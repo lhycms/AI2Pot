@@ -4,8 +4,9 @@ from typing import List
 import numpy as np
 
 from dpdata import LabeledSystem
+import torch
 from torch.utils.data import Dataset
-sys.path.append("/data/home/liuhanyu/hyliu/code/matersdk/source/nblist/bind/gen")
+sys.path.append("/data/home/liuhanyu/hyliu/code/matersdk/source/nblist/bind/gen")   ### Need to modify
 import nblist   ### Need to modify
 
 
@@ -53,17 +54,17 @@ class MlffDataset(Dataset):
             types_list.append(types)
             nghost_list.append(nghost)
             
-        self.inum: np.ndarray = np.array(inum_list)
-        self.ilist: np.ndarray = np.array(ilist_list)
-        self.numneigh: np.ndarray = np.array(numneigh_list)
-        self.firstneigh: np.ndarray = np.array(firstneigh_list)
-        self.relative_coords: np.ndarray = np.array(relativae_coords_list)
-        self.types: np.ndarray = np.array(types_list)
-        self.nghost: np.ndarray = np.array(nghost_list)
-        self.energies: np.ndarray = self.labeled_system["energies"]
-        self.forces: np.ndarray = self.labeled_system["forces"]
+        self.inum: torch.Tensor = torch.tensor(inum_list)
+        self.ilist: torch.Tensor = torch.tensor(ilist_list)
+        self.numneigh: torch.Tensor = torch.tensor(numneigh_list)
+        self.firstneigh: torch.Tensor = torch.tensor(firstneigh_list)
+        self.relative_coords: torch.Tensor = torch.tensor(relativae_coords_list)
+        self.types: torch.Tensor = torch.tensor(types_list)
+        self.nghost: torch.Tensor = torch.tensor(nghost_list)
+        self.energies: torch.Tensor = torch.tensor( self.labeled_system["energies"] )
+        self.forces: torch.Tensor = torch.tensor( self.labeled_system["forces"] )
         if (self.labeled_system.has_virial()):
-            self.virials = self.labeled_system["virials"]
+            self.virials = torch.tensor( self.labeled_system["virials"] )
 
     
     def __len__(self):
@@ -99,15 +100,15 @@ class MlffDataset(Dataset):
     
     def info(self):
         print(self.labeled_system)
-        print("\t+++ 1. self.inum.shape = ", self.inum.shape)
-        print("\t+++ 2. self.ilist.shape = ", self.ilist.shape)
-        print("\t+++ 3. self.numneigh.shape = ", self.ilist.shape)
-        print("\t+++ 4. self.firstneigh.shape = ", self.firstneigh.shape)
-        print("\t+++ 5. self.relative_coords.shape = ", self.relative_coords.shape)
-        print("\t+++ 6. self.types.shape = ", self.types.shape)
-        print("\t+++ 7. self.nghost.shape = ", self.nghost.shape)
-        print("\t+++ 8. self.energies.shape = ", self.energies.shape)
-        print("\t+++ 9. self.forces.shape = ", self.forces.shape)
+        print("\t+++ 1. self.inum.size() = ", self.inum.size())
+        print("\t+++ 2. self.ilist.size() = ", self.ilist.size())
+        print("\t+++ 3. self.numneigh.size() = ", self.ilist.size())
+        print("\t+++ 4. self.firstneigh.size() = ", self.firstneigh.size())
+        print("\t+++ 5. self.relative_coords.size() = ", self.relative_coords.size())
+        print("\t+++ 6. self.types.size() = ", self.types.size())
+        print("\t+++ 7. self.nghost.size() = ", self.nghost.size())
+        print("\t+++ 8. self.energies.size() = ", self.energies.size())
+        print("\t+++ 9. self.forces.size() = ", self.forces.size())
         if (self.labeled_system.has_virial()):
-            print("\t+++ 10. self.virials.shape = ", self.virials.shape)
+            print("\t+++ 10. self.virials.shape = ", self.virials.size())
         

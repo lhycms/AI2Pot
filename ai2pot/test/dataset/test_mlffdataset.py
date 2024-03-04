@@ -12,7 +12,7 @@ class MlffDatasetTest(unittest.TestCase):
             rcut=3.2,
             umax_num_neigh_atoms=20)
         mlff_dataset.info()
-        print(mlff_dataset[0])
+        #print(mlff_dataset[0])
 
         
 
