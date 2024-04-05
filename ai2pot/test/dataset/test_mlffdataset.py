@@ -24,11 +24,12 @@ class MlffDatasetTest(unittest.TestCase):
         #print(mlff_dataset[0])
     
     def test_load(self):
-        for data in self.mlff_dataloader:
-            print(data[0])  # inum
+        for ii, data in enumerate(self.mlff_dataloader):
+            print("\tSize of Batch#{0} = {1}".format(ii, data[0].size()[0]))  # data[0]: batch of inum
 
     def tearDown(self):
         print("MlffDatasetTest is tearing down...\n")
         
 if __name__ == "__main__":
     unittest.main()
+    

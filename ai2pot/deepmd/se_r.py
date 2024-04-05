@@ -20,8 +20,10 @@ class EmbeddingNet(nn.Module):
         self.activation: nn.Module = activation
         self.bias_mark: bool = bias_mark
         self.resnet_mark: bool = resnet_mark
+        
         self.linears_list: nn.Module = nn.ModuleList()
         self.resnet_dt_list: nn.Module = nn.ParameterList()
+        
         for ii in range(len(self.layers_size_list)-1):
             self.linears_list.append( 
                 nn.Linear(self.layers_size_list[ii], self.layers_size_list[ii+1], bias=self.bias_mark) )
@@ -52,6 +54,16 @@ class EmbeddingNet(nn.Module):
             else:
                 x = hidden
         return x
+
+    def info(self):
+        print("1. Linears:")
+        for ii, tmp_linear in enumerate(self.linears_list):
+            print("\tlinear#{0}.weight.size() = ".format(ii), tmp_linear.weight.size())
+            print("\t\t+ linear#{0}.bias.size() = ".format(ii), tmp_linear.bias.size())
+        print("\n")
+        print("2. Resnet_dt:")
+        for ii, tmp_resnet_dt in enumerate(self.resnet_dt_list):
+            print("\tresnet_dt_{0}.size() = ".format(ii), tmp_resnet_dt.size())
 
 
 class FittingNet(nn.Module):
@@ -115,6 +127,9 @@ class DpSeR(nn.Module):
     def __init__(
             self,
             ntypes: int,
+            rcut: float,
+            rcut_smooth: float,
+            umax_num_neighs: torch.Tensor,
             energy_shift_list: List[float],
             embed_sizes_list: List[int],
             embed_activation: nn.Module,
@@ -126,10 +141,13 @@ class DpSeR(nn.Module):
             fit_resnet_mark: bool = False):
         super(DpSeR, self).__init__()
         self.ntypes: int = ntypes
+        self.rcut: float = rcut
+        self.rcut_smooth: float = rcut_smooth
+        self.umax_num_neighs: torch.Tensor = umax_num_neighs
         self.energy_shift_list: List[float] = energy_shift_list
         self.embed_sizes_list: List[int] = embed_sizes_list
         self.fit_sizes_list: List[int] = fit_sizes_list
-        
+
         self.embeds_list: nn.Module = nn.ModuleList()
         self.fits_list: nn.Module = nn.ModuleList()
         
@@ -151,14 +169,24 @@ class DpSeR(nn.Module):
             
     def forward(
         self,
-        binum: torch.Tensor,
         bilist: torch.Tensor,
         bnumneigh: torch.Tensor,
         bfirstneigh: torch.Tensor,
         brcs: torch.Tensor,
         btypes: torch.Tensor,
         bnghost: torch.Tensor):
-        nbatches: int = bilist.size()[0]
-        natoms: int = bilist.size()[1]
-        umax_num_neigh_atoms: int = bfirstneigh.size()[2]
+        #nbatches: int = bilist.size()[0]
+        #natoms: int = bilist.size()[1]
+        #umax_num_neigh_atoms: int = bfirstneigh.size()[2]
+
+        tilde_r: torch.Tensor = envMatrixOp(
+            bilist,
+            bnumneigh,
+            bfirstneigh,
+            brcs,
+            btypes,
+            self.umax_num_neighs,
+            self.rcut,
+            self.rcut_smooth)
         
+        return tilde_r
