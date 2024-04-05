@@ -54,17 +54,17 @@ class MlffDataset(Dataset):
             types_list.append(types)
             nghost_list.append(nghost)
             
-        self.inum: torch.Tensor = torch.tensor(inum_list)
-        self.ilist: torch.Tensor = torch.tensor(ilist_list)
-        self.numneigh: torch.Tensor = torch.tensor(numneigh_list)
-        self.firstneigh: torch.Tensor = torch.tensor(firstneigh_list)
-        self.relative_coords: torch.Tensor = torch.tensor(relativae_coords_list)
-        self.types: torch.Tensor = torch.tensor(types_list)
-        self.nghost: torch.Tensor = torch.tensor(nghost_list)
-        self.energies: torch.Tensor = torch.tensor( self.labeled_system["energies"] )
-        self.forces: torch.Tensor = torch.tensor( self.labeled_system["forces"] )
+        self.inum: torch.Tensor = torch.tensor(np.array(inum_list))
+        self.ilist: torch.Tensor = torch.tensor(np.array(ilist_list))
+        self.numneigh: torch.Tensor = torch.tensor(np.array(numneigh_list))
+        self.firstneigh: torch.Tensor = torch.tensor(np.array(firstneigh_list))
+        self.relative_coords: torch.Tensor = torch.tensor(np.array(relativae_coords_list))
+        self.types: torch.Tensor = torch.tensor(np.array(types_list))
+        self.nghost: torch.Tensor = torch.tensor(np.array(nghost_list))
+        self.energies: torch.Tensor = torch.tensor( np.array(self.labeled_system["energies"]) )
+        self.forces: torch.Tensor = torch.tensor( np.array(self.labeled_system["forces"]) )
         if (self.labeled_system.has_virial()):
-            self.virials = torch.tensor( self.labeled_system["virials"] )
+            self.virials = torch.tensor( np.array(self.labeled_system["virials"]) )
 
     
     def __len__(self):
