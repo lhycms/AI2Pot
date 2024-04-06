@@ -191,7 +191,7 @@ class DpSeR(nn.Module):
         brcs: torch.Tensor,
         btypes: torch.Tensor,
         bnghost: torch.Tensor):
-        nbatches: int = bilist.size()[0]
+        #nbatches: int = bilist.size()[0]
         #natoms: int = bilist.size()[1]
         #umax_num_neigh_atoms: int = bfirstneigh.size()[2]
         tilde_r: torch.Tensor = envMatrixOp(
@@ -200,7 +200,7 @@ class DpSeR(nn.Module):
             bfirstneigh,
             brcs,
             btypes,
-            self.umax_num_neighs.expand(nbatches, self.ntypes),
+            self.umax_num_neighs,
             self.rcut,
             self.rcut_smooth)[0]
         

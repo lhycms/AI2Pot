@@ -80,25 +80,27 @@ class DpSeRTest(unittest.TestCase):
 
         self.outcar_path: str = "/data/home/liuhanyu/hyliu/code/AI2Pot/test_data/ReNbSSe/OUTCAR"
         self.labeled_system: LabeledSystem = LabeledSystem(self.outcar_path)
-        mlff_dataset: MlffDataset = MlffDataset(
+        self.mlff_dataset: MlffDataset = MlffDataset(
             labeled_system=self.labeled_system,
             rcut=3.2,
             umax_num_neigh_atoms=umax_num_neighs)
         self.mlff_dataloader: DataLoader = DataLoader(
-            dataset=mlff_dataset,
+            dataset=self.mlff_dataset,
             batch_size=5,
             shuffle=True)
         
     def test_info(self):
+        print("len(mlff_dataset) = {0}".format(len(self.mlff_dataset)))
+        print("len(mlff_dataloader) = {0}".format(len(self.mlff_dataloader)))
         for ii, batch_data in enumerate(self.mlff_dataloader):
-            y = self.dp_se_r(
+            tilde_r: torch.Tensor = self.dp_se_r(
                 batch_data[1],
                 batch_data[2],
                 batch_data[3],
                 batch_data[4],
                 batch_data[5],
                 batch_data[6])
-            print(y.size())
+            print("\t{0}. In Batch#{1}, tilde_r.size() = ".format(ii+1, ii), tilde_r.size())
     
     def test_forward(self):
         pass
