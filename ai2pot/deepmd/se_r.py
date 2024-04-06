@@ -136,7 +136,7 @@ class FittingNet(nn.Module):
             print("\tresnet_dt#{0}.size() = ".format(ii), tmp_resnet_dt.size())
 
 
-class DpSeR(nn.Module):
+class DescripSeR(nn.Module):
     def __init__(
             self,
             ntypes: int,
@@ -144,30 +144,26 @@ class DpSeR(nn.Module):
             rcut_smooth: float,
             umax_num_neighs: torch.Tensor,
             embed_sizes_list: List[int],
-            fit_sizes_list: List[int],
+            M2: int = 4,
             embed_activation: nn.Module = nn.Tanh(),
-            fit_activation: nn.Module = nn.Tanh(),
             embed_bias_mark: bool = True,
-            embed_resnet_mark: bool = False,
-            fit_bias_mark: bool = True,
-            fit_resnet_mark: bool = False,
-            energy_shift_list: Union[bool, List[float]] = False):
-        super(DpSeR, self).__init__()
+            embed_resnet_mark: bool = False):
+        super(DescripSeR, self).__init__()
+        assert(embed_sizes_list[-1] >= M2)
         self.ntypes: int = ntypes
         self.rcut: float = rcut
         self.rcut_smooth: float = rcut_smooth
         self.umax_num_neighs: torch.Tensor = umax_num_neighs
-        if energy_shift_list is False:
-            self.energy_shift_list = [0.0] * ntypes
-        else:
-            self.energy_shift_list: List[float] = energy_shift_list
         self.embed_sizes_list: List[int] = embed_sizes_list
-        self.fit_sizes_list: List[int] = fit_sizes_list
-
+        self.embed_segpoints: torch.Tensor = torch.cat(
+            [torch.tensor([0], dtype=torch.int32), torch.cumsum(self.umax_num_neighs, dim=0)],
+            dim=0)
+        self.M2 = M2
+        
         self.embeds_list: nn.Module = nn.ModuleList()
         self.fits_list: nn.Module = nn.ModuleList()
         
-        for ii in range(self.ntypes):
+        for _ in range(self.ntypes):
             for _ in range(self.ntypes):
                 self.embeds_list.append(
                     EmbeddingNet(
@@ -175,25 +171,19 @@ class DpSeR(nn.Module):
                         activation=embed_activation,
                         bias_mark=embed_bias_mark,
                         resnet_mark=embed_resnet_mark))
-            self.fits_list.append(
-                FittingNet(
-                    layer_size_list=self.fit_sizes_list,
-                    activation=fit_activation,
-                    bias_mark=fit_bias_mark,
-                    resnet_mark=fit_resnet_mark,
-                    energy_shift=self.energy_shift_list[ii]))
-            
+
     def forward(
         self,
         bilist: torch.Tensor,
         bnumneigh: torch.Tensor,
         bfirstneigh: torch.Tensor,
         brcs: torch.Tensor,
-        btypes: torch.Tensor,
-        bnghost: torch.Tensor):
-        #nbatches: int = bilist.size()[0]
-        #natoms: int = bilist.size()[1]
-        #umax_num_neigh_atoms: int = bfirstneigh.size()[2]
+        btypes: torch.Tensor):
+        nbatches: int = bilist.size()[0]
+        natoms: int = bilist.size()[1]
+        descrip: torch.Tensor = torch.zeros(
+            (nbatches, natoms, self.embed_sizes_list[-1], self.M2), 
+            dtype=brcs.dtype)
         tilde_r: torch.Tensor = envMatrixOp(
             bilist,
             bnumneigh,
@@ -204,5 +194,51 @@ class DpSeR(nn.Module):
             self.rcut,
             self.rcut_smooth)[0]
         
-        return tilde_r
-    
+        for ii in range(self.ntypes):
+            mask_itype: torch.Tensor = (btypes[0][:natoms] == ii)
+            tilde_r_itype: torch.Tensor = tilde_r[:, mask_itype]
+            fh_itype: torch.Tensor = torch.zeros(
+                (nbatches, tilde_r_itype.size()[1], self.embed_sizes_list[-1], 4),
+                dtype=tilde_r.dtype)
+            for jj in range(self.ntypes):
+                tilde_r_itype_jtype: torch.Tensor = tilde_r_itype[:, :, self.embed_segpoints[jj] : self.embed_segpoints[jj+1]]
+                G: torch.Tensor = self.embeds_list[ii*self.ntypes + jj](
+                    tilde_r_itype_jtype[:, :, :, -1].unsqueeze(dim=-1))
+                fh_itype += torch.matmul(G.transpose(-2, -1), tilde_r_itype_jtype)
+            fh_itype = fh_itype / torch.sum(self.umax_num_neighs)
+            sh_itype: torch.Tensor = fh_itype[:, :, :self.M2, :].transpose(-2, -1)
+            descrip[:, mask_itype, :, :] = torch.matmul(fh_itype, sh_itype)
+                                                        
+        return descrip
+
+
+
+class DpSeR(nn.Module):
+    def __init__(
+            self,
+            ntypes: int,
+            rcut: float,
+            rcut_smooth: float,
+            umax_num_neighs: torch.Tensor,
+            embed_sizes_list: List[int],
+            fit_sizes_list: List[int],
+            M2: int = 4,
+            embed_activation: nn.Module = nn.Tanh(),
+            fit_activation: nn.Module = nn.Tanh(),
+            embed_bias_mark: bool = True,
+            embed_resnet_mark: bool = False,
+            fit_bias_mark: bool = True,
+            fit_resnet_mark: bool = False,
+            energy_shift_list: Union[bool, List[float]] = False):
+        super(DpSeR, self).__init__()
+        pass
+            
+    def forward(
+        self,
+        bilist: torch.Tensor,
+        bnumneigh: torch.Tensor,
+        bfirstneigh: torch.Tensor,
+        brcs: torch.Tensor,
+        btypes: torch.Tensor,
+        bnghost: torch.Tensor):
+        pass

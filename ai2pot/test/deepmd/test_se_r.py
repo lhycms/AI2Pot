@@ -10,7 +10,7 @@ from ai2pot.dataset.mlffdataset import MlffDataset
 from ai2pot.deepmd.se_r import (
     EmbeddingNet,
     FittingNet,
-    DpSeR
+    DescripSeR
 )
 
 
@@ -58,9 +58,9 @@ class FittingNetTest(unittest.TestCase):
         print("FittingNetTest (TestCase) is tearing down...\n")
 
 
-class DpSeRTest(unittest.TestCase):
+class DescripSeRTest(unittest.TestCase):
     def setUp(self):
-        print("DpSeRTest (TestCase) is setting up...\n")
+        print("DescripTest (TestCase) is setting up...\n")
         ntypes: int = 4 # ReNbSSe
         rcut: float = 3.2
         rcut_smooth: float = 3.0
@@ -69,14 +69,13 @@ class DpSeRTest(unittest.TestCase):
         # for envMatrixOp (equal)
         umax_num_neighs_tensor: torch.Tensor = torch.tensor([10, 10, 10, 10], dtype=torch.int32)
         embed_sizes_list: List[int] = [2, 4, 8]
-        fit_sizes_list: List[int] = [8, 4, 2]
-        self.dp_se_r = DpSeR(
+        self.dp_se_r = DescripSeR(
             ntypes=ntypes,
             rcut=rcut,
             rcut_smooth=rcut_smooth,
             umax_num_neighs=umax_num_neighs_tensor,
-            embed_sizes_list=embed_sizes_list,
-            fit_sizes_list=fit_sizes_list)
+            embed_sizes_list=embed_sizes_list)
+        self.dp_se_r.to(torch.float64)
 
         self.outcar_path: str = "/data/home/liuhanyu/hyliu/code/AI2Pot/test_data/ReNbSSe/OUTCAR"
         self.labeled_system: LabeledSystem = LabeledSystem(self.outcar_path)
@@ -93,20 +92,19 @@ class DpSeRTest(unittest.TestCase):
         print("len(mlff_dataset) = {0}".format(len(self.mlff_dataset)))
         print("len(mlff_dataloader) = {0}".format(len(self.mlff_dataloader)))
         for ii, batch_data in enumerate(self.mlff_dataloader):
-            tilde_r: torch.Tensor = self.dp_se_r(
+            descrip: torch.Tensor = self.dp_se_r(
                 batch_data[1],
                 batch_data[2],
                 batch_data[3],
                 batch_data[4],
-                batch_data[5],
-                batch_data[6])
-            print("\t{0}. In Batch#{1}, tilde_r.size() = ".format(ii+1, ii), tilde_r.size())
+                batch_data[5])
+            print("\t{0}. In Batch#{1}, descrip.size() = ".format(ii+1, ii), descrip.size())
     
     def test_forward(self):
         pass
     
     def tearDown(self):
-        print("DpSeRTest (TestCase) is tearing down...\n")
+        print("DescripTest (TestCase) is tearing down...\n")
         
 
 if __name__ == "__main__":
