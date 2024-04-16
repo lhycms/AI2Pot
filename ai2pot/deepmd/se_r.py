@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Union, Dict, Any, Optional
 
 import torch
 import torch.nn as nn
@@ -278,7 +278,7 @@ class DpSeR(nn.Module):
         bfirstneigh: torch.Tensor,
         brcs: torch.Tensor,
         btypes: torch.Tensor,
-        bnghost: torch.Tensor):
+        bnghost: torch.Tensor) -> torch.Tensor:
         nbatches: int = bilist.size()[0]
         nlocal: int = bilist.size()[1]
         descrip: torch.Tensor = self.descrip_list[0](bilist,
@@ -294,11 +294,15 @@ class DpSeR(nn.Module):
                                                                          -1)
             e_i_sr[:, mask_itype] = self.fits_list[0](descrip_itype)
         e_tot_sr: torch.Tensor = torch.sum(e_i_sr, dim=1)
-        
+        mask: List[Optional[torch.Tensor]] = [torch.ones_like(e_tot_sr)]
+        eisr_rij_jacobian: torch.Tensor = torch.autograd.grad([e_tot_sr], 
+                                                              [brcs], 
+                                                              grad_outputs=mask,
+                                                              retain_graph=True,
+                                                              create_graph=True)[0]
         return e_tot_sr
-        
     
-    def checkpoint_info(self):
+    def get_checkpoint_dict(self) -> Dict[str, Any]:
         pass
     
     def info(self):

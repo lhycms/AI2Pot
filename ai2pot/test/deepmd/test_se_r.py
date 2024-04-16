@@ -147,7 +147,7 @@ class DpSeRTest(unittest.TestCase):
                 batch_data[1],
                 batch_data[2],
                 batch_data[3],
-                batch_data[4],
+                batch_data[4].requires_grad_(True),
                 batch_data[5],
                 batch_data[6])
             print("\t{0}. In Batch#{1}, descrip.size() = ".format(ii+1, ii), e_tot_sr.size())
