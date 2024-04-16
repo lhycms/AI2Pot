@@ -10,11 +10,12 @@ from ai2pot.dataset.mlffdataset import MlffDataset
 from ai2pot.deepmd.se_r import (
     EmbeddingNet,
     FittingNet,
-    DescripSeR
+    DescripSeR,
+    DpSeR
 )
 
-
-class EmbeddingNetTest(unittest.TestCase):
+"""
+class EmbeddingNetTes(unittest.TestCase):
     def setUp(self):
         print("EmbeddingNetTest (TestCase) is setting up...\n")
         self.layer_size_list: List[int] = [2, 4, 8]
@@ -36,7 +37,7 @@ class EmbeddingNetTest(unittest.TestCase):
         print("EmbeddingNetTest (TestCase) is tearing down...\n")
 
 
-class FittingNetTest(unittest.TestCase):
+class FittingNetTes(unittest.TestCase):
     def setUp(self):
         print("FittingNetTest (TestCase) is setting up...\n")
         self.layer_size_list: List[int] = [2, 4, 8]
@@ -58,7 +59,7 @@ class FittingNetTest(unittest.TestCase):
         print("FittingNetTest (TestCase) is tearing down...\n")
 
 
-class DescripSeRTest(unittest.TestCase):
+class DescripSeRTes(unittest.TestCase):
     def setUp(self):
         print("DescripTest (TestCase) is setting up...\n")
         ntypes: int = 4 # ReNbSSe
@@ -69,13 +70,14 @@ class DescripSeRTest(unittest.TestCase):
         # for envMatrixOp (equal)
         umax_num_neighs_tensor: torch.Tensor = torch.tensor([10, 10, 10, 10], dtype=torch.int32)
         embed_sizes_list: List[int] = [2, 4, 8]
-        self.dp_se_r = DescripSeR(
+        self.descrip_se_r: nn.Module = DescripSeR(
             ntypes=ntypes,
             rcut=rcut,
             rcut_smooth=rcut_smooth,
             umax_num_neighs=umax_num_neighs_tensor,
-            embed_sizes_list=embed_sizes_list)
-        self.dp_se_r.to(torch.float64)
+            embed_sizes_list=embed_sizes_list,
+            M2=4)
+        self.descrip_se_r.to(torch.float64)
 
         self.outcar_path: str = "/data/home/liuhanyu/hyliu/code/AI2Pot/test_data/ReNbSSe/OUTCAR"
         self.labeled_system: LabeledSystem = LabeledSystem(self.outcar_path)
@@ -92,7 +94,7 @@ class DescripSeRTest(unittest.TestCase):
         print("len(mlff_dataset) = {0}".format(len(self.mlff_dataset)))
         print("len(mlff_dataloader) = {0}".format(len(self.mlff_dataloader)))
         for ii, batch_data in enumerate(self.mlff_dataloader):
-            descrip: torch.Tensor = self.dp_se_r(
+            descrip: torch.Tensor = self.descrip_se_r(
                 batch_data[1],
                 batch_data[2],
                 batch_data[3],
@@ -106,6 +108,53 @@ class DescripSeRTest(unittest.TestCase):
     def tearDown(self):
         print("DescripTest (TestCase) is tearing down...\n")
         
+"""
+
+class DpSeRTest(unittest.TestCase):
+    def setUp(self):
+        print("DpSeRTest (TestCase) is setting up...\n")
+        ntypes: int = 4
+        rcut: float = 3.2
+        rcut_smooth: float= 3.0
+        # for nblist (equal)
+        umax_num_neighs: int = 40
+        # for envMatrixOp (equal)
+        umax_num_neighs_tensor: torch.Tensor = torch.tensor([10, 10, 10, 10], dtype=torch.int32)
+        embed_sizes_list: List[int] = [2, 4, 8]
+        fit_sizes_list: List[int] = [16, 16, 16]
+        self.dp_se_r: nn.Module = DpSeR(ntypes=ntypes,
+                                        rcut=rcut,
+                                        rcut_smooth=rcut_smooth,
+                                        umax_num_neighs=umax_num_neighs_tensor,
+                                        embed_sizes_list=embed_sizes_list,
+                                        fit_sizes_list=fit_sizes_list,
+                                        M2=4,
+                                        energy_shift_list=False)
+        self.dp_se_r.to(torch.float64)
+
+        self.outcar_path: str = "/data/home/liuhanyu/hyliu/code/AI2Pot/test_data/ReNbSSe/OUTCAR"
+        self.labeled_system: LabeledSystem = LabeledSystem(self.outcar_path)
+        self.mlff_dataset: MlffDataset = MlffDataset(labeled_system=self.labeled_system,
+                                                     rcut=rcut,
+                                                     umax_num_neigh_atoms=umax_num_neighs)
+        self.mlff_dataloader: DataLoader = DataLoader(self.mlff_dataset,
+                                                      batch_size=5,
+                                                      shuffle=True)
+        
+    def test_forward(self):
+        for ii, batch_data in enumerate(self.mlff_dataloader):
+            e_tot_sr: torch.Tensor = self.dp_se_r(
+                batch_data[1],
+                batch_data[2],
+                batch_data[3],
+                batch_data[4],
+                batch_data[5],
+                batch_data[6])
+            print("\t{0}. In Batch#{1}, descrip.size() = ".format(ii+1, ii), e_tot_sr.size())
+    
+    def tearDown(self):
+        print("DpSeRTest (TestCase) is tearing down...\n")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -54,22 +54,27 @@ class MlffDataset(Dataset):
             types_list.append(types)
             nghost_list.append(nghost)
             
-        self.inum: torch.Tensor = torch.tensor(np.array(inum_list), dtype=torch.int32)
-        self.ilist: torch.Tensor = torch.tensor(np.array(ilist_list), dtype=torch.int32)
-        self.numneigh: torch.Tensor = torch.tensor(np.array(numneigh_list), dtype=torch.int32)
-        self.firstneigh: torch.Tensor = torch.tensor(np.array(firstneigh_list), dtype=torch.int32)
-        self.relative_coords: torch.Tensor = torch.tensor(np.array(relativae_coords_list))
-        self.types: torch.Tensor = torch.tensor(np.array(types_list), dtype=torch.int32)
-        self.nghost: torch.Tensor = torch.tensor(np.array(nghost_list), dtype=torch.int32)
-        self.energies: torch.Tensor = torch.tensor( np.array(self.labeled_system["energies"]) )
-        self.forces: torch.Tensor = torch.tensor( np.array(self.labeled_system["forces"]) )
+        self.inum: torch.Tensor = torch.tensor(np.array(inum_list), 
+                                               dtype=torch.int32)
+        self.ilist: torch.Tensor = torch.tensor(np.array(ilist_list), 
+                                                dtype=torch.int32)
+        self.numneigh: torch.Tensor = torch.tensor(np.array(numneigh_list), 
+                                                   dtype=torch.int32)
+        self.firstneigh: torch.Tensor = torch.tensor(np.array(firstneigh_list), 
+                                                     dtype=torch.int32)
+        self.relative_coords: torch.Tensor = torch.tensor(np.array(relativae_coords_list), 
+                                                          dtype=torch.float64)
+        self.types: torch.Tensor = torch.tensor(np.array(types_list), 
+                                                dtype=torch.int32)
+        self.nghost: torch.Tensor = torch.tensor(np.array(nghost_list), 
+                                                 dtype=torch.int32)
+        self.energies: torch.Tensor = torch.tensor(np.array(self.labeled_system["energies"]))
+        self.forces: torch.Tensor = torch.tensor(np.array(self.labeled_system["forces"]))
         if (self.labeled_system.has_virial()):
             self.virials = torch.tensor( np.array(self.labeled_system["virials"]) )
 
-    
     def __len__(self):
-        return self.labeled_system.get_nframes()
-    
+        return self.labeled_system.get_nframes()    
     
     def __getitem__(self, index) -> List[np.ndarray]:
         if self.labeled_system.has_virial():
