@@ -1,0 +1,5 @@
+if(EXISTS "/data/home/liuhanyu/hyliu/code/AI2Pot/source/build/core/test_AlignedArray[1]_tests.cmake")
+  include("/data/home/liuhanyu/hyliu/code/AI2Pot/source/build/core/test_AlignedArray[1]_tests.cmake")
+else()
+  add_test(test_AlignedArray_NOT_BUILT test_AlignedArray_NOT_BUILT)
+endif()

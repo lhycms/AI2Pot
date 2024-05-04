@@ -1,0 +1,1 @@
+/opt/rh/devtoolset-7/root/usr/bin/c++  -fopenmp -g -rdynamic CMakeFiles/test_arrayUtils.dir/tests/test_arrayUtils.cc.o -o ../bin/core/test_arrayUtils  ../lib/libgtest.a ../lib/libgtest_main.a ../lib/libgtest.a -lpthread 

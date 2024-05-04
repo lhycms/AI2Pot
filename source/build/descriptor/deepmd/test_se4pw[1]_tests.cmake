@@ -1,0 +1,5 @@
+add_test([=[Se4pwTest.generate]=]  /data/home/liuhanyu/hyliu/code/AI2Pot/source/build/bin/descriptor/deepmd/test_se4pw [==[--gtest_filter=Se4pwTest.generate]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[Se4pwTest.generate]=]  PROPERTIES WORKING_DIRECTORY /data/home/liuhanyu/hyliu/code/AI2Pot/source/build/descriptor/deepmd SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+add_test([=[Se4pwTest.get_prim_indices_from_matersdk]=]  /data/home/liuhanyu/hyliu/code/AI2Pot/source/build/bin/descriptor/deepmd/test_se4pw [==[--gtest_filter=Se4pwTest.get_prim_indices_from_matersdk]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[Se4pwTest.get_prim_indices_from_matersdk]=]  PROPERTIES WORKING_DIRECTORY /data/home/liuhanyu/hyliu/code/AI2Pot/source/build/descriptor/deepmd SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+set(  test_se4pw_TESTS Se4pwTest.generate Se4pwTest.get_prim_indices_from_matersdk)

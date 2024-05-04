@@ -1,0 +1,5 @@
+if(EXISTS "/data/home/liuhanyu/hyliu/code/AI2Pot/source/build/nblist/test_basicStructureInfo[1]_tests.cmake")
+  include("/data/home/liuhanyu/hyliu/code/AI2Pot/source/build/nblist/test_basicStructureInfo[1]_tests.cmake")
+else()
+  add_test(test_basicStructureInfo_NOT_BUILT test_basicStructureInfo_NOT_BUILT)
+endif()

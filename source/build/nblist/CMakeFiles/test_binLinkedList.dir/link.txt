@@ -1,0 +1,1 @@
+/opt/rh/devtoolset-7/root/usr/bin/c++  -fopenmp -g -rdynamic CMakeFiles/test_binLinkedList.dir/tests/test_binLinkedList.cc.o -o ../bin/nblist/test_binLinkedList  ../lib/libgtest_main.a ../lib/libgtest.a -lpthread 

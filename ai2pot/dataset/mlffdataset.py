@@ -6,8 +6,7 @@ import numpy as np
 from dpdata import LabeledSystem
 import torch
 from torch.utils.data import Dataset
-sys.path.append("/data/home/liuhanyu/hyliu/code/matersdk/source/nblist/bind/gen")   ### Need to modify
-import nblist   ### Need to modify
+from ai2pot.fromcc import nblist
 
 
 class MlffDataset(Dataset):

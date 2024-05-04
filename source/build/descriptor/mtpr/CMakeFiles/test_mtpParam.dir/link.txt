@@ -1,0 +1,1 @@
+/opt/rh/devtoolset-7/root/usr/bin/c++  -fopenmp -rdynamic CMakeFiles/test_mtpParam.dir/tests/test_mtpParam.cc.o -o ../../bin/descriptor/mtpr/test_mtpParam  -Wl,-rpath,/data/home/liuhanyu/hyliu/code/AI2Pot/source/build/lib/descriptor/mtpr ../../lib/descriptor/mtpr/libmtpParam.so ../../lib/libgtest.a ../../lib/libgtest_main.a ../../lib/libgtest.a -lpthread 

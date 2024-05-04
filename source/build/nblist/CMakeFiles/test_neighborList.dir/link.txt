@@ -1,0 +1,1 @@
+/opt/rh/devtoolset-7/root/usr/bin/c++  -fopenmp -g -rdynamic CMakeFiles/test_neighborList.dir/tests/test_neighborList.cc.o -o ../bin/nblist/test_neighborList  ../lib/libgtest.a ../lib/libgtest_main.a ../lib/libgtest.a -lpthread 

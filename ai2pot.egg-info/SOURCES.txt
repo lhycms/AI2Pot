@@ -4,6 +4,12 @@ ai2pot/__init__.py
 ai2pot.egg-info/PKG-INFO
 ai2pot.egg-info/SOURCES.txt
 ai2pot.egg-info/dependency_links.txt
+ai2pot.egg-info/requires.txt
 ai2pot.egg-info/top_level.txt
 ai2pot/dataset/__init__.py
 ai2pot/dataset/mlffdataset.py
+ai2pot/deepmd/__init__.py
+ai2pot/deepmd/network.py
+ai2pot/deepmd/se_a.py
+ai2pot/deepmd/se_r.py
+ai2pot/fromcc/__init__.py

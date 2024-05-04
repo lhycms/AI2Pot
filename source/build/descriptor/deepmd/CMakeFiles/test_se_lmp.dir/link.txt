@@ -1,0 +1,1 @@
+/opt/rh/devtoolset-7/root/usr/bin/c++  -fopenmp -D_GLIBCXX_USE_CXX11_ABI=0 -rdynamic CMakeFiles/test_se_lmp.dir/test/test_se_lmp.cc.o -o ../../bin/descriptor/deepmd/test_se_lmp  ../../lib/libgtest.a ../../lib/libgtest_main.a ../../lib/libgtest.a -lpthread 
