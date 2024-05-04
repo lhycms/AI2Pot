@@ -1,5 +1,0 @@
-add_test([=[Se4pwOpTest.forward]=]  /data/home/liuhanyu/hyliu/code/AI2Pot/source/build/bin/descriptor/deepmd/test_se4pw_op [==[--gtest_filter=Se4pwOpTest.forward]==] --gtest_also_run_disabled_tests)
-set_tests_properties([=[Se4pwOpTest.forward]=]  PROPERTIES WORKING_DIRECTORY /data/home/liuhanyu/hyliu/code/AI2Pot/source/build/descriptor/deepmd SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
-add_test([=[Se4pwOpTest.get_prim_indices_from_matersdk]=]  /data/home/liuhanyu/hyliu/code/AI2Pot/source/build/bin/descriptor/deepmd/test_se4pw_op [==[--gtest_filter=Se4pwOpTest.get_prim_indices_from_matersdk]==] --gtest_also_run_disabled_tests)
-set_tests_properties([=[Se4pwOpTest.get_prim_indices_from_matersdk]=]  PROPERTIES WORKING_DIRECTORY /data/home/liuhanyu/hyliu/code/AI2Pot/source/build/descriptor/deepmd SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
-set(  test_se4pw_op_TESTS Se4pwOpTest.forward Se4pwOpTest.get_prim_indices_from_matersdk)

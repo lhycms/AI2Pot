@@ -1,5 +1,0 @@
-if(EXISTS "/data/home/liuhanyu/hyliu/code/AI2Pot/source/build/descriptor/deepmd/test_se4pw[1]_tests.cmake")
-  include("/data/home/liuhanyu/hyliu/code/AI2Pot/source/build/descriptor/deepmd/test_se4pw[1]_tests.cmake")
-else()
-  add_test(test_se4pw_NOT_BUILT test_se4pw_NOT_BUILT)
-endif()

@@ -1,7 +1,0 @@
-add_test([=[MtpExceptionTest.throw_exception]=]  /data/home/liuhanyu/hyliu/code/AI2Pot/source/build/bin/descriptor/mtpr/test_mtpParam [==[--gtest_filter=MtpExceptionTest.throw_exception]==] --gtest_also_run_disabled_tests)
-set_tests_properties([=[MtpExceptionTest.throw_exception]=]  PROPERTIES WORKING_DIRECTORY /data/home/liuhanyu/hyliu/code/AI2Pot/source/build/descriptor/mtpr SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
-add_test([=[MtpExceptionTest.MtpError_test]=]  /data/home/liuhanyu/hyliu/code/AI2Pot/source/build/bin/descriptor/mtpr/test_mtpParam [==[--gtest_filter=MtpExceptionTest.MtpError_test]==] --gtest_also_run_disabled_tests)
-set_tests_properties([=[MtpExceptionTest.MtpError_test]=]  PROPERTIES WORKING_DIRECTORY /data/home/liuhanyu/hyliu/code/AI2Pot/source/build/descriptor/mtpr SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
-add_test([=[MtpParamTest.constructor]=]  /data/home/liuhanyu/hyliu/code/AI2Pot/source/build/bin/descriptor/mtpr/test_mtpParam [==[--gtest_filter=MtpParamTest.constructor]==] --gtest_also_run_disabled_tests)
-set_tests_properties([=[MtpParamTest.constructor]=]  PROPERTIES WORKING_DIRECTORY /data/home/liuhanyu/hyliu/code/AI2Pot/source/build/descriptor/mtpr SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
-set(  test_mtpParam_TESTS MtpExceptionTest.throw_exception MtpExceptionTest.MtpError_test MtpParamTest.constructor)

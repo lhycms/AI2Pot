@@ -1,1 +1,0 @@
-/opt/rh/devtoolset-7/root/usr/bin/c++  -fopenmp -D_GLIBCXX_USE_CXX11_ABI=0 -rdynamic CMakeFiles/test_force_sr.dir/test/test_force_sr.cc.o -o ../bin/fvt/test_force_sr  ../lib/libgtest.a ../lib/libgtest_main.a ../lib/libgtest.a -lpthread 

@@ -1,1 +1,0 @@
-/opt/rh/devtoolset-7/root/usr/bin/c++  -fopenmp -D_GLIBCXX_USE_CXX11_ABI=0 -rdynamic CMakeFiles/test_mtpMRadial_de.dir/tests/test_mtpMRadial_de.cc.o -o ../../bin/descriptor/mtp/test_mtpMRadial_de  ../../lib/libgtest.a ../../lib/libgtest_main.a ../../lib/libgtest.a -lpthread 

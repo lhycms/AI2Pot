@@ -1,1 +1,0 @@
-/opt/rh/devtoolset-7/root/usr/bin/c++ -fPIC  -fopenmp -shared -Wl,-soname,libmtpParam.so -o ../../lib/descriptor/mtpr/libmtpParam.so CMakeFiles/mtpParam.dir/src/mtpParam.cc.o 

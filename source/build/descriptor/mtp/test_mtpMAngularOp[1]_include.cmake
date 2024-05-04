@@ -1,5 +1,0 @@
-if(EXISTS "/data/home/liuhanyu/hyliu/code/AI2Pot/source/build/descriptor/mtp/test_mtpMAngularOp[1]_tests.cmake")
-  include("/data/home/liuhanyu/hyliu/code/AI2Pot/source/build/descriptor/mtp/test_mtpMAngularOp[1]_tests.cmake")
-else()
-  add_test(test_mtpMAngularOp_NOT_BUILT test_mtpMAngularOp_NOT_BUILT)
-endif()
