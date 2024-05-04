@@ -1,5 +1,0 @@
-if(EXISTS "/data/home/liuhanyu/hyliu/code/AI2Pot/source/build/nblist/test_structure[1]_tests.cmake")
-  include("/data/home/liuhanyu/hyliu/code/AI2Pot/source/build/nblist/test_structure[1]_tests.cmake")
-else()
-  add_test(test_structure_NOT_BUILT test_structure_NOT_BUILT)
-endif()
