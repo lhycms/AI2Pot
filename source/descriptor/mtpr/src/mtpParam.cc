@@ -8,7 +8,7 @@
 #include "../include/mtpParam.h"
 
 
-namespace matersdk {
+namespace ai2pot {
 namespace mtpr {
 
 MtpParam::MtpParam()
@@ -564,4 +564,4 @@ const int (*AlphaIndexTimes::alpha_index_times() const)[4]
 }
 
 };  // namespace : mtpr
-};  // namespace : matersdk
+};  // namespace : ai2pot

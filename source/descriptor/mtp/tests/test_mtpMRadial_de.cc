@@ -40,7 +40,7 @@ TEST_F(SwitchFuncTest, value_rcut) {
     rcut = 3.5;
     rcut_smooth = 3.0;
     rji = 3.5;
-    matersdk::mtp::SwitchFunc<double> switch_func(rcut, rcut_smooth);
+    ai2pot::mtp::SwitchFunc<double> switch_func(rcut, rcut_smooth);
 
     double result = switch_func.get_result(rji);
     EXPECT_DOUBLE_EQ(result, 0);
@@ -51,7 +51,7 @@ TEST_F(SwitchFuncTest, value_random) {
     rcut = 3.5;
     rcut_smooth = 3.0;
     rji = 3.2;
-    matersdk::mtp::SwitchFunc<double> switch_func(rcut, rcut_smooth);
+    ai2pot::mtp::SwitchFunc<double> switch_func(rcut, rcut_smooth);
 
     double result = switch_func.get_result(rji);
     EXPECT_FLOAT_EQ(result, 0.68256);
@@ -62,7 +62,7 @@ TEST_F(SwitchFuncTest, value_rcut_smooth) {
     rcut = 3.5;
     rcut_smooth = 3.0;
     rji = 3.0;
-    matersdk::mtp::SwitchFunc<double> switch_func(rcut, rcut_smooth);
+    ai2pot::mtp::SwitchFunc<double> switch_func(rcut, rcut_smooth);
 
     double result = switch_func.get_result(rji);
     EXPECT_DOUBLE_EQ(result, 1);
@@ -101,7 +101,7 @@ protected:
 
 
 TEST_F(RadialBasisChebyshevTest, constructor_default) {
-    matersdk::mtp::RadialBasisChebyshev<double> rb;
+    ai2pot::mtp::RadialBasisChebyshev<double> rb;
 
     rb.show_in_value();
     rb.show_in_deriv();
@@ -113,7 +113,7 @@ TEST_F(RadialBasisChebyshevTest, constructor_1) {
     rcut_smooth = 2.0;
     hmju = 3;
     rji = 3.0;
-    matersdk::mtp::RadialBasisChebyshev<double> rb(rcut, rcut_smooth, hmju, rji);
+    ai2pot::mtp::RadialBasisChebyshev<double> rb(rcut, rcut_smooth, hmju, rji);
 
     rb.show_in_value();
     rb.show_in_deriv();
@@ -125,7 +125,7 @@ TEST_F(RadialBasisChebyshevTest, get_info) {
     rcut_smooth = 2.0;
     hmju = 3;
     rji = 3.0;
-    matersdk::mtp::RadialBasisChebyshev<double> rb(rcut, rcut_smooth, hmju, rji);
+    ai2pot::mtp::RadialBasisChebyshev<double> rb(rcut, rcut_smooth, hmju, rji);
 
     EXPECT_FLOAT_EQ(rcut, rb.get_rcut());
     EXPECT_FLOAT_EQ(rcut_smooth, rb.get_rcut_smooth());
@@ -139,7 +139,7 @@ TEST_F(RadialBasisChebyshevTest, get_chebyshev_vals) {
     rcut_smooth = 3.0;
     hmju = 3;
     rji = 3.05;
-    matersdk::mtp::RadialBasisChebyshev<double> rb(rcut, rcut_smooth, hmju, rji);
+    ai2pot::mtp::RadialBasisChebyshev<double> rb(rcut, rcut_smooth, hmju, rji);
 
     const double* chebyshev_vals = rb.get_chebyshev_vals();
     printf("chebyshev_vals = [");
@@ -155,7 +155,7 @@ TEST_F(RadialBasisChebyshevTest, get_chebyshev_ders) {
     rcut_smooth = 2.0;
     hmju = 3;
     rji = 3.0;
-    matersdk::mtp::RadialBasisChebyshev<double> rb(rcut, rcut_smooth, hmju, rji);
+    ai2pot::mtp::RadialBasisChebyshev<double> rb(rcut, rcut_smooth, hmju, rji);
 
     const double* chebyshev_ders = rb.get_chebyshev_ders();
     printf("chebyshev_ders = [");
@@ -171,7 +171,7 @@ TEST_F(RadialBasisChebyshevTest, get_rb_vals) {
     rcut_smooth = 2.0;
     hmju = 3;
     rji = 3.0;
-    matersdk::mtp::RadialBasisChebyshev<double> rb(rcut, rcut_smooth, hmju, rji);
+    ai2pot::mtp::RadialBasisChebyshev<double> rb(rcut, rcut_smooth, hmju, rji);
 
     const double* rb_vals = rb.get_rb_vals();
     printf("rb_vals = [");
@@ -187,7 +187,7 @@ TEST_F(RadialBasisChebyshevTest, get_rb_ders) {
     rcut_smooth = 2.0;
     hmju = 3;
     rji = 3.0;
-    matersdk::mtp::RadialBasisChebyshev<double> rb(rcut, rcut_smooth, hmju, rji);
+    ai2pot::mtp::RadialBasisChebyshev<double> rb(rcut, rcut_smooth, hmju, rji);
 
     const double* rb_ders = rb.get_rb_ders();
     printf("rb_ders = [");
@@ -207,8 +207,8 @@ TEST_F(RadialBasisChebyshevTest, check_deriv_from_definition_way1) {
     double rji_end = 3.051;
     double delta = rji_end - rji;
 
-    matersdk::mtp::RadialBasisChebyshev<double> rb(rcut, rcut_smooth, hmju, rji);
-    matersdk::mtp::RadialBasisChebyshev<double> rb_end(rcut, rcut_smooth, hmju, rji_end);   
+    ai2pot::mtp::RadialBasisChebyshev<double> rb(rcut, rcut_smooth, hmju, rji);
+    ai2pot::mtp::RadialBasisChebyshev<double> rb_end(rcut, rcut_smooth, hmju, rji_end);   
     
     double* chebyshev_ders_definition = (double*)malloc(sizeof(double) * (rb.get_hmju()+1));
     double* rb_ders_definition = (double*)malloc(sizeof(double) * (rb.get_hmju()+1));

@@ -20,8 +20,8 @@ protected:
     double rcut_smooth;
     bool pbc_xyz[3];
     int nghost;
-    matersdk::Structure<double> structure;
-    matersdk::NeighborList<double> neighbor_list;
+    ai2pot::Structure<double> structure;
+    ai2pot::NeighborList<double> neighbor_list;
 
     int inum;
     int* ilist;
@@ -111,8 +111,8 @@ protected:
         rcut = 3.3;
         rcut_smooth = 3.0;
 
-        structure = matersdk::Structure<double>(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-        neighbor_list = matersdk::NeighborList<double>(structure, rcut, pbc_xyz, true);
+        structure = ai2pot::Structure<double>(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+        neighbor_list = ai2pot::NeighborList<double>(structure, rcut, pbc_xyz, true);
         
         ntypes = 2;
         umax_num_neigh_atoms_lst = (int*)malloc(sizeof(int) * ntypes);
@@ -179,7 +179,7 @@ TEST_F(EnvMatrixOpTest, test_EnvMatrixFunction) {
         {2}, 
         int_options);
     relative_coords_tensor.requires_grad_(true);     // Note!!!
-    auto result = matersdk::deepPotSE::EnvMatrixFunction::apply(
+    auto result = ai2pot::deepPotSE::EnvMatrixFunction::apply(
         ilist_tensor,
         numneigh_tensor,
         firstneigh_tensor,
@@ -194,7 +194,7 @@ std::cout << relative_coords_tensor.grad() << std::endl;
     //std::cout << result[1] << std::endl;
 
     /*
-    auto result1 = matersdk::deepPotSE::EnvMatrixOp(
+    auto result1 = ai2pot::deepPotSE::EnvMatrixOp(
         ilist_tensor,
         numneigh_tensor,
         firstneigh_tensor,

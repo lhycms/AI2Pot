@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <iostream>
 
-// ./bin/matersdk/io/publicLayer/test_CpuNeighborList
+// ./bin/ai2pot/io/publicLayer/test_CpuNeighborList
 #include "../include/CpuNeighborList.h"
 
 
@@ -15,7 +15,7 @@ protected:
     float maxy = 2;
     float minz = 0;
     float maxz = 2;
-    matersdk::Vec3* boxVectors = new matersdk::Vec3[3];
+    ai2pot::Vec3* boxVectors = new ai2pot::Vec3[3];
 
     bool usePeriodic = true;
 
@@ -54,23 +54,23 @@ protected:
 
 
 TEST_F(CpuNeighborListTest, getVoxelIndex) {
-    matersdk::CpuNeighborList::Voxels voxels(
+    ai2pot::CpuNeighborList::Voxels voxels(
                                 blockSize, 
                                 vsy, vsz,
                                 miny, maxy, minz, maxz,
                                 boxVectors, usePeriodic);
     float location_1[3] = {1.0, 4.0, 12.0};
-    matersdk::VoxelIndex index = voxels.getVoxelIndex(location_1);
+    ai2pot::VoxelIndex index = voxels.getVoxelIndex(location_1);
     std::cout << index.y << ", " << index.z << std::endl;
 
     float location_2[3] = {1.0, 4.0, 11.0};
-    matersdk::VoxelIndex index_2 = voxels.getVoxelIndex(location_2);
+    ai2pot::VoxelIndex index_2 = voxels.getVoxelIndex(location_2);
     std::cout << index_2.y << ", " << index_2.z << std::endl;
 }
 
 
 TEST_F(CpuNeighborListTest, insert) {
-    matersdk::CpuNeighborList::Voxels voxels(
+    ai2pot::CpuNeighborList::Voxels voxels(
                                 blockSize, 
                                 vsy, vsz,
                                 miny, maxy, minz, maxz,
@@ -86,7 +86,7 @@ TEST_F(CpuNeighborListTest, insert) {
 
 
 TEST_F(CpuNeighborListTest, sortItems) {
-    matersdk::CpuNeighborList::Voxels voxels(
+    ai2pot::CpuNeighborList::Voxels voxels(
                                 blockSize, 
                                 vsy, vsz,
                                 miny, maxy, minz, maxz,

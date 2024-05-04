@@ -1,9 +1,9 @@
-#ifndef MATERSDK_FORCE_SR_OP_H
-#define MATERSDK_FORCE_SR_OP_H
+#ifndef AI2POT_FORCE_SR_OP_H
+#define AI2POT_FORCE_SR_OP_H
 #include <torch/torch.h>
 
 
-namespace matersdk {
+namespace ai2pot {
 namespace fvt {
 
 class ForceSrFunction : public torch::autograd::Function<ForceSrFunction>
@@ -33,6 +33,6 @@ torch::autograd::variable_list ForceSrOp(
     const at::Tensor& bdei_drij_tensor);
 
 };  // namespace : fvt
-};  // namespace : matersdk
+};  // namespace : ai2pot
 
 #endif

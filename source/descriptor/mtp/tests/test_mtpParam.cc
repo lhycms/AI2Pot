@@ -33,7 +33,7 @@ protected:
 
 TEST_F(MtpParamTest, test_all)
 {   
-    matersdk::mtp::MtpParam::find_param(
+    ai2pot::mtp::MtpParam::find_param(
         mtp_level,
         alpha_moments_count,
         alpha_index_basic_count,

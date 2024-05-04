@@ -16,8 +16,8 @@ protected:
     double rcut_smooth;
     bool pbc_xyz[3];
     int nghost;
-    matersdk::Structure<double> structure;
-    matersdk::NeighborList<double> neighbor_list;
+    ai2pot::Structure<double> structure;
+    ai2pot::NeighborList<double> neighbor_list;
 
     int inum;
     int* ilist;
@@ -109,8 +109,8 @@ protected:
         rcut = 3.3;
         rcut_smooth = 3.0;
 
-        structure = matersdk::Structure<double>(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-        neighbor_list = matersdk::NeighborList<double>(structure, rcut, pbc_xyz, true);
+        structure = ai2pot::Structure<double>(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+        neighbor_list = ai2pot::NeighborList<double>(structure, rcut, pbc_xyz, true);
         
         ntypes = 2;
         umax_num_neigh_atoms_lst = (int*)malloc(sizeof(int) * ntypes);
@@ -155,7 +155,7 @@ TEST_F(EnvMatrixTest, find_value_deriv) {
         nghost,
         umax_num_neigh_atoms);
     for (int ii=0; ii<1000; ii++)
-    matersdk::deepPotSE::EnvMatrix<double>::find_value_deriv(
+    ai2pot::deepPotSE::EnvMatrix<double>::find_value_deriv(
         tilde_r,
         tilde_r_deriv,
         inum,

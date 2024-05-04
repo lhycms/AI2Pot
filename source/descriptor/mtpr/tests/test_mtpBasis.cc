@@ -28,7 +28,7 @@ protected:
     int ntypes;
 
     std::vector<std::string> filenames;
-    matersdk::mtpr::MtpParam mtp_param;
+    ai2pot::mtpr::MtpParam mtp_param;
 
     int num_atoms;
     double basis_vectors[3][3];
@@ -47,8 +47,8 @@ protected:
     int* types;
     int nghost;
 
-    matersdk::Structure<double> structure;
-    matersdk::NeighborList<double> neighbor_list;
+    ai2pot::Structure<double> structure;
+    ai2pot::NeighborList<double> neighbor_list;
 
     static void SetUpTestSuite() {
         std::cout << "MtpBasisTest (TestSuite) is setting up...\n";
@@ -60,20 +60,20 @@ protected:
 
     void SetUp() override {
         filenames = {
-            "/data/home/liuhanyu/hyliu/code/matersdk/source/descriptor/mtpr/MTP_templates/depreciated-02.almtp", 
-            "/data/home/liuhanyu/hyliu/code/matersdk/source/descriptor/mtpr/MTP_templates/depreciated-04.almtp",
-            "/data/home/liuhanyu/hyliu/code/matersdk/source/descriptor/mtpr/MTP_templates/06.almtp",
-            "/data/home/liuhanyu/hyliu/code/matersdk/source/descriptor/mtpr/MTP_templates/08.almtp",
-            "/data/home/liuhanyu/hyliu/code/matersdk/source/descriptor/mtpr/MTP_templates/10.almtp",
-            "/data/home/liuhanyu/hyliu/code/matersdk/source/descriptor/mtpr/MTP_templates/12.almtp",
-            "/data/home/liuhanyu/hyliu/code/matersdk/source/descriptor/mtpr/MTP_templates/14.almtp",
-            "/data/home/liuhanyu/hyliu/code/matersdk/source/descriptor/mtpr/MTP_templates/16.almtp",
-            "/data/home/liuhanyu/hyliu/code/matersdk/source/descriptor/mtpr/MTP_templates/18.almtp",
-            "/data/home/liuhanyu/hyliu/code/matersdk/source/descriptor/mtpr/MTP_templates/20.almtp",
-            "/data/home/liuhanyu/hyliu/code/matersdk/source/descriptor/mtpr/MTP_templates/22.almtp",
-            "/data/home/liuhanyu/hyliu/code/matersdk/source/descriptor/mtpr/MTP_templates/24.almtp",
-            "/data/home/liuhanyu/hyliu/code/matersdk/source/descriptor/mtpr/MTP_templates/26.almtp",
-            "/data/home/liuhanyu/hyliu/code/matersdk/source/descriptor/mtpr/MTP_templates/28.almtp"
+            "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/depreciated-02.almtp", 
+            "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/depreciated-04.almtp",
+            "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/06.almtp",
+            "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/08.almtp",
+            "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/10.almtp",
+            "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/12.almtp",
+            "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/14.almtp",
+            "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/16.almtp",
+            "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/18.almtp",
+            "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/20.almtp",
+            "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/22.almtp",
+            "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/24.almtp",
+            "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/26.almtp",
+            "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/28.almtp"
         };
         mtp_param._load(filenames[7]); // 3 or 7
 //mtp_param.show();
@@ -166,8 +166,8 @@ protected:
         pbc_xyz[1] = true;
         pbc_xyz[2] = true;
 
-        structure = matersdk::Structure<double>(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-        neighbor_list = matersdk::NeighborList<double>(structure, rcut, bin_size_xyz, pbc_xyz, true);
+        structure = ai2pot::Structure<double>(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+        neighbor_list = ai2pot::NeighborList<double>(structure, rcut, bin_size_xyz, pbc_xyz, true);
 
         umax_num_neigh_atoms = 19;
         inum = 12;
@@ -205,7 +205,7 @@ protected:
 TEST_F(MtpBasisTest, find_val_der4rcs)
 {    
     //for (int ii=0; ii<1000; ii++)
-    matersdk::mtpr::MtpBasis<double>::find_val_der(
+    ai2pot::mtpr::MtpBasis<double>::find_val_der(
         mtp_basis_val,
         mtp_basis_der,
         mtp_basis_der2coeffs,
@@ -233,7 +233,7 @@ TEST_F(MtpBasisTest, find_val_der4rcs)
         rmax,
         rmin);
     rcs[0*umax_num_neigh_atoms*3 + 0*3 + 2] += 0.0001;  // [0, 0, 0]: [中心原子，近邻原子，y方向]
-    matersdk::mtpr::MtpBasis<double>::find_val_der(
+    ai2pot::mtpr::MtpBasis<double>::find_val_der(
         mtp_basis_val_,
         mtp_basis_der_,
         mtp_basis_der2coeffs_,
@@ -281,7 +281,7 @@ printf("]\n");
 TEST_F(MtpBasisTest, find_val_der4coeffs)
 {
     //for (int ii=0; ii<1000; ii++)
-    matersdk::mtpr::MtpBasis<double>::find_val_der(
+    ai2pot::mtpr::MtpBasis<double>::find_val_der(
         mtp_basis_val,
         mtp_basis_der,
         mtp_basis_der2coeffs,
@@ -311,7 +311,7 @@ TEST_F(MtpBasisTest, find_val_der4coeffs)
     int coeff_idx = (0*ntypes + 0)*ntypes*mtp_param.nmus()*chebyshev_size + 0*chebyshev_size + 0;   // [0, 0, 2, 0] = [center_type, neigh_type, mu, chebyshev_idx]
     assert(1 < mtp_param.nmus());   // now_mu < max_mu
     coeffs[coeff_idx] += 0.0001;
-    matersdk::mtpr::MtpBasis<double>::find_val_der(
+    ai2pot::mtpr::MtpBasis<double>::find_val_der(
         mtp_basis_val_,
         mtp_basis_der_,
         mtp_basis_der2coeffs_,

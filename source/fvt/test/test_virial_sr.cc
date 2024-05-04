@@ -37,8 +37,8 @@ protected:
     int *types;
     int nghost;
 
-    matersdk::Structure<double> structure;
-    matersdk::NeighborList<double> nblist;
+    ai2pot::Structure<double> structure;
+    ai2pot::NeighborList<double> nblist;
 
     static void SetUpTestSuite() {
         std::cout << "VirialSrTest (TestSuite) is setting up...\n";
@@ -125,8 +125,8 @@ protected:
         pbc_xyz[1] = true;
         pbc_xyz[2] = true;
 
-        structure = matersdk::Structure<double>(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-        nblist = matersdk::NeighborList<double>(structure, rcut, bin_size_xyz, pbc_xyz, true);
+        structure = ai2pot::Structure<double>(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+        nblist = ai2pot::NeighborList<double>(structure, rcut, bin_size_xyz, pbc_xyz, true);
 
         umax_num_neighs = 20;
         inum = 12;
@@ -176,7 +176,7 @@ TEST_F(VirialSrTest, find_val_der1) {
     int neighbor_idx_modify = 1;
     int direction_idx_modify = 0;
 
-    matersdk::fvt::VirialSr<double>::find_val_der(virial_sr_val,
+    ai2pot::fvt::VirialSr<double>::find_val_der(virial_sr_val,
                                                 virial_sr_der1,
                                                 virial_sr_der2,
                                                 inum,
@@ -186,7 +186,7 @@ TEST_F(VirialSrTest, find_val_der1) {
                                                 dei_drij);
     
     dei_drij[center_idx_modify*umax_num_neighs*3 + neighbor_idx_modify*3 + direction_idx_modify] += 0.002;
-    matersdk::fvt::VirialSr<double>::find_val_der(virial_sr_val_,
+    ai2pot::fvt::VirialSr<double>::find_val_der(virial_sr_val_,
                                                 virial_sr_der1_,
                                                 virial_sr_der2_,
                                                 inum,
@@ -222,7 +222,7 @@ TEST_F(VirialSrTest, find_val_der2) {
     int neighbor_idx_modify = 1;
     int direction_idx_modify = 0;
 
-    matersdk::fvt::VirialSr<double>::find_val_der(virial_sr_val,
+    ai2pot::fvt::VirialSr<double>::find_val_der(virial_sr_val,
                                                 virial_sr_der1,
                                                 virial_sr_der2,
                                                 inum,
@@ -232,7 +232,7 @@ TEST_F(VirialSrTest, find_val_der2) {
                                                 dei_drij);
     
     rcs[center_idx_modify*umax_num_neighs*3 + neighbor_idx_modify*3 + direction_idx_modify] += 0.001;
-    matersdk::fvt::VirialSr<double>::find_val_der(virial_sr_val_,
+    ai2pot::fvt::VirialSr<double>::find_val_der(virial_sr_val_,
                                                 virial_sr_der1_,
                                                 virial_sr_der2_,
                                                 inum,

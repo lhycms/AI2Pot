@@ -1,8 +1,8 @@
-#ifndef MATERSDK_MTPM_ANGULAR_OP_H
-#define MATERSDK_MTPM_ANGULAR_OP_H
+#ifndef AI2POT_MTPM_ANGULAR_OP_H
+#define AI2POT_MTPM_ANGULAR_OP_H
 #include <torch/torch.h>
 
-namespace matersdk {
+namespace ai2pot {
 namespace mtp {
 
 class OuterNu0Function : public torch::autograd::Function<OuterNu0Function>
@@ -25,6 +25,6 @@ at::Tensor MtpMAngularOp(
     int nu);
 
 }; // namespace : mtp
-}; // namespace : matersdk
+}; // namespace : ai2pot
 
 #endif

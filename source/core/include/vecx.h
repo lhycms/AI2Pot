@@ -6,7 +6,7 @@
 #include <cassert>
 
 
-namespace matersdk {
+namespace ai2pot {
 
 /**
  * @brief This Class represents a three component vector. It is used for storing positions, 
@@ -225,7 +225,7 @@ std::ostream& operator<<(std::ostream &COUT, const Vec3 &rhs) {
 }
 
 
-}   // namespace `matersdk`
+}   // namespace `ai2pot`
 
 
 

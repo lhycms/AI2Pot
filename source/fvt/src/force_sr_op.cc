@@ -4,7 +4,7 @@
 #include "../include/force_sr_op.h"
 
 
-namespace matersdk {
+namespace ai2pot {
 namespace fvt {
 
 torch::autograd::variable_list ForceSrFunction::forward(
@@ -187,4 +187,4 @@ torch::autograd::variable_list ForceSrOp(
 }
 
 };  // class : fvt
-};  // class : matersdk
+};  // class : ai2pot

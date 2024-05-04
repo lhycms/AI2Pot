@@ -1,12 +1,12 @@
-#ifndef MATERSDK_ARRAY_UTILS_H
-#define MATERSDK_ARRAY_UTILS_H
+#ifndef AI2POT_ARRAY_UTILS_H
+#define AI2POT_ARRAY_UTILS_H
 
 
 #include <stdlib.h>
 #include <stdio.h>
 
 
-namespace matersdk {
+namespace ai2pot {
 namespace arrayUtils {
 
 
@@ -223,7 +223,7 @@ void show5dArray(
 }
 
 
-};  // namespace : matersdk
+};  // namespace : ai2pot
 };  // namespace : arrayUtils
 
 

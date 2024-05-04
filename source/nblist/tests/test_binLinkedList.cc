@@ -99,25 +99,25 @@ protected:
 
 
 TEST_F(SupercellTest, default_constructor) {
-    matersdk::Supercell<double> supercell;
+    ai2pot::Supercell<double> supercell;
     //supercell.show();
 }
 
 
 TEST_F(SupercellTest, constuctor_1) {
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-    matersdk::Supercell<double> supercell(structure, scaling_matrix);
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::Supercell<double> supercell(structure, scaling_matrix);
     //supercell.show();
 }
 
 
 TEST_F(SupercellTest, copy_constructor) {
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-    matersdk::Supercell<double> supercell_1(structure, scaling_matrix);
-    matersdk::Supercell<double> supercell_2;
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::Supercell<double> supercell_1(structure, scaling_matrix);
+    ai2pot::Supercell<double> supercell_2;
 
-    matersdk::Supercell<double> supercell_3(supercell_1);
-    matersdk::Supercell<double> supercell_4(supercell_2);
+    ai2pot::Supercell<double> supercell_3(supercell_1);
+    ai2pot::Supercell<double> supercell_4(supercell_2);
 
     //supercell_3.show();
     //supercell_4.show();
@@ -125,13 +125,13 @@ TEST_F(SupercellTest, copy_constructor) {
 
 
 TEST_F(SupercellTest, assignment_operator) {
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-    matersdk::Supercell<double> supercell_1(structure, scaling_matrix);
-    matersdk::Supercell<double> supercell_(structure, scaling_matrix);
-    matersdk::Supercell<double> supercell_2;
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::Supercell<double> supercell_1(structure, scaling_matrix);
+    ai2pot::Supercell<double> supercell_(structure, scaling_matrix);
+    ai2pot::Supercell<double> supercell_2;
     
-    matersdk::Supercell<double> supercell_3;
-    matersdk::Supercell<double> supercell_4;
+    ai2pot::Supercell<double> supercell_3;
+    ai2pot::Supercell<double> supercell_4;
 
     supercell_3 = supercell_1;
     supercell_4 = supercell_2;
@@ -144,12 +144,12 @@ TEST_F(SupercellTest, assignment_operator) {
 
 
 TEST_F(SupercellTest, calc_prim_cell_idx_xyz_even) {
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
     // Test 1: Scaling factor 是奇数
     scaling_matrix[0] = 5;
     scaling_matrix[1] = 7;
     scaling_matrix[2] = 9;
-    matersdk::Supercell<double> supercell(structure, scaling_matrix);
+    ai2pot::Supercell<double> supercell(structure, scaling_matrix);
     // supercell.calc_prim_cell_idx_xyz();
     // supercell.calc_prim_cell_idx();
     const int* prim_cell_idx_xyz = supercell.get_prim_cell_idx_xyz();
@@ -161,12 +161,12 @@ TEST_F(SupercellTest, calc_prim_cell_idx_xyz_even) {
 
 
 TEST_F(SupercellTest, calc_prim_cell_idx_xyz_odd) {
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
     // Test 2: Scaling factor 是偶数
     scaling_matrix[0] = 6;
     scaling_matrix[1] = 8;
     scaling_matrix[2] = 10;
-    matersdk::Supercell<double> supercell(structure, scaling_matrix);
+    ai2pot::Supercell<double> supercell(structure, scaling_matrix);
     // supercell.calc_prim_cell_idx_xyz();
     // supercell.calc_prim_cell_idx();
     const int* prim_cell_idx_xyz = supercell.get_prim_cell_idx_xyz();
@@ -177,12 +177,12 @@ TEST_F(SupercellTest, calc_prim_cell_idx_xyz_odd) {
 
 
 TEST_F(SupercellTest, calc_prim_cell_idx_xyz_even_odd) {
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
     // Test 3: Scaling factor 既有奇数，也有偶数
     scaling_matrix[0] = 5;
     scaling_matrix[1] = 6;
     scaling_matrix[2] = 7;
-    matersdk::Supercell<double> supercell(structure, scaling_matrix);
+    ai2pot::Supercell<double> supercell(structure, scaling_matrix);
     // supercell.calc_prim_cell_idx_xyz();
     // supercell.calc_prim_cell_idx();
     const int* prim_cell_idx_xyz = supercell.get_prim_cell_idx_xyz();
@@ -193,12 +193,12 @@ TEST_F(SupercellTest, calc_prim_cell_idx_xyz_even_odd) {
 
 
 TEST_F(SupercellTest, calc_prim_cell_idx_even) {
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
     // Test 1: Scaling factor 是奇数
     scaling_matrix[0] = 5;
     scaling_matrix[1] = 7;
     scaling_matrix[2] = 9;
-    matersdk::Supercell<double> supercell(structure, scaling_matrix);
+    ai2pot::Supercell<double> supercell(structure, scaling_matrix);
     // supercell.calc_prim_cell_idx_xyz();
     // supercell.calc_prim_cell_idx();
     const int* prim_cell_idx_xyz = supercell.get_prim_cell_idx_xyz();
@@ -214,12 +214,12 @@ TEST_F(SupercellTest, calc_prim_cell_idx_even) {
 
 
 TEST_F(SupercellTest, calc_prim_cell_idx_odd) {
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
     // Test 2: Scaling factor 是偶数
     scaling_matrix[0] = 6;
     scaling_matrix[1] = 8;
     scaling_matrix[2] = 10;
-    matersdk::Supercell<double> supercell(structure, scaling_matrix);
+    ai2pot::Supercell<double> supercell(structure, scaling_matrix);
     // supercell.calc_prim_cell_idx_xyz();
     // supercell.calc_prim_cell_idx();
     const int* prim_cell_idx_xyz = supercell.get_prim_cell_idx_xyz();
@@ -235,12 +235,12 @@ TEST_F(SupercellTest, calc_prim_cell_idx_odd) {
 
 
 TEST_F(SupercellTest, calc_prim_cell_even_odd) {
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
     // Test 3: Scaling factor 既有奇数，也有偶数
     scaling_matrix[0] = 5;
     scaling_matrix[1] = 6;
     scaling_matrix[2] = 7;
-    matersdk::Supercell<double> supercell(structure, scaling_matrix);
+    ai2pot::Supercell<double> supercell(structure, scaling_matrix);
     // supercell.calc_prim_cell_idx_xyz();
     // supercell.calc_prim_cell_idx();
     const int* prim_cell_idx_xyz = supercell.get_prim_cell_idx_xyz();
@@ -256,22 +256,22 @@ TEST_F(SupercellTest, calc_prim_cell_even_odd) {
 
 
 TEST_F(SupercellTest, get_structure) {
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
     scaling_matrix[0] = 7;
     scaling_matrix[1] = 8;
     scaling_matrix[2] = 9;
-    matersdk::Supercell<double> supercell(structure, scaling_matrix);
+    ai2pot::Supercell<double> supercell(structure, scaling_matrix);
 
     //supercell.get_structure().show();
 }
 
 
 TEST_F(SupercellTest, get_scaling_matrix) {
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
     scaling_matrix[0] = 7;
     scaling_matrix[1] = 8;
     scaling_matrix[2] = 18;
-    matersdk::Supercell<double> supercell(structure, scaling_matrix);
+    ai2pot::Supercell<double> supercell(structure, scaling_matrix);
     const int* scaling_matrix = supercell.get_scaling_matrix();
 
     EXPECT_EQ(scaling_matrix[0], 7);
@@ -282,11 +282,11 @@ TEST_F(SupercellTest, get_scaling_matrix) {
 
 
 TEST_F(SupercellTest, get_num_atoms) {
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
     scaling_matrix[0] = 6;
     scaling_matrix[1] = 8;
     scaling_matrix[2] = 10;
-    matersdk::Supercell<double> supercell(structure, scaling_matrix);
+    ai2pot::Supercell<double> supercell(structure, scaling_matrix);
     
     EXPECT_EQ(supercell.get_prim_num_atoms(), 12);
     EXPECT_EQ(supercell.get_num_atoms(), 12 * scaling_matrix[0] * scaling_matrix[1] * scaling_matrix[2]);
@@ -294,11 +294,11 @@ TEST_F(SupercellTest, get_num_atoms) {
 
 
 TEST_F(SupercellTest, get_owned_atom_idxs) {
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
     scaling_matrix[0] = 3;
     scaling_matrix[1] = 3;
     scaling_matrix[2] = 1;
-    matersdk::Supercell<double> supercell(structure, scaling_matrix);
+    ai2pot::Supercell<double> supercell(structure, scaling_matrix);
     /*
         72~83   84~95   96~107
         36~47   48~59   60~71
@@ -426,7 +426,7 @@ protected:
 
 
 TEST_F(BinLinkedListTest, default_constructor) {
-    matersdk::BinLinkedList<double> bin_linked_list;
+    ai2pot::BinLinkedList<double> bin_linked_list;
     //bin_linked_list.show();
 }
 
@@ -436,8 +436,8 @@ TEST_F(BinLinkedListTest, constructor_1_case_1) {
     pbc_xyz[1] = true;
     pbc_xyz[2] = false;
 
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-    matersdk::BinLinkedList<double> bin_linked_list(structure, rcut, bin_size_xyz, pbc_xyz);
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::BinLinkedList<double> bin_linked_list(structure, rcut, bin_size_xyz, pbc_xyz);
     //bin_linked_list.show();
 
     // Step 1. 验证 `extending_matrix`, `scaling_matrix`
@@ -482,8 +482,8 @@ TEST_F(BinLinkedListTest, constructor_2) {
     pbc_xyz[1] = true;
     pbc_xyz[2] = false;
 
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-    matersdk::BinLinkedList<double> bin_linked_list(structure, rcut, pbc_xyz);
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::BinLinkedList<double> bin_linked_list(structure, rcut, pbc_xyz);
     //bin_linked_list.show();
 
 
@@ -526,12 +526,12 @@ TEST_F(BinLinkedListTest, constructor_2) {
 
 
 TEST_F(BinLinkedListTest, copy_constructor) {
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-    matersdk::BinLinkedList<double> bin_linked_list_1(structure, rcut, bin_size_xyz, pbc_xyz);
-    matersdk::BinLinkedList<double> bin_linked_list_2;
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::BinLinkedList<double> bin_linked_list_1(structure, rcut, bin_size_xyz, pbc_xyz);
+    ai2pot::BinLinkedList<double> bin_linked_list_2;
 
-    matersdk::BinLinkedList<double> bin_linked_list_3(bin_linked_list_1);
-    matersdk::BinLinkedList<double> bin_linked_list_4(bin_linked_list_2);
+    ai2pot::BinLinkedList<double> bin_linked_list_3(bin_linked_list_1);
+    ai2pot::BinLinkedList<double> bin_linked_list_4(bin_linked_list_2);
     //bin_linked_list_3.show();
     //bin_linked_list_4.show();
 }
@@ -546,12 +546,12 @@ TEST_F(BinLinkedListTest, assignment_operator) {
     pbc_xyz[1] = true;
     pbc_xyz[2] = false;
 
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-    matersdk::BinLinkedList<double> bin_linked_list_1(structure, rcut, bin_size_xyz, pbc_xyz);
-    matersdk::BinLinkedList<double> bin_linked_list_2;
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::BinLinkedList<double> bin_linked_list_1(structure, rcut, bin_size_xyz, pbc_xyz);
+    ai2pot::BinLinkedList<double> bin_linked_list_2;
     
-    matersdk::BinLinkedList<double> bin_linked_list_3 = bin_linked_list_1;
-    matersdk::BinLinkedList<double> bin_linked_list_4 = bin_linked_list_2;
+    ai2pot::BinLinkedList<double> bin_linked_list_3 = bin_linked_list_1;
+    ai2pot::BinLinkedList<double> bin_linked_list_4 = bin_linked_list_2;
 
     //bin_linked_list_2 = bin_linked_list_1;
     //bin_linked_list_2.show();
@@ -559,8 +559,8 @@ TEST_F(BinLinkedListTest, assignment_operator) {
 
 
 TEST_F(BinLinkedListTest, _build) {
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-    matersdk::BinLinkedList<double> bin_linked_list(structure, rcut, bin_size_xyz, pbc_xyz);
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::BinLinkedList<double> bin_linked_list(structure, rcut, bin_size_xyz, pbc_xyz);
     // bin_linked_list._build();
     //bin_linked_list.show();
 }
@@ -575,8 +575,8 @@ TEST_F(BinLinkedListTest, get_bin_size) {
     pbc_xyz[1] = true;
     pbc_xyz[2] = false;
 
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-    matersdk::BinLinkedList<double> bin_linked_list(structure, rcut, bin_size_xyz, pbc_xyz);
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::BinLinkedList<double> bin_linked_list(structure, rcut, bin_size_xyz, pbc_xyz);
 
     const double* bin_sizes = bin_linked_list.get_bin_size_xyz();
 
@@ -597,8 +597,8 @@ TEST_F(BinLinkedListTest, get_bin_idx) {
     int prim_atom_idx = 3;
 
     // Step 1. 得到 `bin_idx`
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-    matersdk::BinLinkedList<double> bin_linked_list(structure, rcut, bin_size_xyz, pbc_xyz);
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::BinLinkedList<double> bin_linked_list(structure, rcut, bin_size_xyz, pbc_xyz);
     //bin_linked_list.show();
 
     int bin_idx = bin_linked_list.get_bin_idx(prim_atom_idx);
@@ -648,8 +648,8 @@ TEST_F(BinLinkedListTest, get_num_neigh_bins) {
     pbc_xyz[1] = true;
     pbc_xyz[2] = false;
 
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-    matersdk::BinLinkedList<double> bin_linked_list(structure, rcut, bin_size_xyz, pbc_xyz);
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::BinLinkedList<double> bin_linked_list(structure, rcut, bin_size_xyz, pbc_xyz);
 
     EXPECT_EQ(bin_linked_list.get_num_neigh_bins(), 343);
 }
@@ -665,8 +665,8 @@ TEST_F(BinLinkedListTest, get_neigh_bins) {
     pbc_xyz[2] = false;
 
     // Step 1. 初始化 structure, bin_linked_list
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);    
-    matersdk::BinLinkedList<double> bin_linked_list(structure, rcut, bin_size_xyz, pbc_xyz);
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);    
+    ai2pot::BinLinkedList<double> bin_linked_list(structure, rcut, bin_size_xyz, pbc_xyz);
 
     // Step 1.1. 得到 prim_atom_idx 对应的 atom_idx
     int center_bin_idx = bin_linked_list.get_bin_idx(0);
@@ -705,8 +705,8 @@ TEST_F(BinLinkedListTest, get_neigh_atoms) {
     pbc_xyz[1] = true;
     pbc_xyz[2] = false;
 
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-    matersdk::BinLinkedList<double> bin_linked_list(structure, rcut, bin_size_xyz, pbc_xyz);
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::BinLinkedList<double> bin_linked_list(structure, rcut, bin_size_xyz, pbc_xyz);
     std::vector<int> neigh_atom_idxs = bin_linked_list.get_neigh_atoms(0);
     //for (int neigh_atom_idx: neigh_atom_idxs) {
         //printf("%d, ", neigh_atom_idx);
@@ -716,8 +716,8 @@ TEST_F(BinLinkedListTest, get_neigh_atoms) {
 
 
 TEST_F(BinLinkedListTest, get_supercell) {
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-    matersdk::BinLinkedList<double> bin_linked_list(structure, rcut, bin_size_xyz, pbc_xyz);
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::BinLinkedList<double> bin_linked_list(structure, rcut, bin_size_xyz, pbc_xyz);
 
 }
 

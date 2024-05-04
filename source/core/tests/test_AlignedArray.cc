@@ -7,8 +7,8 @@
 
 class AlignedArrayTest : public ::testing::Test {
 protected:
-    matersdk::AlignedArray<float> *ptr_aa_1;
-    matersdk::AlignedArray<float> *ptr_aa_2;
+    ai2pot::AlignedArray<float> *ptr_aa_1;
+    ai2pot::AlignedArray<float> *ptr_aa_2;
 
     static void SetUpTestSuite() {
         std::cout << "Set up AlignedArrayTest (TestSuite)...\n";
@@ -19,8 +19,8 @@ protected:
     }
 
     void SetUp() override {
-        ptr_aa_1 = new matersdk::AlignedArray<float>();
-        ptr_aa_2 = new matersdk::AlignedArray<float>(12);
+        ptr_aa_1 = new ai2pot::AlignedArray<float>();
+        ptr_aa_2 = new ai2pot::AlignedArray<float>(12);
     }
 
     void TearDown() override {
@@ -48,8 +48,8 @@ TEST_F(AlignedArrayTest, GetElementByIndex) {
     std::cout << "(*ptr_aa_2)[5] = " << (*ptr_aa_2)[5] << std::endl;
     
 
-    matersdk::AlignedArray<float> tmp_aa(12);
-    matersdk::AlignedArray<float> *ptr_tmp_aa;
+    ai2pot::AlignedArray<float> tmp_aa(12);
+    ai2pot::AlignedArray<float> *ptr_tmp_aa;
     ptr_tmp_aa = &tmp_aa;
     EXPECT_EQ(tmp_aa[0], (*ptr_tmp_aa)[0]);
     EXPECT_EQ(tmp_aa[5], (*ptr_tmp_aa)[5]);

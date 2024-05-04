@@ -1,10 +1,10 @@
-#ifndef MATERSDK_MTP_LEVEL_H
-#define MATERSDK_MTP_LEVEL_H
+#ifndef AI2POT_MTP_LEVEL_H
+#define AI2POT_MTP_LEVEL_H
 #include <utility>
 #include <vector>
 
 
-namespace matersdk {
+namespace ai2pot {
 namespace mtp {
 
 class MtpMCoeffPair {
@@ -86,6 +86,6 @@ private:
 
 
 };  // namespace : mtp
-};  // namespace : matersdk
+};  // namespace : ai2pot
 
 #endif

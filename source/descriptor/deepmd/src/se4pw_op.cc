@@ -4,7 +4,7 @@
 #include "../include/se4pw_op.h"
 
 
-namespace matersdk {
+namespace ai2pot {
 namespace deepPotSE {
 
 
@@ -106,7 +106,7 @@ torch::autograd::variable_list Se4pwOp::forward(
 
 
 
-at::Tensor Se4pwOp::get_prim_indices_from_matersdk(
+at::Tensor Se4pwOp::get_prim_indices_from_ai2pot(
         int batch_size,
         int inum,
         at::Tensor& ilist,
@@ -130,7 +130,7 @@ at::Tensor Se4pwOp::get_prim_indices_from_matersdk(
 
     for (int ii=0; ii<batch_size; ii++) {
         int* prim_indices_ptr = prim_indices[ii].data_ptr<int>();
-        Se4pw<double>::get_prim_indices_from_matersdk(
+        Se4pw<double>::get_prim_indices_from_ai2pot(
             prim_indices_ptr,
             inum,
             ilist[ii].data_ptr<int>(),
@@ -146,4 +146,4 @@ at::Tensor Se4pwOp::get_prim_indices_from_matersdk(
 
 
 };  // namespace : deepPotSE 
-};  // namespace : matersdk
+};  // namespace : ai2pot

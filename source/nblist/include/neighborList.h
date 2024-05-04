@@ -1,5 +1,5 @@
-#ifndef MATERSDK_NEIGHBOR_LIST_H
-#define MATERSDK_NEIGHBOR_LIST_H
+#ifndef AI2POT_NEIGHBOR_LIST_H
+#define AI2POT_NEIGHBOR_LIST_H
 
 #include <cassert>
 #include <cmath>
@@ -9,7 +9,7 @@
 #include "./binLinkedList.h"
 
 
-namespace matersdk {
+namespace ai2pot {
 
 
 template <typename CoordType>
@@ -563,7 +563,7 @@ void NeighborList<CoordType>::find_info4mlff(
 }
 
 
-}; // namespace: matersdk
+}; // namespace: ai2pot
 
 
 #endif

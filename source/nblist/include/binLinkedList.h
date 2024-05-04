@@ -1,5 +1,5 @@
-#ifndef MATERSDK_BIN_LINKED_LIST_H
-#define MATERSDK_BIN_LINKED_LIST_H
+#ifndef AI2POT_BIN_LINKED_LIST_H
+#define AI2POT_BIN_LINKED_LIST_H
 
 
 #include <vector>
@@ -8,7 +8,7 @@
 #include "../../core/include/vec3Operation.h"
 
 
-namespace matersdk {
+namespace ai2pot {
 
 const double EPSILON = 1e-3;
 
@@ -131,7 +131,7 @@ public:
     const CoordType* get_min_limit_xyz() const;
 
 private:
-    Supercell<CoordType> supercell;             // 超胞 `matersdk::Supercell 对象`
+    Supercell<CoordType> supercell;             // 超胞 `ai2pot::Supercell 对象`
     CoordType rcut = 0;                         // 截断半径
     CoordType bin_size_xyz[3] = {0, 0, 0};      // bin 在 x, y, z 方向上的尺寸
     bool pbc_xyz[3] = {false, false, false};
@@ -297,12 +297,12 @@ void BasicStructureInfo<CoordType>::show() const{
 
 
 /**
- * @brief Construct a new matersdk::Supercell<Coord Type>::Supercell object
+ * @brief Construct a new ai2pot::Supercell<Coord Type>::Supercell object
  * 
  * @tparam CoordType 
  */
 template <typename CoordType>
-matersdk::Supercell<CoordType>::Supercell() {
+ai2pot::Supercell<CoordType>::Supercell() {
     this->structure = Structure<CoordType>();
     this->prim_structure_info = BasicStructureInfo<CoordType>();
 
@@ -322,14 +322,14 @@ matersdk::Supercell<CoordType>::Supercell() {
 
 
 /**
- * @brief Construct a new matersdk::Supercell<Coord Type>::Supercell object
+ * @brief Construct a new ai2pot::Supercell<Coord Type>::Supercell object
  * 
  * @tparam CoordType 
  * @param structure 
  * @param scaling_matrix 
  */
 template <typename CoordType>
-matersdk::Supercell<CoordType>::Supercell(Structure<CoordType> structure, int *scaling_matrix)
+ai2pot::Supercell<CoordType>::Supercell(Structure<CoordType> structure, int *scaling_matrix)
 {
     this->structure = structure;
     this->prim_structure_info = BasicStructureInfo<CoordType>(structure);
@@ -1087,6 +1087,6 @@ const CoordType* BinLinkedList<CoordType>::get_min_limit_xyz() const {
 
 
 
-} // namespace: matersdk
+} // namespace: ai2pot
 
 #endif

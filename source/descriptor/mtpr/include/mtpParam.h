@@ -1,10 +1,10 @@
-#ifndef MATERSDK_MTPR_MTP_PARAM_H
-#define MATERSDK_MTPR_MTP_PARAM_H
+#ifndef AI2POT_MTPR_MTP_PARAM_H
+#define AI2POT_MTPR_MTP_PARAM_H
 #include <string>
 #include <vector>
 #include <set>
 
-namespace matersdk {
+namespace ai2pot {
 namespace mtpr {
 
 class MtpException {
@@ -115,6 +115,6 @@ private:
 
 
 };  // namespace : mtpr
-};  // namespace : matersdk
+};  // namespace : ai2pot
 
 #endif

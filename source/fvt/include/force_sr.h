@@ -1,8 +1,8 @@
-#ifndef MATERSDK_FORCE_SR_H
-#define MATERSDK_FORCE_SR_H
+#ifndef AI2POT_FORCE_SR_H
+#define AI2POT_FORCE_SR_H
 #include <cstring>
 
-namespace matersdk {
+namespace ai2pot {
 namespace fvt {
 
 template <typename CoordType>
@@ -66,6 +66,6 @@ void ForceSr<CoordType>::find_val_der(
 }
 
 };  // namespace : fvt
-};  // namespace : matersdk
+};  // namespace : ai2pot
 
 #endif

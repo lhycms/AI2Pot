@@ -57,7 +57,7 @@ protected:
 
 
 TEST_F(MtpQOpTest, apply) {
-    at::Tensor result = matersdk::mtp::MtpQOp(size, rcuts_tensor, rcs_tensor)[0];
+    at::Tensor result = ai2pot::mtp::MtpQOp(size, rcuts_tensor, rcs_tensor)[0];
     std::cout << "1.1. Result of Q(x) = \n" << result << std::endl;
     at::Tensor sum = result.sum();
     sum.backward();
@@ -79,7 +79,7 @@ TEST_F(MtpQOpTest, apply) {
     rcs_tensor_[3][1] = 0;
     rcs_tensor_[3][2] = 0;
     rcs_tensor_.requires_grad_(true);
-    at::Tensor result_ = matersdk::mtp::MtpQOp(size, rcuts_tensor, rcs_tensor_)[0];
+    at::Tensor result_ = ai2pot::mtp::MtpQOp(size, rcuts_tensor, rcs_tensor_)[0];
     at::Tensor sum_ = result_.sum();
     std::cout << "2.1. Result of Q(x+/delta{x}}) = \n" << result_ << std::endl;
     std::cout << "2.2. Partial derivative wrt. x_{ij} of third neigh =\n" << ((sum_ - sum) / 0.0001) << std::endl;

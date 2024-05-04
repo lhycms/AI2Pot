@@ -1,9 +1,9 @@
-#ifndef MATERSDK_ENVMATRIX_H
-#define MATERSDK_ENVMATRIX_H
+#ifndef AI2POT_ENVMATRIX_H
+#define AI2POT_ENVMATRIX_H
 #include <cstring>
 #include "./se.h"
 
-namespace matersdk {
+namespace ai2pot {
 namespace deepPotSE {
 
 template <typename CoordType>
@@ -171,7 +171,7 @@ void EnvMatrix<CoordType>::find_value_deriv(
 
 
 }   // namespace : deepPotSE
-}   // namespace : matersdk
+}   // namespace : ai2pot
 
 
 #endif

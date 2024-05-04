@@ -1,5 +1,5 @@
-#ifndef MATERSDK_LEVEL_H
-#define MATERSDK_LEVEL_H
+#ifndef AI2POT_LEVEL_H
+#define AI2POT_LEVEL_H
 
 
 #include <vector>
@@ -8,7 +8,7 @@
 #include <unordered_map>
 #include <cmath>
 
-namespace matersdk {
+namespace ai2pot {
 namespace mtp {
 
 
@@ -360,5 +360,5 @@ void MTPLevel::calc_redundant_combinations(
 
 
 }; // namespace : mtp
-}; // namespace : matersdk
+}; // namespace : ai2pot
 #endif

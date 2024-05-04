@@ -25,8 +25,8 @@ protected:
     double bin_size_xyz[3];
     bool pbc_xyz[3];
 
-    matersdk::Structure<double> structure;
-    matersdk::NeighborList<double> neighbor_list;
+    ai2pot::Structure<double> structure;
+    ai2pot::NeighborList<double> neighbor_list;
 
     int umax_num_neigh_atoms;
     int inum;
@@ -130,8 +130,8 @@ protected:
         pbc_xyz[1] = true;
         pbc_xyz[2] = false;
 
-        structure = matersdk::Structure<double>(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-        neighbor_list = matersdk::NeighborList<double>(structure, rcut, bin_size_xyz, pbc_xyz, true);
+        structure = ai2pot::Structure<double>(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+        neighbor_list = ai2pot::NeighborList<double>(structure, rcut, bin_size_xyz, pbc_xyz, true);
 
         umax_num_neigh_atoms = 19;
         inum = 12;
@@ -164,7 +164,7 @@ protected:
 
 
 TEST_F(MtpFModuleTest, init) {
-    matersdk::mtp::MtpMModule mtp_f(
+    ai2pot::mtp::MtpMModule mtp_f(
         nmus,
         ntypes,
         size,

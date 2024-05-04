@@ -17,7 +17,7 @@ TORCH_LIBRARY(fvt, m) {
         {   
             assert(nghost <= INT_MAX);
             assert(umax_num_neighs <= INT_MAX);
-            return matersdk::fvt::ForceSrOp(bilist_tensor,
+            return ai2pot::fvt::ForceSrOp(bilist_tensor,
                                             bnumneigh_tensor,
                                             bfirstneigh_tensor,
                                             (int)nghost,

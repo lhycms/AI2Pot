@@ -1,5 +1,5 @@
-#ifndef MATERSDK_SE_H
-#define MATERSDK_SE_H
+#ifndef AI2POT_SE_H
+#define AI2POT_SE_H
 
 
 #include <stdlib.h>
@@ -10,7 +10,7 @@
 #include "../../../core/include/arrayUtils.h"
 
 
-namespace matersdk {
+namespace ai2pot {
 namespace deepPotSE{
 
 
@@ -1295,7 +1295,7 @@ TildeR<CoordType>::TildeR() {
  * @brief Construct a new Tilde R< Coord Type>:: Tilde R object
  * 
  * @tparam CoordType 
- * @param neighbor_list matersdk::NeighborList<CoordType> object
+ * @param neighbor_list ai2pot::NeighborList<CoordType> object
  * @param num_center_atomic_numbers 中心原子的种类数
  * @param center_atomic_numbers_lst 中心原子的种类
  * @param num_neigh_atomic_numbers 近邻原子的种类数
@@ -1381,7 +1381,7 @@ TildeR<CoordType>::TildeR(
  * @brief Construct a new Tilde R< Coord Type>:: Tilde R object
  * 
  * @tparam CoordType 
- * @param structure matersdk::Structure object
+ * @param structure ai2pot::Structure object
  * @param rcut 截断半径
  * @param pbc_xyz 周期性边界条件
  * @param sort 原子是否按照距中心原子距离排序
@@ -2458,7 +2458,7 @@ void TildeR<CoordType>::deriv(
 
 
 }   // namespace : deepPotSE
-}   // namespace : matersdk
+}   // namespace : ai2pot
 
 
 #endif

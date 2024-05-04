@@ -36,8 +36,8 @@ protected:
     int* types;
     int nghost;
 
-    matersdk::Structure<double> structure;
-    matersdk::NeighborList<double> neighbor_list;
+    ai2pot::Structure<double> structure;
+    ai2pot::NeighborList<double> neighbor_list;
 
     at::Tensor ilist_tensor;
     at::Tensor firstneigh_tensor;
@@ -139,8 +139,8 @@ protected:
         pbc_xyz[1] = true;
         pbc_xyz[2] = true;
 
-        structure = matersdk::Structure<double>(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-        neighbor_list = matersdk::NeighborList<double>(structure, rcut, bin_size_xyz, pbc_xyz, true);
+        structure = ai2pot::Structure<double>(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+        neighbor_list = ai2pot::NeighborList<double>(structure, rcut, bin_size_xyz, pbc_xyz, true);
 
         umax_num_neigh_atoms = 19;
         inum = 12;
@@ -196,7 +196,7 @@ protected:
 
 TEST_F(MtpBModuleTest, init)
 {
-    matersdk::mtp::MtpBModule mtp_b_module(
+    ai2pot::mtp::MtpBModule mtp_b_module(
         max_level,
         ntypes,
         size,

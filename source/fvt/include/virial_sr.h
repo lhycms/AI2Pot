@@ -1,8 +1,8 @@
-#ifndef MATERSDK_VIRIAL_SR_H
-#define MATERSDK_VIRIAL_SR_H
+#ifndef AI2POT_VIRIAL_SR_H
+#define AI2POT_VIRIAL_SR_H
 #include <cstring>
 
-namespace matersdk {
+namespace ai2pot {
 namespace fvt {
 
 template <typename CoordType>
@@ -51,6 +51,6 @@ void VirialSr<CoordType>::find_val_der(
 }
 
 };  // namespace : fvt
-};  // namespace : matersdk
+};  // namespace : ai2pot
 
 #endif

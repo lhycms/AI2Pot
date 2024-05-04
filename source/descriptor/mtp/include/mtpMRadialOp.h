@@ -1,9 +1,9 @@
-#ifndef MATERSDK_MTPM_RADIAL_OP
-#define MATERSDK_MTPM_RADIAL_OP
+#ifndef AI2POT_MTPM_RADIAL_OP
+#define AI2POT_MTPM_RADIAL_OP
 #include <torch/torch.h>
 #include "./mtpMRadial.h"
 
-namespace matersdk {
+namespace ai2pot {
 namespace mtp {
 
 class MtpQFunction : public torch::autograd::Function<MtpQFunction>
@@ -28,6 +28,6 @@ torch::autograd::variable_list MtpQOp(
     const at::Tensor& distances_tensor);
 
 };  // namespace : mtp
-};  // namespace : matersdk
+};  // namespace : ai2pot
 
 #endif

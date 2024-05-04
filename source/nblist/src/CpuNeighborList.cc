@@ -3,7 +3,7 @@
 #include "../include/CpuNeighborList.h"
 
 
-namespace matersdk {
+namespace ai2pot {
 
 /**
  * @brief Construct a new Voxels object
@@ -175,4 +175,4 @@ int CpuNeighborList::Voxels::findUpperBound(
 }
 
 
-} // namespace: matersdk
+} // namespace: ai2pot

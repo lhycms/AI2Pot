@@ -105,8 +105,8 @@ int main() {
     num_neigh_atoms_lst[0] = 10; 
     num_neigh_atoms_lst[1] = 15;
 
-    // Step 3. 构建 matersdk::Structure 对象
-    matersdk::Structure<double> structure(
+    // Step 3. 构建 ai2pot::Structure 对象
+    ai2pot::Structure<double> structure(
                     num_atoms,          // 体系的原子数
                     basis_vectors,      // 基矢:  3*3的数组
                     atomic_numbers,     // 原子序数: 长度等于体系的原子数
@@ -119,8 +119,8 @@ int main() {
 
 
     auto start = std::chrono::high_resolution_clock::now();
-    // Step 4. 构建 matersdk::NeighborList 对象
-    matersdk::NeighborList<double> neighbor_list(
+    // Step 4. 构建 ai2pot::NeighborList 对象
+    ai2pot::NeighborList<double> neighbor_list(
                     structure,          // Structure 对象
                     rcut,               // 截断半径
                     pbc_xyz,            // [true, true, false]，在各个方向上周期性
@@ -128,8 +128,8 @@ int main() {
     );
     
     
-    // Step 5. 构建 matersdk::deepPotSE::TildeR 对象
-    matersdk::deepPotSE::TildeR<double> tilde_r(
+    // Step 5. 构建 ai2pot::deepPotSE::TildeR 对象
+    ai2pot::deepPotSE::TildeR<double> tilde_r(
                     neighbor_list,          // neighbor_list 对象
                     num_center_atomic_numbers,   
                     center_atomic_numbers_lst,
@@ -139,7 +139,7 @@ int main() {
                     rcut_smooth);
     double*** tilde_r_value = tilde_r.generate();
 
-    matersdk::arrayUtils::free3dArray(tilde_r_value, tilde_r.get_num_center_atoms(), tilde_r.get_num_neigh_atoms());
+    ai2pot::arrayUtils::free3dArray(tilde_r_value, tilde_r.get_num_center_atoms(), tilde_r.get_num_neigh_atoms());
 
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - start).count();

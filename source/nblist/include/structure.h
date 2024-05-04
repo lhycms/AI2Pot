@@ -1,12 +1,12 @@
-#ifndef MATERSDK_STRUCTURE_H
-#define MATERSDK_STRUCTURE_H
+#ifndef AI2POT_STRUCTURE_H
+#define AI2POT_STRUCTURE_H
 
 #include <stdio.h>
 #include <stdlib.h>
 #include "../../core/include/vec3Operation.h"
 
 
-namespace matersdk {
+namespace ai2pot {
 
 // Forward declaration of class B for `friend class`
 template <typename CoordType>
@@ -68,7 +68,7 @@ public:
     friend class BasicStructureInfo<CoordType>;
 
 private:
-    int num_atoms = 0;  // Note: 初始化为0，防止 `matersdk::Structure<double> structure;` 后，拷贝赋值函数无法得到正确的 `this->num_atoms`
+    int num_atoms = 0;  // Note: 初始化为0，防止 `ai2pot::Structure<double> structure;` 后，拷贝赋值函数无法得到正确的 `this->num_atoms`
     CoordType **basis_vectors;
     CoordType *pseudo_orgin;            // 仅当 `make_supercell` 后改变
     int *atomic_numbers;
@@ -77,7 +77,7 @@ private:
 
 
 
-} // namespace: matersdk
+} // namespace: ai2pot
 
 
 
@@ -87,7 +87,7 @@ private:
 
 
 // Definition of Structure member function
-namespace matersdk {
+namespace ai2pot {
 
 
 /**
@@ -622,7 +622,7 @@ void Structure<CoordType>::show() const {
         for (int ii=0; ii<this->num_atoms; ii++)
             printf(" %-4d %-4d  %-15.6f %-15.6f %-15.6f\n", ii, this->atomic_numbers[ii], this->cart_coords[ii][0], this->cart_coords[ii][1], this->cart_coords[ii][2]);
     } else {
-        printf("This is a NULL matersdk::Sturcture\n");
+        printf("This is a NULL ai2pot::Sturcture\n");
     }
 }
 
@@ -837,7 +837,7 @@ CoordType** Structure<CoordType>::get_limit_xyz() const {
 }
 
 
-}   // namespace: matersdk
+}   // namespace: ai2pot
 
 
 #endif

@@ -33,8 +33,8 @@ protected:
     int *types;
     int nghost;
 
-    matersdk::Structure<double> structure;
-    matersdk::NeighborList<double> nblist;
+    ai2pot::Structure<double> structure;
+    ai2pot::NeighborList<double> nblist;
 
     static void SetUpTestSuite() {
         std::cout << "ForceSrTest (TestSuite) is setting up...\n";
@@ -121,8 +121,8 @@ protected:
         pbc_xyz[1] = true;
         pbc_xyz[2] = true;
 
-        structure = matersdk::Structure<double>(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-        nblist = matersdk::NeighborList<double>(structure, rcut, bin_size_xyz, pbc_xyz, true);
+        structure = ai2pot::Structure<double>(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+        nblist = ai2pot::NeighborList<double>(structure, rcut, bin_size_xyz, pbc_xyz, true);
 
         umax_num_neighs = 20;
         inum = 12;
@@ -171,7 +171,7 @@ TEST_F(ForceSrTest, find_val_der)
     int neigh_idx_modify = 1;
     int direction_modify = 0;
 
-    matersdk::fvt::ForceSr<double>::find_val_der(
+    ai2pot::fvt::ForceSr<double>::find_val_der(
         force_sr_val,
         force_sr_der,
         inum,
@@ -183,7 +183,7 @@ TEST_F(ForceSrTest, find_val_der)
         dei_drij);
 
     dei_drij[center_idx_modify*umax_num_neighs*3 + neigh_idx_modify*3 + direction_modify] += 0.001;
-    matersdk::fvt::ForceSr<double>::find_val_der(
+    ai2pot::fvt::ForceSr<double>::find_val_der(
         force_sr_val_,
         force_sr_der_,
         inum,

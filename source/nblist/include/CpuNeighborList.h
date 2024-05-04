@@ -24,7 +24,7 @@
 #include "../../core/include/AlignedArray.h"
 
 
-namespace matersdk {
+namespace ai2pot {
 
 /**
  * @brief The Index of Voxel.
@@ -152,7 +152,7 @@ private:
 
 
 
-} /* namespace: matersdk */
+} /* namespace: ai2pot */
 
 
 #endif

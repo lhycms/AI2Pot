@@ -16,7 +16,7 @@ TORCH_LIBRARY(deepmd, m) {
            double rcut,
            double rcut_smooth)
         {
-            return matersdk::deepPotSE::EnvMatrixOp(ilist_tensor,
+            return ai2pot::deepPotSE::EnvMatrixOp(ilist_tensor,
                                                     numneigh_tensor,
                                                     firstneigh_tensor,
                                                     relative_coords_tensor,

@@ -17,8 +17,8 @@ public:
     double rcut_smooth;
     bool pbc_xyz[3];
 
-    matersdk::Structure<double> structure;
-    matersdk::NeighborList<double> neighbor_list;
+    ai2pot::Structure<double> structure;
+    ai2pot::NeighborList<double> neighbor_list;
 
     // Variables to simulate info of `LAMMPS_NS::LAMMPS* lmp`
     int inum;           // 中心原子的数目
@@ -111,8 +111,8 @@ public:
         rcut = 3.3;
         rcut_smooth = 3.0;
 
-        structure = matersdk::Structure<double>(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-        neighbor_list = matersdk::NeighborList<double>(structure, rcut, pbc_xyz, true);
+        structure = ai2pot::Structure<double>(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+        neighbor_list = ai2pot::NeighborList<double>(structure, rcut, pbc_xyz, true);
         
         // Variables to simulate the info of `LAMMPS_NS::LAMMPS*`
         inum = neighbor_list.get_num_center_atoms();
@@ -174,7 +174,7 @@ TEST_F(Se4pwTest, generate) {
     double* tilde_r_deriv = (double*)malloc(sizeof(double) * (inum*tot_num_neigh_atoms*4*3));
     double* relative_coords = (double*)malloc(sizeof(double) * (inum*tot_num_neigh_atoms*3));
 
-    matersdk::deepPotSE::Se4pw<double>::generate(
+    ai2pot::deepPotSE::Se4pw<double>::generate(
                         tilde_r,
                         tilde_r_deriv,
                         relative_coords,
@@ -238,10 +238,10 @@ TEST_F(Se4pwTest, generate) {
 
 
 
-TEST_F(Se4pwTest, get_prim_indices_from_matersdk) {
+TEST_F(Se4pwTest, get_prim_indices_from_ai2pot) {
     int* prim_indices = (int*)malloc(sizeof(int) * inum * tot_num_neigh_atoms);
 
-    matersdk::deepPotSE::Se4pw<double>::get_prim_indices_from_matersdk(
+    ai2pot::deepPotSE::Se4pw<double>::get_prim_indices_from_ai2pot(
             prim_indices,
             inum,
             ilist,

@@ -39,8 +39,8 @@ protected:
     int *types;
     double *dei_drij;
 
-    matersdk::Structure<double> structure;
-    matersdk::NeighborList<double> nblist;
+    ai2pot::Structure<double> structure;
+    ai2pot::NeighborList<double> nblist;
 
     static void SetUpTestSuite() {
         std::cout << "VirialSrOpTest (TestSuite) is setting up...\n";
@@ -133,8 +133,8 @@ protected:
         pbc_xyz[1] = true;
         pbc_xyz[2] = true;
 
-        structure = matersdk::Structure<double>(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-        nblist = matersdk::NeighborList<double>(structure, rcut, bin_size_xyz, pbc_xyz, true);
+        structure = ai2pot::Structure<double>(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+        nblist = ai2pot::NeighborList<double>(structure, rcut, bin_size_xyz, pbc_xyz, true);
 
         umax_num_neighs = 20;
         inum = 12;
@@ -175,7 +175,7 @@ TEST_F(VirialSrOpTest, backward_for_der1) {
     int direction_idx_modify = 0;
     bdei_drij_tensor.requires_grad_(true);
     brcs_tensor.requires_grad_(true);
-    at::Tensor bvirial_sr_tensor = matersdk::fvt::VirialSrOp(
+    at::Tensor bvirial_sr_tensor = ai2pot::fvt::VirialSrOp(
         bnumneigh_tensor,
         brcs_tensor,
         umax_num_neighs,
@@ -189,7 +189,7 @@ std::cout << bvirial_sr_tensor << std::endl;
 std::cout << der1_tensor << std::endl;
 
     dei_drij[center_idx_modify*umax_num_neighs*3 + neighbor_idx_modify*3 + direction_idx_modify] += 0.001;
-    at::Tensor bvirial_sr_tensor_ = matersdk::fvt::VirialSrOp(
+    at::Tensor bvirial_sr_tensor_ = ai2pot::fvt::VirialSrOp(
         bnumneigh_tensor,
         brcs_tensor,
         umax_num_neighs,

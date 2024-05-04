@@ -7,7 +7,7 @@
 #include "../include/mtpLevel.h"
 
 
-namespace matersdk {
+namespace ai2pot {
 namespace mtp {
 
 MtpMCoeffPair::MtpMCoeffPair()
@@ -242,4 +242,4 @@ void MtpMCoeffPairCombs::show() const {
 }
 
 };  // namespace : mtp
-};  // namespace : matersdk
+};  // namespace : ai2pot

@@ -1,5 +1,5 @@
-#ifndef MATERSDK_MTP_H
-#define MATERSDK_MTP_H
+#ifndef AI2POT_MTP_H
+#define AI2POT_MTP_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,7 +11,7 @@
 #include "../../../core/include/arrayUtils.h"
 
 
-namespace matersdk {
+namespace ai2pot {
 namespace mtp {
 
 
@@ -434,6 +434,6 @@ const CoordType* RadialBasisChebyshev<CoordType>::get_rb_ders() const {
 
 
 }   // namespace : mtp
-}   // namespace : matersdk
+}   // namespace : ai2pot
 
 #endif

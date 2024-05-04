@@ -1,9 +1,9 @@
-#ifndef MATERSDK_MTPM_RADIAL_H
-#define MATERSDK_MTPM_RADIAL_H
+#ifndef AI2POT_MTPM_RADIAL_H
+#define AI2POT_MTPM_RADIAL_H
 #include <cmath>
 #include <string.h>
 
-namespace matersdk {
+namespace ai2pot {
 namespace mtp {
 
 template <typename CoordType>
@@ -595,6 +595,6 @@ void MtpQ<CoordType>::show() const
 
 
 };  // namespace : mtp
-};  // namespace : matersdk
+};  // namespace : ai2pot
 
 #endif

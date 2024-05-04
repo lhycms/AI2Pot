@@ -3,7 +3,7 @@
 #include <vector>
 #include "../include/mtpMAngularOp.h"
 
-namespace matersdk {
+namespace ai2pot {
 namespace mtp {
 
 
@@ -92,4 +92,4 @@ at::Tensor MtpMAngularOp(
 }
 
 };  // namespace : mtp
-};  // namespace : matersdk
+};  // namespace : ai2pot

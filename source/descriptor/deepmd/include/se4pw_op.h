@@ -1,11 +1,11 @@
-#ifndef MATERSDK_SE4PW_OP_H
-#define MATERSDK_SE4PW_OP_H
+#ifndef AI2POT_SE4PW_OP_H
+#define AI2POT_SE4PW_OP_H
 
 #include "./se4pw.h"
 #include <torch/torch.h>
 #include <cstdlib>
 
-namespace matersdk {
+namespace ai2pot {
 namespace deepPotSE {
 class Se4pwOp {
 public:
@@ -23,7 +23,7 @@ public:
         double rcut_smooth);     // Python 中默认是双精度浮点数
 
 
-    static at::Tensor get_prim_indices_from_matersdk(
+    static at::Tensor get_prim_indices_from_ai2pot(
         int batch_size,
         int inum,
         at::Tensor& ilist,
@@ -35,7 +35,7 @@ public:
 
 };  // class : Se4pwOp
 };  // namespace : deepPotSE
-};  // namespace : matersdk
+};  // namespace : ai2pot
 
 
 #endif

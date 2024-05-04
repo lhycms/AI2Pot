@@ -4,7 +4,7 @@
 #include "../include/virial_sr.h"
 
 
-namespace matersdk {
+namespace ai2pot {
 namespace fvt {
 
 torch::autograd::variable_list VirialSrFunction::forward(
@@ -176,4 +176,4 @@ torch::autograd::variable_list VirialSrOp(
 }
 
 };  // namespace : fvt
-};  // namespace : matersdk
+};  // namespace : ai2pot

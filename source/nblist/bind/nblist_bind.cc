@@ -50,7 +50,7 @@ PyObject* find_info4mlff(
     //assert(descr_umax_num_neigh_atoms_py->type_num == NPY_INT32);
     
 
-    // Step 1. Init matersdk::Structure<double>
+    // Step 1. Init ai2pot::Structure<double>
     // Step 1.1. 
     PyArrayObject* lattice_py_array = (PyArrayObject*)lattice_py;
     PyArrayObject* atomic_numbers_py_array = (PyArrayObject*)atomic_numbers_py;
@@ -78,9 +78,9 @@ PyObject* find_info4mlff(
     
     // Step 1.3. You must init it with fractional/cartesian coordinates
     bool is_cart_coord = (PyObject_IsTrue(is_cart_coord_py));
-    matersdk::Structure<double> structure(num_atoms, lattice, atomic_numbers, frac_coords, is_cart_coord);
+    ai2pot::Structure<double> structure(num_atoms, lattice, atomic_numbers, frac_coords, is_cart_coord);
 
-    // Step 2. Init matersdk::NeighborList<double>
+    // Step 2. Init ai2pot::NeighborList<double>
     // Step 2.1. 
     double rcut = PyFloat_AsDouble(rcut_py);
     bool pbc_xyz[3];
@@ -97,9 +97,9 @@ PyObject* find_info4mlff(
         sort = false;
 
     // Step 2.2. Build 
-    matersdk::NeighborList<double> neighbor_list(structure, rcut, pbc_xyz, sort);
+    ai2pot::NeighborList<double> neighbor_list(structure, rcut, pbc_xyz, sort);
 
-    // Step 3. Call matersdk::NeighborList<double>::find_info4mlff()
+    // Step 3. Call ai2pot::NeighborList<double>::find_info4mlff()
     int inum = (int)num_atoms;
     int* ilist = (int*)malloc(sizeof(int) * inum);
     int* numneigh = (int*)malloc(sizeof(int) * inum);

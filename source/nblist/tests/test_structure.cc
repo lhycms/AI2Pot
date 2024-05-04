@@ -97,28 +97,28 @@ protected:
 
 
 //TEST_F(StructureArrayTest, default_constructor) {
-//    matersdk::Structure<double> structure;
+//    ai2pot::Structure<double> structure;
 //}
 
 
 TEST_F(StructureArrayTest, init) {
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
     //structure.show();
 }
 
 
 TEST_F(StructureArrayTest, copy_constructor) {
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
 
-    matersdk::Structure<double> structure_1(structure);     // Note: You should init `this->num_atoms` in private region
+    ai2pot::Structure<double> structure_1(structure);     // Note: You should init `this->num_atoms` in private region
     //structure_1.show();
 }
 
 
 TEST_F(StructureArrayTest, copy_assignment) {
-    matersdk::Structure<double> structure_1(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-    matersdk::Structure<double> structure_2;
-    matersdk::Structure<double> structure_3;
+    ai2pot::Structure<double> structure_1(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::Structure<double> structure_2;
+    ai2pot::Structure<double> structure_3;
 
     structure_2 = structure_1;
     //structure_2.show();
@@ -129,13 +129,13 @@ TEST_F(StructureArrayTest, copy_assignment) {
 
 
 TEST_F(StructureArrayTest, calc_cart_coords_array) {
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
     //structure.show();
 }
 
 
 TEST_F(StructureArrayTest, make_supercell) {
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
     int scaling_matrix[3] = {3, 3, 1};
     structure.make_supercell(scaling_matrix);
     //structure.show();
@@ -143,7 +143,7 @@ TEST_F(StructureArrayTest, make_supercell) {
 
 
 TEST_F(StructureArrayTest, get_num_atoms) {
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
     EXPECT_EQ(structure.get_num_atoms(), 12);
 
     int scaling_matrix[3] = {3, 3, 1};
@@ -153,7 +153,7 @@ TEST_F(StructureArrayTest, get_num_atoms) {
 
 
 TEST_F(StructureArrayTest, get_basis_vectors) {
-    matersdk::Structure<double> structure_1(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::Structure<double> structure_1(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
     const double** basis_vectors_1 = structure_1.get_basis_vectors();
     
     EXPECT_EQ(basis_vectors_1[0][0], basis_vectors[0][0]);
@@ -167,15 +167,15 @@ TEST_F(StructureArrayTest, get_basis_vectors) {
     EXPECT_EQ(basis_vectors_1[2][2], basis_vectors[2][2]);
 
 
-    matersdk::Structure<double> structure_2;
+    ai2pot::Structure<double> structure_2;
     const void* basis_vectors_2 = structure_2.get_basis_vectors();
     EXPECT_EQ(basis_vectors_2, nullptr);
 }
 
 
 TEST_F(StructureArrayTest, get_basis_vectors_4_supercell) {
-    matersdk::Structure<double> prim_structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::Structure<double> prim_structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
     int scaling_matrix[3] = {3, 3, 1};    
 
     // Step 1. 记录原胞的 basis_vectors
@@ -199,7 +199,7 @@ TEST_F(StructureArrayTest, get_basis_vectors_4_supercell) {
 
 
 TEST_F(StructureArrayTest, get_atomic_numbers) {
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
     const int* atomic_numbers_1 = structure.get_atomic_numbers();
     for (int ii=0; ii<structure.get_num_atoms(); ii++) {
         EXPECT_EQ(atomic_numbers_1[ii], atomic_numbers[ii]);
@@ -209,28 +209,28 @@ TEST_F(StructureArrayTest, get_atomic_numbers) {
     // free(atomic_numbers_1_nonconst);
 
 
-    matersdk::Structure<double> structure_2;
+    ai2pot::Structure<double> structure_2;
     const void* atomic_numbers_2 = structure_2.get_atomic_numbers();
     EXPECT_EQ(atomic_numbers_2, nullptr);
 }
 
 
 TEST_F(StructureArrayTest, get_cart_coords) {
-    matersdk::Structure<double> structure_1(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::Structure<double> structure_1(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
     const double** cart_coords_1 = structure_1.get_cart_coords();
     //structure.show();
     for (int ii=0; ii<structure_1.get_num_atoms(); ii++) {
         //printf("%-12.6f\t%-12.6f\t%-12.6f\n", cart_coords_[ii][0], cart_coords_[ii][1], cart_coords_[ii][2]);
     }
 
-    matersdk::Structure<double> structure_2;
+    ai2pot::Structure<double> structure_2;
     EXPECT_EQ(structure_2.get_cart_coords(), nullptr);
 
 }
 
 
 TEST_F(StructureArrayTest, get_projected_lengths) {
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
     
     // Step 1. 得到 `projected_lengths`
     double* projected_lengths = structure.get_projected_lengths();
@@ -276,13 +276,13 @@ TEST_F(StructureArrayTest, get_projected_lengths) {
         free(limit_xyz[ii]);
     free(limit_xyz);
 
-    matersdk::Structure<double> structure_2;
+    ai2pot::Structure<double> structure_2;
     EXPECT_EQ(structure_2.get_projected_lengths(), nullptr);
 }
 
 
 TEST_F(StructureArrayTest, get_projected_lengths4supercell) {
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
     int scaling_matrix[3] = {3, 3, 1};
     structure.make_supercell(scaling_matrix);
     double* projected_lengths = structure.get_projected_lengths();
@@ -310,7 +310,7 @@ TEST_F(StructureArrayTest, get_projected_lengths4supercell) {
 
 
 TEST_F(StructureArrayTest, get_interplanar_distances) {
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
     const double* interplanar_distances = structure.get_interplanar_distances();
 
     //printf("Interplanar distances:\n");
@@ -319,13 +319,13 @@ TEST_F(StructureArrayTest, get_interplanar_distances) {
     double* interplanar_distances_noconst = (double*)interplanar_distances;
     free(interplanar_distances_noconst);
 
-    matersdk::Structure<double> structure_2;
+    ai2pot::Structure<double> structure_2;
     EXPECT_EQ(structure_2.get_interplanar_distances(), nullptr);
 }
 
 
 TEST_F(StructureArrayTest, get_interplanar_distances4supercell) {
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
     double* interplanar_distances = structure.get_interplanar_distances();
 
     int scaling_matrix[3] = {3, 3, 1};
@@ -344,7 +344,7 @@ TEST_F(StructureArrayTest, get_interplanar_distances4supercell) {
 
 
 TEST_F(StructureArrayTest, get_pseudo_origin) {
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
     const double* pseudo_origin = structure.get_pseudo_origin();
 
     EXPECT_DOUBLE_EQ(pseudo_origin[0], 0);
@@ -354,7 +354,7 @@ TEST_F(StructureArrayTest, get_pseudo_origin) {
 
 
 TEST_F(StructureArrayTest, get_pseudo_origin4supercell) {
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
     int scaling_matrix[3] = {3, 3, 1};
     // Note: structure.make_supercell(scaling_matrix) 之后，`prim_basis_vectors_` 也会发生变化
     const double** prim_basis_vectors_ = structure.get_basis_vectors();
@@ -403,7 +403,7 @@ TEST_F(StructureArrayTest, get_pseudo_origin4supercell) {
 
 TEST_F(StructureArrayTest, get_vertexes) {
     // Step 1.
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
     double** vertexes = structure.get_vertexes();
     
     printf("scaling_matrix[3] = {1, 1, 1}. Primitive cell's Vertexes:\n");
@@ -419,7 +419,7 @@ TEST_F(StructureArrayTest, get_vertexes) {
 
 
 TEST_F(StructureArrayTest, get_vertexes4supercell) {
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
     int scaling_matix[3] = {3, 3, 1};
     structure.make_supercell(scaling_matix);
     
@@ -438,7 +438,7 @@ TEST_F(StructureArrayTest, get_vertexes4supercell) {
 
 
 TEST_F(StructureArrayTest, get_limit_xyz) {
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
     double** limit_xyz = structure.get_limit_xyz();
 
     printf("scaling_matrix[3] = {1, 1, 1}. Primitive cell's limit_xyz:\n");
@@ -454,7 +454,7 @@ TEST_F(StructureArrayTest, get_limit_xyz) {
 
 
 TEST_F(StructureArrayTest, get_limit_xyz4supercell) {
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
     int scaling_matrix[3] = {3, 3, 1};
     structure.make_supercell(scaling_matrix);
     double** limit_xyz = structure.get_limit_xyz();
@@ -583,7 +583,7 @@ protected:
 
 
 TEST_F(StructurePointerTest, init) {
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
     //structure.show();
 }
 

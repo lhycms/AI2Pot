@@ -1,5 +1,5 @@
-#ifndef MATERSDK_MTPR_MTP_BASIS_H
-#define MATERSDK_MTPR_MTP_BASIS_H
+#ifndef AI2POT_MTPR_MTP_BASIS_H
+#define AI2POT_MTPR_MTP_BASIS_H
 
 #include <iostream>
 #include <stdio.h>
@@ -9,7 +9,7 @@
 #include "./basis.h"
 #include "./mtpParam.h"
 
-namespace matersdk {
+namespace ai2pot {
 namespace mtpr {
 
 template <typename CoordType>
@@ -257,6 +257,6 @@ void MtpBasis<CoordType>::find_val_der(
 }
 
 };  // namespace : mtpr
-};  // namespace : matersdk
+};  // namespace : ai2pot
 
 #endif

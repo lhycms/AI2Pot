@@ -1,5 +1,5 @@
-#ifndef MATERSDK_MTPR_BASIS_H
-#define MATERSDK_MTPR_BASIS_H
+#ifndef AI2POT_MTPR_BASIS_H
+#define AI2POT_MTPR_BASIS_H
 #include <cstdlib>
 #include <cstring>
 #include <cassert>
@@ -7,7 +7,7 @@
 #include <iostream>
 #include <cmath>
 
-namespace matersdk {
+namespace ai2pot {
 namespace mtpr {
 
 template <typename CoordType>
@@ -567,6 +567,6 @@ void RQ_Chebyshev<CoordType>::show() const
 
 
 };  // namespace : mtpr
-};  // namespace : matersdk
+};  // namespace : ai2pot
 
 #endif

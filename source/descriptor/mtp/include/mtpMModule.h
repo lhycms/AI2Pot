@@ -1,8 +1,8 @@
-#ifndef MATERSDK_MTPM_MODULE_H
-#define MATERSDK_MTPM_MODULE_H
+#ifndef AI2POT_MTPM_MODULE_H
+#define AI2POT_MTPM_MODULE_H
 #include <torch/torch.h>
 
-namespace matersdk {
+namespace ai2pot {
 namespace mtp {
 class MtpMModuleImpl : public torch::nn::Module
 {
@@ -31,7 +31,7 @@ private:
 
 TORCH_MODULE(MtpMModule);
 
-};  // namespace : matersdk
 };  // namespace : mtp
+};  // namespace : ai2pot
 
 #endif

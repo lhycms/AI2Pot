@@ -23,8 +23,8 @@ protected:
     double rcut_smooth;
     int num_neigh_atoms;    // dpse zero-paddning size
 
-    matersdk::Structure<double> structure;
-    matersdk::NeighborList<double> neighbor_list;
+    ai2pot::Structure<double> structure;
+    ai2pot::NeighborList<double> neighbor_list;
 
     // Variables to simulate info of `LAMMPS_NS::LAMMPS* lmp`
     int inum;           // 中心原子的数目
@@ -116,8 +116,8 @@ protected:
         neigh_atomic_number = 42;
         num_neigh_atoms = 14;
 
-        structure = matersdk::Structure<double>(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-        neighbor_list = matersdk::NeighborList<double>(structure, rcut, pbc_xyz, true);
+        structure = ai2pot::Structure<double>(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+        neighbor_list = ai2pot::NeighborList<double>(structure, rcut, pbc_xyz, true);
 
         // Variables to simulate the info of `LAMMPS_NS::LAMMPS*`
         inum = neighbor_list.get_num_center_atoms();
@@ -162,7 +162,7 @@ protected:
 
 
 TEST_F(PairTildeRTest, generate_for_lmp) {
-    double*** pair_tilde_r = matersdk::deepPotSE::PairTildeR<double>::generate(
+    double*** pair_tilde_r = ai2pot::deepPotSE::PairTildeR<double>::generate(
                                 inum, ilist, numneigh, firstneigh,
                                 x, types,
                                 center_atomic_number, neigh_atomic_number, num_neigh_atoms,
@@ -195,7 +195,7 @@ TEST_F(PairTildeRTest, generate_for_lmp) {
 
 
 TEST_F(PairTildeRTest, deriv_for_lmp) {
-    double**** pair_tilde_r_deriv = matersdk::deepPotSE::PairTildeR<double>::deriv(
+    double**** pair_tilde_r_deriv = ai2pot::deepPotSE::PairTildeR<double>::deriv(
                                         inum, ilist, numneigh, firstneigh,
                                         x, types,
                                         center_atomic_number, neigh_atomic_number, num_neigh_atoms,
@@ -243,8 +243,8 @@ protected:
     int* neigh_atomic_numbers_lst;      // 近邻原子的元素种类   e.g. MoS2 -- [42, 16]
     int* num_neigh_atoms_lst;           // 近邻原子的数目，决定了 zero-padding 的尺寸   e.g. MoS2 -- [100, 80]
 
-    matersdk::Structure<double> structure;
-    matersdk::NeighborList<double> neighbor_list;
+    ai2pot::Structure<double> structure;
+    ai2pot::NeighborList<double> neighbor_list;
 
     // Variables to simulate info of `LAMMPS_NS::LAMMPS* lmp`
     int inum;               // 中心原子的数目
@@ -346,8 +346,8 @@ protected:
         num_neigh_atoms_lst[0] = 8;    
         num_neigh_atoms_lst[1] = 7;
 
-        structure = matersdk::Structure<double>(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-        neighbor_list = matersdk::NeighborList<double>(structure, rcut, pbc_xyz, true);
+        structure = ai2pot::Structure<double>(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+        neighbor_list = ai2pot::NeighborList<double>(structure, rcut, pbc_xyz, true);
 
         // Variables to simulate the info of `LAMMPS_NS::LAMMPS* lmp`
         inum = neighbor_list.get_num_center_atoms();
@@ -390,7 +390,7 @@ protected:
 
 TEST_F(TildeRTest, generate_for_lmp_1) {
     // Step 1. generate()
-    double*** tilde_r = matersdk::deepPotSE::TildeR<double>::generate(
+    double*** tilde_r = ai2pot::deepPotSE::TildeR<double>::generate(
                                         inum,
                                         ilist,
                                         numneigh,
@@ -424,7 +424,7 @@ TEST_F(TildeRTest, generate_for_lmp_1) {
      */
 
     // Step . Free memory
-    matersdk::arrayUtils::free3dArray<double>(tilde_r, inum, tot_num_neigh_atoms);
+    ai2pot::arrayUtils::free3dArray<double>(tilde_r, inum, tot_num_neigh_atoms);
 }
 
 
@@ -435,9 +435,9 @@ TEST_F(TildeRTest, generate_for_lmp_2) {
     for (int ii=0; ii<num_neigh_atomic_numbers; ii++)
         tot_num_neigh_atoms += num_neigh_atoms_lst[ii];
 
-    double*** tilde_r = matersdk::arrayUtils::allocate3dArray<double>(inum, tot_num_neigh_atoms, 4, true);
+    double*** tilde_r = ai2pot::arrayUtils::allocate3dArray<double>(inum, tot_num_neigh_atoms, 4, true);
 
-    matersdk::deepPotSE::TildeR<double>::generate(
+    ai2pot::deepPotSE::TildeR<double>::generate(
                                 tilde_r,
                                 inum,
                                 ilist,
@@ -468,13 +468,13 @@ TEST_F(TildeRTest, generate_for_lmp_2) {
      */
 
     // Step . Free memory
-    matersdk::arrayUtils::free3dArray<double>(tilde_r, inum, tot_num_neigh_atoms);
+    ai2pot::arrayUtils::free3dArray<double>(tilde_r, inum, tot_num_neigh_atoms);
 }
 
 
 TEST_F(TildeRTest, deriv_for_lmp_1) {
     // Step 1. deriv()
-    double**** tilde_r_deriv = matersdk::deepPotSE::TildeR<double>::deriv(
+    double**** tilde_r_deriv = ai2pot::deepPotSE::TildeR<double>::deriv(
                         inum,
                         ilist,
                         numneigh,
@@ -516,7 +516,7 @@ TEST_F(TildeRTest, deriv_for_lmp_1) {
      */
 
     // Step . Free memory
-    matersdk::arrayUtils::free4dArray(tilde_r_deriv, inum, tot_num_neigh_atoms, 4);
+    ai2pot::arrayUtils::free4dArray(tilde_r_deriv, inum, tot_num_neigh_atoms, 4);
 }
 
 
@@ -528,8 +528,8 @@ TEST_F(TildeRTest, deriv_for_lmp_2) {
         tot_num_neigh_atoms += num_neigh_atoms_lst[ii];
 
 
-    double**** tilde_r_deriv = matersdk::arrayUtils::allocate4dArray<double>(inum, tot_num_neigh_atoms, 4, 3, true);
-    matersdk::deepPotSE::TildeR<double>::deriv(
+    double**** tilde_r_deriv = ai2pot::arrayUtils::allocate4dArray<double>(inum, tot_num_neigh_atoms, 4, 3, true);
+    ai2pot::deepPotSE::TildeR<double>::deriv(
                         tilde_r_deriv,
                         inum,
                         ilist,
@@ -567,7 +567,7 @@ TEST_F(TildeRTest, deriv_for_lmp_2) {
     }
 
     // Step . Free memory
-    matersdk::arrayUtils::free4dArray(tilde_r_deriv, inum, tot_num_neigh_atoms, 4);
+    ai2pot::arrayUtils::free4dArray(tilde_r_deriv, inum, tot_num_neigh_atoms, 4);
 }
 
 

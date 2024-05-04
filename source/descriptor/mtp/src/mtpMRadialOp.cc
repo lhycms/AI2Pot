@@ -5,7 +5,7 @@
 #include "../include/mtpMRadialOp.h"
 
 
-namespace matersdk {
+namespace ai2pot {
 namespace mtp {
 
 torch::autograd::variable_list MtpQFunction::forward(
@@ -143,4 +143,4 @@ torch::autograd::variable_list MtpQOp(
 }
 
 };  // class : mtp
-};  // class : matersdk
+};  // class : ai2pot

@@ -2,7 +2,7 @@
 #include "../include/envMatrixOp.h"
 
 
-namespace matersdk {
+namespace ai2pot {
 namespace deepPotSE {
 
 /**
@@ -199,4 +199,4 @@ torch::autograd::variable_list EnvMatrixOp(
 }
 
 };  // namespace : deepPotSE
-};  // namespace : matersdk
+};  // namespace : ai2pot

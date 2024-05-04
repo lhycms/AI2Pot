@@ -18,8 +18,8 @@ protected:
     double rcut_smooth;
     bool pbc_xyz[3];
 
-    matersdk::Structure<double> structure;
-    matersdk::NeighborList<double> neighbor_list;
+    ai2pot::Structure<double> structure;
+    ai2pot::NeighborList<double> neighbor_list;
 
     int batch_size;
     int sinum;                  // 超胞中的总原子数
@@ -113,8 +113,8 @@ protected:
         rcut = 3.3;
         rcut_smooth = 3.0;
         
-        structure = matersdk::Structure<double>(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-        neighbor_list = matersdk::NeighborList<double>(structure, rcut, pbc_xyz, false);
+        structure = ai2pot::Structure<double>(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+        neighbor_list = ai2pot::NeighborList<double>(structure, rcut, pbc_xyz, false);
 
         batch_size = 1;
         inum = neighbor_list.get_num_center_atoms();
@@ -186,7 +186,7 @@ TEST_F(DemoSe4pwTest, demo) {
     std::cout << "types_tensor.sizes() = " << types_tensor.sizes() << std::endl;
     std::cout << "num_neigh_atoms_lst_tensor.sizes() = " << num_neigh_atoms_lst_tensor.sizes() << std::endl;
 
-    torch::autograd::variable_list outputs = matersdk::deepPotSE::Se4pwOp::forward(
+    torch::autograd::variable_list outputs = ai2pot::deepPotSE::Se4pwOp::forward(
             batch_size,
             inum,
             ilist_tensor,
@@ -204,7 +204,7 @@ TEST_F(DemoSe4pwTest, demo) {
     at::Tensor relative_coords = outputs[2];
 
     // Step 1.2. list_neigh
-    at::Tensor prim_indices_tensor = matersdk::deepPotSE::Se4pwOp::get_prim_indices_from_matersdk(
+    at::Tensor prim_indices_tensor = ai2pot::deepPotSE::Se4pwOp::get_prim_indices_from_ai2pot(
             batch_size,
             inum,
             ilist_tensor,

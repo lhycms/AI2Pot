@@ -5,7 +5,7 @@
 #include "../include/mtpBModule.h"
 
 
-namespace matersdk {
+namespace ai2pot {
 namespace mtp {
 
 MtpBModuleImpl::MtpBModuleImpl(
@@ -93,4 +93,4 @@ at::Tensor MtpBModuleImpl::forward(
 
 
 };  // namespace : mtp
-};  // namespace : matersdk
+};  // namespace : ai2pot

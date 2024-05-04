@@ -1,8 +1,8 @@
-#ifndef MATERSDK_SE4PW_H
-#define MATERSDK_SE4PW_H
+#ifndef AI2POT_SE4PW_H
+#define AI2POT_SE4PW_H
 #include "./se.h"
 
-namespace matersdk {
+namespace ai2pot {
 namespace deepPotSE {
 
 
@@ -25,7 +25,7 @@ public:
         CoordType rcut_smooth);
     
     // Compatible with Fortran. 0 stands for none atom. indices starts from 1
-    static void get_prim_indices_from_matersdk(
+    static void get_prim_indices_from_ai2pot(
         int* prim_indices,
         int inum,
         int* ilist,
@@ -211,7 +211,7 @@ void Se4pw<CoordType>::generate(
 
 
 template <typename CoordType>
-void Se4pw<CoordType>::get_prim_indices_from_matersdk(
+void Se4pw<CoordType>::get_prim_indices_from_ai2pot(
         int* prim_indices,
         int inum,
         int* ilist,

@@ -15,7 +15,7 @@
 #define CORE_ALIGNED_ARRAY_H
 
 
-namespace matersdk {
+namespace ai2pot {
 
 
 /**
@@ -109,6 +109,6 @@ private:
 };  /* class: AlignedArray */
 
 
-} /* namespace: matersdk */
+} /* namespace: · */
 
 #endif

@@ -1,10 +1,10 @@
-#ifndef MATERSDK_MTPB_MODULE_H
-#define MATERSDK_MTPB_MODULE_H
+#ifndef AI2POT_MTPB_MODULE_H
+#define AI2POT_MTPB_MODULE_H
 #include <torch/torch.h>
 #include "./mtpLevel.h"
 #include "./mtpMModule.h"
 
-namespace matersdk {
+namespace ai2pot {
 namespace mtp {
 
 class MtpBModuleImpl : public torch::nn::Module
@@ -45,6 +45,6 @@ TORCH_MODULE(MtpBModule);
 
 
 };  // namespace : mtp
-};  // namespace : matersdk
+};  // namespace : ai2pot
 
 #endif

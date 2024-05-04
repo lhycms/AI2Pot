@@ -86,7 +86,7 @@ protected:
 
 TEST_F(SwitchFunctionTest, init)
 {
-    matersdk::mtpr::SwitchFunction<double> swf(rmax, rmin);
+    ai2pot::mtpr::SwitchFunction<double> swf(rmax, rmin);
     distance_ij = rmin;
     ASSERT_DOUBLE_EQ(swf.val(distance_ij), 1);
     ASSERT_DOUBLE_EQ(swf.der2r(distance_ij), 0);
@@ -99,7 +99,7 @@ TEST_F(SwitchFunctionTest, init)
 TEST_F(SwitchFunctionTest, der_accuracy)
 {
     distance_ij = 3.14;
-    matersdk::mtpr::SwitchFunction<double> swf(rmax, rmin);
+    ai2pot::mtpr::SwitchFunction<double> swf(rmax, rmin);
 
     double der2r = swf.der2r(distance_ij);
     double value1 = swf.val(distance_ij);
@@ -113,7 +113,7 @@ std::cout << "Finite difference method: Deriv wrt. r = " << der2r_ << std::endl;
 
 TEST_F(RB_ChebyshevTest, build) 
 {
-    matersdk::mtpr::RB_Chebyshev<double>* rb_ptr = new matersdk::mtpr::RB_Chebyshev<double>(size, rmax, rmin);
+    ai2pot::mtpr::RB_Chebyshev<double>* rb_ptr = new ai2pot::mtpr::RB_Chebyshev<double>(size, rmax, rmin);
     ASSERT_EQ(rb_ptr->size(), size);
     ASSERT_EQ(rb_ptr->rmax(), rmax);
     ASSERT_EQ(rb_ptr->rmin(), rmin);
@@ -127,11 +127,11 @@ TEST_F(RB_ChebyshevTest, build)
 TEST_F(RB_ChebyshevTest, der_accuracy)
 {
     distance_ij = 3.14;
-    matersdk::mtpr::RB_Chebyshev<double>* rb1_ptr = new matersdk::mtpr::RB_Chebyshev<double>(size, rmax, rmin);
+    ai2pot::mtpr::RB_Chebyshev<double>* rb1_ptr = new ai2pot::mtpr::RB_Chebyshev<double>(size, rmax, rmin);
     rb1_ptr->build(distance_ij);
 
     double distance_ij_ = 3.14 + 0.0001;
-    matersdk::mtpr::RB_Chebyshev<double>* rb2_ptr = new matersdk::mtpr::RB_Chebyshev<double>(size, rmax, rmin);
+    ai2pot::mtpr::RB_Chebyshev<double>* rb2_ptr = new ai2pot::mtpr::RB_Chebyshev<double>(size, rmax, rmin);
     rb2_ptr->build(distance_ij_);
 
 printf("0. Value of RB_Chebyshev:\n");
@@ -157,8 +157,8 @@ printf("\n");
 
 TEST_F(RB_ChebyshevTest, copy_constructor)
 {
-    matersdk::mtpr::RB_Chebyshev<double>* rb1_ptr  = new matersdk::mtpr::RB_Chebyshev<double>(size, rmax, rmin);
-    matersdk::mtpr::RB_Chebyshev<double> rb2(*rb1_ptr);
+    ai2pot::mtpr::RB_Chebyshev<double>* rb1_ptr  = new ai2pot::mtpr::RB_Chebyshev<double>(size, rmax, rmin);
+    ai2pot::mtpr::RB_Chebyshev<double> rb2(*rb1_ptr);
 
     ASSERT_EQ(rb1_ptr->size(), rb2.size());
     ASSERT_DOUBLE_EQ(rb1_ptr->rmin(), rb2.rmin());
@@ -174,8 +174,8 @@ TEST_F(RB_ChebyshevTest, copy_constructor)
 
 TEST_F(RB_ChebyshevTest, copy_constructor_move)
 {
-    matersdk::mtpr::RB_Chebyshev<double>* rb1_ptr = new matersdk::mtpr::RB_Chebyshev<double>(size, rmax, rmin);
-    matersdk::mtpr::RB_Chebyshev<double> rb2(std::move(*rb1_ptr));
+    ai2pot::mtpr::RB_Chebyshev<double>* rb1_ptr = new ai2pot::mtpr::RB_Chebyshev<double>(size, rmax, rmin);
+    ai2pot::mtpr::RB_Chebyshev<double> rb2(std::move(*rb1_ptr));
     
     ASSERT_EQ(rb1_ptr->vals(), nullptr);
     ASSERT_EQ(rb1_ptr->ders2uu(), nullptr);
@@ -186,8 +186,8 @@ TEST_F(RB_ChebyshevTest, copy_constructor_move)
 
 TEST_F(RB_ChebyshevTest, assignment_operator)
 {
-    matersdk::mtpr::RB_Chebyshev<double>* rb1_ptr = new matersdk::mtpr::RB_Chebyshev<double>(size, rmax, rmin);
-    matersdk::mtpr::RB_Chebyshev<double>* rb2_ptr = new matersdk::mtpr::RB_Chebyshev<double>(size, rmax, rmin+1);
+    ai2pot::mtpr::RB_Chebyshev<double>* rb1_ptr = new ai2pot::mtpr::RB_Chebyshev<double>(size, rmax, rmin);
+    ai2pot::mtpr::RB_Chebyshev<double>* rb2_ptr = new ai2pot::mtpr::RB_Chebyshev<double>(size, rmax, rmin+1);
 
     *rb2_ptr = *rb1_ptr;
 
@@ -206,8 +206,8 @@ TEST_F(RB_ChebyshevTest, assignment_operator)
 
 TEST_F(RB_ChebyshevTest, assignment_operator_move)
 {
-    matersdk::mtpr::RB_Chebyshev<double>* rb1_ptr = new matersdk::mtpr::RB_Chebyshev<double>(size, rmax, rmin);
-    matersdk::mtpr::RB_Chebyshev<double>* rb2_ptr = new matersdk::mtpr::RB_Chebyshev<double>(size, rmax, rmin+1);
+    ai2pot::mtpr::RB_Chebyshev<double>* rb1_ptr = new ai2pot::mtpr::RB_Chebyshev<double>(size, rmax, rmin);
+    ai2pot::mtpr::RB_Chebyshev<double>* rb2_ptr = new ai2pot::mtpr::RB_Chebyshev<double>(size, rmax, rmin+1);
 
     *rb2_ptr = std::move(*rb1_ptr);
 
@@ -220,10 +220,10 @@ TEST_F(RB_ChebyshevTest, assignment_operator_move)
 
 TEST_F(RQ_ChebyshevTest, der_accuracy) {
     distance_ij = 3.14;
-    matersdk::mtpr::RQ_Chebyshev<double>* rq1_ptr = new matersdk::mtpr::RQ_Chebyshev<double>(size, rmax, rmin);
+    ai2pot::mtpr::RQ_Chebyshev<double>* rq1_ptr = new ai2pot::mtpr::RQ_Chebyshev<double>(size, rmax, rmin);
     rq1_ptr->build(distance_ij);
 //rq1_ptr->show();
-    matersdk::mtpr::RQ_Chebyshev<double>* rq2_ptr = new matersdk::mtpr::RQ_Chebyshev<double>(size, rmax, rmin);
+    ai2pot::mtpr::RQ_Chebyshev<double>* rq2_ptr = new ai2pot::mtpr::RQ_Chebyshev<double>(size, rmax, rmin);
     rq2_ptr->build(distance_ij + 0.001);
 
 printf("0. Value of RQ_Chebyshev:\n");
@@ -250,9 +250,9 @@ printf("\n");
 }
 
 TEST_F(RQ_ChebyshevTest, copy_constructor) {
-    matersdk::mtpr::RQ_Chebyshev<double> rq1(size, rmax, rmin);
+    ai2pot::mtpr::RQ_Chebyshev<double> rq1(size, rmax, rmin);
     rq1.build(distance_ij);
-    matersdk::mtpr::RQ_Chebyshev<double> rq2(rq1);
+    ai2pot::mtpr::RQ_Chebyshev<double> rq2(rq1);
 
     ASSERT_EQ(rq1.size(), rq2.size());
     ASSERT_DOUBLE_EQ(rq1.rmax(), rq2.rmax());
@@ -264,9 +264,9 @@ TEST_F(RQ_ChebyshevTest, copy_constructor) {
 }
 
 TEST_F(RQ_ChebyshevTest, assignment_operator) {
-    matersdk::mtpr::RQ_Chebyshev<double> rq1(size, rmax, rmin);
+    ai2pot::mtpr::RQ_Chebyshev<double> rq1(size, rmax, rmin);
     rq1.build(distance_ij);
-    matersdk::mtpr::RQ_Chebyshev<double> rq2(size, rmax, rmin+0.01);
+    ai2pot::mtpr::RQ_Chebyshev<double> rq2(size, rmax, rmin+0.01);
     rq2.build(distance_ij);
     rq2 = rq1;
 
@@ -280,9 +280,9 @@ TEST_F(RQ_ChebyshevTest, assignment_operator) {
 }
 
 TEST_F(RQ_ChebyshevTest, copy_constructor_move) {
-    matersdk::mtpr::RQ_Chebyshev<double> rq1(size, rmax, rmin);
+    ai2pot::mtpr::RQ_Chebyshev<double> rq1(size, rmax, rmin);
     rq1.build(distance_ij);
-    matersdk::mtpr::RQ_Chebyshev<double> rq2(std::move(rq1));
+    ai2pot::mtpr::RQ_Chebyshev<double> rq2(std::move(rq1));
     
     ASSERT_EQ(rq1.size(), 0);
     ASSERT_DOUBLE_EQ(rq1.rmax(), 0);
@@ -296,9 +296,9 @@ TEST_F(RQ_ChebyshevTest, copy_constructor_move) {
 }
 
 TEST_F(RQ_ChebyshevTest, assignment_operator_move) {
-    matersdk::mtpr::RQ_Chebyshev<double> rq1(size, rmax, rmin);
+    ai2pot::mtpr::RQ_Chebyshev<double> rq1(size, rmax, rmin);
     rq1.build(distance_ij);
-    matersdk::mtpr::RQ_Chebyshev<double> rq2(size, rmax, rmin+0.01);
+    ai2pot::mtpr::RQ_Chebyshev<double> rq2(size, rmax, rmin+0.01);
     rq2.build(distance_ij);
     rq2 = std::move(rq1);
 

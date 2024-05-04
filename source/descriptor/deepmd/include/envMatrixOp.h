@@ -2,7 +2,7 @@
 #include "./envMatrix.h"
 
 
-namespace matersdk {
+namespace ai2pot {
 namespace deepPotSE {
 
 class EnvMatrixFunction : public torch::autograd::Function<EnvMatrixFunction> {
@@ -35,4 +35,4 @@ torch::autograd::variable_list EnvMatrixOp(
     double rcut_smooth);
 
 };  // namespace : deepPotSE
-};  // namespace : matersdk
+};  // namespace : ai2pot

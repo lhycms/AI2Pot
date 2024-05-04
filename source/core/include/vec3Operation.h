@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <cmath>
 
-namespace matersdk {
+namespace ai2pot {
 namespace vec3Operation
 {
 
@@ -101,7 +101,7 @@ CoordType norm(CoordType* vec) {
 
     
 }   // namespace: vecOperation
-}   // namespace: matersdk
+}   // namespace: ai2pot
 
 
 #endif

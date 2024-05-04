@@ -90,25 +90,25 @@ protected:
 
 
 TEST_F(BasicStructureInfoTest, default_init) {
-    matersdk::BasicStructureInfo<double> bst;
+    ai2pot::BasicStructureInfo<double> bst;
     //bst.show();
 }
 
 
 TEST_F(BasicStructureInfoTest, init_1) {
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-    matersdk::BasicStructureInfo<double> bst(structure);
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::BasicStructureInfo<double> bst(structure);
     //bst.show();
 }
 
 
 TEST_F(BasicStructureInfoTest, copy_constructor) {
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-    matersdk::BasicStructureInfo<double> bst_1(structure);
-    matersdk::BasicStructureInfo<double> bst_2;
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::BasicStructureInfo<double> bst_1(structure);
+    ai2pot::BasicStructureInfo<double> bst_2;
 
-    matersdk::BasicStructureInfo<double> bst_3(bst_1);
-    matersdk::BasicStructureInfo<double> bst_4(bst_2);
+    ai2pot::BasicStructureInfo<double> bst_3(bst_1);
+    ai2pot::BasicStructureInfo<double> bst_4(bst_2);
 
     //bst_3.show();
     //bst_4.show();
@@ -116,11 +116,11 @@ TEST_F(BasicStructureInfoTest, copy_constructor) {
 
 
 TEST_F(BasicStructureInfoTest, assignment) {
-    matersdk::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-    matersdk::BasicStructureInfo<double> bst_1(structure);
-    matersdk::BasicStructureInfo<double> bst_2;
-    matersdk::BasicStructureInfo<double> bst_3(structure);
-    matersdk::BasicStructureInfo<double> bst_4;
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::BasicStructureInfo<double> bst_1(structure);
+    ai2pot::BasicStructureInfo<double> bst_2;
+    ai2pot::BasicStructureInfo<double> bst_3(structure);
+    ai2pot::BasicStructureInfo<double> bst_4;
 
     bst_3 = bst_1;
     bst_3 = bst_2;

@@ -72,7 +72,7 @@ protected:
 
 
 TEST_F(OuterNu0OpTest, forward_and_backward) {
-    at::Tensor result = matersdk::mtp::OuterNu0Op(ircs_tensor)[0];
+    at::Tensor result = ai2pot::mtp::OuterNu0Op(ircs_tensor)[0];
     result.sum().backward();
     //std::cout << result << std::endl;
     //std::cout << ircs_tensor.grad() << std::endl;
@@ -85,7 +85,7 @@ TEST_F(OuterNu0OpTest, forward_and_backward) {
 
 
 TEST_F(MtpMAngularOpTest, forward_and_backward_nu0) {
-    at::Tensor mtp_angular_0 = matersdk::mtp::MtpMAngularOp(
+    at::Tensor mtp_angular_0 = ai2pot::mtp::MtpMAngularOp(
         ircs_tensor,
         nu_0);
     mtp_angular_0.sum().backward();
@@ -100,7 +100,7 @@ TEST_F(MtpMAngularOpTest, forward_and_backward_nu0) {
 
 
 TEST_F(MtpMAngularOpTest, forward_and_backward_nu1) {
-    at::Tensor mtp_angular_1 = matersdk::mtp::MtpMAngularOp(
+    at::Tensor mtp_angular_1 = ai2pot::mtp::MtpMAngularOp(
         ircs_tensor,
         nu_1);
     mtp_angular_1.sum().backward();
@@ -115,7 +115,7 @@ TEST_F(MtpMAngularOpTest, forward_and_backward_nu1) {
 }
 
 TEST_F(MtpMAngularOpTest, forward_and_backward_nu2) {
-    at::Tensor mtp_angular_2 = matersdk::mtp::MtpMAngularOp(
+    at::Tensor mtp_angular_2 = ai2pot::mtp::MtpMAngularOp(
         ircs_tensor,
         nu_2);
     mtp_angular_2.sum().backward();
@@ -136,7 +136,7 @@ TEST_F(MtpMAngularOpTest, speed) {
     auto time1 = std::chrono::high_resolution_clock::now();
     #pragma omp parallel for
     for (int ii=0; ii<times; ii++) {
-        at::Tensor mtp_angular = matersdk::mtp::MtpMAngularOp(
+        at::Tensor mtp_angular = ai2pot::mtp::MtpMAngularOp(
             ircs_tensor,
             3);
     }
@@ -147,7 +147,7 @@ TEST_F(MtpMAngularOpTest, speed) {
 
 
 TEST_F(MtpMAngularOpTest, deriv_accuracy) {
-    at::Tensor mtp_angular_tensor = matersdk::mtp::MtpMAngularOp(
+    at::Tensor mtp_angular_tensor = ai2pot::mtp::MtpMAngularOp(
         ircs_tensor,
         2);
     at::Tensor result = mtp_angular_tensor.sum();
@@ -157,7 +157,7 @@ TEST_F(MtpMAngularOpTest, deriv_accuracy) {
     
     double* ircs = ircs_tensor.data_ptr<double>();
     ircs[0*3 + 0] += 0.001;
-    at::Tensor mtp_angular_tensor1 = matersdk::mtp::MtpMAngularOp(
+    at::Tensor mtp_angular_tensor1 = ai2pot::mtp::MtpMAngularOp(
         ircs_tensor,
         2);
     at::Tensor result1 = mtp_angular_tensor1.sum();

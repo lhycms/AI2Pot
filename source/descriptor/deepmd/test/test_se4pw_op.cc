@@ -18,8 +18,8 @@ public:
     double rcut_smooth;
     bool pbc_xyz[3];
 
-    matersdk::Structure<double> structure;
-    matersdk::NeighborList<double> neighbor_list;
+    ai2pot::Structure<double> structure;
+    ai2pot::NeighborList<double> neighbor_list;
 
     // Variables to simulate info of `LAMMPS_NS::LAMMPS* lmp`
     int batch_size;
@@ -114,8 +114,8 @@ public:
         rcut = 3.3;
         rcut_smooth = 3.0;
 
-        structure = matersdk::Structure<double>(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-        neighbor_list = matersdk::NeighborList<double>(structure, rcut, pbc_xyz, false);
+        structure = ai2pot::Structure<double>(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+        neighbor_list = ai2pot::NeighborList<double>(structure, rcut, pbc_xyz, false);
         
         // Variables to simulate the info of `LAMMPS_NS::LAMMPS*`
         batch_size = 1;
@@ -189,7 +189,7 @@ TEST_F(Se4pwOpTest, forward) {
     at::Tensor num_neigh_atoms_lst_tensor = torch::from_blob(num_neigh_atoms_lst, {ntypes}, int_tensor_options);
     at::Tensor x_tensor = torch::from_blob(x, {batch_size, sinum, 3}, float_tensor_options);
 
-    torch::autograd::variable_list outputs = matersdk::deepPotSE::Se4pwOp::forward(
+    torch::autograd::variable_list outputs = ai2pot::deepPotSE::Se4pwOp::forward(
             batch_size,
             inum,
             ilist_tensor,
@@ -210,7 +210,7 @@ TEST_F(Se4pwOpTest, forward) {
 }
 
 
-TEST_F(Se4pwOpTest, get_prim_indices_from_matersdk) {
+TEST_F(Se4pwOpTest, get_prim_indices_from_ai2pot) {
     c10::TensorOptions int_tensor_options = c10::TensorOptions().dtype(torch::kInt32).device(c10::kCPU);
 
     at::Tensor ilist_tensor = torch::from_blob(ilist, {batch_size, inum}, int_tensor_options);
@@ -219,7 +219,7 @@ TEST_F(Se4pwOpTest, get_prim_indices_from_matersdk) {
     at::Tensor types_tensor = torch::from_blob(types, {batch_size, sinum}, int_tensor_options);
     at::Tensor num_neigh_atoms_lst_tensor = torch::from_blob(num_neigh_atoms_lst, {ntypes}, int_tensor_options);
 
-    at::Tensor prim_indices = matersdk::deepPotSE::Se4pwOp::get_prim_indices_from_matersdk(
+    at::Tensor prim_indices = ai2pot::deepPotSE::Se4pwOp::get_prim_indices_from_ai2pot(
             batch_size, 
             inum, 
             ilist_tensor, 
