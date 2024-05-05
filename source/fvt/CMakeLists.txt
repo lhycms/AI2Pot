@@ -20,12 +20,12 @@ if (TORCH_OP)
     add_library(force_sr_op SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/force_sr_op.cc)
     target_link_libraries(force_sr_op PRIVATE ${TORCH_LIBRARIES})
 
-    add_library(force_sr_op_bind SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bind/force_sr_op_bind.cc)
-    target_include_directories(force_sr_op_bind PRIVATE ${PYTHON_INCLUDE_DIRS})
-    target_link_libraries(force_sr_op_bind PRIVATE force_sr_op ${TORCH_LIBRARIES} ${PYTHON_LIBRARIES})
-
     add_library(virial_sr_op SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/virial_sr_op.cc)
     target_link_libraries(virial_sr_op PRIVATE ${TORCH_LIBRARIES})
+
+    add_library(fvt_sr_op_bind SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bind/fvt_sr_op_bind.cc)
+    target_include_directories(fvt_sr_op_bind PRIVATE ${PYTHON_INCLUDE_DIRS})
+    target_link_libraries(fvt_sr_op_bind PRIVATE force_sr_op virial_sr_op ${TORCH_LIBRARIES} ${PYTHON_LIBRARIES})
 endif()
 
 # 6. 

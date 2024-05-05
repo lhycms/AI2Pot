@@ -7,12 +7,10 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 
 from ai2pot.dataset.mlffdataset import MlffDataset
-from ai2pot.deepmd.se_r import (
-    EmbeddingNet,
-    FittingNet,
-    DescripSeR,
-    DpSeR
-)
+from ai2pot.deepmd.se_r import (EmbeddingNet,
+                                FittingNet,
+                                DescripSeR,
+                                DpSeR)
 
 """
 class EmbeddingNetTes(unittest.TestCase):
@@ -129,7 +127,7 @@ class DpSeRTest(unittest.TestCase):
                                         embed_sizes_list=embed_sizes_list,
                                         fit_sizes_list=fit_sizes_list,
                                         M2=4,
-                                        energy_shift_list=False)
+                                        energy_shift_tensor=False)
         self.dp_se_r.to(torch.float64)
 
         self.outcar_path: str = "/data/home/liuhanyu/hyliu/code/AI2Pot/test_data/ReNbSSe/OUTCAR"
@@ -143,14 +141,17 @@ class DpSeRTest(unittest.TestCase):
         
     def test_forward(self):
         for ii, batch_data in enumerate(self.mlff_dataloader):
-            e_tot_sr: torch.Tensor = self.dp_se_r(
+            ei, fi, v = self.dp_se_r(
                 batch_data[1],
                 batch_data[2],
                 batch_data[3],
                 batch_data[4].requires_grad_(True),
                 batch_data[5],
                 batch_data[6])
-            print("\t{0}. In Batch#{1}, descrip.size() = ".format(ii+1, ii), e_tot_sr.size())
+            print("\t{0}. In Batch#{1}, descrip.size() = ".format(ii+1, ii), 
+                  ei.size(), 
+                  fi.size(),
+                  v.size())
     
     def tearDown(self):
         print("DpSeRTest (TestCase) is tearing down...\n")

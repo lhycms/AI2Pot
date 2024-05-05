@@ -12,13 +12,18 @@ sys.path.append(nblist_bind_gen_dir)
 import nblist
 
 
-### Part 2. deepmd
+### Part 2.1. deepmd
 deepmd_lib_dir:str = os.path.join(ai2pot_source_build_lib_dir, "descriptor", "deepmd")
 envMatrixOp_bind_so_path:str = os.path.join(deepmd_lib_dir, "libenvMatrixOp_bind.so")
 torch.ops.load_library(envMatrixOp_bind_so_path)
 # name `envMatrixOp`
 envMatrixOp = torch.ops.deepmd.EnvMatrixOp
 
-force_sr_op_bind_so_path: str = os.path.join(ai2pot_source_build_lib_dir, "fvt", "libforce_sr_op_bind.so")
-torch.ops.load_library(force_sr_op_bind_so_path)
-forceSrOp = torch.ops.ForceSrOp
+
+### Part 3. fvt
+fvt_sr_lib_dir: str = os.path.join(ai2pot_source_build_lib_dir, "fvt")
+fvt_sr_bind_so_path: str = os.path.join(fvt_sr_lib_dir, "libfvt_sr_op_bind.so")
+torch.ops.load_library(fvt_sr_bind_so_path)
+# name
+forceSrOp = torch.ops.fvt.ForceSrOp
+virialSrOp = torch.ops.fvt.VirialSrOp
