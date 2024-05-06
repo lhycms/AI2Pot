@@ -93,7 +93,6 @@ TEST_F(MtpParamTest, constructor)
 mtp_param.show();
 }
 
-/*
 TEST_F(MtpParamTest, load) {
     ai2pot::mtpr::MtpParam mtp_param;
     mtp_param._load(filenames[0]);
@@ -259,7 +258,7 @@ TEST_F(MtpParamTest, AlphaIndexBasic_assignment_operator)
         for (int jj=0; jj<4; jj++)
             ASSERT_EQ(at1.alpha_index_times()[ii][jj], at2.alpha_index_times()[ii][jj]);
 }
-
+/*
 TEST_F(MtpParamTest, AlphaIndexTimes_assignment_operator_move)
 {
     ai2pot::mtpr::MtpParam mp;

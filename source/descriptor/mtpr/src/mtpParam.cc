@@ -132,8 +132,6 @@ void MtpParam::_load(const std::string& filename)
 
     ifs.close();
 
-    //for (int ii=0; ii<this->_alpha_moments_count; ii++)
-        //this->_mus4moms_lst.push_back( this->_get_mus4all_mom(ii) );
     std::vector<std::set<int>> mus4moms_lst = this->_get_mus4all_mom_dp(this->_alpha_moments_count);
     this->_max_num_mus4mom = 0;
     for (int ii=0; ii<this->_alpha_moments_count; ii++)
@@ -194,28 +192,30 @@ MtpParam::MtpParam(const MtpParam& rhs)
 
 MtpParam::MtpParam(MtpParam&& rhs)
 {
-    this->_alpha_moments_count = rhs._alpha_moments_count;
-    this->_alpha_index_basic_count = rhs._alpha_index_basic_count;
-    this->_alpha_index_basic = rhs._alpha_index_basic;
-    this->_alpha_index_times_count = rhs._alpha_index_times_count;
-    this->_alpha_index_times = rhs._alpha_index_times;
-    this->_alpha_scalar_moments = rhs._alpha_scalar_moments;
-    this->_alpha_moment_mapping = rhs._alpha_moment_mapping;
-    this->_max_num_mus4mom = rhs._max_num_mus4mom;
-    this->_num_mus4moms = rhs._num_mus4moms;
-    this->_mus4moms_ptr = rhs._mus4moms_ptr;
+    if (this != &rhs) {
+        this->_alpha_moments_count = rhs._alpha_moments_count;
+        this->_alpha_index_basic_count = rhs._alpha_index_basic_count;
+        this->_alpha_index_basic = rhs._alpha_index_basic;
+        this->_alpha_index_times_count = rhs._alpha_index_times_count;
+        this->_alpha_index_times = rhs._alpha_index_times;
+        this->_alpha_scalar_moments = rhs._alpha_scalar_moments;
+        this->_alpha_moment_mapping = rhs._alpha_moment_mapping;
+        this->_max_num_mus4mom = rhs._max_num_mus4mom;
+        this->_num_mus4moms = rhs._num_mus4moms;
+        this->_mus4moms_ptr = rhs._mus4moms_ptr;
 
 
-    rhs._alpha_moments_count = 0;
-    rhs._alpha_index_basic_count = 0;
-    rhs._alpha_index_basic = nullptr;
-    rhs._alpha_index_times_count = 0;
-    rhs._alpha_index_times = nullptr;
-    rhs._alpha_scalar_moments = 0;
-    rhs._alpha_moment_mapping = nullptr;
-    rhs._max_num_mus4mom = 0;
-    rhs._num_mus4moms = nullptr;
-    rhs._mus4moms_ptr = nullptr;
+        rhs._alpha_moments_count = 0;
+        rhs._alpha_index_basic_count = 0;
+        rhs._alpha_index_basic = nullptr;
+        rhs._alpha_index_times_count = 0;
+        rhs._alpha_index_times = nullptr;
+        rhs._alpha_scalar_moments = 0;
+        rhs._alpha_moment_mapping = nullptr;
+        rhs._max_num_mus4mom = 0;
+        rhs._num_mus4moms = nullptr;
+        rhs._mus4moms_ptr = nullptr;
+    }
 }
 
 MtpParam& MtpParam::operator=(const MtpParam& rhs)
@@ -232,6 +232,11 @@ MtpParam& MtpParam::operator=(const MtpParam& rhs)
     if (this->_alpha_scalar_moments != 0) {
         free(this->_alpha_moment_mapping);
         this->_alpha_scalar_moments = 0;
+    }
+    if (this->_max_num_mus4mom != 0) {
+        free(this->_num_mus4moms);
+        free(this->_mus4moms_ptr);
+        this->_max_num_mus4mom = 0;
     }
 
     this->_alpha_moments_count = rhs._alpha_moments_count;
@@ -262,8 +267,17 @@ MtpParam& MtpParam::operator=(const MtpParam& rhs)
             this->_alpha_moment_mapping[ii] = rhs._alpha_moment_mapping[ii];
     }
     this->_max_num_mus4mom = rhs._max_num_mus4mom;
-    this->_num_mus4moms = (int*)malloc(sizeof(int) * this->_alpha_moments_count);
-    //this->
+    if ((this->_alpha_scalar_moments != 0) && (this->_max_num_mus4mom != 0)) {
+        this->_num_mus4moms = (int*)malloc(sizeof(int) * this->_alpha_moments_count);
+        this->_mus4moms_ptr = (int*)malloc(sizeof(int) * this->_alpha_moments_count * this->_max_num_mus4mom);
+        memset(this->_mus4moms_ptr, -1, sizeof(int) * this->_alpha_scalar_moments * this->_max_num_mus4mom);
+        for (int ii=0; ii<this->_alpha_scalar_moments; ii++) {
+            for (int jj=0; jj<this->_max_num_mus4mom; jj++) {
+                this->_num_mus4moms[ii] = rhs._num_mus4moms[ii];
+                this->_mus4moms_ptr[ii*this->_max_num_mus4mom+jj] = rhs._mus4moms_ptr[ii*this->_max_num_mus4mom+jj];
+            }
+        }
+    }
 
     return *this;
 }
@@ -284,6 +298,11 @@ MtpParam& MtpParam::operator=(MtpParam&& rhs)
             free(this->_alpha_moment_mapping);
             this->_alpha_scalar_moments = 0;
         }
+        if (this->_max_num_mus4mom != 0) {
+            free(this->_num_mus4moms);
+            free(this->_mus4moms_ptr);
+            this->_max_num_mus4mom = 0;
+        }
 
         this->_alpha_moments_count = rhs._alpha_moments_count;
         this->_alpha_index_basic_count = rhs._alpha_index_basic_count;
@@ -292,6 +311,10 @@ MtpParam& MtpParam::operator=(MtpParam&& rhs)
         this->_alpha_index_times = rhs._alpha_index_basic;
         this->_alpha_scalar_moments = rhs._alpha_scalar_moments;
         this->_alpha_moment_mapping = rhs._alpha_moment_mapping;
+        this->_max_num_mus4mom = rhs._max_num_mus4mom;
+        this->_num_mus4moms = rhs._num_mus4moms;
+        this->_mus4moms_ptr = rhs._mus4moms_ptr;
+
 
         rhs._alpha_moments_count = 0;
         rhs._alpha_index_basic_count = 0;
@@ -300,6 +323,9 @@ MtpParam& MtpParam::operator=(MtpParam&& rhs)
         rhs._alpha_index_times = nullptr;
         rhs._alpha_scalar_moments = 0;
         rhs._alpha_moment_mapping = nullptr;
+        rhs._max_num_mus4mom = 0;
+        rhs._num_mus4moms = nullptr;
+        rhs._mus4moms_ptr = nullptr;
     }
 
 }
@@ -309,6 +335,8 @@ MtpParam::~MtpParam()
     free(this->_alpha_index_basic);
     free(this->_alpha_index_times);
     free(this->_alpha_moment_mapping);
+    free(this->_num_mus4moms);
+    free(this->_mus4moms_ptr);
 }
 
 std::set<int> MtpParam::_get_mus4all_mom(int mom_idx)
