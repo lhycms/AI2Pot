@@ -13,6 +13,7 @@ namespace mtpr {
 
 MtpParam::MtpParam()
 {
+printf("+++Default constructor...\n");
     this->_alpha_moments_count = 0;
     this->_alpha_index_basic_count = 0;
     this->_alpha_index_basic = nullptr;
@@ -27,6 +28,7 @@ MtpParam::MtpParam()
 
 MtpParam::MtpParam(const std::string& filename)
 {
+printf("+++Constructor\n");
     this->_load(filename);
 }
 
@@ -156,6 +158,7 @@ void MtpParam::_load(const std::string& filename)
 
 MtpParam::MtpParam(const MtpParam& rhs)
 {
+printf("+++Copy assignment constructor...\n");
     this->_alpha_moments_count = rhs._alpha_moments_count;
     this->_alpha_index_basic_count = rhs._alpha_index_basic_count;
     this->_alpha_index_basic = (int (*)[4])malloc(4*sizeof(int)*this->_alpha_index_basic_count);
@@ -192,6 +195,7 @@ MtpParam::MtpParam(const MtpParam& rhs)
 
 MtpParam::MtpParam(MtpParam&& rhs)
 {
+printf("+++ Move copy assignment constructor...\n");
     if (this != &rhs) {
         this->_alpha_moments_count = rhs._alpha_moments_count;
         this->_alpha_index_basic_count = rhs._alpha_index_basic_count;
@@ -218,8 +222,9 @@ MtpParam::MtpParam(MtpParam&& rhs)
     }
 }
 
-MtpParam& MtpParam::operator=(const MtpParam& rhs)
+MtpParam& MtpParam::operator=(const MtpParam &rhs)
 {
+printf("+++Assignment operator\n");
     this->_alpha_moments_count = 0;
     if (this->_alpha_index_basic_count != 0) {
         free(this->_alpha_index_basic);
@@ -284,6 +289,7 @@ MtpParam& MtpParam::operator=(const MtpParam& rhs)
 
 MtpParam& MtpParam::operator=(MtpParam&& rhs)
 {
+printf("+++Move assignment operator\n");
     if (this != &rhs) {
         this->_alpha_moments_count = 0;
         if (this->_alpha_index_basic_count != 0) {
@@ -308,7 +314,7 @@ MtpParam& MtpParam::operator=(MtpParam&& rhs)
         this->_alpha_index_basic_count = rhs._alpha_index_basic_count;
         this->_alpha_index_basic = rhs._alpha_index_basic;
         this->_alpha_index_times_count = rhs._alpha_index_times_count;
-        this->_alpha_index_times = rhs._alpha_index_basic;
+        this->_alpha_index_times = rhs._alpha_index_times;
         this->_alpha_scalar_moments = rhs._alpha_scalar_moments;
         this->_alpha_moment_mapping = rhs._alpha_moment_mapping;
         this->_max_num_mus4mom = rhs._max_num_mus4mom;
@@ -327,16 +333,27 @@ MtpParam& MtpParam::operator=(MtpParam&& rhs)
         rhs._num_mus4moms = nullptr;
         rhs._mus4moms_ptr = nullptr;
     }
-
+    return *this;
 }
 
 MtpParam::~MtpParam()
 {
-    free(this->_alpha_index_basic);
-    free(this->_alpha_index_times);
-    free(this->_alpha_moment_mapping);
-    free(this->_num_mus4moms);
-    free(this->_mus4moms_ptr);
+printf("+++Destructor\n");
+    if (this->_alpha_index_basic_count != 0)
+        free(this->_alpha_index_basic);
+    if (this->_alpha_index_times_count != 0)
+        free(this->_alpha_index_times);
+    if (this->_alpha_scalar_moments != 0)
+        free(this->_alpha_moment_mapping);
+    if (this->_max_num_mus4mom != 0) {
+        free(this->_num_mus4moms);
+        free(this->_mus4moms_ptr);
+    }
+    this->_alpha_moments_count = 0;
+    this->_alpha_index_basic_count = 0;
+    this->_alpha_index_times_count = 0;
+    this->_alpha_scalar_moments = 0;
+    this->_max_num_mus4mom = 0;
 }
 
 std::set<int> MtpParam::_get_mus4all_mom(int mom_idx)
@@ -559,6 +576,7 @@ AlphaIndexTimes& AlphaIndexTimes::operator=(AlphaIndexTimes &&rhs)
         rhs._alpha_index_times_count = 0;
         rhs._alpha_index_times = nullptr;
     }
+    return *this;
 }
 
 AlphaIndexTimes::~AlphaIndexTimes()

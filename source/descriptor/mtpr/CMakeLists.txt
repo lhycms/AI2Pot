@@ -19,6 +19,7 @@ target_link_libraries(test_basis PRIVATE gtest gtest_main)
 
 add_executable(test_mtpParam ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mtpParam.cc)
 target_link_libraries(test_mtpParam PRIVATE mtpParam gtest gtest_main)
+set_target_properties(test_mtpParam PROPERTIES COMPILE_FLAGS "-g")
 
 add_executable(test_mtpBasis ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mtpBasis.cc)
 target_link_libraries(test_mtpBasis PRIVATE mtpParam gtest gtest_main)
