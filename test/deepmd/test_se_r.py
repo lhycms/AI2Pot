@@ -114,10 +114,8 @@ class DpSeRTest(unittest.TestCase):
         ntypes: int = 4
         rcut: float = 3.2
         rcut_smooth: float= 3.0
-        # for nblist (equal)
-        umax_num_neighs: int = 40
-        # for envMatrixOp (equal)
-        umax_num_neighs_tensor: torch.Tensor = torch.tensor([10, 10, 10, 10], dtype=torch.int32)
+        umax_num_neighs: int = 40   # for envMatrixOp (equal)
+        umax_num_neighs_tensor: torch.Tensor = torch.tensor([10, 10, 10, 10], dtype=torch.int32)    # for envMatrixOp (equal)
         embed_sizes_list: List[int] = [2, 4, 8]
         fit_sizes_list: List[int] = [16, 16, 16]
         self.dp_se_r: nn.Module = DpSeR(ntypes=ntypes,
@@ -141,13 +139,12 @@ class DpSeRTest(unittest.TestCase):
         
     def test_forward(self):
         for ii, batch_data in enumerate(self.mlff_dataloader):
-            ei, fi, v = self.dp_se_r(
-                batch_data[1],
-                batch_data[2],
-                batch_data[3],
-                batch_data[4].requires_grad_(True),
-                batch_data[5],
-                batch_data[6])
+            ei, fi, v = self.dp_se_r(batch_data[1],
+                                     batch_data[2],
+                                     batch_data[3],
+                                     batch_data[4].requires_grad_(True),
+                                     batch_data[5],
+                                     batch_data[6])
             print("\t{0}. In Batch#{1}, descrip.size() = ".format(ii+1, ii), 
                   ei.size(), 
                   fi.size(),

@@ -241,25 +241,24 @@ TEST_F(MtpParamTest, AlphaIndexBasic_copy_constructor_move)
 
 TEST_F(MtpParamTest, AlphaIndexBasic_assignment_operator)
 {
-printf("*** testing...\n");
     ai2pot::mtpr::MtpParam mp;
     mp = std::move(ai2pot::mtpr::MtpParam(filenames[5]));
-    //mp = ai2pot::mtpr::MtpParam(filenames[5]);
-    //ai2pot::mtpr::AlphaIndexTimes at1(
-    //    (int)mp.alpha_index_times_count(),
-    //    (int(*)[4])mp.alpha_index_times());
+    mp = ai2pot::mtpr::MtpParam(filenames[5]);
+    ai2pot::mtpr::AlphaIndexTimes at1(
+        (int)mp.alpha_index_times_count(),
+        (int(*)[4])mp.alpha_index_times());
 //mp.show();
-//printf("111\n");
-    //mp = ai2pot::mtpr::MtpParam(filenames[5]); // mtp_level = 12
-    //ai2pot::mtpr::AlphaIndexTimes at2(
-    //    (int)mp.alpha_index_times_count(),
-    //    (int(*)[4])mp.alpha_index_times());
+
+    mp = ai2pot::mtpr::MtpParam(filenames[5]); // mtp_level = 12
+    ai2pot::mtpr::AlphaIndexTimes at2(
+        (int)mp.alpha_index_times_count(),
+        (int(*)[4])mp.alpha_index_times());
     
-    //at2 = at1;
-    //ASSERT_EQ(at1.alpha_index_times_count(), at2.alpha_index_times_count());
-    //for (int ii=0; ii<at1.alpha_index_times_count(); ii++)
-    //    for (int jj=0; jj<4; jj++)
-    //        ASSERT_EQ(at1.alpha_index_times()[ii][jj], at2.alpha_index_times()[ii][jj]);
+    at2 = at1;
+    ASSERT_EQ(at1.alpha_index_times_count(), at2.alpha_index_times_count());
+    for (int ii=0; ii<at1.alpha_index_times_count(); ii++)
+        for (int jj=0; jj<4; jj++)
+            ASSERT_EQ(at1.alpha_index_times()[ii][jj], at2.alpha_index_times()[ii][jj]);
 }
 /*
 TEST_F(MtpParamTest, AlphaIndexTimes_assignment_operator_move)

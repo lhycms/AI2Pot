@@ -13,7 +13,6 @@ namespace mtpr {
 
 MtpParam::MtpParam()
 {
-printf("+++Default constructor...\n");
     this->_alpha_moments_count = 0;
     this->_alpha_index_basic_count = 0;
     this->_alpha_index_basic = nullptr;
@@ -28,7 +27,6 @@ printf("+++Default constructor...\n");
 
 MtpParam::MtpParam(const std::string& filename)
 {
-printf("+++Constructor\n");
     this->_load(filename);
 }
 
@@ -158,44 +156,49 @@ void MtpParam::_load(const std::string& filename)
 
 MtpParam::MtpParam(const MtpParam& rhs)
 {
-printf("+++Copy assignment constructor...\n");
     this->_alpha_moments_count = rhs._alpha_moments_count;
     this->_alpha_index_basic_count = rhs._alpha_index_basic_count;
-    this->_alpha_index_basic = (int (*)[4])malloc(4*sizeof(int)*this->_alpha_index_basic_count);
-    for (int ii=0; ii<this->_alpha_index_basic_count; ii++)
-    {
-        this->_alpha_index_basic[ii][0] = rhs._alpha_index_basic[ii][0];
-        this->_alpha_index_basic[ii][1] = rhs._alpha_index_basic[ii][1];
-        this->_alpha_index_basic[ii][2] = rhs._alpha_index_basic[ii][2];
-        this->_alpha_index_basic[ii][3] = rhs._alpha_index_basic[ii][3];
+    if (this->_alpha_index_basic_count != 0) {
+        this->_alpha_index_basic = (int (*)[4])malloc(4*sizeof(int)*this->_alpha_index_basic_count);
+        for (int ii=0; ii<this->_alpha_index_basic_count; ii++)
+        {
+            this->_alpha_index_basic[ii][0] = rhs._alpha_index_basic[ii][0];
+            this->_alpha_index_basic[ii][1] = rhs._alpha_index_basic[ii][1];
+            this->_alpha_index_basic[ii][2] = rhs._alpha_index_basic[ii][2];
+            this->_alpha_index_basic[ii][3] = rhs._alpha_index_basic[ii][3];
+        }
     }
     this->_alpha_index_times_count = rhs._alpha_index_times_count;
-    this->_alpha_index_times = (int (*)[4])malloc(4*sizeof(int)*this->_alpha_index_times_count);
-    for (int ii=0; ii<this->_alpha_index_times_count; ii++)
-    {
-        this->_alpha_index_times[ii][0] = rhs._alpha_index_times[ii][0];
-        this->_alpha_index_times[ii][1] = rhs._alpha_index_times[ii][1];
-        this->_alpha_index_times[ii][2] = rhs._alpha_index_times[ii][2];
-        this->_alpha_index_times[ii][3] = rhs._alpha_index_times[ii][3];
+    if (this->_alpha_index_times != 0) {
+        this->_alpha_index_times = (int (*)[4])malloc(4*sizeof(int)*this->_alpha_index_times_count);
+        for (int ii=0; ii<this->_alpha_index_times_count; ii++)
+        {
+            this->_alpha_index_times[ii][0] = rhs._alpha_index_times[ii][0];
+            this->_alpha_index_times[ii][1] = rhs._alpha_index_times[ii][1];
+            this->_alpha_index_times[ii][2] = rhs._alpha_index_times[ii][2];
+            this->_alpha_index_times[ii][3] = rhs._alpha_index_times[ii][3];
+        }
     }
     this->_alpha_scalar_moments = rhs._alpha_scalar_moments;
-    this->_alpha_moment_mapping = (int*)malloc(sizeof(int) * this->_alpha_scalar_moments);
-    for (int ii=0; ii<this->_alpha_scalar_moments; ii++)
-        this->_alpha_moment_mapping[ii] = rhs._alpha_moment_mapping[ii];
-
+    if (this->_alpha_moments_count != 0) {
+        this->_alpha_moment_mapping = (int*)malloc(sizeof(int) * this->_alpha_scalar_moments);
+        for (int ii=0; ii<this->_alpha_scalar_moments; ii++)
+            this->_alpha_moment_mapping[ii] = rhs._alpha_moment_mapping[ii];
+    }
     this->_max_num_mus4mom = rhs._max_num_mus4mom;
-    this->_num_mus4moms = (int*)malloc(sizeof(int) * this->_alpha_moments_count);
-    this->_mus4moms_ptr = (int*)malloc(sizeof(int) * this->_alpha_moments_count * this->_max_num_mus4mom);
-    for (int ii=0; ii<this->_alpha_moments_count; ii++) {
-        this->_num_mus4moms[ii] = rhs._num_mus4moms[ii];
-        for (int jj=0; jj<this->_max_num_mus4mom; jj++)
-            this->_mus4moms_ptr[ii*this->_max_num_mus4mom + jj] = rhs._mus4moms_ptr[ii*this->_max_num_mus4mom + jj];
+    if (this->_max_num_mus4mom != 0) {
+        this->_num_mus4moms = (int*)malloc(sizeof(int) * this->_alpha_moments_count);
+        this->_mus4moms_ptr = (int*)malloc(sizeof(int) * this->_alpha_moments_count * this->_max_num_mus4mom);
+        for (int ii=0; ii<this->_alpha_moments_count; ii++) {
+            this->_num_mus4moms[ii] = rhs._num_mus4moms[ii];
+            for (int jj=0; jj<this->_max_num_mus4mom; jj++)
+                this->_mus4moms_ptr[ii*this->_max_num_mus4mom + jj] = rhs._mus4moms_ptr[ii*this->_max_num_mus4mom + jj];
+        }
     }
 }
 
 MtpParam::MtpParam(MtpParam&& rhs)
 {
-printf("+++ Move copy assignment constructor...\n");
     if (this != &rhs) {
         this->_alpha_moments_count = rhs._alpha_moments_count;
         this->_alpha_index_basic_count = rhs._alpha_index_basic_count;
@@ -224,7 +227,6 @@ printf("+++ Move copy assignment constructor...\n");
 
 MtpParam& MtpParam::operator=(const MtpParam &rhs)
 {
-printf("+++Assignment operator\n");
     this->_alpha_moments_count = 0;
     if (this->_alpha_index_basic_count != 0) {
         free(this->_alpha_index_basic);
@@ -289,7 +291,6 @@ printf("+++Assignment operator\n");
 
 MtpParam& MtpParam::operator=(MtpParam&& rhs)
 {
-printf("+++Move assignment operator\n");
     if (this != &rhs) {
         this->_alpha_moments_count = 0;
         if (this->_alpha_index_basic_count != 0) {
@@ -338,7 +339,6 @@ printf("+++Move assignment operator\n");
 
 MtpParam::~MtpParam()
 {
-printf("+++Destructor\n");
     if (this->_alpha_index_basic_count != 0)
         free(this->_alpha_index_basic);
     if (this->_alpha_index_times_count != 0)
