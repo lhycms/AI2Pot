@@ -19,6 +19,12 @@ torch.ops.load_library(envMatrixOp_bind_so_path)
 # name `envMatrixOp`
 envMatrixOp = torch.ops.deepmd.EnvMatrixOp
 
+### Part 2.2. mtpr
+mtpr_lib_dir:str = os.path.join(ai2pot_source_build_lib_dir, "descriptor", "mtpr")
+mtpr_bind_so_path: str = os.path.join(mtpr_lib_dir, "libmtpr_bind.so")
+torch.ops.load_library(mtpr_bind_so_path)
+# name
+mtpParamOp = torch.ops.mtpr.mtpParamOp
 
 ### Part 3. fvt
 fvt_sr_lib_dir: str = os.path.join(ai2pot_source_build_lib_dir, "fvt")

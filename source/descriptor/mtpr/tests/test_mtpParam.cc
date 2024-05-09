@@ -90,6 +90,12 @@ TEST_F(MtpParamTest, constructor)
     //}
 
     ai2pot::mtpr::MtpParam mtp_param(filenames[6]);
+//mtp_param.show();
+}
+
+TEST_F(MtpParamTest, constructor1) 
+{
+    ai2pot::mtpr::MtpParam mtp_param(10);
 mtp_param.show();
 }
 
@@ -107,9 +113,9 @@ TEST_F(MtpParamTest, _get_mus4all_mom)
     int mom_idx = 172;
 
     std::set<int> mus_lst = mtp_param._get_mus4all_mom(mom_idx);
-    for (auto& v : mus_lst)
-        printf("%d, ", v);
-    printf("\n");
+//for (auto& v : mus_lst)
+    //printf("%d, ", v);
+//printf("\n");
 }
 
 
@@ -121,9 +127,9 @@ TEST_F(MtpParamTest, _get_mus4all_mom_dp)
 
     std::vector<std::set<int>> mus4moms_lst = mtp_param._get_mus4all_mom_dp(num_moms);
     std::set<int> mus_lst = mus4moms_lst[172];
-    for (auto& v : mus_lst)
-        printf("%d, ", v);
-    printf("\n");   
+//for (auto& v : mus_lst)
+    //printf("%d, ", v);
+//printf("\n");   
 }
 
 

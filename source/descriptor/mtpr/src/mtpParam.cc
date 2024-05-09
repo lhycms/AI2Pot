@@ -30,6 +30,23 @@ MtpParam::MtpParam(const std::string& filename)
     this->_load(filename);
 }
 
+MtpParam::MtpParam(const int mtp_level) {
+    if ((mtp_level < 2) || (mtp_level > 28) || (mtp_level % 2 != 0))
+        MtpError("mtp level must be odd number (2 ~ 28)");
+    std::string dir = (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/";
+    std::string filename;
+    if (mtp_level <= 4) {
+        filename = dir + (std::string)"depreciated-" + "0" + std::to_string(mtp_level) + ".almtp";
+    
+    } else {
+        if (mtp_level < 10)
+            filename = dir + (std::string)"0" + std::to_string(mtp_level) + ".almtp";
+        else
+            filename = dir + std::to_string(mtp_level) + ".almtp";
+    }
+    this->_load(filename);
+}
+
 void MtpParam::_load(const std::string& filename)
 {
     std::ifstream ifs;

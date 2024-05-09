@@ -29,6 +29,8 @@ public:
 
     MtpParam(const std::string& filename);
 
+    MtpParam(const int mtp_level);
+
     void _load(const std::string& filename);
 
     MtpParam(const MtpParam& rhs);

@@ -12,6 +12,21 @@ file(MAKE_DIRECTORY ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY})
 # 5. compile
 add_library(mtpParam SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/mtpParam.cc)
 
+if (TORCH_OP)
+    execute_process(COMMAND python3 -c "import torch;print(torch.__path__[0])" OUTPUT_VARIABLE TORCH_PATH)
+    string(REPLACE "\n" "/share/cmake" TORCH_CMAKE_PREFIX_PATH ${TORCH_PATH})
+    list(APPEND CMAKE_PREFIX_PATH ${TORCH_CMAKE_PREFIX_PATH})
+    find_package(Torch CONFIG REQUIRED)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
+
+    add_library(mtpParamOp SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/mtpParamOp.cc)
+    target_link_libraries(mtpParamOp PRIVATE mtpParam ${TORCH_LIBRARIES})
+
+    add_library(mtpr_bind SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bind/mtpr_bind.cc)
+    target_include_directories(mtpr_bind PRIVATE ${PYTHON_INCLUDE_DIRS})
+    target_link_libraries(mtpr_bind PRIVATE mtpParamOp ${TORCH_LIBRARIES} ${PYTHON_LIBRARIES})
+endif()
+
 
 # 6. compile test
 add_executable(test_basis ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_basis.cc)
@@ -23,6 +38,12 @@ set_target_properties(test_mtpParam PROPERTIES COMPILE_FLAGS "-g")
 
 add_executable(test_mtpBasis ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mtpBasis.cc)
 target_link_libraries(test_mtpBasis PRIVATE mtpParam gtest gtest_main)
+
+if (TORCH_OP)
+    add_executable(test_mtpParamOp ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mtpParamOp.cc)
+    target_link_libraries(test_mtpParamOp PRIVATE ${TORCH_LIBRARIES} mtpParamOp mtpParam gtest gtest_main)
+    gtest_discover_tests(test_mtpParamOp)
+endif()
 
 gtest_discover_tests(test_basis)
 gtest_discover_tests(test_mtpParam)
