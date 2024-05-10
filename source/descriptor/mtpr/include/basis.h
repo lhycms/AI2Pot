@@ -250,6 +250,7 @@ RB_Chebyshev<CoordType>& RB_Chebyshev<CoordType>::operator=(const RB_Chebyshev& 
 
         }
     }
+    return *this;
 }
 
 template <typename CoordType>
@@ -279,6 +280,8 @@ RB_Chebyshev<CoordType>& RB_Chebyshev<CoordType>::operator=(RB_Chebyshev&& rhs)
         rhs._ders2uu = nullptr;
         rhs._ders2r = nullptr;
     }
+
+    return *this;
 }
 
 template <typename CoordType>
@@ -468,7 +471,7 @@ RQ_Chebyshev<CoordType>& RQ_Chebyshev<CoordType>::operator=(const RQ_Chebyshev& 
         this->_vals = nullptr;
         this->_ders2r = nullptr;
     }
-    
+
     return *this;
 }
 
