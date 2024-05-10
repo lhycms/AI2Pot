@@ -255,7 +255,7 @@ TEST_F(MTPLevelTest, calc_redundant_combination) {
     mtp_level.calc_redundant_combination(num_M, max_level, level, combination);
     
     std::vector<std::vector<std::pair<int, int>>> redundant_combinations = mtp_level.get_redundant_combinaions();
-    printf("+++ %d\n", redundant_combinations.size());
+    printf("+++ %ld\n", redundant_combinations.size());
     for (int ii=0; ii<redundant_combinations.size(); ii++) {
         printf("[mju, nju] = ");
         for (int jj=0; jj<redundant_combinations[ii].size(); jj++) {
@@ -274,7 +274,7 @@ TEST_F(MTPLevelTest, calc_redundant_combinations) {
     mtp_level.calc_redundant_combinations(max_level, combination);
     
     std::vector<std::vector<std::pair<int, int>>> redundant_combinations = mtp_level.get_redundant_combinaions();
-    printf("+++ %d\n", redundant_combinations.size());
+    printf("+++ %ld\n", redundant_combinations.size());
     for (int ii=0; ii<redundant_combinations.size(); ii++) {
         printf("[mju, nju] = ");
         for (int jj=0; jj<redundant_combinations[ii].size(); jj++) {

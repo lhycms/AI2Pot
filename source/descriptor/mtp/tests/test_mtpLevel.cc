@@ -84,7 +84,7 @@ std::ostream& operator<<(
         printf("\n");
         count++;
     }
-    printf("MtpM Level = %3d, %5d combinations in total.", coeff_pair_combs.size(), coeff_pair_combs.size());
+    printf("MtpM Level = %3ld, %5ld combinations in total.", coeff_pair_combs.size(), coeff_pair_combs.size());
     return COUT;
 }
 

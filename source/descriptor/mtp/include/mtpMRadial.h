@@ -370,6 +370,7 @@ ChebyshevPoly<CoordType>& ChebyshevPoly<CoordType>::operator=(ChebyshevPoly&& rh
         rhs.deriv2xi = nullptr;
         rhs.deriv2r = nullptr;
     }    
+    return *this;
 }
 
 template <typename CoordType>
@@ -522,6 +523,7 @@ MtpQ<CoordType>& MtpQ<CoordType>::operator=(const MtpQ& rhs)
         this->result[ii] = rhs.result[ii];
         this->deriv2r[ii] = rhs.deriv2r[ii];
     }
+    return *this;
 }
 
 template <typename CoordType>
@@ -545,6 +547,7 @@ MtpQ<CoordType>& MtpQ<CoordType>::operator=(MtpQ&& rhs)
         rhs.result = nullptr;
         rhs.deriv2r = nullptr;
     }
+    return *this;
 }
 
 template <typename CoordType>
