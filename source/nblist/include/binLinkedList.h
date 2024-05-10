@@ -257,6 +257,8 @@ BasicStructureInfo<CoordType>& BasicStructureInfo<CoordType>::operator=(const Ba
         this->interplanar_distances[1] = rhs.interplanar_distances[1];
         this->interplanar_distances[2] = rhs.interplanar_distances[2];
     }
+
+    return *this;
 }
 
 
