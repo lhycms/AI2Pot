@@ -2,7 +2,7 @@ import os
 import torch
 import sys
 
-ai2pot_root_dir:str = "/data/home/liuhanyu/hyliu/code/AI2Pot"  #Path(__file__).parent.absolute().parent.absolute().parent.absolute()
+ai2pot_root_dir:str = os.environ.get("AI2POT_PATH")
 ai2pot_source_build_lib_dir:str = os.path.join(ai2pot_root_dir, "source", "build", "lib")
 
 ### Part 1 . nblist
