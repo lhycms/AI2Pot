@@ -45,6 +45,7 @@ MtpMCoeffPair& MtpMCoeffPair::operator=(const MtpMCoeffPair& rhs)
 {
     this->_coeff_pair = rhs._coeff_pair;
     this->_calc_level();
+    return *this;
 }
 
 void MtpMCoeffPair::_calc_level() 
@@ -97,6 +98,7 @@ MtpMCoeffPairCombs& MtpMCoeffPairCombs::operator=(const MtpMCoeffPairCombs& rhs)
 {
     this->_max_level = rhs._max_level;
     this->_coeff_pair_combs = rhs._coeff_pair_combs;
+    return *this;
 }
 
 /**
