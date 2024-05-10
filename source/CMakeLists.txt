@@ -17,7 +17,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #include(GoogleTest)
 
 ## 2.2. Way 2: Build gtest
-add_subdirectory("/data/home/liuhanyu/hyliu/code/AI2Pot/source/ext/googletest-main")
+add_subdirectory("$ENV{AI2POT_PATH}/source/ext/googletest-main")
 include(GoogleTest)
 
 

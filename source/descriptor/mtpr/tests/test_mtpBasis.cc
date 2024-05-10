@@ -60,20 +60,20 @@ protected:
 
     void SetUp() override {
         filenames = {
-            "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/depreciated-02.almtp", 
-            "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/depreciated-04.almtp",
-            "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/06.almtp",
-            "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/08.almtp",
-            "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/10.almtp",
-            "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/12.almtp",
-            "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/14.almtp",
-            "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/16.almtp",
-            "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/18.almtp",
-            "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/20.almtp",
-            "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/22.almtp",
-            "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/24.almtp",
-            "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/26.almtp",
-            "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/28.almtp"
+            (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/depreciated-02.almtp", 
+            (std::string)std::getenv("AI2POT_PATH") + "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/depreciated-04.almtp",
+            (std::string)std::getenv("AI2POT_PATH") + "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/06.almtp",
+            (std::string)std::getenv("AI2POT_PATH") + "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/08.almtp",
+            (std::string)std::getenv("AI2POT_PATH") + "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/10.almtp",
+            (std::string)std::getenv("AI2POT_PATH") + "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/12.almtp",
+            (std::string)std::getenv("AI2POT_PATH") + "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/14.almtp",
+            (std::string)std::getenv("AI2POT_PATH") + "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/16.almtp",
+            (std::string)std::getenv("AI2POT_PATH") + "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/18.almtp",
+            (std::string)std::getenv("AI2POT_PATH") + "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/20.almtp",
+            (std::string)std::getenv("AI2POT_PATH") + "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/22.almtp",
+            (std::string)std::getenv("AI2POT_PATH") + "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/24.almtp",
+            (std::string)std::getenv("AI2POT_PATH") + "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/26.almtp",
+            (std::string)std::getenv("AI2POT_PATH") + "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/28.almtp"
         };
         mtp_param._load(filenames[7]); // 3 or 7
 //mtp_param.show();
