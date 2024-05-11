@@ -27,7 +27,7 @@ if (TORCH_OP)
 
     add_library(mtpr_bind SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bind/mtpr_bind.cc)
     target_include_directories(mtpr_bind PRIVATE ${PYTHON_INCLUDE_DIRS})
-    target_link_libraries(mtpr_bind PRIVATE mtpParamOp ${TORCH_LIBRARIES} ${PYTHON_LIBRARIES})
+    target_link_libraries(mtpr_bind PRIVATE mtpParamOp mtpBasisOp ${TORCH_LIBRARIES} ${PYTHON_LIBRARIES})
 endif()
 
 
