@@ -121,10 +121,10 @@ torch::autograd::variable_list MtpBasisFunction::forward(
             int *ilist = bilist_tensor[ii].data_ptr<int>();
             int *numneigh = bnumneigh_tensor[ii].data_ptr<int>();
             int *firstneigh = bfirstnumneigh_tensor[ii].data_ptr<int>();
-            double (*rcs)[3] = (float (*)[3])brcs_tensor[ii].data_ptr<double>();
-            int *types = btypes_tensor[ii].data_ptr<double>();
+            double (*rcs)[3] = (double (*)[3])brcs_tensor[ii].data_ptr<double>();
+            int *types = btypes_tensor[ii].data_ptr<int>();
 
-            MtpBasis<float>::find_val_der(
+            MtpBasis<double>::find_val_der(
                 mtp_basis_val,
                 mtp_basis_der,
                 mtp_basis_der2coeff,
@@ -154,7 +154,7 @@ torch::autograd::variable_list MtpBasisFunction::forward(
         }
     }
     ctx->save_for_backward({bmtp_basis_der_tensor, bmtp_basis_der2coeffs_tensor});
-    return {bmtp_basis_tensor};
+    return {bmtp_basis_val_tensor};
 }
 
 torch::autograd::variable_list MtpBasisFunction::backward(
@@ -164,8 +164,8 @@ torch::autograd::variable_list MtpBasisFunction::backward(
     at::Tensor bgrad_output_tensor = bgrad_outputs_tensor[0];
     if ( !bgrad_outputs_tensor[0].is_contiguous() ) 
         bgrad_output_tensor = bgrad_output_tensor.contiguous();
-    at::Tensor bmtp_basis_der_tensor = ctx->save_for_backward()[0];
-    at::Tensor bmtp_basis_der2coeffs_tensor = ctx->save_for_backward()[1];
+    at::Tensor bmtp_basis_der_tensor = ctx->get_saved_variables()[0];
+    at::Tensor bmtp_basis_der2coeffs_tensor = ctx->get_saved_variables()[1];
     int nbatches = (int)bgrad_output_tensor.size(0);
     int nlocal = (int)bgrad_output_tensor.size(1);
     int alpha_scalar_moments = (int)bgrad_output_tensor.size(2);
@@ -188,7 +188,7 @@ torch::autograd::variable_list MtpBasisFunction::backward(
             float *out_der2coeffs = bout_der2coeffs_tensor[bb].data_ptr<float>();
             float *mtp_basis_der = bmtp_basis_der_tensor[bb].data_ptr<float>();
             float *mtp_basis_der2coeffs = bmtp_basis_der2coeffs_tensor[bb].data_ptr<float>();
-            float *grad_output = bgrad_output_tensor[bb].data_ptr<float>; 
+            float *grad_output = bgrad_output_tensor[bb].data_ptr<float>(); 
             
             for (int ii=0; ii<nlocal; ii++) 
                 for (int ee=0; ee<alpha_scalar_moments; ee++) {
@@ -230,7 +230,8 @@ torch::autograd::variable_list MtpBasisFunction::backward(
                             * mtp_basis_der[ii*alpha_scalar_moments*umax_num_neighs*3 + ee*umax_num_neighs + jj*3 + 2];
                     }
                     for (int kk=0; kk<num_coeffs; kk++)
-                        out_der2coeffs[kk] += 
+                        out_der2coeffs[kk] += grad_output[ii*alpha_scalar_moments + ee]
+                            * mtp_basis_der2coeffs[ii*alpha_scalar_moments*num_coeffs + ee*num_coeffs + kk];
                 }
             }
         }
@@ -242,6 +243,46 @@ torch::autograd::variable_list MtpBasisFunction::backward(
         at::Tensor(), at::Tensor(), at::Tensor(),
         bout_der_tensor,
         at::Tensor(), at::Tensor(), at::Tensor(), at::Tensor()};
+}
+
+
+torch::autograd::variable_list MtpBasisOp(
+    const at::Tensor &alpha_index_basic_tensor,
+    const at::Tensor &alpha_index_times_tensor,
+    const at::Tensor &alpha_moment_mapping_tensor,
+    const at::Tensor &num_mus4moms_tensor,
+    const at::Tensor &mus4moms_tensor,
+    const at::Tensor &nmus_tensor,
+    int ntypes,
+    int chebyshev_size,
+    const at::Tensor &coeffs_tensor,
+    const at::Tensor &bilist_tensor,
+    const at::Tensor &bnumneigh_tensor,
+    const at::Tensor &bfirstneigh_tensor,
+    const at::Tensor &brcs_tensor,
+    const at::Tensor &btypes_tensor,
+    int umax_num_neighs,
+    double rmax,
+    double rmin)
+{
+    return MtpBasisFunction::apply(
+        alpha_index_basic_tensor,
+        alpha_index_times_tensor,
+        alpha_moment_mapping_tensor,
+        num_mus4moms_tensor,
+        mus4moms_tensor,
+        nmus_tensor,
+        ntypes,
+        chebyshev_size,
+        coeffs_tensor,
+        bilist_tensor,
+        bnumneigh_tensor,
+        bfirstneigh_tensor,
+        brcs_tensor,
+        btypes_tensor,
+        umax_num_neighs,
+        rmax,
+        rmin);
 }
 
 };  // namespace : mtpr

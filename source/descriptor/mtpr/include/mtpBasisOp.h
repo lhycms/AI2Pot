@@ -15,13 +15,15 @@ public:
         const at::Tensor &alpha_moment_mapping_tensor,
         const at::Tensor &num_mus4moms_tensor,
         const at::Tensor &mus4moms_tensor,
+        const at::Tensor &nmus_tensor,
+        int ntypes,
         int chebyshev_size,
         const at::Tensor &coeffs_tensor,
         const at::Tensor &bilist_tensor,
         const at::Tensor &bnumneigh_tensor,
-        const at::Tenosr &bfirstneigh_tensor,
+        const at::Tensor &bfirstneigh_tensor,
         const at::Tensor &brcs_tensor,
-        const at::Tenosr &btypes_tensor,
+        const at::Tensor &btypes_tensor,
         int umax_num_neighs,
         double rmax,
         double rmin);
@@ -33,6 +35,15 @@ public:
 
 
 torch::autograd::variable_list MtpBasisOp(
+    const at::Tensor &alpha_index_basic_tensor,
+    const at::Tensor &alpha_index_times_tensor,
+    const at::Tensor &alpha_moment_mapping_tensor,
+    const at::Tensor &num_mus4moms_tensor,
+    const at::Tensor &mus4moms_tensor,
+    const at::Tensor &nmus_tensor,
+    int ntypes,
+    int chebyshev_size,
+    const at::Tensor &coeffs_tensor,
     const at::Tensor &bilist_tensor,
     const at::Tensor &bnumneigh_tensor,
     const at::Tensor &bfirstneigh_tensor,
