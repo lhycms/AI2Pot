@@ -13,7 +13,9 @@ public:
         const at::Tensor &alpha_index_basic_tensor,
         const at::Tensor &alpha_index_times_tensor,
         const at::Tensor &alpha_moment_mapping_tensor,
+        const at::Tensor &num_mus4moms_tensor,
         const at::Tensor &mus4moms_tensor,
+        int chebyshev_size,
         const at::Tensor &coeffs_tensor,
         const at::Tensor &bilist_tensor,
         const at::Tensor &bnumneigh_tensor,
@@ -26,7 +28,7 @@ public:
 
     static torch::autograd::variable_list backward(
         torch::autograd::AutogradContext *ctx,
-        torch::autograd::variable_list grad_outputs);
+        torch::autograd::variable_list bgrad_outputs_tensor);
 };  // class : MtpBasisFunction
 
 

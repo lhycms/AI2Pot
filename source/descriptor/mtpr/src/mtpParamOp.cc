@@ -17,10 +17,12 @@ torch::autograd::variable_list MtpParamFunction::forward(
     at::Tensor alpha_index_basic_tensor = at::zeros({mtp_param.alpha_index_basic_count(), 4}, int_options);
     at::Tensor alpha_index_times_tensor = at::zeros({mtp_param.alpha_index_times_count(), 4}, int_options);
     at::Tensor alpha_moment_mapping_tensor = at::zeros({mtp_param.alpha_scalar_moments()}, int_options);
+    at::Tensor num_mus4moms_tensor = at::zeros({mtp_param.alpha_moments_count()}, int_options);
     at::Tensor mus4moms_tensor = at::zeros({mtp_param.alpha_moments_count(), mtp_param.max_num_mus4mom()}, int_options) - 1;
     int *alpha_index_basic = alpha_index_basic_tensor.data_ptr<int>();
     int *alpha_index_times = alpha_index_times_tensor.data_ptr<int>();
     int *alpha_moment_mapping = alpha_moment_mapping_tensor.data_ptr<int>();
+    int *num_mus4moms = num_mus4moms_tensor.data_ptr<int>();
     int *mus4moms = mus4moms_tensor.data_ptr<int>();
 
     for (int ii=0; ii<mtp_param.alpha_index_basic_count(); ii++)
@@ -31,11 +33,18 @@ torch::autograd::variable_list MtpParamFunction::forward(
             alpha_index_times[ii*4+jj] = mtp_param.alpha_index_times()[ii][jj];
     for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++)
         alpha_moment_mapping[ii] = mtp_param.alpha_moment_mapping()[ii];
-    for (int ii=0; ii<mtp_param.alpha_moments_count(); ii++)
+    for (int ii=0; ii<mtp_param.alpha_moments_count(); ii++) {
+        num_mus4moms[ii] = mtp_param.num_mus4moms()[ii];
         for (int jj=0; jj<mtp_param.num_mus4moms()[ii]; jj++)
             mus4moms[ii*mtp_param.max_num_mus4mom() + jj] = mtp_param.mus4moms_ptr()[ii*mtp_param.max_num_mus4mom() + jj];
+    }
     
-    return {alpha_index_basic_tensor, alpha_index_times_tensor, alpha_moment_mapping_tensor, mus4moms_tensor};
+    return {alpha_index_basic_tensor, 
+            alpha_index_times_tensor, 
+            alpha_moment_mapping_tensor, 
+            num_mus4moms_tensor, 
+            mus4moms_tensor,
+            torch::tensor(mtp_param.nmus(), int_options)};
 }
 
 torch::autograd::variable_list MtpParamFunction::backward(

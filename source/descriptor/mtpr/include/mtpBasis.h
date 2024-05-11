@@ -29,8 +29,8 @@ public:
         const int alpha_scalar_moments,
         const int *alpha_moment_mapping,
         const int max_num_mus4mom,
-        const int* num_mus4moms,
-        const int* mus4moms_ptr,
+        const int *num_mus4moms,
+        const int *mus4moms_ptr,
         int nmus,
         int inum,
         int *ilist,
@@ -40,8 +40,8 @@ public:
         int *types,
         int ntypes,
         int umax_num_neigh_atoms,
-        CoordType rmax,
-        CoordType rmin);
+        double rmax,
+        double rmin);
 };  // classs : MtpBasis
 
 
@@ -71,8 +71,8 @@ void MtpBasis<CoordType>::find_val_der(
     int *types,
     int ntypes,
     int umax_num_neigh_atoms,
-    CoordType rmax,
-    CoordType rmin)
+    double rmax,
+    double rmin)
 {
     // Step 1.
     memset(mtp_basis_val, 0, sizeof(CoordType) * inum * alpha_scalar_moments);
