@@ -72,7 +72,8 @@ class FittingNet(nn.Module):
                  fit_activation: nn.Module = nn.Tanh(),
                  bias_mark: bool = True,
                  energy_shift_tensor: Union[bool, torch.Tensor] = False):
-        assert(ntypes == energy_shift_tensor.size()[0])
+        if energy_shift_tensor is not False:
+            assert(ntypes == energy_shift_tensor.size()[0])
         super(FittingNet, self).__init__()
         self.ntypes: int = ntypes
         self.layer_sizes_list: List[int] = [num_descriptor] + fit_sizes_list + [1]
@@ -117,6 +118,13 @@ class FittingNet(nn.Module):
                 x = hidden
         return x
     
+    def info(self):
+        print("1. Linears ({0} in total):".format(len(self.linears_list)))
+        for ii, tmp_linear in enumerate(self.linears_list):
+            print("\tlinear#{0}.weight.size() = ".format(ii), tmp_linear.weight.size())
+            if (ii != len(self.linears_list) - 1):
+                print("\t\t+ linear#{0}.bias.size() = ".format(ii), tmp_linear.bias.size())
+                
 
 class NNMtp(nn.Module):
     def __init__(self,
@@ -130,7 +138,7 @@ class NNMtp(nn.Module):
                  fit_activation: nn.Module = nn.Tanh(),
                  bias_mark: bool = True,
                  energy_shift_tensor: Union[bool, torch.Tensor] = False):
-        if not energy_shift_tensor:
+        if energy_shift_tensor is not False:
             assert(energy_shift_tensor.size()[0] == ntypes)
         super(NNMtp, self).__init__()
         self.mtp_level: int = mtp_level
