@@ -227,6 +227,8 @@ class DpSeR(nn.Module):
             fit_bias_mark: bool = True,
             fit_resnet_mark: bool = False,
             energy_shift_tensor: Union[bool, torch.Tensor] = False):
+        if not energy_shift_tensor:
+            assert(energy_shift_tensor.size()[0] == ntypes)
         super(DpSeR, self).__init__()
         self.ntypes: int = ntypes
         self.rcut: float = rcut
@@ -290,7 +292,9 @@ class DpSeR(nn.Module):
                                                                          -1)
             e_i_sr[:, mask_itype] = self.fits_list[ii](descrip_itype)
         e_tot_sr: torch.Tensor = torch.sum(e_i_sr, dim=1)
-        mask: List[Optional[torch.Tensor]] = [torch.ones_like(e_tot_sr)]
+        mask: List[Optional[torch.Tensor]] = [torch.ones_like(e_tot_sr, 
+                                                              device=brcs.device(), 
+                                                              dtype=brcs.dtype())]
         eisr_rij_jacobian: torch.Tensor = torch.autograd.grad([e_tot_sr], 
                                                               [brcs], 
                                                               grad_outputs=mask,

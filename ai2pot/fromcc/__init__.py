@@ -25,6 +25,7 @@ mtpr_bind_so_path: str = os.path.join(mtpr_lib_dir, "libmtpr_bind.so")
 torch.ops.load_library(mtpr_bind_so_path)
 # name
 mtpParamOp = torch.ops.mtpr.mtpParamOp
+mtpBasisOp = torch.ops.mtpr.mtpBasisOp
 
 ### Part 3. fvt
 fvt_sr_lib_dir: str = os.path.join(ai2pot_source_build_lib_dir, "fvt")
