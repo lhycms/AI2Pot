@@ -68,7 +68,7 @@ class FittingNet(nn.Module):
     def __init__(self,
                  ntypes: int,
                  num_descriptor: int,
-                 fit_sizes_list: List[int],
+                 fit_sizes_list: List[int] = [],
                  fit_activation: nn.Module = nn.Tanh(),
                  bias_mark: bool = True,
                  energy_shift_tensor: Union[bool, torch.Tensor] = False):
@@ -108,7 +108,7 @@ class FittingNet(nn.Module):
         x: torch.Tensor = bdescriptor_tensor
         for ii, tmp_linear in enumerate(self.linears_list):
             if (ii == len(self.linears_list)):
-                hidden = tmp_linear
+                hidden = tmp_linear(x)
                 hidden = hidden + self.energy_shift_tensor[btypes[:, :nlocal].unsqueeze(dim=-1)]
                 x = hidden
             else:
@@ -165,10 +165,10 @@ class NNMtp(nn.Module):
                 btypes: torch.Tensor,
                 bnghost: torch.Tensor) -> torch.Tensor:
         bdescriptor: torch.Tensor = self.descriptor_module(bilist,
-                                                 bnumneigh,
-                                                 bfirstneigh,
-                                                 brcs,
-                                                 btypes)
+                                                           bnumneigh,
+                                                           bfirstneigh,
+                                                           brcs,
+                                                           btypes)
         e_i_sr: torch.Tensor = self.fitting_module(btypes, bdescriptor)
         e_tot_sr: torch.Tensor = torch.sum(e_i_sr, dim=1)
         mask: List[Optional[torch.Tensor]] = [torch.ones_like(e_tot_sr,
