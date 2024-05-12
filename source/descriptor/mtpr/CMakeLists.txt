@@ -37,7 +37,6 @@ target_link_libraries(test_basis PRIVATE gtest gtest_main)
 
 add_executable(test_mtpParam ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mtpParam.cc)
 target_link_libraries(test_mtpParam PRIVATE mtpParam gtest gtest_main)
-set_target_properties(test_mtpParam PROPERTIES COMPILE_FLAGS "-g")
 
 add_executable(test_mtpBasis ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mtpBasis.cc)
 target_link_libraries(test_mtpBasis PRIVATE mtpParam gtest gtest_main)
@@ -46,6 +45,11 @@ if (TORCH_OP)
     add_executable(test_mtpParamOp ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mtpParamOp.cc)
     target_link_libraries(test_mtpParamOp PRIVATE ${TORCH_LIBRARIES} mtpParamOp mtpParam gtest gtest_main)
     gtest_discover_tests(test_mtpParamOp)
+
+    add_executable(test_mtpBasisOp ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mtpBasisOp.cc)
+    target_link_libraries(test_mtpBasisOp PRIVATE ${TORCH_LIBRARIES} mtpBasisOp mtpParamOp gtest gtest_main)
+    set_target_properties(test_mtpBasis PROPERTIES COMPILE_FLAGS "-g")
+    gtest_discover_tests(test_mtpBasisOp)
 endif()
 
 gtest_discover_tests(test_basis)

@@ -143,11 +143,11 @@ protected:
         brcs_tensor = at::zeros({1, inum, umax_num_neighs, 3}, float_options);
         btypes_tensor = at::zeros({1, inum}, int_options);
         bdei_drij_tensor = at::zeros({1, inum, umax_num_neighs, 3}, float_options);
-        ilist = bilist_tensor.data_ptr<int>();
-        numneigh = bnumneigh_tensor.data_ptr<int>();
-        firstneigh = bfirstnumneigh_tensor.data_ptr<int>();
-        rcs = brcs_tensor.data_ptr<double>();
-        types = btypes_tensor.data_ptr<int>();
+        ilist = bilist_tensor[0].data_ptr<int>();
+        numneigh = bnumneigh_tensor[0].data_ptr<int>();
+        firstneigh = bfirstnumneigh_tensor[0].data_ptr<int>();
+        rcs = brcs_tensor[0].data_ptr<double>();
+        types = btypes_tensor[0].data_ptr<int>();
         dei_drij = bdei_drij_tensor.data_ptr<double>();
 
         nblist.find_info4mlff(inum,

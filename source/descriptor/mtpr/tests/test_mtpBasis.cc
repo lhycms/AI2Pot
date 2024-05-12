@@ -59,23 +59,24 @@ protected:
     }
 
     void SetUp() override {
+        
         filenames = {
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/depreciated-02.almtp", 
-            (std::string)std::getenv("AI2POT_PATH") + "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/depreciated-04.almtp",
-            (std::string)std::getenv("AI2POT_PATH") + "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/06.almtp",
-            (std::string)std::getenv("AI2POT_PATH") + "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/08.almtp",
-            (std::string)std::getenv("AI2POT_PATH") + "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/10.almtp",
-            (std::string)std::getenv("AI2POT_PATH") + "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/12.almtp",
-            (std::string)std::getenv("AI2POT_PATH") + "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/14.almtp",
-            (std::string)std::getenv("AI2POT_PATH") + "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/16.almtp",
-            (std::string)std::getenv("AI2POT_PATH") + "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/18.almtp",
-            (std::string)std::getenv("AI2POT_PATH") + "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/20.almtp",
-            (std::string)std::getenv("AI2POT_PATH") + "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/22.almtp",
-            (std::string)std::getenv("AI2POT_PATH") + "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/24.almtp",
-            (std::string)std::getenv("AI2POT_PATH") + "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/26.almtp",
-            (std::string)std::getenv("AI2POT_PATH") + "/data/home/liuhanyu/hyliu/code/AI2Pot/source/descriptor/mtpr/MTP_templates/28.almtp"
+            (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/depreciated-04.almtp",
+            (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/06.almtp",
+            (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/08.almtp",
+            (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/10.almtp",
+            (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/12.almtp",
+            (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/14.almtp",
+            (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/16.almtp",
+            (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/18.almtp",
+            (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/20.almtp",
+            (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/22.almtp",
+            (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/24.almtp",
+            (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/26.almtp",
+            (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/28.almtp"
         };
-        mtp_param._load(filenames[7]); // 3 or 7
+        mtp_param._load(filenames[4]); // 7
 //mtp_param.show();
 
         inum = 12;
@@ -93,7 +94,7 @@ protected:
         mtp_basis_der2coeffs_ = (double*)malloc(sizeof(double) * inum * mtp_param.alpha_scalar_moments() * ntypes * ntypes * mtp_param.nmus() * chebyshev_size);
         coeffs = (double*)malloc(sizeof(double) * ntypes * ntypes * mtp_param.nmus() * chebyshev_size);
         for (int ii=0; ii<ntypes*ntypes*mtp_param.nmus()*chebyshev_size; ii++)
-            coeffs[ii] = 1;
+            coeffs[ii] = 1.0;
 
         // Establish neighbor list
         num_atoms = 12;
@@ -197,6 +198,10 @@ protected:
         free(firstneigh);
         free(rcs);
         free(types);
+
+        free(mtp_basis_val_);
+        free(mtp_basis_der_);
+        free(mtp_basis_der2coeffs_);
     }
 };  // class : MtpBasisTest
 
@@ -260,6 +265,10 @@ TEST_F(MtpBasisTest, find_val_der4rcs)
         umax_num_neigh_atoms,
         rmax,
         rmin);
+
+for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++)
+    printf("%10lf, ", mtp_basis_val[0*mtp_param.alpha_scalar_moments() + ii]);
+printf("\n");
 
 // Step 1. Check the derivatives of MTP basis wrt. relative coordinates
 printf("1. Check the derivatives of MTP basis wrt. relative coordinates:\n");
