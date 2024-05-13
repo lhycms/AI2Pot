@@ -1,4 +1,5 @@
 import unittest
+import os 
 
 from typing import List
 from dpdata import LabeledSystem
@@ -12,8 +13,11 @@ from ai2pot.deepmd.se_r import (EmbeddingNet,
                                 DescripSeR,
                                 DpSeR)
 
-"""
-class EmbeddingNetTes(unittest.TestCase):
+
+TEST_FILES_DIR: str = os.path.join(os.getenv("AI2POT_PATH"), "test_data")
+
+
+class EmbeddingNetTest(unittest.TestCase):
     def setUp(self):
         print("EmbeddingNetTest (TestCase) is setting up...\n")
         self.layer_size_list: List[int] = [2, 4, 8]
@@ -35,7 +39,7 @@ class EmbeddingNetTes(unittest.TestCase):
         print("EmbeddingNetTest (TestCase) is tearing down...\n")
 
 
-class FittingNetTes(unittest.TestCase):
+class FittingNetTest(unittest.TestCase):
     def setUp(self):
         print("FittingNetTest (TestCase) is setting up...\n")
         self.layer_size_list: List[int] = [2, 4, 8]
@@ -77,7 +81,7 @@ class DescripSeRTes(unittest.TestCase):
             M2=4)
         self.descrip_se_r.to(torch.float64)
 
-        self.outcar_path: str = "/data/home/liuhanyu/hyliu/code/AI2Pot/test_data/ReNbSSe/OUTCAR"
+        self.outcar_path: str = f"{TEST_FILES_DIR}/ReNbSSe/OUTCAR"
         self.labeled_system: LabeledSystem = LabeledSystem(self.outcar_path)
         self.mlff_dataset: MlffDataset = MlffDataset(
             labeled_system=self.labeled_system,
@@ -105,8 +109,7 @@ class DescripSeRTes(unittest.TestCase):
     
     def tearDown(self):
         print("DescripTest (TestCase) is tearing down...\n")
-        
-"""
+
 
 class DpSeRTest(unittest.TestCase):
     def setUp(self):
@@ -128,7 +131,7 @@ class DpSeRTest(unittest.TestCase):
                                         energy_shift_tensor=False)
         self.dp_se_r.to(torch.float64)
 
-        self.outcar_path: str = "/data/home/liuhanyu/hyliu/code/AI2Pot/test_data/ReNbSSe/OUTCAR"
+        self.outcar_path: str = f"{TEST_FILES_DIR}/ReNbSSe/OUTCAR"
         self.labeled_system: LabeledSystem = LabeledSystem(self.outcar_path)
         self.mlff_dataset: MlffDataset = MlffDataset(labeled_system=self.labeled_system,
                                                      rcut=rcut,

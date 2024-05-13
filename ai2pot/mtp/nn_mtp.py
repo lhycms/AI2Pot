@@ -30,7 +30,6 @@ class DescriptorMtp(nn.Module):
         self.register_buffer("nmus_tensor", mtp_param_info[5])
         self.nmus: int = self.nmus_tensor.item()
         self.num_descriptors: int = self.alpha_moment_mapping_tensor.size()[0]
-        print(self.num_descriptors)
         
         self.coeffs_list: nn.Module = nn.ParameterList()
         self.coeffs_list.append(nn.Parameter(torch.Tensor(self.ntypes*self.ntypes*self.nmus*self.chebyshev_size),
@@ -180,8 +179,8 @@ class NNMtp(nn.Module):
         e_i_sr: torch.Tensor = self.fitting_module(btypes, bdescriptor)
         e_tot_sr: torch.Tensor = torch.sum(e_i_sr, dim=1)
         mask: List[Optional[torch.Tensor]] = [torch.ones_like(e_tot_sr,
-                                                              device=brcs.device(),
-                                                              dtype=brcs.dtype())]
+                                                              device=brcs.device,
+                                                              dtype=brcs.dtype)]
         eisr_rij_jacobian: torch.Tensor = torch.autograd.grad([e_tot_sr],
                                                               [brcs],
                                                               grad_outputs=mask,
