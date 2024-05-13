@@ -1,2 +1,2 @@
 # AI2Pot
-Machine learning potenial for material.
+Ab Initio and Artificial Intelligence POTential framework, applied in materials and molecular systems, with the ability to predict scalars and tensors.
