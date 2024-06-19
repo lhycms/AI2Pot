@@ -1,1 +1,0 @@
-/opt/rh/devtoolset-7/root/usr/bin/c++  -fopenmp -g -rdynamic CMakeFiles/test_hardware.dir/tests/test_hardware.cc.o -o ../bin/core/test_hardware  ../lib/libgtest_main.a ../lib/libgtest.a -lpthread 

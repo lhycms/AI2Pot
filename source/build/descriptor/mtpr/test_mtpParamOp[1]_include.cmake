@@ -1,5 +1,0 @@
-if(EXISTS "/data/home/liuhanyu/hyliu/code/rubbish/test/AI2Pot/source/build/descriptor/mtpr/test_mtpParamOp[1]_tests.cmake")
-  include("/data/home/liuhanyu/hyliu/code/rubbish/test/AI2Pot/source/build/descriptor/mtpr/test_mtpParamOp[1]_tests.cmake")
-else()
-  add_test(test_mtpParamOp_NOT_BUILT test_mtpParamOp_NOT_BUILT)
-endif()

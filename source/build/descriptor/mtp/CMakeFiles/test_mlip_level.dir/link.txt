@@ -1,1 +1,0 @@
-/opt/rh/devtoolset-7/root/usr/bin/c++  -fopenmp -D_GLIBCXX_USE_CXX11_ABI=0 -rdynamic CMakeFiles/test_mlip_level.dir/tests/test_mlip_level.cc.o -o ../../bin/descriptor/mtp/test_mlip_level 

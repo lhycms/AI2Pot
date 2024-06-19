@@ -1,5 +1,0 @@
-if(EXISTS "/data/home/liuhanyu/hyliu/code/rubbish/test/AI2Pot/source/build/nblist/test_neighborList[1]_tests.cmake")
-  include("/data/home/liuhanyu/hyliu/code/rubbish/test/AI2Pot/source/build/nblist/test_neighborList[1]_tests.cmake")
-else()
-  add_test(test_neighborList_NOT_BUILT test_neighborList_NOT_BUILT)
-endif()

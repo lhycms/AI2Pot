@@ -1,5 +1,0 @@
-if(EXISTS "/data/home/liuhanyu/hyliu/code/rubbish/test/AI2Pot/source/build/descriptor/mtp/test_mtpLevel[1]_tests.cmake")
-  include("/data/home/liuhanyu/hyliu/code/rubbish/test/AI2Pot/source/build/descriptor/mtp/test_mtpLevel[1]_tests.cmake")
-else()
-  add_test(test_mtpLevel_NOT_BUILT test_mtpLevel_NOT_BUILT)
-endif()

@@ -1,1 +1,0 @@
-/opt/rh/devtoolset-7/root/usr/bin/c++  -fopenmp -D_GLIBCXX_USE_CXX11_ABI=0 -rdynamic CMakeFiles/demo.dir/test/demo.cc.o -o ../../bin/descriptor/deepmd/demo 

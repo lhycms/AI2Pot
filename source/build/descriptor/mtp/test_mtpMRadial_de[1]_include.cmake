@@ -1,5 +1,0 @@
-if(EXISTS "/data/home/liuhanyu/hyliu/code/rubbish/test/AI2Pot/source/build/descriptor/mtp/test_mtpMRadial_de[1]_tests.cmake")
-  include("/data/home/liuhanyu/hyliu/code/rubbish/test/AI2Pot/source/build/descriptor/mtp/test_mtpMRadial_de[1]_tests.cmake")
-else()
-  add_test(test_mtpMRadial_de_NOT_BUILT test_mtpMRadial_de_NOT_BUILT)
-endif()

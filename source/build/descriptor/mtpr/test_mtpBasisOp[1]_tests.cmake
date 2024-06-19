@@ -1,5 +1,0 @@
-add_test([=[MtpBasisOpTest.forward]=]  /data/home/liuhanyu/hyliu/code/rubbish/test/AI2Pot/source/build/bin/descriptor/mtpr/test_mtpBasisOp [==[--gtest_filter=MtpBasisOpTest.forward]==] --gtest_also_run_disabled_tests)
-set_tests_properties([=[MtpBasisOpTest.forward]=]  PROPERTIES WORKING_DIRECTORY /data/home/liuhanyu/hyliu/code/rubbish/test/AI2Pot/source/build/descriptor/mtpr SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
-add_test([=[MtpBasisOpTest.backward]=]  /data/home/liuhanyu/hyliu/code/rubbish/test/AI2Pot/source/build/bin/descriptor/mtpr/test_mtpBasisOp [==[--gtest_filter=MtpBasisOpTest.backward]==] --gtest_also_run_disabled_tests)
-set_tests_properties([=[MtpBasisOpTest.backward]=]  PROPERTIES WORKING_DIRECTORY /data/home/liuhanyu/hyliu/code/rubbish/test/AI2Pot/source/build/descriptor/mtpr SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
-set(  test_mtpBasisOp_TESTS MtpBasisOpTest.forward MtpBasisOpTest.backward)
