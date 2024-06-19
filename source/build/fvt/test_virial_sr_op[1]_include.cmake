@@ -1,0 +1,5 @@
+if(EXISTS "/data/home/liuhanyu/hyliu/code/rubbish/test/AI2Pot/source/build/fvt/test_virial_sr_op[1]_tests.cmake")
+  include("/data/home/liuhanyu/hyliu/code/rubbish/test/AI2Pot/source/build/fvt/test_virial_sr_op[1]_tests.cmake")
+else()
+  add_test(test_virial_sr_op_NOT_BUILT test_virial_sr_op_NOT_BUILT)
+endif()

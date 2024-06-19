@@ -1,0 +1,5 @@
+add_test([=[VirialSrOpTest.backward_for_der1]=]  /data/home/liuhanyu/hyliu/code/rubbish/test/AI2Pot/source/build/bin/fvt/test_virial_sr_op [==[--gtest_filter=VirialSrOpTest.backward_for_der1]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[VirialSrOpTest.backward_for_der1]=]  PROPERTIES WORKING_DIRECTORY /data/home/liuhanyu/hyliu/code/rubbish/test/AI2Pot/source/build/fvt SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+add_test([=[VirialSrOpTest.backward_for_der2]=]  /data/home/liuhanyu/hyliu/code/rubbish/test/AI2Pot/source/build/bin/fvt/test_virial_sr_op [==[--gtest_filter=VirialSrOpTest.backward_for_der2]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[VirialSrOpTest.backward_for_der2]=]  PROPERTIES WORKING_DIRECTORY /data/home/liuhanyu/hyliu/code/rubbish/test/AI2Pot/source/build/fvt SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+set(  test_virial_sr_op_TESTS VirialSrOpTest.backward_for_der1 VirialSrOpTest.backward_for_der2)

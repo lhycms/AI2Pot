@@ -1,0 +1,7 @@
+add_test([=[ArrayUtilsTest.array_3d]=]  /data/home/liuhanyu/hyliu/code/rubbish/test/AI2Pot/source/build/bin/core/test_arrayUtils [==[--gtest_filter=ArrayUtilsTest.array_3d]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[ArrayUtilsTest.array_3d]=]  PROPERTIES WORKING_DIRECTORY /data/home/liuhanyu/hyliu/code/rubbish/test/AI2Pot/source/build/core SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+add_test([=[ArrayUtilsTest.array_4d]=]  /data/home/liuhanyu/hyliu/code/rubbish/test/AI2Pot/source/build/bin/core/test_arrayUtils [==[--gtest_filter=ArrayUtilsTest.array_4d]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[ArrayUtilsTest.array_4d]=]  PROPERTIES WORKING_DIRECTORY /data/home/liuhanyu/hyliu/code/rubbish/test/AI2Pot/source/build/core SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+add_test([=[ArrayUtilsTest.array_5d]=]  /data/home/liuhanyu/hyliu/code/rubbish/test/AI2Pot/source/build/bin/core/test_arrayUtils [==[--gtest_filter=ArrayUtilsTest.array_5d]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[ArrayUtilsTest.array_5d]=]  PROPERTIES WORKING_DIRECTORY /data/home/liuhanyu/hyliu/code/rubbish/test/AI2Pot/source/build/core SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+set(  test_arrayUtils_TESTS ArrayUtilsTest.array_3d ArrayUtilsTest.array_4d ArrayUtilsTest.array_5d)

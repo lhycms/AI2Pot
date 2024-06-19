@@ -128,7 +128,7 @@ SwitchFunction<CoordType>::SwitchFunction(CoordType rmax, CoordType rmin)
 template <typename CoordType>
 CoordType SwitchFunction<CoordType>::val(CoordType distance_ij)
 {
-    assert( (distance_ij>=this->_rmin) && (distance_ij<=this->_rmax) );
+    // ZBL: assert( (distance_ij>=this->_rmin) && (distance_ij<=this->_rmax) );
     CoordType uu = (distance_ij - this->_rmin) / (this->_rmax - this->_rmin);
     
     if (distance_ij < this->_rmin) {
@@ -143,7 +143,7 @@ CoordType SwitchFunction<CoordType>::val(CoordType distance_ij)
 template <typename CoordType>
 CoordType SwitchFunction<CoordType>::der2r(CoordType distance_ij)
 {
-    assert( (distance_ij>=this->_rmin) && (distance_ij<=this->_rmax) );
+    // ZBL: assert( (distance_ij>=this->_rmin) && (distance_ij<=this->_rmax) );
     CoordType uu = (distance_ij - this->_rmin) / (this->_rmax - this->_rmin);
 
     if (distance_ij < this->_rmin) {

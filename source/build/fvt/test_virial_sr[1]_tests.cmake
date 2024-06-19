@@ -1,0 +1,5 @@
+add_test([=[VirialSrTest.find_val_der1]=]  /data/home/liuhanyu/hyliu/code/rubbish/test/AI2Pot/source/build/bin/fvt/test_virial_sr [==[--gtest_filter=VirialSrTest.find_val_der1]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[VirialSrTest.find_val_der1]=]  PROPERTIES WORKING_DIRECTORY /data/home/liuhanyu/hyliu/code/rubbish/test/AI2Pot/source/build/fvt SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+add_test([=[VirialSrTest.find_val_der2]=]  /data/home/liuhanyu/hyliu/code/rubbish/test/AI2Pot/source/build/bin/fvt/test_virial_sr [==[--gtest_filter=VirialSrTest.find_val_der2]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[VirialSrTest.find_val_der2]=]  PROPERTIES WORKING_DIRECTORY /data/home/liuhanyu/hyliu/code/rubbish/test/AI2Pot/source/build/fvt SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+set(  test_virial_sr_TESTS VirialSrTest.find_val_der1 VirialSrTest.find_val_der2)

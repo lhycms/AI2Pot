@@ -1,0 +1,1 @@
+/opt/rh/devtoolset-7/root/usr/bin/c++  -fopenmp -g -rdynamic CMakeFiles/test_AlignedArray.dir/tests/test_AlignedArray.cc.o -o ../bin/core/test_AlignedArray  ../lib/libgtest_main.a ../lib/libgtest.a -lpthread 

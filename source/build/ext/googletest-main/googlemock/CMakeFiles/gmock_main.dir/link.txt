@@ -1,0 +1,2 @@
+/opt/rh/devtoolset-7/root/usr/bin/ar qc ../../../lib/libgmock_main.a CMakeFiles/gmock_main.dir/src/gmock_main.cc.o
+/opt/rh/devtoolset-7/root/usr/bin/ranlib ../../../lib/libgmock_main.a

@@ -1,0 +1,5 @@
+if(EXISTS "/data/home/liuhanyu/hyliu/code/rubbish/test/AI2Pot/source/build/fvt/test_force_sr[1]_tests.cmake")
+  include("/data/home/liuhanyu/hyliu/code/rubbish/test/AI2Pot/source/build/fvt/test_force_sr[1]_tests.cmake")
+else()
+  add_test(test_force_sr_NOT_BUILT test_force_sr_NOT_BUILT)
+endif()

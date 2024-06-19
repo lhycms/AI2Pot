@@ -1,0 +1,5 @@
+add_test([=[MtpBasisTest.find_val_der4rcs]=]  /data/home/liuhanyu/hyliu/code/rubbish/test/AI2Pot/source/build/bin/descriptor/mtpr/test_mtpBasis [==[--gtest_filter=MtpBasisTest.find_val_der4rcs]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[MtpBasisTest.find_val_der4rcs]=]  PROPERTIES WORKING_DIRECTORY /data/home/liuhanyu/hyliu/code/rubbish/test/AI2Pot/source/build/descriptor/mtpr SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+add_test([=[MtpBasisTest.find_val_der4coeffs]=]  /data/home/liuhanyu/hyliu/code/rubbish/test/AI2Pot/source/build/bin/descriptor/mtpr/test_mtpBasis [==[--gtest_filter=MtpBasisTest.find_val_der4coeffs]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[MtpBasisTest.find_val_der4coeffs]=]  PROPERTIES WORKING_DIRECTORY /data/home/liuhanyu/hyliu/code/rubbish/test/AI2Pot/source/build/descriptor/mtpr SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+set(  test_mtpBasis_TESTS MtpBasisTest.find_val_der4rcs MtpBasisTest.find_val_der4coeffs)

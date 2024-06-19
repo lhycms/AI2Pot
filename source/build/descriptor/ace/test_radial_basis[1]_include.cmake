@@ -1,0 +1,5 @@
+if(EXISTS "/data/home/liuhanyu/hyliu/code/rubbish/test/AI2Pot/source/build/descriptor/ace/test_radial_basis[1]_tests.cmake")
+  include("/data/home/liuhanyu/hyliu/code/rubbish/test/AI2Pot/source/build/descriptor/ace/test_radial_basis[1]_tests.cmake")
+else()
+  add_test(test_radial_basis_NOT_BUILT test_radial_basis_NOT_BUILT)
+endif()
