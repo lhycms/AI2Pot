@@ -40,13 +40,13 @@ public:
                   CoordType rmin,
                   CoordType lambda_val);
 
-    //RB_CChebyshev(const RB_CChebyshev &rhs);
+    RB_CChebyshev(const RB_CChebyshev &rhs);
 
-    //RB_CChebyshev(RB_CChebyshev &&rhs);
+    RB_CChebyshev(RB_CChebyshev &&rhs);
 
-    //RB_CChebyshev& operator=(const RB_CChebyshev &rhs);
+    RB_CChebyshev& operator=(const RB_CChebyshev &rhs);
 
-    //RB_CChebyshev& operator=(RB_CChebyshev &&rhs);
+    RB_CChebyshev& operator=(RB_CChebyshev &&rhs);
 
     void build(CoordType distance_ij);
 
@@ -158,6 +158,104 @@ RB_CChebyshev<CoordType>::RB_CChebyshev(int size,
     memset(this->_ders2vv, 0, this->_size * sizeof(CoordType));
     this->_ders2r = (CoordType*)malloc(sizeof(CoordType) * this->_size);
     memset(this->_ders2r, 0, this->_size * sizeof(CoordType));
+}
+
+template <typename CoordType>
+RB_CChebyshev<CoordType>::RB_CChebyshev(const RB_CChebyshev &rhs)
+{
+    if ((rhs.size()!=0) && (rhs.rmax()>rhs.rmin())) {
+        this->_size = rhs._size;
+        this->_rmax = rhs._rmax;
+        this->_rmin = rhs._rmin;
+        this->_lambda_val = rhs._lambda_val;
+        this->_vals = (CoordType*)malloc(this->_size * sizeof(CoordType));
+        this->_ders2vv = (CoordType*)malloc(this->_size * sizeof(CoordType));
+        this->_ders2r = (CoordType*)malloc(this->_size * sizeof(CoordType));
+        for (int ii=0; ii<this->_size; ii++) {
+            this->_vals[ii] = rhs._vals[ii];
+            this->_ders2vv[ii] = rhs._ders2vv[ii];
+            this->_ders2r[ii] = rhs._ders2r[ii];
+        }
+    } else {
+        this->_size = rhs._size;
+        this->_rmax = rhs._rmax;
+        this->_rmin = rhs._rmin;
+        this->_lambda_val = rhs._lambda_val;
+        this->_vals = nullptr;
+        this->_ders2vv = nullptr;
+        this->_ders2r = nullptr;
+    }
+}
+
+template <typename CoordType>
+RB_CChebyshev<CoordType>::RB_CChebyshev(RB_CChebyshev &&rhs)
+{
+    if (this != &rhs) {
+        this->_size = rhs._size;
+        rhs._size = 0;
+        this->_rmax = rhs._rmax;
+        rhs._rmax = 0.0;
+        this->_rmin = rhs._rmin;
+        rhs._rmin = 0.0;
+        this->_lambda_val = rhs._lambda_val;
+        rhs._lambda_val = 0.0;
+        this->_vals = rhs._vals;
+        rhs._vals = nullptr;
+        this->_ders2vv = rhs._ders2vv;
+        rhs._ders2vv = nullptr;
+        this->_ders2r = rhs._ders2r;
+        rhs._ders2r = nullptr;
+    }
+}
+
+template <typename CoordType>
+RB_CChebyshev<CoordType>& RB_CChebyshev<CoordType>::operator=(const RB_CChebyshev<CoordType> &rhs)
+{
+    if ((rhs._size!=0) && (rhs._rmax>rhs._rmin)) {
+        this->_size = rhs._size;
+        this->_rmax = rhs._rmax;
+        this->_rmin = rhs._rmin;
+        this->_lambda_val = rhs._lambda_val;
+        this->_vals = (CoordType*)malloc(this->_size * sizeof(CoordType));
+        this->_ders2vv = (CoordType*)malloc(this->_size * sizeof(CoordType));
+        this->_ders2r = (CoordType*)malloc(this->_size * sizeof(CoordType));
+        for (int ii=0; ii<this->_size; ii++) {
+            this->_vals[ii] = rhs._vals[ii];
+            this->_ders2vv[ii] = rhs._ders2vv[ii];
+            this->_ders2r[ii] = rhs._ders2r[ii];
+        }
+    } else {
+        this->_size = rhs._size;
+        this->_rmax = rhs._rmax;
+        this->_rmin = rhs._rmin;
+        this->_lambda_val = rhs._lambda_val;
+        this->_vals = nullptr;
+        this->_ders2vv = nullptr;
+        this->_ders2r = nullptr;
+    }
+    return *this;
+}
+
+template <typename CoordType>
+RB_CChebyshev<CoordType>& RB_CChebyshev<CoordType>::operator=(RB_CChebyshev<CoordType> &&rhs)
+{
+    if (this != &rhs) {
+        this->_size = rhs._size;
+        rhs._size = 0;
+        this->_rmax = rhs._rmax;
+        rhs._rmax = 0.0;
+        this->_rmin = rhs._rmin;
+        rhs._rmin = 0.0;
+        this->_lambda_val = rhs._lambda_val;
+        rhs._lambda_val = 0.0;
+        this->_vals = rhs._vals;
+        rhs._vals = nullptr;
+        this->_ders2vv = rhs._ders2vv;
+        rhs._ders2vv = nullptr;
+        this->_ders2r = rhs._ders2r;
+        rhs._ders2r = nullptr;
+    }
+    return *this;
 }
 
 template <typename CoordType>
