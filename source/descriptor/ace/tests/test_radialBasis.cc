@@ -61,6 +61,36 @@ protected:
 };  // class : RB_CChebyshevTest
 
 
+class RQ_CChebyshevTest : public ::testing::Test
+{
+protected:
+    int size;
+    double rmax;
+    double rmin;
+    double lambda_val;
+    double distance_ij;
+
+    static void SetUpTestSuite() {
+        std::cout << "RQ_CChebyshevTest (TestSuite) is setting up...\n";
+    }
+
+    static void TearDownTestSuite() {
+        std::cout << "RQ_CChebyshevTest (TestSuite) is tearing down...\n";
+    }
+
+    void SetUp() override {
+        size = 8;
+        rmax = 5.0;
+        rmin = 2.0;
+        lambda_val = 5.0;
+        distance_ij = 3.14;
+    }
+
+    void TearDown() override {
+    }
+};  // class : RQ_CChebyshevTest
+
+
 TEST_F(SwitchFunctionTest, default_constructor) {
     ai2pot::ace::SwitchFunction<double> switch_func;
 
@@ -184,6 +214,56 @@ printf("\n");
 printf("2.2. Numerical ders2r:\n\t");
 for (int ii=0; ii<rb_cchebyshev.size(); ii++) {
     printf("%lf, ", (delta_rb_cchebyshev.vals()[ii] - rb_cchebyshev.vals()[ii]) / 0.001);
+}
+printf("\n");
+}
+
+
+TEST_F(RQ_CChebyshevTest, default_constructor) {
+    ai2pot::ace::RQ_CChebyshev<double> rq_cchebyshev;
+    ASSERT_EQ(rq_cchebyshev.size(), 0);
+    ASSERT_EQ(rq_cchebyshev.rmax(), 0.0);
+    ASSERT_EQ(rq_cchebyshev.rmin(), 0.0);
+    ASSERT_EQ(rq_cchebyshev.lambda_val(), 0.0);
+    ASSERT_EQ(rq_cchebyshev.vals(), nullptr);
+    ASSERT_EQ(rq_cchebyshev.ders2r(), nullptr);
+}
+
+TEST_F(RQ_CChebyshevTest, constructor_1) {
+    ai2pot::ace::RQ_CChebyshev<double> rq_cchebyshev(size, rmax, rmin, lambda_val);
+    ASSERT_EQ(rq_cchebyshev.size(), size);
+    ASSERT_EQ(rq_cchebyshev.rmax(), rmax);
+    ASSERT_EQ(rq_cchebyshev.rmin(), rmin);
+    ASSERT_EQ(rq_cchebyshev.lambda_val(), lambda_val);
+}
+
+TEST_F(RQ_CChebyshevTest, ders2r_accuracy) {
+    ai2pot::ace::RQ_CChebyshev<double> rq_cchebyshev(size, rmax, rmin, lambda_val);
+    rq_cchebyshev.build(distance_ij);
+    ai2pot::ace::RQ_CChebyshev<double> delta_rq_cchebyshev(size, rmax, rmin, lambda_val);
+    delta_rq_cchebyshev.build(distance_ij+0.001);
+
+printf("1.1. Value of rq_cchbyshev:\n\t");
+for (int ii=0; ii<rq_cchebyshev.size(); ii++) {
+    printf("%lf, ", rq_cchebyshev.vals()[ii]);
+}
+printf("\n");
+
+printf("1.2. Value of delta_rq_chebyshev:\n\t");
+for (int ii=0; ii<rq_cchebyshev.size(); ii++) {
+    printf("%lf, ", delta_rq_cchebyshev.vals()[ii]);
+}
+printf("\n");
+
+printf("2.1. Numerical derivatives:\n\t");
+for (int ii=0; ii<rq_cchebyshev.size(); ii++) {
+    printf("%lf, ", (delta_rq_cchebyshev.vals()[ii] - rq_cchebyshev.vals()[ii]) / 0.001);
+}
+printf("\n");
+
+printf("2.2. Analytical derivatives:\n\t");
+for (int ii=0; ii<rq_cchebyshev.size(); ii++) {
+    printf("%lf, ", rq_cchebyshev.ders2r()[ii]);
 }
 printf("\n");
 }

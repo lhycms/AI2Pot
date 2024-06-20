@@ -77,6 +77,50 @@ private:
 };  // class : RB_CChebyshev
 
 
+template <typename CoordType>
+class RQ_CChebyshev {
+public:
+    RQ_CChebyshev();
+
+    RQ_CChebyshev(int size,
+                  CoordType rmax,
+                  CoordType rmin,
+                  CoordType lambda_val);
+    
+    RQ_CChebyshev(const RQ_CChebyshev &rhs);
+
+    RQ_CChebyshev(RQ_CChebyshev &&rhs);
+
+    RQ_CChebyshev& operator=(const RQ_CChebyshev &rhs);
+
+    RQ_CChebyshev& operator=(RQ_CChebyshev &&rhs);
+
+    ~RQ_CChebyshev();
+
+    void build(CoordType distance_ij);
+
+    const int size() const;
+
+    const CoordType rmax() const;
+
+    const CoordType rmin() const;
+
+    const CoordType lambda_val() const;
+
+    const CoordType* vals() const;
+
+    const CoordType* ders2r() const;
+
+
+private:
+    int _size = 0;
+    CoordType _rmax = 0.0;
+    CoordType _rmin = 0.0;
+    CoordType _lambda_val = 0.0;
+    RB_CChebyshev<CoordType>* _ptr_rb = nullptr;
+    CoordType *_vals = nullptr;
+    CoordType *_ders2r = nullptr;
+};  // class : RQ_CChebyshev
 
 
 
@@ -152,12 +196,14 @@ RB_CChebyshev<CoordType>::RB_CChebyshev(int size,
     this->_rmin = rmin;
     this->_rmax = rmax;
     this->_lambda_val = lambda_val;
-    this->_vals = (CoordType*)malloc(sizeof(CoordType) * this->_size);
-    memset(this->_vals, 0, this->_size * sizeof(CoordType));
-    this->_ders2vv = (CoordType*)malloc(sizeof(CoordType) * this->_size);
-    memset(this->_ders2vv, 0, this->_size * sizeof(CoordType));
-    this->_ders2r = (CoordType*)malloc(sizeof(CoordType) * this->_size);
-    memset(this->_ders2r, 0, this->_size * sizeof(CoordType));
+    if (this->_size > 0) {
+        this->_vals = (CoordType*)malloc(sizeof(CoordType) * this->_size);
+        memset(this->_vals, 0, this->_size * sizeof(CoordType));
+        this->_ders2vv = (CoordType*)malloc(sizeof(CoordType) * this->_size);
+        memset(this->_ders2vv, 0, this->_size * sizeof(CoordType));
+        this->_ders2r = (CoordType*)malloc(sizeof(CoordType) * this->_size);
+        memset(this->_ders2r, 0, this->_size * sizeof(CoordType));
+    }
 }
 
 template <typename CoordType>
@@ -240,6 +286,12 @@ template <typename CoordType>
 RB_CChebyshev<CoordType>& RB_CChebyshev<CoordType>::operator=(RB_CChebyshev<CoordType> &&rhs)
 {
     if (this != &rhs) {
+        if (this->_size > 0) {
+            free(this->_vals);
+            free(this->_ders2vv);
+            free(this->_ders2r);
+        }
+
         this->_size = rhs._size;
         rhs._size = 0;
         this->_rmax = rhs._rmax;
@@ -287,12 +339,13 @@ void RB_CChebyshev<CoordType>::build(CoordType distance_ij)
     }
 }
 
-
 template <typename CoordType>
 RB_CChebyshev<CoordType>::~RB_CChebyshev() {
-    free(this->_vals);
-    free(this->_ders2vv);
-    free(this->_ders2r);
+    if (this->_size != 0) {
+        free(this->_vals);
+        free(this->_ders2vv);
+        free(this->_ders2r);
+    }
 }
 
 template <typename CoordType>
@@ -329,6 +382,187 @@ template <typename CoordType>
 const CoordType* RB_CChebyshev<CoordType>::ders2r() const {
     return this->_ders2r;
 }
+
+
+
+template <typename CoordType>
+RQ_CChebyshev<CoordType>::RQ_CChebyshev()
+{
+    this->_size = 0;
+    this->_rmax = 0.0;
+    this->_rmin = 0.0;
+    this->_lambda_val = 0.0;
+    this->_ptr_rb = nullptr;
+    this->_vals = nullptr;
+    this->_ders2r = nullptr;
+}
+
+template <typename CoordType>
+RQ_CChebyshev<CoordType>::RQ_CChebyshev(int size, CoordType rmax, CoordType rmin, CoordType lambda_val)
+{
+    this->_size = size;
+    this->_rmax = rmax;
+    this->_rmin = rmin;
+    this->_lambda_val = lambda_val;
+    if (this->_size > 0) {
+        this->_ptr_rb = new RB_CChebyshev<CoordType>(this->_size, this->_rmax, this->_rmin, this->_lambda_val);
+        this->_vals = (CoordType*)malloc(this->_size * sizeof(CoordType));
+        this->_ders2r = (CoordType*)malloc(this->_size * sizeof(CoordType));
+    }
+}
+
+template <typename CoordType>
+RQ_CChebyshev<CoordType>::RQ_CChebyshev(const RQ_CChebyshev &rhs)
+{
+    this->_size = rhs._size;
+    this->_rmax = rhs._rmax;
+    this->_rmin = rhs._rmin;
+    this->_lambda_val = rhs._lambda_val;
+    if ((this->_size>0) && (this->_rmax>this->_rmin)) {
+        this->_ptr_rb = new RB_CChebyshev(*rhs._ptr_rb);
+        this->_vals = (CoordType*)malloc(this->_size * sizeof(CoordType));
+        this->_ders2r = (CoordType*)malloc(this->_size * sizeof(CoordType));
+        for (int ii=0; ii<this->_size; ii++) {
+            this->_vals[ii] = rhs._vals[ii];
+            this->_ders2r[ii] = rhs._ders2r[ii];
+        }
+    } else {
+        this->_ptr_rb = nullptr;
+        this->_vals = nullptr;
+        this->_ders2r = nullptr;
+    }
+}
+
+template <typename CoordType>
+RQ_CChebyshev<CoordType>::RQ_CChebyshev(RQ_CChebyshev &&rhs)
+{
+    if (this != &rhs) {
+        this->_size = rhs._size;
+        rhs._size = 0;
+        this->_rmax = rhs._rmax;
+        rhs._rmax = 0.0;
+        this->_rmin = rhs._rmin;
+        rhs._rmin = 0.0;
+        this->_lambda_val = rhs._lambda_val;
+        rhs._lambda_val = 0.0;
+        this->_ptr_rb = rhs._ptr_rb;
+        rhs._ptr_rb = nullptr;
+        this->_vals = rhs._vals;
+        rhs._vals = nullptr;
+        this->_ders2r = rhs._ders2r;
+        rhs._ders2r = nullptr;
+    }
+}
+
+template <typename CoordType>
+RQ_CChebyshev<CoordType>& RQ_CChebyshev<CoordType>::operator=(const RQ_CChebyshev &rhs)
+{
+    if (this->_size > 0) {
+        delete this->_ptr_rb;
+        free(this->_vals);
+        free(this->_ders2r);
+        this->_size = 0;
+    }
+    this->_size = rhs._size;
+    this->_rmax = rhs._rmax;
+    this->_rmin = rhs._rmin;
+    this->_lambda_val = rhs._lambda_val;
+    if (this->_size > 0) {
+        this->_ptr_rb = new RB_CChebyshev(*rhs._ptr_rb);
+        this->_vals = (CoordType*)malloc(this->_size * sizeof(CoordType));
+        this->_ders2r = (CoordType*)malloc(this->_size * sizeof(CoordType));
+        for (int ii=0; ii<this->_size; ii++) {
+            this->_vals[ii] = rhs._vals[ii];
+            this->_ders2r[ii] = rhs._vals[ii];
+        }
+    } else {
+        this->_ptr_rb = nullptr;
+        this->_vals = nullptr;
+        this->_ders2r = nullptr;
+    }
+    return *this;
+}
+
+template <typename CoordType>
+RQ_CChebyshev<CoordType>& RQ_CChebyshev<CoordType>::operator=(RQ_CChebyshev<CoordType> &&rhs)
+{
+    if (this->_size > 0) {
+        delete this->_ptr_rb;
+        free(this->_vals);
+        free(this->_ders2r);
+        this->_size = 0;
+    }
+    if (this != &rhs) {
+        this->_size = rhs._size;
+        rhs._size = 0;
+        this->_rmax = rhs._rmax;
+        rhs._rmax = 0.0;
+        this->_rmin = rhs._rmin;
+        rhs._rmin = 0.0;
+        this->_lambda_val = rhs._lambda_val;
+        rhs._lambda_val = 0.0;
+        this->_ptr_rb = rhs._ptr_rb;
+        rhs._ptr_rb = nullptr;
+        this->_vals = rhs._vals;
+        rhs._vals = nullptr;
+        this->_ders2r = rhs._ders2r;
+        rhs._ders2r = nullptr;
+    }
+    return *this;
+}
+
+template <typename CoordType>
+RQ_CChebyshev<CoordType>::~RQ_CChebyshev()
+{
+    if (this->_size != 0) {
+        delete this->_ptr_rb;
+        free(this->_vals);
+        free(this->_ders2r);
+    }
+}
+
+template <typename CoordType>
+void RQ_CChebyshev<CoordType>::build(CoordType distance_ij)
+{
+    this->_ptr_rb->build(distance_ij);
+    SwitchFunction<CoordType> switch_func(this->_rmax, this->_rmin);
+    for (int ii=0; ii<this->size(); ii++) {
+        this->_vals[ii] = switch_func.val(distance_ij) * this->_ptr_rb->vals()[ii];
+        this->_ders2r[ii] = switch_func.der2r(distance_ij) * this->_ptr_rb->vals()[ii] 
+                            + switch_func.val(distance_ij) * this->_ptr_rb->ders2r()[ii];
+    }
+}
+
+template <typename CoordType>
+const int RQ_CChebyshev<CoordType>::size() const {
+    return this->_size;
+}
+
+template <typename CoordType>
+const CoordType RQ_CChebyshev<CoordType>::rmax() const {
+    return this->_rmax;
+}
+
+template <typename CoordType>
+const CoordType RQ_CChebyshev<CoordType>::rmin() const {
+    return this->_rmin;
+}
+
+template <typename CoordType>
+const CoordType RQ_CChebyshev<CoordType>::lambda_val() const {
+    return this->_lambda_val;
+}
+
+template <typename CoordType>
+const CoordType* RQ_CChebyshev<CoordType>::vals() const {
+    return this->_vals;
+}
+
+template <typename CoordType>
+const CoordType* RQ_CChebyshev<CoordType>::ders2r() const {
+    return this->_ders2r;
+}
+
 
 };  // namespace : ace
 };  // namespace : ai2pot
