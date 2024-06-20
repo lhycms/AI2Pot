@@ -473,7 +473,7 @@ RQ_CChebyshev<CoordType>& RQ_CChebyshev<CoordType>::operator=(const RQ_CChebyshe
         this->_ders2r = (CoordType*)malloc(this->_size * sizeof(CoordType));
         for (int ii=0; ii<this->_size; ii++) {
             this->_vals[ii] = rhs._vals[ii];
-            this->_ders2r[ii] = rhs._vals[ii];
+            this->_ders2r[ii] = rhs._ders2r[ii];
         }
     } else {
         this->_ptr_rb = nullptr;

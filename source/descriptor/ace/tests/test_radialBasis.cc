@@ -237,6 +237,60 @@ TEST_F(RQ_CChebyshevTest, constructor_1) {
     ASSERT_EQ(rq_cchebyshev.lambda_val(), lambda_val);
 }
 
+TEST_F(RQ_CChebyshevTest, copy_constructor) {
+    ai2pot::ace::RQ_CChebyshev<double> rq_cchebyshev_1(size, rmax, rmin, lambda_val);
+    rq_cchebyshev_1.build(distance_ij);
+    ai2pot::ace::RQ_CChebyshev<double> rq_cchebyshev_2(rq_cchebyshev_1);
+    ASSERT_EQ(rq_cchebyshev_1.size(), rq_cchebyshev_2.size());
+    ASSERT_EQ(rq_cchebyshev_1.rmax(), rq_cchebyshev_2.rmax());
+    ASSERT_EQ(rq_cchebyshev_1.rmin(), rq_cchebyshev_2.rmin());
+    ASSERT_EQ(rq_cchebyshev_1.lambda_val(), rq_cchebyshev_2.lambda_val());
+    for (int ii=0; ii<rq_cchebyshev_1.size(); ii++) {
+        ASSERT_EQ(rq_cchebyshev_1.vals()[ii], rq_cchebyshev_2.vals()[ii]);
+        ASSERT_EQ(rq_cchebyshev_1.ders2r()[ii], rq_cchebyshev_2.ders2r()[ii]);
+    }
+}
+
+TEST_F(RQ_CChebyshevTest, copy_constructor_move) {
+    ai2pot::ace::RQ_CChebyshev<double> rq_cchebyshev_1(size, rmax, rmin, lambda_val);
+    rq_cchebyshev_1.build(distance_ij);
+    ai2pot::ace::RQ_CChebyshev<double> rq_cchebyshev_2(std::move(rq_cchebyshev_1));
+    ASSERT_EQ(rq_cchebyshev_1.size(), 0);
+    ASSERT_EQ(rq_cchebyshev_1.rmax(), 0.0);
+    ASSERT_EQ(rq_cchebyshev_1.rmin(), 0.0);
+    ASSERT_EQ(rq_cchebyshev_1.lambda_val(), 0.0);
+    ASSERT_EQ(rq_cchebyshev_1.vals(), nullptr);
+    ASSERT_EQ(rq_cchebyshev_1.ders2r(), nullptr);
+}
+
+TEST_F(RQ_CChebyshevTest, assignment_operator) {
+    ai2pot::ace::RQ_CChebyshev<double> rq_cchebyshev_1(size, rmax, rmin, lambda_val);
+    rq_cchebyshev_1.build(distance_ij);
+    ai2pot::ace::RQ_CChebyshev<double> rq_cchebyshev_2;
+    rq_cchebyshev_2 = rq_cchebyshev_1;
+    ASSERT_EQ(rq_cchebyshev_1.size(), rq_cchebyshev_2.size());
+    ASSERT_EQ(rq_cchebyshev_1.rmax(), rq_cchebyshev_2.rmax());
+    ASSERT_EQ(rq_cchebyshev_1.rmin(), rq_cchebyshev_2.rmin());
+    ASSERT_EQ(rq_cchebyshev_1.lambda_val(), rq_cchebyshev_2.lambda_val());
+    for (int ii=0; ii<rq_cchebyshev_1.size(); ii++) {
+        ASSERT_EQ(rq_cchebyshev_1.vals()[ii], rq_cchebyshev_2.vals()[ii]);
+        ASSERT_EQ(rq_cchebyshev_1.ders2r()[ii], rq_cchebyshev_2.ders2r()[ii]);
+    }   
+}
+
+TEST_F(RQ_CChebyshevTest, assignment_operator_move) {
+    ai2pot::ace::RQ_CChebyshev<double> rq_cchebyshev_1(size, rmax, rmin, lambda_val);
+    rq_cchebyshev_1.build(distance_ij);
+    ai2pot::ace::RQ_CChebyshev<double> rq_cchebyshev_2;
+    rq_cchebyshev_2 = std::move(rq_cchebyshev_1);
+    ASSERT_EQ(rq_cchebyshev_1.size(), 0);
+    ASSERT_EQ(rq_cchebyshev_1.rmax(), 0.0);
+    ASSERT_EQ(rq_cchebyshev_1.rmin(), 0.0);
+    ASSERT_EQ(rq_cchebyshev_1.lambda_val(), 0.0);
+    ASSERT_EQ(rq_cchebyshev_1.vals(), nullptr);
+    ASSERT_EQ(rq_cchebyshev_1.ders2r(), nullptr);
+}
+
 TEST_F(RQ_CChebyshevTest, ders2r_accuracy) {
     ai2pot::ace::RQ_CChebyshev<double> rq_cchebyshev(size, rmax, rmin, lambda_val);
     rq_cchebyshev.build(distance_ij);
