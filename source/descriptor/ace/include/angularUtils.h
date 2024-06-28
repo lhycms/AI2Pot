@@ -153,9 +153,61 @@ template <typename CoordType>
 void b42(CoordType &val, CoordType *der2xyz, CoordType *rc) {
     CoordType r2 = std::pow(rc[0], 2) + std::pow(rc[1], 2) + std::pow(rc[2], 2);
     val = (7*std::pow(rc[2], 2) - 3*r2) * rc[1] * rc[2];
-    der2xyz[0] = ;
-    der2xyz[1] = ;
-    der2xyz[2] = ;
+    der2xyz[0] = -6*rc[0]*rc[1]*rc[2];
+    der2xyz[1] = -6*std::pow(rc[1], 2)*rc[2] + 7*std::pow(rc[2], 3) - 3*r2*rc[2];
+    der2xyz[2] = 15*rc[1]*std::pow(rc[2], 2) - 3*r2*rc[1];
+}
+
+template <typename CoordType>
+void b43(CoordType &val, CoordType *der2xyz, CoordType *rc) {
+    CoordType r2 = std::pow(rc[0], 2) + std::pow(rc[1], 2) + std::pow(rc[2], 2);
+    val = (7*std::pow(rc[2], 2) - r2) * (std::pow(rc[0], 2) - std::pow(rc[1], 2));
+    der2xyz[0] = -2*std::pow(rc[0], 3) + 2*rc[0]*std::pow(rc[1], 2) + 14*rc[0]*std::pow(rc[2], 2) - 2*r2*rc[0];
+    der2xyz[1] = -2*std::pow(rc[0], 2)*rc[1] + 2*std::pow(rc[1], 3) - 14*rc[1]*std::pow(rc[2], 2) + 2*r2*rc[1];
+    der2xyz[2] = 12*rc[2] * (std::pow(rc[0], 2) - std::pow(rc[1], 2));
+}
+
+template <typename CoordType>
+void b44(CoordType &val, CoordType *der2xyz, CoordType *rc) {
+    CoordType r2 = std::pow(rc[0], 2) + std::pow(rc[1], 2) + std::pow(rc[2], 2);
+    val = (7*std::pow(rc[2], 2) - r2)*2*rc[0]*rc[1];
+    der2xyz[0] = -4*std::pow(rc[0], 2)*rc[1] + 14*rc[1]*std::pow(rc[2], 2) - 2*r2*rc[1];
+    der2xyz[1] = -4*rc[0]*std::pow(rc[1], 2) + 14*rc[0]*std::pow(rc[2], 2) - 2*r2*rc[0];
+    der2xyz[2] = 24*rc[0]*rc[1]*rc[2];
+}
+
+template <typename CoordType>
+void b45(CoordType &val, CoordType *der2xyz, CoordType *rc) {
+    val = (std::pow(rc[0], 2) - 3*std::pow(rc[1], 2)) * rc[0] * rc[2];
+    der2xyz[0] = 3*std::pow(rc[0], 2)*rc[2] - 3*std::pow(rc[1], 2)*rc[2];
+    der2xyz[1] = -6*rc[0]*rc[1]*rc[2];
+    der2xyz[2] = (std::pow(rc[0], 2) - 3*std::pow(rc[1], 2)) * rc[0];
+}
+
+template <typename CoordType>
+void b46(CoordType &val, CoordType *der2xyz, CoordType *rc) {
+    val = (3*std::pow(rc[0]) - std::pow(rc[1], 2))*rc[1]*rc[2];
+    der2xyz[0] = 6*rc[0]*rc[1]*rc[2];
+    der2xyz[1] = 3*std::pow(rc[0], 2)*rc[2] - 3*std::pow(rc[1], 2)*rc[2];
+    der2xyz[2] = (3*std::pow(rc[0], 2) - std::pow(rc[1], 2)) * rc[1];
+}
+
+template <typename CoordType>
+void b47(CoordType &val, CoordType *der2xyz, CoordType *rc) {
+    CoordType x2_minus_y2 = std::pow(rc[0], 2) - std::pow(rc[1], 2);
+    val = std::pow(x2_minus_y2, 2) - 4*std::pow(rc[0], 2)*std::pow(rc[1], 2);
+    der2xyz[0] = 4*std::pow(rc[0], 3) - 12*rc[0]*std::pow(rc[1], 2);
+    der2xyz[1] = 4*std::pow(rc[1], 3) - 12*std::pow(rc[0], 2)*rc[1];
+    der2xyz[2] = 0.0;
+}
+
+template <typename CoordType>
+void b48(CoordType &val, CoordType *der2xyz, CoordType *rc) {
+    CoordType x2_minus_y2 = std::pow(rc[0], 2) - std::pow(rc[1], 2);
+    val = 4*x2_minus_y2*rc[0]*rc[1];
+    der2xyz[0] = 12*std::pow(rc[0], 2)*rc[1] - 4*std::pow(rc[1], 3);
+    der2xyz[1] = 4*std::pow(rc[0], 3) - 12*rc[0]*std::pow(rc[1], 2);
+    der2xyz[2] = 0.0;
 }
 
 };  // namespace : ace
