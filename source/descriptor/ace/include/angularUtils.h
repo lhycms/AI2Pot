@@ -34,7 +34,8 @@ void b12(CoordType &val, CoordType *der2xyz, CoordType *rc) {
 
 template <typename CoordType>
 void b20(CoordType &val, CoordType *der2xyz, CoordType *rc) {
-    val = 3*std::pow(rc[2], 2) - std::pow(rc[0], 2)+std::pow(rc[1], 2)+std::pow(rc[2], 2);
+    CoordType r2 = std::pow(rc[0], 2)+std::pow(rc[1], 2)+std::pow(rc[2], 2);
+    val = 3*std::pow(rc[2], 2) - r2;
     der2xyz[0] = -2*rc[0];
     der2xyz[1] = -2*rc[1];
     der2xyz[2] = 4*rc[2];
