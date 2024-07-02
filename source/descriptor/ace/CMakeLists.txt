@@ -19,4 +19,8 @@ if (BUILD_TEST)
     add_executable(test_angular_utils ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_angularUtils.cc)
     target_link_libraries(test_angular_utils PRIVATE gtest gtest_main)
     gtest_discover_tests(test_angular_utils)
+
+    add_executable(test_descriptor ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_descriptor.cc)
+    target_link_libraries(test_descriptor PRIVATE gtest gtest_main)
+    gtest_discover_tests(test_descriptor)
 endif()
