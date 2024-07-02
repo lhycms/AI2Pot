@@ -26,9 +26,9 @@ public:
 
     Descriptor2B(Descriptor2B &&rhs);
 
-    Descriptor2B& operator=(const Descriptor2B &rhs);
+    Descriptor2B<CoordType>& operator=(const Descriptor2B &rhs);
 
-    Descriptor2B& operator=(Descriptor2B &&rhs);
+    Descriptor2B<CoordType>& operator=(Descriptor2B &&rhs);
 
     ~Descriptor2B();
 
@@ -105,7 +105,7 @@ Descriptor2B<CoordType>& Descriptor2B<CoordType>::operator=(const Descriptor2B &
 
     this->_chebyshev_size = rhs._chebyshev_size;
     if (this->_chebyshev_size > 0) 
-        this->_ptr_rq = new RQ_CChebyshev<CoordType>(rhs);
+        this->_ptr_rq = new RQ_CChebyshev<CoordType>(*rhs.ptr_rq());
     else
         this->_ptr_rq = nullptr;
 }
@@ -145,9 +145,9 @@ void Descriptor2B<CoordType>::find_val_der2r(CoordType *ptr_val,
     memset(ptr_der2coeffs, 0.0, this->_chebyshev_size * sizeof(CoordType));
     memset(ptr_der2r, 0.0, sizeof(CoordType));
     for (int ii=0; ii<this->_chebyshev_size; ii++) {
-        *ptr_val += ptr_coeffs[ii] * this->_ptr_rq->vals[ii];
-        *ptr_der2coeffs[ii] = this->_ptr_rq->vals[ii];
-        *ptr_der2r += ptr_coeffs[ii] * this->_ptr_rq->_ders2r[ii];
+        *ptr_val += ptr_coeffs[ii] * this->_ptr_rq->vals()[ii];
+        ptr_der2coeffs[ii] = this->_ptr_rq->vals()[ii];
+        *ptr_der2r += ptr_coeffs[ii] * this->_ptr_rq->ders2r()[ii];
     }
 }
 
