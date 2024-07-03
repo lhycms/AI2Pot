@@ -124,6 +124,43 @@ private:
 };  // class : RQ_CChebyshev
 
 
+template <typename CoordType>
+class Gn {
+public:
+    Gn();
+
+    Gn(int size,
+                 CoordType rmax,
+                 CoordType rmin,
+                 CoordType lambda_val);
+
+    Gn(RQ_CChebyshev<CoordType> *ptr_rq);
+    
+    Gn(const Gn &rhs);
+
+    Gn(Gn &&rhs);
+
+    Gn<CoordType>& operator=(const Gn &rhs);
+
+    Gn<CoordType>& operator=(Gn &&rhs);
+
+    ~Gn();
+
+    void find_val_der2r(CoordType *ptr_val, 
+                        CoordType *ptr_der2coeffs,
+                        CoordType *ptr_der2r, 
+                        CoordType distance_ij,
+                        CoordType *ptr_coeffs);
+    
+    const int chebyshev_size() const;
+
+    const RQ_CChebyshev<CoordType>* ptr_rq() const;
+
+private:
+    int _chebyshev_size = 0;
+    RQ_CChebyshev<CoordType> *_ptr_rq = nullptr;
+};  // class : Gn
+
 
 template <typename CoordType>
 SwitchFunction<CoordType>::SwitchFunction() {
@@ -564,6 +601,119 @@ const CoordType* RQ_CChebyshev<CoordType>::ders2r() const {
     return this->_ders2r;
 }
 
+
+template <typename CoordType>
+Gn<CoordType>::Gn() 
+{
+    this->_chebyshev_size = 0;
+    this->_ptr_rq = nullptr;
+}
+
+template <typename CoordType>
+Gn<CoordType>::Gn(int size,
+                                      CoordType rmax,
+                                      CoordType rmin,
+                                      CoordType lambda_val)
+{
+    this->_chebyshev_size = size;
+    this->_ptr_rq = new RQ_CChebyshev<CoordType>(size, rmax, rmin, lambda_val);
+}
+
+template <typename CoordType>
+Gn<CoordType>::Gn(RQ_CChebyshev<CoordType> *ptr_rq)
+{
+    this->_chebyshev_size = ptr_rq->size();
+    this->_ptr_rq = new RQ_CChebyshev<CoordType>(*ptr_rq);
+}
+
+template <typename CoordType>
+Gn<CoordType>::Gn(const Gn &rhs) 
+{
+    this->_chebyshev_size = rhs._chebyshev_size;
+    if (this->_chebyshev_size > 0)
+        this->_ptr_rq = new RQ_CChebyshev<CoordType>(*rhs.ptr_rq());
+    else
+        this->_ptr_rq = nullptr;
+}
+
+template <typename CoordType>
+Gn<CoordType>::Gn(Gn &&rhs)
+{
+    if (this != &rhs) {
+        this->_chebyshev_size = rhs._chebyshev_size;
+        rhs._chebyshev_size = 0;
+        this->_ptr_rq = rhs._ptr_rq;
+        rhs._ptr_rq = nullptr;
+    }
+}
+
+template <typename CoordType>
+Gn<CoordType>& Gn<CoordType>::operator=(const Gn &rhs)
+{
+    if (this->_chebyshev_size > 0) {
+        this->_chebyshev_size = 0;
+        delete this->_ptr_rq;
+    }
+
+    this->_chebyshev_size = rhs._chebyshev_size;
+    if (this->_chebyshev_size > 0) 
+        this->_ptr_rq = new RQ_CChebyshev<CoordType>(*rhs.ptr_rq());
+    else
+        this->_ptr_rq = nullptr;
+}
+
+template <typename CoordType>
+Gn<CoordType>& Gn<CoordType>::operator=(Gn<CoordType> &&rhs)
+{
+    if (this != &rhs) {
+        if (this->_chebyshev_size > 0) {
+            this->_chebyshev_size = 0;
+            delete this->_ptr_rq;
+        }
+
+        this->_chebyshev_size = rhs._chebyshev_size;
+        rhs._chebyshev_size = 0;
+        this->_ptr_rq = rhs._ptr_rq;
+        rhs._ptr_rq = nullptr;
+    }
+}
+
+template <typename CoordType>
+Gn<CoordType>::~Gn()
+{
+    this->_chebyshev_size = 0;
+    delete this->_ptr_rq;
+}
+
+template <typename CoordType>
+void Gn<CoordType>::find_val_der2r(CoordType *ptr_val,
+                                             CoordType *ptr_der2coeffs,
+                                             CoordType *ptr_der2r,
+                                             CoordType distance_ij,
+                                             CoordType *ptr_coeffs)
+{
+    this->_ptr_rq->build(distance_ij);
+    memset(ptr_val, 0.0, sizeof(CoordType));
+    memset(ptr_der2coeffs, 0.0, this->_chebyshev_size * sizeof(CoordType));
+    memset(ptr_der2r, 0.0, sizeof(CoordType));
+    for (int ii=0; ii<this->_chebyshev_size; ii++) {
+        *ptr_val += ptr_coeffs[ii] * this->_ptr_rq->vals()[ii];
+        ptr_der2coeffs[ii] = this->_ptr_rq->vals()[ii];
+        *ptr_der2r += ptr_coeffs[ii] * this->_ptr_rq->ders2r()[ii];
+    }
+}
+
+template <typename CoordType>
+const int Gn<CoordType>::chebyshev_size() const
+{
+    return this->_chebyshev_size;
+}
+
+template <typename CoordType>
+const RQ_CChebyshev<CoordType>* Gn<CoordType>::ptr_rq() const
+{
+    return this->_ptr_rq;
+}
 
 };  // namespace : ace
 };  // namespace : ai2pot
