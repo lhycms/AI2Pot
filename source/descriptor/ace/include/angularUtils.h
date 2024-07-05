@@ -5,7 +5,8 @@
 #include <stdio.h>
 #include <cstdlib>
 #include <string.h>
-#include "radialBasis.h"
+#include <cassert>
+#include "./radialBasis.h"
 
 namespace ai2pot {
 namespace ace {
@@ -246,17 +247,41 @@ public:
           int n_a_max,
           int l_3b_max);    // 1+3
 
-    Sinlm(const Sinlm<CoordType> &rhs);
+    //Sinlm(const Sinlm<CoordType> &rhs);
 
-    Sinlm(Sinlm<CoordType> &&rhs);
+    //Sinlm(Sinlm<CoordType> &&rhs);
 
-    Sinlm<CoordType>& operator=(const Sinlm<CoordType> &rhs);
+    //Sinlm<CoordType>& operator=(const Sinlm<CoordType> &rhs);
 
-    Sinlm<CoordType>& operator=(Sinlm<CoordType> &&rhs);
+    //Sinlm<CoordType>& operator=(Sinlm<CoordType> &&rhs);
 
     ~Sinlm();
 
+    const Gn<CoordType>* ptr_gn_r() const;
+    
+    const Gn<CoordType>* ptr_gn_a() const;
 
+    const CoordType rmax_r() const;
+
+    const CoordType rmin_r() const;
+
+    const CoordType rmax_a() const;
+
+    const CoordType rmin_a() const;
+
+    const int n_r_max() const;
+
+    const int n_r_basis() const;
+
+    const int max_body() const;
+
+    const int n_a_max() const;
+
+    const int n_a_basis() const;
+
+    const int l_3b_max() const;
+
+    const int num_s() const;
 
 private:
     Gn<CoordType> *_ptr_gn_r = nullptr;
@@ -267,6 +292,7 @@ private:
     int _n_a_max = 0;
     int _n_a_basis = 0;
     int _l_3b_max = 0;   // l_3b_max >= 1
+    int _num_s = 0;       // size of Sinlm = (n_c, n^a_{max}, \sum^{l^{3b}_{max}}_{l=0}{(2l+1)})
 };  // class : Sinlm
 
 
@@ -280,6 +306,7 @@ Sinlm<CoordType>::Sinlm() {     // 2+4
     this->_n_a_max = 0;
     this->_n_a_basis = 0;
     this->_l_3b_max = 0;
+    this->_num_s = 0;
 }
 
 template <typename CoordType>
@@ -295,6 +322,8 @@ Sinlm<CoordType>::Sinlm(CoordType lambda_val,
                         int n_a_basis,
                         int l_3b_max)
 {
+    assert(l_3b_max <= 4);
+    assert((max_body >=2) && (max_body<=5));
     this->_ptr_gn_r = new Gn<CoordType>(n_r_basis, rmax_r, rmin_r, lambda_val);
     this->_ptr_gn_a = new Gn<CoordType>(n_a_basis, rmax_a, rmin_a, lambda_val);
     this->_n_r_max = n_r_max;
@@ -303,6 +332,9 @@ Sinlm<CoordType>::Sinlm(CoordType lambda_val,
     this->_n_a_max = n_a_max;
     this->_n_a_basis = this->_ptr_gn_a->chebyshev_size();
     this->_l_3b_max = l_3b_max;
+    this->_num_s = 0;
+    for (int ii=0; ii<=this->_l_3b_max; ii++)
+        this->_num_s += 2*ii+1;
 }
 
 template <typename CoordType>
@@ -313,6 +345,8 @@ Sinlm<CoordType>::Sinlm(Gn<CoordType> *ptr_gn_r,
                         int n_a_max,
                         int l_3b_max)
 {
+    assert(l_3b_max <= 4);
+    assert((max_body >=2) && (max_body<=5));
     this->_ptr_gn_r = new Gn<CoordType>(*ptr_gn_r);
     this->_ptr_gn_a = new Gn<CoordType>(*ptr_gn_a);
     this->_n_r_max = n_r_max;
@@ -321,9 +355,89 @@ Sinlm<CoordType>::Sinlm(Gn<CoordType> *ptr_gn_r,
     this->_n_a_max = n_a_max;
     this->_n_a_basis = this->_ptr_gn_a->chebyshev_size();
     this->_l_3b_max = l_3b_max;
-    
+    this->_num_s = 0;
+    for (int ii=0; ii<=this->_l_3b_max; ii++)
+        this->_num_s += 2*ii+1;
 }
 
+template <typename CoordType>
+Sinlm<CoordType>::~Sinlm()
+{
+    delete this->_ptr_gn_r;
+    delete this->_ptr_gn_a;
+    this->_n_r_max = 0;
+    this->_n_r_basis = 0;
+    this->_max_body = 0;
+    this->_n_a_max = 0;
+    this->_n_a_basis = 0;
+    this->_l_3b_max = 0;
+    this->_num_s = 0;
+}
+
+template <typename CoordType>
+const Gn<CoordType>* Sinlm<CoordType>::ptr_gn_r() const {
+    return this->_ptr_gn_r;
+}
+
+template <typename CoordType>
+const Gn<CoordType>* Sinlm<CoordType>::ptr_gn_a() const {
+    return this->_ptr_gn_a;
+}
+
+template <typename CoordType>
+const CoordType Sinlm<CoordType>::rmax_r() const {
+    return this->_ptr_gn_r->ptr_rq()->rmax();
+}
+
+template <typename CoordType>
+const CoordType Sinlm<CoordType>::rmin_r() const {
+    return this->_ptr_gn_r->ptr_rq()->rmin();
+}
+
+template <typename CoordType>
+const CoordType Sinlm<CoordType>::rmax_a() const {
+    return this->_ptr_gn_a->ptr_rq()->rmax();
+}
+
+template <typename CoordType>
+const CoordType Sinlm<CoordType>::rmin_a() const {
+    return this->_ptr_gn_a->ptr_rq()->rmin();
+}
+
+template <typename CoordType>
+const int Sinlm<CoordType>::n_r_max() const {
+    return this->_n_r_max;
+}
+
+template <typename CoordType>
+const int Sinlm<CoordType>::n_r_basis() const {
+    return this->_n_r_basis;
+}
+
+template <typename CoordType>
+const int Sinlm<CoordType>::max_body() const {
+    return this->_max_body;
+}
+
+template <typename CoordType>
+const int Sinlm<CoordType>::n_a_max() const {
+    return this->_n_a_max;
+}
+
+template <typename CoordType>
+const int Sinlm<CoordType>::n_a_basis() const {
+    return this->_n_a_basis;
+}
+
+template <typename CoordType>
+const int Sinlm<CoordType>::l_3b_max() const {
+    return this->_l_3b_max;
+}
+
+template <typename CoordType>
+const int Sinlm<CoordType>::num_s() const {
+    return this->_num_s;
+}
 
 
 };  // namespace : ace

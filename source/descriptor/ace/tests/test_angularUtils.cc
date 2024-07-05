@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <cstdlib>
 #include "../include/angularUtils.h"
+#include "../include/radialBasis.h"
 
 
 class BlmTest : public ::testing::Test {
@@ -38,6 +39,52 @@ protected:
         free(der2xyz2);
     }
 };  // class : BlmTest
+
+
+class SinlmTest : public ::testing::Test {
+protected:
+    double lambda_val;
+    double rmax_r, rmin_r;
+    int n_r_max, n_r_basis;
+    int max_body;
+    double rmax_a, rmin_a;
+    int n_a_max, n_a_basis;
+    int l_3b_max;
+    ai2pot::ace::Gn<double> *ptr_gn_r;
+    ai2pot::ace::Gn<double> *ptr_gn_a;
+
+    static void SetUpTestSuite() {
+        std::cout << "SinlmTest (TestSuite) is setting up...\n";
+    }
+
+    static void TearDownTestSuite() {
+        std::cout << "SinlmTest (TestSuite) is tearing down...\n";
+    }
+
+    void SetUp() override {
+        lambda_val = 5.0;
+        rmax_r = 8.0;
+        rmin_r = 2.0;
+        n_r_max = 10;
+        n_r_basis = 8;
+        max_body = 5;
+        rmax_a = 6.0;
+        rmin_a = 2.0;
+        n_a_max = 8;
+        n_a_basis = 8;
+        l_3b_max = 4;
+        ptr_gn_r = new ai2pot::ace::Gn<double>(n_r_basis, rmax_r, rmin_r, lambda_val);
+        ptr_gn_a = new ai2pot::ace::Gn<double>(n_a_basis, rmax_a, rmin_a, lambda_val);
+    }
+
+    void TearDown() override {
+        delete ptr_gn_r;
+        delete ptr_gn_a;
+    }
+};  // class : SinlmTest
+
+
+
 
 TEST_F(BlmTest, b10_der2x) {
     rc2[0] = rc1[0] + delta;
@@ -758,6 +805,41 @@ TEST_F(BlmTest, b48_der2z) {
     printf("\t1. Analytic der2z = %g\n", der2xyz1[2]);
     printf("\t2. Numerical der2z = %g\n", (val2 - val1) / delta);
 }
+
+
+TEST_F(SinlmTest, default_constructor)
+{
+    ai2pot::ace::Sinlm<double> sinlm;
+    ASSERT_EQ(sinlm.n_r_max(), 0);
+    ASSERT_EQ(sinlm.n_r_basis(), 0);
+    ASSERT_EQ(sinlm.n_a_max(), 0);
+    ASSERT_EQ(sinlm.n_a_basis(), 0);
+    ASSERT_EQ(sinlm.l_3b_max(), 0);
+    ASSERT_EQ(sinlm.num_s(), 0);
+}
+
+TEST_F(SinlmTest, constructor_1)
+{
+    ai2pot::ace::Sinlm<double> sinlm(lambda_val, 
+                                     rmax_r, 
+                                     rmin_r, 
+                                     n_r_max, 
+                                     n_r_basis, 
+                                     max_body, 
+                                     rmax_a, 
+                                     rmin_a, 
+                                     n_a_max, 
+                                     n_a_basis, 
+                                     l_3b_max);
+    ASSERT_EQ(sinlm.n_r_max(), n_r_max);
+    ASSERT_EQ(sinlm.n_r_basis(), n_r_basis);
+    ASSERT_EQ(sinlm.max_body(), max_body);
+    ASSERT_EQ(sinlm.n_a_max(), n_a_max);
+    ASSERT_EQ(sinlm.n_a_basis(), n_a_basis);
+    ASSERT_EQ(sinlm.l_3b_max(), l_3b_max);
+    ASSERT_EQ(sinlm.num_s(), 25);
+}
+
 
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
