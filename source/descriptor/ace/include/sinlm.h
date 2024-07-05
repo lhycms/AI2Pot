@@ -257,6 +257,23 @@ public:
 
     ~Sinlm();
 
+    void find_val_der(CoordType *val_r,
+                        CoordType *val_a,
+                        CoordType *der2xyz_r,
+                        CoordType *der2xyz_a,
+                        CoordType *der2coeffs_r,
+                        CoordType *der2coeffs_a,
+                        int inum,
+                        int *ilist,
+                        int *numneigh,
+                        int *firstneigh,
+                        int ntypes,
+                        int *types,
+                        CoordType *rcs,
+                        int umax_num_neighs,
+                        CoordType *coeffs_r,
+                        CoordType *coeffs_a);
+
     const Gn<CoordType>* ptr_gn_r() const;
     
     const Gn<CoordType>* ptr_gn_a() const;
@@ -281,7 +298,7 @@ public:
 
     const int l_3b_max() const;
 
-    const int num_s() const;
+    const int num_s_a() const;
 
 private:
     Gn<CoordType> *_ptr_gn_r = nullptr;
@@ -292,7 +309,7 @@ private:
     int _n_a_max = 0;
     int _n_a_basis = 0;
     int _l_3b_max = 0;   // l_3b_max >= 1
-    int _num_s = 0;       // size of Sinlm = (n_c, n^a_{max}, \sum^{l^{3b}_{max}}_{l=0}{(2l+1)})
+    int _num_s_a = 0;       // size of Sinlm = (n_c, n^a_{max}, \sum^{l^{3b}_{max}}_{l=0}{(2l+1)})
 };  // class : Sinlm
 
 
@@ -306,7 +323,7 @@ Sinlm<CoordType>::Sinlm() {     // 2+4
     this->_n_a_max = 0;
     this->_n_a_basis = 0;
     this->_l_3b_max = 0;
-    this->_num_s = 0;
+    this->_num_s_a = 0;
 }
 
 template <typename CoordType>
@@ -332,9 +349,9 @@ Sinlm<CoordType>::Sinlm(CoordType lambda_val,
     this->_n_a_max = n_a_max;
     this->_n_a_basis = this->_ptr_gn_a->chebyshev_size();
     this->_l_3b_max = l_3b_max;
-    this->_num_s = 0;
-    for (int ii=0; ii<=this->_l_3b_max; ii++)
-        this->_num_s += 2*ii+1;
+    this->_num_s_a = 0;
+    for (int ii=1; ii<=this->_l_3b_max; ii++)
+        this->_num_s_a += 2*ii+1;
 }
 
 template <typename CoordType>
@@ -355,9 +372,9 @@ Sinlm<CoordType>::Sinlm(Gn<CoordType> *ptr_gn_r,
     this->_n_a_max = n_a_max;
     this->_n_a_basis = this->_ptr_gn_a->chebyshev_size();
     this->_l_3b_max = l_3b_max;
-    this->_num_s = 0;
-    for (int ii=0; ii<=this->_l_3b_max; ii++)
-        this->_num_s += 2*ii+1;
+    this->_num_s_a = 0;
+    for (int ii=1; ii<=this->_l_3b_max; ii++)
+        this->_num_s_a += 2*ii+1;
 }
 
 template <typename CoordType>
@@ -371,7 +388,50 @@ Sinlm<CoordType>::~Sinlm()
     this->_n_a_max = 0;
     this->_n_a_basis = 0;
     this->_l_3b_max = 0;
-    this->_num_s = 0;
+    this->_num_s_a = 0;
+}
+
+template <typename CoordType>
+void Sinlm<CoordType>::find_val_der(CoordType *val_r,
+                                      CoordType *val_a,
+                                      CoordType *der2xyz_r,
+                                      CoordType *der2xyz_a,
+                                      CoordType *der2coeffs_r,
+                                      CoordType *der2coeffs_a,
+                                      int inum,
+                                      int *ilist,
+                                      int *numneigh,
+                                      int *firstneigh,
+                                      int ntypes,
+                                      int *types,
+                                      CoordType *rcs,
+                                      int umax_num_neighs,
+                                      CoordType *coeffs_r,
+                                      CoordType *coeffs_a)
+{
+    int tot_num_s_r = inum * this->_n_r_max;
+    int tot_num_s_a = inum * this->_n_a_max * this->_num_s_a;
+    int num_coeffs_r = ntypes * ntypes * this->_n_r_max * this->_n_r_basis;
+    int num_coeffs_a = ntypes * ntypes * this->_n_a_max * this->_n_a_basis;
+    memset(val_r, 0, tot_num_s_r * sizeof(CoordType));
+    memset(val_a, 0, tot_num_s_a * sizeof(CoordType));
+    memset(der2xyz_r, 0, tot_num_s_r * 3 * sizeof(CoordType));
+    memset(der2xyz_a, 0, tot_num_s_a * 3 * sizeof(CoordType));
+    memset(der2coeffs_r, 0, tot_num_s_r * num_coeffs_r * sizeof(CoordType));
+    memset(der2coeffs_a, 0, tot_num_s_a * num_coeffs_a * sizeof(CoordType));
+
+    for (int ii=0; ii<inum; ii++) {
+        int cidx = ilist[ii];
+        for (int jj=0; jj<numneigh[ii]; jj++) {
+            int nidx = firstneigh[ii*umax_num_neighs+jj];
+            for (int kk=0; kk<this->_n_r_max; kk++) {
+                
+            }
+            for (int kk=0; kk<this->_n_a_max; kk++) {
+
+            }
+        }
+    }
 }
 
 template <typename CoordType>
@@ -435,8 +495,8 @@ const int Sinlm<CoordType>::l_3b_max() const {
 }
 
 template <typename CoordType>
-const int Sinlm<CoordType>::num_s() const {
-    return this->_num_s;
+const int Sinlm<CoordType>::num_s_a() const {
+    return this->_num_s_a;
 }
 
 

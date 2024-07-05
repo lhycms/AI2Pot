@@ -2,7 +2,7 @@
 #include <iostream>
 #include <stdio.h>
 #include <cstdlib>
-#include "../include/angularUtils.h"
+#include "../include/sinlm.h"
 #include "../include/radialBasis.h"
 
 
@@ -815,7 +815,7 @@ TEST_F(SinlmTest, default_constructor)
     ASSERT_EQ(sinlm.n_a_max(), 0);
     ASSERT_EQ(sinlm.n_a_basis(), 0);
     ASSERT_EQ(sinlm.l_3b_max(), 0);
-    ASSERT_EQ(sinlm.num_s(), 0);
+    ASSERT_EQ(sinlm.num_s_a(), 0);
 }
 
 TEST_F(SinlmTest, constructor_1)
@@ -837,7 +837,7 @@ TEST_F(SinlmTest, constructor_1)
     ASSERT_EQ(sinlm.n_a_max(), n_a_max);
     ASSERT_EQ(sinlm.n_a_basis(), n_a_basis);
     ASSERT_EQ(sinlm.l_3b_max(), l_3b_max);
-    ASSERT_EQ(sinlm.num_s(), 25);
+    ASSERT_EQ(sinlm.num_s_a(), 24);
 }
 
 
