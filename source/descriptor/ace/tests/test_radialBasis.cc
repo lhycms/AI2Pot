@@ -449,7 +449,7 @@ TEST_F(GnTest, assignment_operator_move) {
 
 TEST_F(GnTest, der_accuracy) {
     ai2pot::ace::Gn<double> descriptor_2b(size, rmax, rmin, lambda_val);
-    descriptor_2b.find_val_der2r(&val,
+    descriptor_2b.find_val_der2r(val,
                                  ptr_der2coeffs,
                                  &der2r,
                                  distance_ij, 
@@ -459,7 +459,7 @@ printf("1. Derivative wrt. distance_ij:\n");
     distance_ij_delta = distance_ij + delta;
     for (int ii=0; ii<size; ii++)
         ptr_coeffs_delta[ii] = ptr_coeffs[ii];
-    descriptor_2b.find_val_der2r(&val_delta,
+    descriptor_2b.find_val_der2r(val_delta,
                                  ptr_der2coeffs_delta,
                                  &der2r_delta,
                                  distance_ij_delta,
@@ -480,7 +480,7 @@ printf("\n");
 printf("\t2.2. Numerical derivate wrt. coeffs: ");
 for (int ii=0; ii<descriptor_2b.chebyshev_size(); ii++) {
     ptr_coeffs_delta[ii] += delta;
-    descriptor_2b.find_val_der2r(&val_delta,
+    descriptor_2b.find_val_der2r(val_delta,
                                  ptr_der2coeffs_delta,
                                  &der2r_delta,
                                  distance_ij_delta,

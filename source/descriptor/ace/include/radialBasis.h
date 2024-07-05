@@ -130,9 +130,9 @@ public:
     Gn();
 
     Gn(int size,
-                 CoordType rmax,
-                 CoordType rmin,
-                 CoordType lambda_val);
+       CoordType rmax,
+       CoordType rmin,
+       CoordType lambda_val);
 
     Gn(RQ_CChebyshev<CoordType> *ptr_rq);
     
@@ -146,11 +146,11 @@ public:
 
     ~Gn();
 
-    void find_val_der2r(CoordType *ptr_val, 
+    void find_val_der2r(CoordType &val,
                         CoordType *ptr_der2coeffs,
-                        CoordType *ptr_der2r, 
+                        CoordType *ptr_der2r,
                         CoordType distance_ij,
-                        CoordType *ptr_coeffs);
+                        CoordType *ptr_coeffs);     // located using (ntypes, ntypes, n^r_max / n^a_max)
     
     const int chebyshev_size() const;
 
@@ -611,9 +611,9 @@ Gn<CoordType>::Gn()
 
 template <typename CoordType>
 Gn<CoordType>::Gn(int size,
-                                      CoordType rmax,
-                                      CoordType rmin,
-                                      CoordType lambda_val)
+                  CoordType rmax,
+                  CoordType rmin,
+                  CoordType lambda_val)
 {
     this->_chebyshev_size = size;
     this->_ptr_rq = new RQ_CChebyshev<CoordType>(size, rmax, rmin, lambda_val);
@@ -686,18 +686,18 @@ Gn<CoordType>::~Gn()
 }
 
 template <typename CoordType>
-void Gn<CoordType>::find_val_der2r(CoordType *ptr_val,
-                                             CoordType *ptr_der2coeffs,
-                                             CoordType *ptr_der2r,
-                                             CoordType distance_ij,
-                                             CoordType *ptr_coeffs)
+void Gn<CoordType>::find_val_der2r(CoordType &val,
+                                   CoordType *ptr_der2coeffs,
+                                   CoordType *ptr_der2r,
+                                   CoordType distance_ij,
+                                   CoordType *ptr_coeffs)
 {
     this->_ptr_rq->build(distance_ij);
-    memset(ptr_val, 0.0, sizeof(CoordType));
+    memset(&val, 0.0, sizeof(CoordType));
     memset(ptr_der2coeffs, 0.0, this->_chebyshev_size * sizeof(CoordType));
     memset(ptr_der2r, 0.0, sizeof(CoordType));
     for (int ii=0; ii<this->_chebyshev_size; ii++) {
-        *ptr_val += ptr_coeffs[ii] * this->_ptr_rq->vals()[ii];
+        val += ptr_coeffs[ii] * this->_ptr_rq->vals()[ii];
         ptr_der2coeffs[ii] = this->_ptr_rq->vals()[ii];
         *ptr_der2r += ptr_coeffs[ii] * this->_ptr_rq->ders2r()[ii];
     }
@@ -719,4 +719,3 @@ const RQ_CChebyshev<CoordType>* Gn<CoordType>::ptr_rq() const
 };  // namespace : ai2pot
 
 #endif
-

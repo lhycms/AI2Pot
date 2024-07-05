@@ -4,9 +4,19 @@
 #include <iostream>
 #include <stdio.h>
 #include <cstdlib>
+#include <string.h>
+#include "radialBasis.h"
 
 namespace ai2pot {
 namespace ace {
+
+template <typename CoordType>
+void b00(CoordType &val, CoordType *der2xyz, CoordType *rc) {
+    val = 1;
+    der2xyz[0] = 0.0;
+    der2xyz[1] = 0.0;
+    der2xyz[2] = 0.0;
+}
 
 template <typename CoordType>
 void b10(CoordType &val, CoordType *der2xyz, CoordType *rc) {
@@ -210,6 +220,111 @@ void b48(CoordType &val, CoordType *der2xyz, CoordType *rc) {
     der2xyz[1] = 4*std::pow(rc[0], 3) - 12*rc[0]*std::pow(rc[1], 2);
     der2xyz[2] = 0.0;
 }
+
+
+template <typename CoordType>
+class Sinlm {
+public:
+    Sinlm();
+
+    Sinlm(CoordType lambda_val, 
+          CoordType rmax_r,
+          CoordType rmin_r,
+          int n_r_max,
+          int n_r_basis,
+          int max_body,
+          CoordType rmax_a,
+          CoordType rmin_a,
+          int n_a_max,
+          int n_a_basis,
+          int l_3b_max);    // 5+6
+    
+    Sinlm(Gn<CoordType> *ptr_gn_r,
+          Gn<CoordType> *ptr_gn_a,
+          int n_r_max,
+          int max_body,
+          int n_a_max,
+          int l_3b_max);    // 1+3
+
+    Sinlm(const Sinlm<CoordType> &rhs);
+
+    Sinlm(Sinlm<CoordType> &&rhs);
+
+    Sinlm<CoordType>& operator=(const Sinlm<CoordType> &rhs);
+
+    Sinlm<CoordType>& operator=(Sinlm<CoordType> &&rhs);
+
+    ~Sinlm();
+
+
+
+private:
+    Gn<CoordType> *_ptr_gn_r = nullptr;
+    Gn<CoordType> *_ptr_gn_a = nullptr;
+    int _n_r_max = 0;
+    int _n_r_basis = 0;
+    int _max_body = 0;
+    int _n_a_max = 0;
+    int _n_a_basis = 0;
+    int _l_3b_max = 0;   // l_3b_max >= 1
+};  // class : Sinlm
+
+
+template <typename CoordType>
+Sinlm<CoordType>::Sinlm() {     // 2+4 
+    this->_ptr_gn_r = nullptr;
+    this->_ptr_gn_a = nullptr;
+    this->_n_r_max = 0;
+    this->_n_r_basis = 0;
+    this->_max_body = 0;
+    this->_n_a_max = 0;
+    this->_n_a_basis = 0;
+    this->_l_3b_max = 0;
+}
+
+template <typename CoordType>
+Sinlm<CoordType>::Sinlm(CoordType lambda_val,
+                        CoordType rmax_r,
+                        CoordType rmin_r,
+                        int n_r_max,
+                        int n_r_basis,
+                        int max_body,
+                        CoordType rmax_a,
+                        CoordType rmin_a,                        
+                        int n_a_max,
+                        int n_a_basis,
+                        int l_3b_max)
+{
+    this->_ptr_gn_r = new Gn<CoordType>(n_r_basis, rmax_r, rmin_r, lambda_val);
+    this->_ptr_gn_a = new Gn<CoordType>(n_a_basis, rmax_a, rmin_a, lambda_val);
+    this->_n_r_max = n_r_max;
+    this->_n_r_basis = this->_ptr_gn_r->chebyshev_size();
+    this->_max_body = max_body;
+    this->_n_a_max = n_a_max;
+    this->_n_a_basis = this->_ptr_gn_a->chebyshev_size();
+    this->_l_3b_max = l_3b_max;
+}
+
+template <typename CoordType>
+Sinlm<CoordType>::Sinlm(Gn<CoordType> *ptr_gn_r,
+                        Gn<CoordType> *ptr_gn_a,
+                        int n_r_max,
+                        int max_body,
+                        int n_a_max,
+                        int l_3b_max)
+{
+    this->_ptr_gn_r = new Gn<CoordType>(*ptr_gn_r);
+    this->_ptr_gn_a = new Gn<CoordType>(*ptr_gn_a);
+    this->_n_r_max = n_r_max;
+    this->_n_r_basis = this->_ptr_gn_r->chebyshev_size();
+    this->_max_body = max_body;
+    this->_n_a_max = n_a_max;
+    this->_n_a_basis = this->_ptr_gn_a->chebyshev_size();
+    this->_l_3b_max = l_3b_max;
+    
+}
+
+
 
 };  // namespace : ace
 };  // namespace : ai2pot
