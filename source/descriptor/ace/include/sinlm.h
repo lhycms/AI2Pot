@@ -415,8 +415,8 @@ void Sinlm<CoordType>::find_val_der(CoordType *val_r,
     int num_coeffs_a = ntypes * ntypes * this->_n_a_max * this->_n_a_basis;
     memset(val_r, 0, tot_num_s_r * sizeof(CoordType));
     memset(val_a, 0, tot_num_s_a * sizeof(CoordType));
-    memset(der2xyz_r, 0, tot_num_s_r * 3 * sizeof(CoordType));
-    memset(der2xyz_a, 0, tot_num_s_a * 3 * sizeof(CoordType));
+    memset(der2xyz_r, 0, tot_num_s_r * inum * umax_num_neighs * 3 * sizeof(CoordType));
+    memset(der2xyz_a, 0, tot_num_s_a * inum * umax_num_neighs * 3 * sizeof(CoordType));
     memset(der2coeffs_r, 0, tot_num_s_r * num_coeffs_r * sizeof(CoordType));
     memset(der2coeffs_a, 0, tot_num_s_a * num_coeffs_a * sizeof(CoordType));
 
@@ -424,11 +424,21 @@ void Sinlm<CoordType>::find_val_der(CoordType *val_r,
         int cidx = ilist[ii];
         for (int jj=0; jj<numneigh[ii]; jj++) {
             int nidx = firstneigh[ii*umax_num_neighs+jj];
+            const CoordType *neigh_vec = rcs[ii*umax_num_neighs*3 + jj*3];
+            CoordType distance_ij = std::sqrt(std::pow(neigh_vec[0], 2)
+                                              + std::pow(neigh_vec[1], 2)
+                                              + std::pow(neigh_vec[2], 2));
+            // For 2b
             for (int kk=0; kk<this->_n_r_max; kk++) {
-                
+                val_r[ii*this->_n_r_max + kk] += 0.0;
             }
-            for (int kk=0; kk<this->_n_a_max; kk++) {
-
+            // For 3b/4b/5b
+            if (this->_max_body >= 3) {
+                for (int kk=0; kk<this->_n_a_max; kk++) {
+                    for (int ll=0; ll<this->_l_3b_max; ll++) {
+                        val_a[ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + ll] += 0.0;
+                    }
+                }
             }
         }
     }
