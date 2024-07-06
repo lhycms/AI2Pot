@@ -153,6 +153,12 @@ public:
 
     const RQ_CChebyshev<CoordType>* ptr_rq() const;
 
+    const CoordType val() const;
+
+    const CoordType* der2coeffs() const;
+
+    const CoordType der2r() const;
+
 private:
     int _chebyshev_size = 0;
     RQ_CChebyshev<CoordType> *_ptr_rq = nullptr;
@@ -620,7 +626,10 @@ Gn<CoordType>::Gn(int size,
 {
     this->_chebyshev_size = size;
     this->_ptr_rq = new RQ_CChebyshev<CoordType>(size, rmax, rmin, lambda_val);
+    this->_val = 0.0;
     this->_der2coeffs = (CoordType*)malloc(this->_chebyshev_size * sizeof(CoordType));
+    memset(this->_der2coeffs, 0, this->_chebyshev_size * sizeof(CoordType));
+    this->_der2r = 0.0;
 }
 
 template <typename CoordType>
@@ -628,7 +637,10 @@ Gn<CoordType>::Gn(RQ_CChebyshev<CoordType> *ptr_rq)
 {
     this->_chebyshev_size = ptr_rq->size();
     this->_ptr_rq = new RQ_CChebyshev<CoordType>(*ptr_rq);
+    this->_val = 0.0;
     this->_der2coeffs = (CoordType*)malloc(this->_chebyshev_size * sizeof(CoordType));
+    memset(this->_der2coeffs, 0, this->_chebyshev_size * sizeof(CoordType));
+    this->_der2r = 0.0;
 }
 
 template <typename CoordType>
@@ -671,15 +683,26 @@ template <typename CoordType>
 Gn<CoordType>& Gn<CoordType>::operator=(const Gn &rhs)
 {
     if (this->_chebyshev_size > 0) {
-        this->_chebyshev_size = 0;
         delete this->_ptr_rq;
+        free(this->_der2coeffs);
+        this->_chebyshev_size = 0;
+        this->_val = 0.0;
+        this->_der2r = 0.0;
     }
 
     this->_chebyshev_size = rhs._chebyshev_size;
-    if (this->_chebyshev_size > 0) 
+    if (this->_chebyshev_size > 0) {
         this->_ptr_rq = new RQ_CChebyshev<CoordType>(*rhs.ptr_rq());
-    else
+        this->_val = rhs._val;
+        this->_der2coeffs = (CoordType*)malloc(this->_chebyshev_size * sizeof(CoordType));
+        this->_der2r = rhs._der2r;
+    }
+    else {
         this->_ptr_rq = nullptr;
+        this->_val = 0.0;
+        this->_der2coeffs = nullptr;
+        this->_der2r = 0.0;
+    }
 }
 
 template <typename CoordType>
@@ -687,23 +710,34 @@ Gn<CoordType>& Gn<CoordType>::operator=(Gn<CoordType> &&rhs)
 {
     if (this != &rhs) {
         if (this->_chebyshev_size > 0) {
-            this->_chebyshev_size = 0;
             delete this->_ptr_rq;
+            free(this->_der2coeffs);
+            this->_chebyshev_size = 0;
+            this->_val = 0.0;
+            this->_der2r = 0.0;
         }
 
         this->_chebyshev_size = rhs._chebyshev_size;
         rhs._chebyshev_size = 0;
         this->_ptr_rq = rhs._ptr_rq;
         rhs._ptr_rq = nullptr;
+        this->_val = rhs._val;
+        rhs._val = 0.0;
+        this->_der2coeffs = rhs._der2coeffs;
+        rhs._der2coeffs = nullptr;
+        this->_der2r = rhs._der2r;
+        rhs._der2r;
     }
 }
 
 template <typename CoordType>
 Gn<CoordType>::~Gn()
 {
-    this->_chebyshev_size = 0;
     delete this->_ptr_rq;
     free(this->_der2coeffs);
+    this->_chebyshev_size = 0;
+    this->_val = 0.0;
+    this->_der2r = 0.0;
 }
 
 template <typename CoordType>
@@ -711,9 +745,9 @@ void Gn<CoordType>::build(CoordType distance_ij,
                           CoordType *ptr_coeffs)
 {
     this->_ptr_rq->build(distance_ij);
-    memset(&this->_val, 0.0, sizeof(CoordType));
-    memset(this->_der2coeffs, 0.0, this->_chebyshev_size * sizeof(CoordType));
-    memset(this->_der2r, 0.0, sizeof(CoordType));
+    this->_val = 0.0;
+    memset(this->_der2coeffs, 0, this->_chebyshev_size * sizeof(CoordType));
+    this->_der2r = 0.0;
     for (int ii=0; ii<this->_chebyshev_size; ii++) {
         this->_val += ptr_coeffs[ii] * this->_ptr_rq->vals()[ii];
         this->_der2coeffs[ii] = this->_ptr_rq->vals()[ii];
@@ -731,6 +765,21 @@ template <typename CoordType>
 const RQ_CChebyshev<CoordType>* Gn<CoordType>::ptr_rq() const
 {
     return this->_ptr_rq;
+}
+
+template <typename CoordType>
+const CoordType Gn<CoordType>::val() const {
+    return this->_val;
+}
+
+template <typename CoordType>
+const CoordType* Gn<CoordType>::der2coeffs() const {
+    return this->_der2coeffs;
+}
+
+template <typename CoordType>
+const CoordType Gn<CoordType>::der2r() const {
+    return this->_der2r;
 }
 
 };  // namespace : ace
