@@ -247,13 +247,13 @@ public:
           int n_a_max,
           int l_3b_max);    // 1+3
 
-    //Sinlm(const Sinlm<CoordType> &rhs);
+    Sinlm(const Sinlm<CoordType> &rhs);
 
-    //Sinlm(Sinlm<CoordType> &&rhs);
+    Sinlm(Sinlm<CoordType> &&rhs);
 
-    //Sinlm<CoordType>& operator=(const Sinlm<CoordType> &rhs);
+    Sinlm<CoordType>& operator=(const Sinlm<CoordType> &rhs);
 
-    //Sinlm<CoordType>& operator=(Sinlm<CoordType> &&rhs);
+    Sinlm<CoordType>& operator=(Sinlm<CoordType> &&rhs);
 
     ~Sinlm();
 
@@ -378,10 +378,108 @@ Sinlm<CoordType>::Sinlm(Gn<CoordType> *ptr_gn_r,
 }
 
 template <typename CoordType>
+Sinlm<CoordType>::Sinlm(const Sinlm<CoordType> &rhs)
+{
+    if (rhs.ptr_gn_r()->chebyshev_size() > 0)
+        this->_ptr_gn_r = new Sinlm<CoordType>(*rhs.ptr_gn_r());
+    else
+        this->_ptr_gn_r = nullptr;
+    if (rhs.ptr_gn_a()->chebyshev_size() > 0)
+        this->_ptr_gn_a = new Sinlm<CoordType>(*rhs.ptr_gn_a());
+    else
+        this->_ptr_gn_a = nullptr;
+    this->_n_r_max = rhs._n_r_max;
+    this->_n_r_basis = rhs._n_r_basis;
+    this->_max_body = rhs._max_body;
+    this->_n_a_max = rhs._n_a_max;
+    this->_n_a_basis = rhs._n_a_basis;
+    this->_l_3b_max = rhs._l_3b_max;
+    this->_num_s_a = rhs._num_s_a;
+}
+
+template <typename CoordType>
+Sinlm<CoordType>::Sinlm(Sinlm<CoordType> &&rhs)
+{
+    if (this != &rhs) {
+        this->_ptr_gn_r = rhs._ptr_gn_r;
+        rhs._ptr_gn_r = nullptr;
+        this->_ptr_gn_a = rhs._ptr_gn_a;
+        rhs._ptr_gn_a = nullptr;
+        this->_n_r_max = rhs._n_r_max;
+        rhs._n_r_max = 0;
+        this->_n_r_basis = rhs._n_r_basis;
+        rhs._n_r_basis = 0;
+        this->_max_body = rhs._max_body;
+        rhs._max_body = 0;
+        this->_n_a_max = rhs._n_a_max;
+        rhs._n_a_max = 0;
+        this->_n_a_basis = rhs._n_a_basis;
+        rhs._n_a_basis = 0;
+        this->_l_3b_max = rhs._l_3b_max;
+        rhs._l_3b_max = 0;
+        this->_num_s_a = rhs._num_s_a;
+        rhs._num_s_a = 0;
+    }
+}
+
+template <typename CoordType>
+Sinlm<CoordType>& Sinlm<CoordType>::operator=(const Sinlm<CoordType> &rhs)
+{
+    if (this->_ptr_gn_r->chebyshev_size() > 0)
+        delete this->_ptr_gn_r;
+    if (this->_ptr_gn_a->chebyshev_size() > 0)
+        delete this->_ptr_gn_a;
+    
+    if (rhs._ptr_gn_r->chebyshev_size() > 0)
+        this->_ptr_gn_r = new Sinlm<CoordType>(*rhs.ptr_gn_r());
+    if (rhs._ptr_gn_a->chebyshev_size() > 0)
+        this->_ptr_gn_a = new Sinlm<CoordType>(*rhs.ptr_gn_a());
+    this->_n_r_max = rhs._n_r_max;
+    this->_n_r_basis = rhs._n_r_basis;
+    this->_max_body = rhs._max_body;
+    this->_n_a_max = rhs._n_a_max;
+    this->_n_a_basis = rhs._n_a_basis;
+    this->_l_3b_max = rhs._l_3b_max;
+    this->_num_s_a = rhs._num_s_a;
+}
+
+template <typename CoordType>
+Sinlm<CoordType>& Sinlm<CoordType>::operator=(Sinlm<CoordType> &&rhs)
+{
+    if (this->_ptr_gn_r->chebyshev_size() > 0)
+        delete this->_ptr_gn_r;
+    if (this->_ptr_gn_r->chebyshev_size() > 0)
+        delete this->_ptr_gn_a;
+    
+    if (this != &rhs) {
+        this->_ptr_gn_r = rhs._ptr_gn_r;
+        rhs._ptr_gn_r = nullptr;
+        this->_ptr_gn_a = rhs._ptr_gn_a;
+        rhs._ptr_gn_a = nullptr;
+        this->_n_r_max = rhs._n_r_max;
+        rhs._n_r_max = 0;
+        this->_n_r_basis = rhs._n_r_basis;
+        rhs._n_r_basis = 0;
+        this->_max_body = rhs._max_body;
+        rhs._max_body = 0;
+        this->_n_a_max = rhs._n_a_max;
+        rhs._n_a_max = 0;
+        this->_n_a_basis = rhs._n_a_basis;
+        rhs._n_a_basis = 0;
+        this->_l_3b_max = rhs._l_3b_max;
+        rhs._l_3b_max = 0;
+        this->_num_s_a = rhs._num_s_a;
+        rhs._num_s_a = 0;
+    }
+}
+
+template <typename CoordType>
 Sinlm<CoordType>::~Sinlm()
 {
-    delete this->_ptr_gn_r;
-    delete this->_ptr_gn_a;
+    if (this->_ptr_gn_r->chebyshev_size() > 0)
+        delete this->_ptr_gn_r;
+    if (this->_ptr_gn_a->chebyshev_size() > 0)
+        delete this->_ptr_gn_a;
     this->_n_r_max = 0;
     this->_n_r_basis = 0;
     this->_max_body = 0;
@@ -455,7 +553,7 @@ void Sinlm<CoordType>::find_val_der(CoordType *val_r,
             CoordType b_der2xyz[3];
             if (this->_max_body >= 3) {
                 for (int kk=0; kk<this->_n_a_max; kk++) {
-                    int coeffs_a_idx = (itype*ntypes+jtype)*this->_n_r_max*this->_n_r_basis + kk*this->_n_a_basis + 0;
+                    int coeffs_a_idx = (itype*ntypes+jtype)*this->_n_a_max*this->_n_a_basis + kk*this->_n_a_basis + 0;
                     CoordType *tmp_coeffs_a = coeffs_a[coeffs_a_idx];
                     this->_ptr_gn_a->build(distance_ij, tmp_coeffs_a);
                     for (int ll=0; ll<this->_l_3b_max; ll++) {

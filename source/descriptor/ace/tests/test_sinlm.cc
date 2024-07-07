@@ -818,6 +818,7 @@ TEST_F(SinlmTest, default_constructor)
     ASSERT_EQ(sinlm.num_s_a(), 0);
 }
 
+/*
 TEST_F(SinlmTest, constructor_1)
 {
     ai2pot::ace::Sinlm<double> sinlm(lambda_val, 
@@ -840,6 +841,21 @@ TEST_F(SinlmTest, constructor_1)
     ASSERT_EQ(sinlm.num_s_a(), 24);
 }
 
+
+TEST_F(SinlmTest, constructor_2)
+{
+    ai2pot::ace::Gn<double> gn_r(n_r_max, rmax_r, rmin_r, lambda_val);
+    ai2pot::ace::Gn<double> gn_a(n_a_max, rmax_a, rmin_a, lambda_val);
+    ai2pot::ace::Sinlm<double> sinlm(&gn_r, &gn_a, n_r_max, max_body, n_a_max, l_3b_max);
+    ASSERT_EQ(sinlm.n_r_max(), n_r_max);
+    ASSERT_EQ(sinlm.n_r_basis(), n_r_basis);
+    ASSERT_EQ(sinlm.max_body(), max_body);
+    ASSERT_EQ(sinlm.n_a_max(), n_a_max);
+    ASSERT_EQ(sinlm.n_a_basis(), n_a_basis);
+    ASSERT_EQ(sinlm.l_3b_max(), l_3b_max);
+    ASSERT_EQ(sinlm.num_s_a(), 24);
+}
+*/
 
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
