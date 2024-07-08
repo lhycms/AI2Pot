@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include "../include/sinlm.h"
 #include "../include/radialBasis.h"
+#include "../../../nblist/include/neighborList.h"
 
 
 class BlmTest : public ::testing::Test {
@@ -53,6 +54,34 @@ protected:
     ai2pot::ace::Gn<double> *ptr_gn_r;
     ai2pot::ace::Gn<double> *ptr_gn_a;
 
+    int num_atoms;
+    double basis_vectors[3][3];
+    int atomic_numbers[12];
+    double frac_coords[12][3];
+    double rcut;
+    bool pbc_xyz[3];
+    int nghost;
+    ai2pot::Structure<double> structure;
+    ai2pot::NeighborList<double> neighbor_list;
+    int inum;
+    int *ilist;
+    int *numneigh;
+    int *firstneigh;
+    double *rcs;
+    int ntypes;
+    int *types;
+    int umax_num_neighs;
+
+    double *s_val_r;
+    double *s_val_a;
+    double *s_der2xyz_r;
+    double *s_der2xyz_a;
+    double *s_der2coeffs_r;
+    double *s_der2coeffs_a;
+
+    double *coeffs_r;
+    double *coeffs_a;
+
     static void SetUpTestSuite() {
         std::cout << "SinlmTest (TestSuite) is setting up...\n";
     }
@@ -75,11 +104,123 @@ protected:
         l_3b_max = 4;
         ptr_gn_r = new ai2pot::ace::Gn<double>(n_r_basis, rmax_r, rmin_r, lambda_val);
         ptr_gn_a = new ai2pot::ace::Gn<double>(n_a_basis, rmax_a, rmin_a, lambda_val);
+
+        num_atoms = 12;
+        basis_vectors[0][0] = 3.1903157348;
+        basis_vectors[0][1] = 5.5257885468;
+        basis_vectors[0][2] = 0.0000000000;
+        basis_vectors[1][0] = -6.3806307800;
+        basis_vectors[1][1] = 0.0000000000;
+        basis_vectors[1][2] = 0.0000000000;
+        basis_vectors[2][0] = 0.0000000000;
+        basis_vectors[2][1] = 0.0000000000;
+        basis_vectors[2][2] = 23.1297687334;
+        // 42: 0; 16: 1
+        atomic_numbers[0] = 0;
+        atomic_numbers[1] = 1;
+        atomic_numbers[2] = 1;
+        atomic_numbers[3] = 0;
+        atomic_numbers[4] = 1;
+        atomic_numbers[5] = 1;
+        atomic_numbers[6] = 0;
+        atomic_numbers[7] = 1;
+        atomic_numbers[8] = 1;
+        atomic_numbers[9] = 0; 
+        atomic_numbers[10] = 1;
+        atomic_numbers[11] = 1;
+        frac_coords[0][0] = 0.333333333333;
+        frac_coords[0][1] = 0.166666666667;
+        frac_coords[0][2] = 0.500000000000;
+        frac_coords[1][0] = 0.166666666667;
+        frac_coords[1][1] = 0.333333333333;
+        frac_coords[1][2] = 0.432343276548;
+        frac_coords[2][0] = 0.166666666667;
+        frac_coords[2][1] = 0.333333333333;
+        frac_coords[2][2] = 0.567656723452;
+        frac_coords[3][0] = 0.333333333333;
+        frac_coords[3][1] = 0.666666666667;
+        frac_coords[3][2] = 0.500000000000;
+        frac_coords[4][0] = 0.166666666667;
+        frac_coords[4][1] = 0.833333333333;
+        frac_coords[4][2] = 0.432343276548;
+        frac_coords[5][0] = 0.166666666667;
+        frac_coords[5][1] = 0.833333333333;
+        frac_coords[5][2] = 0.567656723452;
+        frac_coords[6][0] = 0.833333333333;
+        frac_coords[6][1] = 0.166666666667;
+        frac_coords[6][2] = 0.500000000000;
+        frac_coords[7][0] = 0.666666666667;
+        frac_coords[7][1] = 0.333333333333;
+        frac_coords[7][2] = 0.432343276548;
+        frac_coords[8][0] = 0.666666666667;
+        frac_coords[8][1] = 0.333333333333;
+        frac_coords[8][2] = 0.567656723452;
+        frac_coords[9][0] = 0.833333333333;
+        frac_coords[9][1] = 0.666666666667;
+        frac_coords[9][2] = 0.500000000000;
+        frac_coords[10][0] = 0.666666666667;
+        frac_coords[10][1] = 0.833333333333;
+        frac_coords[10][2] = 0.432343276548;
+        frac_coords[11][0] = 0.666666666667;
+        frac_coords[11][1] = 0.833333333333;
+        frac_coords[11][2] = 0.567656723452;
+        pbc_xyz[0] = true;
+        pbc_xyz[1] = true;
+        pbc_xyz[2] = true;
+        rcut = 3.3;
+
+        structure = ai2pot::Structure<double>(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+        neighbor_list = ai2pot::NeighborList<double>(structure, rcut, pbc_xyz, true);
+        
+        ntypes = 2;
+        umax_num_neighs = 19;
+        inum = neighbor_list.get_num_center_atoms();
+        ilist = (int*)malloc(inum * sizeof(int));
+        numneigh = (int*)malloc(inum * sizeof(int));
+        firstneigh = (int*)malloc(inum * umax_num_neighs * sizeof(int));
+        rcs = (double*)malloc(inum * umax_num_neighs * 3 * sizeof(double));
+        types = (int*)malloc(inum * sizeof(int));
+
+        s_val_r = (double*)malloc(inum * n_r_max * sizeof(double));
+        memset(s_val_r, 0, inum * n_r_max * sizeof(double));
+        s_val_a = (double*)malloc(inum * n_a_max * 24 * sizeof(double));
+        memset(s_val_a, 0, inum * n_a_max * 24 * sizeof(double));
+        s_der2coeffs_r = (double*)malloc(inum * n_r_max * ntypes * ntypes * n_r_max * n_r_basis * sizeof(double));
+        memset(s_der2coeffs_r, 0, inum * n_r_max * ntypes * ntypes * n_r_max * n_r_basis * sizeof(double));
+        s_der2coeffs_a = (double*)malloc(inum * n_a_max * 24 * ntypes * ntypes * n_a_max * n_a_basis * sizeof(double));
+        memset(s_der2coeffs_a, 0, inum * n_a_max * 24 * ntypes * ntypes * n_a_max * n_a_basis * sizeof(double));
+        s_der2xyz_r = (double*)malloc(inum * n_r_max * inum * umax_num_neighs * 3 * sizeof(double));
+        memset(s_der2xyz_r, 0, inum * n_r_max * inum * umax_num_neighs * 3 * sizeof(double));
+        s_der2xyz_a = (double*)malloc(inum * n_a_max * 24 * inum * umax_num_neighs * 3 * sizeof(double));
+        memset(s_der2xyz_a, 0, inum * n_a_max * 24 * inum * umax_num_neighs * 3 * sizeof(double));
+
+        coeffs_r = (double*)malloc(ntypes * ntypes * n_r_max * n_r_basis * sizeof(double));
+        coeffs_a = (double*)malloc(ntypes * ntypes * n_a_max * n_a_basis * sizeof(double));
+        for (int ii=0; ii<ntypes * ntypes * n_r_max * n_r_basis; ii++)
+            coeffs_r[ii] = 1 + 0.03 * ii;
+        for (int ii=0; ii<ntypes * ntypes * n_a_max * n_a_basis; ii++)
+            coeffs_a[ii] = 1 + 0.02 * ii;
     }
 
     void TearDown() override {
         delete ptr_gn_r;
         delete ptr_gn_a;
+            
+        free(ilist);
+        free(numneigh);
+        free(firstneigh);
+        free(rcs);
+        free(types);
+
+        free(s_val_r);
+        free(s_val_a);
+        free(s_der2coeffs_r);
+        free(s_der2coeffs_a);
+        free(s_der2xyz_r);
+        free(s_der2xyz_a);
+
+        free(coeffs_r);
+        free(coeffs_a);
     }
 };  // class : SinlmTest
 
@@ -914,7 +1055,33 @@ TEST_F(SinlmTest, assignment_operator_move)
 
 TEST_F(SinlmTest, find_val_der)
 {
-    
+    neighbor_list.find_info4mlff(inum,
+                                 ilist,
+                                 numneigh,
+                                 firstneigh,
+                                 rcs,
+                                 types,
+                                 nghost,
+                                 umax_num_neighs);
+    ai2pot::ace::Gn<double> gn_r(n_r_basis, rmax_r, rmin_r, lambda_val);
+    ai2pot::ace::Gn<double> gn_a(n_a_basis, rmax_a, rmin_a, lambda_val);
+    ai2pot::ace::Sinlm<double> sinlm(&gn_r, &gn_a, n_r_max, max_body, n_a_max, l_3b_max);
+    sinlm.find_val_der(s_val_r,
+                       s_val_a,
+                       s_der2xyz_r,
+                       s_der2xyz_a,
+                       s_der2coeffs_r,
+                       s_der2coeffs_a,
+                       inum,
+                       ilist,
+                       numneigh,
+                       firstneigh,
+                       ntypes,
+                       types,
+                       rcs,
+                       umax_num_neighs,
+                       coeffs_r,
+                       coeffs_a);
 }
 
 
