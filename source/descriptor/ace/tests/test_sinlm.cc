@@ -73,14 +73,22 @@ protected:
     int umax_num_neighs;
 
     double *s_val_r;
+    double *s_val_r_delta;
     double *s_val_a;
+    double *s_val_a_delta;
     double *s_der2xyz_r;
+    double *s_der2xyz_r_delta;
     double *s_der2xyz_a;
+    double *s_der2xyz_a_delta;
     double *s_der2coeffs_r;
+    double *s_der2coeffs_r_delta;
     double *s_der2coeffs_a;
+    double *s_der2coeffs_a_delta;
 
     double *coeffs_r;
+    double *coeffs_r_delta;
     double *coeffs_a;
+    double *coeffs_a_delta;
 
     static void SetUpTestSuite() {
         std::cout << "SinlmTest (TestSuite) is setting up...\n";
@@ -185,14 +193,26 @@ protected:
         memset(s_val_r, 0, inum * n_r_max * sizeof(double));
         s_val_a = (double*)malloc(inum * n_a_max * 24 * sizeof(double));
         memset(s_val_a, 0, inum * n_a_max * 24 * sizeof(double));
-        s_der2coeffs_r = (double*)malloc(inum * n_r_max * ntypes * ntypes * n_r_max * n_r_basis * sizeof(double));
-        memset(s_der2coeffs_r, 0, inum * n_r_max * ntypes * ntypes * n_r_max * n_r_basis * sizeof(double));
-        s_der2coeffs_a = (double*)malloc(inum * n_a_max * 24 * ntypes * ntypes * n_a_max * n_a_basis * sizeof(double));
-        memset(s_der2coeffs_a, 0, inum * n_a_max * 24 * ntypes * ntypes * n_a_max * n_a_basis * sizeof(double));
-        s_der2xyz_r = (double*)malloc(inum * n_r_max * inum * umax_num_neighs * 3 * sizeof(double));
-        memset(s_der2xyz_r, 0, inum * n_r_max * inum * umax_num_neighs * 3 * sizeof(double));
-        s_der2xyz_a = (double*)malloc(inum * n_a_max * 24 * inum * umax_num_neighs * 3 * sizeof(double));
-        memset(s_der2xyz_a, 0, inum * n_a_max * 24 * inum * umax_num_neighs * 3 * sizeof(double));
+        s_der2coeffs_r = (double*)malloc(inum * n_r_max * ntypes * ntypes * n_r_basis * sizeof(double));
+        memset(s_der2coeffs_r, 0, inum * n_r_max * ntypes * ntypes * n_r_basis * sizeof(double));
+        s_der2coeffs_a = (double*)malloc(inum * n_a_max * 24 * ntypes * ntypes * n_a_basis * sizeof(double));
+        memset(s_der2coeffs_a, 0, inum * n_a_max * 24 * ntypes * ntypes * n_a_basis * sizeof(double));
+        s_der2xyz_r = (double*)malloc(inum * n_r_max * umax_num_neighs * 3 * sizeof(double));
+        memset(s_der2xyz_r, 0, inum * n_r_max * umax_num_neighs * 3 * sizeof(double));
+        s_der2xyz_a = (double*)malloc(inum * n_a_max * 24 * umax_num_neighs * 3 * sizeof(double));
+        memset(s_der2xyz_a, 0, inum * n_a_max * 24 * umax_num_neighs * 3 * sizeof(double));
+        s_val_r_delta = (double*)malloc(inum * n_r_max * sizeof(double));
+        memset(s_val_r_delta, 0, inum * n_r_max * sizeof(double));
+        s_val_a_delta = (double*)malloc(inum * n_a_max * 24 * sizeof(double));
+        memset(s_val_a_delta, 0, inum * n_a_max * 24 * sizeof(double));
+        s_der2coeffs_r_delta = (double*)malloc(inum * n_r_max * ntypes * ntypes * n_r_basis * sizeof(double));
+        memset(s_der2coeffs_r_delta, 0, inum * n_r_max * ntypes * ntypes * n_r_basis * sizeof(double));
+        s_der2coeffs_a_delta = (double*)malloc(inum * n_a_max * 24 * ntypes * ntypes * n_a_basis * sizeof(double));
+        memset(s_der2coeffs_a_delta, 0, inum * n_a_max * 24 * ntypes * ntypes * n_a_basis * sizeof(double));
+        s_der2xyz_r_delta = (double*)malloc(inum * n_r_max * umax_num_neighs * 3 * sizeof(double));
+        memset(s_der2xyz_r_delta, 0, inum * n_r_max * umax_num_neighs * 3 * sizeof(double));
+        s_der2xyz_a_delta = (double*)malloc(inum * n_a_max * 24 * umax_num_neighs * 3 * sizeof(double));
+        memset(s_der2xyz_a_delta, 0, inum * n_a_max * 24 * umax_num_neighs * 3 * sizeof(double));
 
         coeffs_r = (double*)malloc(ntypes * ntypes * n_r_max * n_r_basis * sizeof(double));
         coeffs_a = (double*)malloc(ntypes * ntypes * n_a_max * n_a_basis * sizeof(double));
@@ -200,6 +220,8 @@ protected:
             coeffs_r[ii] = 1 + 0.03 * ii;
         for (int ii=0; ii<ntypes * ntypes * n_a_max * n_a_basis; ii++)
             coeffs_a[ii] = 1 + 0.02 * ii;
+        coeffs_r_delta = (double*)malloc(ntypes * ntypes * n_r_max * n_r_basis * sizeof(double));
+        coeffs_a_delta = (double*)malloc(ntypes * ntypes * n_a_max * n_a_basis * sizeof(double));
     }
 
     void TearDown() override {
@@ -213,14 +235,22 @@ protected:
         free(types);
 
         free(s_val_r);
+        free(s_val_r_delta);
         free(s_val_a);
+        free(s_val_a_delta);
         free(s_der2coeffs_r);
+        free(s_der2coeffs_r_delta);
         free(s_der2coeffs_a);
+        free(s_der2coeffs_a_delta);
         free(s_der2xyz_r);
+        free(s_der2xyz_r_delta);
         free(s_der2xyz_a);
+        free(s_der2xyz_a_delta);
 
         free(coeffs_r);
+        free(coeffs_r_delta);
         free(coeffs_a);
+        free(coeffs_a_delta);
     }
 };  // class : SinlmTest
 
@@ -1053,7 +1083,7 @@ TEST_F(SinlmTest, assignment_operator_move)
     ASSERT_EQ(sinlm_1.ptr_gn_a(), nullptr);
 }
 
-TEST_F(SinlmTest, find_val_der)
+TEST_F(SinlmTest, der_r_accuracy)
 {
     neighbor_list.find_info4mlff(inum,
                                  ilist,
@@ -1066,6 +1096,7 @@ TEST_F(SinlmTest, find_val_der)
     ai2pot::ace::Gn<double> gn_r(n_r_basis, rmax_r, rmin_r, lambda_val);
     ai2pot::ace::Gn<double> gn_a(n_a_basis, rmax_a, rmin_a, lambda_val);
     ai2pot::ace::Sinlm<double> sinlm(&gn_r, &gn_a, n_r_max, max_body, n_a_max, l_3b_max);
+
     sinlm.find_val_der(s_val_r,
                        s_val_a,
                        s_der2xyz_r,
@@ -1082,6 +1113,9 @@ TEST_F(SinlmTest, find_val_der)
                        umax_num_neighs,
                        coeffs_r,
                        coeffs_a);
+
+for (int ii=0; ii<inum*n_r_max*umax_num_neighs*3; ii++)
+    printf("%g, ", s_der2xyz_r[ii]);
 }
 
 
