@@ -315,8 +315,8 @@ private:
 
 template <typename CoordType>
 Sinlm<CoordType>::Sinlm() {     // 2+4 
-    this->_ptr_gn_r = nullptr;
-    this->_ptr_gn_a = nullptr;
+    this->_ptr_gn_r = new Gn<CoordType>();
+    this->_ptr_gn_a = new Gn<CoordType>();
     this->_n_r_max = 0;
     this->_n_r_basis = 0;
     this->_max_body = 0;
@@ -381,13 +381,13 @@ template <typename CoordType>
 Sinlm<CoordType>::Sinlm(const Sinlm<CoordType> &rhs)
 {
     if (rhs.ptr_gn_r()->chebyshev_size() > 0)
-        this->_ptr_gn_r = new Sinlm<CoordType>(*rhs.ptr_gn_r());
+        this->_ptr_gn_r = new Gn<CoordType>(*rhs.ptr_gn_r());
     else
-        this->_ptr_gn_r = nullptr;
+        this->_ptr_gn_r = new Gn<CoordType>();
     if (rhs.ptr_gn_a()->chebyshev_size() > 0)
-        this->_ptr_gn_a = new Sinlm<CoordType>(*rhs.ptr_gn_a());
+        this->_ptr_gn_a = new Gn<CoordType>(*rhs.ptr_gn_a());
     else
-        this->_ptr_gn_a = nullptr;
+        this->_ptr_gn_a = new Gn<CoordType>();
     this->_n_r_max = rhs._n_r_max;
     this->_n_r_basis = rhs._n_r_basis;
     this->_max_body = rhs._max_body;
@@ -425,15 +425,11 @@ Sinlm<CoordType>::Sinlm(Sinlm<CoordType> &&rhs)
 template <typename CoordType>
 Sinlm<CoordType>& Sinlm<CoordType>::operator=(const Sinlm<CoordType> &rhs)
 {
-    if (this->_ptr_gn_r->chebyshev_size() > 0)
-        delete this->_ptr_gn_r;
-    if (this->_ptr_gn_a->chebyshev_size() > 0)
-        delete this->_ptr_gn_a;
+    delete this->_ptr_gn_r;
+    delete this->_ptr_gn_a;
     
-    if (rhs._ptr_gn_r->chebyshev_size() > 0)
-        this->_ptr_gn_r = new Sinlm<CoordType>(*rhs.ptr_gn_r());
-    if (rhs._ptr_gn_a->chebyshev_size() > 0)
-        this->_ptr_gn_a = new Sinlm<CoordType>(*rhs.ptr_gn_a());
+    this->_ptr_gn_r = new Gn<CoordType>(*rhs.ptr_gn_r());
+    this->_ptr_gn_a = new Gn<CoordType>(*rhs.ptr_gn_a());
     this->_n_r_max = rhs._n_r_max;
     this->_n_r_basis = rhs._n_r_basis;
     this->_max_body = rhs._max_body;
@@ -446,10 +442,8 @@ Sinlm<CoordType>& Sinlm<CoordType>::operator=(const Sinlm<CoordType> &rhs)
 template <typename CoordType>
 Sinlm<CoordType>& Sinlm<CoordType>::operator=(Sinlm<CoordType> &&rhs)
 {
-    if (this->_ptr_gn_r->chebyshev_size() > 0)
-        delete this->_ptr_gn_r;
-    if (this->_ptr_gn_r->chebyshev_size() > 0)
-        delete this->_ptr_gn_a;
+    delete this->_ptr_gn_r;
+    delete this->_ptr_gn_a;
     
     if (this != &rhs) {
         this->_ptr_gn_r = rhs._ptr_gn_r;
@@ -476,10 +470,8 @@ Sinlm<CoordType>& Sinlm<CoordType>::operator=(Sinlm<CoordType> &&rhs)
 template <typename CoordType>
 Sinlm<CoordType>::~Sinlm()
 {
-    if (this->_ptr_gn_r->chebyshev_size() > 0)
-        delete this->_ptr_gn_r;
-    if (this->_ptr_gn_a->chebyshev_size() > 0)
-        delete this->_ptr_gn_a;
+    delete this->_ptr_gn_r;
+    delete this->_ptr_gn_a;
     this->_n_r_max = 0;
     this->_n_r_basis = 0;
     this->_max_body = 0;
@@ -536,7 +528,7 @@ void Sinlm<CoordType>::find_val_der(CoordType *val_r,
                 this->_ptr_gn_r->build(distance_ij, tmp_coeffs_r);
                 val_r[s_idx] += this->_ptr_gn_r->val();
                 for (int ll=0; ll<this->_n_r_basis; ll++) 
-                    der2coeffs_r[s_idx*ntypes*ntypes*this->_n_r_max*this->_n_r_basis
+                    der2coeffs_r[s_idx*tot_num_s_r
                                  + coeffs_r_idx + ll] += this->_ptr_gn_r->der2coeffs()[ll];
                 der2xyz_r[s_idx*inum*umax_num_neighs*3
                           + ii*umax_num_neighs*3 
@@ -562,7 +554,7 @@ void Sinlm<CoordType>::find_val_der(CoordType *val_r,
                             b10(b_val, b_der2xyz, neigh_vec);
                             val_a[s_idx] += this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_val;
                             for (int mm=0; mm<this->_n_a_basis; mm++)
-                                der2coeffs_a[s_idx*ntypes*ntypes*this->_n_a_max*this->_n_a_basis + coeffs_a_idx + mm] += 
+                                der2coeffs_a[s_idx*tot_num_s_a + coeffs_a_idx + mm] += 
                                     this->_ptr_gn_a->der2coeffs()[mm] / std::pow(distance_ij, ll) * b_val;
                             der2xyz_a[s_idx*inum*umax_num_neighs*3 + ii*umax_num_neighs*3 + jj*3 + 0] = 
                                 this->_ptr_gn_a->der2r() * neigh_vec[0] / distance_ij / std::pow(distance_ij, ll) * b_val
