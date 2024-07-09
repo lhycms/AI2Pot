@@ -120,10 +120,10 @@ protected:
         rmin = 2.0;
         lambda_val = 5.0;
         
-        distance_ij = 3.14;
+        distance_ij = 3.78;
         ptr_coeffs = (double*)malloc(size * sizeof(double));
         for (int ii=0; ii<size; ii++)
-            ptr_coeffs[ii] = 1.0 + 0.1 * ii;
+            ptr_coeffs[ii] = 2.0 + 0.1 * ii;
 
         delta = 0.001;
         ptr_coeffs_delta = (double*)malloc(size * sizeof(double));

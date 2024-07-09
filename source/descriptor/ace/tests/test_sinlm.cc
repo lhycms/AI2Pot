@@ -84,6 +84,7 @@ protected:
     double *s_der2coeffs_r_delta;
     double *s_der2coeffs_a;
     double *s_der2coeffs_a_delta;
+    double delta;
 
     double *coeffs_r;
     double *coeffs_r_delta;
@@ -189,6 +190,7 @@ protected:
         rcs = (double*)malloc(inum * umax_num_neighs * 3 * sizeof(double));
         types = (int*)malloc(inum * sizeof(int));
 
+        delta = 0.001;
         s_val_r = (double*)malloc(inum * n_r_max * sizeof(double));
         memset(s_val_r, 0, inum * n_r_max * sizeof(double));
         s_val_a = (double*)malloc(inum * n_a_max * 24 * sizeof(double));
@@ -1096,7 +1098,6 @@ TEST_F(SinlmTest, der_r_accuracy)
     ai2pot::ace::Gn<double> gn_r(n_r_basis, rmax_r, rmin_r, lambda_val);
     ai2pot::ace::Gn<double> gn_a(n_a_basis, rmax_a, rmin_a, lambda_val);
     ai2pot::ace::Sinlm<double> sinlm(&gn_r, &gn_a, n_r_max, max_body, n_a_max, l_3b_max);
-
     sinlm.find_val_der(s_val_r,
                        s_val_a,
                        s_der2xyz_r,
@@ -1113,9 +1114,78 @@ TEST_F(SinlmTest, der_r_accuracy)
                        umax_num_neighs,
                        coeffs_r,
                        coeffs_a);
+    // 1.1. After delta (wrt. rcs)
+    int cidx_modify = 0;
+    int n_r_idx_modify = 0;
+    int neigh_idx_modify = 0;
+    int direction_idx_modify = 0;
+    rcs[cidx_modify*umax_num_neighs*3 + neigh_idx_modify*3 + direction_idx_modify] += delta;
+    sinlm.find_val_der(s_val_r_delta,
+                       s_val_a_delta,
+                       s_der2xyz_r_delta,
+                       s_der2xyz_a_delta,
+                       s_der2coeffs_r_delta,
+                       s_der2coeffs_a_delta,
+                       inum,
+                       ilist,
+                       numneigh,
+                       firstneigh,
+                       ntypes,
+                       types,
+                       rcs,
+                       umax_num_neighs,
+                       coeffs_r,
+                       coeffs_a);
+    rcs[cidx_modify*umax_num_neighs*3 + neigh_idx_modify*3 + direction_idx_modify] -= delta;
+printf("\t1.1. The analytic derivative of Sinlm_r wrt. rcs[%d, %d, %d] = %g\n",
+    cidx_modify,
+    neigh_idx_modify,
+    direction_idx_modify,
+    s_der2xyz_r[cidx_modify*n_r_max*umax_num_neighs*3 + n_r_idx_modify*umax_num_neighs*3 + neigh_idx_modify*3 + direction_idx_modify]);
+printf("\t1.2. The numerical derivative of Sinlm_r wrt. rcs[%d, %d, %d] = %g\n\n",
+    cidx_modify,
+    neigh_idx_modify,
+    direction_idx_modify,
+    (s_val_r_delta[cidx_modify*n_r_max+n_r_idx_modify] - s_val_r[cidx_modify*n_r_max+n_r_idx_modify]) / delta);
 
-for (int ii=0; ii<inum*n_r_max*umax_num_neighs*3; ii++)
-    printf("%g, ", s_der2xyz_r[ii]);
+    // 1.2. After delta (wrt. coeffs)
+    cidx_modify = 6;
+    n_r_idx_modify = 0;
+    int itype_modify = 0;
+    int jtype_modify = 0;
+    int n_r_basis_idx_modify = 7;
+    coeffs_r[(itype_modify*ntypes+jtype_modify)*n_r_max*n_r_basis + n_r_idx_modify*n_r_basis + n_r_basis_idx_modify] += delta;
+    sinlm.find_val_der(s_val_r_delta,
+                       s_val_a_delta,
+                       s_der2xyz_r_delta,
+                       s_der2xyz_a_delta,
+                       s_der2coeffs_r_delta,
+                       s_der2coeffs_a_delta,
+                       inum,
+                       ilist,
+                       numneigh,
+                       firstneigh,
+                       ntypes,
+                       types,
+                       rcs,
+                       umax_num_neighs,
+                       coeffs_r,
+                       coeffs_a);
+printf("\t2.1. The analytic derivative of Sinlm_r wrt. coeffs_r[%d, %d, %d, %d] = %g\n", 
+    itype_modify,
+    jtype_modify,
+    n_r_idx_modify,
+    n_r_basis_idx_modify,
+    s_der2coeffs_r[cidx_modify*n_r_max*ntypes*ntypes*n_r_basis
+                   + n_r_idx_modify*ntypes*ntypes*n_r_basis
+                   + (itype_modify*ntypes + jtype_modify)*n_r_basis
+                   + n_r_basis_idx_modify]);
+printf("\t2.2. The numerical derivative of Sinlm_r wrt. coeffs_r[%d, %d, %d, %d] = %g\n", 
+    itype_modify,
+    jtype_modify,
+    n_r_idx_modify,
+    n_r_basis_idx_modify,
+    (s_val_r_delta[cidx_modify*n_r_max + n_r_idx_modify] - s_val_r[cidx_modify*n_r_max + n_r_idx_modify]) / delta);
 }
 
 
