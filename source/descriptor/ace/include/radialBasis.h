@@ -159,6 +159,8 @@ public:
 
     const CoordType der2r() const;
 
+    void show() const;
+
 private:
     int _chebyshev_size = 0;
     RQ_CChebyshev<CoordType> *_ptr_rq = nullptr;
@@ -780,6 +782,21 @@ const CoordType* Gn<CoordType>::der2coeffs() const {
 template <typename CoordType>
 const CoordType Gn<CoordType>::der2r() const {
     return this->_der2r;
+}
+
+template <typename CoordType>
+void Gn<CoordType>::show() const {
+    printf("Gn information:\n");
+    printf("\t1. chebyshev_size = %d\n", this->_chebyshev_size);
+    printf("\t2. rmax = %g\n", this->_ptr_rq->rmax());
+    printf("\t3. rmin = %g\n", this->_ptr_rq->rmin());
+    printf("\t4. lambda_val = %g\n", this->_ptr_rq->lambda_val());
+    printf("\t5. val = %g\n", this->_val);
+    printf("\t6. der2coeffs = ");
+    for (int ii=0; ii<this->_chebyshev_size; ii++)
+        printf("%g, ", this->_der2coeffs[ii]);
+    printf("\n");
+    printf("\t7. der2r = %g\n", this->_der2r);
 }
 
 };  // namespace : ace

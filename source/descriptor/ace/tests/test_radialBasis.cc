@@ -448,6 +448,7 @@ TEST_F(GnTest, der_accuracy) {
     ai2pot::ace::Gn<double> gn_delta(size, rmax, rmin, lambda_val);
     gn.build(distance_ij, ptr_coeffs);
 
+printf("* Value of gn = %g\n", gn.val());
 printf("1. Derivative wrt. distance_ij:\n");
     distance_ij_delta = distance_ij + delta;
     for (int ii=0; ii<size; ii++)

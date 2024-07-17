@@ -30,7 +30,7 @@ protected:
         rc2 = (double*)malloc(sizeof(double) * 3);
         der2xyz1 = (double*)malloc(sizeof(double) * 3);
         der2xyz2 = (double*)malloc(sizeof(double) * 3);
-        delta = 0.0001;
+        delta = 0.001;
     }
 
     void TearDown() override {
@@ -110,7 +110,7 @@ protected:
         rmin_a = 2.0;
         n_a_max = 8;
         n_a_basis = 8;
-        l_3b_max = 4;
+        l_3b_max = 1;
         ptr_gn_r = new ai2pot::ace::Gn<double>(n_r_basis, rmax_r, rmin_r, lambda_val);
         ptr_gn_a = new ai2pot::ace::Gn<double>(n_a_basis, rmax_a, rmin_a, lambda_val);
 
@@ -134,7 +134,7 @@ protected:
         atomic_numbers[6] = 0;
         atomic_numbers[7] = 1;
         atomic_numbers[8] = 1;
-        atomic_numbers[9] = 0; 
+        atomic_numbers[9] = 0;
         atomic_numbers[10] = 1;
         atomic_numbers[11] = 1;
         frac_coords[0][0] = 0.333333333333;
@@ -176,13 +176,13 @@ protected:
         pbc_xyz[0] = true;
         pbc_xyz[1] = true;
         pbc_xyz[2] = true;
-        rcut = 3.3;
+        rcut = 8.0;
 
         structure = ai2pot::Structure<double>(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
         neighbor_list = ai2pot::NeighborList<double>(structure, rcut, pbc_xyz, true);
         
         ntypes = 2;
-        umax_num_neighs = 19;
+        umax_num_neighs = 200;
         inum = neighbor_list.get_num_center_atoms();
         ilist = (int*)malloc(inum * sizeof(int));
         numneigh = (int*)malloc(inum * sizeof(int));
@@ -1087,6 +1087,7 @@ TEST_F(SinlmTest, assignment_operator_move)
 
 TEST_F(SinlmTest, der_r_accuracy)
 {
+    max_body = 2;
     neighbor_list.find_info4mlff(inum,
                                  ilist,
                                  numneigh,
@@ -1137,6 +1138,7 @@ TEST_F(SinlmTest, der_r_accuracy)
                        coeffs_r,
                        coeffs_a);
     rcs[cidx_modify*umax_num_neighs*3 + neigh_idx_modify*3 + direction_idx_modify] -= delta;
+printf("%g, %g\n", s_val_r[cidx_modify*n_r_max+n_r_idx_modify], s_val_r_delta[cidx_modify*n_r_max+n_r_idx_modify]);
 printf("\t1.1. The analytic derivative of Sinlm_r wrt. rcs[%d, %d, %d] = %g\n",
     cidx_modify,
     neigh_idx_modify,
@@ -1151,7 +1153,7 @@ printf("\t1.2. The numerical derivative of Sinlm_r wrt. rcs[%d, %d, %d] = %g\n\n
     // 1.2. After delta (wrt. coeffs)
     cidx_modify = 6;
     n_r_idx_modify = 0;
-    int itype_modify = 0;
+    int itype_modify = types[cidx_modify];
     int jtype_modify = 0;
     int n_r_basis_idx_modify = 7;
     coeffs_r[(itype_modify*ntypes+jtype_modify)*n_r_max*n_r_basis + n_r_idx_modify*n_r_basis + n_r_basis_idx_modify] += delta;
@@ -1171,6 +1173,7 @@ printf("\t1.2. The numerical derivative of Sinlm_r wrt. rcs[%d, %d, %d] = %g\n\n
                        umax_num_neighs,
                        coeffs_r,
                        coeffs_a);
+printf("%g, %g\n", s_val_r[cidx_modify*n_r_max+n_r_idx_modify], s_val_r_delta[cidx_modify*n_r_max+n_r_idx_modify]);
 printf("\t2.1. The analytic derivative of Sinlm_r wrt. coeffs_r[%d, %d, %d, %d] = %g\n", 
     itype_modify,
     jtype_modify,
@@ -1189,8 +1192,11 @@ printf("\t2.2. The numerical derivative of Sinlm_r wrt. coeffs_r[%d, %d, %d, %d]
 }
 
 
+
 TEST_F(SinlmTest, der_a_accuracy)
 {
+    l_3b_max = 1;
+    int num_sl = 3;
     neighbor_list.find_info4mlff(inum,
                                  ilist,
                                  numneigh,
@@ -1202,6 +1208,7 @@ TEST_F(SinlmTest, der_a_accuracy)
     ai2pot::ace::Gn<double> gn_r(n_r_basis, rmax_r, rmin_r, lambda_val);
     ai2pot::ace::Gn<double> gn_a(n_a_basis, rmax_a, rmin_a, lambda_val);
     ai2pot::ace::Sinlm<double> sinlm(&gn_r, &gn_a, n_r_max, max_body, n_a_max, l_3b_max);
+    rcs[0] += delta;
     sinlm.find_val_der(s_val_r,
                        s_val_a,
                        s_der2xyz_r,
@@ -1221,10 +1228,9 @@ TEST_F(SinlmTest, der_a_accuracy)
     // 1.1. After delta (wrt. rcs)
     int cidx_modify = 0;
     int n_a_idx_modify = 0;
-    int l_idx = 0;
+    int l_idx = 1;
     int neigh_idx_modify = 0;
     int direction_idx_modify = 0;
-    rcs[cidx_modify*umax_num_neighs*3 + neigh_idx_modify*3 + direction_idx_modify] += delta;
     sinlm.find_val_der(s_val_r_delta,
                        s_val_a_delta,
                        s_der2xyz_r_delta,
@@ -1242,12 +1248,13 @@ TEST_F(SinlmTest, der_a_accuracy)
                        coeffs_r,
                        coeffs_a);
     rcs[cidx_modify*umax_num_neighs*3 + neigh_idx_modify*3 + direction_idx_modify] -= delta;
+printf("%g, %g\n", s_val_a[cidx_modify*n_a_max*num_sl + n_a_idx_modify*num_sl + l_idx], s_val_a_delta[cidx_modify*n_a_max*num_sl + n_a_idx_modify*num_sl + l_idx]);
 printf("\t1.1. The anlytic derivative of Sinlm_a wrt. rcs[%d, %d, %d] = %g\n",
        cidx_modify,
        neigh_idx_modify,
        direction_idx_modify,
-       s_der2xyz_a[cidx_modify*n_a_max*24*umax_num_neighs*3 
-                   + n_a_idx_modify*24*umax_num_neighs*3 
+       s_der2xyz_a[cidx_modify*n_a_max*num_sl*umax_num_neighs*3 
+                   + n_a_idx_modify*num_sl*umax_num_neighs*3 
                    + l_idx*umax_num_neighs*3 
                    + neigh_idx_modify*3 
                    + direction_idx_modify]);
@@ -1255,15 +1262,15 @@ printf("\t1.2. The numerical derivative of Sinlm_a wrt. rcs[%d, %d, %d] = %g\n\n
        cidx_modify,
        neigh_idx_modify,
        direction_idx_modify,
-       (s_val_a_delta[cidx_modify*n_a_max*24 + n_a_idx_modify*24 + l_idx] - s_val_a[cidx_modify*n_a_max*24 + n_a_idx_modify*24 + l_idx]) / delta);
+       (s_val_a_delta[cidx_modify*n_a_max*num_sl + n_a_idx_modify*num_sl + l_idx] - s_val_a[cidx_modify*n_a_max*num_sl + n_a_idx_modify*num_sl + l_idx]) / delta);
 
     // 1.2. After delta (wrt. coeffs)
-    cidx_modify = 2;
-    n_a_idx_modify = 5;
-    int l_idx_modify = 20;
-    int itype_idx_modify = 1;
+    cidx_modify = 0;
+    n_a_idx_modify = 0;
+    int l_idx_modify = 0;
+    int itype_idx_modify = types[cidx_modify];
     int jtype_idx_modify = 1;
-    int n_a_basis_idx_modify = 3;
+    int n_a_basis_idx_modify = 0;
     coeffs_a[(itype_idx_modify*ntypes+jtype_idx_modify)*n_a_max*n_a_basis + n_a_idx_modify*n_a_basis + n_a_basis_idx_modify] += delta;
     sinlm.find_val_der(s_val_r_delta,
                        s_val_a_delta,
@@ -1282,23 +1289,23 @@ printf("\t1.2. The numerical derivative of Sinlm_a wrt. rcs[%d, %d, %d] = %g\n\n
                        coeffs_r,
                        coeffs_a);
     coeffs_a[(itype_idx_modify*ntypes+jtype_idx_modify)*n_a_max*n_a_basis + n_a_idx_modify*n_a_basis + n_a_basis_idx_modify] -= delta;
-printf("%g, %g\n", s_val_a[cidx_modify*n_a_max*24 + n_a_idx_modify*24 + l_idx], s_val_a_delta[cidx_modify*n_a_max*24 + n_a_idx_modify*24 + l_idx]);
+printf("%g, %g\n", s_val_a[cidx_modify*n_a_max*num_sl + n_a_idx_modify*num_sl + l_idx], s_val_a_delta[cidx_modify*n_a_max*num_sl + n_a_idx_modify*num_sl + l_idx]);
 printf("\t2.1. The anlytic derivative of Sinlm_a wrt. coeffs_a[%d, %d, %d, %d] = \t%g\n",
         itype_idx_modify,
         jtype_idx_modify,
         n_a_idx_modify,
         n_a_basis_idx_modify,
-        s_der2coeffs_a[cidx_modify*n_a_max*24*ntypes*ntypes*n_a_basis 
-        + n_a_idx_modify*24*ntypes*ntypes*n_a_basis
+        s_der2coeffs_a[cidx_modify*n_a_max*num_sl*ntypes*ntypes*n_a_basis 
+        + n_a_idx_modify*num_sl*ntypes*ntypes*n_a_basis
         + l_idx*ntypes*ntypes*n_a_basis
         + (itype_idx_modify*ntypes+jtype_idx_modify)*n_a_basis
         + n_a_basis_idx_modify]);
-printf("\t2.2. The anlytic derivative of Sinlm_a wrt. coeffs_a[%d, %d, %d, %d] = \t%g\n", 
+printf("\t2.2. The numerical derivative of Sinlm_a wrt. coeffs_a[%d, %d, %d, %d] = \t%g\n", 
         itype_idx_modify,
         jtype_idx_modify,
         n_a_idx_modify,
         n_a_basis_idx_modify,
-      (s_val_a_delta[cidx_modify*n_a_max*24 + n_a_idx_modify*24 + l_idx] - s_val_a[cidx_modify*n_a_max*24 + n_a_idx_modify*24 + l_idx]) / delta);
+      (s_val_a_delta[cidx_modify*n_a_max*num_sl + n_a_idx_modify*num_sl + l_idx] - s_val_a[cidx_modify*n_a_max*num_sl + n_a_idx_modify*num_sl + l_idx]) / delta);
 }
 
 
