@@ -522,11 +522,13 @@ void Sinlm<CoordType>::find_val_der4blm_neigh_atom(
 {
     CoordType b_val;
     CoordType b_der2xyz[3];
+    int coeffs_idx = (itype*ntypes+jtype)*this->_n_a_max*this->_n_a_basis + n_a_idx*this->_n_a_basis + 0;
+    CoordType *tmp_coeffs_a = &coeffs_a[coeffs_idx];
     this->_ptr_gn_a->build(distance_ij, coeffs_a);
 
     int sidx = ii*this->_n_a_max*this->_num_s_a + n_a_idx*this->_num_s_a + blm_idx;
-    ptr_blm(&b_val, b_der2xyz);
-    val_a[sidx] += this->_ptr_gn_a->val() / std::pow(distance_ij, l ) * b_val;
+    ptr_blm(b_val, b_der2xyz, rc);
+    val_a[sidx] += this->_ptr_gn_a->val() / std::pow(distance_ij, l) * b_val;
     for (int ii=0; ii<this->_n_a_basis; ii++)
         der2coeffs_a[sidx*ntypes*ntypes*this->_n_a_basis
                      + (itype*ntypes+jtype)*this->_n_a_basis 
@@ -569,7 +571,7 @@ void Sinlm<CoordType>::find_val_der(
     int num_coeffs_r = ntypes * ntypes * this->_n_r_max * this->_n_r_basis;
     int num_coeffs_a = ntypes * ntypes * this->_n_a_max * this->_n_a_basis;
     memset(val_r, 0, tot_num_s_r * sizeof(CoordType));
-    memset(val_a, 0, tot_num_s_a * this->_num_s_a * sizeof(CoordType));
+    memset(val_a, 0, tot_num_s_a * sizeof(CoordType));
     memset(der2xyz_r, 0, tot_num_s_r * umax_num_neighs * 3 * sizeof(CoordType));  // Note : Don't repeat index.
     memset(der2xyz_a, 0, tot_num_s_a * umax_num_neighs * 3 * sizeof(CoordType));
     memset(der2coeffs_r, 0, tot_num_s_r * ntypes * ntypes * this->_n_r_basis * sizeof(CoordType));
@@ -585,7 +587,7 @@ void Sinlm<CoordType>::find_val_der(
             CoordType distance_ij = std::sqrt(std::pow(neigh_vec[0], 2)
                                               + std::pow(neigh_vec[1], 2)
                                               + std::pow(neigh_vec[2], 2));
-
+        
             // For 2b
             if ( (distance_ij >= this->_ptr_gn_r->ptr_rq()->rmin()) && (distance_ij <= this->_ptr_gn_r->ptr_rq()->rmax()) )
             {
@@ -607,511 +609,120 @@ void Sinlm<CoordType>::find_val_der(
                               + jj*3 + 2] = this->_ptr_gn_r->der2r() * neigh_vec[2] / distance_ij;
                 }
             }
-
             // For 3b/4b/5b
-            CoordType b_val;
-            CoordType b_der2xyz[3];
-            if ( (this->_max_body >= 3) 
+            if ( (this->_max_body >= 3)
                  && (distance_ij >= this->_ptr_gn_a->ptr_rq()->rmin()) 
                  && (distance_ij <= this->_ptr_gn_a->ptr_rq()->rmax()) )
             {
                 for (int kk=0; kk<this->_n_a_max; kk++) {
-                    int coeffs_a_idx = (itype*ntypes+jtype)*this->_n_a_max*this->_n_a_basis + kk*this->_n_a_basis + 0;
-                    CoordType *tmp_coeffs_a = &coeffs_a[coeffs_a_idx];
-                    this->_ptr_gn_a->build(distance_ij, tmp_coeffs_a);
-                    int s_idx;
-                    int ll;
+                    // l=1 
                     if (this->_l_3b_max >= 1) {
-                        ll = 1;
-                        s_idx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + 0;
-                        b10<CoordType>(b_val, b_der2xyz, neigh_vec);
-//printf("aaa %g, %g, %g\n", this->_ptr_gn_a->val(), std::pow(distance_ij, ll), b_val);
-                        val_a[s_idx] += this->_ptr_gn_a->val() / std::pow(distance_ij, 1) * b_val;
-//printf("aaaa %d, %g\n", s_idx, val_a[s_idx]);
-                        for (int mm=0; mm<this->_n_a_basis; mm++)
-                            der2coeffs_a[s_idx*ntypes*ntypes*this->_n_a_basis
-                                        + (itype*ntypes+jtype)*this->_n_a_basis
-                                        + mm] += this->_ptr_gn_a->der2coeffs()[mm] / std::pow(distance_ij, ll) * b_val;
-                        der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 0] =
-                            this->_ptr_gn_a->der2r() * neigh_vec[0] / distance_ij / std::pow(distance_ij, ll) * b_val
-                            - this->_ptr_gn_a->val() * neigh_vec[0] / std::pow(distance_ij, 3) * b_val
-                            + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[0];
-                        der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 1] =
-                            this->_ptr_gn_a->der2r() * neigh_vec[1] / distance_ij / std::pow(distance_ij, ll) * b_val
-                            - this->_ptr_gn_a->val() * neigh_vec[1] / std::pow(distance_ij, 3) * b_val
-                            + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[1];
-                        der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 2] =
-                            this->_ptr_gn_a->der2r() * neigh_vec[2] / distance_ij / std::pow(distance_ij, ll) * b_val
-                            - this->_ptr_gn_a->val() * neigh_vec[2] / std::pow(distance_ij, 3) * b_val
-                            + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[2];
-
-                        s_idx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + 1;
-                        b11<CoordType>(b_val, b_der2xyz, neigh_vec);
-                        val_a[s_idx] += this->_ptr_gn_a->val() / std::pow(distance_ij, 1) * b_val;
-                        for (int mm=0; mm<this->_n_a_basis; mm++)
-                            der2coeffs_a[s_idx*ntypes*ntypes*this->_n_a_basis 
-                                        + (itype*ntypes+jtype)*this->_n_a_basis
-                                        + mm] += this->_ptr_gn_a->der2coeffs()[mm] / std::pow(distance_ij, ll) * b_val;
-                        der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 0] =
-                            this->_ptr_gn_a->der2r() * neigh_vec[0] / distance_ij / std::pow(distance_ij, ll) * b_val
-                            - this->_ptr_gn_a->val() * neigh_vec[0] / std::pow(distance_ij, 3) * b_val
-                            + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[0];
-                        der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 1] =
-                            this->_ptr_gn_a->der2r() * neigh_vec[1] / distance_ij / std::pow(distance_ij, ll) * b_val
-                            - this->_ptr_gn_a->val() * neigh_vec[1] / std::pow(distance_ij, 3) * b_val
-                            + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[1];
-                        der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 2] =
-                            this->_ptr_gn_a->der2r() * neigh_vec[2] / distance_ij / std::pow(distance_ij, ll) * b_val
-                            - this->_ptr_gn_a->val() * neigh_vec[2] / std::pow(distance_ij, 3) * b_val
-                            + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[2];
-
-                        s_idx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + 2;
-                        b12<CoordType>(b_val, b_der2xyz, neigh_vec);
-                        val_a[s_idx] += this->_ptr_gn_a->val() / std::pow(distance_ij, 1) * b_val;
-                        for (int mm=0; mm<this->_n_a_basis; mm++)
-                            der2coeffs_a[s_idx*ntypes*ntypes*this->_n_a_basis 
-                                        + (itype*ntypes + jtype) * this->_n_a_basis
-                                        + mm] += this->_ptr_gn_a->der2coeffs()[mm] / std::pow(distance_ij, ll) * b_val;
-                        der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 0] =
-                            this->_ptr_gn_a->der2r() * neigh_vec[0] / distance_ij / std::pow(distance_ij, ll) * b_val
-                            - this->_ptr_gn_a->val() * neigh_vec[0] / std::pow(distance_ij, 3) * b_val
-                            + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[0];
-                        der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 1] =
-                            this->_ptr_gn_a->der2r() * neigh_vec[1] / distance_ij / std::pow(distance_ij, ll) * b_val
-                            - this->_ptr_gn_a->val() * neigh_vec[1] / std::pow(distance_ij, 3) * b_val
-                            + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[1];
-                        der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 2] =
-                            this->_ptr_gn_a->der2r() * neigh_vec[2] / distance_ij / std::pow(distance_ij, ll) * b_val
-                            - this->_ptr_gn_a->val() * neigh_vec[2] / std::pow(distance_ij, 3) * b_val
-                            + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[2];
+                        // b10
+                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
+                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
+                            1, 0, &b10<CoordType>);
+                        // b11
+                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
+                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
+                            1, 1, &b11<CoordType>);
+                        // b12
+                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
+                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
+                            1, 2, &b12<CoordType>);
                     }
-
-                    /*
-                    for (int ll=1; ll<this->_l_3b_max+1; ll++) {
-                        if (ll == 1) {
-                        } else if (ll == 5) {
-                            s_idx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + 3;
-                            b20<CoordType>(b_val, b_der2xyz, neigh_vec);
-                            val_a[s_idx] += this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_val;
-                            for (int mm=0; mm<this->_n_a_basis; mm++)
-                                der2coeffs_a[s_idx*ntypes*ntypes*this->_n_a_basis 
-                                            + (itype*ntypes+jtype)*this->_n_a_basis
-                                            + mm] += this->_ptr_gn_a->der2coeffs()[mm] / std::pow(distance_ij, ll) * b_val;
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 0] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[0] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 2 * this->_ptr_gn_a->val() * neigh_vec[0] / std::pow(distance_ij, 4) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[0];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 1] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[1] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 2 * this->_ptr_gn_a->val() * neigh_vec[1] / std::pow(distance_ij, 4) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[1];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 2] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[2] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 2 * this->_ptr_gn_a->val() * neigh_vec[2] / std::pow(distance_ij, 4) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[2];
-
-                            s_idx++;    // int s_idx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + 4;
-                            b21<CoordType>(b_val, b_der2xyz, neigh_vec);
-                            val_a[s_idx] += this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_val;
-                            for (int mm=0; mm<this->_n_a_basis; mm++)
-                                der2coeffs_a[s_idx*ntypes*ntypes*this->_n_a_basis 
-                                            + (itype*ntypes+jtype)*this->_n_a_basis
-                                            + mm] += this->_ptr_gn_a->der2coeffs()[mm] / std::pow(distance_ij, ll) * b_val;
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 0] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[0] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 2 * this->_ptr_gn_a->val() * neigh_vec[0] / std::pow(distance_ij, 4) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[0];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 1] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[1] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 2 * this->_ptr_gn_a->val() * neigh_vec[1] / std::pow(distance_ij, 4) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[1];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 2] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[2] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 2 * this->_ptr_gn_a->val() * neigh_vec[2] / std::pow(distance_ij, 4) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[2];
-
-                            s_idx++;    // int s_idx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + 5;
-                            b22<CoordType>(b_val, b_der2xyz, neigh_vec);
-                            val_a[s_idx] += this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_val;
-                            for (int mm=0; mm<this->_n_a_basis; mm++)
-                                der2coeffs_a[s_idx*ntypes*ntypes*this->_n_a_basis 
-                                            + (itype*ntypes+jtype)*this->_n_a_basis
-                                            + mm] += this->_ptr_gn_a->der2coeffs()[mm] / std::pow(distance_ij, ll) * b_val;
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 0] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[0] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 2 * this->_ptr_gn_a->val() * neigh_vec[0] / std::pow(distance_ij, 4) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[0];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 1] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[1] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 2 * this->_ptr_gn_a->val() * neigh_vec[1] / std::pow(distance_ij, 4) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[1];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 2] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[2] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 2 * this->_ptr_gn_a->val() * neigh_vec[2] / std::pow(distance_ij, 4) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[2];
-
-                            s_idx++;    // int s_idx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + 6;
-                            b23<CoordType>(b_val, b_der2xyz, neigh_vec);
-                            val_a[s_idx] += this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_val;
-                            for (int mm=0; mm<this->_n_a_basis; mm++)
-                                der2coeffs_a[s_idx*ntypes*ntypes*this->_n_a_basis 
-                                            + (itype*ntypes+jtype)*this->_n_a_basis
-                                            + mm] += this->_ptr_gn_a->der2coeffs()[mm] / std::pow(distance_ij, ll) * b_val;
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 0] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[0] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 2 * this->_ptr_gn_a->val() * neigh_vec[0] / std::pow(distance_ij, 4) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[0];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 1] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[1] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 2 * this->_ptr_gn_a->val() * neigh_vec[1] / std::pow(distance_ij, 4) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[1];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 2] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[2] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 2 * this->_ptr_gn_a->val() * neigh_vec[2] / std::pow(distance_ij, 4) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[2];
-
-                            s_idx++;    // int s_idx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + 7;
-                            b24<CoordType>(b_val, b_der2xyz, neigh_vec);
-                            val_a[s_idx] += this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_val;
-                            for (int mm=0; mm<this->_n_a_basis; mm++)
-                                der2coeffs_a[s_idx*ntypes*ntypes*this->_n_a_basis 
-                                            + (itype*ntypes+jtype)*this->_n_a_basis
-                                            + mm] += this->_ptr_gn_a->der2coeffs()[mm] / std::pow(distance_ij, ll) * b_val;
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 0] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[0] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 2 * this->_ptr_gn_a->val() * neigh_vec[0] / std::pow(distance_ij, 4) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[0];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 1] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[1] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 2 * this->_ptr_gn_a->val() * neigh_vec[1] / std::pow(distance_ij, 4) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[1];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 2] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[2] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 2 * this->_ptr_gn_a->val() * neigh_vec[2] / std::pow(distance_ij, 4) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[2];
-                        } else if (ll == 5) {
-                            s_idx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + 8;
-                            b30<CoordType>(b_val, b_der2xyz, neigh_vec);
-                            val_a[s_idx] += this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_val;
-                            for (int mm=0; mm<this->_n_a_basis; mm++)
-                                der2coeffs_a[s_idx*ntypes*ntypes*this->_n_a_basis 
-                                            + (itype*ntypes+jtype)*this->_n_a_basis
-                                            + mm] += this->_ptr_gn_a->der2coeffs()[mm] / std::pow(distance_ij, ll) * b_val;
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 0] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[0] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 3 * this->_ptr_gn_a->val() * neigh_vec[0] / std::pow(distance_ij, 5) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[0];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 1] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[1] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 3 * this->_ptr_gn_a->val() * neigh_vec[1] / std::pow(distance_ij, 5) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[1];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 2] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[2] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 3 * this->_ptr_gn_a->val() * neigh_vec[2] / std::pow(distance_ij, 5) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[2];
-
-                            s_idx++;    // int s_idx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + 9;
-                            b31<CoordType>(b_val, b_der2xyz, neigh_vec);
-                            val_a[s_idx] += this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_val;
-                            for (int mm=0; mm<this->_n_a_basis; mm++)
-                                der2coeffs_a[s_idx*ntypes*ntypes*this->_n_a_basis 
-                                            + (itype*ntypes+jtype)*this->_n_a_basis
-                                            + mm] += this->_ptr_gn_a->der2coeffs()[mm] / std::pow(distance_ij, ll) * b_val;
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 0] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[0] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 3 * this->_ptr_gn_a->val() * neigh_vec[0] / std::pow(distance_ij, 5) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[0];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 1] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[1] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 3 * this->_ptr_gn_a->val() * neigh_vec[1] / std::pow(distance_ij, 5) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[1];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 2] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[2] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 3 * this->_ptr_gn_a->val() * neigh_vec[2] / std::pow(distance_ij, 5) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[2];
-
-                            s_idx++;    // int s_idx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + 10;
-                            b32<CoordType>(b_val, b_der2xyz, neigh_vec);
-                            val_a[s_idx] += this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_val;
-                            for (int mm=0; mm<this->_n_a_basis; mm++)
-                                der2coeffs_a[s_idx*ntypes*ntypes*this->_n_a_basis 
-                                            + (itype*ntypes+jtype)*this->_n_a_basis
-                                            + mm] += this->_ptr_gn_a->der2coeffs()[mm] / std::pow(distance_ij, ll) * b_val;
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 0] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[0] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 3 * this->_ptr_gn_a->val() * neigh_vec[0] / std::pow(distance_ij, 5) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[0];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 1] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[1] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 3 * this->_ptr_gn_a->val() * neigh_vec[1] / std::pow(distance_ij, 5) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[1];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 2] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[2] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 3 * this->_ptr_gn_a->val() * neigh_vec[2] / std::pow(distance_ij, 5) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[2];
-
-                            s_idx++;    // int s_idx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + 11;
-                            b33<CoordType>(b_val, b_der2xyz, neigh_vec);
-                            val_a[s_idx] += this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_val;
-                            for (int mm=0; mm<this->_n_a_basis; mm++)
-                                der2coeffs_a[s_idx*ntypes*ntypes*this->_n_a_basis 
-                                            + (itype*ntypes+jtype)*this->_n_a_basis
-                                            + mm] += this->_ptr_gn_a->der2coeffs()[mm] / std::pow(distance_ij, ll) * b_val;
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 0] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[0] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 3 * this->_ptr_gn_a->val() * neigh_vec[0] / std::pow(distance_ij, 5) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[0];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 1] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[1] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 3 * this->_ptr_gn_a->val() * neigh_vec[1] / std::pow(distance_ij, 5) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[1];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 2] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[2] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 3 * this->_ptr_gn_a->val() * neigh_vec[2] / std::pow(distance_ij, 5) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[2];
-
-                            s_idx++;    // int s_idx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + 12;
-                            b34<CoordType>(b_val, b_der2xyz, neigh_vec);
-                            val_a[s_idx] += this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_val;
-                            for (int mm=0; mm<this->_n_a_basis; mm++)
-                                der2coeffs_a[s_idx*ntypes*ntypes*this->_n_a_basis 
-                                            + (itype*ntypes+jtype)*this->_n_a_basis
-                                            + mm] += this->_ptr_gn_a->der2coeffs()[mm] / std::pow(distance_ij, ll) * b_val;
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 0] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[0] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 3 * this->_ptr_gn_a->val() * neigh_vec[0] / std::pow(distance_ij, 5) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[0];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 1] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[1] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 3 * this->_ptr_gn_a->val() * neigh_vec[1] / std::pow(distance_ij, 5) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[1];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 2] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[2] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 3 * this->_ptr_gn_a->val() * neigh_vec[2] / std::pow(distance_ij, 5) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[2];
-
-                            s_idx++;    // int s_idx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + 13;
-                            b35<CoordType>(b_val, b_der2xyz, neigh_vec);
-                            val_a[s_idx] += this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_val;
-                            for (int mm=0; mm<this->_n_a_basis; mm++)
-                                der2coeffs_a[s_idx*ntypes*ntypes*this->_n_a_basis 
-                                            + (itype*ntypes+jtype)*this->_n_a_basis 
-                                            + mm] += this->_ptr_gn_a->der2coeffs()[mm] / std::pow(distance_ij, ll) * b_val;
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 0] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[0] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 3 * this->_ptr_gn_a->val() * neigh_vec[0] / std::pow(distance_ij, 5) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[0];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 1] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[1] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 3 * this->_ptr_gn_a->val() * neigh_vec[1] / std::pow(distance_ij, 5) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[1];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 2] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[2] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 3 * this->_ptr_gn_a->val() * neigh_vec[2] / std::pow(distance_ij, 5) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[2];
-
-                            s_idx++;    // int s_idx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + 14;
-                            b36<CoordType>(b_val, b_der2xyz, neigh_vec);
-                            val_a[s_idx] += this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_val;
-                            for (int mm=0; mm<this->_n_a_basis; mm++)
-                                der2coeffs_a[s_idx*ntypes*ntypes*this->_n_a_basis 
-                                            + (itype*ntypes+jtype)*this->_n_a_basis
-                                            + mm] += this->_ptr_gn_a->der2coeffs()[mm] / std::pow(distance_ij, ll) * b_val;
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 0] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[0] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 3 * this->_ptr_gn_a->val() * neigh_vec[0] / std::pow(distance_ij, 5) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[0];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 1] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[1] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 3 * this->_ptr_gn_a->val() * neigh_vec[1] / std::pow(distance_ij, 5) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[1];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 2] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[2] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 3 * this->_ptr_gn_a->val() * neigh_vec[2] / std::pow(distance_ij, 5) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[2];
-                        } else if (ll == 5) {
-                            s_idx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + 15;
-                            b40<CoordType>(b_val, b_der2xyz, neigh_vec);
-                            val_a[s_idx] += this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_val;
-                            for (int mm=0; mm<this->_n_a_basis; mm++)
-                                der2coeffs_a[s_idx*ntypes*ntypes*this->_n_a_basis 
-                                            + coeffs_a_idx 
-                                            + mm] += this->_ptr_gn_a->der2coeffs()[mm] / std::pow(distance_ij, ll) * b_val;
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 0] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[0] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 4 * this->_ptr_gn_a->val() * neigh_vec[0] / std::pow(distance_ij, 6) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[0];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 1] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[1] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 4 * this->_ptr_gn_a->val() * neigh_vec[1] / std::pow(distance_ij, 6) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[1];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 2] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[2] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 4 * this->_ptr_gn_a->val() * neigh_vec[2] / std::pow(distance_ij, 6) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[2];
-
-                            s_idx++;    // int s_idx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + 16;
-                            b41<CoordType>(b_val, b_der2xyz, neigh_vec);
-                            val_a[s_idx] += this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_val;
-                            for (int mm=0; mm<this->_n_a_basis; mm++)
-                                der2coeffs_a[s_idx*ntypes*ntypes*this->_n_a_basis 
-                                            + (itype*ntypes+jtype)*this->_n_a_basis
-                                            + mm] += this->_ptr_gn_a->der2coeffs()[mm] / std::pow(distance_ij, ll) * b_val;
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 0] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[0] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 4 * this->_ptr_gn_a->val() * neigh_vec[0] / std::pow(distance_ij, 6) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[0];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 1] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[1] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 4 * this->_ptr_gn_a->val() * neigh_vec[1] / std::pow(distance_ij, 6) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[1];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 2] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[2] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 4 * this->_ptr_gn_a->val() * neigh_vec[2] / std::pow(distance_ij, 6) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[2];
-
-                            s_idx++;    // int s_idx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + 17;
-                            b42<CoordType>(b_val, b_der2xyz, neigh_vec);
-                            val_a[s_idx] += this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_val;
-                            for (int mm=0; mm<this->_n_a_basis; mm++)
-                                der2coeffs_a[s_idx*ntypes*ntypes*this->_n_a_basis 
-                                            + (itype*ntypes+jtype)*this->_n_a_basis
-                                            + mm] += this->_ptr_gn_a->der2coeffs()[mm] / std::pow(distance_ij, ll) * b_val;
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 0] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[0] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 4 * this->_ptr_gn_a->val() * neigh_vec[0] / std::pow(distance_ij, 6) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[0];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 1] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[1] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 4 * this->_ptr_gn_a->val() * neigh_vec[1] / std::pow(distance_ij, 6) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[1];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 2] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[2] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 4 * this->_ptr_gn_a->val() * neigh_vec[2] / std::pow(distance_ij, 6) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[2];
-
-                            s_idx++;    // int s_idx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + 18;
-                            b43<CoordType>(b_val, b_der2xyz, neigh_vec);
-                            val_a[s_idx] += this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_val;
-                            for (int mm=0; mm<this->_n_a_basis; mm++)
-                                der2coeffs_a[s_idx*ntypes*ntypes*this->_n_a_basis 
-                                            + (itype*ntypes+jtype)*this->_n_a_basis
-                                            + mm] += this->_ptr_gn_a->der2coeffs()[mm] / std::pow(distance_ij, ll) * b_val;
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 0] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[0] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 4 * this->_ptr_gn_a->val() * neigh_vec[0] / std::pow(distance_ij, 6) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[0];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 1] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[1] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 4 * this->_ptr_gn_a->val() * neigh_vec[1] / std::pow(distance_ij, 6) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[1];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 2] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[2] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 4 * this->_ptr_gn_a->val() * neigh_vec[2] / std::pow(distance_ij, 6) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[2];
-
-                            s_idx++;    // int s_idx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + 19;
-                            b44<CoordType>(b_val, b_der2xyz, neigh_vec);
-                            val_a[s_idx] += this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_val;
-                            for (int mm=0; mm<this->_n_a_basis; mm++)
-                                der2coeffs_a[s_idx*ntypes*ntypes*this->_n_a_basis 
-                                            + (itype*ntypes+jtype)*this->_n_a_basis
-                                            + mm] += this->_ptr_gn_a->der2coeffs()[mm] / std::pow(distance_ij, ll) * b_val;
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 0] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[0] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 4 * this->_ptr_gn_a->val() * neigh_vec[0] / std::pow(distance_ij, 6) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[0];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 1] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[1] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 4 * this->_ptr_gn_a->val() * neigh_vec[1] / std::pow(distance_ij, 6) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[1];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 2] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[2] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 4 * this->_ptr_gn_a->val() * neigh_vec[2] / std::pow(distance_ij, 6) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[2];
-
-                            s_idx++;    // int s_idx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + 20;
-                            b45<CoordType>(b_val, b_der2xyz, neigh_vec);
-                            val_a[s_idx] += this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_val;
-                            for (int mm=0; mm<this->_n_a_basis; mm++)
-                                der2coeffs_a[s_idx*ntypes*ntypes*this->_n_a_basis 
-                                            + (itype*ntypes+jtype)*this->_n_a_basis
-                                            + mm] += this->_ptr_gn_a->der2coeffs()[mm] / std::pow(distance_ij, ll) * b_val;
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 0] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[0] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 4 * this->_ptr_gn_a->val() * neigh_vec[0] / std::pow(distance_ij, 6) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[0];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 1] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[1] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 4 * this->_ptr_gn_a->val() * neigh_vec[1] / std::pow(distance_ij, 6) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[1];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 2] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[2] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 4 * this->_ptr_gn_a->val() * neigh_vec[2] / std::pow(distance_ij, 6) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[2];
-
-                            s_idx++;    // int s_idx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + 21;
-                            b46<CoordType>(b_val, b_der2xyz, neigh_vec);
-                            val_a[s_idx] += this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_val;
-                            for (int mm=0; mm<this->_n_a_basis; mm++)
-                                der2coeffs_a[s_idx*ntypes*ntypes*this->_n_a_basis 
-                                            + (itype*ntypes+jtype)*this->_n_a_basis
-                                            + mm] += this->_ptr_gn_a->der2coeffs()[mm] / std::pow(distance_ij, ll) * b_val;
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 0] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[0] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 4 * this->_ptr_gn_a->val() * neigh_vec[0] / std::pow(distance_ij, 6) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[0];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 1] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[1] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 4 * this->_ptr_gn_a->val() * neigh_vec[1] / std::pow(distance_ij, 6) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[1];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 2] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[2] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 4 * this->_ptr_gn_a->val() * neigh_vec[2] / std::pow(distance_ij, 6) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[2];
-
-                            s_idx++;    // int s_idx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + 22;
-                            b47<CoordType>(b_val, b_der2xyz, neigh_vec);
-                            val_a[s_idx] += this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_val;
-                            for (int mm=0; mm<this->_n_a_basis; mm++)
-                                der2coeffs_a[s_idx*ntypes*ntypes*this->_n_a_basis 
-                                            + (itype*ntypes+jtype)*this->_n_a_basis 
-                                            + mm] += this->_ptr_gn_a->der2coeffs()[mm] / std::pow(distance_ij, ll) * b_val;
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 0] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[0] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 4 * this->_ptr_gn_a->val() * neigh_vec[0] / std::pow(distance_ij, 6) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[0];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 1] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[1] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 4 * this->_ptr_gn_a->val() * neigh_vec[1] / std::pow(distance_ij, 6) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[1];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 2] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[2] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 4 * this->_ptr_gn_a->val() * neigh_vec[2] / std::pow(distance_ij, 6) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[2];
-
-                            s_idx++;    // int s_idx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + 23;
-                            b48<CoordType>(b_val, b_der2xyz, neigh_vec);
-                            val_a[s_idx] += this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_val;
-                            for (int mm=0; mm<this->_n_a_basis; mm++)
-                                der2coeffs_a[s_idx*ntypes*ntypes*this->_n_a_basis
-                                            + (itype*ntypes+jtype)*this->_n_a_basis
-                                            + mm] += this->_ptr_gn_a->der2coeffs()[mm] / std::pow(distance_ij, ll) * b_val;
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 0] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[0] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 4 * this->_ptr_gn_a->val() * neigh_vec[0] / std::pow(distance_ij, 6) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[0];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 1] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[1] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 4 * this->_ptr_gn_a->val() * neigh_vec[1] / std::pow(distance_ij, 6) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[1];
-                            der2xyz_a[s_idx*umax_num_neighs*3 + jj*3 + 2] =
-                                this->_ptr_gn_a->der2r() * neigh_vec[2] / distance_ij / std::pow(distance_ij, ll) * b_val
-                                - 4 * this->_ptr_gn_a->val() * neigh_vec[2] / std::pow(distance_ij, 6) * b_val
-                                + this->_ptr_gn_a->val() / std::pow(distance_ij, ll) * b_der2xyz[2];
-                        }
+                    // l=2
+                    if (this->_l_3b_max >= 2) {
+                        // b20
+                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
+                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
+                            2, 3, &b20<CoordType>);
+                        // b21
+                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
+                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
+                            2, 4, &b21<CoordType>);
+                            // b22
+                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
+                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
+                            2, 5, &b22<CoordType>);
+                            // b23
+                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
+                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
+                            2, 6, &b23<CoordType>);
+                            // b24
+                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
+                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
+                            2, 7, &b24<CoordType>);
                     }
-                    */
+                    // l=3
+                    if (this->_l_3b_max >= 3) {
+                            // 30
+                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
+                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
+                            3, 8, &b30<CoordType>);
+                            // b31
+                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
+                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
+                            3, 9, &b31<CoordType>);
+                            // b32
+                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
+                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
+                            3, 10, &b32<CoordType>);
+                            // b33
+                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
+                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
+                            3, 11, &b33<CoordType>);
+                            // b34
+                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
+                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
+                            3, 12, &b34<CoordType>);
+                            // b35
+                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
+                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
+                            3, 13, &b35<CoordType>);
+                            // b36
+                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
+                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
+                            3, 14, &b36<CoordType>);
+                    }
+                    // l=4
+                    if (this->_l_3b_max >= 4) {
+                        // b40
+                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
+                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
+                            4, 15, &b40<CoordType>);
+                        // b41
+                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
+                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
+                            4, 16, &b41<CoordType>);
+                        // b42
+                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
+                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
+                            4, 17, &b42<CoordType>);
+                        // b43
+                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
+                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
+                            4, 18, &b43<CoordType>);
+                        // b44
+                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
+                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
+                            4, 19, &b44<CoordType>);
+                        // b45
+                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
+                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
+                            4, 20, &b45<CoordType>);
+                        // b46
+                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
+                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
+                            4, 21, &b46<CoordType>);
+                        // b47
+                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
+                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
+                            4, 22, &b21<CoordType>);
+                        // b48
+                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
+                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
+                            4, 23, &b21<CoordType>);
+                    }
                 }
             }
         }

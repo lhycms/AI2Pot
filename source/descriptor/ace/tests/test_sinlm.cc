@@ -110,7 +110,7 @@ protected:
         rmin_a = 2.0;
         n_a_max = 8;
         n_a_basis = 8;
-        l_3b_max = 1;
+        l_3b_max = 4;
         ptr_gn_r = new ai2pot::ace::Gn<double>(n_r_basis, rmax_r, rmin_r, lambda_val);
         ptr_gn_a = new ai2pot::ace::Gn<double>(n_a_basis, rmax_a, rmin_a, lambda_val);
 
@@ -1115,6 +1115,7 @@ TEST_F(SinlmTest, der_r_accuracy)
                        umax_num_neighs,
                        coeffs_r,
                        coeffs_a);
+
     // 1.1. After delta (wrt. rcs)
     int cidx_modify = 0;
     int n_r_idx_modify = 0;
@@ -1192,9 +1193,9 @@ printf("\t2.2. The numerical derivative of Sinlm_r wrt. coeffs_r[%d, %d, %d, %d]
 }
 
 
-
 TEST_F(SinlmTest, der_a_accuracy)
 {
+    max_body = 3;
     l_3b_max = 1;
     int num_sl = 3;
     neighbor_list.find_info4mlff(inum,
@@ -1226,7 +1227,7 @@ TEST_F(SinlmTest, der_a_accuracy)
                        coeffs_r,
                        coeffs_a);
     // 1.1. After delta (wrt. rcs)
-    int cidx_modify = 0;
+    int cidx_modify = 4;
     int n_a_idx_modify = 0;
     int l_idx = 1;
     int neigh_idx_modify = 0;
