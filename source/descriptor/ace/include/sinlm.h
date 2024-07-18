@@ -609,6 +609,7 @@ void Sinlm<CoordType>::find_val_der(
                               + jj*3 + 2] = this->_ptr_gn_r->der2r() * neigh_vec[2] / distance_ij;
                 }
             }
+            
             // For 3b/4b/5b
             if ( (this->_max_body >= 3)
                  && (distance_ij >= this->_ptr_gn_a->ptr_rq()->rmin()) 
