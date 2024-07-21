@@ -257,6 +257,17 @@ public:
 
     ~Sinlm();
 
+    void find_val_der4blm_neigh_atom(
+        CoordType* val_a,
+        CoordType* der2xyz,
+        CoordType* der2coeffs_a,
+        CoordType* neigh_vec,
+        CoordType distance_ij,
+        CoordType* coeffs_a,
+        int l,
+        void (*ptr_blm)(CoordType&, CoordType*, CoordType*));
+
+
     // Calculate Sinlm for single neighbor atom, fix ii, jj, and n_a_idx
     void find_val_der4blm_neigh_atom(
         CoordType *val_a,
@@ -503,6 +514,37 @@ Sinlm<CoordType>::~Sinlm()
 
 template <typename CoordType>
 void Sinlm<CoordType>::find_val_der4blm_neigh_atom(
+    CoordType* val_a,
+    CoordType* der2xyz,
+    CoordType* der2coeffs_a,
+    CoordType* neigh_vec,
+    CoordType distance_ij,
+    CoordType* coeffs_a,
+    int l,
+    void (*ptr_blm)(CoordType&, CoordType*, CoordType*))
+{
+    this->_ptr_gn_a->build(distance_ij, coeffs_a);
+    CoordType b_val;
+    CoordType b_der2xyz[3];
+    ptr_blm(b_val, b_der2xyz, neigh_vec);
+
+    *val_a += this->_ptr_gn_a->val() / std::pow(distance_ij, l) * b_val;
+    for (int ii=0; ii<this->_n_a_basis; ii++)
+        der2coeffs_a[ii] += this->_ptr_gn_a->der2coeffs()[ii] / std::pow(distance_ij, l) * b_val;
+    der2xyz[0] = this->_ptr_gn_a->der2r() * neigh_vec[0] / std::pow(distance_ij, l+1) * b_val
+                 - l * this->_ptr_gn_a->val() * neigh_vec[0] / std::pow(distance_ij, l+2) * b_val
+                 + this->_ptr_gn_a->val() / std::pow(distance_ij, l) * b_der2xyz[0];
+    der2xyz[1] = this->_ptr_gn_a->der2r() * neigh_vec[1] / std::pow(distance_ij, l+1) * b_val
+                 - l * this->_ptr_gn_a->val() * neigh_vec[1] / std::pow(distance_ij, l+2) * b_val
+                 + this->_ptr_gn_a->val() / std::pow(distance_ij, l) * b_der2xyz[1];
+    der2xyz[2] = this->_ptr_gn_a->der2r() * neigh_vec[2] / std::pow(distance_ij, l+1) * b_val
+                 - l * this->_ptr_gn_a->val() * neigh_vec[2] / std::pow(distance_ij, l+2) * b_val
+                 + this->_ptr_gn_a->val() / std::pow(distance_ij, l) * b_der2xyz[2];
+}
+
+
+template <typename CoordType>
+void Sinlm<CoordType>::find_val_der4blm_neigh_atom(
     CoordType *val_a,
     CoordType *der2xyz_a,
     CoordType *der2coeffs_a,
@@ -527,13 +569,14 @@ void Sinlm<CoordType>::find_val_der4blm_neigh_atom(
     this->_ptr_gn_a->build(distance_ij, coeffs_a);
 
     int sidx = ii*this->_n_a_max*this->_num_s_a + n_a_idx*this->_num_s_a + blm_idx;
+//printf("%d, ", sidx);
     ptr_blm(b_val, b_der2xyz, rc);
-    val_a[sidx] += this->_ptr_gn_a->val() / std::pow(distance_ij, l) * b_val;
+    *val_a[sidx] += this->_ptr_gn_a->val() / std::pow(distance_ij, l) * b_val;
     for (int ii=0; ii<this->_n_a_basis; ii++)
         der2coeffs_a[sidx*ntypes*ntypes*this->_n_a_basis
-                     + (itype*ntypes+jtype)*this->_n_a_basis 
+                     + (itype*ntypes+jtype)*this->_n_a_basis
                      + ii] += this->_ptr_gn_a->der2coeffs()[ii] / std::pow(distance_ij, l) * b_val;
-    der2xyz_a[sidx*umax_num_neighs*3 + jj*3 + 0] = 
+    der2xyz_a[sidx*umax_num_neighs*3 + jj*3 + 0] =
         this->_ptr_gn_a->der2r() * rc[0] / distance_ij / std::pow(distance_ij, l) * b_val
         - l * this->_ptr_gn_a->val() * rc[0] / std::pow(distance_ij, l+2) * b_val
         + this->_ptr_gn_a->val() / std::pow(distance_ij, l) * b_der2xyz[0];
@@ -541,7 +584,7 @@ void Sinlm<CoordType>::find_val_der4blm_neigh_atom(
         this->_ptr_gn_a->der2r() * rc[1] / distance_ij / std::pow(distance_ij, l) * b_val
         - l * this->_ptr_gn_a->val() * rc[1] / std::pow(distance_ij, l+2) * b_val
         + this->_ptr_gn_a->val() / std::pow(distance_ij, l) * b_der2xyz[1];
-    der2xyz_a[sidx*umax_num_neighs*3 + jj*3 + 2] = 
+    der2xyz_a[sidx*umax_num_neighs*3 + jj*3 + 2] =
         this->_ptr_gn_a->der2r() * rc[2] / distance_ij / std::pow(distance_ij, l) * b_val
         - l * this->_ptr_gn_a->val() * rc[2] / std::pow(distance_ij, l+2) * b_val
         + this->_ptr_gn_a->val() / std::pow(distance_ij, l) * b_der2xyz[2];
@@ -576,6 +619,13 @@ void Sinlm<CoordType>::find_val_der(
     memset(der2xyz_a, 0, tot_num_s_a * umax_num_neighs * 3 * sizeof(CoordType));
     memset(der2coeffs_r, 0, tot_num_s_r * ntypes * ntypes * this->_n_r_basis * sizeof(CoordType));
     memset(der2coeffs_a, 0, tot_num_s_a * ntypes * ntypes * this->_n_a_basis * sizeof(CoordType));
+    // For 3b/4b/5b
+    int tmp_blm_idx;
+    int tmp_sidx;
+    CoordType *tmp_der2xyz;
+    CoordType *tmp_der2coeffs_a;
+    int tmp_coeffs_idx;
+    CoordType *tmp_coeffs_a;
 
     for (int ii=0; ii<inum; ii++) {
         int cidx = ilist[ii];
@@ -587,7 +637,7 @@ void Sinlm<CoordType>::find_val_der(
             CoordType distance_ij = std::sqrt(std::pow(neigh_vec[0], 2)
                                               + std::pow(neigh_vec[1], 2)
                                               + std::pow(neigh_vec[2], 2));
-        
+
             // For 2b
             if ( (distance_ij >= this->_ptr_gn_r->ptr_rq()->rmin()) && (distance_ij <= this->_ptr_gn_r->ptr_rq()->rmax()) )
             {
@@ -616,113 +666,163 @@ void Sinlm<CoordType>::find_val_der(
                  && (distance_ij <= this->_ptr_gn_a->ptr_rq()->rmax()) )
             {
                 for (int kk=0; kk<this->_n_a_max; kk++) {
-                    // l=1 
+                    tmp_coeffs_idx = (itype*ntypes+jtype)*this->_n_a_max*this->_n_a_basis + kk*this->_n_a_basis + 0;
+                    tmp_coeffs_a = &coeffs_a[tmp_coeffs_idx];
+                    // l=1
                     if (this->_l_3b_max >= 1) {
                         // b10
-                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
-                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
-                            1, 0, &b10<CoordType>);
+                        tmp_blm_idx = 0;
+                        tmp_sidx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + tmp_blm_idx;
+                        tmp_der2xyz = &der2xyz_a[tmp_sidx*umax_num_neighs*3 + jj*3 + 0];
+                        tmp_der2coeffs_a = &der2coeffs_a[tmp_sidx*ntypes*ntypes*this->_n_a_basis + (itype*ntypes+jtype)*this->_n_a_basis + 0];
+                        this->find_val_der4blm_neigh_atom(&val_a[tmp_sidx], tmp_der2xyz, tmp_der2coeffs_a, neigh_vec, distance_ij, tmp_coeffs_a, 1, &b10<CoordType>);
                         // b11
-                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
-                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
-                            1, 1, &b11<CoordType>);
+                        tmp_blm_idx = 1;
+                        tmp_sidx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + tmp_blm_idx;
+                        tmp_der2xyz = &der2xyz_a[tmp_sidx*umax_num_neighs*3 + jj*3 + 0];
+                        tmp_der2coeffs_a = &der2coeffs_a[tmp_sidx*ntypes*ntypes*this->_n_a_basis + (itype*ntypes+jtype)*this->_n_a_basis + 0];
+                        this->find_val_der4blm_neigh_atom(&val_a[tmp_sidx], tmp_der2xyz, tmp_der2coeffs_a, neigh_vec, distance_ij, tmp_coeffs_a, 1, &b11<CoordType>);
                         // b12
-                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
-                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
-                            1, 2, &b12<CoordType>);
+                        tmp_blm_idx = 2;
+                        tmp_sidx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + tmp_blm_idx;
+                        tmp_der2xyz = &der2xyz_a[tmp_sidx*umax_num_neighs*3 + jj*3 + 0];
+                        tmp_der2coeffs_a = &der2coeffs_a[tmp_sidx*ntypes*ntypes*this->_n_a_basis + (itype*ntypes+jtype)*this->_n_a_basis + 0];
+                        this->find_val_der4blm_neigh_atom(&val_a[tmp_sidx], tmp_der2xyz, tmp_der2coeffs_a, neigh_vec, distance_ij, tmp_coeffs_a, 1, &b12<CoordType>);
                     }
                     // l=2
                     if (this->_l_3b_max >= 2) {
                         // b20
-                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
-                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
-                            2, 3, &b20<CoordType>);
+                        tmp_blm_idx = 3;
+                        tmp_sidx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + tmp_blm_idx;
+                        tmp_der2xyz = &der2xyz_a[tmp_sidx*umax_num_neighs*3 + jj*3 + 0];
+                        tmp_der2coeffs_a = &der2coeffs_a[tmp_sidx*ntypes*ntypes*this->_n_a_basis + (itype*ntypes+jtype)*this->_n_a_basis + 0];
+                        this->find_val_der4blm_neigh_atom(&val_a[tmp_sidx], tmp_der2xyz, tmp_der2coeffs_a, neigh_vec, distance_ij, tmp_coeffs_a, 2, &b20<CoordType>);
                         // b21
-                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
-                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
-                            2, 4, &b21<CoordType>);
-                            // b22
-                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
-                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
-                            2, 5, &b22<CoordType>);
-                            // b23
-                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
-                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
-                            2, 6, &b23<CoordType>);
-                            // b24
-                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
-                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
-                            2, 7, &b24<CoordType>);
+                        tmp_blm_idx = 4;
+                        tmp_sidx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + tmp_blm_idx;
+                        tmp_der2xyz = &der2xyz_a[tmp_sidx*umax_num_neighs*3 + jj*3 + 0];
+                        tmp_der2coeffs_a = &der2coeffs_a[tmp_sidx*ntypes*ntypes*this->_n_a_basis + (itype*ntypes+jtype)*this->_n_a_basis + 0];
+                        this->find_val_der4blm_neigh_atom(&val_a[tmp_sidx], tmp_der2xyz, tmp_der2coeffs_a, neigh_vec, distance_ij, tmp_coeffs_a, 2, &b21<CoordType>);
+                        // b22
+                        tmp_blm_idx = 5;
+                        tmp_sidx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + tmp_blm_idx;
+                        tmp_der2xyz = &der2xyz_a[tmp_sidx*umax_num_neighs*3 + jj*3 + 0];
+                        tmp_der2coeffs_a = &der2coeffs_a[tmp_sidx*ntypes*ntypes*this->_n_a_basis + (itype*ntypes+jtype)*this->_n_a_basis + 0];
+                        this->find_val_der4blm_neigh_atom(&val_a[tmp_sidx], tmp_der2xyz, tmp_der2coeffs_a, neigh_vec, distance_ij, tmp_coeffs_a, 2, &b22<CoordType>);
+                        // b23
+                        tmp_blm_idx = 6;
+                        tmp_sidx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + tmp_blm_idx;
+                        tmp_der2xyz = &der2xyz_a[tmp_sidx*umax_num_neighs*3 + jj*3 + 0];
+                        tmp_der2coeffs_a = &der2coeffs_a[tmp_sidx*ntypes*ntypes*this->_n_a_basis + (itype*ntypes+jtype)*this->_n_a_basis + 0];
+                        this->find_val_der4blm_neigh_atom(&val_a[tmp_sidx], tmp_der2xyz, tmp_der2coeffs_a, neigh_vec, distance_ij, tmp_coeffs_a, 2, &b23<CoordType>);
+                        // b24
+                        tmp_blm_idx = 7;
+                        tmp_sidx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + tmp_blm_idx;
+                        tmp_der2xyz = &der2xyz_a[tmp_sidx*umax_num_neighs*3 + jj*3 + 0];
+                        tmp_der2coeffs_a = &der2coeffs_a[tmp_sidx*ntypes*ntypes*this->_n_a_basis + (itype*ntypes+jtype)*this->_n_a_basis + 0];
+                        this->find_val_der4blm_neigh_atom(&val_a[tmp_sidx], tmp_der2xyz, tmp_der2coeffs_a, neigh_vec, distance_ij, tmp_coeffs_a, 2, &b24<CoordType>);
                     }
                     // l=3
                     if (this->_l_3b_max >= 3) {
-                            // 30
-                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
-                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
-                            3, 8, &b30<CoordType>);
-                            // b31
-                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
-                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
-                            3, 9, &b31<CoordType>);
-                            // b32
-                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
-                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
-                            3, 10, &b32<CoordType>);
-                            // b33
-                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
-                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
-                            3, 11, &b33<CoordType>);
-                            // b34
-                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
-                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
-                            3, 12, &b34<CoordType>);
-                            // b35
-                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
-                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
-                            3, 13, &b35<CoordType>);
-                            // b36
-                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
-                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
-                            3, 14, &b36<CoordType>);
+                        // 30
+                        tmp_blm_idx = 8;
+                        tmp_sidx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + tmp_blm_idx;
+                        tmp_der2xyz = &der2xyz_a[tmp_sidx*umax_num_neighs*3 + jj*3 + 0];
+                        tmp_der2coeffs_a = &der2coeffs_a[tmp_sidx*ntypes*ntypes*this->_n_a_basis + (itype*ntypes+jtype)*this->_n_a_basis + 0];
+                        this->find_val_der4blm_neigh_atom(&val_a[tmp_sidx], tmp_der2xyz, tmp_der2coeffs_a, neigh_vec, distance_ij, tmp_coeffs_a, 3, &b30<CoordType>);
+                        // b31
+                        tmp_blm_idx = 9;
+                        tmp_sidx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + tmp_blm_idx;
+                        tmp_der2xyz = &der2xyz_a[tmp_sidx*umax_num_neighs*3 + jj*3 + 0];
+                        tmp_der2coeffs_a = &der2coeffs_a[tmp_sidx*ntypes*ntypes*this->_n_a_basis + (itype*ntypes+jtype)*this->_n_a_basis + 0];
+                        this->find_val_der4blm_neigh_atom(&val_a[tmp_sidx], tmp_der2xyz, tmp_der2coeffs_a, neigh_vec, distance_ij, tmp_coeffs_a, 3, &b31<CoordType>);
+                        // b32
+                        tmp_blm_idx = 10;
+                        tmp_sidx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + tmp_blm_idx;
+                        tmp_der2xyz = &der2xyz_a[tmp_sidx*umax_num_neighs*3 + jj*3 + 0];
+                        tmp_der2coeffs_a = &der2coeffs_a[tmp_sidx*ntypes*ntypes*this->_n_a_basis + (itype*ntypes+jtype)*this->_n_a_basis + 0];
+                        this->find_val_der4blm_neigh_atom(&val_a[tmp_sidx], tmp_der2xyz, tmp_der2coeffs_a, neigh_vec, distance_ij, tmp_coeffs_a, 3, &b32<CoordType>);
+                        // b33
+                        tmp_blm_idx = 11;
+                        tmp_sidx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + tmp_blm_idx;
+                        tmp_der2xyz = &der2xyz_a[tmp_sidx*umax_num_neighs*3 + jj*3 + 0];
+                        tmp_der2coeffs_a = &der2coeffs_a[tmp_sidx*ntypes*ntypes*this->_n_a_basis + (itype*ntypes+jtype)*this->_n_a_basis + 0];
+                        this->find_val_der4blm_neigh_atom(&val_a[tmp_sidx], tmp_der2xyz, tmp_der2coeffs_a, neigh_vec, distance_ij, tmp_coeffs_a, 3, &b33<CoordType>);
+                        // b34
+                        tmp_blm_idx = 12;
+                        tmp_sidx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + tmp_blm_idx;
+                        tmp_der2xyz = &der2xyz_a[tmp_sidx*umax_num_neighs*3 + jj*3 + 0];
+                        tmp_der2coeffs_a = &der2coeffs_a[tmp_sidx*ntypes*ntypes*this->_n_a_basis + (itype*ntypes+jtype)*this->_n_a_basis + 0];
+                        this->find_val_der4blm_neigh_atom(&val_a[tmp_sidx], tmp_der2xyz, tmp_der2coeffs_a, neigh_vec, distance_ij, tmp_coeffs_a, 3, &b34<CoordType>);
+                        // b35
+                        tmp_blm_idx = 13;
+                        tmp_sidx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + tmp_blm_idx;
+                        tmp_der2xyz = &der2xyz_a[tmp_sidx*umax_num_neighs*3 + jj*3 + 0];
+                        tmp_der2coeffs_a = &der2coeffs_a[tmp_sidx*ntypes*ntypes*this->_n_a_basis + (itype*ntypes+jtype)*this->_n_a_basis + 0];
+                        this->find_val_der4blm_neigh_atom(&val_a[tmp_sidx], tmp_der2xyz, tmp_der2coeffs_a, neigh_vec, distance_ij, tmp_coeffs_a, 3, &b35<CoordType>);
+                        // b36
+                        tmp_blm_idx = 14;
+                        tmp_sidx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + tmp_blm_idx;
+                        tmp_der2xyz = &der2xyz_a[tmp_sidx*umax_num_neighs*3 + jj*3 + 0];
+                        tmp_der2coeffs_a = &der2coeffs_a[tmp_sidx*ntypes*ntypes*this->_n_a_basis + (itype*ntypes+jtype)*this->_n_a_basis + 0];
+                        this->find_val_der4blm_neigh_atom(&val_a[tmp_sidx], tmp_der2xyz, tmp_der2coeffs_a, neigh_vec, distance_ij, tmp_coeffs_a, 3, &b36<CoordType>);
                     }
                     // l=4
                     if (this->_l_3b_max >= 4) {
                         // b40
-                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
-                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
-                            4, 15, &b40<CoordType>);
+                        tmp_blm_idx = 15;
+                        tmp_sidx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + tmp_blm_idx;
+                        tmp_der2xyz = &der2xyz_a[tmp_sidx*umax_num_neighs*3 + jj*3 + 0];
+                        tmp_der2coeffs_a = &der2coeffs_a[tmp_sidx*ntypes*ntypes*this->_n_a_basis + (itype*ntypes+jtype)*this->_n_a_basis + 0];
+                        this->find_val_der4blm_neigh_atom(&val_a[tmp_sidx], tmp_der2xyz, tmp_der2coeffs_a, neigh_vec, distance_ij, tmp_coeffs_a, 4, &b40<CoordType>);
                         // b41
-                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
-                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
-                            4, 16, &b41<CoordType>);
+                        tmp_blm_idx = 16;
+                        tmp_sidx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + tmp_blm_idx;
+                        tmp_der2xyz = &der2xyz_a[tmp_sidx*umax_num_neighs*3 + jj*3 + 0];
+                        tmp_der2coeffs_a = &der2coeffs_a[tmp_sidx*ntypes*ntypes*this->_n_a_basis + (itype*ntypes+jtype)*this->_n_a_basis + 0];
+                        this->find_val_der4blm_neigh_atom(&val_a[tmp_sidx], tmp_der2xyz, tmp_der2coeffs_a, neigh_vec, distance_ij, tmp_coeffs_a, 4, &b41<CoordType>);
                         // b42
-                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
-                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
-                            4, 17, &b42<CoordType>);
+                        tmp_blm_idx = 17;
+                        tmp_sidx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + tmp_blm_idx;
+                        tmp_der2xyz = &der2xyz_a[tmp_sidx*umax_num_neighs*3 + jj*3 + 0];
+                        tmp_der2coeffs_a = &der2coeffs_a[tmp_sidx*ntypes*ntypes*this->_n_a_basis + (itype*ntypes+jtype)*this->_n_a_basis + 0];
+                        this->find_val_der4blm_neigh_atom(&val_a[tmp_sidx], tmp_der2xyz, tmp_der2coeffs_a, neigh_vec, distance_ij, tmp_coeffs_a, 4, &b42<CoordType>);
                         // b43
-                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
-                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
-                            4, 18, &b43<CoordType>);
+                        tmp_blm_idx = 18;
+                        tmp_sidx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + tmp_blm_idx;
+                        tmp_der2xyz = &der2xyz_a[tmp_sidx*umax_num_neighs*3 + jj*3 + 0];
+                        tmp_der2coeffs_a = &der2coeffs_a[tmp_sidx*ntypes*ntypes*this->_n_a_basis + (itype*ntypes+jtype)*this->_n_a_basis + 0];
+                        this->find_val_der4blm_neigh_atom(&val_a[tmp_sidx], tmp_der2xyz, tmp_der2coeffs_a, neigh_vec, distance_ij, tmp_coeffs_a, 4, &b43<CoordType>);
                         // b44
-                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
-                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
-                            4, 19, &b44<CoordType>);
+                        tmp_blm_idx = 19;
+                        tmp_sidx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + tmp_blm_idx;
+                        tmp_der2xyz = &der2xyz_a[tmp_sidx*umax_num_neighs*3 + jj*3 + 0];
+                        tmp_der2coeffs_a = &der2coeffs_a[tmp_sidx*ntypes*ntypes*this->_n_a_basis + (itype*ntypes+jtype)*this->_n_a_basis + 0];
+                        this->find_val_der4blm_neigh_atom(&val_a[tmp_sidx], tmp_der2xyz, tmp_der2coeffs_a, neigh_vec, distance_ij, tmp_coeffs_a, 4, &b44<CoordType>);
                         // b45
-                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
-                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
-                            4, 20, &b45<CoordType>);
+                        tmp_blm_idx = 20;
+                        tmp_sidx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + tmp_blm_idx;
+                        tmp_der2xyz = &der2xyz_a[tmp_sidx*umax_num_neighs*3 + jj*3 + 0];
+                        tmp_der2coeffs_a = &der2coeffs_a[tmp_sidx*ntypes*ntypes*this->_n_a_basis + (itype*ntypes+jtype)*this->_n_a_basis + 0];
+                        this->find_val_der4blm_neigh_atom(&val_a[tmp_sidx], tmp_der2xyz, tmp_der2coeffs_a, neigh_vec, distance_ij, tmp_coeffs_a, 4, &b45<CoordType>);
                         // b46
-                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
-                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
-                            4, 21, &b46<CoordType>);
+                        tmp_blm_idx = 21;
+                        tmp_sidx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + tmp_blm_idx;
+                        tmp_der2xyz = &der2xyz_a[tmp_sidx*umax_num_neighs*3 + jj*3 + 0];
+                        tmp_der2coeffs_a = &der2coeffs_a[tmp_sidx*ntypes*ntypes*this->_n_a_basis + (itype*ntypes+jtype)*this->_n_a_basis + 0];
+                        this->find_val_der4blm_neigh_atom(&val_a[tmp_sidx], tmp_der2xyz, tmp_der2coeffs_a, neigh_vec, distance_ij, tmp_coeffs_a, 4, &b46<CoordType>);
                         // b47
-                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
-                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
-                            4, 22, &b21<CoordType>);
+                        tmp_blm_idx = 22;
+                        tmp_sidx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + tmp_blm_idx;
+                        tmp_der2xyz = &der2xyz_a[tmp_sidx*umax_num_neighs*3 + jj*3 + 0];
+                        tmp_der2coeffs_a = &der2coeffs_a[tmp_sidx*ntypes*ntypes*this->_n_a_basis + (itype*ntypes+jtype)*this->_n_a_basis + 0];
+                        this->find_val_der4blm_neigh_atom(&val_a[tmp_sidx], tmp_der2xyz, tmp_der2coeffs_a, neigh_vec, distance_ij, tmp_coeffs_a, 4, &b47<CoordType>);
                         // b48
-                        this->find_val_der4blm_neigh_atom(val_a, der2xyz_a, der2coeffs_a, ii, jj, kk,
-                            ntypes, itype, jtype, coeffs_a, neigh_vec, distance_ij, umax_num_neighs,
-                            4, 23, &b21<CoordType>);
+                        tmp_blm_idx = 23;
+                        tmp_sidx = ii*this->_n_a_max*this->_num_s_a + kk*this->_num_s_a + tmp_blm_idx;
+                        tmp_der2xyz = &der2xyz_a[tmp_sidx*umax_num_neighs*3 + jj*3 + 0];
+                        tmp_der2coeffs_a = &der2coeffs_a[tmp_sidx*ntypes*ntypes*this->_n_a_basis + (itype*ntypes+jtype)*this->_n_a_basis + 0];
+                        this->find_val_der4blm_neigh_atom(&val_a[tmp_sidx], tmp_der2xyz, tmp_der2coeffs_a, neigh_vec, distance_ij, tmp_coeffs_a, 4, &b48<CoordType>);
                     }
                 }
             }
