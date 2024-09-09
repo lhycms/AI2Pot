@@ -28,6 +28,8 @@ public:
     
     Structure(int num_atoms, CoordType basis_vectors[3][3], int atomic_number[], CoordType coords[][3], bool is_cart_coords=true);
 
+    Structure(int num_atoms, CoordType *basis_vectors, int *atomic_number, CoordType *coords, bool is_cart_coords=true);
+
     Structure(const Structure &rhs);
 
     Structure& operator=(const Structure &rhs);
@@ -37,6 +39,8 @@ public:
     void calc_cart_coords(CoordType **frac_coords);
 
     void calc_cart_coords(CoordType frac_coords[][3]);
+
+    void calc_cart_coords(CoordType *frac_coords);
 
     // Note: `0~this->num_atoms` are owned atoms; others are ghost atoms.
     void make_supercell(const int *scaling_matix);   // Note: You can use `int[3]` to init it.
@@ -261,6 +265,62 @@ Structure<CoordType>::Structure(int num_atoms,
  * @brief Construct a new Structure< Coord Type>:: Structure object
  * 
  * @tparam CoordType 
+ * @param num_atoms 
+ * @param basis_vectors 
+ * @param atomic_numbers 
+ * @param coords 
+ * @param is_cart_coords 
+ */
+template <typename CoordType>
+Structure<CoordType>::Structure(int num_atoms,
+                                CoordType *basis_vectors,
+                                int *atomic_numbers,
+                                CoordType *coords,
+                                bool is_cart_coords)
+{
+    this->num_atoms = num_atoms;
+
+    if (this->num_atoms != 0) {
+        // Step 1. Allocate memory for `this->_basis_vectors` and assign
+        this->basis_vectors = (CoordType**)malloc(3 * sizeof(CoordType*));
+        for (int ii=0; ii<3; ii++)
+            this->basis_vectors[ii] = (CoordType*)malloc(3 * sizeof(CoordType));
+        for (int ii=0; ii<3; ii++)
+            for (int jj=0; jj<3; jj++)
+                this->basis_vectors[ii][jj] = basis_vectors[ii*3 + jj];
+        
+        // Step 2. Allocate memory for `this->pseudo_origin`
+        this->pseudo_orgin = (CoordType*)malloc(3 * sizeof(CoordType));
+        this->pseudo_orgin[0] = 0;
+        this->pseudo_orgin[1] = 0;
+        this->pseudo_orgin[2] = 0;
+
+        // Step 3. Allocate memory for `this->atomic_numbers`
+        this->atomic_numbers = (int*)malloc(this->num_atoms * sizeof(int));
+        for (int ii=0; ii<this->num_atoms; ii++)
+            this->atomic_numbers[ii] = atomic_numbers[ii];
+
+        // Step 4. Allocate memory for `this->cart_coords`
+        this->cart_coords = (CoordType**)malloc(this->num_atoms * sizeof(CoordType*));
+        for (int ii=0; ii<this->num_atoms; ii++) 
+            this->cart_coords[ii] = (CoordType*)malloc(3 * sizeof(CoordType));
+        if (is_cart_coords) {
+            for (int ii=0; ii<this->num_atoms; ii++) {
+                for (int jj=0; jj<3; jj++) {
+                    this->cart_coords[ii][jj] = coords[ii*3 + jj];
+                }
+            }
+        } else {
+            this->calc_cart_coords(coords);
+        }
+    }
+}
+
+
+/**
+ * @brief Construct a new Structure< Coord Type>:: Structure object
+ * 
+ * @tparam CoordType 
  * @param rhs 
  */
 template <typename CoordType>
@@ -471,6 +531,27 @@ void Structure<CoordType>::calc_cart_coords(CoordType frac_coords[][3]) {
     }
 }
 
+
+template <typename CoordType>
+void Structure<CoordType>::calc_cart_coords(CoordType *frac_coords) {
+    for (int ii=0; ii<this->num_atoms; ii++) {
+        this->cart_coords[ii][0] = (
+            frac_coords[ii*3 + 0] * this->basis_vectors[0][0] + 
+            frac_coords[ii*3 + 1] * this->basis_vectors[1][0] +
+            frac_coords[ii*3 + 2] * this->basis_vectors[2][0]
+        );
+        this->cart_coords[ii][1] = (
+            frac_coords[ii*3 + 0] * this->basis_vectors[0][1] +
+            frac_coords[ii*3 + 1] * this->basis_vectors[1][1] +
+            frac_coords[ii*3 + 2] * this->basis_vectors[2][1]
+        );
+        this->cart_coords[ii][2] = (
+            frac_coords[ii*3 + 0] * this->basis_vectors[0][2] +
+            frac_coords[ii*3 + 1] * this->basis_vectors[1][2] +
+            frac_coords[ii*3 + 2] * this->basis_vectors[2][2]
+        );
+    }
+}
 
 /**
  * @brief make supercell

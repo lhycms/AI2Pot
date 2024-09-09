@@ -107,6 +107,30 @@ TEST_F(StructureArrayTest, init) {
 }
 
 
+TEST_F(StructureArrayTest, init_func2_1d) {
+    // 1. 
+    double *basis_vectors_ptr = (double*)malloc(9 * sizeof(double));
+    for (int ii=0; ii<3; ii++)
+        for (int jj=0; jj<3; jj++)
+            basis_vectors_ptr[ii*3 + jj] = basis_vectors[ii][jj];
+    int *atomic_number_ptr = (int*)malloc(num_atoms * sizeof(int));
+    for (int ii=0; ii<num_atoms; ii++)
+        atomic_number_ptr[ii] = atomic_numbers[ii];
+    double *coords_ptr = (double*)malloc(num_atoms * 3 * sizeof(double));
+    for (int ii=0; ii<num_atoms; ii++)
+        for (int jj=0; jj<3; jj++)
+            coords_ptr[ii*3 + jj] = frac_coords[ii][jj];
+
+    // 2. 
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors_ptr, atomic_number_ptr, coords_ptr, false);
+
+    // Free.
+    free(basis_vectors_ptr);
+    free(atomic_number_ptr);
+    free(coords_ptr);
+}
+
+
 TEST_F(StructureArrayTest, copy_constructor) {
     ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
 
