@@ -10,11 +10,11 @@
  * @brief 
  * 
  * @param lattice_py 
- *          np.array (3, 3)
+ *          np.array (3, 3), NPY_FLOAT32 or NPY_FLOAT64
  * @param atomic_numbers_py 
- *          np.array (num_atoms,)  -- astype(np.int32)
- * @param frac_coords_py 
- *          np.array (num_atoms, 3)
+ *          np.array (num_atoms,), NPY_INT32 or NPY_INT64
+ * @param frac_coords_py
+ *          np.array (num_atoms, 3), NPY_FLOAT32 or NPY_FLOAT64
  * @param rcut_py 
  *          double
  * @param pbc_xyz_py
@@ -25,7 +25,7 @@
  *          bool 
  * @param is_cart_coord_py
  *          bool 
- * @return PyObject* 
+ * @return PyObject* (NPY_INT32, NPY_FLOAT32 or NPY_FLOAT64)
  */
 PyObject* find_info4mlff(
         PyObject* lattice_py,
