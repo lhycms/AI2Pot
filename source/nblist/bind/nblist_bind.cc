@@ -7,7 +7,6 @@
 #include "../include/neighborList.h"
 
 
-namespace ai2pot {
 
 int initialize_npy(void) {
     if (PyArray_API)
@@ -99,8 +98,6 @@ static PyObject *py_find_info4mlff(PyObject *self, PyObject *args)
 
     // Step 2. Get Neighbor List
     void *nblist_ptr;
-    int inum;
-    int nghost;
     double rcut = PyFloat_AsDouble(py_rcut);
     bool pbc_xyz[3];
     bool sort;
@@ -120,6 +117,8 @@ static PyObject *py_find_info4mlff(PyObject *self, PyObject *args)
         nblist_ptr = (void*)(new NeighborList<double>(*((Structure<double>*)structure_ptr), rcut, pbc_xyz, sort));
 
     // Step 3. Make return_tuple
+    int inum;
+    int nghost;
     PyObject *py_ilist = PyArray_Zeros(1, {(npy_intp)num_atoms}, PyArray_DescrFromType(NPY_INT64), 0);
     PyObject *py_numneigh = PyArray_Zeros(1, {(npy_intp)num_atoms}, PyArray_DescrFromType(NPY_INT64), 0);
     PyObject *py_firstneigh = PyArray_Zeros(2, {(npy_intp)num_atoms, (npy_intp)PyLong_AsLong(py_umax_num_neigh_atoms)}, PyArray_DescrFromType(NPY_INT64), 0);
@@ -165,4 +164,19 @@ static PyObject *py_find_info4mlff(PyObject *self, PyObject *args)
     return return_tuple;
 }
 
-}; // namespace : ai2pot
+static PyMethodDef methods[] = {
+    {"find_info4mlff", (PyCFunction)&py_find_info4mlff, METH_VARARGS, "nblist.find_info4mlff() from C++"},
+    {NULL, NULL, 0, NULL}
+};
+
+static PyModuleDef nblist = {
+    PyModuleDef_HEAD_INIT,
+    "nblist",
+    "nblist from C++",
+    -1,
+    methods
+};
+
+PyMODINIT_FUNC PyInit_nblist(void) {
+    return PyModule_Create(&nblist);
+}
