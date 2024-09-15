@@ -1,4 +1,3 @@
-import sys
 from typing import List
 
 import numpy as np
@@ -6,7 +5,7 @@ import numpy as np
 from dpdata import LabeledSystem
 import torch
 from torch.utils.data import Dataset
-from ai2pot.fromcc import nblist
+from ai2pot.core import Nblist
 
 
 class MlffDataset(Dataset):
@@ -36,7 +35,7 @@ class MlffDataset(Dataset):
         nghost_list: List[int] = []
         for ii in range(self.labeled_system.get_nframes()):
             inum, ilist, numneigh, firstneigh, relativae_coords, types, nghost = \
-                nblist.find_info4mlff(
+                Nblist.find_info4mlff(
                     self.labeled_system["cells"][ii].astype(np.float64),
                     self.labeled_system["atom_types"].astype(np.int32),
                     self.labeled_system["coords"][ii].astype(np.float64),
