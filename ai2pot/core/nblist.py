@@ -9,8 +9,8 @@ class Nblist(object):
     def __init__(self, 
                  structure: Structure,
                  rcut: float,
-                 umax_num_neigh_atoms: int,
-                 pbc_xyz: List[bool],
+                 umax_num_neigh_atoms: int = 100,
+                 pbc_xyz: List[bool] = [True, True, True],
                  sort: bool = False):
         self.structure: Structure = structure
         cell: np.ndarray = self.structure.lattice.matrix
