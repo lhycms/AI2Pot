@@ -1,5 +1,6 @@
 import unittest
-import os 
+import os
+import time
 
 from typing import List
 from dpdata import LabeledSystem
@@ -141,6 +142,7 @@ class DpSeRTest(unittest.TestCase):
                                                       shuffle=True)
         
     def test_forward(self):
+        t1 = time.time()
         for ii, batch_data in enumerate(self.mlff_dataloader):
             ei, fi, v = self.dp_se_r(batch_data[1],
                                      batch_data[2],
@@ -152,6 +154,8 @@ class DpSeRTest(unittest.TestCase):
                   ei.size(), 
                   fi.size(),
                   v.size())
+        t2 = time.time()
+        print("Time = ", t2 - t1)
     
     def tearDown(self):
         print("DpSeRTest (TestCase) is tearing down...\n")

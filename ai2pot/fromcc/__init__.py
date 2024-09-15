@@ -5,12 +5,11 @@ import sys
 ai2pot_root_dir:str = os.environ.get("AI2POT_PATH")
 ai2pot_source_build_lib_dir:str = os.path.join(ai2pot_root_dir, "source", "build", "lib")
 
-### Part 1 . nblist
-nblist_bind_dir:str = os.path.join(ai2pot_root_dir, "source", "nblist", "bind")
-nblist_bind_gen_dir:str = os.path.join(nblist_bind_dir, "gen")
-sys.path.append(nblist_bind_gen_dir)
-import nblist
 
+### Part 1 . nblist
+nblist_lib_dir: str = os.path.join(ai2pot_source_build_lib_dir, "nblist")
+sys.path.append(nblist_lib_dir)
+import nblist
 
 ### Part 2.1. deepmd
 deepmd_lib_dir:str = os.path.join(ai2pot_source_build_lib_dir, "descriptor", "deepmd")

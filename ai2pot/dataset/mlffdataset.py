@@ -41,10 +41,10 @@ class MlffDataset(Dataset):
                     self.labeled_system["atom_types"].astype(np.int32),
                     self.labeled_system["coords"][ii].astype(np.float64),
                     rcut,
-                    pbc_xyz,
                     umax_num_neigh_atoms,
-                    sort,
-                    is_cart_coord)
+                    is_cart_coord,
+                    pbc_xyz,
+                    sort)
             inum_list.append(inum)
             ilist_list.append(ilist)
             numneigh_list.append(numneigh)

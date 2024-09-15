@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #include "./nblist_bind.h"
+#include "../include/structure.h"
 #include "../include/neighborList.h"
 
 
@@ -38,16 +39,16 @@ static PyObject *py_find_info4mlff(PyObject *self, PyObject *args)
                          &py_pbc_xyz,
                          &py_sort))
         return NULL;
-    if (PyArray_Check(py_lattice) &&
-        PyArray_Check(py_types_pre) &&
-        PyArray_Check(py_coords) &&
-        PyFloat_Check(py_rcut) &&
-        PyLong_Check(py_umax_num_neigh_atoms) &&
-        PyBool_Check(py_is_cart_coords) &&
-        PyList_Check(py_pbc_xyz) &&
-        PyBool_Check(py_sort))
+    if (!PyArray_Check(py_lattice) ||
+        !PyArray_Check(py_types_pre) ||
+        !PyArray_Check(py_coords) ||
+        !PyFloat_Check(py_rcut) ||
+        !PyLong_Check(py_umax_num_neigh_atoms) ||
+        !PyBool_Check(py_is_cart_coords) ||
+        !PyList_Check(py_pbc_xyz) ||
+        !PyBool_Check(py_sort))
     {
-        PyErr_SetString(PyExc_TypeError, "Please check the parameter in interface of py_find_info4mlff().")
+        PyErr_SetString(PyExc_TypeError, "Please check the parameter in interface of py_find_info4mlff().");
         return NULL;
     }
     PyObject *return_tuple = PyTuple_New(7);
@@ -61,7 +62,7 @@ static PyObject *py_find_info4mlff(PyObject *self, PyObject *args)
     npy_intp* py_coords_shape = PyArray_SHAPE((PyArrayObject*)py_coords);
     int num_atoms = py_coords_shape[0];
     if ( npy_int_type==NPY_INT64 ) {    // Convert NPY_INT64 to NPY_INT32
-        py_types = PyArray_Cast(py_types_pre, NPY_INT32);
+        py_types = PyArray_Cast((PyArrayObject*)py_types_pre, NPY_INT32);
     } else {
         py_types = py_types_pre;
         Py_INCREF(py_types);
@@ -72,14 +73,14 @@ static PyObject *py_find_info4mlff(PyObject *self, PyObject *args)
         // 1.C2. types
         int *types_data = (int*)PyArray_DATA((PyArrayObject*)py_types);
         // 1.C3. coords
-        float *coords = (float*)PyArray_DATA(PyArrayObject*)py_coords;
+        float *coords = (float*)PyArray_DATA((PyArrayObject*)py_coords);
         // 1.C4. is_cart_coords
         bool is_cart_coords;
         if (PyObject_IsTrue(py_is_cart_coords))
             is_cart_coords = true;
         else
             is_cart_coords = false;
-        structure_ptr = (void*)(new Structure<float>(num_atoms, lattice_data, types_data, coords, is_cart_coords));
+        structure_ptr = (void*)(new ai2pot::Structure<float>(num_atoms, lattice_data, types_data, coords, is_cart_coords));
     } else {    // npy_float_type==NPY_FLOAT64
         // 1.C1. lattice
         double *lattice_data = (double*)PyArray_DATA((PyArrayObject*)py_lattice);
@@ -93,7 +94,7 @@ static PyObject *py_find_info4mlff(PyObject *self, PyObject *args)
             is_cart_coords = true;
         else
             is_cart_coords = false;
-        structure_ptr = (void*)(new Structure<double>(num_atoms, lattice_data, types_data, coords, is_cart_coords));
+        structure_ptr = (void*)(new ai2pot::Structure<double>(num_atoms, lattice_data, types_data, coords, is_cart_coords));
     }
 
     // Step 2. Get Neighbor List
@@ -112,21 +113,25 @@ static PyObject *py_find_info4mlff(PyObject *self, PyObject *args)
     else
         sort = false;
     if ( npy_float_type == NPY_FLOAT32 )
-        nblist_ptr = (void*)(new NeighborList<float>(*((Structure<float>*)structure_ptr), rcut, pbc_xyz, sort));
+        nblist_ptr = (void*)(new ai2pot::NeighborList<float>(*((ai2pot::Structure<float>*)structure_ptr), rcut, pbc_xyz, sort));
     else
-        nblist_ptr = (void*)(new NeighborList<double>(*((Structure<double>*)structure_ptr), rcut, pbc_xyz, sort));
+        nblist_ptr = (void*)(new ai2pot::NeighborList<double>(*((ai2pot::Structure<double>*)structure_ptr), rcut, pbc_xyz, sort));
 
     // Step 3. Make return_tuple
     int inum;
     int nghost;
-    PyObject *py_ilist = PyArray_Zeros(1, {(npy_intp)num_atoms}, PyArray_DescrFromType(NPY_INT64), 0);
-    PyObject *py_numneigh = PyArray_Zeros(1, {(npy_intp)num_atoms}, PyArray_DescrFromType(NPY_INT64), 0);
-    PyObject *py_firstneigh = PyArray_Zeros(2, {(npy_intp)num_atoms, (npy_intp)PyLong_AsLong(py_umax_num_neigh_atoms)}, PyArray_DescrFromType(NPY_INT64), 0);
-    PyObject *py_rcs = PyArray_Zeros(3, {(npy_intp)num_atoms, (npy_intp)PyLong_AsLong(py_umax_num_neigh_atoms), 3}, PyArray_DescrFromType(NPY_FLOAT64), 0);
-    PyObject *py_types = PyArray_Zeros(1, {(npy_intp)(num_atoms + nghost)}, PyArray_DescrFromType(NPY_INT64), 0);
+    npy_intp py_ilist_dims[1] = { (npy_intp)num_atoms };
+    PyObject *py_ilist = PyArray_Zeros(1, py_ilist_dims, PyArray_DescrFromType(NPY_INT32), 0);
+    npy_intp py_numneigh_dims[1] = { (npy_intp)num_atoms };
+    PyObject *py_numneigh = PyArray_Zeros(1, py_numneigh_dims, PyArray_DescrFromType(NPY_INT32), 0);
+    npy_intp py_firstneigh_dims[2] = { (npy_intp)num_atoms, (npy_intp)PyLong_AsLong(py_umax_num_neigh_atoms) };
+    PyObject *py_firstneigh = PyArray_Zeros(2, py_firstneigh_dims, PyArray_DescrFromType(NPY_INT32), 0);
+    npy_intp py_rcs_dims[3] = {(npy_intp)num_atoms, (npy_intp)PyLong_AsLong(py_umax_num_neigh_atoms), 3};
+    PyObject *py_rcs = PyArray_Zeros(3, py_rcs_dims, PyArray_DescrFromType(NPY_FLOAT64), 0);
+    //PyObject *py_types = PyArray_Zeros(1, {(npy_intp)(num_atoms + nghost)}, PyArray_DescrFromType(NPY_INT64), 0);
     if (npy_float_type == NPY_FLOAT32) {
         // Convert NPY_FLOAT32 TO NPY_FLOAT64.
-        ((NeighborList<float>*)nblist_ptr)->find_info4mlff(inum,
+        ((ai2pot::NeighborList<float>*)nblist_ptr)->find_info4mlff(inum,
                                                            (int*)PyArray_DATA((PyArrayObject*)py_ilist),
                                                            (int*)PyArray_DATA((PyArrayObject*)py_numneigh),
                                                            (int*)PyArray_DATA((PyArrayObject*)py_firstneigh),
@@ -135,7 +140,7 @@ static PyObject *py_find_info4mlff(PyObject *self, PyObject *args)
                                                            nghost,
                                                            (int)PyLong_AsLong(py_umax_num_neigh_atoms));
     } else {
-        ((NeighborList<double>*)nblist_ptr)->find_info4mlff(inum,
+        ((ai2pot::NeighborList<double>*)nblist_ptr)->find_info4mlff(inum,
                                                            (int*)PyArray_DATA((PyArrayObject*)py_ilist),
                                                            (int*)PyArray_DATA((PyArrayObject*)py_numneigh),
                                                            (int*)PyArray_DATA((PyArrayObject*)py_firstneigh),
@@ -150,17 +155,16 @@ static PyObject *py_find_info4mlff(PyObject *self, PyObject *args)
     PyTuple_SetItem(return_tuple, 3, py_firstneigh);
     PyTuple_SetItem(return_tuple, 4, py_rcs);
     PyTuple_SetItem(return_tuple, 5, py_types);
-    PyTuple_SetItem(return_tuple, 6, PyLongFromLong((long)nghost));
+    PyTuple_SetItem(return_tuple, 6, PyLong_FromLong((long)nghost));
     
     // Step Free. 
     if (npy_float_type == NPY_FLOAT32) {
-        delete (Structure<float>*)structure_ptr;
-        delete (NeighborList<float>*)nblist_ptr;
+        delete (ai2pot::Structure<float>*)structure_ptr;
+        delete (ai2pot::NeighborList<float>*)nblist_ptr;
     } else {
-        delete (Structure<double>*)structure_ptr;
-        delete (NeighborList<double>*)nblist_ptr;
+        delete (ai2pot::Structure<double>*)structure_ptr;
+        delete (ai2pot::NeighborList<double>*)nblist_ptr;
     }
-    Py_DECREF(py_types);
     return return_tuple;
 }
 

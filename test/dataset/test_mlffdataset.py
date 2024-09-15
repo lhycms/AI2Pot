@@ -1,3 +1,4 @@
+import os
 import unittest
 from dpdata import LabeledSystem
 from torch.utils.data import DataLoader
@@ -5,10 +6,12 @@ from torch.utils.data import DataLoader
 from ai2pot.dataset import MlffDataset
 
 
+TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")
+
 class MlffDatasetTest(unittest.TestCase):
     def setUp(self) -> None:
         print("MlffDatasetTest is setting up...\n")
-        self.outcar_path: str = "/data/home/liuhanyu/hyliu/code/AI2Pot/test_data/ReNbSSe/OUTCAR"
+        self.outcar_path: str = os.path.join(TEST_FILES_DIR, "ReNbSSe", "OUTCAR")
         self.labeled_system : LabeledSystem = LabeledSystem(self.outcar_path)
         self.mlff_dataset: MlffDataset = MlffDataset(
             labeled_system=self.labeled_system,

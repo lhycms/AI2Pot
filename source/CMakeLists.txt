@@ -16,19 +16,22 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #FetchContent_MakeAvailable(googletest)
 #include(GoogleTest)
 
-## 2.2. Way 2: Build gtest
+## 2.1. Way 2: Build gtest
 add_subdirectory("$ENV{AI2POT_PATH}/source/ext/googletest-main")
 include(GoogleTest)
 
 
-#list(APPEND CMAKE_PREFIX_PATH "/data/home/liuhanyu/anaconda3/envs/mlff38/lib/python3.8/site-packages/pybind11/share/cmake/")
-#find_package(pybind11 CONFIG REQUIRED)
+## 2.2. pybind11
 execute_process(COMMAND python3 -c "import pybind11; print(pybind11.__path__[0])" OUTPUT_VARIABLE PYBIND11_PATH)
 string(REPLACE "\n" "/share/cmake" PYBIND11_CMAKE_PREFIX_PATH "${PYBIND11_PATH}")
 list(APPEND CMAKE_PREFIX_PATH ${PYBIND11_CMAKE_PREFIX_PATH})
 find_package(pybind11 CONFIG REQUIRED)
 
-# FindOpenMP
+## 2.3. numpy
+execute_process(COMMAND python3 -c "import numpy as np;print(np.__path__[0])" OUTPUT_VARIABLE NUMPY_ROOT_PATH)
+string(REPLACE "\n" "/core/include" NUMPY_INCLUDE_PATH ${NUMPY_ROOT_PATH})
+
+## 2.4. FindOpenMP
 find_package(OpenMP)
 if(OpenMP_CXX_FOUND)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")

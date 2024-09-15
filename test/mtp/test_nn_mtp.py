@@ -1,5 +1,6 @@
 import unittest
 import os
+import time
 
 from typing import List
 from dpdata import LabeledSystem
@@ -109,6 +110,7 @@ class NNMtpTest(unittest.TestCase):
         
     def test_forward(self):
         self.nn_mtp.to(torch.float64)
+        t1 = time.time()
         for ii, batch_data in enumerate(self.mlff_dataloader):
             ei, fi, v = self.nn_mtp(batch_data[1],
                                      batch_data[2],
@@ -120,6 +122,8 @@ class NNMtpTest(unittest.TestCase):
                   ei.size(), 
                   fi.size(),
                   v.size())
+        t2 = time.time()
+        print("Time = ", t2 - t1)
     
     def tearDown(self) -> None:
         print("NNMtpTest (TestCase) is tearing down...\n")
