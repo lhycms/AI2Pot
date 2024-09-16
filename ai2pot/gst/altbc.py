@@ -32,6 +32,17 @@ class Altbc(object):
                                   types,
                                   nghost,
                                   umax_num_neigh_atoms)
+    
+    @staticmethod
+    def find_batch_long_short_bonds(binum: np.ndarray,
+                                    bilist: np.ndarray,
+                                    bnumneigh: np.ndarray,
+                                    bfirstneigh: np.ndarray,
+                                    brcs: np.ndarray,
+                                    btypes: np.ndarray,
+                                    bnghost: np.ndarray,
+                                    umax_num_neigh_atoms: int):
+        pass
         
     def analyse_structure(self, structure: Structure):
         cell: np.ndarray = structure.lattice.matrix
@@ -57,6 +68,9 @@ class Altbc(object):
                                          self.umax_num_neigh_atoms, 
                                          self.angle_threshold)
     
+    def analyse_structures(self, structures: List[Structure]):
+        pass
+    
     @property
     def rcut(self) -> float:
         return self._rcut
@@ -80,4 +94,3 @@ class Altbc(object):
     @angle_threshold.setter
     def angle_threshold(self, value: float) -> None:
         self._angle_threshold = value
-        

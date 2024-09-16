@@ -11,7 +11,7 @@ print(TEST_FILES_DIR)
 
 class NblistTest(unittest.TestCase):
     def setUp(self) -> None:
-        print("Nblist is setting up...\n")
+        print("NblistTest is setting up...\n")
         self.structure: Structure = Structure.from_file(os.path.join(TEST_FILES_DIR, "POSCARs", "POSCAR"))
         self.rcut: float = 3.2
         self.umax_num_neigh_atoms: int = 6
@@ -32,7 +32,7 @@ class NblistTest(unittest.TestCase):
         pass
     
     def tearDown(self) -> None:
-        print("Nblist is tearing down...\n")
+        print("NblistTest is tearing down...\n")
         
     
 if __name__ == "__main__":
