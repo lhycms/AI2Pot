@@ -33,3 +33,9 @@ torch.ops.load_library(fvt_sr_bind_so_path)
 # name
 forceSrOp = torch.ops.fvt.ForceSrOp
 virialSrOp = torch.ops.fvt.VirialSrOp
+
+
+### Part 4, gst
+gst_lib_dir: str = os.path.join(ai2pot_source_build_lib_dir, "gst")
+sys.path.append(gst_lib_dir)
+import gst

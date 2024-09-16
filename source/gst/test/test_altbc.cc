@@ -17,6 +17,20 @@ protected:
     double bin_size_xyz[3];
     bool pbc_xyz[3];
 
+    int inum;
+    int* ilist;
+    int* numneigh;
+    int* firstneigh;
+    double* rcs;
+    int* types;
+    int nghost;
+    int umax_num_neigh_atoms;
+
+    double angle_threshold;
+
+    ai2pot::Structure<double> structure;
+    ai2pot::NeighborList<double> nblist;
+
     static void SetUpTestSuite() {
         printf("AltbcTest (TestSuite) is setting up...\n");
     }
@@ -95,17 +109,56 @@ protected:
         pbc_xyz[0] = true;
         pbc_xyz[1] = true;
         pbc_xyz[2] = true;
+
+        umax_num_neigh_atoms = 19;
+        angle_threshold = 120.0;
+
+        structure = ai2pot::Structure<double>(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+        nblist = ai2pot::NeighborList<double>(structure, rcut, bin_size_xyz, pbc_xyz, false);
+        inum = structure.get_num_atoms();
+        nghost = 0;
+        ilist = (int*)malloc(inum * sizeof(int));
+        numneigh = (int*)malloc(inum * sizeof(int));
+        firstneigh = (int*)malloc(inum * umax_num_neigh_atoms * sizeof(int));
+        rcs = (double*)malloc(inum * umax_num_neigh_atoms * 3 * sizeof(double));
+        types = (int*)malloc((inum+nghost) * sizeof(int));
     }
 
     void TearDown() override {
+        free(ilist);
+        free(numneigh);
+        free(firstneigh);
+        free(rcs);
+        free(types);
     }
 };   // class: AltbcTest
 
 
 TEST_F(AltbcTest, find_long_short_bonds) {
-    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-    ai2pot::NeighborList<double> nblist(structure, rcut, bin_size_xyz, pbc_xyz, false);
-    
+    nblist.find_info4mlff(inum,
+                         ilist,
+                         numneigh,
+                         firstneigh,
+                         rcs,
+                         types,
+                         nghost,
+                         umax_num_neigh_atoms);
+    std::vector<double> long_bond_lengths;
+    std::vector<double> short_bond_lengths;
+    ai2pot::gst::Altbc<double>::find_long_short_bonds(short_bond_lengths,
+                                                      long_bond_lengths,
+                                                      inum,
+                                                      ilist,
+                                                      numneigh,
+                                                      firstneigh,
+                                                      rcs,
+                                                      types,
+                                                      nghost,
+                                                      umax_num_neigh_atoms,
+                                                      angle_threshold);
+for (int ii=0; ii<long_bond_lengths.size(); ii++)
+    printf("%g, %g\n", long_bond_lengths[ii], short_bond_lengths[ii]);
+printf("\n");
 }
 
 
