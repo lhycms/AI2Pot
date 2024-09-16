@@ -14,13 +14,7 @@ add_library(mtpLevel SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/mtpLevel.cc)
 
 #add_library(mtpParam SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/mtpParam.cc)
 
-if (TORCH_OP)    
-    execute_process(COMMAND python3 -c "import torch;print(torch.__path__[0])" OUTPUT_VARIABLE TORCH_PATH)
-    string(REPLACE "\n" "/share/cmake" TORCH_CMAKE_PREFIX_PATH ${TORCH_PATH})
-    list(APPEND CMAKE_PREFIX_PATH ${TORCH_CMAKE_PREFIX_PATH})
-    find_package(Torch CONFIG REQUIRED)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
-
+if (TORCH_OP)
     add_library(mtpMAngularOp SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/mtpMAngularOp.cc)
     target_include_directories(mtpMAngularOp PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
     target_link_libraries(mtpMAngularOp PRIVATE ${TORCH_LIBRARIES})

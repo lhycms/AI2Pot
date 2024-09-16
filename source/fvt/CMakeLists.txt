@@ -11,12 +11,6 @@ file(MAKE_DIRECTORY ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY})
 
 # 5. 
 if (TORCH_OP)
-    execute_process(COMMAND python3 -c "import torch;print(torch.__path__[0])" OUTPUT_VARIABLE TORCH_PATH)
-    string(REPLACE "\n" "/share/cmake" TORCH_CMAKE_PREFIX_PATH ${TORCH_PATH})
-    list(APPEND CMAKE_PREFIX_PATH ${TORCH_CMAKE_PREFIX_PATH})
-    find_package(Torch CONFIG REQUIRED)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
-
     add_library(force_sr_op SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/force_sr_op.cc)
     target_link_libraries(force_sr_op PRIVATE ${TORCH_LIBRARIES})
 

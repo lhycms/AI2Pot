@@ -13,12 +13,6 @@ file(MAKE_DIRECTORY ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY})
 add_library(mtpParam SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/mtpParam.cc)
 
 if (TORCH_OP)
-    execute_process(COMMAND python3 -c "import torch;print(torch.__path__[0])" OUTPUT_VARIABLE TORCH_PATH)
-    string(REPLACE "\n" "/share/cmake" TORCH_CMAKE_PREFIX_PATH ${TORCH_PATH})
-    list(APPEND CMAKE_PREFIX_PATH ${TORCH_CMAKE_PREFIX_PATH})
-    find_package(Torch CONFIG REQUIRED)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
-
     add_library(mtpParamOp SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/mtpParamOp.cc)
     target_link_libraries(mtpParamOp PRIVATE mtpParam ${TORCH_LIBRARIES})
 
