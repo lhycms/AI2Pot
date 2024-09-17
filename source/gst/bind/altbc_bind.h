@@ -24,3 +24,14 @@ int initialize_npy(void);
  * @return PyObject* 
  */
 static PyObject* py_find_long_short_bonds(PyObject* self, PyObject* args);
+
+
+/**
+ * @brief 
+ * 
+ * @param self 
+ * @param args 
+ *  @param 
+ * @return PyObject* 
+ */
+static PyObject* py_find_batch_long_short_bonds(PyObject* self, PyObject* args);

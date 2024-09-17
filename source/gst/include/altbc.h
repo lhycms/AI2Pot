@@ -38,9 +38,6 @@ void Altbc<CoordType>::find_long_short_bonds(std::vector<CoordType>& long_bond_l
                                              int umax_num_neigh_atoms,
                                              CoordType angle_threshold)
 {
-    short_bond_lengths.clear();
-    long_bond_lengths.clear();
-
     CoordType* neigh_vec1;
     CoordType* neigh_vec2;
     for (int ii=0; ii<inum; ii++) {
