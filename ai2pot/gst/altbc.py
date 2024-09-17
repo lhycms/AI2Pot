@@ -81,7 +81,38 @@ class Altbc(object):
                                          self.angle_threshold)
     
     def analyse_labeled_system(self, labeled_system: LabeledSystem):
-        pass
+        binum: List[int] = []
+        bilist: List[np.ndarray] = []
+        bnumneigh: List[np.ndarray] = []
+        bfirstneigh: List[np.ndarray] = []
+        brcs: List[np.ndarray] = []
+        btypes: List[np.ndarray] = []
+        bnghost: List[np.ndarray] = []
+        for ii in range(len(labeled_system)):
+            nblist_info = Nblist.find_info4mlff(labeled_system["cells"][ii],
+                                                labeled_system["atom_types"].astype(np.int32),
+                                                labeled_system["coords"][ii],
+                                                self.rcut,
+                                                self.umax_num_neigh_atoms,
+                                                True,
+                                                [True, True, True],
+                                                False)
+            binum.append(nblist_info[0])
+            bilist.append(nblist_info[1])
+            bnumneigh.append(nblist_info[2])
+            bfirstneigh.append(nblist_info[3])
+            brcs.append(nblist_info[4])
+            btypes.append(nblist_info[5])
+            bnghost.append(nblist_info[6])
+        return Altbc.find_batch_long_short_bonds(np.array(binum).astype(np.int32),
+                                                 np.array(bilist),
+                                                 np.array(bnumneigh),
+                                                 np.array(bfirstneigh),
+                                                 np.array(brcs),
+                                                 np.array(btypes),
+                                                 np.array(bnghost),
+                                                 self.umax_num_neigh_atoms,
+                                                 self.angle_threshold)
     
     @property
     def rcut(self) -> float:

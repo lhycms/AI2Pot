@@ -54,7 +54,9 @@ class AltbcTest(unittest.TestCase):
         #print(result)
     
     def test_analyse_labeled_system(self):
-        pass
+        altbc: Altbc = Altbc(self.rcut, self.umax_num_neigh_atoms, self.angle_threshold)
+        result: np.ndarray = altbc.analyse_labeled_system(self.labeled_system)
+        print(result)
 
     def test_find_batch_long_short_bonds(self):
         binum: List[int] = []
@@ -89,7 +91,7 @@ class AltbcTest(unittest.TestCase):
                                                    np.array(bnghost),
                                                    self.umax_num_neigh_atoms,
                                                    self.angle_threshold)
-        print(result)
+        #print(result)
 
     
     def tearDown(self) -> None:
