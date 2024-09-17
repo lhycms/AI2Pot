@@ -11,7 +11,7 @@ file(MAKE_DIRECTORY ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY})
 # 4. Add subdirectory
 
 # 5. Compile program
-add_library(gst SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bind/altbc_bind.cc)
+add_library(gst SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bind/gst_bind.cc)
 set_target_properties(gst PROPERTIES
     PREFIX ""
     SUFFIX ${PYTHON_MODULE_EXTENSION})

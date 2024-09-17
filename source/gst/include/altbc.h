@@ -1,3 +1,6 @@
+#ifndef AI2POT_GST_ALTBC
+#define AI2POT_GST_ALTBC
+
 #include <stdio.h>
 #include <math.h>
 #include <vector>
@@ -62,7 +65,9 @@ void Altbc<CoordType>::find_long_short_bonds(std::vector<CoordType>& long_bond_l
             }
         }
     }
-}
+}   // class : Altbc
 
 };  // namespace : gst
 };  // namespace : ai2pot
+
+#endif

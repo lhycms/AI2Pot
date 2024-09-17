@@ -1,3 +1,6 @@
+#ifndef AI2POT_GST_ALTBC_BIND
+#define AI2POT_GST_ALTBC_BIND
+
 #include <Python.h>
 #include <numpy/arrayobject.h>
 #include <stdio.h>
@@ -35,3 +38,6 @@ static PyObject* py_find_long_short_bonds(PyObject* self, PyObject* args);
  * @return PyObject* 
  */
 static PyObject* py_find_batch_long_short_bonds(PyObject* self, PyObject* args);
+
+
+#endif
