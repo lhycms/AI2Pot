@@ -285,13 +285,13 @@ static PyObject* py_find_order_parameters(PyObject* self, PyObject* args) {
                           &py_umax_num_neigh_atoms))
         return NULL;
     if (!PyLong_Check(py_inum)
-        || PyArray_Check(py_ilist)
-        || PyArray_Check(py_numneigh)
-        || PyArray_Check(py_firstneigh)
-        || PyArray_Check(py_rcs)
-        || PyArray_Check(py_types)
-        || PyLong_Check(py_nghost)
-        || PyLong_Check(py_umax_num_neigh_atoms)) {
+        || !PyArray_Check(py_ilist)
+        || !PyArray_Check(py_numneigh)
+        || !PyArray_Check(py_firstneigh)
+        || !PyArray_Check(py_rcs)
+        || !PyArray_Check(py_types)
+        || !PyLong_Check(py_nghost)
+        || !PyLong_Check(py_umax_num_neigh_atoms)) {
         PyErr_SetString(PyExc_TypeError, "Check the parameters of py_find_order_parameters().");
         return NULL;
     }
@@ -306,7 +306,7 @@ static PyObject* py_find_order_parameters(PyObject* self, PyObject* args) {
     }
     int npy_int_dtype = PyArray_TYPE((PyArrayObject*)py_ilist);
     int npy_float_dtype = PyArray_TYPE((PyArrayObject*)py_rcs);
-    if (npy_int_dtype == NPY_INT32) {
+    if (npy_int_dtype != NPY_INT32) {
         PyErr_SetString(PyExc_TypeError, "Please use NPY_INT32 in py_find_order_parameters()");
         return NULL;
     }
