@@ -24,8 +24,8 @@ class Altbc(object):
                               rcs: np.ndarray,
                               types: np.ndarray,
                               nghost: int,
-                              umax_num_neigh_atoms: int,
-                              angle_threshold: float):
+                              umax_num_neigh_atoms: int = 100,
+                              angle_threshold: float = 155.0):
         return gst.find_long_short_bonds(inum,
                                          ilist,
                                          numneigh,
@@ -44,8 +44,8 @@ class Altbc(object):
                                     brcs: np.ndarray,
                                     btypes: np.ndarray,
                                     bnghost: np.ndarray,
-                                    umax_num_neigh_atoms: int,
-                                    angle_threshold: float):
+                                    umax_num_neigh_atoms: int = 100,
+                                    angle_threshold: float = 155.0):
         return gst.find_batch_long_short_bonds(binum,
                                                bilist,
                                                bnumneigh,
