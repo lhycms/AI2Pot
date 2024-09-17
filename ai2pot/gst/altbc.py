@@ -1,6 +1,7 @@
 from typing import List, Dict
 import numpy as np
 from pymatgen.core import Structure
+from dpdata import LabeledSystem
 
 from ai2pot.core import Nblist
 from ai2pot.fromcc import gst
@@ -23,15 +24,17 @@ class Altbc(object):
                               rcs: np.ndarray,
                               types: np.ndarray,
                               nghost: int,
-                              umax_num_neigh_atoms: int):
-        gst.find_long_short_bonds(inum,
-                                  ilist,
-                                  numneigh,
-                                  firstneigh,
-                                  rcs,
-                                  types,
-                                  nghost,
-                                  umax_num_neigh_atoms)
+                              umax_num_neigh_atoms: int,
+                              angle_threshold: float):
+        return gst.find_long_short_bonds(inum,
+                                         ilist,
+                                         numneigh,
+                                         firstneigh,
+                                         rcs,
+                                         types,
+                                         nghost,
+                                         umax_num_neigh_atoms,
+                                         float(angle_threshold))
     
     @staticmethod
     def find_batch_long_short_bonds(binum: np.ndarray,
@@ -41,8 +44,17 @@ class Altbc(object):
                                     brcs: np.ndarray,
                                     btypes: np.ndarray,
                                     bnghost: np.ndarray,
-                                    umax_num_neigh_atoms: int):
-        pass
+                                    umax_num_neigh_atoms: int,
+                                    angle_threshold: float):
+        return gst.find_batch_long_short_bonds(binum,
+                                               bilist,
+                                               bnumneigh,
+                                               bfirstneigh,
+                                               brcs,
+                                               btypes,
+                                               bnghost,
+                                               umax_num_neigh_atoms,
+                                               float(angle_threshold))
         
     def analyse_structure(self, structure: Structure):
         cell: np.ndarray = structure.lattice.matrix
@@ -68,7 +80,7 @@ class Altbc(object):
                                          self.umax_num_neigh_atoms, 
                                          self.angle_threshold)
     
-    def analyse_structures(self, structures: List[Structure]):
+    def analyse_labeled_system(self, labeled_system: LabeledSystem):
         pass
     
     @property
