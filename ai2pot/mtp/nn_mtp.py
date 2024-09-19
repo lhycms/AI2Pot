@@ -2,8 +2,12 @@ from typing import List, Union, Dict, Any, Optional
 
 import torch
 import torch.nn as nn
+import lightning as L
 
 from ai2pot.fromcc import mtpParamOp, mtpBasisOp, forceSrOp, virialSrOp
+from ai2pot.loss import (ELoss,
+                         FLoss,
+                         VLoss)
 
 
 class DescriptorMtp(nn.Module):
@@ -100,7 +104,7 @@ class FittingNet(nn.Module):
             self.register_parameter("energy_shift_tensor",
                                     nn.Parameter(data=energy_shift_tensor,
                                                  requires_grad=True))
-            
+    
     def forward(self,
                 btypes: torch.Tensor,
                 bdescriptor_tensor: torch.Tensor):
@@ -171,6 +175,7 @@ class NNMtp(nn.Module):
                 brcs: torch.Tensor,
                 btypes: torch.Tensor,
                 bnghost: torch.Tensor) -> torch.Tensor:
+        brcs.requires_grad_()
         bdescriptor: torch.Tensor = self.descriptor_module(bilist,
                                                            bnumneigh,
                                                            bfirstneigh,
@@ -206,4 +211,34 @@ class NNMtp(nn.Module):
     def info(self):
         pass
         
+
+class LitNNMtp(L.LightningModule):
+    def __init__(self, 
+                 model: nn.Module, 
+                 has_forces: bool = True,
+                 has_virials: bool = True):
+        super().__init__()
+        self.model: nn.Module = model
+        self.criterion: nn.Module = nn.MSELoss()
+        self.has_forces: bool = has_forces
+        self.has_virials: bool = has_virials
         
+    def training_step(self, batch, batch_idx):
+        if (self.has_forces and self.has_virials):
+            inum, ilist, numneigh, firstneigh, rcs, types, nghost, energies, forces, virials = batch
+            e, fi, v = self.model(ilist, numneigh, firstneigh, rcs, types, nghost)
+            loss: torch.tensor = self.criterion(torch.sum(e), torch.sum(energies))
+            return torch.sqrt(loss)
+        elif (self.has_forces):
+            inum, ilist, numneigh, firstneigh, rcs, types, nghost, energies, forces, virials = batch
+            e, fi = self.model(ilist, numneigh, firstneigh, rcs, types, nghost)
+            loss: torch.tensor = self.criterion(torch.sum(e), torch.sum(energies))
+            return torch.sqrt(loss)
+        else:
+            pass
+    
+    
+    def configure_optimizers(self):
+        optimizer: torch.optim.Optimizer = torch.optim.Adam(self.model.parameters(),
+                                                            lr=1e-3)
+        return optimizer

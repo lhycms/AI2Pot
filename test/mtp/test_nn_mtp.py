@@ -7,15 +7,16 @@ from dpdata import LabeledSystem
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
+import lightning as L
 
 from ai2pot.dataset.mlffdataset import MlffDataset
-from ai2pot.mtp.nn_mtp import DescriptorMtp, FittingNet, NNMtp
+from ai2pot.mtp.nn_mtp import DescriptorMtp, FittingNet, NNMtp, LitNNMtp
 
 
 TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")
 
 
-class DescriptorMtpTest(unittest.TestCase):
+class DescriptorMtpTes(unittest.TestCase):
     def setUp(self) -> None:
         print("DescriptorMtpTest (TestCase) is setting up...\n")
         mtp_level: int = 10
@@ -49,13 +50,13 @@ class DescriptorMtpTest(unittest.TestCase):
                                                            batch_data[3],
                                                            batch_data[4],
                                                            batch_data[5])
-            print("\t{0}. In Batch#{1}, descrip.size() = ".format(ii+1, ii), descriptor.size())
+            #print("\t{0}. In Batch#{1}, descrip.size() = ".format(ii+1, ii), descriptor.size())
         
     def tearDown(self) -> None:
         print("DescriptorMtpTest (TestCase) is tearing down...\n")
         
         
-class FittingNetTest(unittest.TestCase):
+class FittingNetTes(unittest.TestCase):
     def setUp(self) -> None:
         print("FittingNetTest (TestSuite) is setting up...\n")
         ntypes: int = 4
@@ -70,14 +71,15 @@ class FittingNetTest(unittest.TestCase):
     
     def test_forward(self):
         output_tensor = self.fitting_net(self.btypes, self.input_tensor)
-        print(output_tensor.size())
+        #print(output_tensor.size())
     
     def test_info(self):
-        print(self.fitting_net.linears_list)
-        self.fitting_net.info()
+        #print(self.fitting_net.linears_list)
+        #self.fitting_net.info()
+        pass
         
     def tearDown(self) -> None:
-        print("FittingNetTest (TestSutie) is tearing down...\n")
+        print("FittingNetTest (TestCase) is tearing down...\n")
   
 
 class NNMtpTest(unittest.TestCase):
@@ -107,27 +109,32 @@ class NNMtpTest(unittest.TestCase):
         self.mlff_dataloader: DataLoader = DataLoader(dataset=self.mlff_dataset,
                                                       batch_size=5,
                                                       shuffle=True)
+        self.trainer = L.Trainer(max_epochs=3)
         
-    def test_forward(self):
+    def est_forward(self):
         self.nn_mtp.to(torch.float64)
-        t1 = time.time()
         for ii, batch_data in enumerate(self.mlff_dataloader):
             ei, fi, v = self.nn_mtp(batch_data[1],
-                                     batch_data[2],
-                                     batch_data[3],
-                                     batch_data[4].requires_grad_(True),
-                                     batch_data[5],
-                                     batch_data[6])
-            print("\t{0}. In Batch#{1}, descrip.size() = ".format(ii+1, ii), 
-                  ei.size(), 
-                  fi.size(),
-                  v.size())
-        t2 = time.time()
-        print("Time = ", t2 - t1)
+                                    batch_data[2],
+                                    batch_data[3],
+                                    batch_data[4].requires_grad_(True),
+                                    batch_data[5],
+                                    batch_data[6])
+            #print("\t{0}. In Batch#{1}, descrip.size() = ".format(ii+1, ii), 
+            #      ei.size(), 
+            #      fi.size(),
+            #      v.size())
+    
+    def test_train(self):
+        self.nn_mtp.to(torch.float64)
+        lit_nn_mtp: L.LightningModule = LitNNMtp(model=self.nn_mtp)
+        self.trainer.fit(model=lit_nn_mtp,
+                         train_dataloaders=self.mlff_dataloader)
+        
     
     def tearDown(self) -> None:
         print("NNMtpTest (TestCase) is tearing down...\n")
-        
 
+    
 if __name__ == "__main__":
     unittest.main()

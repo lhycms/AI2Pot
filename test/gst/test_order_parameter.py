@@ -1,6 +1,5 @@
 import os
 import unittest
-from typing import List
 import numpy as np
 from pymatgen.core import Structure
 
