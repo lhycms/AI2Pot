@@ -1,3 +1,4 @@
+import glob
 from typing import List
 
 import numpy as np
@@ -9,100 +10,64 @@ from ai2pot.core import Nblist
 
 
 class ScDataset(Dataset):
-    def __init__(
-        self,
-        labeled_system: LabeledSystem,
-        rcut: float,
-        umax_num_neigh_atoms: int,
-        pbc_xyz: List[bool] = [True, True, True],
-        sort: bool = False,
-        torch_float_dtype: torch._C.dtype = torch.float64):
-        #self.atom_names: List[str] = labeled_system["atom_names"]
-        #self.atom_numbs: List[int] = labeled_system["atom_numbs"]
-        #self.atom_types: List[int] = labeled_system["atom_types"]
-        #self.cells: np.ndarray = labeled_system["cells"]
-        #self.coords: np.ndarray = labeled_system["coords"]
-        #self.energies: np.ndarray = labeled_system["energies"]
-        #self.forces: np.ndarray = labeled_system["forces"]
-        #self.virials: np.ndarray = labeled_system["virials"]
+    def __init__(self,
+                 labeled_system: LabeledSystem,
+                 rcut: float,
+                 umax_num_neigh_atoms: int,
+                 pbc_xyz: List[bool] = [True, True, True],
+                 sort: bool = False,
+                 torch_float_dtype: torch._C.dtype = torch.float64):
         self.labeled_system: LabeledSystem = labeled_system
-        inum_list: List[int] = []
-        ilist_list: List[np.ndarray] = []
-        numneigh_list: List[np.ndarray] = []
-        firstneigh_list: List[np.ndarray] = []
-        relativae_coords_list: List[np.ndarray] = []
-        types_list: List[np.ndarray] = []
-        nghost_list: List[int] = []
-        npy_float_dtype: np.dtype = np.float64
+        self.rcut: float = rcut
+        self.umax_num_neigh_atoms: int = umax_num_neigh_atoms
+        self.pbc_xyz: List[bool] = pbc_xyz
+        self.sort: bool = sort
+        self.npy_float_dtype: np.dtype = np.float64
         if (torch_float_dtype == torch.float32):
-            npy_float_dtype = np.float32
+            self.torch_float_dtype = torch.float32
+            self.npy_float_dtype = np.float32
         else:
-            npy_float_dtype = np.float64
-        for ii in range(self.labeled_system.get_nframes()):
-            inum, ilist, numneigh, firstneigh, relativae_coords, types, nghost = \
-                Nblist.find_info4mlff(
-                    self.labeled_system["cells"][ii].astype(npy_float_dtype),
-                    self.labeled_system["atom_types"].astype(np.int32),
-                    self.labeled_system["coords"][ii].astype(npy_float_dtype),
-                    rcut,
-                    umax_num_neigh_atoms,
-                    pbc_xyz,
-                    sort)
-            inum_list.append(inum)
-            ilist_list.append(ilist)
-            numneigh_list.append(numneigh)
-            firstneigh_list.append(firstneigh)
-            relativae_coords_list.append(relativae_coords)
-            types_list.append(types)
-            nghost_list.append(nghost)
-            
-        self.inum: torch.Tensor = torch.tensor(np.array(inum_list), 
-                                               dtype=torch.int32)
-        self.ilist: torch.Tensor = torch.tensor(np.array(ilist_list), 
-                                                dtype=torch.int32)
-        self.numneigh: torch.Tensor = torch.tensor(np.array(numneigh_list), 
-                                                   dtype=torch.int32)
-        self.firstneigh: torch.Tensor = torch.tensor(np.array(firstneigh_list), 
-                                                     dtype=torch.int32)
-        self.relative_coords: torch.Tensor = torch.tensor(np.array(relativae_coords_list), 
-                                                          dtype=torch_float_dtype)
-        self.types: torch.Tensor = torch.tensor(np.array(types_list), 
-                                                dtype=torch.int32)
-        self.nghost: torch.Tensor = torch.tensor(np.array(nghost_list), 
-                                                 dtype=torch.int32)
-        self.energies: torch.Tensor = torch.tensor(np.array(self.labeled_system["energies"]))
-        self.forces: torch.Tensor = torch.tensor(np.array(self.labeled_system["forces"]))
-        if (self.labeled_system.has_virial()):
-            self.virials = torch.tensor( np.array(self.labeled_system["virials"]) )
+            self.torch_float_dtype = torch.float64
+            self.npy_float_dtype = np.float64
 
     def __len__(self):
         return self.labeled_system.get_nframes()    
     
     def __getitem__(self, index) -> List[np.ndarray]:
+        inum, ilist, numneigh, firstneigh, relative_coords, types, nghost = \
+            Nblist.find_info4mlff(
+                self.labeled_system["cells"][index].astype(self.npy_float_dtype),
+                self.labeled_system["atom_types"].astype(np.int32),
+                self.labeled_system["coords"][index].astype(self.npy_float_dtype),
+                self.rcut,
+                self.umax_num_neigh_atoms,
+                True,
+                self.pbc_xyz,
+                self.sort)
         if self.labeled_system.has_virial():
             return [
-                self.inum[index],
-                self.ilist[index],
-                self.numneigh[index],
-                self.firstneigh[index],
-                self.relative_coords[index],
-                self.types[index],
-                self.nghost[index],
-                self.energies[index],
-                self.forces[index],
-                self.virials[index]
+                inum,
+                ilist,
+                numneigh,
+                firstneigh,
+                relative_coords,
+                types,
+                nghost,
+                self.labeled_system["energies"],
+                self.labeled_system["forces"],
+                self.labeled_system["virials"]
             ]
         else:
             return [
-                self.inum[index],
-                self.ilist[index],
-                self.numneigh[index],
-                self.firstneigh[index],
-                self.relative_coords[index],
-                self.types[index],
-                self.nghost[index],
-                self.energies[index],
-                self.forces[index],
+                inum,
+                ilist,
+                numneigh,
+                firstneigh,
+                relative_coords,
+                types,
+                nghost,
+                self.labeled_system["energies"],
+                self.labeled_system["forces"]
             ]
     
     def info(self):
@@ -126,7 +91,50 @@ class McDataset(Dataset):
                  rcut: float,
                  umax_num_neigh_atoms: int,
                  pbc_xyz: List[bool] = [True, True, True],
-                 sort: bool = True,
+                 sort: bool = False,
                  torch_float_dtype: torch._C.dtype = torch.float64):
         self.multi_systems: MultiSystems = multi_systems
+        self.rcut: float = rcut
+        self.umax_num_neigh_atoms: int = umax_num_neigh_atoms
+        self.pbc_xyz: List[bool] = pbc_xyz
+        self.sort: bool = sort
+        if (torch_float_dtype == torch.float32):
+            self.torch_float_dtype = torch.float32
+            self.npy_float_dtype = np.float32
+        else:
+            self.torch_float_dtype = torch.float64
+            self.npy_float_dtype = np.float64
         
+        # Get max number of atoms
+        natoms_list: List[int] = []
+        for system in self.multi_systems:
+            natoms_list.append(system.get_natoms())
+        self.max_num_atoms = max(natoms_list)
+        
+    def __len__(self) -> int:
+        num_frames: int = 0
+        for ls in self.multi_systems:
+            num_frames += len(ls)
+        return num_frames
+    
+    def __getitem__(self, index: int) -> int:
+        inum, ilist, numneigh, firstneigh, relative_coords, types, nghost = \
+            Nblist.find_info4mlff()
+    
+    @staticmethod
+    def from_dir(dir_name: str,
+                 file_name: str, 
+                 fmt: str = "auto",
+                 torch_float_dtype: torch._C.dtype = torch.float64):
+        ms: MultiSystems = MultiSystems()
+        fs: List[str] = glob.glob(pathname=f"{dir_name}/*/{file_name}",
+                                  recursive=False)
+        for f in fs:
+            try:
+                ls = LabeledSystem(file_name=f, fmt=fmt)
+            except Exception as _:
+                print(f)
+            if (len(ls) > 0):
+                ms.append(ls) 
+        return McDataset(multi_systems=ms, 
+                         torch_float_dtype=torch_float_dtype)
