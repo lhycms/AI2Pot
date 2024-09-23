@@ -8,9 +8,10 @@ ai2pot.egg-info/requires.txt
 ai2pot.egg-info/top_level.txt
 ai2pot/core/__init__.py
 ai2pot/core/nblist.py
-ai2pot/dataset/__init__.py
-ai2pot/dataset/mlffdataset.py
+ai2pot/data/__init__.py
+ai2pot/data/mlffdataset.py
 ai2pot/deepmd/__init__.py
+ai2pot/deepmd/loss.py
 ai2pot/deepmd/network.py
 ai2pot/deepmd/se_a.py
 ai2pot/deepmd/se_r.py
@@ -18,6 +19,8 @@ ai2pot/fromcc/__init__.py
 ai2pot/gst/__init__.py
 ai2pot/gst/altbc.py
 ai2pot/gst/order_parameter.py
+ai2pot/loss/__init__.py
+ai2pot/loss/potential_loss.py
 ai2pot/mtp/__init__.py
 ai2pot/mtp/linear_mtp.py
 ai2pot/mtp/nn_mtp.py

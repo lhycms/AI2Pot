@@ -7,11 +7,12 @@ from ai2pot.fromcc import nblist
 
 
 TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")
+ReNbSSe_POSCAR_DIR = os.path.join(TEST_FILES_DIR, "POSCARs")
 
 class NblistTest(unittest.TestCase):
     def setUp(self) -> None:
         print("NblistTest is setting up...\n")
-        structure_file: str = os.path.join(TEST_FILES_DIR, "POSCARs", "POSCAR")
+        structure_file: str = os.path.join(ReNbSSe_POSCAR_DIR, "POSCAR")
         self.structure: Structure = Structure.from_file(structure_file)
         self.cell: np.ndarray = self.structure.lattice.matrix
         self.atom_types: np.ndarray = [str(ii) for ii in self.structure.species]

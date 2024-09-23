@@ -4,12 +4,12 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 import lightning as L
 
-from ai2pot.dataset import MlffDataset
+from ai2pot.data import ScDataset
 from ai2pot.mtp import NNMtp, LitNNMtp
 
 
 labeled_system = LabeledSystem("/data/home/liuhanyu/hyliu/code/rubbish/test/AI2Pot/test/test_data/OUTCARs/OUTCAR")
-mlff_dataset = MlffDataset(labeled_system=labeled_system,
+mlff_dataset = ScDataset(labeled_system=labeled_system,
                            rcut=3.2,
                            umax_num_neigh_atoms=100,
                            pbc_xyz=[True, True, True],

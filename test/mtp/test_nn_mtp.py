@@ -9,14 +9,15 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 import lightning as L
 
-from ai2pot.dataset.mlffdataset import MlffDataset
+from ai2pot.data.mlffdataset import ScDataset
 from ai2pot.mtp.nn_mtp import DescriptorMtp, FittingNet, NNMtp, LitNNMtp
 
 
 TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")
+ReNbSSe_OUTCAR_DIR = os.path.join(TEST_FILES_DIR, "OUTCARs", "ReNbSSe")
 
 
-class DescriptorMtpTes(unittest.TestCase):
+class DescriptorMtpTest(unittest.TestCase):
     def setUp(self) -> None:
         print("DescriptorMtpTest (TestCase) is setting up...\n")
         mtp_level: int = 10
@@ -34,9 +35,9 @@ class DescriptorMtpTes(unittest.TestCase):
                                                        umax_num_neighs=umax_num_neighs)
         self.descriptor_mtp.to(torch.float64)
         
-        self.outcar_path: str = f"{TEST_FILES_DIR}/ReNbSSe/OUTCAR"
+        self.outcar_path: str = f"{ReNbSSe_OUTCAR_DIR}/OUTCAR"
         self.labeled_system: LabeledSystem = LabeledSystem(self.outcar_path)
-        self.mlff_dataset: MlffDataset = MlffDataset(labeled_system=self.labeled_system,
+        self.mlff_dataset: ScDataset = ScDataset(labeled_system=self.labeled_system,
                                                      rcut=rmax,
                                                      umax_num_neigh_atoms=umax_num_neighs)
         self.mlff_dataloader: DataLoader = DataLoader(self.mlff_dataset,
@@ -50,13 +51,13 @@ class DescriptorMtpTes(unittest.TestCase):
                                                            batch_data[3],
                                                            batch_data[4],
                                                            batch_data[5])
-            #print("\t{0}. In Batch#{1}, descrip.size() = ".format(ii+1, ii), descriptor.size())
+            print("\t{0}. In Batch#{1}, descrip.size() = ".format(ii+1, ii), descriptor.size())
         
     def tearDown(self) -> None:
         print("DescriptorMtpTest (TestCase) is tearing down...\n")
         
         
-class FittingNetTes(unittest.TestCase):
+class FittingNetTest(unittest.TestCase):
     def setUp(self) -> None:
         print("FittingNetTest (TestSuite) is setting up...\n")
         ntypes: int = 4
@@ -71,12 +72,11 @@ class FittingNetTes(unittest.TestCase):
     
     def test_forward(self):
         output_tensor = self.fitting_net(self.btypes, self.input_tensor)
-        #print(output_tensor.size())
+        print(output_tensor.size())
     
     def test_info(self):
-        #print(self.fitting_net.linears_list)
-        #self.fitting_net.info()
-        pass
+        print(self.fitting_net.linears_list)
+        self.fitting_net.info()
         
     def tearDown(self) -> None:
         print("FittingNetTest (TestCase) is tearing down...\n")
@@ -101,9 +101,9 @@ class NNMtpTest(unittest.TestCase):
                             umax_num_neighs=umax_num_neighs,
                             fit_sizes_list=fit_sizes_list,
                             fit_activation=fit_activation)
-        outcar_path: str = f"{TEST_FILES_DIR}/ReNbSSe/OUTCAR"
+        outcar_path: str = f"{ReNbSSe_OUTCAR_DIR}/OUTCAR"
         labeled_system: LabeledSystem = LabeledSystem(outcar_path)
-        self.mlff_dataset: MlffDataset = MlffDataset(labeled_system=labeled_system,
+        self.mlff_dataset: ScDataset = ScDataset(labeled_system=labeled_system,
                                                      rcut=rmax,
                                                      umax_num_neigh_atoms=umax_num_neighs)
         self.mlff_dataloader: DataLoader = DataLoader(dataset=self.mlff_dataset,
@@ -111,7 +111,7 @@ class NNMtpTest(unittest.TestCase):
                                                       shuffle=True)
         self.trainer = L.Trainer(max_epochs=3)
         
-    def est_forward(self):
+    def test_forward(self):
         self.nn_mtp.to(torch.float64)
         for ii, batch_data in enumerate(self.mlff_dataloader):
             ei, fi, v = self.nn_mtp(batch_data[1],

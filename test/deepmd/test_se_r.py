@@ -8,7 +8,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
-from ai2pot.dataset.mlffdataset import MlffDataset
+from ai2pot.data.mlffdataset import ScDataset
 from ai2pot.deepmd.se_r import (EmbeddingNet,
                                 FittingNet,
                                 DescripSeR,
@@ -16,6 +16,7 @@ from ai2pot.deepmd.se_r import (EmbeddingNet,
 
 
 TEST_FILES_DIR: str = os.path.join(os.getenv("AI2POT_PATH"), "test_data")
+ReNbSSe_OUTCAR_DIR: str = os.path.join(TEST_FILES_DIR, "OUTCARs", "ReNbSSe")
 
 
 class EmbeddingNetTest(unittest.TestCase):
@@ -82,9 +83,9 @@ class DescripSeRTes(unittest.TestCase):
             M2=4)
         self.descrip_se_r.to(torch.float64)
 
-        self.outcar_path: str = f"{TEST_FILES_DIR}/ReNbSSe/OUTCAR"
+        self.outcar_path: str = f"{ReNbSSe_OUTCAR_DIR}/OUTCAR"
         self.labeled_system: LabeledSystem = LabeledSystem(self.outcar_path)
-        self.mlff_dataset: MlffDataset = MlffDataset(
+        self.mlff_dataset: ScDataset = ScDataset(
             labeled_system=self.labeled_system,
             rcut=3.2,
             umax_num_neigh_atoms=umax_num_neighs)
@@ -132,9 +133,9 @@ class DpSeRTest(unittest.TestCase):
                                         energy_shift_tensor=False)
         self.dp_se_r.to(torch.float64)
 
-        self.outcar_path: str = f"{TEST_FILES_DIR}/ReNbSSe/OUTCAR"
+        self.outcar_path: str = f"{ReNbSSe_OUTCAR_DIR}/OUTCAR"
         self.labeled_system: LabeledSystem = LabeledSystem(self.outcar_path)
-        self.mlff_dataset: MlffDataset = MlffDataset(labeled_system=self.labeled_system,
+        self.mlff_dataset: ScDataset = ScDataset(labeled_system=self.labeled_system,
                                                      rcut=rcut,
                                                      umax_num_neigh_atoms=umax_num_neighs)
         self.mlff_dataloader: DataLoader = DataLoader(self.mlff_dataset,
