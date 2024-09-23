@@ -69,20 +69,6 @@ class ScDataset(Dataset):
                 self.labeled_system["energies"],
                 self.labeled_system["forces"]
             ]
-    
-    def info(self):
-        print(self.labeled_system)
-        print("\t+++ 1. self.inum.size() = ", self.inum.size())
-        print("\t+++ 2. self.ilist.size() = ", self.ilist.size())
-        print("\t+++ 3. self.numneigh.size() = ", self.ilist.size())
-        print("\t+++ 4. self.firstneigh.size() = ", self.firstneigh.size())
-        print("\t+++ 5. self.relative_coords.size() = ", self.relative_coords.size())
-        print("\t+++ 6. self.types.size() = ", self.types.size())
-        print("\t+++ 7. self.nghost.size() = ", self.nghost.size())
-        print("\t+++ 8. self.energies.size() = ", self.energies.size())
-        print("\t+++ 9. self.forces.size() = ", self.forces.size())
-        if (self.labeled_system.has_virial()):
-            print("\t+++ 10. self.virials.shape = ", self.virials.size())
         
 
 class McDataset(Dataset):
@@ -105,11 +91,12 @@ class McDataset(Dataset):
             self.torch_float_dtype = torch.float64
             self.npy_float_dtype = np.float64
         
-        # Get max number of atoms
         natoms_list: List[int] = []
         for system in self.multi_systems:
             natoms_list.append(system.get_natoms())
         self.max_num_atoms = max(natoms_list)
+        
+        self.nframes: List[int] = [len(ls) for ls in self.multi_systems]
         
     def __len__(self) -> int:
         num_frames: int = 0
@@ -118,8 +105,76 @@ class McDataset(Dataset):
         return num_frames
     
     def __getitem__(self, index: int) -> int:
-        inum, ilist, numneigh, firstneigh, relative_coords, types, nghost = \
-            Nblist.find_info4mlff()
+        cumsum_nframes: List[int] = list(np.cumsum(self.nframes))
+        cumsum_nframes.insert(0, 0)
+        ls_index: int = -1
+        el_index: int = -1
+        for ii in range(len(cumsum_nframes) - 1):
+            if ( (index >= cumsum_nframes[ii]) and (index < cumsum_nframes[ii+1]) ):
+                ls_index = ii
+                break
+        el_index = index - cumsum_nframes[ls_index]
+        ls: LabeledSystem = self.multi_systems[ls_index]
+        
+        num_real_atoms: int = ls.get_natoms()
+        ilist: np.ndarray = np.zeros(shape=(self.max_num_atoms), 
+                                     dtype=np.int32)
+        numneigh: np.ndarray = np.zeros(shape=(self.max_num_atoms),
+                                        dtype=np.int32)
+        firstneigh: np.ndarray = np.zeros(shape=(self.max_num_atoms, self.umax_num_neigh_atoms),
+                                          dtype=np.int32)
+        relative_coords: np.ndarray = np.zeros(shape=(self.max_num_atoms, self.umax_num_neigh_atoms, 3),
+                                               dtype=self.npy_float_dtype)
+        types: np.ndarray = np.zeros(shape=(self.max_num_atoms),
+                                     dtype=np.int32)
+        energies: np.ndarray = np.zeros(shape=(self.max_num_atoms),
+                                        dtype=self.npy_float_dtype)
+        forces: np.ndarray = np.zeros(shape=(self.max_num_atoms, 3),
+                                      dtype=self.npy_float_dtype)
+        if ls.has_virial():
+            virials: np.ndarray = np.zeros(shape=(3, 3),
+                                           dtype=self.npy_float_dtype)
+        energies[:num_real_atoms] = ls["energies"]
+        forces[:num_real_atoms] = ls["forces"]
+        if ls.has_virial():
+            virials[:num_real_atoms] = ls["virials"]
+        
+        inum, ilist[:num_real_atoms], numneigh[:num_real_atoms], firstneigh[:num_real_atoms], \
+        relative_coords[:num_real_atoms], types[:num_real_atoms], nghost = \
+            Nblist.find_info4mlff(
+                ls["cells"][el_index].astype(self.npy_float_dtype),
+                ls["atom_types"].astype(np.int32),
+                ls["coords"][el_index].astype(self.npy_float_dtype),
+                self.rcut,
+                self.umax_num_neigh_atoms,
+                True,
+                self.pbc_xyz,
+                self.sort)
+        if ls.has_virial():
+            return [
+                inum,
+                ilist,
+                numneigh,
+                firstneigh,
+                relative_coords,
+                types,
+                nghost,
+                ls["energies"],
+                ls["forces"],
+                ls["virials"]
+            ]
+        else:
+            return [
+                inum,
+                ilist,
+                numneigh,
+                firstneigh,
+                relative_coords,
+                types,
+                nghost,
+                ls["energies"],
+                ls["forces"] 
+            ]
     
     @staticmethod
     def from_dir(dir_name: str,

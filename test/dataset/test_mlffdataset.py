@@ -27,10 +27,6 @@ class ScDatasetTest(unittest.TestCase):
             batch_size=5, 
             shuffle=True)
     
-    def test_dataset_info(self):
-        self.mlff_dataset.info()
-        #print(self.mlff_dataset[0])
-    
     def test_load(self):
         for ii, data in enumerate(self.mlff_dataloader):
             print("\tSize of Batch#{0} = {1}".format(ii, data[0].size()[0]))  # data[0]: batch of inum
@@ -52,13 +48,16 @@ class McDatasetT(unittest.TestCase):
                 print(f)
             if (len(ls) > 0):
                 self.multi_systems.append(ls)
-        print(self.multi_systems)
-
-    def test_init(self):
-        mc_dataset: McDataset = McDataset(multi_systems=self.multi_systems,
-                                          torch_float_dtype=torch.float64)
-
+        self.mc_dataset: McDataset = McDataset(multi_systems=self.multi_systems,
+                                               rcut=3.2,
+                                               umax_num_neigh_atoms=20,
+                                               pbc_xyz=[True, True, True],
+                                               sort=False,
+                                               torch_float_dtype=torch.float64)
     
+    def test_init(self):
+        pass
+
     def tearDown(self) -> None:
         print("McDatasetTest is tearing down...")
     
