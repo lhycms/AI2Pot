@@ -105,15 +105,15 @@ class McDataset(Dataset):
         return num_frames
     
     def __getitem__(self, index: int) -> int:
-        cumsum_nframes: List[int] = list(np.cumsum(self.nframes))
-        cumsum_nframes.insert(0, 0)
         ls_index: int = -1
-        el_index: int = -1
-        for ii in range(len(cumsum_nframes) - 1):
-            if ( (index >= cumsum_nframes[ii]) and (index < cumsum_nframes[ii+1]) ):
+        el_index: int = -1        
+        cumsum_value: int = 0
+        for ii, tmp_ls in enumerate(self.multi_systems):
+            cumsum_value += len(tmp_ls)
+            if (cumsum_value > index):
                 ls_index = ii
                 break
-        el_index = index - cumsum_nframes[ls_index]
+        el_index = int(index - np.sum(self.nframes[:ls_index]))
         ls: LabeledSystem = self.multi_systems[ls_index]
         
         num_real_atoms: int = ls.get_natoms()
