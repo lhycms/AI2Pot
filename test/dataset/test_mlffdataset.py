@@ -2,6 +2,7 @@ import os
 import glob
 import unittest
 from typing import List
+import numpy as np
 import torch
 from dpdata import LabeledSystem, MultiSystems
 from torch.utils.data import DataLoader
@@ -27,7 +28,14 @@ class ScDatasetTest(unittest.TestCase):
             batch_size=5, 
             shuffle=True)
     
-    def test_load(self):
+    def test_getitem(self):
+        for ii in self.mlff_dataset[0]:
+            if (type(ii) is torch.Tensor):
+                print(ii.size())
+            else:
+                print(type(ii))
+    
+    def test_dataloader(self):
         for ii, data in enumerate(self.mlff_dataloader):
             print("\tSize of Batch#{0} = {1}".format(ii, data[0].size()[0]))  # data[0]: batch of inum
 
@@ -54,9 +62,20 @@ class McDatasetT(unittest.TestCase):
                                                pbc_xyz=[True, True, True],
                                                sort=False,
                                                torch_float_dtype=torch.float64)
+        self.mc_dataloader = DataLoader(dataset=self.mc_dataset,
+                                        batch_size=32,
+                                        shuffle=True)
     
-    def test_init(self):
-        pass
+    def test_getitem(self):
+        for ii in self.mc_dataset[0]:
+            if (type(ii) is torch.Tensor):
+                print(ii.size())
+            else:
+                print(type(ii))
+    
+    def test_dataloader(self):
+        for ii, batch in enumerate(self.mc_dataloader):
+            print("\tSize of Batch#{0} = {1}".format(ii, batch[1].size()[0]))
 
     def tearDown(self) -> None:
         print("McDatasetTest is tearing down...")
