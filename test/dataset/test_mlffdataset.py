@@ -2,7 +2,6 @@ import os
 import glob
 import unittest
 from typing import List
-import numpy as np
 import torch
 from dpdata import LabeledSystem, MultiSystems
 from torch.utils.data import DataLoader

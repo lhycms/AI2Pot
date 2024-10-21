@@ -242,3 +242,4 @@ class LitNNMtp(L.LightningModule):
         optimizer: torch.optim.Optimizer = torch.optim.Adam(self.model.parameters(),
                                                             lr=1e-3)
         return optimizer
+    
