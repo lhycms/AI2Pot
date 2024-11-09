@@ -30,13 +30,13 @@ do {                                                                    \
     }                                                                   \
 } while(0);
 
-const int MAX_NUM_MTP_BASIS;
+const int MAX_NUM_MTP_BASIS = 2445;
 
 
 template <typename CoordType>
 __global__ void find_mtp_basis_val_der_cuda_kernel()
 {
-    
+
 }
 
 template <typename CoordType>
