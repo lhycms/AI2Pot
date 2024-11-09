@@ -8,6 +8,7 @@ from ai2pot.data import ScDataset
 from ai2pot.mtp import NNMtp, LitNNMtp
 
 
+# 1. 初始化 Dataset
 labeled_system = LabeledSystem("/data/home/liuhanyu/hyliu/code/rubbish/test/AI2Pot/test/test_data/OUTCARs/ReNbSSe/OUTCAR")
 mlff_dataset = ScDataset(labeled_system=labeled_system,
                          rcut=3.2,
@@ -15,6 +16,7 @@ mlff_dataset = ScDataset(labeled_system=labeled_system,
                          pbc_xyz=[True, True, True],
                          sort=False,
                          torch_float_dtype=torch.float64)
+# 2. 初始化 MTP 势函数模型
 nn_mtp = NNMtp(mtp_level=28, 
                ntypes=4,
                chebyshev_size=8,
@@ -26,7 +28,8 @@ nn_mtp = NNMtp(mtp_level=28,
 nn_mtp.to(torch.float64)
 lit_nn_mtp = LitNNMtp(model=nn_mtp)
 dataloader = DataLoader(dataset=mlff_dataset, batch_size=5, shuffle=True)
-
+# 3. 开始训练
 trainer = L.Trainer(max_epochs=3)
 trainer.fit(model=lit_nn_mtp, train_dataloaders=dataloader)
+
 

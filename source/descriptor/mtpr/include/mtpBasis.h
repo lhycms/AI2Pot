@@ -9,6 +9,11 @@
 #include "./basis.h"
 #include "./mtpParam.h"
 
+#ifdef USE_CUDA
+template <typename CoordType>
+extern void find_mtp_basis_val_der_cuda_launcher();
+#endif
+
 namespace ai2pot {
 namespace mtpr {
 
