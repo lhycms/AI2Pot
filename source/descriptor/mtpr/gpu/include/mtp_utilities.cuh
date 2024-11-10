@@ -1,5 +1,5 @@
-#ifndef AI2POT_MTP_UTILITIES
-#define AI2POT_MTP_UTILITIES
+#ifndef AI2POT_MTP_UTILITIES_CUH
+#define AI2POT_MTP_UTILITIES_CUH
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
@@ -30,19 +30,36 @@ do {                                                                    \
     }                                                                   \
 } while(0);
 
+
 const int MAX_NUM_MTP_BASIS = 2445;
-
-
-template <typename CoordType>
-__global__ void find_mtp_basis_val_der_cuda_kernel()
-{
-
-}
-
-template <typename CoordType>
-void find_mtp_basis_val_der_cuda_launcher()
-{
-
-}
+#if MAX_MTP_LEVEL == 2
+MAX_NUM_MTP_BASIS = 1;
+#elif MAX_MTP_LEVEL == 4
+MAX_NUM_MTP_BASIS = 2;
+#elif MAX_MTP_LEVEL == 6
+MAX_NUM_MTP_BASIS = 5;
+#elif MAX_MTP_LEVEL == 8
+MAX_NUM_MTP_BASIS = 9;
+#elif MAX_MTP_LEVEL == 10
+MAX_NUM_MTP_BASIS = 16;
+#elif MAX_MTP_LEVEL == 12
+MAX_NUM_MTP_BASIS = 29;
+#elif MAX_MTP_LEVEL == 14
+MAX_NUM_MTP_BASIS = 52;
+#elif MAX_MTP_LEVEL == 16
+MAX_NUM_MTP_BASIS = 92;
+#elif MAX_MTP_LEVEL == 18
+MAX_NUM_MTP_BASIS = 163;
+#elif MAX_MTP_LEVEL == 20
+MAX_NUM_MTP_BASIS = 288;
+#elif MAX_MTP_LEVEL == 22
+MAX_NUM_MTP_BASIS = 500;
+#elif MAX_MTP_LEVEL == 24
+MAX_NUM_MTP_BASIS = 864;
+#elif MAX_MTP_LEVEL == 26
+MAX_NUM_MTP_BASIS = 1464;
+#else //#elif MAX_MTP_LEVEL == 28
+MAX_NUM_MTP_BASIS = 2445;
+#endif
 
 #endif

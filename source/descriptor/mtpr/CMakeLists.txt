@@ -18,6 +18,9 @@ if (TORCH_OP)
 
     add_library(mtpBasisOp SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/mtpBasisOp.cc)
     target_link_libraries(mtpBasisOp PRIVATE ${TORCH_LIBRARIES})
+    if (MAX_MTP_LEVEL)
+        target_compile_definitions(mtpBasisOp PRIVATE MAX_MTP_LEVEL=${MAX_MTP_LEVEL})
+    endif()
 
     add_library(mtpr_bind SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bind/mtpr_bind.cc)
     target_include_directories(mtpr_bind PRIVATE ${PYTHON_INCLUDE_DIRS})
