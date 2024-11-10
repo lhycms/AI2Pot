@@ -5,9 +5,9 @@ import torch.nn as nn
 import lightning as L
 
 from ai2pot.fromcc import mtpParamOp, mtpBasisOp, forceSrOp, virialSrOp
-from ai2pot.loss import (ELoss,
-                         FLoss,
-                         VLoss)
+#from ai2pot.loss import (ELoss,
+#                         FLoss,
+#                         VLoss)
 
 
 class DescriptorMtp(nn.Module):
@@ -183,6 +183,7 @@ class NNMtp(nn.Module):
                                                            btypes)
         e_i_sr: torch.Tensor = self.fitting_module(btypes, bdescriptor)
         e_tot_sr: torch.Tensor = torch.sum(e_i_sr, dim=1)
+        print("***+++*** ", e_tot_sr.size(), e_i_sr.size())
         mask: List[Optional[torch.Tensor]] = [torch.ones_like(e_tot_sr,
                                                               device=brcs.device,
                                                               dtype=brcs.dtype)]
