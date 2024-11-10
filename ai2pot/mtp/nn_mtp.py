@@ -211,7 +211,7 @@ class NNMtp(nn.Module):
     
     def info(self):
         pass
-        
+
 
 class LitNNMtp(L.LightningModule):
     def __init__(self, 
@@ -243,4 +243,49 @@ class LitNNMtp(L.LightningModule):
         optimizer: torch.optim.Optimizer = torch.optim.Adam(self.model.parameters(),
                                                             lr=1e-3)
         return optimizer
+ 
+
+'''
+class LitNNMtp(L.LightningModule):
+    def __init__(self, 
+                 model: nn.Module,
+                 max_epoches: int, 
+                 lr_start: float,
+                 lr_stop: float,
+                 decay_steps: int,
+                 has_forces: bool = True,
+                 has_virials: bool = True):
+        super().__init__()
+        self.model: nn.Module = model
+        self.max_epoches: int = max_epoches
+        self.lr_start: float = lr_start
+        self.lr_stop: float = lr_stop
+        self.decay_steps: int = decay_steps
+        self.criterion: nn.Module = nn.MSELoss()
+        self.has_forces: bool = has_forces
+        self.has_virials: bool = has_virials
+        
+        self.decay_rate: float = (lr_stop / lr_start) ** (self.decay_steps / self.max_epoches)
+        
+    def training_step(self, batch, batch_idx):
+        if (self.has_forces and self.has_virials):
+            inum, ilist, numneigh, firstneigh, rcs, types, nghost, energies, forces, virials = batch
+            e, fi, v = self.model(ilist, numneigh, firstneigh, rcs, types, nghost)
+            loss: torch.tensor = self.criterion(torch.sum(e), torch.sum(energies))
+            return torch.sqrt(loss)
+        elif (self.has_forces):
+            inum, ilist, numneigh, firstneigh, rcs, types, nghost, energies, forces, virials = batch
+            e, fi = self.model(ilist, numneigh, firstneigh, rcs, types, nghost)
+            loss: torch.tensor = self.criterion(torch.sum(e), torch.sum(energies))
+            return torch.sqrt(loss)
+        else:
+            pass
     
+    
+    def configure_optimizers(self):
+        optimizer: torch.optim.Optimizer = torch.optim.Adam(self.model.parameters(),
+                                                            lr=self.lr_start)
+        scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer=optimizer,
+                                                      lr_lambda=lambda epoch: self.lr_start * self.decay_rate ** (epoch / self.decay_steps))
+        return [optimizer], [scheduler]
+'''

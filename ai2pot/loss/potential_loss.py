@@ -54,12 +54,8 @@ class VRmse(nn.Module):
 
 class PotRmse(nn.Module):
     def __init__(self,
-                 energy_mark: bool,
-                 force_mark: bool,
                  virial_mark: bool):
         super(PotRmse, self).__init__()
-        self.energy_mark = energy_mark
-        self.force_mark = force_mark
         self.virial_mark = virial_mark
             
     def forward(self,
@@ -70,10 +66,6 @@ class PotRmse(nn.Module):
                 target_benergies: Optional[torch.TensorType],
                 target_bforces: Optional[torch.TensorType],
                 target_bvirials: Optional[torch.TensorType]):
-        if self.energy_mark and input_benergies and target_benergies:
-            pass
-        if self.force_mark and input_bforces and target_bforces:
-            pass
+        
         if self.virial_mark and input_bvirials and target_bvirials:
             pass
-        
