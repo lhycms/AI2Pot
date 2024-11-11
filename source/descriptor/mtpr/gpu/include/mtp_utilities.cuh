@@ -32,6 +32,7 @@ do {                                                                    \
 
 
 const int MAX_CHEBYSHEV_SIZE = 20;
+const int MAX_NUM_NEIGH_ATOMS = 512;
 #if MAX_MTP_LEVEL == 2
     #define MAX_NUM_MTP_BASIS 1
     #define ALPHA_MOMENTS_COUNT 1
@@ -55,7 +56,7 @@ const int MAX_CHEBYSHEV_SIZE = 20;
     #define ALPHA_MOMENTS_COUNT 174
 #elif MAX_MTP_LEVEL == 16
     #define MAX_NUM_MTP_BASIS 92
-    #define ALPHA_MOMENTS_COUNT 130
+    #define ALPHA_MOMENTS_COUNT 350
 #elif MAX_MTP_LEVEL == 18
     #define MAX_NUM_MTP_BASIS 163
     #define ALPHA_MOMENTS_COUNT 718

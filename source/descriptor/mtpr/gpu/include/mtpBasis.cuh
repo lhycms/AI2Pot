@@ -9,34 +9,37 @@
 
 
 template <typename CoordType>
-__device__ void find_switch_func(
-    CoordType &val,
-    CoordType &der2r,
-    CoordType rmax,
-    CoordType rmin,
-    CoordType distance_ij);
+__host__ __device__ 
+void find_switch_func(CoordType &val,
+                      CoordType &der2r,
+                      CoordType rmax,
+                      CoordType rmin,
+                      CoordType distance_ij);
 
 
 template <typename CoordType>
-__device__ void find_rb_chebyshev(CoordType *vals,
-                                  CoordType *ders2r,
-                                  int chebyshev_size,
-                                  CoordType rmax,
-                                  CoordType rmin,
-                                  CoordType distance);
+__host__ __device__ 
+void find_rb_chebyshev(CoordType *vals,
+                       CoordType *ders2r,
+                       int chebyshev_size,
+                       CoordType rmax,
+                       CoordType rmin,
+                       CoordType distance);
 
 
 template <typename CoordType>
-__device__ void find_rq_chebyshev(CoordType *vals,
-                                  CoordType *ders2r,
-                                  int chebyshev_size,
-                                  CoordType rmax,
-                                  CoordType rmin,
-                                  CoordType distance_ij);
+__host__ __device__ 
+void find_rq_chebyshev(CoordType *vals,
+                       CoordType *ders2r,
+                       int chebyshev_size,
+                       CoordType rmax,
+                       CoordType rmin,
+                       CoordType distance_ij);
 
 
 template <typename CoordType>
-__global__ void find_mtp_basis_val_der_cuda_kernel(
+__global__ 
+void find_mtp_basis_val_der_cuda_kernel(
     CoordType *mtp_basis_val,
     CoordType (*mtp_basis_der)[3],
     CoordType *mtp_basis_der2coeffs,
@@ -67,12 +70,12 @@ __global__ void find_mtp_basis_val_der_cuda_kernel(
 
 
 template <typename CoordType>
-__device__ void find_swtich_func(
-    CoordType& val,
-    CoordType& der2r,
-    CoordType rmax,
-    CoordType rmin,
-    CoordType distance_ij)
+__host__ __device__ 
+void find_switch_func(CoordType& val,
+                      CoordType& der2r,
+                      CoordType rmax,
+                      CoordType rmin,
+                      CoordType distance_ij)
 {
     CoordType uu = (distance_ij - rmin) / (rmax - rmin);
 
@@ -90,12 +93,13 @@ __device__ void find_swtich_func(
 
 
 template <typename CoordType>
-__device__ void find_rb_chebyshev(CoordType *vals,
-                                  CoordType *ders2r,
-                                  int chebyshev_size,
-                                  CoordType rmax,
-                                  CoordType rmin,
-                                  CoordType distance_ij)
+__host__ __device__ 
+void find_rb_chebyshev(CoordType *vals,
+                       CoordType *ders2r,
+                       int chebyshev_size,
+                       CoordType rmax,
+                       CoordType rmin,
+                       CoordType distance_ij)
 {
     CoordType ders2uu[MAX_CHEBYSHEV_SIZE] = {0.};
     CoordType uu = (2*distance_ij - (rmax + rmin)) / (rmax - rmin);
@@ -120,12 +124,13 @@ __device__ void find_rb_chebyshev(CoordType *vals,
 
 
 template <typename CoordType>
-__device__ void find_rq_chebyshev(CoordType *vals,
-                                  CoordType *ders2r,
-                                  int chebyshev_size,
-                                  CoordType rmax,
-                                  CoordType rmin,
-                                  CoordType distance_ij)
+__host__ __device__ 
+void find_rq_chebyshev(CoordType *vals,
+                       CoordType *ders2r,
+                       int chebyshev_size,
+                       CoordType rmax,
+                       CoordType rmin,
+                       CoordType distance_ij)
 {
     CoordType rb_chebyshev_vals[MAX_CHEBYSHEV_SIZE];
     CoordType rb_chebyshev_ders2r[MAX_CHEBYSHEV_SIZE];

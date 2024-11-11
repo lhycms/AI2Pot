@@ -16,11 +16,21 @@ file(MAKE_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 if (BUILD_TEST)
     add_executable(test_mtp_utilities ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mtp_utilities)
     set_target_properties(test_mtp_utilities PROPERTIES
-        CUDA_STANDARD_REQUIRED ${CMAKE_CXX_STANDARD}
+        CUDA_STANDARD ${CMAKE_CXX_STANDARD}
         CUDA_SEPERATE_COMPILATION on
         CUDA_ARCHITECTURES ${CMAKE_CUDA_ARCHITECTURES})
-    target_link_libraries(test_mtp_utilities gtest gtest_main)
+    target_compile_definitions(test_mtp_utilities PRIVATE MAX_MTP_LEVEL=${MAX_MTP_LEVEL})
+    target_link_libraries(test_mtp_utilities PRIVATE gtest gtest_main)
     
+    add_executable(test_mtp_basis ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mtpBasis.cu)
+    set_target_properties(test_mtp_basis PROPERTIES
+        CUDA_STANDARD ${CMAKE_CXX_STANDARD}
+        CUDA_SEPERATE_COMPILATION on
+        CUDA_ARCHITECTURES ${CMAKE_CUDA_ARCHITECTURES})
+    target_compile_definitions(test_mtp_utilities PRIVATE MAX_MTP_LEVEL=${MAX_MTP_LEVEL})
+    target_link_libraries(test_mtp_basis PRIVATE gtest gtest_main)
+
     
     gtest_discover_tests(test_mtp_utilities)
+    gtest_discover_tests(test_mtp_basis)
 endif()
