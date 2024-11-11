@@ -27,6 +27,15 @@ __device__ void find_rb_chebyshev(CoordType *vals,
 
 
 template <typename CoordType>
+__device__ void find_rq_chebyshev(CoordType *vals,
+                                  CoordType *ders2r,
+                                  int chebyshev_size,
+                                  CoordType rmax,
+                                  CoordType rmin,
+                                  CoordType distance_ij);
+
+
+template <typename CoordType>
 __global__ void find_mtp_basis_val_der_cuda_kernel(
     CoordType *mtp_basis_val,
     CoordType (*mtp_basis_der)[3],
@@ -86,10 +95,58 @@ __device__ void find_rb_chebyshev(CoordType *vals,
                                   int chebyshev_size,
                                   CoordType rmax,
                                   CoordType rmin,
-                                  CoordType distance)
+                                  CoordType distance_ij)
 {
-    //CoordType ders2coeffs[MAX_CHEBYSHEV_SIZE*MAX_CHEBYSHEV_SIZE];
+    CoordType ders2uu[MAX_CHEBYSHEV_SIZE] = {0.};
+    CoordType uu = (2*distance_ij - (rmax + rmin)) / (rmax - rmin);
+    CoordType uu_coeff = 2 / (rmax - rmin);
 
+    for (int ii=0; ii<chebyshev_size; ii++) {
+        if (ii == 0) {
+            vals[ii] = 1;
+            ders2uu[ii] = 0;
+            ders2r[ii] = ders2uu[ii] * uu_coeff;
+        } else if (ii == 1)  {
+            vals[ii] = uu;
+            ders2uu[ii] = 1;
+            ders2r[ii] = ders2uu[ii] * uu_coeff;
+        } else {
+            vals[ii] = 2*uu*vals[ii-1] - vals[ii-2];
+            ders2uu[ii] = 2*vals[ii-1] + 2*uu*ders2uu[ii-1] - ders2uu[ii-2];
+            ders2r[ii] = ders2uu[ii] * uu_coeff;
+        }
+    }
+}
+
+
+template <typename CoordType>
+__device__ void find_rq_chebyshev(CoordType *vals,
+                                  CoordType *ders2r,
+                                  int chebyshev_size,
+                                  CoordType rmax,
+                                  CoordType rmin,
+                                  CoordType distance_ij)
+{
+    CoordType rb_chebyshev_vals[MAX_CHEBYSHEV_SIZE];
+    CoordType rb_chebyshev_ders2r[MAX_CHEBYSHEV_SIZE];
+    CoordType switch_func_val;
+    CoordType switch_func_der2r;
+    find_rb_chebyshev(rb_chebyshev_vals,
+                      rb_chebyshev_ders2r,
+                      chebyshev_size,
+                      rmax,
+                      rmin,
+                      distance_ij);
+    find_switch_func(switch_func_val,
+                     switch_func_der2r,
+                     rmax,
+                     rmin,
+                     distance_ij);
+    for (int ii=0; ii<chebyshev_size; ii++) {
+        vals[ii] = switch_func_val * rb_chebyshev_vals[ii];
+        ders2r[ii] = (switch_func_der2r * rb_chebyshev_vals[ii]
+                      + switch_func_val * rb_chebyshev_ders2r[ii]);
+    }
 }
 
 

@@ -3,5 +3,11 @@ Ab Initio and Artificial Intelligence POTential framework, applied in materials 
 
 # Installation
 ```shell
-cmake -DBUILD_TEST=yes -DTORCH_OP=yes -DUSE_CUDA=yes ..
+# 1. CUDA
+export CUDA_HOME=/path/to/pytorch/cuda  # /usr/local/cuda-11.6
+export PATH=$CUDA_HOME/bin:$PATH
+export LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
+# 2. 
+export AI2POT_PATH=
+cmake -DBUILD_TEST=yes -DTORCH_OP=yes -DUSE_CUDA=yes -DMAX_MTP_LEVEL=16 ..
 ```

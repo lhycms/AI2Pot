@@ -287,7 +287,7 @@ RB_Chebyshev<CoordType>& RB_Chebyshev<CoordType>::operator=(RB_Chebyshev&& rhs)
 template <typename CoordType>
 void RB_Chebyshev<CoordType>::build(CoordType distance_ij)
 {   
-    assert( (distance_ij >= this->_rmin) && (distance_ij <= this->_rmax) );
+    //assert( (distance_ij >= this->_rmin) && (distance_ij <= this->_rmax) );
     CoordType uu = (2*distance_ij - (this->_rmax + this->_rmin)) / (this->_rmax - this->_rmin);
     CoordType uu_coeff = 2 / (this->_rmax - this->_rmin);
     
@@ -510,7 +510,7 @@ RQ_Chebyshev<CoordType>& RQ_Chebyshev<CoordType>::operator=(RQ_Chebyshev&& rhs)
 template <typename CoordType>
 void RQ_Chebyshev<CoordType>::build(CoordType distance_ij)
 {
-    assert( (distance_ij >= this->_rmin) && (distance_ij <= this->_rmax) );
+    //assert( (distance_ij >= this->_rmin) && (distance_ij <= this->_rmax) );
     this->_rb_ptr->build(distance_ij);
 
     for (int ii=0; ii<this->_size; ii++) {

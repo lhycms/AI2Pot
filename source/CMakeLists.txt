@@ -46,6 +46,17 @@ list(APPEND CMAKE_PREFIX_PATH ${TORCH_CMAKE_PREFIX_PATH})
 find_package(Torch CONFIG REQUIRED)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
 
+## 2.6. CUDA
+find_package(CUDA)
+if (CUDA_FOUND)
+    message(STATUS "CUDA found: {CUDA_VERSION_STRING}")
+    enable_language(CXX CUDA)
+    set(CMAKE_CUDA_ARCHITECTURES 61)
+else()
+    message(STATUS "CUDA not found, compile only CPU version.")
+    enable_language(CXX)
+endif()
+
 # 3. dirs
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 file(MAKE_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
