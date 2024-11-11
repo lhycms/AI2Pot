@@ -32,7 +32,7 @@ do {                                                                    \
 
 
 const int MAX_CHEBYSHEV_SIZE = 20;
-const int MAX_NUM_NEIGH_ATOMS = 512;
+const int MAX_NNEI = 256;
 #if MAX_MTP_LEVEL == 2
     #define MAX_NUM_MTP_BASIS 1
     #define ALPHA_MOMENTS_COUNT 1
