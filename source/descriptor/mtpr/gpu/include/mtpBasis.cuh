@@ -189,6 +189,8 @@ __global__ void find_mtp_basis_val_der_cuda_kernel(
     CoordType mom_vals[MAX_ALPHA_MOMENTS_COUNT] = {0.};
     CoordType mom_ders[MAX_ALPHA_MOMENTS_COUNT][MAX_NNEI][3] = {0.};
     CoordType mom_ders2coeffs[MAX_ALPHA_MOMENTS_COUNT][MAX_NUM_TYPES][MAX_NUM_TYPES][MAX_NUM_MUS][MAX_CHEBYSHEV_SIZE] = {0.};
+    CoordType rq_chebyshev_vals[MAX_CHEBYSHEV_SIZE];
+    CoordType rq_chebyshev_ders2r[MAX_CHEBYSHEV_SIZE];
 
     int max_alpha_index_basic = 0;
     for (int ii=0; ii<alpha_index_basic_count; ii++) {
@@ -230,11 +232,68 @@ __global__ void find_mtp_basis_val_der_cuda_kernel(
                     auto_coords_powers_[k][a] = auto_coords_powers_[k-1][a] * NeighVect[a];
             }
 
+            find_rq_chebyshev<CoordType>(rq_chebyshev_vals,
+                                         rq_chebyshev_ders2r,
+                                         chebyshev_size,
+                                         rmax,
+                                         rmin,
+                                         distance_ij);
+
             for (int i=0; i<alpha_index_basic_count; i++)
             {
-                
+                int mu = alpha_index_basic[i][0];
+                int k = alpha_index_basic[i][1] + alpha_index_basic[i][2] + alpha_index_basic[i][3];
+                CoordType powk = 1 / auto_dist_powers_[k];
+                CoordType pow0 = auto_coords_powers_[alpha_index_basic[i][1]];
+                CoordType pow1 = auto_coords_powers_[alpha_index_basic[i][2]];
+                CoordType pow2 = auto_coords_powers_[alpha_index_basic[i][3]];
+                CoordType mult0 = pow0 * pow1 * pow2;
+
+                for (int xi=0; xi<chebyshev_size; xi++) {
+                    int idx = type_central*ntypes*nmus*chebyshev_size
+                              + type_outer*nmus*chebyshev_size
+                              + mu*chebyshev_size
+                              + xi;
+                    mom_vals[i] += coeffs[idx] * rq_chebyshev_vals[xi] * powk * mult0;
+                    mom_ders2coeffs[i][type_central][type_outer][mu][xi] += rq_chebyshev_vals[xi] * powk * mult0;
+                    mom_ders[i][jj][0] += NeighVect[0] / distance_ij * coeffs[idx] * mult0 *
+                                          (rq_chebyshev_ders2r[xi] * powk
+                                           - rq_chebyshev_vals[xi] * k * powk / distance_ij);
+                    mom_ders[i][jj][1] += NeighVect[1] / distance_ij * coeffs[idx] * mult0 *
+                                          (rq_chebyshev_ders2r[xi] * powk
+                                           - rq_chebyshev_vals[xi] * k * powk / distance_ij);
+                    mom_ders[i][jj][2] += NeighVect[2] / distance_ij * coeffs[idx] * mult0 *
+                                          (rq_chebyshev_ders2r[xi] * powk
+                                           - rq_chebyshev_vals[xi] * k * powk / distance_ij);
+                    if (alpha_index_basic[i][1] != 0) {
+                        mom_ders[i][jj][0] += coeffs[idx] * rq_chebyshev_vals[xi] * powk * alpha_index_basic[i][1]
+                            * auto_coords_powers_[alpha_index_basic[i][1]-1][0]
+                            * pow1
+                            * pow2;
+                    }
+                    if (alpha_index_basic[i][2] != 0) {
+                        mom_ders[i][jj][1] += coeffs[idx] * rq_chebyshev_vals[xi] * powk * alpha_index_basic[i][2]
+                            * pow0
+                            * auto_coords_powers_[alpha_index_basic[i][2]-1][1]
+                            * pow2;
+                    }
+                    if (alpha_index_basic[i][3] != 0) {
+                        mom_ders[i][jj][2] += coeffs[idx] * rq_chebyshev_vals[xi] * powk * alpha_index_basic[i][3]
+                            * pow0
+                            * pow1
+                            * auto_coords_powers_[alpha_index_basic[i][3]-1][2];
+                    }
+                }
             }
 
+            for (int i=0; i<alpha_index_times_count; i++) {
+                CoordType val0 = mom_vals[alpha_index_times[i][0]];
+                CoordType val1 = mom_vals[alpha_index_times[i][1]];
+                CoordType val2 = alpha_index_times[i][2];
+
+                mom_vals[alpha_index_times[i][3]] += val2 * val0 * val1;
+                
+            }
         }
     }
 }
