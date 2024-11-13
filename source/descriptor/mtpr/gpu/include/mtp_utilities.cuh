@@ -36,72 +36,72 @@ const int MAX_NUM_TYPES = 10;
 const int MAX_NNEI = 256;
 #if MAX_MTP_LEVEL == 2
     #define MAX_NUM_MUS 1
-    #define MAX_ALPHA_INDEX_BASIC 0
+    #define MAX_ALPHA_INDEX_BASIC 1
     #define MAX_NUM_MTP_BASIS 1
     #define MAX_ALPHA_MOMENTS_COUNT 1
 #elif MAX_MTP_LEVEL == 4
     #define MAX_NUM_MUS 1
-    #define MAX_ALPHA_INDEX_BASIC 0
+    #define MAX_ALPHA_INDEX_BASIC 1
     #define MAX_NUM_MTP_BASIS 2
     #define ALPHA_MOMENTS_CONUT 2
 #elif MAX_MTP_LEVEL == 6
     #define MAX_NUM_MUS 2
-    #define MAX_ALPHA_INDEX_BASIC 1
+    #define MAX_ALPHA_INDEX_BASIC 2
     #define MAX_NUM_MTP_BASIS 5
     #define MAX_ALPHA_MOMENTS_COUNT 8
 #elif MAX_MTP_LEVEL == 8
     #define MAX_NUM_MUS 2
-    #define MAX_ALPHA_INDEX_BASIC 2
+    #define MAX_ALPHA_INDEX_BASIC 3
     #define MAX_NUM_MTP_BASIS 9
     #define MAX_ALPHA_MOMENTS_COUNT 18
 #elif MAX_MTP_LEVEL == 10
     #define MAX_NUM_MUS 3
-    #define MAX_ALPHA_INDEX_BASIC 3
+    #define MAX_ALPHA_INDEX_BASIC 4
     #define MAX_NUM_MTP_BASIS 16
     #define MAX_ALPHA_MOMENTS_COUNT 41
 #elif MAX_MTP_LEVEL == 12
     #define MAX_NUM_MUS 3
-    #define MAX_ALPHA_INDEX_BASIC 4
+    #define MAX_ALPHA_INDEX_BASIC 5
     #define MAX_NUM_MTP_BASIS 29
     #define MAX_ALPHA_MOMENTS_COUNT 84
 #elif MAX_MTP_LEVEL == 14
     #define MAX_NUM_MUS 4
-    #define MAX_ALPHA_INDEX_BASIC 5
+    #define MAX_ALPHA_INDEX_BASIC 6
     #define MAX_NUM_MTP_BASIS 52
     #define MAX_ALPHA_MOMENTS_COUNT 174
 #elif MAX_MTP_LEVEL == 16
     #define MAX_NUM_MUS 4
-    #define MAX_ALPHA_INDEX_BASIC 6
+    #define MAX_ALPHA_INDEX_BASIC 7
     #define MAX_NUM_MTP_BASIS 92
     #define MAX_ALPHA_MOMENTS_COUNT 350
 #elif MAX_MTP_LEVEL == 18
     #define MAX_NUM_MUS 5
-    #define MAX_ALPHA_INDEX_BASIC 7
+    #define MAX_ALPHA_INDEX_BASIC 8
     #define MAX_NUM_MTP_BASIS 163
     #define MAX_ALPHA_MOMENTS_COUNT 718
 #elif MAX_MTP_LEVEL == 20
     #define MAX_NUM_MUS 5
-    #define MAX_ALPHA_INDEX_BASIC 8
+    #define MAX_ALPHA_INDEX_BASIC 9
     #define MAX_NUM_MTP_BASIS 288
     #define MAX_ALPHA_MOMENTS_COUNT 1352
 #elif MAX_MTP_LEVEL == 22
     #define MAX_NUM_MUS 6
-    #define MAX_ALPHA_INDEX_BASIC 9
+    #define MAX_ALPHA_INDEX_BASIC 10
     #define MAX_NUM_MTP_BASIS 500
     #define MAX_ALPHA_MOMENTS_COUNT 2621
 #elif MAX_MTP_LEVEL == 24
     #define MAX_NUM_MUS 6
-    #define MAX_ALPHA_INDEX_BASIC 10
+    #define MAX_ALPHA_INDEX_BASIC 11
     #define MAX_NUM_MTP_BASIS 864
     #define MAX_ALPHA_MOMENTS_COUNT 4991
 #elif MAX_MTP_LEVEL == 26
     #define MAX_NUM_MUS 6
-    #define MAX_ALPHA_INDEX_BASIC 10
+    #define MAX_ALPHA_INDEX_BASIC 11
     #define MAX_NUM_MTP_BASIS 1464
     #define MAX_ALPHA_MOMENTS_COUNT 9396
 #else //#elif MAX_MTP_LEVEL == 28
     #define MAX_NUM_MUS 6
-    #define MAX_ALPHA_INDEX_BASIC 10
+    #define MAX_ALPHA_INDEX_BASIC 11
     #define MAX_NUM_MTP_BASIS 2445
     #define MAX_ALPHA_MOMENTS_COUNT 17366
 #endif

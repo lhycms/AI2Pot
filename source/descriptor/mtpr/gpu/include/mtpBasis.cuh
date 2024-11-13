@@ -189,9 +189,9 @@ __global__ void find_mtp_basis_val_der_cuda_kernel(
     CoordType mom_vals[MAX_ALPHA_MOMENTS_COUNT] = {0.};
     CoordType mom_ders[MAX_ALPHA_MOMENTS_COUNT][MAX_NNEI][3] = {0.};
     CoordType mom_ders2coeffs[MAX_ALPHA_MOMENTS_COUNT][MAX_NUM_TYPES][MAX_NUM_TYPES][MAX_NUM_MUS][MAX_CHEBYSHEV_SIZE] = {0.};
-    
+
     int max_alpha_index_basic = 0;
-    for (int ii=0; ii<max_alpha_index_basic; ii++) {
+    for (int ii=0; ii<alpha_index_basic_count; ii++) {
         int now_alpha_index_basic = alpha_index_basic[ii][1] + alpha_index_basic[ii][2] + alpha_index_basic[ii][3];
         if (now_alpha_index_basic > max_alpha_index_basic)
             max_alpha_index_basic = now_alpha_index_basic;
@@ -221,6 +221,20 @@ __global__ void find_mtp_basis_val_der_cuda_kernel(
                                      std::pow(NeighVect[1], 2) +
                                      std::pow(NeighVect[2], 2) );
             
+            auto_dist_powers_[0] = 1;
+            for (int a=0; a<3; a++)
+                auto_coords_powers_[0][a] = 1;
+            for (int k=0; k<max_alpha_index_basic; k++) {
+                auto_dist_powers_[k] = auto_dist_powers_[k-1] * distance_ij;
+                for (int a=0; a<3; a++)
+                    auto_coords_powers_[k][a] = auto_coords_powers_[k-1][a] * NeighVect[a];
+            }
+
+            for (int i=0; i<alpha_index_basic_count; i++)
+            {
+                
+            }
+
         }
     }
 }
