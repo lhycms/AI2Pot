@@ -5,11 +5,12 @@
 #include <device_launch_parameters.h>
 #include <stdio.h>
 #include <math.h>
+#include <string.h>
 #include "./mtp_utilities.cuh"
 
 
 template <typename CoordType>
-__host__ __device__ 
+static __host__ __device__ 
 void find_switch_func(CoordType &val,
                       CoordType &der2r,
                       CoordType rmax,
@@ -18,7 +19,7 @@ void find_switch_func(CoordType &val,
 
 
 template <typename CoordType>
-__host__ __device__ 
+static __host__ __device__ 
 void find_rb_chebyshev(CoordType *vals,
                        CoordType *ders2r,
                        int chebyshev_size,
@@ -28,7 +29,7 @@ void find_rb_chebyshev(CoordType *vals,
 
 
 template <typename CoordType>
-__host__ __device__ 
+static __host__ __device__ 
 void find_rq_chebyshev(CoordType *vals,
                        CoordType *ders2r,
                        int chebyshev_size,
@@ -70,7 +71,7 @@ void find_mtp_basis_val_der_cuda_kernel(
 
 
 template <typename CoordType>
-__host__ __device__ 
+static __host__ __device__
 void find_switch_func(CoordType& val,
                       CoordType& der2r,
                       CoordType rmax,
@@ -93,7 +94,7 @@ void find_switch_func(CoordType& val,
 
 
 template <typename CoordType>
-__host__ __device__ 
+static __host__ __device__
 void find_rb_chebyshev(CoordType *vals,
                        CoordType *ders2r,
                        int chebyshev_size,
@@ -124,7 +125,7 @@ void find_rb_chebyshev(CoordType *vals,
 
 
 template <typename CoordType>
-__host__ __device__ 
+static __host__ __device__ 
 void find_rq_chebyshev(CoordType *vals,
                        CoordType *ders2r,
                        int chebyshev_size,
@@ -184,10 +185,44 @@ __global__ void find_mtp_basis_val_der_cuda_kernel(
     double rmax,
     double rmin)
 {
+    // Step 1.
     CoordType mom_vals[MAX_ALPHA_MOMENTS_COUNT] = {0.};
-    CoordType mom_ders[MAX_ALPHA_MOMENTS_COUNT][3] = {0.};
-    CoordType mom_ders2coeffs[MAX_ALPHA_MOMENTS_COUNT][ntypes][ntypes][nmus][MAX_CHEBYSHEV_SIZE] = {0.};
+    CoordType mom_ders[MAX_ALPHA_MOMENTS_COUNT][MAX_NNEI][3] = {0.};
+    CoordType mom_ders2coeffs[MAX_ALPHA_MOMENTS_COUNT][MAX_NUM_TYPES][MAX_NUM_TYPES][MAX_NUM_MUS][MAX_CHEBYSHEV_SIZE] = {0.};
     
+    int max_alpha_index_basic = 0;
+    for (int ii=0; ii<max_alpha_index_basic; ii++) {
+        int now_alpha_index_basic = alpha_index_basic[ii][1] + alpha_index_basic[ii][2] + alpha_index_basic[ii][3];
+        if (now_alpha_index_basic > max_alpha_index_basic)
+            max_alpha_index_basic = now_alpha_index_basic;
+    }
+    max_alpha_index_basic++;
+
+    CoordType auto_dist_powers_[MAX_ALPHA_INDEX_BASIC];
+    CoordType auto_coords_powers_[MAX_ALPHA_INDEX_BASIC][3];
+    CoordType NeighVect[3];
+    CoordType distance_ij;
+    int type_central;
+    int type_outer;
+    int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
+
+    // Step 2.
+    for (int ii=0; ii<inum; ii++) {
+        memset(mom_vals, 0, MAX_ALPHA_MOMENTS_COUNT * sizeof(CoordType));
+        memset(mom_ders, 0, MAX_ALPHA_MOMENTS_COUNT * MAX_NNEI * 3 * sizeof(CoordType));
+        memset(mom_ders2coeffs, 0, MAX_ALPHA_MOMENTS_COUNT * MAX_NUM_TYPES * MAX_NUM_TYPES * MAX_NUM_MUS * MAX_CHEBYSHEV_SIZE * sizeof(CoordType));
+        type_central = types[ilist[ii]];
+
+        for (int jj=0; jj<numneigh[ii]; ii++) {
+            type_outer = types[firstneigh[ii*umax_num_neigh_atoms + jj]];
+            for (int a=0; a<3; a++)
+                NeighVect[a] = relative_coords[ii*umax_num_neigh_atoms + jj][a];
+            distance_ij = std::sqrt( std::pow(NeighVect[0], 2) +
+                                     std::pow(NeighVect[1], 2) +
+                                     std::pow(NeighVect[2], 2) );
+            
+        }
+    }
 }
 
 //template <typename CoordType>
