@@ -10,8 +10,8 @@
 #include "./mtpParam.h"
 
 #ifdef USE_CUDA
-template <typename CoordType>
-extern void find_mtp_basis_val_der_cuda_launcher();
+extern void find_mtp_basis_val_der_cuda_launcher<float>();
+extern void find_mtp_basis_val_der_cuda_launcher<double>();
 #endif
 
 namespace ai2pot {
@@ -80,16 +80,16 @@ void MtpBasis<CoordType>::find_val_der(
     double rmin)
 {
     // Step 1.
-    memset(mtp_basis_val, 0, sizeof(CoordType) * inum * alpha_scalar_moments);
-    memset(mtp_basis_der, 0, sizeof(CoordType) * inum * alpha_scalar_moments * umax_num_neigh_atoms * 3);
-    memset(mtp_basis_der2coeffs, 0, sizeof(CoordType) * inum * alpha_scalar_moments * ntypes * ntypes * nmus * chebyshev_size);
+    //memset(mtp_basis_val, 0, sizeof(CoordType) * inum * alpha_scalar_moments);
+    //memset(mtp_basis_der, 0, sizeof(CoordType) * inum * alpha_scalar_moments * umax_num_neigh_atoms * 3);
+    //memset(mtp_basis_der2coeffs, 0, sizeof(CoordType) * inum * alpha_scalar_moments * ntypes * ntypes * nmus * chebyshev_size);
 
     CoordType *mom_vals = (CoordType*)malloc(sizeof(CoordType) * alpha_moments_count);
     CoordType (*mom_ders)[3] = (CoordType (*)[3])malloc(sizeof(CoordType) * alpha_moments_count * umax_num_neigh_atoms * 3);
     CoordType *mom_ders2coeffs = (CoordType*)malloc(sizeof(CoordType) * alpha_moments_count * ntypes * ntypes * nmus * chebyshev_size);
-    memset(mom_vals, 0, sizeof(CoordType) * alpha_moments_count);
-    memset(mom_ders, 0, sizeof(CoordType) * alpha_moments_count * umax_num_neigh_atoms * 3);
-    memset(mom_ders2coeffs, 0, sizeof(CoordType) * alpha_moments_count * ntypes * ntypes * nmus * chebyshev_size);
+    //memset(mom_vals, 0, sizeof(CoordType) * alpha_moments_count);
+    //memset(mom_ders, 0, sizeof(CoordType) * alpha_moments_count * umax_num_neigh_atoms * 3);
+    //memset(mom_ders2coeffs, 0, sizeof(CoordType) * alpha_moments_count * ntypes * ntypes * nmus * chebyshev_size);
 
     int max_alpha_index_basic = 0;
     for (int ii=0; ii<alpha_index_basic_count; ii++) {
@@ -103,8 +103,8 @@ void MtpBasis<CoordType>::find_val_der(
     CoordType (*auto_coords_powers_)[3];
     auto_dist_powers_ = (CoordType*)malloc(sizeof(CoordType) * max_alpha_index_basic);
     auto_coords_powers_ = (CoordType (*)[3])malloc(sizeof(CoordType) * max_alpha_index_basic * 3);
-    memset(auto_dist_powers_, 0, sizeof(CoordType) * max_alpha_index_basic);
-    memset(auto_coords_powers_, 0, sizeof(CoordType) * max_alpha_index_basic * 3);
+    //memset(auto_dist_powers_, 0, sizeof(CoordType) * max_alpha_index_basic);
+    //memset(auto_coords_powers_, 0, sizeof(CoordType) * max_alpha_index_basic * 3);
     CoordType NeighbVect[3];
     CoordType distance_ij;
     int type_central;

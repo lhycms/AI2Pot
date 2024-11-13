@@ -177,11 +177,11 @@ RB_Chebyshev<CoordType>::RB_Chebyshev(
     this->_rmax = rmax;
     this->_rmin = rmin;
     this->_vals = (CoordType*)malloc(sizeof(CoordType) * this->_size);
-    memset(this->_vals, 0, sizeof(CoordType) * this->_size);
+    //memset(this->_vals, 0, sizeof(CoordType) * this->_size);
     this->_ders2uu = (CoordType*)malloc(sizeof(CoordType) * this->_size);
-    memset(this->_ders2uu, 0, sizeof(CoordType) * this->_size);
+    //memset(this->_ders2uu, 0, sizeof(CoordType) * this->_size);
     this->_ders2r = (CoordType*)malloc(sizeof(CoordType) * this->_size);
-    memset(this->_ders2r, 0, sizeof(CoordType) * this->_size);
+    //memset(this->_ders2r, 0, sizeof(CoordType) * this->_size);
 }
 
 template <typename CoordType>
@@ -394,9 +394,9 @@ RQ_Chebyshev<CoordType>::RQ_Chebyshev(
     this->_switch_func = SwitchFunction<CoordType>(rmax, rmin);
     this->_rb_ptr = new RB_Chebyshev<CoordType>(size, rmax, rmin);
     this->_vals = (CoordType*)malloc(sizeof(CoordType) * this->_size);
-    memset(this->_vals, 0, sizeof(CoordType) * this->_size);
+    //memset(this->_vals, 0, sizeof(CoordType) * this->_size);
     this->_ders2r = (CoordType*)malloc(sizeof(CoordType) * this->_size);
-    memset(this->_ders2r, 0, sizeof(CoordType) * this->_size);
+    //memset(this->_ders2r, 0, sizeof(CoordType) * this->_size);
 }
 
 template <typename CoordType>

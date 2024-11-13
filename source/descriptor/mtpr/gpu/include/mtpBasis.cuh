@@ -184,6 +184,9 @@ __global__ void find_mtp_basis_val_der_cuda_kernel(
     double rmax,
     double rmin)
 {
+    CoordType mom_vals[MAX_ALPHA_MOMENTS_COUNT] = {0.};
+    CoordType mom_ders[MAX_ALPHA_MOMENTS_COUNT][3] = {0.};
+    CoordType mom_ders2coeffs[MAX_ALPHA_MOMENTS_COUNT][ntypes][ntypes][nmus][MAX_CHEBYSHEV_SIZE] = {0.};
     
 }
 
