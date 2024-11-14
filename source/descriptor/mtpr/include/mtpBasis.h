@@ -221,7 +221,6 @@ void MtpBasis<CoordType>::find_val_der(
                                 * mom_ders2coeffs[alpha_index_times[i][1]*num_coeffs + idx1];
                         }
                     }
-
                 }
             }
 
@@ -240,7 +239,7 @@ void MtpBasis<CoordType>::find_val_der(
         }
 
 
-        for (int i=0; i<alpha_scalar_moments; i++) 
+        for (int i=0; i<alpha_scalar_moments; i++)
         {
             mtp_basis_val[ii*alpha_scalar_moments + i] = mom_vals[alpha_moment_mapping[i]];
             for (int jj=0; jj<numneigh[ii]; jj++)
