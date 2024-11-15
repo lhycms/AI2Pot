@@ -28,7 +28,8 @@ if (BUILD_TEST)
         CUDA_SEPERATE_COMPILATION on
         CUDA_ARCHITECTURES ${CMAKE_CUDA_ARCHITECTURES})
     target_compile_definitions(test_mtp_utilities PRIVATE MAX_MTP_LEVEL=${MAX_MTP_LEVEL})
-    target_link_libraries(test_mtp_basis PRIVATE gtest gtest_main)
+    target_link_directories(test_mtp_basis PRIVATE ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/..)
+    target_link_libraries(test_mtp_basis PRIVATE mtpParam gtest gtest_main)
 
     
     gtest_discover_tests(test_mtp_utilities)

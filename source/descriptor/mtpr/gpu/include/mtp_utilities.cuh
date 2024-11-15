@@ -31,9 +31,9 @@ do {                                                                    \
 } while(0);
 
 
-const int MAX_CHEBYSHEV_SIZE = 20;
+const int MAX_CHEBYSHEV_SIZE = 12;
 const int MAX_NUM_TYPES = 10;
-const int MAX_NNEI = 256;
+const int MAX_NNEI = 128;
 #if MAX_MTP_LEVEL == 2
     #define MAX_NUM_MUS 1
     #define MAX_ALPHA_INDEX_BASIC 1

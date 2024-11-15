@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.2 FATAL_ERROR)
 project(ai2pot)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_GTEST_DISCOVERY_TIMEOUT 600)
 
 
 # 2. include FetchContent
@@ -49,7 +50,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
 ## 2.6. CUDA
 find_package(CUDA)
 if (CUDA_FOUND)
-    message(STATUS "CUDA found: {CUDA_VERSION_STRING}")
+    message(STATUS "CUDA found: ${CUDA_VERSION_STRING}")
     enable_language(CXX CUDA)
     set(CMAKE_CUDA_ARCHITECTURES 61)
 else()

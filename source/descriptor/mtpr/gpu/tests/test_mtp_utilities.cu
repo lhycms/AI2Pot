@@ -24,16 +24,17 @@ protected:
     }
 
     void TearDown() override {
-
+        
     }
 };  // class : MtpUtilitiesTest
 
 
 TEST_F(MtpUtilitiesTest, mtp_hyperparameters) {
     printf("mtp_hyperparameters:\n");
-    printf("\t1. MAX_CHEBYHSEV_SIZE = %d\n", MAX_CHEBYSHEV_SIZE);
-    printf("\t2. MAX_NUM_MTP_BASIS = %d\n", MAX_NUM_MTP_BASIS);
-    printf("\t3. ALPHA_MOMENTS_COUNT = %d\n", ALPHA_MOMENTS_COUNT);
+    printf("\t1. MAX_NUM_MUS = %d\n", MAX_NUM_MUS);
+    printf("\t2. MAX_CHEBYHSEV_SIZE = %d\n", MAX_CHEBYSHEV_SIZE);
+    printf("\t3. MAX_NUM_MTP_BASIS = %d\n", MAX_NUM_MTP_BASIS);
+    printf("\t4. ALPHA_MOMENTS_COUNT = %d\n", MAX_ALPHA_MOMENTS_COUNT);
 }
 
 
