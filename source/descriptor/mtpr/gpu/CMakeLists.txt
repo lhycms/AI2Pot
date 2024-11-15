@@ -32,6 +32,6 @@ if (BUILD_TEST)
     target_link_libraries(test_mtp_basis PRIVATE mtpParam gtest gtest_main)
 
     
-    gtest_discover_tests(test_mtp_utilities)
-    gtest_discover_tests(test_mtp_basis)
+    gtest_discover_tests(test_mtp_utilities DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT})
+    gtest_discover_tests(test_mtp_basis DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT})
 endif()
