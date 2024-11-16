@@ -43,7 +43,7 @@ const int MAX_NNEI = 128;
     #define MAX_NUM_MUS 1
     #define MAX_ALPHA_INDEX_BASIC 1
     #define MAX_NUM_MTP_BASIS 2
-    #define ALPHA_MOMENTS_CONUT 2
+    #define MAX_ALPHA_MOMENTS_COUNT 2
 #elif MAX_MTP_LEVEL == 6
     #define MAX_NUM_MUS 2
     #define MAX_ALPHA_INDEX_BASIC 2

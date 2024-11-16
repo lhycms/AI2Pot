@@ -71,7 +71,7 @@ void find_mtp_basis_val_der_cuda_kernel(
     CoordType rmax,
     CoordType rmin,
     CoordType *moms_vals,
-    CoordType *moms_ders,
+    CoordType (*moms_ders)[3],
     CoordType *moms_ders2coeffs);
 
 
@@ -364,7 +364,7 @@ void find_mtp_basis_val_der_cuda_kernel(
                     ( mom_ders[alpha_index_times[i][0]*umax_num_neigh_atoms + jj][1] * val1
                       + val0 * mom_ders[alpha_index_times[i][1]*umax_num_neigh_atoms + jj][1] );
                 mom_ders[alpha_index_times[i][3]*umax_num_neigh_atoms + jj][2] += val2 *
-                    ( mom_ders[alpha_index_times[i][0]][jj][2] * val1
+                    ( mom_ders[alpha_index_times[i][0]*umax_num_neigh_atoms + jj][2] * val1
                       + val0 * mom_ders[alpha_index_times[i][1]*umax_num_neigh_atoms + jj][2] );
             }
         }
@@ -459,7 +459,6 @@ void find_mtp_basis_val_der_cuda_launcher(
 
 };  // namespace : mtpr
 };  // namespace : ai2pot
-
 
 
 #endif

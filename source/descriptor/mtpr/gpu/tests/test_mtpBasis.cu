@@ -83,6 +83,9 @@ protected:
     double rmax;
     double rmin;
     int ntypes;
+    double *d_moms_vals;
+    double *d_moms_ders;
+    double *d_moms_ders2coeffs;
 
     std::vector<std::string> filenames;
     ai2pot::mtpr::MtpParam mtp_param;
@@ -143,7 +146,7 @@ protected:
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/26.almtp",
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/28.almtp"
         };
-        mtp_param._load(filenames[1]);
+        mtp_param._load(filenames[4]);
 //mtp_param.show();
         CHECK( cudaMalloc((void**)&d_alpha_index_basic, sizeof(int) * mtp_param.alpha_index_basic_count() * 4) );
         CHECK( cudaMalloc((void**)&d_alpha_index_times, sizeof(int) * mtp_param.alpha_index_times_count() * 4) );
@@ -191,6 +194,9 @@ protected:
         for (int ii=0; ii<ntypes*ntypes*nmus*chebyshev_size; ii++)
             h_coeffs[ii] = 1.0;
         CHECK( cudaMemcpy(d_coeffs, h_coeffs, sizeof(double)*ntypes*ntypes*nmus*chebyshev_size, cudaMemcpyHostToDevice) );
+        CHECK( cudaMalloc((void**)&d_moms_vals, sizeof(double) * inum * mtp_param.alpha_moments_count()) );
+        CHECK( cudaMalloc((void**)&d_moms_ders, sizeof(double) * inum * mtp_param.alpha_moments_count() * umax_num_neigh_atoms * 3) );
+        CHECK( cudaMalloc((void**)&d_moms_ders2coeffs, sizeof(double) * inum * mtp_param.alpha_moments_count() * ntypes * ntypes * nmus * chebyshev_size) );
 
 
         // Establish neighbor list
@@ -316,6 +322,10 @@ protected:
         free(h_mtp_basis_der2coeffs_);
         CHECK( cudaFree(d_mtp_basis_der2coeffs_) );
 
+        CHECK( cudaFree(d_moms_vals) );
+        CHECK( cudaFree(d_moms_ders) );
+        CHECK( cudaFree(d_moms_ders2coeffs) );
+
         free(h_coeffs);
         CHECK( cudaFree(d_coeffs) );
 
@@ -387,7 +397,7 @@ printf("\n");
 
 
 TEST_F(MtpBasisTest, find_mtp_basis_val_der) {
-    ai2pot::mtpr::find_mtp_basis_val_der_cuda_kernel<double> <<<2, 4>>> (
+    ai2pot::mtpr::find_mtp_basis_val_der_cuda_kernel<double> KERNEL_ARG2(2, 12) (
         d_mtp_basis_val,
         (double (*)[3])d_mtp_basis_der,
         d_mtp_basis_der2coeffs,
@@ -413,7 +423,10 @@ TEST_F(MtpBasisTest, find_mtp_basis_val_der) {
         ntypes,
         umax_num_neigh_atoms,
         rmax,
-        rmin);
+        rmin,
+        d_moms_vals,
+        (double (*)[3])d_moms_ders,
+        d_moms_ders2coeffs);
 
     CHECK( cudaDeviceSynchronize() );
     CHECK( cudaMemcpy(h_mtp_basis_val, d_mtp_basis_val, sizeof(double)*mtp_param.alpha_scalar_moments(), cudaMemcpyDeviceToHost) );
