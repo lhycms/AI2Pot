@@ -69,11 +69,11 @@ const int MAX_NNEI = 128;
     #define MAX_ALPHA_INDEX_BASIC 6
     #define MAX_NUM_MTP_BASIS 52
     #define MAX_ALPHA_MOMENTS_COUNT 174
-#elif MAX_MTP_LEVEL == 16
-    #define MAX_NUM_MUS 4
-    #define MAX_ALPHA_INDEX_BASIC 7
-    #define MAX_NUM_MTP_BASIS 92
-    #define MAX_ALPHA_MOMENTS_COUNT 350
+//#elif MAX_MTP_LEVEL == 16
+//    #define MAX_NUM_MUS 4
+//    #define MAX_ALPHA_INDEX_BASIC 7
+//    #define MAX_NUM_MTP_BASIS 92
+//    #define MAX_ALPHA_MOMENTS_COUNT 350
 #elif MAX_MTP_LEVEL == 18
     #define MAX_NUM_MUS 5
     #define MAX_ALPHA_INDEX_BASIC 8
@@ -99,11 +99,16 @@ const int MAX_NNEI = 128;
     #define MAX_ALPHA_INDEX_BASIC 11
     #define MAX_NUM_MTP_BASIS 1464
     #define MAX_ALPHA_MOMENTS_COUNT 9396
-#else //#elif MAX_MTP_LEVEL == 28
+#elif MAX_MTP_LEVEL == 28
     #define MAX_NUM_MUS 6
     #define MAX_ALPHA_INDEX_BASIC 11
     #define MAX_NUM_MTP_BASIS 2445
     #define MAX_ALPHA_MOMENTS_COUNT 17366
+#else //#elif MAX_MTP_LEVEL == 16
+    #define MAX_NUM_MUS 4
+    #define MAX_ALPHA_INDEX_BASIC 7
+    #define MAX_NUM_MTP_BASIS 92
+    #define MAX_ALPHA_MOMENTS_COUNT 350
 #endif
 
 #endif
