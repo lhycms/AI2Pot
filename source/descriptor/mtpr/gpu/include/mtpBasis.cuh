@@ -68,8 +68,8 @@ void find_mtp_basis_val_der_cuda_kernel(
     int *types,
     int ntypes,
     int umax_num_neigh_atoms,
-    double rmax,
-    double rmin);
+    CoordType rmax,
+    CoordType rmin);
 
 
 template <typename CoordType>
@@ -99,8 +99,8 @@ void find_mtp_basis_val_der_cuda_launcher(
     int *types,
     int ntypes,
     int umax_num_neigh_atoms,
-    double rmax,
-    double rmin);
+    CoordType rmax,
+    CoordType rmin);
 
 
 template <typename CoordType>
@@ -216,17 +216,20 @@ void find_mtp_basis_val_der_cuda_kernel(
     int *types,
     int ntypes,
     int umax_num_neigh_atoms,
-    double rmax,
-    double rmin)
+    CoordType rmax,
+    CoordType rmin)
 {
     const int nx = blockIdx.x * blockDim.x + threadIdx.x;
+
+    
     if (nx < inum)
     {
         const int ii = nx;
+printf("+++*** %d\n", ii);
         // Step 1. 
-        CoordType mom_vals[MAX_ALPHA_MOMENTS_COUNT] = {0.};
-        CoordType mom_ders[MAX_ALPHA_MOMENTS_COUNT][MAX_NNEI][3] = {0.};
-        CoordType mom_ders2coeffs[MAX_ALPHA_MOMENTS_COUNT][MAX_NUM_TYPES][MAX_NUM_TYPES][MAX_NUM_MUS][MAX_CHEBYSHEV_SIZE] = {0.};
+        CoordType mom_vals[2] = {0.};
+        CoordType mom_ders[2][MAX_NNEI][3] = {0.};
+        CoordType mom_ders2coeffs[2][MAX_NUM_TYPES][MAX_NUM_TYPES][MAX_NUM_MUS][MAX_CHEBYSHEV_SIZE] = {0.};
         CoordType rq_chebyshev_vals[MAX_CHEBYSHEV_SIZE];
         CoordType rq_chebyshev_ders2r[MAX_CHEBYSHEV_SIZE];
 
@@ -240,7 +243,7 @@ void find_mtp_basis_val_der_cuda_kernel(
 
         // Step 2.
         type_central = types[ilist[ii]];
-        for (int jj=0; jj<numneigh[ii]; ii++) {
+        for (int jj=0; jj<numneigh[ii]; jj++) {
             type_outer = types[firstneigh[ii*umax_num_neigh_atoms + jj]];
             for (int a=0; a<3; a++)
                 NeighVect[a] = relative_coords[ii*umax_num_neigh_atoms + jj][a];
@@ -251,7 +254,7 @@ void find_mtp_basis_val_der_cuda_kernel(
             auto_dist_powers_[0] = 1;
             for (int a=0; a<3; a++)
                 auto_coords_powers_[0][a] = 1;
-            for (int k=0; k<MAX_ALPHA_INDEX_BASIC; k++) {
+            for (int k=1; k<MAX_ALPHA_INDEX_BASIC; k++) {
                 auto_dist_powers_[k] = auto_dist_powers_[k-1] * distance_ij;
                 for (int a=0; a<3; a++)
                     auto_coords_powers_[k][a] = auto_coords_powers_[k-1][a] * NeighVect[a];
@@ -263,7 +266,7 @@ void find_mtp_basis_val_der_cuda_kernel(
                                          rmax,
                                          rmin,
                                          distance_ij);
-
+            
             for (int i=0; i<alpha_index_basic_count; i++)
             {
                 int mu = alpha_index_basic[i][0];
@@ -273,13 +276,14 @@ void find_mtp_basis_val_der_cuda_kernel(
                 CoordType pow1 = auto_coords_powers_[alpha_index_basic[i][2]][1];
                 CoordType pow2 = auto_coords_powers_[alpha_index_basic[i][3]][2];
                 CoordType mult0 = pow0 * pow1 * pow2;
-
+                
                 for (int xi=0; xi<chebyshev_size; xi++) {
                     int idx = type_central*ntypes*nmus*chebyshev_size
                               + type_outer*nmus*chebyshev_size
                               + mu*chebyshev_size
                               + xi;
-                    mom_vals[i] += coeffs[idx] * rq_chebyshev_vals[xi] * powk * mult0;
+                    mom_vals[i] += coeffs[idx] * rq_chebyshev_vals[xi] * powk * mult0;  
+//printf("+++ %g, %g, %g, %g\n", coeffs[idx], rq_chebyshev_vals[xi], powk, mult0);
                     mom_ders2coeffs[i][type_central][type_outer][mu][xi] += rq_chebyshev_vals[xi] * powk * mult0;
                     mom_ders[i][jj][0] += NeighVect[0] / distance_ij * coeffs[idx] * mult0 *
                                           (rq_chebyshev_ders2r[xi] * powk
@@ -290,6 +294,7 @@ void find_mtp_basis_val_der_cuda_kernel(
                     mom_ders[i][jj][2] += NeighVect[2] / distance_ij * coeffs[idx] * mult0 *
                                           (rq_chebyshev_ders2r[xi] * powk
                                            - rq_chebyshev_vals[xi] * k * powk / distance_ij);
+                    
                     if (alpha_index_basic[i][1] != 0) {
                         mom_ders[i][jj][0] += coeffs[idx] * rq_chebyshev_vals[xi] * powk * alpha_index_basic[i][1]
                             * auto_coords_powers_[alpha_index_basic[i][1]-1][0]
@@ -361,43 +366,52 @@ void find_mtp_basis_val_der_cuda_kernel(
                     mtp_basis_der[ii*alpha_moments_count*umax_num_neigh_atoms
                                   + alpha_moment_mapping[i]*umax_num_neigh_atoms
                                   + jj][a] = mom_ders[alpha_moment_mapping[i]][jj][a];
-            for (int idx=0; idx<num_coeffs; idx++)
-                mtp_basis_der2coeffs[ii*alpha_scalar_moments*num_coeffs + i*num_coeffs + idx] = mom_ders2coeffs[alpha_moment_mapping[i]*num_coeffs + idx];
+            for (int tmp_type_outer=0; tmp_type_outer<ntypes; tmp_type_outer++) {
+                for (int q=0; q<num_mus4moms[alpha_moment_mapping[i]]; q++) {
+                    int mu = mus4moms_ptr[alpha_moment_mapping[i]*umax_num_neigh_atoms + q];
+                    for (int xi=0; xi<chebyshev_size; xi++) {
+                        int idx = (type_central*ntypes + tmp_type_outer)*nmus*chebyshev_size + mu*chebyshev_size + xi;
+                        mtp_basis_der2coeffs[ii*alpha_scalar_moments*num_coeffs + i*num_coeffs + idx] = mom_ders2coeffs[alpha_moment_mapping[i]][type_central][tmp_type_outer][mu][xi];
+                    }
+                }
+            }
         }
+
     }
 }
 
 
 template <typename CoordType>
 __host__
-void find_mtp_basis_val_der_cuda_launcher(CoordType *mtp_basis_val,
-                                          CoordType (*mtp_basis_der)[3],
-                                          CoordType *mtp_basis_der2coeffs,
-                                          int chebyshev_size,
-                                          CoordType *coeffs,
-                                          const int alpha_moments_count,
-                                          const int alpha_index_basic_count,
-                                          const int (*alpha_index_basic)[4],
-                                          const int alpha_index_times_count,
-                                          const int (*alpha_index_times)[4],
-                                          const int alpha_scalar_moments,
-                                          const int *alpha_moment_mapping,
-                                          const int max_num_mus4mom,
-                                          const int *num_mus4moms,
-                                          const int *mus4moms_ptr,
-                                          int nmus,
-                                          int inum,
-                                          int *ilist,
-                                          int *numneigh,
-                                          int *firstneigh,
-                                          CoordType (*relative_coords)[3],
-                                          int *types,
-                                          int ntypes,
-                                          int umax_num_neigh_atoms,
-                                          double rmax,
-                                          double rmin)
+void find_mtp_basis_val_der_cuda_launcher(
+    CoordType *mtp_basis_val,
+    CoordType (*mtp_basis_der)[3],
+    CoordType *mtp_basis_der2coeffs,
+    int chebyshev_size,
+    CoordType *coeffs,
+    const int alpha_moments_count,
+    const int alpha_index_basic_count,
+    const int (*alpha_index_basic)[4],
+    const int alpha_index_times_count,
+    const int (*alpha_index_times)[4],
+    const int alpha_scalar_moments,
+    const int *alpha_moment_mapping,
+    const int max_num_mus4mom,
+    const int *num_mus4moms,
+    const int *mus4moms_ptr,
+    int nmus,
+    int inum,
+    int *ilist,
+    int *numneigh,
+    int *firstneigh,
+    CoordType (*relative_coords)[3],
+    int *types,
+    int ntypes,
+    int umax_num_neigh_atoms,
+    CoordType rmax,
+    CoordType rmin)
 {
-    const int block_size_x = 256;
+    const int block_size_x = 8;
     const int grid_size_x = (inum - 1) / block_size_x + 1;
     find_mtp_basis_val_der_cuda_kernel<CoordType> KERNEL_ARG2(grid_size_x, block_size_x) (
         mtp_basis_val,
@@ -426,7 +440,9 @@ void find_mtp_basis_val_der_cuda_launcher(CoordType *mtp_basis_val,
         umax_num_neigh_atoms,
         rmax,
         rmin);
+    CHECK( cudaPeekAtLastError() );
     CHECK( cudaDeviceSynchronize() );
+    CHECK( cudaPeekAtLastError() );
 }
 
 

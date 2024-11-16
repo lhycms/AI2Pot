@@ -22,11 +22,11 @@ do {                                                                    \
     if (error_code != cudaSuccess)                                      \
     {                                                                   \
         printf("CUDA Error:\n");                                        \
-        printf("1. File : %s\n", __FILE__);                             \
-        printf("2. Function : %s\n", __FUNCTION__);                     \
-        printf("3. Line : %d\n", __LINE__);                             \
-        printf("4. Error code : %d\n", error_code);                     \
-        printf("5. Error text : %s\n", cudaGetErrorString(error_code)); \
+        printf("\t1. File : %s\n", __FILE__);                             \
+        printf("\t2. Function : %s\n", __FUNCTION__);                     \
+        printf("\t3. Line : %d\n", __LINE__);                             \
+        printf("\t4. Error code : %d\n", error_code);                     \
+        printf("\t5. Error text : %s\n", cudaGetErrorString(error_code)); \
     }                                                                   \
 } while(0);
 

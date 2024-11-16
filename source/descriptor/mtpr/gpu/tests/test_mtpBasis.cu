@@ -86,6 +86,11 @@ protected:
 
     std::vector<std::string> filenames;
     ai2pot::mtpr::MtpParam mtp_param;
+    int *d_alpha_index_basic;
+    int *d_alpha_index_times;
+    int *d_alpha_moment_mapping;
+    int *d_num_mus4moms;
+    int *d_mus4moms_ptr;
     
     int num_atoms;
     double basis_vectors[3][3];
@@ -138,8 +143,28 @@ protected:
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/26.almtp",
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/28.almtp"
         };
-        mtp_param._load(filenames[4]); // mtp_level = 10
+        mtp_param._load(filenames[0]);
 //mtp_param.show();
+        CHECK( cudaMalloc((void**)&d_alpha_index_basic, sizeof(int) * mtp_param.alpha_index_basic_count() * 4) );
+        CHECK( cudaMalloc((void**)&d_alpha_index_times, sizeof(int) * mtp_param.alpha_index_times_count() * 4) );
+        CHECK( cudaMalloc((void**)&d_alpha_moment_mapping, sizeof(int) * mtp_param.alpha_scalar_moments()) );
+        CHECK( cudaMalloc((void**)&d_num_mus4moms, sizeof(int) * mtp_param.alpha_moments_count()) );
+        CHECK( cudaMalloc((void**)&d_mus4moms_ptr, sizeof(int) * mtp_param.alpha_moments_count() * mtp_param.max_num_mus4mom()) );
+        CHECK( cudaMemcpy(d_alpha_index_basic, 
+                          (int*)mtp_param.alpha_index_basic(), 
+                          sizeof(int)*mtp_param.alpha_index_basic_count()*4,
+                          cudaMemcpyHostToDevice) 
+        );
+        CHECK( cudaMemcpy(d_alpha_index_times,
+                          (int*)mtp_param.alpha_index_times(),
+                          sizeof(int)*mtp_param.alpha_index_times_count()*4,
+                          cudaMemcpyHostToDevice) 
+        );
+        CHECK( cudaMemcpy(d_alpha_moment_mapping, 
+                          mtp_param.alpha_moment_mapping(),
+                          sizeof(int)*mtp_param.alpha_scalar_moments(),
+                          cudaMemcpyHostToDevice)
+        );
 
         inum = 12;
         ntypes = 2;
@@ -253,11 +278,31 @@ protected:
         h_rcs = (double*)malloc(sizeof(double) * inum * umax_num_neigh_atoms * 3);
         CHECK( cudaMalloc((void**)&d_rcs, sizeof(double) * inum * umax_num_neigh_atoms * 3) );
         h_types = (int*)malloc(sizeof(int) * inum);
-        CHECK( cudaMalloc((void**)d_types, sizeof(int) * inum) );
-        
+        CHECK( cudaMalloc((void**)&d_types, sizeof(int) * inum) );
+        neighbor_list.find_info4mlff(
+            inum,
+            h_ilist,
+            h_numneigh,
+            h_firstneigh,
+            h_rcs,
+            h_types,
+            nghost,
+            umax_num_neigh_atoms);
+
+        CHECK( cudaMemcpy(d_ilist, h_ilist, sizeof(int)*inum, cudaMemcpyHostToDevice) );
+        CHECK( cudaMemcpy(d_numneigh, h_numneigh, sizeof(int)*inum, cudaMemcpyHostToDevice) );
+        CHECK( cudaMemcpy(d_firstneigh, h_firstneigh, sizeof(int)*inum*umax_num_neigh_atoms, cudaMemcpyHostToDevice) );
+        CHECK( cudaMemcpy(d_rcs, h_rcs, sizeof(double)*inum*umax_num_neigh_atoms*3, cudaMemcpyHostToDevice) );
+        CHECK( cudaMemcpy(d_types, h_types, sizeof(int)*inum, cudaMemcpyHostToDevice) );
     }
 
     void TearDown() override {
+        CHECK( cudaFree(d_alpha_index_basic) );
+        CHECK( cudaFree(d_alpha_index_times) );
+        CHECK( cudaFree(d_alpha_moment_mapping) );
+        CHECK( cudaFree(d_num_mus4moms) );
+        CHECK( cudaFree(d_mus4moms_ptr) );
+
         free(h_mtp_basis_val);
         cudaFree(d_mtp_basis_val);
         free(h_mtp_basis_der);
@@ -284,7 +329,6 @@ protected:
         CHECK( cudaFree(d_rcs) );
         free(h_types);
         CHECK( cudaFree(d_types) );
-
     }
 };  // class : MtpBasisTest
 
@@ -343,7 +387,39 @@ printf("\n");
 
 
 TEST_F(MtpBasisTest, find_mtp_basis_val_der) {
-    
+    ai2pot::mtpr::find_mtp_basis_val_der_cuda_kernel<double> <<<2, 4>>> (
+        d_mtp_basis_val,
+        (double (*)[3])d_mtp_basis_der,
+        d_mtp_basis_der2coeffs,
+        chebyshev_size,
+        d_coeffs,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        (int (*)[4])d_alpha_index_basic,
+        mtp_param.alpha_index_times_count(),
+        (int (*)[4])d_alpha_index_times,
+        mtp_param.alpha_scalar_moments(),
+        d_alpha_moment_mapping,
+        mtp_param.max_num_mus4mom(),
+        d_num_mus4moms,
+        d_mus4moms_ptr,
+        nmus,
+        inum,
+        d_ilist,
+        d_numneigh,
+        d_firstneigh,
+        (double (*)[3])d_rcs,
+        d_types,
+        ntypes,
+        umax_num_neigh_atoms,
+        rmax,
+        rmin);
+
+    CHECK( cudaDeviceSynchronize() );
+    CHECK( cudaMemcpy(h_mtp_basis_val, d_mtp_basis_val, sizeof(double)*mtp_param.alpha_scalar_moments(), cudaMemcpyDeviceToHost) );
+for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++)
+    printf("%10lf, ", h_mtp_basis_val[0*mtp_param.alpha_scalar_moments() + ii]);
+printf("\n");
 }
 
 int main(int argc, char **argv) {
