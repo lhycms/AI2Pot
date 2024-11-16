@@ -66,14 +66,14 @@ class MtpBasisTest : public ::testing::Test
 protected:
     double *h_mtp_basis_val;
     double *d_mtp_basis_val;
-    double (*h_mtp_basis_der)[3];
-    double (*d_mtp_basis_der)[3];
+    double (*h_mtp_basis_der);
+    double (*d_mtp_basis_der);
     double *h_mtp_basis_der2coeffs;
     double *d_mtp_basis_der2coeffs;
     double *h_mtp_basis_val_;
     double *d_mtp_basis_val_;
-    double (*h_mtp_basis_der_)[3];
-    double (*d_mtp_basis_der_)[3];
+    double (*h_mtp_basis_der_);
+    double (*d_mtp_basis_der_);
     double *h_mtp_basis_der2coeffs_;
     double *d_mtp_basis_der2coeffs_;
     int chebyshev_size;
@@ -139,11 +139,151 @@ protected:
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/28.almtp"
         };
         mtp_param._load(filenames[4]); // mtp_level = 10
-mtp_param.show();
+//mtp_param.show();
 
+        inum = 12;
+        ntypes = 2;
+        chebyshev_size = 8;
+        nmus = mtp_param.nmus();
+        rmax = 5.0;
+        rmin = 2.0;
+        umax_num_neigh_atoms = 20;
+        h_mtp_basis_val = (double*)malloc(sizeof(double) * inum * mtp_param.alpha_scalar_moments());
+        CHECK( cudaMalloc((void**)&d_mtp_basis_val, sizeof(double) * inum * mtp_param.alpha_scalar_moments()) );
+        h_mtp_basis_der = (double*)malloc(sizeof(double) * inum * mtp_param.alpha_scalar_moments() * umax_num_neigh_atoms * 3);
+        CHECK( cudaMalloc((void**)&d_mtp_basis_der, sizeof(double) * inum * mtp_param.alpha_scalar_moments() * umax_num_neigh_atoms * 3) );
+        h_mtp_basis_der2coeffs = (double*)malloc(sizeof(double) * inum * mtp_param.alpha_scalar_moments() * ntypes * ntypes * nmus * chebyshev_size);
+        CHECK( cudaMalloc((void**)&d_mtp_basis_der2coeffs, sizeof(double) * inum * mtp_param.alpha_scalar_moments() * ntypes * ntypes * nmus * chebyshev_size) );
+        h_mtp_basis_val_ = (double*)malloc(sizeof(double) * inum * mtp_param.alpha_scalar_moments());
+        CHECK( cudaMalloc((void**)&d_mtp_basis_val_, sizeof(double) * inum * mtp_param.alpha_scalar_moments()) );
+        h_mtp_basis_der_ = (double*)malloc(sizeof(double) * inum * mtp_param.alpha_scalar_moments() * umax_num_neigh_atoms * 3);
+        CHECK( cudaMalloc((void**)&d_mtp_basis_der_, sizeof(double) * inum * mtp_param.alpha_scalar_moments() * umax_num_neigh_atoms * 3) );
+        h_mtp_basis_der2coeffs_ = (double*)malloc(sizeof(double) * inum * mtp_param.alpha_scalar_moments() * ntypes * ntypes * nmus * chebyshev_size);
+        CHECK( cudaMalloc((void**)&d_mtp_basis_der2coeffs_, sizeof(double) * inum * mtp_param.alpha_scalar_moments() * ntypes * ntypes * nmus * chebyshev_size) );
+
+        h_coeffs = (double*)malloc(sizeof(double) * ntypes * ntypes * nmus * chebyshev_size);
+        cudaMalloc((void**)&d_coeffs, sizeof(double) * ntypes * ntypes * nmus * chebyshev_size);
+        for (int ii=0; ii<ntypes*ntypes*nmus*chebyshev_size; ii++)
+            h_coeffs[ii] = 1.0;
+        CHECK( cudaMemcpy(d_coeffs, h_coeffs, sizeof(double)*ntypes*ntypes*nmus*chebyshev_size, cudaMemcpyHostToDevice) );
+
+
+        // Establish neighbor list
+        num_atoms = 12;
+        basis_vectors[0][0] = 3.1903157348;
+        basis_vectors[0][1] = 5.5257885468;
+        basis_vectors[0][2] = 0.0000000000;
+        basis_vectors[1][0] = -6.3806307800;
+        basis_vectors[1][1] = 0.0000000000;
+        basis_vectors[1][2] = 0.0000000000;
+        basis_vectors[2][0] = 0.0000000000;
+        basis_vectors[2][1] = 0.0000000000;
+        basis_vectors[2][2] = 23.1297687334;
+
+        // 42: 0;  16: 1
+        atomic_numbers[0] = 0;
+        atomic_numbers[1] = 1;
+        atomic_numbers[2] = 1;
+        atomic_numbers[3] = 0;
+        atomic_numbers[4] = 1;
+        atomic_numbers[5] = 1;
+        atomic_numbers[6] = 0;
+        atomic_numbers[7] = 1;
+        atomic_numbers[8] = 1;
+        atomic_numbers[9] = 0; 
+        atomic_numbers[10] = 1;
+        atomic_numbers[11] = 1;
+    
+        frac_coords[0][0] = 0.333333333333;
+        frac_coords[0][1] = 0.166666666667;
+        frac_coords[0][2] = 0.500000000000;
+        frac_coords[1][0] = 0.166666666667;
+        frac_coords[1][1] = 0.333333333333;
+        frac_coords[1][2] = 0.432343276548;
+        frac_coords[2][0] = 0.166666666667;
+        frac_coords[2][1] = 0.333333333333;
+        frac_coords[2][2] = 0.567656723452;
+        frac_coords[3][0] = 0.333333333333;
+        frac_coords[3][1] = 0.666666666667;
+        frac_coords[3][2] = 0.500000000000;
+        frac_coords[4][0] = 0.166666666667;
+        frac_coords[4][1] = 0.833333333333;
+        frac_coords[4][2] = 0.432343276548;
+        frac_coords[5][0] = 0.166666666667;
+        frac_coords[5][1] = 0.833333333333;
+        frac_coords[5][2] = 0.567656723452;
+        frac_coords[6][0] = 0.833333333333;
+        frac_coords[6][1] = 0.166666666667;
+        frac_coords[6][2] = 0.500000000000;
+        frac_coords[7][0] = 0.666666666667;
+        frac_coords[7][1] = 0.333333333333;
+        frac_coords[7][2] = 0.432343276548;
+        frac_coords[8][0] = 0.666666666667;
+        frac_coords[8][1] = 0.333333333333;
+        frac_coords[8][2] = 0.567656723452;
+        frac_coords[9][0] = 0.833333333333;
+        frac_coords[9][1] = 0.666666666667;
+        frac_coords[9][2] = 0.500000000000;
+        frac_coords[10][0] = 0.666666666667;
+        frac_coords[10][1] = 0.833333333333;
+        frac_coords[10][2] = 0.432343276548;
+        frac_coords[11][0] = 0.666666666667;
+        frac_coords[11][1] = 0.833333333333;
+        frac_coords[11][2] = 0.567656723452;
+
+        rcut = 5.0;
+        bin_size_xyz[0] = 2.5;
+        bin_size_xyz[1] = 2.5;
+        bin_size_xyz[2] = 2.5;
+        pbc_xyz[0] = true;
+        pbc_xyz[1] = true;
+        pbc_xyz[2] = true;
+
+        structure = ai2pot::Structure<double>(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+        neighbor_list = ai2pot::NeighborList<double>(structure, rcut, bin_size_xyz, pbc_xyz, true);
+
+        //umax_num_neigh_atoms = 20;
+        inum = 12;
+        h_ilist = (int*)malloc(sizeof(int) * inum);
+        CHECK( cudaMalloc((void**)&d_ilist, sizeof(int) * inum) );
+        h_numneigh = (int*)malloc(sizeof(int) * inum);
+        CHECK( cudaMalloc((void**)&d_numneigh, sizeof(int) * inum) );
+        h_firstneigh = (int*)malloc(sizeof(int) * inum * umax_num_neigh_atoms);
+        CHECK( cudaMalloc((void**)&d_firstneigh, sizeof(int) * inum * umax_num_neigh_atoms) );
+        h_rcs = (double*)malloc(sizeof(double) * inum * umax_num_neigh_atoms * 3);
+        CHECK( cudaMalloc((void**)&d_rcs, sizeof(double) * inum * umax_num_neigh_atoms * 3) );
+        h_types = (int*)malloc(sizeof(int) * inum);
+        CHECK( cudaMalloc((void**)d_types, sizeof(int) * inum) );
+        
     }
 
     void TearDown() override {
+        free(h_mtp_basis_val);
+        cudaFree(d_mtp_basis_val);
+        free(h_mtp_basis_der);
+        cudaFree(d_mtp_basis_der);
+        free(h_mtp_basis_der2coeffs);
+        CHECK( cudaFree(d_mtp_basis_der2coeffs) );
+        free(h_mtp_basis_val_);
+        CHECK( cudaFree(d_mtp_basis_val_) );
+        free(h_mtp_basis_der_);
+        CHECK( cudaFree(d_mtp_basis_der_) );
+        free(h_mtp_basis_der2coeffs_);
+        CHECK( cudaFree(d_mtp_basis_der2coeffs_) );
+
+        free(h_coeffs);
+        CHECK( cudaFree(d_coeffs) );
+
+        free(h_ilist);
+        CHECK( cudaFree(d_ilist) );
+        free(h_numneigh);
+        CHECK( cudaFree(d_numneigh) );
+        free(h_firstneigh);
+        CHECK( cudaFree(d_firstneigh) );
+        free(h_rcs);
+        CHECK( cudaFree(d_rcs) );
+        free(h_types);
+        CHECK( cudaFree(d_types) );
 
     }
 };  // class : MtpBasisTest
