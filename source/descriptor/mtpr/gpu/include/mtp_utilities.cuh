@@ -16,18 +16,18 @@
 #define KERNEL_ARG4(grid_size, block_size, sh_mem, stream) <<<grid_size, block_size, sh_mem, stream>>>
 #endif
 
-#define CHECK(call)                                                     \
-do {                                                                    \
-    cudaError_t error_code = call;                                      \
-    if (error_code != cudaSuccess)                                      \
-    {                                                                   \
-        printf("CUDA Error:\n");                                        \
-        printf("\t1. File : %s\n", __FILE__);                             \
-        printf("\t2. Function : %s\n", __FUNCTION__);                     \
-        printf("\t3. Line : %d\n", __LINE__);                             \
-        printf("\t4. Error code : %d\n", error_code);                     \
-        printf("\t5. Error text : %s\n", cudaGetErrorString(error_code)); \
-    }                                                                   \
+#define CHECK(call)                                                         \
+do {                                                                        \
+    cudaError_t error_code = call;                                          \
+    if (error_code != cudaSuccess)                                          \
+    {                                                                       \
+        printf("CUDA Error:\n");                                            \
+        printf("\t1. File : %s\n", __FILE__);                               \
+        printf("\t2. Function : %s\n", __FUNCTION__);                       \
+        printf("\t3. Line : %d\n", __LINE__);                               \
+        printf("\t4. Error code : %d\n", error_code);                       \
+        printf("\t5. Error text : %s\n", cudaGetErrorString(error_code));   \
+    }                                                                       \
 } while(0);
 
 

@@ -421,36 +421,106 @@ void find_mtp_basis_val_der_cuda_launcher(
 {
     const int block_size_x = 8;
     const int grid_size_x = (inum - 1) / block_size_x + 1;
+
+    double *d_mtp_basis_val;
+    double *d_mtp_basis_der;
+    double *d_mtp_basis_der2coeffs;
+    double *d_coeffs;
+    int *d_alpha_index_basic;
+    int *d_alpha_index_times;
+    int *d_alpha_moment_mapping;
+    int *d_num_mus4moms;
+    int *d_mus4moms_ptr;
+    int *d_ilist;
+    int *d_numneigh;
+    int *d_firstneigh;
+    CoordType *d_relative_coords;
+    int *d_types;
+    CoordType *d_moms_vals;
+    CoordType *d_moms_ders;
+    CoordType *d_moms_ders2coeffs;
+    CHECK( cudaMalloc((void**)&d_mtp_basis_val, sizeof(CoordType) * inum * alpha_scalar_moments) );
+    CHECK( cudaMalloc((void**)&d_mtp_basis_der, sizeof(CoordType) * inum * alpha_scalar_moments * umax_num_neigh_atoms * 3) );
+    CHECK( cudaMalloc((void**)&d_mtp_basis_der2coeffs, sizeof(CoordType) * inum * alpha_scalar_moments * ntypes * ntypes * nmus * chebyshev_size) );
+    CHECK( cudaMalloc((void**)&d_coeffs, sizeof(CoordType) * ntypes * ntypes * nmus * chebyshev_size) );
+    CHECK( cudaMalloc((void**)&d_alpha_index_basic, sizeof(int) * alpha_index_basic_count * 4) );
+    CHECK( cudaMalloc((void**)&d_alpha_index_times, sizeof(int) * alpha_index_times_count * 4) );
+    CHECK( cudaMalloc((void**)&d_alpha_moment_mapping, sizeof(int) * alpha_scalar_moments) );
+    CHECK( cudaMalloc((void**)&d_num_mus4moms, sizeof(int) * alpha_moments_count) );
+    CHECK( cudaMalloc((void**)&d_mus4moms_ptr, sizeof(int) * alpha_moments_count* max_num_mus4mom) );
+    CHECK( cudaMalloc((void**)&d_ilist, sizeof(int) * inum) );
+    CHECK( cudaMalloc((void**)&d_numneigh, sizeof(int) * inum) );
+    CHECK( cudaMalloc((void**)&d_firstneigh, sizeof(int) * inum * umax_num_neigh_atoms) );
+    CHECK( cudaMalloc((void**)&d_relative_coords, sizeof(CoordType) * inum * umax_num_neigh_atoms * 3) );
+    CHECK( cudaMalloc((void**)&d_types, sizeof(int) * inum) );
+    CHECK( cudaMalloc((void**)&d_moms_vals, sizeof(CoordType) * inum * alpha_moments_count) );
+    CHECK( cudaMalloc((void**)&d_moms_ders, sizeof(CoordType) * inum * alpha_moments_count * umax_num_neigh_atoms * 3) );
+    CHECK( cudaMalloc((void**)&d_moms_ders2coeffs, sizeof(CoordType) * inum * alpha_moments_count * ntypes * ntypes * nmus * chebyshev_size) );
+
+    CHECK( cudaMemcpy(d_mtp_basis_val, mtp_basis_val, sizeof(CoordType) * inum * alpha_scalar_moments, cudaMemcpyHostToDevice) );
+    CHECK( cudaMemcpy(d_mtp_basis_der, (CoordType*)mtp_basis_der, sizeof(CoordType) * inum * alpha_scalar_moments * umax_num_neigh_atoms * 3, cudaMemcpyHostToDevice) );
+    CHECK( cudaMemcpy(d_mtp_basis_der2coeffs, mtp_basis_der2coeffs, sizeof(CoordType) * inum * alpha_scalar_moments * ntypes * ntypes * nmus * chebyshev_size, cudaMemcpyHostToDevice) );
+    CHECK( cudaMemcpy(d_coeffs, coeffs, sizeof(double) * ntypes * ntypes * nmus * chebyshev_size, cudaMemcpyHostToDevice) );
+    CHECK( cudaMemcpy(d_alpha_index_basic, (CoordType*)alpha_index_basic, sizeof(int) * alpha_index_basic_count * 4, cudaMemcpyHostToDevice) );
+    CHECK( cudaMemcpy(d_alpha_index_times, (CoordType*)alpha_index_times, sizeof(int) * alpha_index_times_count * 4, cudaMemcpyHostToDevice) );
+    CHECK( cudaMemcpy(d_alpha_moment_mapping, alpha_moment_mapping, sizeof(int) * alpha_scalar_moments, cudaMemcpyHostToDevice) );
+    CHECK( cudaMemcpy(d_num_mus4moms, num_mus4moms, sizeof(int) * alpha_moments_count, cudaMemcpyHostToDevice) );
+    CHECK( cudaMemcpy(d_mus4moms_ptr, mus4moms_ptr, sizeof(int) * alpha_moments_count * max_num_mus4mom, cudaMemcpyHostToDevice) );
+    CHECK( cudaMemcpy(d_ilist, ilist, sizeof(int) * inum, cudaMemcpyHostToDevice) );
+    CHECK( cudaMemcpy(d_numneigh, numneigh, sizeof(int) * inum, cudaMemcpyHostToDevice) );
+    CHECK( cudaMemcpy(d_firstneigh, firstneigh, sizeof(int) * inum * umax_num_neigh_atoms, cudaMemcpyHostToDevice) );
+    CHECK( cudaMemcpy(d_relative_coords, relative_coords, sizeof(CoordType) * inum * umax_num_neigh_atoms * 3, cudaMemcpyHostToDevice) );
+    CHECK( cudaMemcpy(d_types, types, sizeof(int) * inum, cudaMemcpyHostToDevice) );
+
     find_mtp_basis_val_der_cuda_kernel<CoordType> KERNEL_ARG2(grid_size_x, block_size_x) (
-        mtp_basis_val,
-        mtp_basis_der,
-        mtp_basis_der2coeffs,
+        d_mtp_basis_val,
+        (CoordType (*)[3])d_mtp_basis_der,
+        d_mtp_basis_der2coeffs,
         chebyshev_size,
-        coeffs,
+        d_coeffs,
         alpha_moments_count,
         alpha_index_basic_count,
-        alpha_index_basic,
+        (int (*)[4])d_alpha_index_basic,
         alpha_index_times_count,
-        alpha_index_times,
+        (int (*)[4])d_alpha_index_times,
         alpha_scalar_moments,
-        alpha_moment_mapping,
+        d_alpha_moment_mapping,
         max_num_mus4mom,
-        num_mus4moms,
-        mus4moms_ptr,
+        d_num_mus4moms,
+        d_mus4moms_ptr,
         nmus,
         inum,
-        ilist,
-        numneigh,
-        firstneigh,
-        relative_coords,
-        types,
+        d_ilist,
+        d_numneigh,
+        d_firstneigh,
+        (CoordType (*)[3])d_relative_coords,
+        d_types,
         ntypes,
         umax_num_neigh_atoms,
         rmax,
         rmin,
-        moms_vals,
-        moms_ders,
-        moms_ders2coeffs);
+        d_moms_vals,
+        d_moms_ders,
+        d_moms_ders2coeffs);
+
+    CHECK( cudaFree(d_mtp_basis_val) );
+    CHECK( cudaFree(d_mtp_basis_der) );
+    CHECK( cudaFree(d_mtp_basis_der2coeffs) );
+    CHECK( cudaFree(d_coeffs) );
+    CHECK( cudaFree(d_alpha_index_basic) );
+    CHECK( cudaFree(d_alpha_index_times) );
+    CHECK( cudaFree(d_alpha_moment_mapping) );
+    CHECK( cudaFree(d_num_mus4moms) );
+    CHECK( cudaFree(d_mus4moms_ptr) );
+    CHECK( cudaFree(d_ilist) );
+    CHECK( cudaFree(d_numneigh) );
+    CHECK( cudaFree(d_firstneigh) );
+    CHECK( cudaFree(d_relative_coords) );
+    CHECK( cudaFree(d_types) );
+    CHECK( cudaFree(d_moms_vals) );
+    CHECK( cudaFree(d_moms_ders) );
+    CHECK( cudaFree(d_moms_ders2coeffs) );
+
     CHECK( cudaPeekAtLastError() );
     CHECK( cudaDeviceSynchronize() );
     CHECK( cudaPeekAtLastError() );
