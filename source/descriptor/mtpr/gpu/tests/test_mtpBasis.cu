@@ -143,7 +143,7 @@ protected:
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/26.almtp",
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/28.almtp"
         };
-        mtp_param._load(filenames[0]);
+        mtp_param._load(filenames[1]);
 //mtp_param.show();
         CHECK( cudaMalloc((void**)&d_alpha_index_basic, sizeof(int) * mtp_param.alpha_index_basic_count() * 4) );
         CHECK( cudaMalloc((void**)&d_alpha_index_times, sizeof(int) * mtp_param.alpha_index_times_count() * 4) );

@@ -69,7 +69,10 @@ void find_mtp_basis_val_der_cuda_kernel(
     int ntypes,
     int umax_num_neigh_atoms,
     CoordType rmax,
-    CoordType rmin);
+    CoordType rmin,
+    CoordType *moms_vals,
+    CoordType *moms_ders,
+    CoordType *moms_ders2coeffs);
 
 
 template <typename CoordType>
@@ -100,7 +103,10 @@ void find_mtp_basis_val_der_cuda_launcher(
     int ntypes,
     int umax_num_neigh_atoms,
     CoordType rmax,
-    CoordType rmin);
+    CoordType rmin,
+    CoordType *moms_vals,
+    CoordType *moms_ders,
+    CoordType *moms_ders2coeffs);
 
 
 template <typename CoordType>
@@ -217,19 +223,23 @@ void find_mtp_basis_val_der_cuda_kernel(
     int ntypes,
     int umax_num_neigh_atoms,
     CoordType rmax,
-    CoordType rmin)
+    CoordType rmin,
+    CoordType *moms_vals,
+    CoordType (*moms_ders)[3],
+    CoordType *moms_ders2coeffs)
 {
     const int nx = blockIdx.x * blockDim.x + threadIdx.x;
-
     
     if (nx < inum)
     {
         const int ii = nx;
-printf("+++*** %d\n", ii);
         // Step 1. 
-        CoordType mom_vals[2] = {0.};
-        CoordType mom_ders[2][MAX_NNEI][3] = {0.};
-        CoordType mom_ders2coeffs[2][MAX_NUM_TYPES][MAX_NUM_TYPES][MAX_NUM_MUS][MAX_CHEBYSHEV_SIZE] = {0.};
+        CoordType *mom_vals = &moms_vals[ii*alpha_moments_count];
+        CoordType (*mom_ders)[3] = (CoordType (*)[3])&moms_ders[ii*alpha_moments_count*umax_num_neigh_atoms];
+        CoordType *mom_ders2coeffs = &moms_ders2coeffs[ii*alpha_moments_count*ntypes*ntypes*nmus*chebyshev_size];
+        memset(mom_vals, 0, sizeof(CoordType) * alpha_moments_count);
+        memset(mom_ders, 0, sizeof(CoordType) * alpha_moments_count * umax_num_neigh_atoms * 3);
+        memset(mom_ders2coeffs, 0, sizeof(CoordType) * alpha_moments_count * ntypes * ntypes * nmus * chebyshev_size);
         CoordType rq_chebyshev_vals[MAX_CHEBYSHEV_SIZE];
         CoordType rq_chebyshev_ders2r[MAX_CHEBYSHEV_SIZE];
 
@@ -282,33 +292,32 @@ printf("+++*** %d\n", ii);
                               + type_outer*nmus*chebyshev_size
                               + mu*chebyshev_size
                               + xi;
-                    mom_vals[i] += coeffs[idx] * rq_chebyshev_vals[xi] * powk * mult0;  
-//printf("+++ %g, %g, %g, %g\n", coeffs[idx], rq_chebyshev_vals[xi], powk, mult0);
-                    mom_ders2coeffs[i][type_central][type_outer][mu][xi] += rq_chebyshev_vals[xi] * powk * mult0;
-                    mom_ders[i][jj][0] += NeighVect[0] / distance_ij * coeffs[idx] * mult0 *
-                                          (rq_chebyshev_ders2r[xi] * powk
-                                           - rq_chebyshev_vals[xi] * k * powk / distance_ij);
-                    mom_ders[i][jj][1] += NeighVect[1] / distance_ij * coeffs[idx] * mult0 *
-                                          (rq_chebyshev_ders2r[xi] * powk
-                                           - rq_chebyshev_vals[xi] * k * powk / distance_ij);
-                    mom_ders[i][jj][2] += NeighVect[2] / distance_ij * coeffs[idx] * mult0 *
-                                          (rq_chebyshev_ders2r[xi] * powk
-                                           - rq_chebyshev_vals[xi] * k * powk / distance_ij);
+                    mom_vals[i] += coeffs[idx] * rq_chebyshev_vals[xi] * powk * mult0;
+                    mom_ders2coeffs[i*num_coeffs + idx] += rq_chebyshev_vals[xi] * powk * mult0;
+                    mom_ders[i*umax_num_neigh_atoms + jj][0] += NeighVect[0] / distance_ij * coeffs[idx] * mult0 *
+                                                                (rq_chebyshev_ders2r[xi] * powk
+                                                                 - rq_chebyshev_vals[xi] * k * powk / distance_ij);
+                    mom_ders[i*umax_num_neigh_atoms + jj][1] += NeighVect[1] / distance_ij * coeffs[idx] * mult0 *
+                                                                (rq_chebyshev_ders2r[xi] * powk
+                                                                 - rq_chebyshev_vals[xi] * k * powk / distance_ij);
+                    mom_ders[i*umax_num_neigh_atoms + jj][2] += NeighVect[2] / distance_ij * coeffs[idx] * mult0 *
+                                                                (rq_chebyshev_ders2r[xi] * powk
+                                                                 - rq_chebyshev_vals[xi] * k * powk / distance_ij);
                     
                     if (alpha_index_basic[i][1] != 0) {
-                        mom_ders[i][jj][0] += coeffs[idx] * rq_chebyshev_vals[xi] * powk * alpha_index_basic[i][1]
+                        mom_ders[i*umax_num_neigh_atoms + jj][0] += coeffs[idx] * rq_chebyshev_vals[xi] * powk * alpha_index_basic[i][1]
                             * auto_coords_powers_[alpha_index_basic[i][1]-1][0]
                             * pow1
                             * pow2;
                     }
                     if (alpha_index_basic[i][2] != 0) {
-                        mom_ders[i][jj][1] += coeffs[idx] * rq_chebyshev_vals[xi] * powk * alpha_index_basic[i][2]
+                        mom_ders[i*umax_num_neigh_atoms + jj][1] += coeffs[idx] * rq_chebyshev_vals[xi] * powk * alpha_index_basic[i][2]
                             * pow0
                             * auto_coords_powers_[alpha_index_basic[i][2]-1][1]
                             * pow2;
                     }
                     if (alpha_index_basic[i][3] != 0) {
-                        mom_ders[i][jj][2] += coeffs[idx] * rq_chebyshev_vals[xi] * powk * alpha_index_basic[i][3]
+                        mom_ders[i*umax_num_neigh_atoms + jj][2] += coeffs[idx] * rq_chebyshev_vals[xi] * powk * alpha_index_basic[i][3]
                             * pow0
                             * pow1
                             * auto_coords_powers_[alpha_index_basic[i][3]-1][2];
@@ -328,17 +337,19 @@ printf("+++*** %d\n", ii);
                 for (int q=0; q<num_mus4moms[alpha_index_times[i][0]]; q++) {
                     const int mu = mus4moms_ptr[alpha_index_times[i][0]*max_num_mus4mom + q];
                     for (int xi=0; xi<chebyshev_size; xi++) {
-                        mom_ders2coeffs[alpha_index_times[i][3]][type_central][tmp_type_outer][mu][xi] += val2
-                            * mom_ders2coeffs[alpha_index_times[i][0]][type_central][tmp_type_outer][mu][xi]
+                        const int idx = (type_central*ntypes + tmp_type_outer)*nmus*chebyshev_size + mu*chebyshev_size + xi;
+                        mom_ders2coeffs[alpha_index_times[i][3]*num_coeffs + idx] += val2
+                            * mom_ders2coeffs[alpha_index_times[i][0]*num_coeffs + idx]
                             * val1;
                     }
                 }
                 for (int q=0; q<num_mus4moms[alpha_index_times[i][1]]; q++) {
                     const int mu = mus4moms_ptr[alpha_index_times[i][1]*max_num_mus4mom + q];
                     for (int xi=0; xi<chebyshev_size; xi++) {
-                        mom_ders2coeffs[alpha_index_times[i][3]][type_central][tmp_type_outer][mu][xi] += val2
+                        const int idx = (type_central*ntypes + tmp_type_outer)*nmus*chebyshev_size + mu*chebyshev_size + xi;
+                        mom_ders2coeffs[alpha_index_times[i][3]*num_coeffs + idx] += val2
                             * val0
-                            * mom_ders2coeffs[alpha_index_times[i][1]][type_central][tmp_type_outer][mu][xi];
+                            * mom_ders2coeffs[alpha_index_times[i][1]*num_coeffs + idx];
                     }
                 }
             }
@@ -346,35 +357,29 @@ printf("+++*** %d\n", ii);
 
             for (int jj=0; jj<numneigh[ii]; jj++) 
             {
-                mom_ders[alpha_index_times[i][3]][jj][0] += val2 * 
-                    ( mom_ders[alpha_index_times[i][0]][jj][0] * val1
-                      + val0 * mom_ders[alpha_index_times[i][1]][jj][0] );
-                mom_ders[alpha_index_times[i][3]][jj][1] += val2 *
-                    ( mom_ders[alpha_index_times[i][0]][jj][1] * val1
-                      + val0 * mom_ders[alpha_index_times[i][1]][jj][1]);
-                mom_ders[alpha_index_times[i][3]][jj][2] += val2 *
+                mom_ders[alpha_index_times[i][3]*umax_num_neigh_atoms + jj][0] += val2 * 
+                    ( mom_ders[alpha_index_times[i][0]*umax_num_neigh_atoms + jj][0] * val1
+                      + val0 * mom_ders[alpha_index_times[i][1]*umax_num_neigh_atoms + jj][0] );
+                mom_ders[alpha_index_times[i][3]*umax_num_neigh_atoms + jj][1] += val2 *
+                    ( mom_ders[alpha_index_times[i][0]*umax_num_neigh_atoms + jj][1] * val1
+                      + val0 * mom_ders[alpha_index_times[i][1]*umax_num_neigh_atoms + jj][1] );
+                mom_ders[alpha_index_times[i][3]*umax_num_neigh_atoms + jj][2] += val2 *
                     ( mom_ders[alpha_index_times[i][0]][jj][2] * val1
-                      + val0 * mom_ders[alpha_index_times[i][1]][jj][2]);
+                      + val0 * mom_ders[alpha_index_times[i][1]*umax_num_neigh_atoms + jj][2] );
             }
         }
 
         for (int i=0; i<alpha_scalar_moments; i++)
         {
-            mtp_basis_val[ii*alpha_moments_count + i] = mom_vals[alpha_moment_mapping[i]];
+            mtp_basis_val[ii*alpha_scalar_moments + i] = mom_vals[alpha_moment_mapping[i]];
             for (int jj=0; jj<numneigh[ii]; jj++)
                 for (int a=0; a<3; a++)
-                    mtp_basis_der[ii*alpha_moments_count*umax_num_neigh_atoms
-                                  + alpha_moment_mapping[i]*umax_num_neigh_atoms
-                                  + jj][a] = mom_ders[alpha_moment_mapping[i]][jj][a];
-            for (int tmp_type_outer=0; tmp_type_outer<ntypes; tmp_type_outer++) {
-                for (int q=0; q<num_mus4moms[alpha_moment_mapping[i]]; q++) {
-                    int mu = mus4moms_ptr[alpha_moment_mapping[i]*umax_num_neigh_atoms + q];
-                    for (int xi=0; xi<chebyshev_size; xi++) {
-                        int idx = (type_central*ntypes + tmp_type_outer)*nmus*chebyshev_size + mu*chebyshev_size + xi;
-                        mtp_basis_der2coeffs[ii*alpha_scalar_moments*num_coeffs + i*num_coeffs + idx] = mom_ders2coeffs[alpha_moment_mapping[i]][type_central][tmp_type_outer][mu][xi];
-                    }
-                }
-            }
+                    mtp_basis_der[ii*alpha_scalar_moments*umax_num_neigh_atoms
+                                  + i*umax_num_neigh_atoms
+                                  + jj][a] = mom_ders[alpha_moment_mapping[i]*umax_num_neigh_atoms + jj][a];
+            
+            for (int idx=0; idx<num_coeffs; idx++)
+                mtp_basis_der2coeffs[ii*alpha_scalar_moments*num_coeffs + i*num_coeffs + idx] = mom_ders2coeffs[alpha_moment_mapping[i]*num_coeffs + idx];
         }
 
     }
@@ -409,7 +414,10 @@ void find_mtp_basis_val_der_cuda_launcher(
     int ntypes,
     int umax_num_neigh_atoms,
     CoordType rmax,
-    CoordType rmin)
+    CoordType rmin,
+    CoordType *moms_vals,
+    CoordType *moms_ders,
+    CoordType *moms_ders2coeffs)
 {
     const int block_size_x = 8;
     const int grid_size_x = (inum - 1) / block_size_x + 1;
@@ -439,7 +447,10 @@ void find_mtp_basis_val_der_cuda_launcher(
         ntypes,
         umax_num_neigh_atoms,
         rmax,
-        rmin);
+        rmin,
+        moms_vals,
+        moms_ders,
+        moms_ders2coeffs);
     CHECK( cudaPeekAtLastError() );
     CHECK( cudaDeviceSynchronize() );
     CHECK( cudaPeekAtLastError() );
