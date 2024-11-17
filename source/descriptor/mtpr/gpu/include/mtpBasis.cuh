@@ -419,7 +419,7 @@ void find_mtp_basis_val_der_cuda_launcher(
     CoordType *moms_ders,
     CoordType *moms_ders2coeffs)
 {
-    const int block_size_x = 8;
+    const int block_size_x = 256;
     const int grid_size_x = (inum - 1) / block_size_x + 1;
 
     double *d_mtp_basis_val;

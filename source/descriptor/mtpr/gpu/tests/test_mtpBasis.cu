@@ -221,7 +221,7 @@ protected:
         atomic_numbers[6] = 0;
         atomic_numbers[7] = 1;
         atomic_numbers[8] = 1;
-        atomic_numbers[9] = 0; 
+        atomic_numbers[9] = 0;
         atomic_numbers[10] = 1;
         atomic_numbers[11] = 1;
     
