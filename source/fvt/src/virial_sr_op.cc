@@ -159,7 +159,7 @@ torch::autograd::variable_list VirialSrFunction::backward(
         }
     }
 
-    return {at::Tensor(), bout_der1_tensor, at::Tensor(), bout_der2_tensor};
+    return {at::Tensor(), bout_der2_tensor, at::Tensor(), bout_der1_tensor};
 }
 
 
