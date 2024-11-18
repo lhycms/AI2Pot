@@ -35,10 +35,9 @@ class DescriptorMtp(nn.Module):
         self.nmus: int = self.nmus_tensor.item()
         self.num_descriptors: int = self.alpha_moment_mapping_tensor.size()[0]
         
-        self.coeffs_list: nn.Module = nn.ParameterList()
-        self.coeffs_list.append(nn.Parameter(torch.Tensor(self.ntypes*self.ntypes*self.nmus*self.chebyshev_size),
-                                             requires_grad=True))
-        nn.init.normal_(self.coeffs_list[0].data, mean=0, std=1.0)
+        coeffs: torch.Tensor = torch.Tensor(self.ntypes*self.ntypes*self.nmus*self.chebyshev_size)
+        nn.init.normal_(coeffs, mean=0, std=1.0)
+        self.register_parameter("coeffs", nn.Parameter(coeffs, requires_grad=True))
     
     
     def forward(self,
@@ -55,7 +54,7 @@ class DescriptorMtp(nn.Module):
                                               self.nmus_tensor,
                                               self.ntypes,
                                               self.chebyshev_size,
-                                              self.coeffs_list[0],
+                                              self.coeffs,
                                               bilist,
                                               bnumneigh,
                                               bfirstneigh,
@@ -181,6 +180,7 @@ class NNMtp(nn.Module):
                                                            bfirstneigh,
                                                            brcs,
                                                            btypes)
+        #print(bdescriptor)
         e_i_sr: torch.Tensor = self.fitting_module(btypes, bdescriptor)
         e_tot_sr: torch.Tensor = torch.sum(e_i_sr, dim=1)
         mask: List[Optional[torch.Tensor]] = [torch.ones_like(e_tot_sr,
@@ -224,23 +224,26 @@ class LitNNMtp(L.LightningModule):
         self.v_criterion: nn.Module = VRmse()
         
     def training_step(self, batch, batch_idx):
-        loss: torch.Tensor = torch.Tensor()
         if (self.has_virials):
             inum, ilist, numneigh, firstneigh, rcs, types, nghost, e_dft, fi_dft, v_dft = batch
             e_ml, fi_ml, v_ml = self.model(ilist, numneigh, firstneigh, rcs, types, nghost)
             loss = self.e_criterion(binum=inum, input_benergies=e_ml, target_benergies=e_dft)   \
                    + self.f_criterion(binum=inum, input_bforces=fi_ml, target_bforces=fi_dft)   \
                    + self.v_criterion(binum=inum, input_bvirials=v_ml, target_bvirials=v_dft)
+            print("e_rmse = ", self.e_criterion(binum=inum, input_benergies=e_ml, target_benergies=e_dft))
+            print("f_rmse = ", self.f_criterion(binum=inum, input_bforces=fi_ml, target_bforces=fi_dft))
+            print("e_rmse = ", self.v_criterion(binum=inum, input_bvirials=v_ml, target_bvirials=v_dft))
         else:
             inum, ilist, numneigh, firstneigh, rcs, types, nghost, e_dft, fi_dft = batch
             e_ml, fi_ml, v_ml = self.model(ilist, numneigh, firstneigh, rcs, types, nghost)
             loss = self.e_criterion(binum=inum, input_benergies=e_ml, target_benergies=e_dft)   \
                    + self.f_criterion(binum=inum, input_bforces=fi_ml, target_bforces=fi_dft)
-        return loss
+        self.log("train_loss", loss, prog_bar=True, on_step=True, on_epoch=True)
+        return 0.01 * loss
     
     def configure_optimizers(self):
         optimizer: torch.optim.Optimizer = torch.optim.Adam(self.model.parameters(),
-                                                            lr=1e-3)
+                                                            lr=1e-4)
         return optimizer
  
 
