@@ -34,7 +34,7 @@ torch::autograd::variable_list ForceSrFunction::forward(
             .dtype(torch::kFloat32)
             .device(bdei_drij_tensor.device());
         bforce_sr_val_tensor = at::zeros({nbatches, nlocal + nghost, 3}, float_options);
-        bforce_sr_der_tensor = at::zeros({nbatches, nlocal + nghost, 3, nlocal, umax_num_neighs, 3}, float_options);
+        bforce_sr_der_tensor = at::zeros({nbatches, nlocal + nghost, 3, nlocal, umax_num_neighs}, float_options);
         
         for (int bb=0; bb<nbatches; bb++) {
             float *force_sr_val = bforce_sr_val_tensor[bb].data_ptr<float>();
@@ -60,7 +60,7 @@ torch::autograd::variable_list ForceSrFunction::forward(
             .dtype(torch::kFloat64)
             .device(bdei_drij_tensor.device());
         bforce_sr_val_tensor = at::zeros({nbatches, nlocal + nghost, 3}, float_options);
-        bforce_sr_der_tensor = at::zeros({nbatches, nlocal + nghost, 3, nlocal, umax_num_neighs, 3}, float_options);
+        bforce_sr_der_tensor = at::zeros({nbatches, nlocal + nghost, 3, nlocal, umax_num_neighs}, float_options);
 
         for (int bb=0; bb<nbatches; bb++) {
             double *force_sr_val = bforce_sr_val_tensor[bb].data_ptr<double>();
@@ -125,11 +125,11 @@ torch::autograd::variable_list ForceSrFunction::backward(
                 for (int jj=0; jj<numneigh[ii]; jj++) {
                     int neigh_idx = firstneigh[ii*umax_num_neighs + jj];
                     for (int kk=0; kk<3; kk++) {
-                        int tmp_idx = ii*umax_num_neighs*3 + jj*3 + kk;
-                        out_der[tmp_idx] += grad_output[center_idx*3 + kk] 
-                                            * force_sr_der[(center_idx*3 + kk)*nlocal*umax_num_neighs*3 + tmp_idx];
-                        out_der[tmp_idx] += grad_output[neigh_idx*3 + kk]
-                                            * force_sr_der[(neigh_idx*3 + kk)*nlocal*umax_num_neighs*3 + tmp_idx];
+                        int tmp_de_idx = ii*umax_num_neighs*3 + jj*3 + kk;
+                        out_der[tmp_de_idx] += grad_output[center_idx*3 + kk] 
+                                               * force_sr_der[(center_idx*3 + kk)*nlocal*umax_num_neighs + ii*umax_num_neighs + jj];
+                        out_der[tmp_de_idx] += grad_output[neigh_idx*3 + kk]
+                                               * force_sr_der[(neigh_idx*3 + kk)*nlocal*umax_num_neighs + ii*umax_num_neighs + jj];
                     }
                 }
             }
@@ -154,11 +154,11 @@ torch::autograd::variable_list ForceSrFunction::backward(
                 for (int jj=0; jj<numneigh[ii]; jj++) {
                     int neigh_idx = firstneigh[ii*umax_num_neighs + jj];
                     for (int kk=0; kk<3; kk++) {
-                        int tmp_idx = ii*umax_num_neighs*3 + jj*3 + kk;
-                        out_der[tmp_idx] += grad_output[center_idx*3 + kk]
-                                            * force_sr_der[(center_idx*3 + kk)*nlocal*umax_num_neighs*3 + tmp_idx];
-                        out_der[tmp_idx] += grad_output[neigh_idx*3 + kk]
-                                            * force_sr_der[(neigh_idx*3 + kk)*nlocal*umax_num_neighs*3 + tmp_idx];
+                        int tmp_de_idx = ii*umax_num_neighs*3 + jj*3 + kk;
+                        out_der[tmp_de_idx] += grad_output[center_idx*3 + kk]
+                                               * force_sr_der[(center_idx*3 + kk)*nlocal*umax_num_neighs + ii*umax_num_neighs + jj];
+                        out_der[tmp_de_idx] += grad_output[neigh_idx*3 + kk]
+                                               * force_sr_der[(neigh_idx*3 + kk)*nlocal*umax_num_neighs + ii*umax_num_neighs + jj];
                     }
                 }
             }

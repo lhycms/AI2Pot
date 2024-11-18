@@ -143,8 +143,8 @@ protected:
 
         force_sr_val = (double*)malloc(sizeof(double) * (inum+nghost) * 3);
         force_sr_val_ = (double*)malloc(sizeof(double) * (inum+nghost) * 3);
-        force_sr_der = (double*)malloc(sizeof(double) * (inum+nghost) * 3 * inum * umax_num_neighs * 3);
-        force_sr_der_ = (double*)malloc(sizeof(double) * (inum+nghost) * 3 * inum * umax_num_neighs * 3);
+        force_sr_der = (double*)malloc(sizeof(double) * (inum+nghost) * 3 * inum * umax_num_neighs);
+        force_sr_der_ = (double*)malloc(sizeof(double) * (inum+nghost) * 3 * inum * umax_num_neighs);
         dei_drij = (double*)malloc(sizeof(double) * inum * umax_num_neighs * 3);
         for (int ii=0; ii<inum*umax_num_neighs*3; ii++)
             dei_drij[ii] = 1.0 + 0.001 * ii;
@@ -169,7 +169,7 @@ TEST_F(ForceSrTest, find_val_der)
 {
     int center_idx_modify = 0;
     int neigh_idx_modify = 1;
-    int direction_modify = 0;
+    int direction_modify = 1;
 
     ai2pot::fvt::ForceSr<double>::find_val_der(
         force_sr_val,
@@ -183,6 +183,7 @@ TEST_F(ForceSrTest, find_val_der)
         dei_drij);
 
     dei_drij[center_idx_modify*umax_num_neighs*3 + neigh_idx_modify*3 + direction_modify] += 0.001;
+    printf("***\n");
     ai2pot::fvt::ForceSr<double>::find_val_der(
         force_sr_val_,
         force_sr_der_,
@@ -193,7 +194,7 @@ TEST_F(ForceSrTest, find_val_der)
         nghost,
         umax_num_neighs,
         dei_drij);
-
+printf("***\n");
 nblist.show_in_index();
 
 printf("1.1. Value of force:\n\t");
@@ -208,9 +209,7 @@ std::cout << "\n\n";
 
 printf("2.1. Derivatives w.r.t. dei_drij[%d][%d][%d] calculated by custom code:\n\t", center_idx_modify, neigh_idx_modify, direction_modify);
 for (int ii=0; ii<(inum+nghost); ii++) {
-    for (int jj=0; jj<3; jj++) {
-        printf("%6lf, ", force_sr_der[(ii*3+jj)*inum*umax_num_neighs*3 + center_idx_modify*umax_num_neighs*3 + neigh_idx_modify*3 + direction_modify]);
-    }
+    printf("%6lf, ", force_sr_der[(ii*3+direction_modify)*inum*umax_num_neighs + center_idx_modify*umax_num_neighs + neigh_idx_modify]);
 }
 std::cout << "\n";
 printf("2.2. Derivatives w.r.t. dei_drij[%d][%d][%d] calculate by finite difference method:\n\t", center_idx_modify, neigh_idx_modify, direction_modify);

@@ -48,18 +48,22 @@ void ForceSr<CoordType>::find_val_der(
     CoordType *dei_drij)
 {
     memset(force_sr_val, 0, sizeof(CoordType) * (inum+nghost) * 3);
-    memset(force_sr_der, 0, sizeof(CoordType) * (inum+nghost) * 3 * inum * umax_num_neighs * 3);
+    memset(force_sr_der, 0, sizeof(CoordType) * (inum+nghost) * 3 * inum * umax_num_neighs);
 
     for (int ii=0; ii<inum; ii++) {
         int center_idx = ilist[ii];
         for (int jj=0; jj<numneigh[ii]; jj++) {
             int neigh_idx = firstneigh[ii*umax_num_neighs + jj];
             for (int kk=0; kk<3; kk++) {
-                int tmp_idx = ii*umax_num_neighs*3 + jj*3 + kk;
-                force_sr_val[center_idx*3 + kk] += dei_drij[tmp_idx];
-                force_sr_val[neigh_idx*3 + kk] -= dei_drij[tmp_idx];
-                force_sr_der[(center_idx*3+kk)*inum*umax_num_neighs*3 + tmp_idx] += 1;
-                force_sr_der[(neigh_idx*3+kk)*inum*umax_num_neighs*3 + tmp_idx] -= 1;
+                int tmp_de_idx = ii*umax_num_neighs*3 + jj*3 + kk;
+                force_sr_val[center_idx*3 + kk] += dei_drij[tmp_de_idx];
+                force_sr_val[neigh_idx*3 + kk] -= dei_drij[tmp_de_idx];
+                force_sr_der[(center_idx*3+kk)*inum*umax_num_neighs 
+                             + ii*umax_num_neighs
+                             + jj] += 1;
+                force_sr_der[(neigh_idx*3+kk)*inum*umax_num_neighs
+                             + ii*umax_num_neighs
+                             + jj] -= 1;
             }
         }
     }

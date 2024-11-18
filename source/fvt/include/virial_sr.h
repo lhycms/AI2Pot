@@ -24,7 +24,7 @@ template <typename CoordType>
 void VirialSr<CoordType>::find_val_der(
     CoordType *virial_sr_val,
     CoordType *virial_sr_der1,   // Derivative w.r.t. dei_drij
-    CoordType *virial_sr_der2,  // Derivative w.r.t. rc
+    CoordType *virial_sr_der2,   // Derivative w.r.t. rc
     int inum,
     int *numneigh,
     CoordType *rcs,
