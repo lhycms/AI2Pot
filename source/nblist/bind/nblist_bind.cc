@@ -113,7 +113,7 @@ static PyObject *py_find_info4mlff(PyObject *self, PyObject *args)
     else
         sort = false;
     if ( npy_float_type == NPY_FLOAT32 )
-        nblist_ptr = (void*)(new ai2pot::NeighborList<float>(*((ai2pot::Structure<float>*)structure_ptr), rcut, pbc_xyz, sort));
+        nblist_ptr = (void*)(new ai2pot::NeighborList<float>(*((ai2pot::Structure<float>*)structure_ptr), (float)rcut, pbc_xyz, sort));
     else
         nblist_ptr = (void*)(new ai2pot::NeighborList<double>(*((ai2pot::Structure<double>*)structure_ptr), rcut, pbc_xyz, sort));
 
@@ -127,10 +127,11 @@ static PyObject *py_find_info4mlff(PyObject *self, PyObject *args)
     npy_intp py_firstneigh_dims[2] = { (npy_intp)num_atoms, (npy_intp)PyLong_AsLong(py_umax_num_neigh_atoms) };
     PyObject *py_firstneigh = PyArray_Zeros(2, py_firstneigh_dims, PyArray_DescrFromType(NPY_INT32), 0);
     npy_intp py_rcs_dims[3] = {(npy_intp)num_atoms, (npy_intp)PyLong_AsLong(py_umax_num_neigh_atoms), 3};
-    PyObject *py_rcs = PyArray_Zeros(3, py_rcs_dims, PyArray_DescrFromType(NPY_FLOAT64), 0);
+    PyObject *py_rcs;
     //PyObject *py_types = PyArray_Zeros(1, {(npy_intp)(num_atoms + nghost)}, PyArray_DescrFromType(NPY_INT64), 0);
     if (npy_float_type == NPY_FLOAT32) {
         // Convert NPY_FLOAT32 TO NPY_FLOAT64.
+        py_rcs = PyArray_Zeros(3, py_rcs_dims, PyArray_DescrFromType(NPY_FLOAT32), 0);
         ((ai2pot::NeighborList<float>*)nblist_ptr)->find_info4mlff(inum,
                                                            (int*)PyArray_DATA((PyArrayObject*)py_ilist),
                                                            (int*)PyArray_DATA((PyArrayObject*)py_numneigh),
@@ -140,6 +141,7 @@ static PyObject *py_find_info4mlff(PyObject *self, PyObject *args)
                                                            nghost,
                                                            (int)PyLong_AsLong(py_umax_num_neigh_atoms));
     } else {
+        py_rcs = PyArray_Zeros(3, py_rcs_dims, PyArray_DescrFromType(NPY_FLOAT64), 0);
         ((ai2pot::NeighborList<double>*)nblist_ptr)->find_info4mlff(inum,
                                                            (int*)PyArray_DATA((PyArrayObject*)py_ilist),
                                                            (int*)PyArray_DATA((PyArrayObject*)py_numneigh),

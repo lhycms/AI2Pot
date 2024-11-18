@@ -10,11 +10,11 @@
 class NeighborListTest : public ::testing::Test {
 protected:
     int num_atoms;
-    double basis_vectors[3][3];
+    float basis_vectors[3][3];
     int atomic_numbers[12];
-    double frac_coords[12][3];
-    double rcut;
-    double bin_size_xyz[3];
+    float frac_coords[12][3];
+    float rcut;
+    float bin_size_xyz[3];
     bool pbc_xyz[3];
 
 
@@ -116,7 +116,7 @@ TEST_F(NeighborListTest, constructor_1) {
     pbc_xyz[0] = true;      // X 方向上是否具有周期性
     pbc_xyz[1] = true;      // Y 方向上是否具有周期性
     pbc_xyz[2] = false;     // Z 方向上是否具有周期性
-    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::Structure<float> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
     /*
     int* scaling_matrix = (int*)malloc(sizeof(int) * 3);
     scaling_matrix[0] = 6;
@@ -124,7 +124,7 @@ TEST_F(NeighborListTest, constructor_1) {
     scaling_matrix[2] = 1;
     structure.make_supercell(scaling_matrix);
     */
-    ai2pot::NeighborList<double> neighbor_list(structure, rcut, bin_size_xyz, pbc_xyz, true);
+    ai2pot::NeighborList<float> neighbor_list(structure, rcut, bin_size_xyz, pbc_xyz, true);
     
     //neighbor_list.show_in_index();
     //printf("\n");
@@ -148,8 +148,8 @@ TEST_F(NeighborListTest, constructor_2) {
     pbc_xyz[0] = true;      // X 方向上是否具有周期性
     pbc_xyz[1] = true;      // Y 方向上是否具有周期性
     pbc_xyz[2] = false;     // Z 方向上是否具有周期性
-    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-    ai2pot::NeighborList<double> neighbor_list(structure, rcut, pbc_xyz, true);
+    ai2pot::Structure<float> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::NeighborList<float> neighbor_list(structure, rcut, pbc_xyz, true);
     
     //neighbor_list.show_in_index();
     //printf("\n");
@@ -166,13 +166,13 @@ TEST_F(NeighborListTest, copy_constructor) {
     pbc_xyz[0] = true;    
     pbc_xyz[1] = true;     
     pbc_xyz[2] = false;
-    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::Structure<float> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
     
-    ai2pot::NeighborList<double> neighbor_list_1;
-    ai2pot::NeighborList<double> neighbor_list_2(structure, rcut, pbc_xyz, false);
+    ai2pot::NeighborList<float> neighbor_list_1;
+    ai2pot::NeighborList<float> neighbor_list_2(structure, rcut, pbc_xyz, false);
 
-    ai2pot::NeighborList<double> neighbor_list_3(neighbor_list_1);
-    ai2pot::NeighborList<double> neighbor_list_4(neighbor_list_2);
+    ai2pot::NeighborList<float> neighbor_list_3(neighbor_list_1);
+    ai2pot::NeighborList<float> neighbor_list_4(neighbor_list_2);
 
     //neighbor_list_3.show_in_an();
     //neighbor_list_4.show_in_an();
@@ -184,12 +184,12 @@ TEST_F(NeighborListTest, assignment_operator) {
     pbc_xyz[0] = true;    
     pbc_xyz[1] = true;     
     pbc_xyz[2] = false;
-    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::Structure<float> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
 
-    ai2pot::NeighborList<double> neighbor_list_1;
-    ai2pot::NeighborList<double> neighbor_list_2(structure, rcut, pbc_xyz, false);
-    ai2pot::NeighborList<double> neighbor_list_3;
-    ai2pot::NeighborList<double> neighbor_list_4(structure, rcut, pbc_xyz, false);
+    ai2pot::NeighborList<float> neighbor_list_1;
+    ai2pot::NeighborList<float> neighbor_list_2(structure, rcut, pbc_xyz, false);
+    ai2pot::NeighborList<float> neighbor_list_3;
+    ai2pot::NeighborList<float> neighbor_list_4(structure, rcut, pbc_xyz, false);
 
     neighbor_list_3 = neighbor_list_1;
     //neighbor_list_3 = neighbor_list_2;
@@ -208,8 +208,8 @@ TEST_F(NeighborListTest, get_num_center_atoms) {
     pbc_xyz[0] = true;      // X 方向上是否具有周期性
     pbc_xyz[1] = true;      // Y 方向上是否具有周期性
     pbc_xyz[2] = false;     // Z 方向上是否具有周期性
-    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-    ai2pot::NeighborList<double> neighbor_list(structure, rcut, bin_size_xyz, pbc_xyz);
+    ai2pot::Structure<float> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::NeighborList<float> neighbor_list(structure, rcut, bin_size_xyz, pbc_xyz);
 
     const int num_center_atoms = neighbor_list.get_num_center_atoms();
     EXPECT_EQ(num_center_atoms, 12);
@@ -224,10 +224,10 @@ TEST_F(NeighborListTest, get_rcut) {
     pbc_xyz[0] = true;      // X 方向上是否具有周期性
     pbc_xyz[1] = true;      // Y 方向上是否具有周期性
     pbc_xyz[2] = false;     // Z 方向上是否具有周期性
-    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-    ai2pot::NeighborList<double> neighbor_list(structure, rcut, bin_size_xyz, pbc_xyz);
+    ai2pot::Structure<float> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::NeighborList<float> neighbor_list(structure, rcut, bin_size_xyz, pbc_xyz);
 
-    const double rcut = neighbor_list.get_rcut();
+    const float rcut = neighbor_list.get_rcut();
     EXPECT_FLOAT_EQ(rcut, 3.3);
 }
 
@@ -237,8 +237,8 @@ TEST_F(NeighborListTest, get_max_num_neigh_atoms) {
     pbc_xyz[0] = true;
     pbc_xyz[1] = true;
     pbc_xyz[2] = false;
-    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-    ai2pot::NeighborList<double> neighbor_list(structure, rcut, pbc_xyz, false);
+    ai2pot::Structure<float> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::NeighborList<float> neighbor_list(structure, rcut, pbc_xyz, false);
 
     int max_num_neigh_atoms = neighbor_list.get_max_num_neigh_atoms();
     EXPECT_EQ(max_num_neigh_atoms, 12);
@@ -251,13 +251,13 @@ TEST_F(NeighborListTest, find_info4mlff) {
     pbc_xyz[1] = true;
     pbc_xyz[2] = false;
     int umax_num_neigh_atoms = 19;
-    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-    ai2pot::NeighborList<double> neighbor_list(structure, rcut, pbc_xyz, true);
+    ai2pot::Structure<float> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    ai2pot::NeighborList<float> neighbor_list(structure, rcut, pbc_xyz, true);
     int inum = structure.get_num_atoms();
     int* ilist = (int*)malloc(sizeof(int) * inum);
     int* numneigh = (int*)malloc(sizeof(int) * inum);
     int* firstneigh = (int*)malloc(sizeof(int) * inum * umax_num_neigh_atoms);
-    double* relative_coords = (double*)malloc(sizeof(double) * inum * umax_num_neigh_atoms * 3);
+    float* relative_coords = (float*)malloc(sizeof(float) * inum * umax_num_neigh_atoms * 3);
     int* types = (int*)malloc(sizeof(int) * inum);
     int nghost;
 
@@ -278,7 +278,7 @@ TEST_F(NeighborListTest, find_info4mlff) {
     
     for (int ii=0; ii<inum; ii++) {
         for (int jj=0; jj<numneigh[ii]; jj++) {
-            double tmp_distance;
+            float tmp_distance;
             tmp_distance = std::sqrt(
                 std::pow(relative_coords[ii*umax_num_neigh_atoms*3 + jj*3 + 0], 2) + 
                 std::pow(relative_coords[ii*umax_num_neigh_atoms*3 + jj*3 + 1], 2) + 

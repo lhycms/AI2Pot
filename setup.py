@@ -23,5 +23,8 @@ setup(
             "joblib>=1.2.0",
             "h5py>=3.8.0",
             "pybind11>=2.11.1",
-    ]
+    ],
+    extras_requires={
+        "presentation": ["chgnet"]
+    }
 )

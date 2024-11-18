@@ -9,7 +9,7 @@ from ai2pot.mtp import NNMtp, LitNNMtp
 
 
 # 1. 初始化 Dataset
-labeled_system = LabeledSystem("/data/home/liuhanyu/hyliu/code/rubbish/test/AI2Pot/test/test_data/OUTCARs/ReNbSSe/OUTCAR")
+labeled_system = LabeledSystem("./ReNbSSe/OUTCAR")
 mlff_dataset = ScDataset(labeled_system=labeled_system,
                          rcut=3.2,
                          umax_num_neigh_atoms=100,
@@ -17,10 +17,10 @@ mlff_dataset = ScDataset(labeled_system=labeled_system,
                          sort=False,
                          torch_float_dtype=torch.float64)
 # 2. 初始化 MTP 势函数模型
-nn_mtp = NNMtp(mtp_level=28, 
+nn_mtp = NNMtp(mtp_level=16, 
                ntypes=4,
                chebyshev_size=8,
-               rmax=3.2,
+               rmax=5,
                rmin=0.5,
                umax_num_neighs=100,
                fit_sizes_list=[],

@@ -230,16 +230,14 @@ class LitNNMtp(L.LightningModule):
             loss = self.e_criterion(binum=inum, input_benergies=e_ml, target_benergies=e_dft)   \
                    + self.f_criterion(binum=inum, input_bforces=fi_ml, target_bforces=fi_dft)   \
                    + self.v_criterion(binum=inum, input_bvirials=v_ml, target_bvirials=v_dft)
-            print("e_rmse = ", self.e_criterion(binum=inum, input_benergies=e_ml, target_benergies=e_dft))
-            print("f_rmse = ", self.f_criterion(binum=inum, input_bforces=fi_ml, target_bforces=fi_dft))
-            print("e_rmse = ", self.v_criterion(binum=inum, input_bvirials=v_ml, target_bvirials=v_dft))
+            print("***+++ ", e_ml, e_dft)
         else:
             inum, ilist, numneigh, firstneigh, rcs, types, nghost, e_dft, fi_dft = batch
             e_ml, fi_ml, v_ml = self.model(ilist, numneigh, firstneigh, rcs, types, nghost)
             loss = self.e_criterion(binum=inum, input_benergies=e_ml, target_benergies=e_dft)   \
                    + self.f_criterion(binum=inum, input_bforces=fi_ml, target_bforces=fi_dft)
         self.log("train_loss", loss, prog_bar=True, on_step=True, on_epoch=True)
-        return 0.01 * loss
+        return loss
     
     def configure_optimizers(self):
         optimizer: torch.optim.Optimizer = torch.optim.Adam(self.model.parameters(),

@@ -20,7 +20,7 @@ ReNbSSe_OUTCAR_DIR = os.path.join(TEST_FILES_DIR, "OUTCARs", "ReNbSSe")
 class DescriptorMtpTest(unittest.TestCase):
     def setUp(self) -> None:
         print("DescriptorMtpTest (TestCase) is setting up...\n")
-        mtp_level: int = 10
+        mtp_level: int = 16
         ntypes: int = 4
         chebyshev_size: int = 8
         rmax: float = 3.2
@@ -104,15 +104,19 @@ class NNMtpTest(unittest.TestCase):
         outcar_path: str = f"{ReNbSSe_OUTCAR_DIR}/OUTCAR"
         labeled_system: LabeledSystem = LabeledSystem(outcar_path)
         self.mlff_dataset: ScDataset = ScDataset(labeled_system=labeled_system,
-                                                     rcut=rmax,
-                                                     umax_num_neigh_atoms=umax_num_neighs)
+                                                 rcut=rmax,
+                                                 umax_num_neigh_atoms=umax_num_neighs,
+                                                 pbc_xyz=[True, True, True],
+                                                 sort=False,
+                                                 torch_float_dtype=torch.float64)
         self.mlff_dataloader: DataLoader = DataLoader(dataset=self.mlff_dataset,
                                                       batch_size=5,
                                                       shuffle=True)
-        self.trainer = L.Trainer(max_epochs=3)
+        self.trainer = L.Trainer(max_epochs=30)
         
     def test_forward(self):
         self.nn_mtp.to(torch.float64)
+        t1 = time.time()
         for ii, batch_data in enumerate(self.mlff_dataloader):
             ei, fi, v = self.nn_mtp(batch_data[1],
                                     batch_data[2],
@@ -120,10 +124,12 @@ class NNMtpTest(unittest.TestCase):
                                     batch_data[4].requires_grad_(True),
                                     batch_data[5],
                                     batch_data[6])
-            #print("\t{0}. In Batch#{1}, descrip.size() = ".format(ii+1, ii), 
-            #      ei.size(), 
-            #      fi.size(),
-            #      v.size())
+            print("\t{0}. In Batch#{1}, descrip.size() = ".format(ii+1, ii), 
+                  ei.size(), 
+                  fi.size(),
+                  v.size())
+        t2 = time.time()
+        print("Cost time: ", t2 - t1)
     
     def test_train(self):
         self.nn_mtp.to(torch.float64)
