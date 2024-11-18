@@ -5,9 +5,9 @@ import torch.nn as nn
 import lightning as L
 
 from ai2pot.fromcc import mtpParamOp, mtpBasisOp, forceSrOp, virialSrOp
-#from ai2pot.loss import (ELoss,
-#                         FLoss,
-#                         VLoss)
+from ai2pot.loss import (ERmse,
+                         FRmse,
+                         VRmse)
 
 
 class DescriptorMtp(nn.Module):
@@ -215,27 +215,28 @@ class NNMtp(nn.Module):
 class LitNNMtp(L.LightningModule):
     def __init__(self, 
                  model: nn.Module, 
-                 has_forces: bool = True,
                  has_virials: bool = True):
         super().__init__()
         self.model: nn.Module = model
-        self.criterion: nn.Module = nn.MSELoss()
-        self.has_forces: bool = has_forces
+        self.e_criterion: nn.Module = ERmse()
+        self.f_criterion: nn.Module = FRmse()
         self.has_virials: bool = has_virials
+        self.v_criterion: nn.Module = VRmse()
         
     def training_step(self, batch, batch_idx):
-        if (self.has_forces and self.has_virials):
-            inum, ilist, numneigh, firstneigh, rcs, types, nghost, energies, forces, virials = batch
-            e, fi, v = self.model(ilist, numneigh, firstneigh, rcs, types, nghost)
-            loss: torch.tensor = self.criterion(torch.sum(e), torch.sum(energies))
-            return torch.sqrt(loss)
-        elif (self.has_forces):
-            inum, ilist, numneigh, firstneigh, rcs, types, nghost, energies, forces, virials = batch
-            e, fi = self.model(ilist, numneigh, firstneigh, rcs, types, nghost)
-            loss: torch.tensor = self.criterion(torch.sum(e), torch.sum(energies))
-            return torch.sqrt(loss)
+        loss: torch.Tensor = torch.Tensor()
+        if (self.has_virials):
+            inum, ilist, numneigh, firstneigh, rcs, types, nghost, e_dft, fi_dft, v_dft = batch
+            e_ml, fi_ml, v_ml = self.model(ilist, numneigh, firstneigh, rcs, types, nghost)
+            loss = self.e_criterion(binum=inum, input_benergies=e_ml, target_benergies=e_dft)   \
+                   + self.f_criterion(binum=inum, input_bforces=fi_ml, target_bforces=fi_dft)   \
+                   + self.v_criterion(binum=inum, input_bvirials=v_ml, target_bvirials=v_dft)
         else:
-            pass
+            inum, ilist, numneigh, firstneigh, rcs, types, nghost, e_dft, fi_dft = batch
+            e_ml, fi_ml, v_ml = self.model(ilist, numneigh, firstneigh, rcs, types, nghost)
+            loss = self.e_criterion(binum=inum, input_benergies=e_ml, target_benergies=e_dft)   \
+                   + self.f_criterion(binum=inum, input_bforces=fi_ml, target_bforces=fi_dft)
+        return loss
     
     def configure_optimizers(self):
         optimizer: torch.optim.Optimizer = torch.optim.Adam(self.model.parameters(),
