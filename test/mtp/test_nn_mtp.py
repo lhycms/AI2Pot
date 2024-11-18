@@ -85,7 +85,7 @@ class FittingNetTest(unittest.TestCase):
 class NNMtpTest(unittest.TestCase):
     def setUp(self) -> None:
         print("NNMtpTest (TestCase) is setting up...\n")
-        mtp_level: int = 10
+        mtp_level: int = 16
         ntypes: int = 4
         chebyshev_size: int = 8
         rmax: float = 5.0
@@ -112,7 +112,9 @@ class NNMtpTest(unittest.TestCase):
         self.mlff_dataloader: DataLoader = DataLoader(dataset=self.mlff_dataset,
                                                       batch_size=5,
                                                       shuffle=True)
-        self.trainer = L.Trainer(max_epochs=30)
+        self.trainer = L.Trainer(max_epochs=30,
+                                 accelerator="cpu",
+                                 devices=4)
         
     def test_forward(self):
         self.nn_mtp.to(torch.float64)
