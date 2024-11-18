@@ -1,3 +1,3 @@
-from ai2pot.loss.potential_loss import (ELoss,
-                                        FLoss,
-                                        VLoss)
+from ai2pot.loss.potential_loss import (ERmse,
+                                        FRmse,
+                                        VRmse)

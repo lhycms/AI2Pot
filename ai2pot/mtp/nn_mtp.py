@@ -183,7 +183,6 @@ class NNMtp(nn.Module):
                                                            btypes)
         e_i_sr: torch.Tensor = self.fitting_module(btypes, bdescriptor)
         e_tot_sr: torch.Tensor = torch.sum(e_i_sr, dim=1)
-        print("***+++*** ", e_tot_sr.size(), e_i_sr.size())
         mask: List[Optional[torch.Tensor]] = [torch.ones_like(e_tot_sr,
                                                               device=brcs.device,
                                                               dtype=brcs.dtype)]
@@ -237,7 +236,6 @@ class LitNNMtp(L.LightningModule):
             return torch.sqrt(loss)
         else:
             pass
-    
     
     def configure_optimizers(self):
         optimizer: torch.optim.Optimizer = torch.optim.Adam(self.model.parameters(),

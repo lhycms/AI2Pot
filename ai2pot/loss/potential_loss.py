@@ -12,12 +12,13 @@ class ERmse(nn.Module):
     def forward(self,
                 binum: torch.TensorType,
                 input_benergies: torch.TensorType,
-                target_benergyies: torch.TensorType) -> torch.Tensor:
-        loss: torch.TensorType = self.criterion(input_benergies,
-                                                target_benergyies)
-        binum = binum.view(input_benergies.size()[0], 1)
-        loss = loss / binum
-        return torch.sqrt(loss)
+                target_benergies: torch.TensorType) -> torch.Tensor:
+        batch_size: int = binum.size()[0]
+        loss_mse: torch.Tensor = self.criterion(input_benergies,
+                                                target_benergies)
+        loss_rmse_avg: torch.Tensor = torch.sqrt(loss_mse / binum)
+        loss: torch.Tensor = torch.sum(loss_rmse_avg) / batch_size
+        return loss
 
 
 class FRmse(nn.Module):
@@ -29,13 +30,14 @@ class FRmse(nn.Module):
                 binum: torch.TensorType,
                 input_bforces: torch.TensorType,
                 target_bforces: torch.TensorType) -> torch.Tensor:
-        loss: torch.TensorType = self.criterion(input_bforces,
+        batch_size: int = binum.size()[0]
+        loss_mse: torch.Tensor = self.criterion(input_bforces,
                                                 target_bforces)
-        binum = binum.view(input_bforces.size()[0], 1, 1)
-        loss = loss / binum
-        return torch.sqrt(loss)
-
-
+        loss_rmse_avg: torch.Tensor = torch.sqrt(loss_mse.sum(dim=(1, 2)).view(batch_size, -1) / (3*binum))
+        loss: torch.Tensor = torch.sum(loss_rmse_avg) / batch_size
+        return loss
+        
+        
 class VRmse(nn.Module):
     def __init__(self):
         super(VRmse, self).__init__()
@@ -43,13 +45,14 @@ class VRmse(nn.Module):
         
     def forward(self,
                 binum: torch.TensorType,
-                input_virials: torch.TensorType,
-                target_virials: torch.TensorType) -> torch.Tensor:
-        loss: torch.TensorType = self.criterion(input_virials,
-                                                target_virials)
-        binum = binum.view(input_virials.size()[0], 1, 1)
-        loss = loss / binum
-        return torch.sqrt(loss)
+                input_bvirials: torch.TensorType,
+                target_bvirials: torch.TensorType) -> torch.Tensor:
+        batch_size: int = binum.size()[0]
+        loss_mse: torch.Tensor = self.criterion(input_bvirials,
+                                                target_bvirials)
+        loss_rmse_avg: torch.Tensor = torch.sqrt(loss_mse.sum(dim=(1, 2)).view(batch_size, -1) / (9*binum))
+        loss: torch.Tensor = torch.sum(loss_rmse_avg) / batch_size
+        return loss
 
 
 class PotRmse(nn.Module):
