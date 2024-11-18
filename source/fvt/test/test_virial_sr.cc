@@ -207,8 +207,8 @@ for (int ii=0; ii<9; ii++)
 printf("\n");
 
 printf("2.1. Derivatives w.r.t. dei_drij[%d][%d][%d] calculated by custom code:\n\t", center_idx_modify, neighbor_idx_modify, direction_idx_modify);
-for (int ii=0; ii<9; ii++)
-    printf("%6lf, ", virial_sr_der1[ii*inum*umax_num_neighs*3 + center_idx_modify*umax_num_neighs*3 + neighbor_idx_modify*3 + direction_idx_modify]);
+for (int bb=0; bb<3; bb++)
+    printf("%6lf, ", virial_sr_der1[(direction_idx_modify*3+bb)*inum*umax_num_neighs + center_idx_modify*umax_num_neighs + neighbor_idx_modify]);
 printf("\n");
 printf("2.2. Derivatives w.r.t. dei_drij[%d][%d][%d] calculated by finite difference method:\n\t", center_idx_modify, neighbor_idx_modify, direction_idx_modify);
 for (int ii=0; ii<9; ii++)
@@ -250,8 +250,8 @@ for (int ii=0; ii<9; ii++)
 printf("\n");
 
 printf("2.1. Derivative w.r.t. rcs[%d][%d][%d] calculated by custom code:\n\t", center_idx_modify, neighbor_idx_modify, direction_idx_modify);
-for (int ii=0; ii<9; ii++)
-    printf("%6lf, ", virial_sr_der2[ii*inum*umax_num_neighs*3 + center_idx_modify*umax_num_neighs*3 + neighbor_idx_modify*3 + direction_idx_modify]);
+for (int aa=0; aa<3; aa++)
+    printf("%6lf, ", virial_sr_der2[(aa*3+direction_idx_modify)*inum*umax_num_neighs + center_idx_modify*umax_num_neighs + neighbor_idx_modify]);
 printf("\n");
 printf("2.2. Derivative w.r.t. rcs[%d][%d][%d] calculated by finite difference method:\n\t", center_idx_modify, neighbor_idx_modify, direction_idx_modify);
 for (int ii=0; ii<9; ii++)

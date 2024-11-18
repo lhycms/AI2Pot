@@ -31,8 +31,8 @@ torch::autograd::variable_list VirialSrFunction::forward(
             .dtype(torch::kFloat32)
             .device(bdei_drij_tensor.device());
         bvirial_val_tensor = at::zeros({nbatches, 3, 3}, float_options);
-        bvirial_der1_tensor = at::zeros({nbatches, 3, 3, nlocal, umax_num_neighs, 3}, float_options);
-        bvirial_der2_tensor = at::zeros({nbatches, 3, 3, nlocal, umax_num_neighs, 3}, float_options);
+        bvirial_der1_tensor = at::zeros({nbatches, 3, 3, nlocal, umax_num_neighs}, float_options);
+        bvirial_der2_tensor = at::zeros({nbatches, 3, 3, nlocal, umax_num_neighs}, float_options);
 
         for (int bb=0; bb<nbatches; bb++) {
             float *virial_val = bvirial_val_tensor[bb].data_ptr<float>();
@@ -57,8 +57,8 @@ torch::autograd::variable_list VirialSrFunction::forward(
             .dtype(torch::kFloat64)
             .device(bdei_drij_tensor.device());
         bvirial_val_tensor = at::zeros({nbatches, 3, 3}, float_options);
-        bvirial_der1_tensor = at::zeros({nbatches, 3, 3, nlocal, umax_num_neighs, 3}, float_options);
-        bvirial_der2_tensor = at::zeros({nbatches, 3, 3, nlocal, umax_num_neighs, 3}, float_options);
+        bvirial_der1_tensor = at::zeros({nbatches, 3, 3, nlocal, umax_num_neighs}, float_options);
+        bvirial_der2_tensor = at::zeros({nbatches, 3, 3, nlocal, umax_num_neighs}, float_options);
 
         for (int bb=0; bb<nbatches; bb++) {
             double *virial_val = bvirial_val_tensor[bb].data_ptr<double>();
@@ -97,7 +97,6 @@ torch::autograd::variable_list VirialSrFunction::backward(
     int nbatches = (int)bvirial_der1_tensor.size(0);
     int nlocal = (int)bvirial_der1_tensor.size(3);
     int umax_num_neighs = (int)bvirial_der1_tensor.size(4);
-
     c10::TensorOptions int_options = c10::TensorOptions()
         .dtype(torch::kInt32)
         .device(bgrad_output_tensor.device());
@@ -122,10 +121,10 @@ torch::autograd::variable_list VirialSrFunction::backward(
                 for (int jj=0; jj<numneigh[ii]; jj++) {
                     for (int aa=0; aa<3; aa++) {
                         for (int bb=0; bb<3; bb++) {
-                            int tmp_idx1 = ii*umax_num_neighs*3 + jj*3 + aa;
-                            int tmp_idx2 = ii*umax_num_neighs*3 + jj*3 + bb;
-                            out_der1[tmp_idx1] += grad_output[aa*3 + bb] * virial_der1[(aa*3 + bb)*nlocal*umax_num_neighs*3 + tmp_idx1];
-                            out_der2[tmp_idx2] += grad_output[aa*3 + bb] * virial_der2[(aa*3 + bb)*nlocal*umax_num_neighs*3 + tmp_idx2];
+                            int tmp_de_idx = ii*umax_num_neighs*3 + jj*3 + aa;
+                            int tmp_rij_idx = ii*umax_num_neighs*3 + jj*3 + bb;
+                            out_der1[tmp_de_idx] += grad_output[aa*3 + bb] * virial_der1[(aa*3 + bb)*nlocal*umax_num_neighs + ii*umax_num_neighs + jj];
+                            out_der2[tmp_rij_idx] += grad_output[aa*3 + bb] * virial_der2[(aa*3 + bb)*nlocal*umax_num_neighs + ii*umax_num_neighs + jj];
                         }
                     }
                 }
@@ -137,6 +136,7 @@ torch::autograd::variable_list VirialSrFunction::backward(
             .device(c10::kCPU);
         bout_der1_tensor = at::zeros({nbatches, nlocal, umax_num_neighs, 3}, float_options);
         bout_der2_tensor = at::zeros({nbatches, nlocal, umax_num_neighs, 3}, float_options);
+
         for (int bb=0; bb<nbatches; bb++) {
             double *out_der1 = bout_der1_tensor[bb].data_ptr<double>();
             double *out_der2 = bout_der2_tensor[bb].data_ptr<double>();
@@ -148,10 +148,10 @@ torch::autograd::variable_list VirialSrFunction::backward(
                 for (int jj=0; jj<numneigh[ii]; jj++) {
                     for (int aa=0; aa<3; aa++) {
                         for (int bb=0; bb<3; bb++) {
-                            int tmp_idx1 = ii*umax_num_neighs*3 + jj*3 + aa;
-                            int tmp_idx2 = ii*umax_num_neighs*3 + jj*3 + bb;
-                            out_der1[tmp_idx1] += grad_output[aa*3 + bb] * virial_der1[(aa*3 + bb)*nlocal*umax_num_neighs*3 + tmp_idx1];
-                            out_der2[tmp_idx2] += grad_output[aa*3 + bb] * virial_der2[(aa*3 + bb)*nlocal*umax_num_neighs*3 + tmp_idx2];
+                            int tmp_de_idx = ii*umax_num_neighs*3 + jj*3 + aa;
+                            int tmp_rij_idx = ii*umax_num_neighs*3 + jj*3 + bb;
+                            out_der1[tmp_de_idx] += grad_output[aa*3 + bb] * virial_der1[(aa*3 + bb)*nlocal*umax_num_neighs + ii*umax_num_neighs + jj];
+                            out_der2[tmp_rij_idx] += grad_output[aa*3 + bb] * virial_der2[(aa*3 + bb)*nlocal*umax_num_neighs + ii*umax_num_neighs + jj];
                         }
                     }
                 }
@@ -159,7 +159,7 @@ torch::autograd::variable_list VirialSrFunction::backward(
         }
     }
 
-    return {at::Tensor(), bvirial_der2_tensor, at::Tensor(), bvirial_der1_tensor};
+    return {at::Tensor(), bout_der1_tensor, at::Tensor(), bout_der2_tensor};
 }
 
 
