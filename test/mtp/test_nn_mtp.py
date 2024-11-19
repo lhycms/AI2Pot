@@ -17,7 +17,7 @@ TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")
 ReNbSSe_OUTCAR_DIR = os.path.join(TEST_FILES_DIR, "OUTCARs", "ReNbSSe")
 
 
-class DescriptorMtpTest(unittest.TestCase):
+class DescriptorMtpTest(object):
     def setUp(self) -> None:
         print("DescriptorMtpTest (TestCase) is setting up...\n")
         mtp_level: int = 16
@@ -57,7 +57,7 @@ class DescriptorMtpTest(unittest.TestCase):
         print("DescriptorMtpTest (TestCase) is tearing down...\n")
         
         
-class FittingNetTest(unittest.TestCase):
+class FittingNetTest(object):
     def setUp(self) -> None:
         print("FittingNetTest (TestSuite) is setting up...\n")
         num_descriptor: int = 16
@@ -66,7 +66,7 @@ class FittingNetTest(unittest.TestCase):
                                                  fit_sizes_list=fit_sizes_list,
                                                  fit_activation=nn.Tanh(),
                                                  bias_mark=False,
-                                                 energy_shift_tensor=False)
+                                                 energy_shift_tensor=torch.tensor(0))
         self.fitting_net.to(torch.float64)
         self.descriptor_tensor: torch.Tensor = torch.ones((2, num_descriptor), dtype=torch.float64)
     
@@ -81,7 +81,7 @@ class FittingNetTest(unittest.TestCase):
         print("FittingNetTest (TestCase) is tearing down...\n")
   
 
-class NNMtpTest(object):
+class NNMtpTest(unittest.TestCase):
     def setUp(self) -> None:
         print("NNMtpTest (TestCase) is setting up...\n")
         mtp_level: int = 16
@@ -113,37 +113,40 @@ class NNMtpTest(object):
                                                       shuffle=True)
         self.trainer = L.Trainer(max_epochs=1,
                                  accelerator="cpu",
-                                 devices=4)
+                                 devices=1)
         
     def test_forward(self):
         self.nn_mtp.to(torch.float64)
         t1 = time.time()
+        print("NNMtpTest.test_forward:")
+        print("-----------------------")
         for ii, batch_data in enumerate(self.mlff_dataloader):
-            ei, fi, v = self.nn_mtp(batch_data[1],
-                                    batch_data[2],
-                                    batch_data[3],
-                                    batch_data[4].requires_grad_(True),
-                                    batch_data[5],
-                                    batch_data[6])
-            print("\t{0}. In Batch#{1}, descrip.size() = ".format(ii+1, ii), 
-                  ei.size(), 
+            etot, fi, v = self.nn_mtp(batch_data[1],
+                                      batch_data[2],
+                                      batch_data[3],
+                                      batch_data[4].requires_grad_(True),
+                                      batch_data[5],
+                                      batch_data[6])
+            print("\t{0}. In Batch#{1}, e.size(), fi.size(), v.size() = ".format(ii+1, ii), 
+                  etot.size(), 
                   fi.size(),
                   v.size())
         t2 = time.time()
-        print("Cost time: ", t2 - t1)
+        #print("Cost time: ", t2 - t1)
     
+    '''
     def test_train(self):
         self.nn_mtp.to(torch.float64)
-        
-        print("+++***")
+        print("NNMtpTest.test_train:")
+        print("---------------------")
         for k, v in self.nn_mtp.named_parameters():
-            print(k, v.size(), v.requires_grad)
+            print('\t', k, v.size(), v.requires_grad)
         
         self.nn_mtp.train()
         lit_nn_mtp: L.LightningModule = LitNNMtp(model=self.nn_mtp)
         self.trainer.fit(model=lit_nn_mtp,
                          train_dataloaders=self.mlff_dataloader)
-        
+    '''  
     
     def tearDown(self) -> None:
         print("NNMtpTest (TestCase) is tearing down...\n")

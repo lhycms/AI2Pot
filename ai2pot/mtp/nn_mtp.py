@@ -73,10 +73,10 @@ class FittingNet(nn.Module):
                  fit_sizes_list: List[int] = [],
                  fit_activation: nn.Module = nn.Tanh(),
                  bias_mark: bool = True,
-                 energy_shift_tensor: Union[bool, torch.Tensor] = False):
+                 energy_shift_tensor: torch.Tensor = torch.tensor(0)):
         super(FittingNet, self).__init__()
         self.layer_sizes_list: List[int] = [num_descriptor] + fit_sizes_list + [1]
-        self.fit_activation: nn.Module = fit_activation
+        self.register_module("fit_activation", fit_activation)
         self.bias_mark: bool = bias_mark
         
         self.linears_list: nn.Module = nn.ModuleList()
@@ -92,10 +92,7 @@ class FittingNet(nn.Module):
                 if (self.bias_mark):
                     nn.init.normal_(self.linears_list[ii].bias, mean=0.0, std=1.0)
         
-        if not energy_shift_tensor:
-            self.register_buffer("energy_shift_tensor", tensor=torch.tensor(0))
-        else:
-            self.register_buffer("energy_shift_tensor", tensor=energy_shift_tensor)
+        self.register_buffer("energy_shift_tensor", tensor=energy_shift_tensor)
     
     
     def forward(self, bdescriptor_tensor: torch.Tensor):
@@ -109,7 +106,8 @@ class FittingNet(nn.Module):
                 hidden = tmp_linear(x)
                 hidden = self.fit_activation(hidden)
                 x = hidden
-        return x
+        # size = (num_atoms,)
+        return x.squeeze(dim=-1)
     
     
     def info(self):
@@ -145,7 +143,6 @@ class NNMtp(nn.Module):
         self.rmin: float = rmin
         self.umax_num_neighs: int = umax_num_neighs
         self.fit_activation: nn.Module = fit_activation
-        self.register_buffer("energy_shift_tensor", energy_shift_tensor)
         self.register_module("descriptor_module",
                              DescriptorMtp(self.mtp_level,
                                            self.ntypes,
@@ -153,13 +150,15 @@ class NNMtp(nn.Module):
                                            self.rmax,
                                            self.rmin,
                                            self.umax_num_neighs))
-        fitting_modules_list: nn.ModuleList = []
+        self.fitting_modules_list: nn.ModuleList = nn.ModuleList()
+        if not energy_shift_tensor:
+            energy_shift_tensor = torch.zeros(self.ntypes)
         for ii in range(ntypes):
-            fitting_modules_list.append(FittingNet(num_descriptor=self.descriptor_module.num_descriptors,
-                                                   fit_sizes_list=fit_sizes_list,
-                                                   fit_activation=fit_activation,
-                                                   bias_mark=bias_mark,
-                                                   energy_shift_tensor=energy_shift_tensor[ii]))
+            self.fitting_modules_list.append(FittingNet(num_descriptor=self.descriptor_module.num_descriptors,
+                                                        fit_sizes_list=fit_sizes_list,
+                                                        fit_activation=fit_activation,
+                                                        bias_mark=bias_mark,
+                                                        energy_shift_tensor=energy_shift_tensor[ii]))
     
     def forward(self,
                 bilist: torch.Tensor,
@@ -168,16 +167,20 @@ class NNMtp(nn.Module):
                 brcs: torch.Tensor,
                 btypes: torch.Tensor,
                 bnghost: torch.Tensor) -> torch.Tensor:
+        batch_size: int = bilist.size()[0]
         brcs.requires_grad_()
         bdescriptor: torch.Tensor = self.descriptor_module(bilist,
                                                            bnumneigh,
                                                            bfirstneigh,
                                                            brcs,
                                                            btypes)
-        e_i_sr: torch.Tensor = torch.zeros(bilist.size()[0], bilist.size()[1], 1)
+        e_i_sr_list: List[torch.Tensor] = []
         for itype in range(self.ntypes):
-            itype_mask: torch.Tensor = (btypes[bilist].unsqueeze(dim=-1) == itype)
-            e_i_sr[itype_mask] = self.fitting_modules_list[itype](btypes, bdescriptor)
+            itype_mask: torch.Tensor = (torch.take(input=btypes, index=bilist.to(torch.int64)) == itype)
+            itype_descriptor: torch.Tensor = bdescriptor[itype_mask].view(batch_size, -1, self.descriptor_module.num_descriptors)
+            e_i_sr_list.append(self.fitting_modules_list[itype](itype_descriptor))
+        e_i_sr: torch.Tensor = torch.cat(e_i_sr_list, dim=1)
+        print("***+++ ", e_i_sr.size())
         e_tot_sr: torch.Tensor = torch.sum(e_i_sr, dim=1)
         mask: List[Optional[torch.Tensor]] = [torch.ones_like(e_tot_sr,
                                                               device=brcs.device,
