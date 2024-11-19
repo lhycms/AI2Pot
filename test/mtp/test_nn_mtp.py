@@ -60,29 +60,28 @@ class DescriptorMtpTest(unittest.TestCase):
 class FittingNetTest(unittest.TestCase):
     def setUp(self) -> None:
         print("FittingNetTest (TestSuite) is setting up...\n")
-        ntypes: int = 4
         num_descriptor: int = 16
-        self.btypes = torch.tensor([[0, 1], [0, 1]], dtype=torch.int32)
         fit_sizes_list: List[int] = [20, 10, 5]
-        self.fitting_net: nn.Module = FittingNet(ntypes,
-                                                 num_descriptor,
-                                                 fit_sizes_list)
+        self.fitting_net: nn.Module = FittingNet(num_descriptor=num_descriptor,
+                                                 fit_sizes_list=fit_sizes_list,
+                                                 fit_activation=nn.Tanh(),
+                                                 bias_mark=False,
+                                                 energy_shift_tensor=False)
         self.fitting_net.to(torch.float64)
-        self.input_tensor: torch.Tensor = torch.ones((2, num_descriptor), dtype=torch.float64)
+        self.descriptor_tensor: torch.Tensor = torch.ones((2, num_descriptor), dtype=torch.float64)
     
     def test_forward(self):
-        output_tensor = self.fitting_net(self.btypes, self.input_tensor)
-        print(output_tensor.size())
+        e_i = self.fitting_net(self.descriptor_tensor)
+        print(e_i.size())
     
     def test_info(self):
-        print(self.fitting_net.linears_list)
         self.fitting_net.info()
         
     def tearDown(self) -> None:
         print("FittingNetTest (TestCase) is tearing down...\n")
   
 
-class NNMtpTest(unittest.TestCase):
+class NNMtpTest(object):
     def setUp(self) -> None:
         print("NNMtpTest (TestCase) is setting up...\n")
         mtp_level: int = 16
@@ -112,7 +111,7 @@ class NNMtpTest(unittest.TestCase):
         self.mlff_dataloader: DataLoader = DataLoader(dataset=self.mlff_dataset,
                                                       batch_size=5,
                                                       shuffle=True)
-        self.trainer = L.Trainer(max_epochs=30,
+        self.trainer = L.Trainer(max_epochs=1,
                                  accelerator="cpu",
                                  devices=4)
         
@@ -135,6 +134,12 @@ class NNMtpTest(unittest.TestCase):
     
     def test_train(self):
         self.nn_mtp.to(torch.float64)
+        
+        print("+++***")
+        for k, v in self.nn_mtp.named_parameters():
+            print(k, v.size(), v.requires_grad)
+        
+        self.nn_mtp.train()
         lit_nn_mtp: L.LightningModule = LitNNMtp(model=self.nn_mtp)
         self.trainer.fit(model=lit_nn_mtp,
                          train_dataloaders=self.mlff_dataloader)
