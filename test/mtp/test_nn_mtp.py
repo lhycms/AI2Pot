@@ -84,7 +84,7 @@ class FittingNetTest(object):
 class NNMtpTest(unittest.TestCase):
     def setUp(self) -> None:
         print("NNMtpTest (TestCase) is setting up...\n")
-        mtp_level: int = 16
+        mtp_level: int = 10
         ntypes: int = 4
         chebyshev_size: int = 8
         rmax: float = 5.0
@@ -109,9 +109,9 @@ class NNMtpTest(unittest.TestCase):
                                                  sort=False,
                                                  torch_float_dtype=torch.float64)
         self.mlff_dataloader: DataLoader = DataLoader(dataset=self.mlff_dataset,
-                                                      batch_size=5,
+                                                      batch_size=8,
                                                       shuffle=True)
-        self.trainer = L.Trainer(max_epochs=1,
+        self.trainer = L.Trainer(max_epochs=30,
                                  accelerator="cpu",
                                  devices=1)
         
@@ -134,7 +134,7 @@ class NNMtpTest(unittest.TestCase):
         t2 = time.time()
         #print("Cost time: ", t2 - t1)
     
-    '''
+    
     def test_train(self):
         self.nn_mtp.to(torch.float64)
         print("NNMtpTest.test_train:")
@@ -146,7 +146,7 @@ class NNMtpTest(unittest.TestCase):
         lit_nn_mtp: L.LightningModule = LitNNMtp(model=self.nn_mtp)
         self.trainer.fit(model=lit_nn_mtp,
                          train_dataloaders=self.mlff_dataloader)
-    '''  
+    
     
     def tearDown(self) -> None:
         print("NNMtpTest (TestCase) is tearing down...\n")

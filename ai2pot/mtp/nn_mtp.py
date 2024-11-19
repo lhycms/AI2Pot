@@ -150,6 +150,7 @@ class NNMtp(nn.Module):
                                            self.rmax,
                                            self.rmin,
                                            self.umax_num_neighs))
+        self.register_module("batch_norm", nn.BatchNorm1d(num_features=self.descriptor_module.num_descriptors))
         self.fitting_modules_list: nn.ModuleList = nn.ModuleList()
         if not energy_shift_tensor:
             energy_shift_tensor = torch.zeros(self.ntypes)
@@ -177,10 +178,10 @@ class NNMtp(nn.Module):
         e_i_sr_list: List[torch.Tensor] = []
         for itype in range(self.ntypes):
             itype_mask: torch.Tensor = (torch.take(input=btypes, index=bilist.to(torch.int64)) == itype)
-            itype_descriptor: torch.Tensor = bdescriptor[itype_mask].view(batch_size, -1, self.descriptor_module.num_descriptors)
+            print("***+++ ", bdescriptor[itype_mask].view(batch_size, -1, self.descriptor_module.num_descriptors).size())
+            itype_descriptor: torch.Tensor = self.batch_norm(bdescriptor[itype_mask].view(-1, self.descriptor_module.num_descriptors)).view(batch_size, -1, self.descriptor_module.num_descriptors)
             e_i_sr_list.append(self.fitting_modules_list[itype](itype_descriptor))
         e_i_sr: torch.Tensor = torch.cat(e_i_sr_list, dim=1)
-        print("***+++ ", e_i_sr.size())
         e_tot_sr: torch.Tensor = torch.sum(e_i_sr, dim=1)
         mask: List[Optional[torch.Tensor]] = [torch.ones_like(e_tot_sr,
                                                               device=brcs.device,
@@ -240,5 +241,5 @@ class LitNNMtp(L.LightningModule):
     
     def configure_optimizers(self):
         optimizer: torch.optim.Optimizer = torch.optim.SGD(self.model.parameters(),
-                                                           lr=1e-4)
+                                                           lr=1e-3)
         return optimizer
