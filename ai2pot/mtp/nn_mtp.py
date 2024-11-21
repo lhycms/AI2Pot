@@ -46,6 +46,8 @@ class DescriptorMtp(nn.Module):
                 bfirstneigh,
                 brcs,
                 btypes) -> torch.Tensor:
+        import time
+        t1 = time.time()
         descriptor: torch.Tensor = mtpBasisOp(self.alpha_index_basic_tensor,
                                               self.alpha_index_times_tensor,
                                               self.alpha_moment_mapping_tensor,
@@ -63,8 +65,11 @@ class DescriptorMtp(nn.Module):
                                               self.umax_num_neighs,
                                               self.rmax,
                                               self.rmin)[0]
+        t2 = time.time()
+        print(descriptor.size())
+        print("***+++ ", t2 - t1)
         return descriptor
-    
+
 
 class FittingNet(nn.Module):
     '''FittingNet for specific element.'''
@@ -73,7 +78,7 @@ class FittingNet(nn.Module):
                  fit_sizes_list: List[int] = [],
                  fit_activation: nn.Module = nn.Tanh(),
                  bias_mark: bool = True,
-                 energy_shift_tensor: torch.Tensor = torch.tensor(0)):
+                 energy_shift_tensor: torch.Tensor = torch.tensor(0.0)):
         super(FittingNet, self).__init__()
         self.layer_sizes_list: List[int] = [num_descriptor] + fit_sizes_list + [1]
         self.register_module("fit_activation", fit_activation)
@@ -92,6 +97,8 @@ class FittingNet(nn.Module):
                 if (self.bias_mark):
                     nn.init.normal_(self.linears_list[ii].bias, mean=0.0, std=1.0)
         
+        type_bias: torch.Tensor = torch.tensor(0.0)
+        self.register_parameter("type_bias", nn.Parameter(data=type_bias, requires_grad=True))
         self.register_buffer("energy_shift_tensor", tensor=energy_shift_tensor)
     
     
@@ -100,13 +107,13 @@ class FittingNet(nn.Module):
         for ii, tmp_linear in enumerate(self.linears_list):
             if (ii == (len(self.linears_list) - 1)):
                 hidden = tmp_linear(x)
-                hidden = hidden + self.energy_shift_tensor
                 x = hidden
             else:
                 hidden = tmp_linear(x)
                 hidden = self.fit_activation(hidden)
                 x = hidden
-        # size = (num_atoms,)
+        x = x + self.type_bias + self.energy_shift_tensor
+        # size = (batch_size, num_atoms,)
         return x.squeeze(dim=-1)
     
     
@@ -132,7 +139,8 @@ class NNMtp(nn.Module):
                  fit_sizes_list: Union[bool, List[int]] = False,
                  fit_activation: nn.Module = nn.Tanh(),
                  bias_mark: bool = True,
-                 energy_shift_tensor: Union[bool, torch.Tensor] = False):
+                 energy_shift_tensor: Union[bool, torch.Tensor] = False,
+                 has_virials: bool = False):
         if energy_shift_tensor is not False:
             assert(energy_shift_tensor.size()[0] == ntypes)
         super(NNMtp, self).__init__()
@@ -160,6 +168,7 @@ class NNMtp(nn.Module):
                                                         fit_activation=fit_activation,
                                                         bias_mark=bias_mark,
                                                         energy_shift_tensor=energy_shift_tensor[ii]))
+        self.has_virials: bool = has_virials
     
     def forward(self,
                 bilist: torch.Tensor,
@@ -196,14 +205,16 @@ class NNMtp(nn.Module):
                                            bnghost[0].item(),   # int32
                                            self.umax_num_neighs,
                                            eisr_rij_jacobian)[0]
-        virial_sr: torch.Tensor = virialSrOp(bnumneigh,
-                                             brcs,
-                                             self.umax_num_neighs,
-                                             eisr_rij_jacobian)[0]
-        return [e_tot_sr, force_sr, virial_sr]
+        if self.has_virials:
+            virial_sr: torch.Tensor = virialSrOp(bnumneigh,
+                                                 brcs,
+                                                 self.umax_num_neighs,
+                                                 eisr_rij_jacobian)[0]
+            return [e_tot_sr, force_sr, virial_sr]
+        return [e_tot_sr, force_sr]
     
     
-    def get_checkpoint_dict(self) -> Dict[str, Any]:
+    def get_ckpt_dict(self) -> Dict[str, Any]:
         pass
     
     
@@ -213,32 +224,32 @@ class NNMtp(nn.Module):
 
 class LitNNMtp(L.LightningModule):
     def __init__(self, 
-                 model: nn.Module, 
-                 has_virials: bool = True):
+                 model: nn.Module):
         super().__init__()
         self.model: nn.Module = model
         self.e_criterion: nn.Module = ERmse()
         self.f_criterion: nn.Module = FRmse()
-        self.has_virials: bool = has_virials
+        self.has_virials: bool = model.has_virials
         self.v_criterion: nn.Module = VRmse()
         
     def training_step(self, batch, batch_idx):
         if (self.has_virials):
             inum, ilist, numneigh, firstneigh, rcs, types, nghost, e_dft, fi_dft, v_dft = batch
             e_ml, fi_ml, v_ml = self.model(ilist, numneigh, firstneigh, rcs, types, nghost)
-            loss = self.e_criterion(binum=inum, input_benergies=e_ml, target_benergies=e_dft)   \
-                   + self.f_criterion(binum=inum, input_bforces=fi_ml, target_bforces=fi_dft)   \
-                   + self.v_criterion(binum=inum, input_bvirials=v_ml, target_bvirials=v_dft)
+            e_criterion_tensor: torch.Tensor = self.e_criterion(binum=inum, input_benergies=e_ml, target_benergies=e_dft)
+            f_criterion_tensor: torch.Tensor = self.f_criterion(binum=inum, input_bforces=fi_ml, target_bforces=fi_dft)
+            v_criterion_tensor: torch.Tensor = self.v_criterion(binum=inum, input_bvirials=v_ml, target_bvirials=v_dft)
+            loss = e_criterion_tensor + f_criterion_tensor + v_criterion_tensor
             print("***+++ ", e_ml, e_dft)
         else:
             inum, ilist, numneigh, firstneigh, rcs, types, nghost, e_dft, fi_dft = batch
             e_ml, fi_ml, v_ml = self.model(ilist, numneigh, firstneigh, rcs, types, nghost)
-            loss = self.e_criterion(binum=inum, input_benergies=e_ml, target_benergies=e_dft)   \
-                   + self.f_criterion(binum=inum, input_bforces=fi_ml, target_bforces=fi_dft)
-        #self.log("train_loss", loss, prog_bar=True, on_step=True, on_epoch=True)
+            e_criterion_tensor: torch.Tensor = self.e_criterion(binum=inum, input_benergies=e_ml, target_benergies=e_dft)
+            v_criterion_tensor: torch.Tensor = self.f_criterion(binum=inum, input_bforces=fi_ml, target_bforces=fi_dft)
+            loss = e_criterion_tensor + f_criterion_tensor
         return loss
     
     def configure_optimizers(self):
-        optimizer: torch.optim.Optimizer = torch.optim.SGD(self.model.parameters(),
+        optimizer: torch.optim.Optimizer = torch.optim.SGD(params=self.model.parameters(),
                                                            lr=1e-3)
         return optimizer

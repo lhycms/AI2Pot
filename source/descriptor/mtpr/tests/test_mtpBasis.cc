@@ -76,7 +76,7 @@ protected:
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/26.almtp",
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/28.almtp"
         };
-        mtp_param._load(filenames[4]); // 7
+        mtp_param._load(filenames[7]); // 7
 //mtp_param.show();
 
         inum = 12;

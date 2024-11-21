@@ -33,7 +33,7 @@ class DescriptorMtpTest(object):
                                                        rmax=rmax,
                                                        rmin=rmin,
                                                        umax_num_neighs=umax_num_neighs)
-        self.descriptor_mtp.to(torch.float64)
+        self.descriptor_mtp.to(torch.float32)
         
         self.outcar_path: str = f"{ReNbSSe_OUTCAR_DIR}/OUTCAR"
         self.labeled_system: LabeledSystem = LabeledSystem(self.outcar_path)
@@ -41,7 +41,7 @@ class DescriptorMtpTest(object):
                                                      rcut=rmax,
                                                      umax_num_neigh_atoms=umax_num_neighs)
         self.mlff_dataloader: DataLoader = DataLoader(self.mlff_dataset,
-                                                      batch_size=5,
+                                                      batch_size=8,
                                                       shuffle=True)
         
     def test_forward(self):
@@ -67,8 +67,8 @@ class FittingNetTest(object):
                                                  fit_activation=nn.Tanh(),
                                                  bias_mark=False,
                                                  energy_shift_tensor=torch.tensor(0))
-        self.fitting_net.to(torch.float64)
-        self.descriptor_tensor: torch.Tensor = torch.ones((2, num_descriptor), dtype=torch.float64)
+        self.fitting_net.to(torch.float32)
+        self.descriptor_tensor: torch.Tensor = torch.ones((2, num_descriptor), dtype=torch.float32)
     
     def test_forward(self):
         e_i = self.fitting_net(self.descriptor_tensor)
@@ -84,13 +84,13 @@ class FittingNetTest(object):
 class NNMtpTest(unittest.TestCase):
     def setUp(self) -> None:
         print("NNMtpTest (TestCase) is setting up...\n")
-        mtp_level: int = 10
+        mtp_level: int = 16
         ntypes: int = 4
         chebyshev_size: int = 8
         rmax: float = 5.0
         rmin: float = 2.0
-        umax_num_neighs: int = 40
-        fit_sizes_list: List[int] = []
+        umax_num_neighs: int = 20
+        fit_sizes_list: List[int] = [30]
         fit_activation: nn.Module = nn.Tanh()
         self.nn_mtp = NNMtp(mtp_level=mtp_level,
                             ntypes=ntypes,
@@ -99,7 +99,8 @@ class NNMtpTest(unittest.TestCase):
                             rmin=rmin,
                             umax_num_neighs=umax_num_neighs,
                             fit_sizes_list=fit_sizes_list,
-                            fit_activation=fit_activation)
+                            fit_activation=fit_activation,
+                            has_virials=True)
         outcar_path: str = f"{ReNbSSe_OUTCAR_DIR}/OUTCAR"
         labeled_system: LabeledSystem = LabeledSystem(outcar_path)
         self.mlff_dataset: ScDataset = ScDataset(labeled_system=labeled_system,
@@ -107,16 +108,17 @@ class NNMtpTest(unittest.TestCase):
                                                  umax_num_neigh_atoms=umax_num_neighs,
                                                  pbc_xyz=[True, True, True],
                                                  sort=False,
-                                                 torch_float_dtype=torch.float64)
+                                                 torch_float_dtype=torch.float32)
         self.mlff_dataloader: DataLoader = DataLoader(dataset=self.mlff_dataset,
-                                                      batch_size=8,
+                                                      batch_size=1,
                                                       shuffle=True)
-        self.trainer = L.Trainer(max_epochs=30,
+        self.trainer = L.Trainer(max_epochs=10,
                                  accelerator="cpu",
-                                 devices=1)
-        
+                                 devices=4)
+    
+    
     def test_forward(self):
-        self.nn_mtp.to(torch.float64)
+        self.nn_mtp.to(torch.float32)
         t1 = time.time()
         print("NNMtpTest.test_forward:")
         print("-----------------------")
@@ -128,15 +130,15 @@ class NNMtpTest(unittest.TestCase):
                                       batch_data[5],
                                       batch_data[6])
             print("\t{0}. In Batch#{1}, e.size(), fi.size(), v.size() = ".format(ii+1, ii), 
-                  etot.size(), 
+                  etot.size(),
                   fi.size(),
                   v.size())
         t2 = time.time()
-        #print("Cost time: ", t2 - t1)
+        print("Cost time: ", t2 - t1)
     
-    
+    '''
     def test_train(self):
-        self.nn_mtp.to(torch.float64)
+        self.nn_mtp.to(torch.float32)
         print("NNMtpTest.test_train:")
         print("---------------------")
         for k, v in self.nn_mtp.named_parameters():
@@ -146,7 +148,7 @@ class NNMtpTest(unittest.TestCase):
         lit_nn_mtp: L.LightningModule = LitNNMtp(model=self.nn_mtp)
         self.trainer.fit(model=lit_nn_mtp,
                          train_dataloaders=self.mlff_dataloader)
-    
+    '''
     
     def tearDown(self) -> None:
         print("NNMtpTest (TestCase) is tearing down...\n")

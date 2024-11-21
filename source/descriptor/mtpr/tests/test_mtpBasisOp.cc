@@ -61,7 +61,7 @@ protected:
     }
 
     void SetUp() override {
-        mtp_level = 10;
+        mtp_level = 16;
         chebyshev_size = 8;
         int_options = c10::TensorOptions()
             .dtype(torch::kInt32)
@@ -207,7 +207,7 @@ TEST_F(MtpBasisOpTest, forward)
                                                            rmax,
                                                            rmin)[0];
     
-//std::cout << "mtp_level = " << mtp_level << ": \n" << mtp_basis_tensor << std::endl;
+std::cout << "mtp_level = " << mtp_level << ": \n" << mtp_basis_tensor << std::endl;
 }
 
 

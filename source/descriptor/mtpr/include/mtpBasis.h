@@ -249,7 +249,6 @@ void MtpBasis<CoordType>::find_val_der(
                 mtp_basis_der2coeffs[ii*alpha_scalar_moments*num_coeffs + i*num_coeffs + idx] = mom_ders2coeffs[alpha_moment_mapping[i]*num_coeffs + idx];
         }
     }   
-   
     
     // Step . Free memory
     free(mom_vals);
