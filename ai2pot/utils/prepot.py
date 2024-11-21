@@ -15,11 +15,21 @@ class LsShifter(object):
     def __init__(self, ls: LabeledSystem):
         self.nframes = len(ls)
         self.elements_energy_shifts, self.systems_energy_shifts = LsShifter.get_energy_shifts(ls)
-    
+
+    def __str__(self):
+        return self.__repr__()
+
+    def __repr__(self):
+        print("LsShifter Summary:")
+        print("------------------")
+        print("1. nframes = ", self.nframes)
+        print("2. elements energy shifts:\n", self.elements_energy_shifts)
+        print("3. systems energy shifts:\n", self.systems_energy_shifts)
+        return ""
     
     @staticmethod
     def get_energy_shifts(ls: LabeledSystem):
-        unique_atom_types: np.ndarray =  np.unique(ls["atom_types"])
+        unique_atom_types: np.ndarray = np.unique(ls["atom_types"])
         nframes: int = len(ls)
         ntypes: int = unique_atom_types.shape[0]
         coeff_mtx: np.ndarray = np.zeros((nframes, ntypes))
@@ -41,7 +51,7 @@ class LsShifter(object):
                 energy_mtx = np.r_[energy_mtx, [add_energy]]
         elements_energy_shifts: np.ndarray = svd_solve(coeff_mtx, energy_mtx)
         systems_energy_shifts: np.ndarray = (energy_mtx - np.matmul(coeff_mtx, elements_energy_shifts)).flatten()
-        return elements_energy_shifts, systems_energy_shifts
+        return elements_energy_shifts.flatten(), systems_energy_shifts
         
 
 class MsShifter(object):
