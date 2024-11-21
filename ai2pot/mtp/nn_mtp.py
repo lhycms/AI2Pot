@@ -119,7 +119,7 @@ class FittingNet(nn.Module):
             if (self.bias_mark):
                 if (ii != len(self.linears_list) - 1):
                     print("\t\t\t+ linear#{0}.bias.size() = ".format(ii), tmp_linear.bias.size())
-                
+
 
 class NNMtp(nn.Module):
     def __init__(self,
@@ -178,7 +178,6 @@ class NNMtp(nn.Module):
         e_i_sr_list: List[torch.Tensor] = []
         for itype in range(self.ntypes):
             itype_mask: torch.Tensor = (torch.take(input=btypes, index=bilist.to(torch.int64)) == itype)
-            print("***+++ ", bdescriptor[itype_mask].view(batch_size, -1, self.descriptor_module.num_descriptors).size())
             itype_descriptor: torch.Tensor = self.batch_norm(bdescriptor[itype_mask].view(-1, self.descriptor_module.num_descriptors)).view(batch_size, -1, self.descriptor_module.num_descriptors)
             e_i_sr_list.append(self.fitting_modules_list[itype](itype_descriptor))
         e_i_sr: torch.Tensor = torch.cat(e_i_sr_list, dim=1)
