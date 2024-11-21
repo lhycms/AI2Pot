@@ -46,8 +46,6 @@ class DescriptorMtp(nn.Module):
                 bfirstneigh,
                 brcs,
                 btypes) -> torch.Tensor:
-        import time
-        t1 = time.time()
         descriptor: torch.Tensor = mtpBasisOp(self.alpha_index_basic_tensor,
                                               self.alpha_index_times_tensor,
                                               self.alpha_moment_mapping_tensor,
@@ -65,9 +63,6 @@ class DescriptorMtp(nn.Module):
                                               self.umax_num_neighs,
                                               self.rmax,
                                               self.rmin)[0]
-        t2 = time.time()
-        print(descriptor.size())
-        print("***+++ ", t2 - t1)
         return descriptor
 
 
@@ -224,32 +219,67 @@ class NNMtp(nn.Module):
 
 class LitNNMtp(L.LightningModule):
     def __init__(self, 
-                 model: nn.Module):
+                 model: nn.Module,
+                 lr_start: float = 1e-4,
+                 e_wgt_start: float = 0.02,
+                 e_wgt_end: float = 1.0,
+                 f_wgt_start: float = 1000.0,
+                 f_wgt_end: float = 1.0,
+                 v_wgt_start: float = 0.0,
+                 v_wgt_end: float = 0.0):
         super().__init__()
         self.model: nn.Module = model
+        self.has_virials: bool = model.has_virials
         self.e_criterion: nn.Module = ERmse()
         self.f_criterion: nn.Module = FRmse()
-        self.has_virials: bool = model.has_virials
         self.v_criterion: nn.Module = VRmse()
         
+        self.lr_start: float = lr_start
+        self.e_wgt_start: float = e_wgt_start
+        self.e_wgt_end: float = e_wgt_end
+        self.f_wgt_start: float = f_wgt_start
+        self.f_wgt_end: float = f_wgt_end
+        self.v_wgt_start: float = v_wgt_start
+        self.v_wgt_end: float = v_wgt_end
+        
+    def get_efv_wgts(self, epoch: int):
+        lr_current: float = self.optimizers().param_groups[0]['lr']
+        rate: float = lr_current / self.lr_start
+        e_wgt: float = self.e_wgt_end * (1 - rate) + self.e_wgt_start * rate
+        f_wgt: float = self.f_wgt_end * (1 - rate) + self.f_wgt_start * rate
+        v_wgt: float = self.v_wgt_end * (1 - rate) + self.v_wgt_start * rate
+        return [e_wgt, f_wgt, v_wgt]
+        
     def training_step(self, batch, batch_idx):
+        e_wgt, f_wgt, v_wgt = self.get_efv_wgts(epoch=self.current_epoch)
         if (self.has_virials):
             inum, ilist, numneigh, firstneigh, rcs, types, nghost, e_dft, fi_dft, v_dft = batch
             e_ml, fi_ml, v_ml = self.model(ilist, numneigh, firstneigh, rcs, types, nghost)
-            e_criterion_tensor: torch.Tensor = self.e_criterion(binum=inum, input_benergies=e_ml, target_benergies=e_dft)
-            f_criterion_tensor: torch.Tensor = self.f_criterion(binum=inum, input_bforces=fi_ml, target_bforces=fi_dft)
-            v_criterion_tensor: torch.Tensor = self.v_criterion(binum=inum, input_bvirials=v_ml, target_bvirials=v_dft)
+            e_criterion_tensor: torch.Tensor = e_wgt * self.e_criterion(binum=inum, input_benergies=e_ml, target_benergies=e_dft)
+            f_criterion_tensor: torch.Tensor = f_wgt * self.f_criterion(binum=inum, input_bforces=fi_ml, target_bforces=fi_dft)
+            v_criterion_tensor: torch.Tensor = v_wgt * self.v_criterion(binum=inum, input_bvirials=v_ml, target_bvirials=v_dft)
             loss = e_criterion_tensor + f_criterion_tensor + v_criterion_tensor
-            print("***+++ ", e_ml, e_dft)
         else:
             inum, ilist, numneigh, firstneigh, rcs, types, nghost, e_dft, fi_dft = batch
             e_ml, fi_ml, v_ml = self.model(ilist, numneigh, firstneigh, rcs, types, nghost)
-            e_criterion_tensor: torch.Tensor = self.e_criterion(binum=inum, input_benergies=e_ml, target_benergies=e_dft)
-            v_criterion_tensor: torch.Tensor = self.f_criterion(binum=inum, input_bforces=fi_ml, target_bforces=fi_dft)
+            e_criterion_tensor: torch.Tensor = e_wgt * self.e_criterion(binum=inum, input_benergies=e_ml, target_benergies=e_dft)
+            v_criterion_tensor: torch.Tensor = f_wgt * self.f_criterion(binum=inum, input_bforces=fi_ml, target_bforces=fi_dft)
             loss = e_criterion_tensor + f_criterion_tensor
         return loss
     
     def configure_optimizers(self):
-        optimizer: torch.optim.Optimizer = torch.optim.SGD(params=self.model.parameters(),
-                                                           lr=1e-3)
-        return optimizer
+        optimizer: torch.optim.Optimizer = torch.optim.Adam(params=self.model.parameters(),
+                                                            lr=self.lr_start)
+        scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer=optimizer, gamma=0.97)
+        return {
+            'optimizer': optimizer,
+            'lr_scheduler': {
+                'scheduler': scheduler,
+                'interval': 'epoch',
+                'frequency': 1
+            }
+        }
+
+    def on_epoch_end(self):
+        current_lr: float = self.optimizers().param_groups[0]['lr']
+        self.log('learning_rate', current_lr, prog_bar=True)
