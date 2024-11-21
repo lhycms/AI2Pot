@@ -9,6 +9,7 @@
 #include "./basis.h"
 #include "./mtpParam.h"
 
+
 #ifdef USE_CUDA
 extern void find_mtp_basis_val_der_cuda_launcher<float>();
 extern void find_mtp_basis_val_der_cuda_launcher<double>();
@@ -107,6 +108,7 @@ void MtpBasis<CoordType>::find_val_der(
     //memset(auto_coords_powers_, 0, sizeof(CoordType) * max_alpha_index_basic * 3);
     CoordType NeighbVect[3];
     CoordType distance_ij;
+    CoordType distance_ij_inv;
     int type_central;
     int type_outer;
     int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
@@ -134,6 +136,7 @@ void MtpBasis<CoordType>::find_val_der(
             distance_ij = std::sqrt( std::pow(NeighbVect[0], 2) + 
                                      std::pow(NeighbVect[1], 2) + 
                                      std::pow(NeighbVect[2], 2) );
+            distance_ij_inv = 1 / distance_ij;
             p_RadialBasis->build(distance_ij);
 
             auto_dist_powers_[0] = 1;
@@ -154,20 +157,18 @@ void MtpBasis<CoordType>::find_val_der(
                 CoordType pow1 = auto_coords_powers_[alpha_index_basic[i][2]][1];
                 CoordType pow2 = auto_coords_powers_[alpha_index_basic[i][3]][2];
                 CoordType mult0 = pow0 * pow1 * pow2;
-
+                
                 for (int xi=0; xi<chebyshev_size; xi++) {
                     int idx = type_central*ntypes*nmus*chebyshev_size + type_outer*nmus*chebyshev_size + mu*chebyshev_size + xi;
                     mom_vals[i] += coeffs[idx] * p_RadialBasis->vals()[xi] * powk * mult0;
                     mom_ders2coeffs[i*num_coeffs + idx] += p_RadialBasis->vals()[xi] * powk * mult0;
-                    mom_ders[i*umax_num_neigh_atoms + jj][0] += NeighbVect[0] / distance_ij * 
-                                    ( coeffs[idx] * p_RadialBasis->ders2r()[xi] * powk * mult0 
-                                    - coeffs[idx] * p_RadialBasis->vals()[xi] * k * powk / distance_ij * mult0 );
-                    mom_ders[i*umax_num_neigh_atoms + jj][1] += NeighbVect[1] / distance_ij * 
+                    
+                    CoordType shuffle_mom_ders_part = distance_ij_inv *
                                     ( coeffs[idx] * p_RadialBasis->ders2r()[xi] * powk * mult0
-                                    - coeffs[idx] * p_RadialBasis->vals()[xi] * k * powk / distance_ij * mult0 );
-                    mom_ders[i*umax_num_neigh_atoms + jj][2] += NeighbVect[2] / distance_ij *
-                                    ( coeffs[idx] * p_RadialBasis->ders2r()[xi] * powk * mult0
-                                    - coeffs[idx] * p_RadialBasis->vals()[xi] * k * powk / distance_ij * mult0 );
+                                    - coeffs[idx] * p_RadialBasis->vals()[xi] * k * powk * distance_ij_inv * mult0 );
+                    mom_ders[i*umax_num_neigh_atoms + jj][0] += NeighbVect[0] * shuffle_mom_ders_part;
+                    mom_ders[i*umax_num_neigh_atoms + jj][1] += NeighbVect[1] * shuffle_mom_ders_part;
+                    mom_ders[i*umax_num_neigh_atoms + jj][2] += NeighbVect[2] * shuffle_mom_ders_part;
                     if (alpha_index_basic[i][1] != 0) {
                         mom_ders[i*umax_num_neigh_atoms + jj][0] += coeffs[idx] * p_RadialBasis->vals()[xi] * powk * alpha_index_basic[i][1]
                                         * auto_coords_powers_[alpha_index_basic[i][1] - 1][0]
@@ -223,6 +224,7 @@ void MtpBasis<CoordType>::find_val_der(
                     }
                 }
             }
+            
 
             for (int jj=0; jj<numneigh[ii]; jj++)
             {
@@ -248,7 +250,7 @@ void MtpBasis<CoordType>::find_val_der(
             for (int idx=0; idx<num_coeffs; idx++)
                 mtp_basis_der2coeffs[ii*alpha_scalar_moments*num_coeffs + i*num_coeffs + idx] = mom_ders2coeffs[alpha_moment_mapping[i]*num_coeffs + idx];
         }
-    }   
+    }
     
     // Step . Free memory
     free(mom_vals);

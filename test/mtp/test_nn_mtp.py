@@ -110,13 +110,14 @@ class NNMtpTest(unittest.TestCase):
                                                  sort=False,
                                                  torch_float_dtype=torch.float32)
         self.mlff_dataloader: DataLoader = DataLoader(dataset=self.mlff_dataset,
-                                                      batch_size=1,
-                                                      shuffle=True)
+                                                      batch_size=8,
+                                                      shuffle=True,
+                                                      num_workers=4)
         self.trainer = L.Trainer(max_epochs=10,
                                  accelerator="cpu",
-                                 devices=4)
+                                 devices=1)
     
-    
+    '''
     def test_forward(self):
         self.nn_mtp.to(torch.float32)
         t1 = time.time()
@@ -135,8 +136,8 @@ class NNMtpTest(unittest.TestCase):
                   v.size())
         t2 = time.time()
         print("Cost time: ", t2 - t1)
-    
     '''
+    
     def test_train(self):
         self.nn_mtp.to(torch.float32)
         print("NNMtpTest.test_train:")
@@ -148,7 +149,6 @@ class NNMtpTest(unittest.TestCase):
         lit_nn_mtp: L.LightningModule = LitNNMtp(model=self.nn_mtp)
         self.trainer.fit(model=lit_nn_mtp,
                          train_dataloaders=self.mlff_dataloader)
-    '''
     
     def tearDown(self) -> None:
         print("NNMtpTest (TestCase) is tearing down...\n")

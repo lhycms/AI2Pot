@@ -193,6 +193,7 @@ protected:
         free(mtp_basis_der);
         free(mtp_basis_der2coeffs);
         free(coeffs);
+        
         free(ilist);
         free(numneigh);
         free(firstneigh);
