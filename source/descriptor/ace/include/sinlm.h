@@ -449,6 +449,7 @@ Sinlm<CoordType>& Sinlm<CoordType>::operator=(const Sinlm<CoordType> &rhs)
     this->_n_a_basis = rhs._n_a_basis;
     this->_l_3b_max = rhs._l_3b_max;
     this->_num_s_a = rhs._num_s_a;
+    return *this;
 }
 
 template <typename CoordType>
@@ -477,6 +478,7 @@ Sinlm<CoordType>& Sinlm<CoordType>::operator=(Sinlm<CoordType> &&rhs)
         this->_num_s_a = rhs._num_s_a;
         rhs._num_s_a = 0;
     }
+    return *this;
 }
 
 template <typename CoordType>
