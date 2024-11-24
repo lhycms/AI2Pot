@@ -5,9 +5,14 @@ file(MAKE_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/fvt)
 file(MAKE_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
 
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/fvt)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/obj/fvt)
 file(MAKE_DIRECTORY ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY})
 
+
+# 4. 
+if (CUDA_FOUND)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/gpu)
+endif()
 
 # 5. 
 if (TORCH_OP)
@@ -23,13 +28,15 @@ if (TORCH_OP)
 endif()
 
 # 6. 
-add_executable(test_force_sr ${CMAKE_CURRENT_SOURCE_DIR}/test/test_force_sr.cc)
-target_link_libraries(test_force_sr PRIVATE gtest gtest_main)
-gtest_discover_tests(test_force_sr)
+if (BUILD_TEST)
+    add_executable(test_force_sr ${CMAKE_CURRENT_SOURCE_DIR}/test/test_force_sr.cc)
+    target_link_libraries(test_force_sr PRIVATE gtest gtest_main)
+    gtest_discover_tests(test_force_sr)
 
-add_executable(test_virial_sr ${CMAKE_CURRENT_SOURCE_DIR}/test/test_virial_sr.cc)
-target_link_libraries(test_virial_sr PRIVATE gtest gtest_main)
-gtest_discover_tests(test_virial_sr)
+    add_executable(test_virial_sr ${CMAKE_CURRENT_SOURCE_DIR}/test/test_virial_sr.cc)
+    target_link_libraries(test_virial_sr PRIVATE gtest gtest_main)
+    gtest_discover_tests(test_virial_sr)
+endif()
 
 if (TORCH_OP)
     add_executable(test_force_sr_op ${CMAKE_CURRENT_SOURCE_DIR}/test/test_force_sr_op.cc)

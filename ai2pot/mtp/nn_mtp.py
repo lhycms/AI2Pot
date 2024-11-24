@@ -271,15 +271,17 @@ class LitNNMtp(L.LightningModule):
         optimizer: torch.optim.Optimizer = torch.optim.Adam(params=self.model.parameters(),
                                                             lr=self.lr_start)
         scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer=optimizer, gamma=0.97)
-        return {
-            'optimizer': optimizer,
-            'lr_scheduler': {
-                'scheduler': scheduler,
-                'interval': 'epoch',
-                'frequency': 1
-            }
-        }
+        print("***+++")
+        return optimizer
+        #    {
+        #    'optimizer': optimizer,
+        #    'lr_scheduler': {
+        #        'scheduler': scheduler,
+        #        'interval': 'epoch',
+        #        'frequency': 1
+        #    }
+        #}
 
-    def on_epoch_end(self):
-        current_lr: float = self.optimizers().param_groups[0]['lr']
-        self.log('learning_rate', current_lr, prog_bar=True)
+    #def on_epoch_end(self):
+    #    current_lr: float = self.optimizers().param_groups[0]['lr']
+    #    self.log('learning_rate', current_lr, prog_bar=True)

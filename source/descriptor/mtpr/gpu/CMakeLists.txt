@@ -10,6 +10,12 @@ file(MAKE_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 
 
 # 5. compile
+if (NOT DEFINED MAX_MTP_LEVEL)
+    message(STATUS "MAX_MTP_LEVEL is set to 16")
+    set(MAX_MTP_LEVEL 16)
+else()
+    message(STATUS "MAX_MTP_LEVEL is set to ${MAX_MTP_LEVEL}")
+endif()
 
 
 # 6. compile test
@@ -27,7 +33,7 @@ if (BUILD_TEST)
         CUDA_STANDARD ${CMAKE_CXX_STANDARD}
         CUDA_SEPERATE_COMPILATION on
         CUDA_ARCHITECTURES ${CMAKE_CUDA_ARCHITECTURES})
-    target_compile_definitions(test_mtp_utilities PRIVATE MAX_MTP_LEVEL=${MAX_MTP_LEVEL})
+    target_compile_definitions(test_mtp_basis PRIVATE MAX_MTP_LEVEL=${MAX_MTP_LEVEL})
     target_link_directories(test_mtp_basis PRIVATE ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/..)
     target_link_libraries(test_mtp_basis PRIVATE mtpParam gtest gtest_main)
 

@@ -3,8 +3,12 @@ cmake_minimum_required(VERSION 3.2 FATAL_ERROR)
 project(ai2pot)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+
 set(CMAKE_GTEST_DISCOVERY_TIMEOUT 600)
+
+set(CUDA_ARCHITECTURES 61)
 
 
 # 2. include FetchContent

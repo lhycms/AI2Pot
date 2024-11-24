@@ -61,7 +61,7 @@ if (BUILD_TEST)
         target_link_libraries(test_envMatrixOp PRIVATE gtest gtest_main ${TORCH_LIBRARIES} envMatrixOp)
 
         gtest_discover_tests(test_se4pw_op DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT})
-        gtest_discover_tests(test_demo_se4pw)
+        gtest_discover_tests(test_demo_se4pw  DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT})
         gtest_discover_tests(test_envMatrixOp DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT})
     endif()
 endif()

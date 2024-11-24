@@ -32,6 +32,7 @@ do                                                                              
 
 
 const int MAX_NNEI = 128;
-const int BLOCK_SIZE_X = 256;
+const int BLOCK_SIZE_X = 128;
+const int BLOCK_SIZE_Y = 8;
 
 #endif
