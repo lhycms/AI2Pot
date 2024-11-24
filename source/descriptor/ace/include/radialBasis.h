@@ -705,6 +705,7 @@ Gn<CoordType>& Gn<CoordType>::operator=(const Gn &rhs)
         this->_der2coeffs = nullptr;
         this->_der2r = 0.0;
     }
+    return *this;
 }
 
 template <typename CoordType>
@@ -730,6 +731,7 @@ Gn<CoordType>& Gn<CoordType>::operator=(Gn<CoordType> &&rhs)
         this->_der2r = rhs._der2r;
         rhs._der2r;
     }
+    return *this;
 }
 
 template <typename CoordType>
