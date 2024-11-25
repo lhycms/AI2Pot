@@ -46,6 +46,11 @@ static void find_virial_sr_val_der(
     int umax_num_neighs,
     CoordType *dei_drij)
 {
+    /* Wrong for CUDA:
+    memset(virial_sr_val, sizeof(CoordType) * 3 * 3);
+    memset(virial_sr_der1, sizeof(CoordType) * 3 * 3 * inum * umax_num_neighs);
+    memset(virial_sr_der2, sizeof(CoordType) * 3 * 3 * inum * umax_num_neighs);
+    */
     const int nx = blockIdx.x * blockDim.x + threadIdx.x;
     const int ny = blockIdx.y * blockDim.y + threadIdx.y;
     const int jj = nx;
@@ -59,7 +64,7 @@ static void find_virial_sr_val_der(
                 atomicAdd(&virial_sr_der1[(aa*3+bb)*inum*umax_num_neighs + ii*umax_num_neighs + jj],
                           rcs[tmp_rij_idx]);
                 atomicAdd(&virial_sr_der2[(aa*3+bb)*inum*umax_num_neighs + ii*umax_num_neighs + jj],
-                          rcs[tmp_de_idx]);
+                          dei_drij[tmp_de_idx]);
             }
         }
     }

@@ -178,7 +178,7 @@ protected:
 };  // class : VirialSrTest
 
 
-TEST_F(VirialSrTest, find_virial_sr_var_der) {
+TEST_F(VirialSrTest, find_virial_sr_var_der1) {
     int center_idx_modify = 0;
     int neighbor_idx_modify = 1;
     int direction_idx_modify = 0;
@@ -215,7 +215,53 @@ printf("\n");
 
 printf("2.1. Derivatives w.r.t. dei_drij[%d][%d][%d] calculated by custom code:\n\t", center_idx_modify, neighbor_idx_modify, direction_idx_modify);
 for (int bb=0; bb<3; bb++)
-    printf("%6lf, ", h_virial_sr_der1[(center_idx_modify*3+bb)*inum*umax_num_neighs + center_idx_modify*umax_num_neighs + neighbor_idx_modify]);
+    printf("%6lf, ", h_virial_sr_der1[(direction_idx_modify*3+bb)*inum*umax_num_neighs + center_idx_modify*umax_num_neighs + neighbor_idx_modify]);
+printf("\n");
+printf("2.2. Derivatives w.r.t. dei_drij[%d][%d][%d] calculated by finite difference method:\n\t", center_idx_modify, neighbor_idx_modify, direction_idx_modify);
+for (int ii=0; ii<9; ii++)
+    printf("%6lf, ", (h_virial_sr_val_[ii] - h_virial_sr_val[ii]) / 0.001);
+printf("\n");
+}
+
+
+TEST_F(VirialSrTest, find_virial_sr_var_der2) {
+    int center_idx_modify = 0;
+    int neighbor_idx_modify = 1;
+    int direction_idx_modify = 0;
+
+    ai2pot::fvt::find_virial_sr_val_der_launcher<double>(
+        h_virial_sr_val,
+        h_virial_sr_der1,
+        h_virial_sr_der2,
+        inum,
+        h_numneigh,
+        h_rcs,
+        umax_num_neighs,
+        h_dei_drij);
+    h_rcs[center_idx_modify*umax_num_neighs*3 + neighbor_idx_modify*3 + direction_idx_modify] += 0.001;
+    ai2pot::fvt::find_virial_sr_val_der_launcher<double>(
+        h_virial_sr_val_,
+        h_virial_sr_der1_,
+        h_virial_sr_der2_,
+        inum,
+        h_numneigh,
+        h_rcs,
+        umax_num_neighs,
+        h_dei_drij);
+    
+nblist.show_in_prim_index();
+printf("1.1. Value of virial\n\t");
+for (int ii=0; ii<9; ii++)
+    printf("%6lf, ", h_virial_sr_val[ii]);
+printf("\n");
+printf("1.2. Value of virial:\n\t");
+for (int ii=0; ii<9; ii++)
+    printf("%6lf, ", h_virial_sr_val[ii]);
+printf("\n");
+
+printf("2.1. Derivatives w.r.t. dei_drij[%d][%d][%d] calculated by custom code:\n\t", center_idx_modify, neighbor_idx_modify, direction_idx_modify);
+for (int aa=0; aa<3; aa++)
+    printf("%6lf, ", h_virial_sr_der2[(aa*3+direction_idx_modify)*inum*umax_num_neighs + center_idx_modify*umax_num_neighs + neighbor_idx_modify]);
 printf("\n");
 printf("2.2. Derivatives w.r.t. dei_drij[%d][%d][%d] calculated by finite difference method:\n\t", center_idx_modify, neighbor_idx_modify, direction_idx_modify);
 for (int ii=0; ii<9; ii++)
