@@ -23,6 +23,18 @@ static void find_force_sr_val_der(
     int umax_num_neighs,
     CoordType *dei_drij);
 
+template <typename CoordType>
+static void find_force_sr_val_der_launcher(
+    CoordType *h_force_sr_val,
+    CoordType *h_force_sr_der,
+    int inum,
+    int *h_ilist,
+    int *h_numneigh,
+    int *h_firstneigh,
+    int nghost,
+    int umax_num_neighs,
+    CoordType *h_dei_drij);
+
 
 template <typename CoordType>
 __global__
@@ -37,8 +49,10 @@ static void find_force_sr_val_der(
     int umax_num_neighs,
     CoordType *dei_drij)
 {
-    //memset(force_sr_val, 0, sizeof(CoordType) * (inum+nghost) * 3);
-    //memset(force_sr_der, 0, sizeof(CoordType) * (inum+nghost) * 3 * inum * umax_num_neighs);
+    /* Wrong for CUDA:
+    memset(force_sr_val, 0, sizeof(CoordType) * (inum+nghost) * 3);
+    memset(force_sr_der, 0, sizeof(CoordType) * (inum+nghost) * 3 * inum * umax_num_neighs);
+    */
     const int nx = blockIdx.x * blockDim.x + threadIdx.x;
     const int ny = blockIdx.y * blockDim.y + threadIdx.y;
     const int jj = nx;
@@ -84,9 +98,9 @@ static void find_force_sr_val_der_launcher(
     int *d_firstneigh;
     CoordType *d_dei_drij;
     CHECK( cudaMalloc((void**)&d_force_sr_val, sizeof(CoordType) * (inum+nghost) * 3) );
-    CHECK( cudaMemset(d_force_sr_val, 0, sizeof(CoordType) * (inum+nghost) * 3) );
+CHECK( cudaMemset(d_force_sr_val, 0, sizeof(CoordType) * (inum+nghost) * 3) );
     CHECK( cudaMalloc((void**)&d_force_sr_der, sizeof(CoordType) * (inum+nghost) * 3 * inum * umax_num_neighs) );
-    CHECK( cudaMemset(d_force_sr_der, 0, sizeof(CoordType) * (inum+nghost) * 3 * inum * umax_num_neighs) );
+CHECK( cudaMemset(d_force_sr_der, 0, sizeof(CoordType) * (inum+nghost) * 3 * inum * umax_num_neighs) );
     CHECK( cudaMalloc((void**)&d_ilist, sizeof(int) * inum) );
     CHECK( cudaMalloc((void**)&d_numneigh, sizeof(int) * inum) );
     CHECK( cudaMalloc((void**)&d_firstneigh, sizeof(int) * inum * umax_num_neighs) );

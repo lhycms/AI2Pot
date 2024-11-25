@@ -21,5 +21,14 @@ if (BUILD_TEST)
         CUDA_ARCHITECTURES ${CUDA_ARCHITECTURES})
     target_link_libraries(test_force_sr_gpu PRIVATE gtest gtest_main)
 
+    add_executable(test_virial_sr_gpu ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_virial_sr.cu)
+    set_target_properties(test_virial_sr_gpu PROPERTIES
+        CUDA_STANDARD ${CMAKE_CXX_STANDARD}
+        CUDA_SEPERABLE_COMPILATION ON
+        CUDA_ARCHITECTURES ${CUDA_ARCHITECTURES})
+    target_link_libraries(test_virial_sr_gpu PRIVATE gtest gtest_main)
+
+
     gtest_discover_tests(test_force_sr_gpu)
+    gtest_discover_tests(test_virial_sr_gpu)
 endif()
