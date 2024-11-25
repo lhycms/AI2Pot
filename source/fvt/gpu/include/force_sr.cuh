@@ -24,7 +24,6 @@ static void find_force_sr_val_der(
     CoordType *dei_drij);
 
 
-
 template <typename CoordType>
 __global__
 static void find_force_sr_val_der(
@@ -38,12 +37,12 @@ static void find_force_sr_val_der(
     int umax_num_neighs,
     CoordType *dei_drij)
 {
-    memset(force_sr_val, 0, sizeof(CoordType) * (inum+nghost) * 3);
-    memset(force_sr_der, 0, sizeof(CoordType) * (inum+nghost) * 3 * inum * umax_num_neighs);
+    //memset(force_sr_val, 0, sizeof(CoordType) * (inum+nghost) * 3);
+    //memset(force_sr_der, 0, sizeof(CoordType) * (inum+nghost) * 3 * inum * umax_num_neighs);
     const int nx = blockIdx.x * blockDim.x + threadIdx.x;
     const int ny = blockIdx.y * blockDim.y + threadIdx.y;
-    int ii = nx;
-    int jj = ny;
+    const int jj = nx;
+    const int ii = ny;
     if ( (ii<inum) && (jj<numneigh[ii]) ) {
         const int center_idx = ilist[ii];
         const int neigh_idx = firstneigh[ii*umax_num_neighs + jj];
@@ -52,12 +51,13 @@ static void find_force_sr_val_der(
             
             atomicAdd(&force_sr_val[center_idx*3 + kk], dei_drij[tmp_de_idx]);
             atomicAdd(&force_sr_val[neigh_idx*3 + kk], -dei_drij[tmp_de_idx]);
-            atomicAdd(&force_sr_der[(center_idx*3 + kk)*inum*umax_num_neighs 
-                        + ii*umax_num_neighs 
+            atomicAdd(&force_sr_der[(center_idx*3 + kk)*inum*umax_num_neighs
+                        + ii*umax_num_neighs
                         + jj], 1);
             atomicAdd(&force_sr_der[(neigh_idx*3 + kk)*inum*umax_num_neighs
                         + ii*umax_num_neighs
                         + jj], -1);
+            
         }
     }
 }
@@ -75,8 +75,8 @@ static void find_force_sr_val_der_launcher(
     int umax_num_neighs,
     CoordType *h_dei_drij)
 {
-    int grid_size_x = (inum - 1) / BLOCK_SIZE_X + 1;
-    int grid_size_y = (umax_num_neighs - 1) / BLOCK_SIZE_Y + 1;
+    int grid_size_x = (umax_num_neighs - 1) / BLOCK_SIZE_X + 1;
+    int grid_size_y = (inum - 1) / BLOCK_SIZE_Y + 1;
     CoordType *d_force_sr_val;
     CoordType *d_force_sr_der;
     int *d_ilist;
@@ -84,7 +84,9 @@ static void find_force_sr_val_der_launcher(
     int *d_firstneigh;
     CoordType *d_dei_drij;
     CHECK( cudaMalloc((void**)&d_force_sr_val, sizeof(CoordType) * (inum+nghost) * 3) );
+    CHECK( cudaMemset(d_force_sr_val, 0, sizeof(CoordType) * (inum+nghost) * 3) );
     CHECK( cudaMalloc((void**)&d_force_sr_der, sizeof(CoordType) * (inum+nghost) * 3 * inum * umax_num_neighs) );
+    CHECK( cudaMemset(d_force_sr_der, 0, sizeof(CoordType) * (inum+nghost) * 3 * inum * umax_num_neighs) );
     CHECK( cudaMalloc((void**)&d_ilist, sizeof(int) * inum) );
     CHECK( cudaMalloc((void**)&d_numneigh, sizeof(int) * inum) );
     CHECK( cudaMalloc((void**)&d_firstneigh, sizeof(int) * inum * umax_num_neighs) );

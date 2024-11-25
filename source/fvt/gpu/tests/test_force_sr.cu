@@ -164,9 +164,9 @@ protected:
         h_force_sr_val = (double*)malloc(sizeof(double) * (inum+nghost) * 3);
         CHECK( cudaMalloc((void**)&d_force_sr_val, sizeof(double) * (inum+nghost) * 3) );
         h_force_sr_der = (double*)malloc(sizeof(double) * (inum+nghost) * 3 * inum * umax_num_neighs);
-        CHECK( cudaMalloc((void**)&d_force_sr_val_, sizeof(double) * (inum+nghost) * 3) );
-        h_force_sr_val_ = (double*)malloc(sizeof(double) * (inum+nghost) * 3);
         CHECK( cudaMalloc((void**)&d_force_sr_der, sizeof(double) * (inum+nghost) * 3 * inum * umax_num_neighs) );
+        h_force_sr_val_ = (double*)malloc(sizeof(double) * (inum+nghost) * 3);
+        CHECK( cudaMalloc((void**)&d_force_sr_val_, sizeof(double) * (inum+nghost) * 3) );
         h_force_sr_der_ = (double*)malloc(sizeof(double) * (inum+nghost) * 3 * inum * umax_num_neighs);
         CHECK( cudaMalloc((void**)&d_force_sr_der_, sizeof(double) * (inum+nghost) * 3 * inum * umax_num_neighs) );
         h_dei_drij = (double*)malloc(sizeof(double) * inum * umax_num_neighs * 3);
@@ -217,6 +217,7 @@ TEST_F(ForceSrTest, find_force_sr_val_der)
         nghost,
         umax_num_neighs,
         h_dei_drij);
+    CHECK( cudaDeviceSynchronize() );
     h_dei_drij[center_idx_modify*umax_num_neighs*3 + neigh_idx_modify*3 + direction_modify] += 0.001;
     ai2pot::fvt::find_force_sr_val_der_launcher(
         h_force_sr_val_,
@@ -228,6 +229,7 @@ TEST_F(ForceSrTest, find_force_sr_val_der)
         nghost,
         umax_num_neighs,
         h_dei_drij);
+    CHECK( cudaDeviceSynchronize() );
 nblist.show_in_prim_index();
 
 printf("1.1. Value of force:\n\t");
