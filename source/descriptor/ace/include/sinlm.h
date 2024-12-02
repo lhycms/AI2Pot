@@ -572,9 +572,9 @@ void Sinlm<CoordType>::find_val_der_r(
             this->accum_val_der_r_one(
                 val_r[kk],
                 &der2xyz_r[kk*umax_num_neighs*3 + jj*3 + 0],
-                &der2coeffs_r[kk*ntypes*ntypes*this->_n_r_max*this->_n_r_basis 
-                             + (itype*ntypes + jtype)*this->_n_r_max*this->_n_r_basis 
-                             + kk*this->_n_r_basis + 0],
+                &der2coeffs_r[kk*ntypes*ntypes*this->_n_r_basis 
+                             + (itype*ntypes + jtype)*this->_n_r_basis 
+                              + 0],
                 neigh_vec,
                 &coeffs_r[(itype*ntypes + jtype)*this->_n_r_max*this->_n_r_basis + kk*this->_n_r_basis + 0]);
         }
