@@ -565,16 +565,18 @@ void Sinlm<CoordType>::find_val_der_r(
     const int itype = types[iilist];
     for (int jj=0; jj<inumneigh; jj++) {
         const int jtype = types[ifirstneigh[jj]];
-        const CoordType *neigh_vec = &ircs[jj*3 + 0];
+        CoordType neigh_vec[3];
+        for (int a=0; a<3; a++)
+            neigh_vec[a] = ircs[jj*3 + a];
         for (int kk=0; kk<this->_n_r_max; kk++) {
             this->accum_val_der_r_one(
                 val_r[kk],
-                der2xyz_r[kk*umax_num_neighs*3 + jj*3 + 0],
-                der2coeffs_r[kk*ntypes*ntypes*this->_n_r_max*this->_n_r_basis 
+                &der2xyz_r[kk*umax_num_neighs*3 + jj*3 + 0],
+                &der2coeffs_r[kk*ntypes*ntypes*this->_n_r_max*this->_n_r_basis 
                              + (itype*ntypes + jtype)*this->_n_r_max*this->_n_r_basis 
                              + kk*this->_n_r_basis + 0],
                 neigh_vec,
-                coeffs_r[(itype*ntypes + jtype)*this->_n_r_max*this->_n_r_basis + kk*this->_n_r_basis + 0]);
+                &coeffs_r[(itype*ntypes + jtype)*this->_n_r_max*this->_n_r_basis + kk*this->_n_r_basis + 0]);
         }
     }
 }
@@ -591,7 +593,7 @@ void Sinlm<CoordType>::accum_val_der_a_one_lm(
     int l,
     void (*ptr_blm)(CoordType&, CoordType*, CoordType*))
 {
-    this->_ptr_gn_a->build(distance_ij, coeffs_a);
+    this->_ptr_gn_a->build(distance_ij, coeffs_a_one);
     CoordType blm_val;
     CoordType blm_der2xyz[3];
     ptr_blm(blm_val, blm_der2xyz, neigh_vec);
