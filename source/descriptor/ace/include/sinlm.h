@@ -619,45 +619,50 @@ void Sinlm<CoordType>::find_val_der_a_lm(
     int ntypes,
     int umax_num_neighs)
 {
+    memset(val_a, 0, sizeof(CoordType) * this->_n_a_max * this->_num_s_a);
+    memset(der2xyz_a, 0, sizeof(CoordType) * this->_n_a_max * this->_num_s_a * umax_num_neighs * 3);
+    memset(der2coeffs_a, 0, sizeof(CoordType) * this->_n_a_max * this->_num_s_a * ntypes * ntypes * this->_n_a_basis);
+
     const int itype = types[iilist];
     for (int jj=0; jj<inumneigh; jj++) {
         const int jtype = types[ifirstneigh[jj]];
         const CoordType *neigh_vec = &ircs[jj*3 + 0];
         const CoordType distance_ij = std::sqrt( std::pow(neigh_vec[0], 2)
-                                                 + std::pow(neigh_vec[1], 2
-                                                 + std::pow(neigh_vec[2], 2)));
+                                                 + std::pow(neigh_vec[1], 2)
+                                                 + std::pow(neigh_vec[2], 2));
         int tmp_blm_idx;
         int tmp_s_idx;
         CoordType *der2xyz_a_one;
         CoordType *der2coeffs_a_one;
+        CoordType *coeffs_a_one;
         for (int kk=0; kk<this->_n_a_max; kk++) {
+            coeffs_a_one = coeffs_a[(itype*ntypes+jtype)*this->_n_a_max*this->_n_a_basis
+                                    + kk*this->_n_a_basis + 0];
             // l=1
             if (this->_l_3b_max >= 1) {
-                CoordType *coeffs_a_one = coeffs_a[(itype*ntypes+jtype)*this->_n_a_max*this->_n_a_basis
-                                                   + kk*this->_n_a_basis + 0];
                 // b10
                 tmp_blm_idx = 0;
                 tmp_s_idx = kk * this->_num_s_a + tmp_blm_idx;
                 der2xyz_a_one = der2xyz_a[tmp_s_idx*umax_num_neighs*3 + jj*3 + 0];
-                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_max*this->_n_a_basis
-                                                + (itype*ntypes + jtype)*this->_n_a_max*this->_n_a_basis
-                                                + kk*this->_n_a_basis + 0]; 
+                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_basis
+                                                + (itype*ntypes + jtype)*this->_n_a_basis
+                                                + 0]; 
                 this->accum_val_der_a_one_lm(val_a[tmp_s_idx], der2xyz_a_one, der2coeffs_a_one, neigh_vec, distance_ij, coeffs_a_one, 1, &b10<CoordType>);
                 // b11
                 tmp_blm_idx = 1;
                 tmp_s_idx = kk * this->_num_s_a + tmp_blm_idx;
                 der2xyz_a_one = der2xyz_a[tmp_s_idx*umax_num_neighs*3 + jj*3 + 0];
-                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_max*this->_n_a_basis
-                                                + (itype*ntypes + jtype)*this->_n_a_max*this->_n_a_basis
-                                                + kk*this->_n_a_basis + 0];
+                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_basis
+                                                + (itype*ntypes + jtype)*this->_n_a_basis
+                                                + 0];
                 this->accum_val_der_a_one_lm(val_a[tmp_s_idx], der2xyz_a_one, der2coeffs_a_one, neigh_vec, distance_ij, coeffs_a_one, 1, &b11<CoordType>);
                 // b12
                 tmp_blm_idx = 2;
                 tmp_s_idx = kk * this->_num_s_a + tmp_blm_idx;
                 der2xyz_a_one = der2xyz_a[tmp_s_idx*umax_num_neighs*3 + jj*3 + 0];
-                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_max*this->_n_a_basis
-                                                + (itype*ntypes + jtype)*this->_n_a_max*this->_n_a_basis
-                                                + kk*this->_n_a_basis + 0];
+                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_basis
+                                                + (itype*ntypes + jtype)*this->_n_a_basis
+                                                + 0];
                 this->accum_val_der_a_one_lm(val_a[tmp_s_idx], der2xyz_a_one, der2coeffs_a_one, neigh_vec, distance_ij, coeffs_a_one, 1, &b12<CoordType>);
             }
             // l=2
@@ -666,41 +671,41 @@ void Sinlm<CoordType>::find_val_der_a_lm(
                 tmp_blm_idx = 3;
                 tmp_s_idx = kk * this->_num_s_a + tmp_blm_idx;
                 der2xyz_a_one = der2xyz_a[tmp_s_idx*umax_num_neighs*3 + jj*3 + 0];
-                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_max*this->_n_a_basis
-                                                + (itype*ntypes + jtype)*this->_n_a_max*this->_n_a_basis
-                                                + kk*this->_n_a_basis + 0];
+                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_basis
+                                                + (itype*ntypes + jtype)*this->_n_a_basis
+                                                + 0];
                 this->accum_val_der_a_one_lm(val_a[tmp_s_idx], der2xyz_a_one, der2coeffs_a_one, neigh_vec, distance_ij, coeffs_a_one, 2, &b20<CoordType>);
                 // b21
                 tmp_blm_idx = 4;
                 tmp_s_idx = kk * this->_num_s_a + tmp_blm_idx;
                 der2xyz_a_one = der2xyz_a[tmp_s_idx*umax_num_neighs*3 + jj*3 + 0];
-                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_max*this->_n_a_basis
-                                                + (itype*ntypes + jtype)*this->_n_a_max*this->_n_a_basis
-                                                + kk*this->_n_a_basis + 0];
+                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_basis
+                                                + (itype*ntypes + jtype)*this->_n_a_basis
+                                                + 0];
                 this->accum_val_der_a_one_lm(val_a[tmp_s_idx], der2xyz_a_one, der2coeffs_a_one, neigh_vec, distance_ij, coeffs_a_one, 2, &b21<CoordType>);
                 // b22
                 tmp_blm_idx = 5;
                     tmp_s_idx = kk * this->_num_s_a + tmp_blm_idx;
                 der2xyz_a_one = der2xyz_a[tmp_s_idx*umax_num_neighs*3 + jj*3 + 0];
-                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_max*this->_n_a_basis
-                                                + (itype*ntypes + jtype)*this->_n_a_max*this->_n_a_basis
-                                                + kk*this->_n_a_basis + 0];
+                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_basis
+                                                + (itype*ntypes + jtype)*this->_n_a_basis
+                                                + 0];
                 this->accum_val_der_a_one_lm(val_a[tmp_s_idx], der2xyz_a_one, der2coeffs_a_one, neigh_vec, distance_ij, coeffs_a_one, 2, &b22<CoordType>);
                 // b23
                 tmp_blm_idx = 6;
                 tmp_s_idx = kk * this->_num_s_a + tmp_blm_idx;
                 der2xyz_a_one = der2xyz_a[tmp_s_idx*umax_num_neighs*3 + jj*3 + 0];
-                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_max*this->_n_a_basis
-                                                + (itype*ntypes + jtype)*this->_n_a_max*this->_n_a_basis
-                                                + kk*this->_n_a_basis + 0];
+                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_basis
+                                                + (itype*ntypes + jtype)*this->_n_a_basis
+                                                + 0];
                 this->accum_val_der_a_one_lm(val_a[tmp_s_idx], der2xyz_a_one, der2coeffs_a_one, neigh_vec, distance_ij, coeffs_a_one, 2, &b23<CoordType>);
                 // b24
                 tmp_blm_idx = 7;
                 tmp_s_idx = kk * this->_num_s_a + tmp_blm_idx;
                 der2xyz_a_one = der2xyz_a[tmp_s_idx*umax_num_neighs*3 + jj*3 + 0];
-                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_max*this->_n_a_basis
-                                                + (itype*ntypes + jtype)*this->_n_a_max*this->_n_a_basis
-                                                + kk*this->_n_a_basis + 0];
+                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_basis
+                                                + (itype*ntypes + jtype)*this->_n_a_basis
+                                                + 0];
                 this->accum_val_der_a_one_lm(val_a[tmp_s_idx], der2xyz_a_one, der2coeffs_a_one, neigh_vec, distance_ij, coeffs_a_one, 2, &b24<CoordType>);
             }
             // l=3
@@ -709,57 +714,57 @@ void Sinlm<CoordType>::find_val_der_a_lm(
                 tmp_blm_idx = 8;
                 tmp_s_idx = kk * this->_num_s_a + tmp_blm_idx;
                 der2xyz_a_one = der2xyz_a[tmp_s_idx*umax_num_neighs*3 + jj*3 + 0];
-                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_max*this->_n_a_basis
-                                                + (itype*ntypes + jtype)*this->_n_a_max*this->_n_a_basis
-                                                + kk*this->_n_a_basis + 0];
+                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_basis
+                                                + (itype*ntypes + jtype)*this->_n_a_basis
+                                                + 0];
                 this->accum_val_der_a_one_lm(val_a[tmp_s_idx], der2xyz_a_one, der2coeffs_a_one, neigh_vec, distance_ij, coeffs_a_one, 3, &b30<CoordType>);
                 // b31
                 tmp_blm_idx = 9;
                 tmp_s_idx = kk * this->_num_s_a + tmp_blm_idx;
                 der2xyz_a_one = der2xyz_a[tmp_s_idx*umax_num_neighs*3 + jj*3 + 0];
-                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_max*this->_n_a_basis
-                                                + (itype*ntypes + jtype)*this->_n_a_max*this->_n_a_basis
-                                                + kk*this->_n_a_basis + 0];
+                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_basis
+                                                + (itype*ntypes + jtype)*this->_n_a_basis
+                                                + 0];
                 this->accum_val_der_a_one_lm(val_a[tmp_s_idx], der2xyz_a_one, der2coeffs_a_one, neigh_vec, distance_ij, coeffs_a_one, 3, &b31<CoordType>);
                 // b32
                 tmp_blm_idx = 10;
                 tmp_s_idx = kk * this->_num_s_a + tmp_blm_idx;
                 der2xyz_a_one = der2xyz_a[tmp_s_idx*umax_num_neighs*3 + jj*3 + 0];
-                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_max*this->_n_a_basis
-                                                + (itype*ntypes + jtype)*this->_n_a_max*this->_n_a_basis
-                                                + kk*this->_n_a_basis + 0];
+                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_basis
+                                                + (itype*ntypes + jtype)*this->_n_a_basis
+                                                + 0];
                 this->accum_val_der_a_one_lm(val_a[tmp_s_idx], der2xyz_a_one, der2coeffs_a_one, neigh_vec, distance_ij, coeffs_a_one, 3, &b32<CoordType>);
                 // b33
                 tmp_blm_idx = 11;
                 tmp_s_idx = kk * this->_num_s_a + tmp_blm_idx;
                 der2xyz_a_one = der2xyz_a[tmp_s_idx*umax_num_neighs*3 + jj*3 + 0];
-                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_max*this->_n_a_basis
-                                                + (itype*ntypes + jtype)*this->_n_a_max*this->_n_a_basis
-                                                + kk*this->_n_a_basis + 0];
+                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_basis
+                                                + (itype*ntypes + jtype)*this->_n_a_basis
+                                                + 0];
                 this->accum_val_der_a_one_lm(val_a[tmp_s_idx], der2xyz_a_one, der2coeffs_a_one, neigh_vec, distance_ij, coeffs_a_one, 3, &b33<CoordType>);
                 // b34
                 tmp_blm_idx = 12;
                 tmp_s_idx = kk * this->_num_s_a + tmp_blm_idx;
                 der2xyz_a_one = der2xyz_a[tmp_s_idx*umax_num_neighs*3 + jj*3 + 0];
-                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_max*this->_n_a_basis
-                                                + (itype*ntypes + jtype)*this->_n_a_max*this->_n_a_basis
-                                                + kk*this->_n_a_basis + 0];
+                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_basis
+                                                + (itype*ntypes + jtype)*this->_n_a_basis
+                                                + 0];
                 this->accum_val_der_a_one_lm(val_a[tmp_s_idx], der2xyz_a_one, der2coeffs_a_one, neigh_vec, distance_ij, coeffs_a_one, 3, &b34<CoordType>);
                 // b35
                 tmp_blm_idx = 13;
                 tmp_s_idx = kk * this->_num_s_a + tmp_blm_idx;
                 der2xyz_a_one = der2xyz_a[tmp_s_idx*umax_num_neighs*3 + jj*3 + 0];
-                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_max*this->_n_a_basis
-                                                + (itype*ntypes + jtype)*this->_n_a_max*this->_n_a_basis
-                                                + kk*this->_n_a_basis + 0];
+                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_basis
+                                                + (itype*ntypes + jtype)*this->_n_a_basis
+                                                + 0];
                 this->accum_val_der_a_one_lm(val_a[tmp_s_idx], der2xyz_a_one, der2coeffs_a_one, neigh_vec, distance_ij, coeffs_a_one, 3, &b35<CoordType>);
                 // b36
                 tmp_blm_idx = 14;
                 tmp_s_idx = kk * this->_num_s_a + tmp_blm_idx;
                 der2xyz_a_one = der2xyz_a[tmp_s_idx*umax_num_neighs*3 + jj*3 + 0];
-                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_max*this->_n_a_basis
-                                                + (itype*ntypes + jtype)*this->_n_a_max*this->_n_a_basis
-                                                + kk*this->_n_a_basis + 0];
+                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_basis
+                                                + (itype*ntypes + jtype)*this->_n_a_basis
+                                                + 0];
                 this->accum_val_der_a_one_lm(val_a[tmp_s_idx], der2xyz_a_one, der2coeffs_a_one, neigh_vec, distance_ij, coeffs_a_one, 3, &b36<CoordType>);
             }
             // l=4
@@ -768,73 +773,73 @@ void Sinlm<CoordType>::find_val_der_a_lm(
                 tmp_blm_idx = 15;
                 tmp_s_idx = kk * this->_num_s_a + tmp_blm_idx;
                 der2xyz_a_one = der2xyz_a[tmp_s_idx*umax_num_neighs*3 + jj*3 + 0];
-                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_max*this->_n_a_basis
-                                                + (itype*ntypes + jtype)*this->_n_a_max*this->_n_a_basis
-                                                + kk*this->_n_a_basis + 0];
+                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_basis
+                                                + (itype*ntypes + jtype)*this->_n_a_basis
+                                                + 0];
                 this->accum_val_der_a_one_lm(val_a[tmp_s_idx], der2xyz_a_one, der2coeffs_a_one, neigh_vec, distance_ij, coeffs_a_one, 4, &b40<CoordType>);
                 // b41
                 tmp_blm_idx = 16;
                 tmp_s_idx = kk * this->_num_s_a + tmp_blm_idx;
                 der2xyz_a_one = der2xyz_a[tmp_s_idx*umax_num_neighs*3 + jj*3 + 0];
-                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_max*this->_n_a_basis
-                                                + (itype*ntypes + jtype)*this->_n_a_max*this->_n_a_basis
-                                                + kk*this->_n_a_basis + 0];
+                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_basis
+                                                + (itype*ntypes + jtype)*this->_n_a_basis
+                                                + 0];
                 this->accum_val_der_a_one_lm(val_a[tmp_s_idx], der2xyz_a_one, der2coeffs_a_one, neigh_vec, distance_ij, coeffs_a_one, 4, &b41<CoordType>);
                 // b42
                 tmp_blm_idx = 17;
                 tmp_s_idx = kk * this->_num_s_a + tmp_blm_idx;
                 der2xyz_a_one = der2xyz_a[tmp_s_idx*umax_num_neighs*3 + jj*3 + 0];
-                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_max*this->_n_a_basis
-                                                + (itype*ntypes + jtype)*this->_n_a_max*this->_n_a_basis
-                                                + kk*this->_n_a_basis + 0];
+                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_basis
+                                                + (itype*ntypes + jtype)*this->_n_a_basis
+                                                + 0];
                 this->accum_val_der_a_one_lm(val_a[tmp_s_idx], der2xyz_a_one, der2coeffs_a_one, neigh_vec, distance_ij, coeffs_a_one, 4, &b42<CoordType>);
                 // b43
                 tmp_blm_idx = 18;
                 tmp_s_idx = kk * this->_num_s_a + tmp_blm_idx;
                 der2xyz_a_one = der2xyz_a[tmp_s_idx*umax_num_neighs*3 + jj*3 + 0];
-                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_max*this->_n_a_basis
-                                                + (itype*ntypes + jtype)*this->_n_a_max*this->_n_a_basis
-                                                + kk*this->_n_a_basis + 0];
+                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_basis
+                                                + (itype*ntypes + jtype)*this->_n_a_basis
+                                                + 0];
                 this->accum_val_der_a_one_lm(val_a[tmp_s_idx], der2xyz_a_one, der2coeffs_a_one, neigh_vec, distance_ij, coeffs_a_one, 4, &b43<CoordType>);
                 // b44
                 tmp_blm_idx = 19;
                 tmp_s_idx = kk * this->_num_s_a + tmp_blm_idx;
                 der2xyz_a_one = der2xyz_a[tmp_s_idx*umax_num_neighs*3 + jj*3 + 0];
-                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_max*this->_n_a_basis
-                                                + (itype*ntypes + jtype)*this->_n_a_max*this->_n_a_basis
-                                                + kk*this->_n_a_basis + 0];
+                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_basis
+                                                + (itype*ntypes + jtype)*this->_n_a_basis
+                                                + 0];
                 this->accum_val_der_a_one_lm(val_a[tmp_s_idx], der2xyz_a_one, der2coeffs_a_one, neigh_vec, distance_ij, coeffs_a_one, 4, &b44<CoordType>);
                 // b45
                 tmp_blm_idx = 20;
                 tmp_s_idx = kk * this->_num_s_a + tmp_blm_idx;
                 der2xyz_a_one = der2xyz_a[tmp_s_idx*umax_num_neighs*3 + jj*3 + 0];
-                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_max*this->_n_a_basis
-                                                + (itype*ntypes + jtype)*this->_n_a_max*this->_n_a_basis
-                                                + kk*this->_n_a_basis + 0];
+                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_basis
+                                                + (itype*ntypes + jtype)*this->_n_a_basis
+                                                + 0];
                 this->accum_val_der_a_one_lm(val_a[tmp_s_idx], der2xyz_a_one, der2coeffs_a_one, neigh_vec, distance_ij, coeffs_a_one, 4, &b45<CoordType>);
                 // b46
                 tmp_blm_idx = 21;
                 tmp_s_idx = kk * this->_num_s_a + tmp_blm_idx;
                 der2xyz_a_one = der2xyz_a[tmp_s_idx*umax_num_neighs*3 + jj*3 + 0];
-                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_max*this->_n_a_basis
-                                                + (itype*ntypes + jtype)*this->_n_a_max*this->_n_a_basis
-                                                + kk*this->_n_a_basis + 0];
+                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_basis
+                                                + (itype*ntypes + jtype)*this->_n_a_basis
+                                                + 0];
                 this->accum_val_der_a_one_lm(val_a[tmp_s_idx], der2xyz_a_one, der2coeffs_a_one, neigh_vec, distance_ij, coeffs_a_one, 4, &b45<CoordType>);
                 // b47
                 tmp_blm_idx = 22;
                 tmp_s_idx = kk * this->_num_s_a + tmp_blm_idx;
                 der2xyz_a_one = der2xyz_a[tmp_s_idx*umax_num_neighs*3 + jj*3 + 0];
-                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_max*this->_n_a_basis
-                                                + (itype*ntypes + jtype)*this->_n_a_max*this->_n_a_basis
-                                                + kk*this->_n_a_basis + 0];
+                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_basis
+                                                + (itype*ntypes + jtype)*this->_n_a_basis
+                                                + 0];
                 this->accum_val_der_a_one_lm(val_a[tmp_s_idx], der2xyz_a_one, der2coeffs_a_one, neigh_vec, distance_ij, coeffs_a_one, 4, &b46<CoordType>);
                 // b48
                 tmp_blm_idx = 23;
                 tmp_s_idx = kk * this->_num_s_a + tmp_blm_idx;
                 der2xyz_a_one = der2xyz_a[tmp_s_idx*umax_num_neighs*3 + jj*3 + 0];
-                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_max*this->_n_a_basis
-                                                + (itype*ntypes + jtype)*this->_n_a_max*this->_n_a_basis
-                                                + kk*this->_n_a_basis + 0];
+                der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_basis
+                                                + (itype*ntypes + jtype)*this->_n_a_basis
+                                                + 0];
                 this->accum_val_der_a_one_lm(val_a[tmp_s_idx], der2xyz_a_one, der2coeffs_a_one, neigh_vec, distance_ij, coeffs_a_one, 4, &b47<CoordType>);
             }
         }
