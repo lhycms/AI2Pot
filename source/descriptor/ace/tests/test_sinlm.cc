@@ -1651,7 +1651,70 @@ printf("2.2. Sinlm_a_delta derivative w.r.t. rcs[%d][%d][%d] calculated with fin
 
 TEST_F(SinlmTest, find_val_der_a_lm_der2coeffs)
 {
+    int center_idx_modify = 11;
+    int neigh_idx_modify = 5;
+    int direction_idx_modify = 0;
+    int kk_modify = 4;
+    int cheby_idx = 3;
+    int blm_idx_modify = 23;
+    int cidx = ilist[center_idx_modify];
+    int nidx = firstneigh[center_idx_modify*umax_num_neighs + neigh_idx_modify];
+    int itype = types[cidx];
+    int jtype = types[nidx];
+    
+    ai2pot::ace::Sinlm<double> sinlm(lambda_val,
+                                     rmax_r,
+                                     rmin_r,
+                                     n_r_max,
+                                     n_r_basis,
+                                     max_body,
+                                     rmax_a,
+                                     rmin_a,
+                                     n_a_max,
+                                     n_a_basis,
+                                     l_3b_max);
+    sinlm.find_val_der_a_lm(s_val_a,
+                            s_der2xyz_a,
+                            s_der2coeffs_a,
+                            coeffs_a,
+                            ilist[center_idx_modify],
+                            numneigh[center_idx_modify],
+                            &firstneigh[center_idx_modify*umax_num_neighs],
+                            &rcs[center_idx_modify*umax_num_neighs*3],
+                            types,
+                            ntypes,
+                            umax_num_neighs);
 
+coeffs_a[(itype*ntypes+jtype)*n_a_max*n_a_basis + kk_modify*n_a_basis + cheby_idx] += delta;
+    ai2pot::ace::Sinlm<double> sinlm_delta(lambda_val,
+                                           rmax_r,
+                                           rmin_r,
+                                           n_r_max,
+                                           n_r_basis,
+                                           max_body,
+                                           rmax_a,
+                                           rmin_a,
+                                           n_a_max,
+                                           n_a_basis,
+                                           l_3b_max);
+    sinlm_delta.find_val_der_a_lm(s_val_a_delta,
+                                  s_der2xyz_a_delta,
+                                  s_der2coeffs_a_delta,
+                                  coeffs_a,
+                                  ilist[center_idx_modify],
+                                  numneigh[center_idx_modify],
+                                  &firstneigh[center_idx_modify*umax_num_neighs],
+                                  &rcs[center_idx_modify*umax_num_neighs*3],
+                                  types,
+                                  ntypes,
+                                  umax_num_neighs);
+
+printf("2.1. The Sinlm_a derivative w.r.t. coeffs_a[%d][%d][%d][%d] = %g\n",
+        itype, jtype, kk_modify, cheby_idx,
+        s_der2coeffs_a[(kk_modify*24+blm_idx_modify)*ntypes*ntypes*n_a_basis + (itype*ntypes+jtype)*n_a_basis + cheby_idx]);
+printf("2.2. The Sinlm_a derivative w.r.t. coeffs_a[%d][%d][%d][%d] = %g\n",
+        itype, jtype, kk_modify, cheby_idx,
+        (s_val_a_delta[kk_modify*24+blm_idx_modify] - s_val_a[kk_modify*24 + blm_idx_modify]) / delta);
 }
 
 
