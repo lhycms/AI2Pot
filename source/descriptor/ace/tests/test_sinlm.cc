@@ -1494,7 +1494,6 @@ TEST_F(SinlmTest, accum_val_der_a_one_lm_der2coeffs)
     int nidx = firstneigh[center_idx_modify*umax_num_neighs + neigh_idx_modify];
     int itype = types[cidx];
     int jtype = types[nidx];
-
     ai2pot::ace::Sinlm<double> sinlm(lambda_val,
                                      rmax_r,
                                      rmin_r,
@@ -1562,6 +1561,98 @@ printf("2.2. Sinlm_val_one_lm derivative w.r.t. coeffs[%d][%d][%d][%d] calculate
         (s_val_a_delta[kk_modify*24+blm_idx_modify] - s_val_a[kk_modify*24+blm_idx_modify]) / delta);
 }
 
+
+TEST_F(SinlmTest, find_val_der_a_lm_der2xyz)
+{
+    neighbor_list.show_in_prim_index();
+
+    int center_idx_modify = 11;
+    int neigh_idx_modify = 18;
+    int direction_idx_modify = 0;
+    int kk_idx_modify = 0;
+    int blm_idx_modify = 23;
+    int cheby_idx = 0;
+    int cidx = ilist[center_idx_modify];
+    int nidx = firstneigh[center_idx_modify*umax_num_neighs + neigh_idx_modify];
+    int itype = types[cidx];
+    int jtype = types[nidx];
+    
+    ai2pot::ace::Sinlm<double> sinlm(lambda_val,
+                                     rmax_r,
+                                     rmin_r,
+                                     n_r_max,
+                                     n_r_basis,
+                                     max_body,
+                                     rmax_a,
+                                     rmin_a,
+                                     n_a_max,
+                                     n_a_basis,
+                                     l_3b_max);
+    sinlm.find_val_der_a_lm(s_val_a,
+                            s_der2xyz_a,
+                            s_der2coeffs_a,
+                            coeffs_a,
+                            ilist[center_idx_modify],
+                            numneigh[center_idx_modify],
+                            &firstneigh[center_idx_modify*umax_num_neighs],
+                            &rcs[center_idx_modify*umax_num_neighs*3],
+                            types,
+                            ntypes,
+                            umax_num_neighs);
+    
+rcs[center_idx_modify*umax_num_neighs*3 + neigh_idx_modify*3 + direction_idx_modify] += delta;
+    ai2pot::ace::Sinlm<double> sinlm_delta(lambda_val,
+                                           rmax_r,
+                                           rmin_r,
+                                           n_r_max,
+                                           n_r_basis,
+                                           max_body,
+                                           rmax_a,
+                                           rmin_a,
+                                           n_a_max,
+                                           n_a_basis,
+                                           l_3b_max);
+    sinlm_delta.find_val_der_a_lm(s_val_a_delta,
+                                  s_der2xyz_a_delta,
+                                  s_der2coeffs_a_delta,
+                                  coeffs_a,
+                                  ilist[center_idx_modify],
+                                  numneigh[center_idx_modify],
+                                  &firstneigh[center_idx_modify*umax_num_neighs],
+                                  &rcs[center_idx_modify*umax_num_neighs*3],
+                                  types,
+                                  ntypes,
+                                  umax_num_neighs);
+
+printf("1.1. Sinlm_a value: \n");
+for (int ii=0; ii<n_a_basis*24; ii++) {
+    if (ii%24==0)
+        printf("\n\t");
+    printf("%g, ", s_val_a[ii]);
+}
+printf("\n\n");
+
+printf("1.2. Sinlm_a_delta value: \n");
+for (int ii=0; ii<n_a_basis*24; ii++) {
+    if (ii%24==0)
+        printf("\n\t");
+    printf("%g, ", s_val_a_delta[ii]);
+}
+printf("\n\n");
+
+printf("2.1. Sinlm_a_delta derivative w.r.t. rcs[%d][%d][%d] calculated with custom code = %g\n", 
+    center_idx_modify, neigh_idx_modify, direction_idx_modify,
+    s_der2xyz_a[(kk_idx_modify*24 + blm_idx_modify)*umax_num_neighs*3 + neigh_idx_modify*3 + direction_idx_modify]);
+printf("2.2. Sinlm_a_delta derivative w.r.t. rcs[%d][%d][%d] calculated with finite difference method = %g\n",
+    center_idx_modify, neigh_idx_modify, direction_idx_modify,
+    (s_val_a_delta[(kk_idx_modify*24 + blm_idx_modify)] - s_val_a[(kk_idx_modify*24 + blm_idx_modify)]) / delta);
+}
+
+
+TEST_F(SinlmTest, find_val_der_a_lm_der2coeffs)
+{
+
+}
 
 
 int main(int argc, char **argv) {
