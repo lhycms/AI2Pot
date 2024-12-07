@@ -1655,8 +1655,8 @@ TEST_F(SinlmTest, find_val_der_a_lm_der2coeffs)
     int neigh_idx_modify = 5;
     int direction_idx_modify = 0;
     int kk_modify = 4;
-    int cheby_idx = 3;
-    int blm_idx_modify = 23;
+    int cheby_idx = 5;
+    int blm_idx_modify = 0;
     int cidx = ilist[center_idx_modify];
     int nidx = firstneigh[center_idx_modify*umax_num_neighs + neigh_idx_modify];
     int itype = types[cidx];
@@ -1708,6 +1708,11 @@ coeffs_a[(itype*ntypes+jtype)*n_a_max*n_a_basis + kk_modify*n_a_basis + cheby_id
                                   types,
                                   ntypes,
                                   umax_num_neighs);
+
+printf("***\n");
+for (int ii=0; ii<ntypes*ntypes*n_a_basis; ii++)
+    printf("%g,  ", s_der2coeffs_a[(kk_modify*24+blm_idx_modify)*ntypes*ntypes*n_a_basis + ii]);
+printf("\n***\n");
 
 printf("2.1. The Sinlm_a derivative w.r.t. coeffs_a[%d][%d][%d][%d] = %g\n",
         itype, jtype, kk_modify, cheby_idx,
