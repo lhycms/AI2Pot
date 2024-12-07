@@ -562,6 +562,9 @@ void Sinlm<CoordType>::find_val_der_r(
     int ntypes,
     int umax_num_neighs)
 {
+    memset(val_r, 0, sizeof(CoordType) * this->_n_r_max);
+    memset(der2xyz_r, 0, sizeof(CoordType) * this->_n_r_max * umax_num_neighs * 3);
+    memset(der2coeffs_r, 0, sizeof(CoordType) * this->_n_r_max * ntypes * ntypes * this->_n_r_basis);
     const int itype = types[iilist];
     for (int jj=0; jj<inumneigh; jj++) {
         const int jtype = types[ifirstneigh[jj]];
@@ -572,8 +575,8 @@ void Sinlm<CoordType>::find_val_der_r(
             this->accum_val_der_r_one(
                 val_r[kk],
                 &der2xyz_r[kk*umax_num_neighs*3 + jj*3 + 0],
-                &der2coeffs_r[kk*ntypes*ntypes*this->_n_r_basis 
-                             + (itype*ntypes + jtype)*this->_n_r_basis 
+                &der2coeffs_r[kk*ntypes*ntypes*this->_n_r_basis
+                              + (itype*ntypes + jtype)*this->_n_r_basis
                               + 0],
                 neigh_vec,
                 &coeffs_r[(itype*ntypes + jtype)*this->_n_r_max*this->_n_r_basis + kk*this->_n_r_basis + 0]);
@@ -598,7 +601,7 @@ void Sinlm<CoordType>::accum_val_der_a_one_lm(
     CoordType blm_der2xyz[3];
     ptr_blm(blm_val, blm_der2xyz, neigh_vec);
     val_a_one += this->_ptr_gn_a->val() / std::pow(distance_ij, l) * blm_val;
-    for (int ii=0; ii<this->_n_r_basis; ii++)
+    for (int ii=0; ii<this->_n_a_basis; ii++)
         der2coeffs_a_one[ii] += this->_ptr_gn_a->der2coeffs()[ii] / std::pow(distance_ij, l) * blm_val;
     for (int ii=0; ii<3; ii++)
         der2xyz_a_one[ii] = this->_ptr_gn_a->der2r() * neigh_vec[ii] / std::pow(distance_ij, l+1) * blm_val
@@ -648,7 +651,7 @@ void Sinlm<CoordType>::find_val_der_a_lm(
                 der2xyz_a_one = der2xyz_a[tmp_s_idx*umax_num_neighs*3 + jj*3 + 0];
                 der2coeffs_a_one = der2coeffs_a[tmp_s_idx*ntypes*ntypes*this->_n_a_basis
                                                 + (itype*ntypes + jtype)*this->_n_a_basis
-                                                + 0]; 
+                                                + 0];
                 this->accum_val_der_a_one_lm(val_a[tmp_s_idx], der2xyz_a_one, der2coeffs_a_one, neigh_vec, distance_ij, coeffs_a_one, 1, &b10<CoordType>);
                 // b11
                 tmp_blm_idx = 1;
