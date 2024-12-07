@@ -1393,7 +1393,7 @@ printf("2.2. Sinlm_r[%d] derivative w.r.t. coeffs_r[%d][%d][%d][%d] calculated w
 }
 
 
-TEST_F(SinlmTest, find_val_der_a_lm_one_der2xyz)
+TEST_F(SinlmTest, accum_val_der_a_lm_one_der2xyz)
 {
     int center_idx_modify = 0;
     int neigh_idx_modify = 1;
@@ -1479,6 +1479,89 @@ printf("2.2. Sinlm_a_lm_one derivative w.r.t. rcs[%d][%d][%d] calculated with cu
         direction_modify,
         (s_val_a_delta[kk_modify*24 + blm_idx_modify] - s_val_a[kk_modify*24+blm_idx_modify]) / delta);
 }
+
+
+TEST_F(SinlmTest, accum_val_der_a_one_lm_der2coeffs)
+{
+    int center_idx_modify = 0;
+    int neigh_idx_modify = 1;
+    int direction_modify = 0;
+    int kk_modify = 0;
+    int l = 4;
+    int blm_idx_modify = 23;
+    int cheby_idx = 5;
+    int cidx = ilist[center_idx_modify];
+    int nidx = firstneigh[center_idx_modify*umax_num_neighs + neigh_idx_modify];
+    int itype = types[cidx];
+    int jtype = types[nidx];
+
+    ai2pot::ace::Sinlm<double> sinlm(lambda_val,
+                                     rmax_r,
+                                     rmin_r,
+                                     n_r_max,
+                                     n_r_basis,
+                                     max_body,
+                                     rmax_a,
+                                     rmin_a,
+                                     n_a_max,
+                                     n_a_basis,
+                                     l_3b_max);
+    double distance_ij = std::sqrt(
+        std::pow(rcs[center_idx_modify*umax_num_neighs*3 + neigh_idx_modify*3 + 0], 2)
+        + std::pow(rcs[center_idx_modify*umax_num_neighs*3 + neigh_idx_modify*3 + 1], 2)
+        + std::pow(rcs[center_idx_modify*umax_num_neighs*3 + neigh_idx_modify*3 + 2], 2)
+    );
+    sinlm.accum_val_der_a_one_lm(s_val_a[kk_modify*24 + blm_idx_modify],
+                                 &s_der2xyz_a[(kk_modify*24+blm_idx_modify)*umax_num_neighs*3
+                                              + neigh_idx_modify*3 + 0],
+                                 &s_der2coeffs_a[(kk_modify*24 + blm_idx_modify)*ntypes*ntypes*n_a_basis
+                                                 + (itype*ntypes+jtype)*n_a_basis + 0],
+                                 &rcs[center_idx_modify*umax_num_neighs*3
+                                      + neigh_idx_modify*3
+                                      + 0],
+                                 distance_ij,
+                                 &coeffs_a[(itype*ntypes+jtype)*n_a_max*n_a_basis
+                                           + kk_modify*n_a_basis + 0],
+                                 l,
+                                 ai2pot::ace::b48<double>);
+    
+coeffs_a[(itype*ntypes+jtype)*n_a_max*n_a_basis + kk_modify*n_a_basis + cheby_idx] += delta;
+    ai2pot::ace::Sinlm<double> sinlm_delta(lambda_val,
+                                           rmax_r,
+                                           rmin_r,
+                                           n_r_max,
+                                           n_r_basis,
+                                           max_body,
+                                           rmax_a,
+                                           rmin_a,
+                                           n_a_max,
+                                           n_a_basis,
+                                           l_3b_max);
+    sinlm_delta.accum_val_der_a_one_lm(s_val_a_delta[kk_modify*24 + blm_idx_modify],
+                                 &s_der2xyz_a_delta[(kk_modify*24+blm_idx_modify)*umax_num_neighs*3
+                                              + neigh_idx_modify*3 + 0],
+                                 &s_der2coeffs_a_delta[(kk_modify*24+blm_idx_modify)*ntypes*ntypes*n_a_basis
+                                              + (itype*ntypes + jtype)*n_a_basis]
+                                              + 0,
+                                 &rcs[center_idx_modify*umax_num_neighs*3
+                                     + neigh_idx_modify*3
+                                     + 0],
+                                 distance_ij,
+                                 &coeffs_a[(itype*ntypes+jtype)*n_a_max*n_a_basis
+                                           + kk_modify*n_a_basis + 0],
+                                 l,
+                                 ai2pot::ace::b48<double>);
+
+printf("1.1. Sinlm_val_one_lm value = %g\n", s_val_a[kk_modify*24 + blm_idx_modify]);
+printf("1.2. Sinlm_val_one_lm value = %g\n", s_val_a_delta[kk_modify*24 + blm_idx_modify]);
+printf("2.1. Sinlm_val_one_lm derivative w.r.t. coeffs[%d][%d][%d][%d] calculated by custom code = %g\n",
+       itype, jtype, kk_modify, cheby_idx, 
+       s_der2coeffs_a[(kk_modify*24+blm_idx_modify)*ntypes*ntypes*n_a_basis + (itype*ntypes+jtype)*n_a_basis + cheby_idx]);
+printf("2.2. Sinlm_val_one_lm derivative w.r.t. coeffs[%d][%d][%d][%d] calculated by finite difference method = %g\n",
+        itype, jtype, kk_modify, cheby_idx,
+        (s_val_a_delta[kk_modify*24+blm_idx_modify] - s_val_a[kk_modify*24+blm_idx_modify]) / delta);
+}
+
 
 
 int main(int argc, char **argv) {
