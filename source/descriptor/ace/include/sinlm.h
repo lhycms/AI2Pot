@@ -238,14 +238,14 @@ public:
           CoordType rmin_a,
           int n_a_max,
           int n_a_basis,
-          int l_3b_max);
+          int l_max);
     
     Sinlm(Gn<CoordType> *ptr_gn_r,
           Gn<CoordType> *ptr_gn_a,
           int n_r_max,
           int max_body,
           int n_a_max,
-          int l_3b_max);
+          int l_max);
 
     Sinlm(const Sinlm<CoordType> &rhs);
 
@@ -256,22 +256,6 @@ public:
     Sinlm<CoordType>& operator=(Sinlm<CoordType> &&rhs);
 
     ~Sinlm();
-
-    void build(CoordType *val_r,
-               CoordType *der2xyz_r,
-               CoordType *der2coeffs_r,
-               CoordType *val_a,
-               CoordType *der2xyz_a,
-               CoordType *der2coeffs_a,
-               CoordType *coeffs_r,
-               CoordType *coeffs_a,
-               int iilist,
-               int inumneigh,
-               int *ifirstneigh,
-               CoordType *ircs,
-               int *types,
-               int ntypes,
-               int umax_num_neighs);
 
     void accum_val_der_r_one(
         CoordType &val_r_one,
@@ -338,21 +322,9 @@ public:
 
     const int n_a_basis() const;
 
-    const int l_3b_max() const;
+    const int l_max() const;
 
     const int num_s_a() const;
-
-    const CoordType *val_r() const;
-
-    const CoordType *der2xyz_r() const;
-
-    const CoordType *der2coeffs_r() const;
-
-    const CoordType *val_a() const;
-
-    const CoordType *der2xyz_a() const;
-
-    const CoordType *der2coeffs_a() const;
 
 private:
     Gn<CoordType> *_ptr_gn_r = nullptr;
@@ -362,14 +334,8 @@ private:
     int _max_body = 0;
     int _n_a_max = 0;
     int _n_a_basis = 0;
-    int _l_3b_max = 0;   // l_3b_max >= 1
+    int _l_max = 0;   // l_max >= 1
     int _num_s_a = 0;    // size of Sinlm = (n_c, n^a_{max}, \sum^{l^{3b}_{max}}_{l=1}{(2l+1)}). This dimension is determined by l and m.
-    CoordType *_val_r;
-    CoordType *_der2xyz_r;
-    CoordType *_der2coeffs_r;
-    CoordType *_val_a;
-    CoordType *_der2xyz_a_lm;
-    CoordType *_der2coeffs_a_lm;
 };  // class : Sinlm
 
 
@@ -382,7 +348,7 @@ Sinlm<CoordType>::Sinlm() {
     this->_max_body = 0;
     this->_n_a_max = 0;
     this->_n_a_basis = 0;
-    this->_l_3b_max = 0;
+    this->_l_max = 0;
     this->_num_s_a = 0;
 }
 
@@ -397,9 +363,9 @@ Sinlm<CoordType>::Sinlm(CoordType lambda_val,
                         CoordType rmin_a,                        
                         int n_a_max,
                         int n_a_basis,
-                        int l_3b_max)
+                        int l_max)
 {
-    assert((l_3b_max >= 1) && (l_3b_max <= 4));
+    assert((l_max >= 1) && (l_max <= 4));
     assert((max_body >= 2) && (max_body <= 5));
     this->_ptr_gn_r = new Gn<CoordType>(n_r_basis, rmax_r, rmin_r, lambda_val);
     this->_ptr_gn_a = new Gn<CoordType>(n_a_basis, rmax_a, rmin_a, lambda_val);
@@ -408,9 +374,9 @@ Sinlm<CoordType>::Sinlm(CoordType lambda_val,
     this->_max_body = max_body;
     this->_n_a_max = n_a_max;
     this->_n_a_basis = this->_ptr_gn_a->chebyshev_size();
-    this->_l_3b_max = l_3b_max;
+    this->_l_max = l_max;
     this->_num_s_a = 0;
-    for (int ii=1; ii<=this->_l_3b_max; ii++)
+    for (int ii=1; ii<=this->_l_max; ii++)
         this->_num_s_a += 2*ii+1;
 }
 
@@ -420,9 +386,9 @@ Sinlm<CoordType>::Sinlm(Gn<CoordType> *ptr_gn_r,
                         int n_r_max,
                         int max_body,
                         int n_a_max,
-                        int l_3b_max)
+                        int l_max)
 {
-    assert(l_3b_max <= 4);
+    assert(l_max <= 4);
     assert((max_body >=2) && (max_body<=5));
     this->_ptr_gn_r = new Gn<CoordType>(*ptr_gn_r);
     this->_ptr_gn_a = new Gn<CoordType>(*ptr_gn_a);
@@ -431,9 +397,9 @@ Sinlm<CoordType>::Sinlm(Gn<CoordType> *ptr_gn_r,
     this->_max_body = max_body;
     this->_n_a_max = n_a_max;
     this->_n_a_basis = this->_ptr_gn_a->chebyshev_size();
-    this->_l_3b_max = l_3b_max;
+    this->_l_max = l_max;
     this->_num_s_a = 0;
-    for (int ii=1; ii<=this->_l_3b_max; ii++)
+    for (int ii=1; ii<=this->_l_max; ii++)
         this->_num_s_a += 2*ii+1;
 }
 
@@ -453,7 +419,7 @@ Sinlm<CoordType>::Sinlm(const Sinlm<CoordType> &rhs)
     this->_max_body = rhs._max_body;
     this->_n_a_max = rhs._n_a_max;
     this->_n_a_basis = rhs._n_a_basis;
-    this->_l_3b_max = rhs._l_3b_max;
+    this->_l_max = rhs._l_max;
     this->_num_s_a = rhs._num_s_a;
 }
 
@@ -475,8 +441,8 @@ Sinlm<CoordType>::Sinlm(Sinlm<CoordType> &&rhs)
         rhs._n_a_max = 0;
         this->_n_a_basis = rhs._n_a_basis;
         rhs._n_a_basis = 0;
-        this->_l_3b_max = rhs._l_3b_max;
-        rhs._l_3b_max = 0;
+        this->_l_max = rhs._l_max;
+        rhs._l_max = 0;
         this->_num_s_a = rhs._num_s_a;
         rhs._num_s_a = 0;
     }
@@ -495,7 +461,7 @@ Sinlm<CoordType>& Sinlm<CoordType>::operator=(const Sinlm<CoordType> &rhs)
     this->_max_body = rhs._max_body;
     this->_n_a_max = rhs._n_a_max;
     this->_n_a_basis = rhs._n_a_basis;
-    this->_l_3b_max = rhs._l_3b_max;
+    this->_l_max = rhs._l_max;
     this->_num_s_a = rhs._num_s_a;
     return *this;
 }
@@ -521,8 +487,8 @@ Sinlm<CoordType>& Sinlm<CoordType>::operator=(Sinlm<CoordType> &&rhs)
         rhs._n_a_max = 0;
         this->_n_a_basis = rhs._n_a_basis;
         rhs._n_a_basis = 0;
-        this->_l_3b_max = rhs._l_3b_max;
-        rhs._l_3b_max = 0;
+        this->_l_max = rhs._l_max;
+        rhs._l_max = 0;
         this->_num_s_a = rhs._num_s_a;
         rhs._num_s_a = 0;
     }
@@ -539,7 +505,7 @@ Sinlm<CoordType>::~Sinlm()
     this->_max_body = 0;
     this->_n_a_max = 0;
     this->_n_a_basis = 0;
-    this->_l_3b_max = 0;
+    this->_l_max = 0;
     this->_num_s_a = 0;
 }
 
@@ -660,7 +626,7 @@ void Sinlm<CoordType>::find_val_der_a_lm(
             coeffs_a_one = &coeffs_a[(itype*ntypes+jtype)*this->_n_a_max*this->_n_a_basis
                                      + kk*this->_n_a_basis + 0];
             // l=1
-            if (this->_l_3b_max >= 1) {
+            if (this->_l_max >= 1) {
                 // b10
                 tmp_blm_idx = 0;
                 tmp_s_idx = kk * this->_num_s_a + tmp_blm_idx;
@@ -687,7 +653,7 @@ void Sinlm<CoordType>::find_val_der_a_lm(
                 this->accum_val_der_a_one_lm(val_a[tmp_s_idx], der2xyz_a_one, der2coeffs_a_one, neigh_vec, distance_ij, coeffs_a_one, 1, &b12<CoordType>);
             }
             // l=2
-            if (this->_l_3b_max >= 2) {
+            if (this->_l_max >= 2) {
                 // b20
                 tmp_blm_idx = 3;
                 tmp_s_idx = kk * this->_num_s_a + tmp_blm_idx;
@@ -730,7 +696,7 @@ void Sinlm<CoordType>::find_val_der_a_lm(
                 this->accum_val_der_a_one_lm(val_a[tmp_s_idx], der2xyz_a_one, der2coeffs_a_one, neigh_vec, distance_ij, coeffs_a_one, 2, &b24<CoordType>);
             }
             // l=3
-            if (this->_l_3b_max >= 3) {
+            if (this->_l_max >= 3) {
                 // b30
                 tmp_blm_idx = 8;
                 tmp_s_idx = kk * this->_num_s_a + tmp_blm_idx;
@@ -789,7 +755,7 @@ void Sinlm<CoordType>::find_val_der_a_lm(
                 this->accum_val_der_a_one_lm(val_a[tmp_s_idx], der2xyz_a_one, der2coeffs_a_one, neigh_vec, distance_ij, coeffs_a_one, 3, &b36<CoordType>);
             }
             // l=4
-            if (this->_l_3b_max >= 4) {
+            if (this->_l_max >= 4) {
                 // b40
                 tmp_blm_idx = 15;
                 tmp_s_idx = kk * this->_num_s_a + tmp_blm_idx;
@@ -923,8 +889,8 @@ const int Sinlm<CoordType>::n_a_basis() const {
 }
 
 template <typename CoordType>
-const int Sinlm<CoordType>::l_3b_max() const {
-    return this->_l_3b_max;
+const int Sinlm<CoordType>::l_max() const {
+    return this->_l_max;
 }
 
 template <typename CoordType>

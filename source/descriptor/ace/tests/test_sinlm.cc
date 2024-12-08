@@ -50,7 +50,7 @@ protected:
     int max_body;
     double rmax_a, rmin_a;
     int n_a_max, n_a_basis;
-    int l_3b_max;
+    int l_max;
     ai2pot::ace::Gn<double> *ptr_gn_r;
     ai2pot::ace::Gn<double> *ptr_gn_a;
 
@@ -111,7 +111,7 @@ protected:
         rmin_a = 2.0;
         n_a_max = 8;
         n_a_basis = 6;
-        l_3b_max = 4;
+        l_max = 4;
         ptr_gn_r = new ai2pot::ace::Gn<double>(n_r_basis, rmax_r, rmin_r, lambda_val);
         ptr_gn_a = new ai2pot::ace::Gn<double>(n_a_basis, rmax_a, rmin_a, lambda_val);
 
@@ -1001,7 +1001,7 @@ TEST_F(SinlmTest, default_constructor)
     ASSERT_EQ(sinlm.n_r_basis(), 0);
     ASSERT_EQ(sinlm.n_a_max(), 0);
     ASSERT_EQ(sinlm.n_a_basis(), 0);
-    ASSERT_EQ(sinlm.l_3b_max(), 0);
+    ASSERT_EQ(sinlm.l_max(), 0);
     ASSERT_EQ(sinlm.num_s_a(), 0);
 }
 
@@ -1018,13 +1018,13 @@ TEST_F(SinlmTest, constructor_1)
                                      rmin_a, 
                                      n_a_max, 
                                      n_a_basis, 
-                                     l_3b_max);
+                                     l_max);
     ASSERT_EQ(sinlm.n_r_max(), n_r_max);
     ASSERT_EQ(sinlm.n_r_basis(), n_r_basis);
     ASSERT_EQ(sinlm.max_body(), max_body);
     ASSERT_EQ(sinlm.n_a_max(), n_a_max);
     ASSERT_EQ(sinlm.n_a_basis(), n_a_basis);
-    ASSERT_EQ(sinlm.l_3b_max(), l_3b_max);
+    ASSERT_EQ(sinlm.l_max(), l_max);
     ASSERT_EQ(sinlm.num_s_a(), 24);
 }
 
@@ -1033,13 +1033,13 @@ TEST_F(SinlmTest, constructor_2)
 {
     ai2pot::ace::Gn<double> gn_r(n_r_basis, rmax_r, rmin_r, lambda_val);
     ai2pot::ace::Gn<double> gn_a(n_a_basis, rmax_a, rmin_a, lambda_val);
-    ai2pot::ace::Sinlm<double> sinlm(&gn_r, &gn_a, n_r_max, max_body, n_a_max, l_3b_max);
+    ai2pot::ace::Sinlm<double> sinlm(&gn_r, &gn_a, n_r_max, max_body, n_a_max, l_max);
     ASSERT_EQ(sinlm.n_r_max(), n_r_max);
     ASSERT_EQ(sinlm.n_r_basis(), n_r_basis);
     ASSERT_EQ(sinlm.max_body(), max_body);
     ASSERT_EQ(sinlm.n_a_max(), n_a_max);
     ASSERT_EQ(sinlm.n_a_basis(), n_a_basis);
-    ASSERT_EQ(sinlm.l_3b_max(), l_3b_max);
+    ASSERT_EQ(sinlm.l_max(), l_max);
     ASSERT_EQ(sinlm.num_s_a(), 24);
 }
 
@@ -1047,7 +1047,7 @@ TEST_F(SinlmTest, copy_constructor)
 {
     ai2pot::ace::Gn<double> gn_r(n_r_basis, rmax_r, rmin_r, lambda_val);
     ai2pot::ace::Gn<double> gn_a(n_a_basis, rmax_a, rmin_a, lambda_val);
-    ai2pot::ace::Sinlm<double> sinlm_1(&gn_r, &gn_a, n_r_max, max_body, n_a_max, l_3b_max);
+    ai2pot::ace::Sinlm<double> sinlm_1(&gn_r, &gn_a, n_r_max, max_body, n_a_max, l_max);
     ai2pot::ace::Sinlm<double> sinlm_2(sinlm_1);
     ASSERT_EQ(sinlm_1.ptr_gn_r()->chebyshev_size(), sinlm_2.ptr_gn_r()->chebyshev_size());
     ASSERT_EQ(sinlm_1.ptr_gn_a()->chebyshev_size(), sinlm_2.ptr_gn_a()->chebyshev_size());
@@ -1056,7 +1056,7 @@ TEST_F(SinlmTest, copy_constructor)
     ASSERT_EQ(sinlm_1.max_body(), sinlm_2.max_body());
     ASSERT_EQ(sinlm_1.n_a_max(), sinlm_2.n_a_max());
     ASSERT_EQ(sinlm_1.n_a_basis(), sinlm_2.n_a_basis());
-    ASSERT_EQ(sinlm_1.l_3b_max(), sinlm_2.l_3b_max());
+    ASSERT_EQ(sinlm_1.l_max(), sinlm_2.l_max());
     ASSERT_EQ(sinlm_1.num_s_a(), sinlm_2.num_s_a());
 }
 
@@ -1064,7 +1064,7 @@ TEST_F(SinlmTest, copy_constructor_move)
 {
     ai2pot::ace::Gn<double> gn_r(n_r_basis, rmax_r, rmin_r, lambda_val);
     ai2pot::ace::Gn<double> gn_a(n_a_basis, rmax_a, rmin_a, lambda_val);
-    ai2pot::ace::Sinlm<double> sinlm_1(&gn_r, &gn_a, n_r_max, max_body, n_a_max, l_3b_max);
+    ai2pot::ace::Sinlm<double> sinlm_1(&gn_r, &gn_a, n_r_max, max_body, n_a_max, l_max);
     ai2pot::ace::Sinlm<double> sinlm_2(std::move(sinlm_1));
     ASSERT_EQ(sinlm_1.ptr_gn_r(), nullptr);
     ASSERT_EQ(sinlm_1.ptr_gn_a(), nullptr);
@@ -1074,8 +1074,8 @@ TEST_F(SinlmTest, assignment_operator)
 {
     ai2pot::ace::Gn<double> gn_r(n_r_basis, rmax_r, rmin_r, lambda_val);
     ai2pot::ace::Gn<double> gn_a(n_a_basis, rmax_a, rmin_a, lambda_val);
-    ai2pot::ace::Sinlm<double> sinlm_1(&gn_r, &gn_a, n_r_max, max_body, n_a_max, l_3b_max);
-    ai2pot::ace::Sinlm<double> sinlm_2(&gn_r, &gn_a, n_r_max+1, max_body, n_a_max, l_3b_max);
+    ai2pot::ace::Sinlm<double> sinlm_1(&gn_r, &gn_a, n_r_max, max_body, n_a_max, l_max);
+    ai2pot::ace::Sinlm<double> sinlm_2(&gn_r, &gn_a, n_r_max+1, max_body, n_a_max, l_max);
     sinlm_2 = sinlm_1;
     ASSERT_EQ(sinlm_1.ptr_gn_r()->chebyshev_size(), sinlm_2.ptr_gn_r()->chebyshev_size());
     ASSERT_EQ(sinlm_1.ptr_gn_a()->chebyshev_size(), sinlm_2.ptr_gn_a()->chebyshev_size());
@@ -1084,7 +1084,7 @@ TEST_F(SinlmTest, assignment_operator)
     ASSERT_EQ(sinlm_1.max_body(), sinlm_2.max_body());
     ASSERT_EQ(sinlm_1.n_a_max(), sinlm_2.n_a_max());
     ASSERT_EQ(sinlm_1.n_a_basis(), sinlm_2.n_a_basis());
-    ASSERT_EQ(sinlm_1.l_3b_max(), sinlm_2.l_3b_max());
+    ASSERT_EQ(sinlm_1.l_max(), sinlm_2.l_max());
     ASSERT_EQ(sinlm_1.num_s_a(), sinlm_2.num_s_a());
 }
 
@@ -1092,8 +1092,8 @@ TEST_F(SinlmTest, assignment_operator_move)
 {
     ai2pot::ace::Gn<double> gn_r(n_r_basis, rmax_r, rmin_r, lambda_val);
     ai2pot::ace::Gn<double> gn_a(n_a_basis, rmax_a, rmin_a, lambda_val);
-    ai2pot::ace::Sinlm<double> sinlm_1(&gn_r, &gn_a, n_r_max, max_body, n_a_max, l_3b_max);
-    ai2pot::ace::Sinlm<double> sinlm_2(&gn_r, &gn_a, n_r_max+1, max_body, n_a_max, l_3b_max);
+    ai2pot::ace::Sinlm<double> sinlm_1(&gn_r, &gn_a, n_r_max, max_body, n_a_max, l_max);
+    ai2pot::ace::Sinlm<double> sinlm_2(&gn_r, &gn_a, n_r_max+1, max_body, n_a_max, l_max);
     sinlm_2 = std::move(sinlm_1);
     ASSERT_EQ(sinlm_1.ptr_gn_r(), nullptr);
     ASSERT_EQ(sinlm_1.ptr_gn_a(), nullptr);
@@ -1121,7 +1121,7 @@ TEST_F(SinlmTest, find_val_der_r_one_der2xyz)
                                      rmin_a,
                                      n_a_max,
                                      n_a_basis,
-                                     l_3b_max);
+                                     l_max);
     sinlm.accum_val_der_r_one(s_val_r[kk_modify],
                               &s_der2xyz_r[kk_modify*umax_num_neighs*3 + neigh_idx_modify*3 + 0],
                               &s_der2coeffs_r[kk_modify*ntypes*ntypes*n_r_basis + (itype*ntypes+jtype)*n_r_basis + 0],
@@ -1139,7 +1139,7 @@ TEST_F(SinlmTest, find_val_der_r_one_der2xyz)
                                         rmin_a,
                                         n_a_max,
                                         n_a_basis,
-                                        l_3b_max);
+                                        l_max);
     sinlm_delta.accum_val_der_r_one(s_val_r_delta[kk_modify],
                                     &s_der2xyz_r_delta[kk_modify*umax_num_neighs*3 + neigh_idx_modify*3 + 0],
                                     &s_der2coeffs_r_delta[kk_modify*ntypes*ntypes*n_r_basis + (itype*ntypes+jtype)*n_r_basis + 0],
@@ -1182,7 +1182,7 @@ TEST_F(SinlmTest, find_val_der_r_one_der2coeffs)
                                      rmin_a,
                                      n_a_max,
                                      n_a_basis,
-                                     l_3b_max);
+                                     l_max);
     sinlm.accum_val_der_r_one(s_val_r[kk_modify],
                               &s_der2xyz_r_delta[kk_modify*umax_num_neighs*3 + neigh_idx_modify*3 + 0],
                               &s_der2coeffs_r_delta[kk_modify*ntypes*ntypes*n_r_max*n_r_basis + (itype*ntypes+jtype)*n_r_basis + 0],
@@ -1200,7 +1200,7 @@ TEST_F(SinlmTest, find_val_der_r_one_der2coeffs)
                                         rmin_a,
                                         n_a_max,
                                         n_a_basis,
-                                        l_3b_max);
+                                        l_max);
     sinlm_delta.accum_val_der_r_one(s_val_r_delta[kk_modify],
                                     &s_der2xyz_r[kk_modify*umax_num_neighs*3 + neigh_idx_modify*3 + 0],
                                     &s_der2coeffs_r[kk_modify*ntypes*ntypes*n_r_basis + (itype*ntypes+jtype)*n_r_basis + 0],
@@ -1245,7 +1245,7 @@ TEST_F(SinlmTest, find_val_der_r_der2xyz)
                                      rmin_a,
                                      n_a_max,
                                      n_a_basis,
-                                     l_3b_max);
+                                     l_max);
     sinlm.find_val_der_r(s_val_r,
                          s_der2xyz_r,
                          s_der2coeffs_r,
@@ -1269,7 +1269,7 @@ TEST_F(SinlmTest, find_val_der_r_der2xyz)
                                            rmin_a,
                                            n_a_max,
                                            n_a_basis,
-                                           l_3b_max);
+                                           l_max);
     sinlm_delta.find_val_der_r(s_val_r_delta,
                                s_der2xyz_r_delta,
                                s_der2coeffs_r_delta,
@@ -1330,7 +1330,7 @@ TEST_F(SinlmTest, find_val_der_r_der2coeffs)
                                      rmin_a,
                                      n_a_max,
                                      n_a_basis,
-                                     l_3b_max);
+                                     l_max);
     sinlm.find_val_der_r(s_val_r,
                          s_der2xyz_r,
                          s_der2coeffs_r,
@@ -1354,7 +1354,7 @@ TEST_F(SinlmTest, find_val_der_r_der2coeffs)
                                            rmin_a,
                                            n_a_max,
                                            n_a_basis,
-                                           l_3b_max);
+                                           l_max);
     sinlm_delta.find_val_der_r(s_val_r_delta,
                                s_der2xyz_r_delta,
                                s_der2coeffs_r_delta,
@@ -1416,7 +1416,7 @@ TEST_F(SinlmTest, accum_val_der_a_lm_one_der2xyz)
                                      rmin_a,
                                      n_a_max,
                                      n_a_basis,
-                                     l_3b_max);
+                                     l_max);
     double distance_ij = std::sqrt(
         std::pow(rcs[center_idx_modify*umax_num_neighs*3
                      + neigh_idx_modify*3 + 0], 2)
@@ -1447,7 +1447,7 @@ rcs[center_idx_modify*umax_num_neighs*3 + neigh_idx_modify*3 + direction_modify]
                                            rmin_a,
                                            n_a_max,
                                            n_a_basis,
-                                           l_3b_max);
+                                           l_max);
     double distance_ij_delta = std::sqrt(
         std::pow(rcs[center_idx_modify*umax_num_neighs*3
                      + neigh_idx_modify*3 + 0], 2)
@@ -1504,7 +1504,7 @@ TEST_F(SinlmTest, accum_val_der_a_one_lm_der2coeffs)
                                      rmin_a,
                                      n_a_max,
                                      n_a_basis,
-                                     l_3b_max);
+                                     l_max);
     double distance_ij = std::sqrt(
         std::pow(rcs[center_idx_modify*umax_num_neighs*3 + neigh_idx_modify*3 + 0], 2)
         + std::pow(rcs[center_idx_modify*umax_num_neighs*3 + neigh_idx_modify*3 + 1], 2)
@@ -1535,7 +1535,7 @@ coeffs_a[(itype*ntypes+jtype)*n_a_max*n_a_basis + kk_modify*n_a_basis + cheby_id
                                            rmin_a,
                                            n_a_max,
                                            n_a_basis,
-                                           l_3b_max);
+                                           l_max);
     sinlm_delta.accum_val_der_a_one_lm(s_val_a_delta[kk_modify*24 + blm_idx_modify],
                                  &s_der2xyz_a_delta[(kk_modify*24+blm_idx_modify)*umax_num_neighs*3
                                               + neigh_idx_modify*3 + 0],
@@ -1587,7 +1587,7 @@ TEST_F(SinlmTest, find_val_der_a_lm_der2xyz)
                                      rmin_a,
                                      n_a_max,
                                      n_a_basis,
-                                     l_3b_max);
+                                     l_max);
     sinlm.find_val_der_a_lm(s_val_a,
                             s_der2xyz_a,
                             s_der2coeffs_a,
@@ -1611,7 +1611,7 @@ rcs[center_idx_modify*umax_num_neighs*3 + neigh_idx_modify*3 + direction_idx_mod
                                            rmin_a,
                                            n_a_max,
                                            n_a_basis,
-                                           l_3b_max);
+                                           l_max);
     sinlm_delta.find_val_der_a_lm(s_val_a_delta,
                                   s_der2xyz_a_delta,
                                   s_der2coeffs_a_delta,
@@ -1651,12 +1651,12 @@ printf("2.2. Sinlm_a_delta derivative w.r.t. rcs[%d][%d][%d] calculated with fin
 
 TEST_F(SinlmTest, find_val_der_a_lm_der2coeffs)
 {
-    int center_idx_modify = 11;
-    int neigh_idx_modify = 5;
+    int center_idx_modify = 0;
+    int neigh_idx_modify = 1;
     int direction_idx_modify = 0;
     int kk_modify = 4;
     int cheby_idx = 5;
-    int blm_idx_modify = 0;
+    int blm_idx_modify = 15;
     int cidx = ilist[center_idx_modify];
     int nidx = firstneigh[center_idx_modify*umax_num_neighs + neigh_idx_modify];
     int itype = types[cidx];
@@ -1672,7 +1672,7 @@ TEST_F(SinlmTest, find_val_der_a_lm_der2coeffs)
                                      rmin_a,
                                      n_a_max,
                                      n_a_basis,
-                                     l_3b_max);
+                                     l_max);
     sinlm.find_val_der_a_lm(s_val_a,
                             s_der2xyz_a,
                             s_der2coeffs_a,
@@ -1696,7 +1696,7 @@ coeffs_a[(itype*ntypes+jtype)*n_a_max*n_a_basis + kk_modify*n_a_basis + cheby_id
                                            rmin_a,
                                            n_a_max,
                                            n_a_basis,
-                                           l_3b_max);
+                                           l_max);
     sinlm_delta.find_val_der_a_lm(s_val_a_delta,
                                   s_der2xyz_a_delta,
                                   s_der2coeffs_a_delta,
