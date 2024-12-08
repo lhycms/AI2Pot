@@ -67,6 +67,7 @@ public:
         int &num_descriptors_a,
         int &num_l,
         int &l_max,
+        int &num_s_a,
         int max_body,
         int n_r_max,
         int n_a_max,
@@ -74,9 +75,32 @@ public:
         int l_4b_max,
         int l_5b_max);
 
+    static void accum_3b_descriptor_one(
+        CoordType &nep_val_a_one,
+        CoordType *nep_der2xyz_a_one,
+        CoordType *nep_der2coeffs_a_one,
+        CoordType s_val_a_one,
+        CoordType *s_der2xyz_a_one,
+        CoordType *s_der2coeffs_a_one,
+        CoordType rmax_a,
+        int n_a_max,
+        int n_a_basis,
+        CoordType C3B_one,
+        int iilist,
+        int inumneigh,
+        int *ifirstneigh,
+        CoordType *ircs,
+        int *types,
+        int ntypes,
+        int umax_num_neigh_atoms);
+
+    static void accum_4b_descriptor_one();
+
+    static void accum_5b_descriptor_one();
+
     static void find_descriptor_val_der_atom(
         CoordType *nep_val_atom,
-        CoordType (*nep_der2xyz_atom)[3],
+        CoordType *nep_der2xyz_atom,
         CoordType *nep_der2coeffs_r_atom,
         CoordType *nep_der2coeffs_a_atom,
         CoordType *coeffs_r,
@@ -93,12 +117,13 @@ public:
         int n_a_basis,
         int l_max,
         int num_l,
-        int num_r_descriptors,
-        int num_a_descriptors,
+        int num_descriptors_r,
+        int num_descriptors_a,
+        int num_s_a,
         int iilist,
         int inumneigh,
         int *ifirstneigh,
-        CoordType (*ircs)[3],
+        CoordType *ircs,
         int *types,
         int ntype,
         int umax_num_neigh_atoms);
@@ -115,6 +140,7 @@ void NepDescriptor<CoordType>::find_hyperparams(
     int &num_descriptors_a,
     int &num_l,
     int &l_max,
+    int &num_s_a,
     int max_body,
     int n_r_max,
     int n_a_max,
@@ -131,18 +157,67 @@ void NepDescriptor<CoordType>::find_hyperparams(
     if (max_body >= 5)
         num_l += 1;
     num_descriptors_a = n_a_max * num_l;
+
     l_max = (l_3b_max > 0) ? l_3b_max : 0;
     l_max = (l_max > l_4b_max) ? l_max : l_4b_max;
     l_max = (l_max > l_5b_max) ? l_max : l_5b_max;
+    
+    num_s_a = 0;
+    for (int ii=1; ii<=l_max; ii++)
+        num_s_a += 2*ii + 1;
 }
 
 
+template <typename CoordType>
+void NepDescriptor<CoordType>::accum_3b_descriptor_one(
+    CoordType &nep_val_a_one,
+    CoordType *nep_der2xyz_a_one,
+    CoordType *nep_der2coeffs_a_one,
+    CoordType s_val_a_one,
+    CoordType *s_der2xyz_a_one,
+    CoordType *s_der2coeffs_a_one,
+    CoordType rmax_a,
+    int n_a_max,
+    int n_a_basis,
+    CoordType C3B_one,
+    int iilist,
+    int inumneigh,
+    int *ifirstneigh,
+    CoordType *ircs,
+    int *types,
+    int ntypes,
+    int umax_num_neigh_atoms)
+{
+    nep_val_a_one += C3B_one * s_val_a_one * s_val_a_one;
+
+    for (int jj=0; jj<inumneigh; jj++) {
+        CoordType *neigh_vec = &ircs[jj*3 + 0];
+        CoordType distance_ij = std::sqrt(std::pow(neigh_vec[0], 2)
+                                          + std::pow(neigh_vec[1], 2)
+                                          + std::pow(neigh_vec[2], 2));
+        if (distance_ij < rmax_a)
+            continue;
+        
+        for (int dd=0; dd<3; dd++)
+            nep_der2xyz_a_one[jj*3 + dd] += 2 * C3B_one 
+                                            * s_val_a_one
+                                            * s_der2xyz_a_one[jj*3 + dd];
+    }
+
+    int itype = types[iilist];
+    for (int type_outer=0; type_outer<ntypes; type_outer++) {
+        for (int xi=0; xi<n_a_basis; xi++)
+            nep_der2coeffs_a_one[(itype*ntypes+type_outer)*n_a_basis + xi] += 2 * C3B_one
+                                                                              * s_val_a_one
+                                                                              * s_der2coeffs_a_one[(itype*ntypes+type_outer)*n_a_basis + xi];
+    }
+}
 
 
 template <typename CoordType>
-static void NepDescriptor<CoordType>::find_descriptor_val_der_atom(
+void NepDescriptor<CoordType>::find_descriptor_val_der_atom(
     CoordType *nep_val_atom,
-    CoordType (*nep_der2xyz_atom)[3],
+    CoordType *nep_der2xyz_atom,
     CoordType *nep_der2coeffs_r_atom,
     CoordType *nep_der2coeffs_a_atom,
     CoordType *coeffs_r,
@@ -161,10 +236,11 @@ static void NepDescriptor<CoordType>::find_descriptor_val_der_atom(
     int num_l,
     int num_descriptors_r,
     int num_descriptors_a,
+    int num_s_a,
     int iilist,
     int inumneigh,
     int *ifirstneigh,
-    CoordType (*ircs)[3],
+    CoordType *ircs,
     int *types,
     int ntypes,
     int umax_num_neigh_atoms)
@@ -174,8 +250,9 @@ static void NepDescriptor<CoordType>::find_descriptor_val_der_atom(
     memset(nep_der2xyz_atom, 0, sizeof(CoordType) * num_descriptors * umax_num_neigh_atoms * 3);
     memset(nep_der2coeffs_r_atom, 0, sizeof(CoordType) * num_descriptors_r * ntypes * ntypes * n_r_basis);
     memset(nep_der2coeffs_a_atom, 0, sizeof(CoordType) * num_descriptors_a * ntypes * ntypes * n_a_basis);
+
+    int itype = types[iilist];
     PseudoWigner<CoordType> pwigner;
-    
     Sinlm<double> sinlm(lambda_val,
                         rmax_r,
                         rmin_r,
@@ -187,17 +264,18 @@ static void NepDescriptor<CoordType>::find_descriptor_val_der_atom(
                         n_a_max,
                         n_a_basis,
                         l_max);
+
     if (max_body >= 2) {
         CoordType *nep_val_r_atom = nep_val_atom;
-        CoordType (*nep_der2xyz_r_atom)[3] = nep_der2xyz_atom;
+        CoordType *nep_der2xyz_r_atom = nep_der2xyz_atom;
         sinlm.find_val_der_r(nep_val_r_atom,
-                             (CoordType*)nep_der2xyz_r_atom,
+                             nep_der2xyz_r_atom,
                              nep_der2coeffs_r_atom,
                              coeffs_r,
                              iilist,
                              inumneigh,
                              ifirstneigh,
-                             (CoordType*)ircs,
+                             ircs,
                              types,
                              ntypes,
                              umax_num_neigh_atoms);
@@ -207,59 +285,74 @@ static void NepDescriptor<CoordType>::find_descriptor_val_der_atom(
     CoordType *s_der2xyz_a_atom;
     CoordType *s_der2coeffs_a_atom;
     if (max_body > 2) {
-        s_val_a_atom = (CoordType*)malloc(sizeof(CoordType) * sinlm.n_a_max() * sinlm.num_s_a());
-        s_der2xyz_a_atom = (CoordType (*)[3])malloc(sizeof(CoordType) * sinlm.n_a_max() * sinlm.num_s_a() * umax_num_neigh_atoms * 3);
-        s_der2coeffs_a_atom = (CoordType *)malloc(sizeof(CoordType) * sinlm.n_a_max() * sinlm.num_s_a() * ntypes * ntypes * n_a_basis);
+        s_val_a_atom = (CoordType*)malloc(sizeof(CoordType) * n_a_max * num_s_a);
+        s_der2xyz_a_atom = (CoordType*)malloc(sizeof(CoordType) * n_a_max * num_s_a * umax_num_neigh_atoms * 3);
+        s_der2coeffs_a_atom = (CoordType*)malloc(sizeof(CoordType) * n_a_max * num_s_a * ntypes * ntypes * n_a_basis);
         sinlm.find_val_der_a_lm(s_val_a_atom,
-                                (CoordType*)(s_der2xyz_a_atom),
+                                s_der2xyz_a_atom,
                                 s_der2coeffs_a_atom,
                                 coeffs_a,
                                 iilist,
                                 inumneigh,
                                 ifirstneigh,
-                                (CoordType)ircs,
+                                ircs,
                                 types,
                                 ntypes,
                                 umax_num_neigh_atoms);
     }
 
+    CoordType *nep_val_a_ones;
+    CoordType *nep_der2xyz_a_one;
+    CoordType *nep_der2coeffs_a_one;
+    int s_idx;
+    CoordType *s_val_a_one;
+    CoordType *s_der2xyz_a_one;
+    CoordType *s_der2coeffs_a_one;
     for (int nn=0; nn<n_a_max; nn++) {
-        CoordType *nep_val_a_one = &nep_val_atom[num_descriptors_r + nn*num_l];
-        CoordType (*nep_der2xyz_a_one)[3] = &nep_der2xyz_atom[(num_descriptors_r + nn*num_l)*umax_num_neigh_atoms];
-        CoordType *nep_der2coeffs_a_one = &nep_der2coeffs_a_atom[(num_descriptors_r + nn*num_l)*ntypes*ntypes*n_a_basis];
-        int s_idx;
-        CoordType s_val_a_one;
-        CoordType *s_der2xyz_a_one;
-        CoordType *s_der2coeffs_a_one;
+        nep_val_a_ones = &nep_val_atom[num_descriptors_r + nn*num_l];
+
         if (num_l >= 1) {
+            nep_der2xyz_a_one = &nep_der2xyz_atom[(num_descriptors_r + nn*num_l + 1)*umax_num_neigh_atoms*3];
+            nep_der2coeffs_a_one = &nep_der2coeffs_a_atom[(num_descriptors_r + nn*num_l + 1)*ntypes*ntypes*n_a_basis];
             for (int blm_idx=0; blm_idx<2*1 + 1; blm_idx++) {
-                s_idx = nn*sinlm.num_s_a() + blm_idx;
+                s_idx = nn*num_s_a + blm_idx;
                 s_val_a_one = s_val_a_atom[s_idx];
                 s_der2xyz_a_one = &s_der2xyz_a_atom[s_idx*umax_num_neigh_atoms*3 + 0];
                 s_der2coeffs_a_one = &s_der2coeffs_a_atom[s_idx*ntypes*ntypes*n_a_basis + 0];
                 
-                nep_val_a_one[1] += pwigner.C3B()[blm_idx] * s_val_a_one * s_val_a_one;
-                for (int a=0; a<3; a++)
-                    nep_der2xyz_a_one[1*umax_num_neigh_atoms*3 + a] += 2
-                                                                       * s_val_a_one
-                                                                       * s_der2xyz_a_one[blm_idx*umax_num_neigh_atoms*3 + a];
-                for (int kk=0; kk<n_a_basis; kk++)
-                    nep_der2coeffs_a_one[]
+                nep_val_a_ones[0] += pwigner.C3B()[blm_idx] * s_val_a_one * s_val_a_one;
+                for (int jj=0; jj<inumneigh; jj++) {
+                    int jtype = types[ifirstneigh[jj]];
+                    CoordType *neigh_vec = &ircs[jj*3];
+                    CoordType distance_ij = std::sqrt(std::pow(neigh_vec[0], 2)
+                                                      + std::pow(neigh_vec[1], 2),
+                                                      + std::pow(neigh_vec[2], 2));
+                    if (distance_ij > rmax_a);
+                        continue;
+                    for (int a=0; a<3; a++)
+                        nep_der2xyz_a_one[1*umax_num_neigh_atoms*3 + jj*3 + a] += 2 * pwigner.C3B()[blm_idx] * s_val_a_one
+                                                                                  * s_der2xyz_a_one[blm_idx*umax_num_neigh_atoms*3 + a];
+                }
+
+                for (int type_outer=0; type_outer<ntypes; type_outer++)
+                    for (int xi=0; xi<n_a_basis; xi++)
+                        nep_der2coeffs_a_one[(itype*ntypes+type_outer)*n_a_basis + xi] += 2 * pwigner.C3B()[blm_idx] * s_val_a_one 
+                                                                                          * s_der2coeffs_a_one[(itype*ntypes+type_outer)*n_a_basis + xi];
             }
         }
         if (num_l >= 2) {
             for (int blm_idx=3; blm_idx<3 + 2*2 + 1; blm_idx++) {
-                nep_val_a_one[2] = 1;
+                nep_val_a_ones[1] = 1;
             }
         }
         if (num_l >= 3) {
             for (int blm_idx=8; blm_idx<8 + 2*3 + 1; blm_idx++) {
-                nep_val_a_one[3] = 1;
+                nep_val_a_ones[2] = 1;
             }
         }
         if (num_l >= 4) {
             for (int blm_idx=15; blm_idx<15 + 2*4 + 1; blm_idx++) {
-                nep_val_a_one[4] = 1;
+                nep_val_a_ones[3] = 1;
             }
         }
         if (num_l >= 5) {
@@ -268,6 +361,12 @@ static void NepDescriptor<CoordType>::find_descriptor_val_der_atom(
         if (num_l >= 6) {
 
         }
+    }
+
+    if (max_body > 2) {
+        free(s_val_a_atom);
+        free(s_der2xyz_a_atom);
+        free(s_der2coeffs_a_atom);
     }
 }
 

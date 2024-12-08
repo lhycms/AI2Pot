@@ -31,6 +31,7 @@ protected:
     int num_descriptors_a;
     int num_l;
     int max_l;
+    int num_s_a;
 
     int max_body;
     int n_r_max;
@@ -64,7 +65,6 @@ protected:
 
 
 
-
 TEST_F(PseudoWignerTest, init) {
     ai2pot::ace::PseudoWigner<double> pwigner;
     printf("1. Value of C3B[%d] = %g\n", 0, pwigner.C3B()[0]);
@@ -78,6 +78,7 @@ TEST_F(NepDescriptorTest, find_hyperparams)
         num_descriptors_a,
         num_l,
         max_l,
+        num_s_a,
         max_body,
         n_r_max,
         n_a_max,
@@ -89,6 +90,7 @@ printf("1. num_r_descriptors = %d\n", num_descriptors_r);
 printf("2. num_a_descriptors = %d\n", num_descriptors_a);
 printf("3. num_l = %d\n", num_l);
 printf("4. max_l = %d\n", max_l);
+printf("5. num_s_a = %d\n", num_s_a);
 }
 
 
