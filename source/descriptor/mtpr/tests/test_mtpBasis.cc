@@ -210,6 +210,10 @@ protected:
 
 TEST_F(MtpBasisTest, find_val_der4rcs)
 {    
+    int center_idx_modify = 5;
+    int neigh_idx_modify = 6;
+    int direction_idx_modify = 2;
+    double delta = 1e-4;
     //for (int ii=0; ii<1000; ii++)
     ai2pot::mtpr::MtpBasis<double>::find_val_der(
         mtp_basis_val,
@@ -238,7 +242,7 @@ TEST_F(MtpBasisTest, find_val_der4rcs)
         umax_num_neigh_atoms,
         rmax,
         rmin);
-    rcs[0*umax_num_neigh_atoms*3 + 0*3 + 2] += 0.0001;  // [0, 0, 0]: [中心原子，近邻原子，y方向]
+    rcs[center_idx_modify*umax_num_neigh_atoms*3 + neigh_idx_modify*3 + direction_idx_modify] += delta;
     ai2pot::mtpr::MtpBasis<double>::find_val_der(
         mtp_basis_val_,
         mtp_basis_der_,
@@ -276,11 +280,11 @@ printf("1. Check the derivatives of MTP basis wrt. relative coordinates:\n");
 printf("1.1. The derivatives of MTP basis wrt. relative coordinates calculated by custom code:\n\t[");
 for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++)
     printf("%10lf, ", 
-        mtp_basis_der[0*mtp_param.alpha_scalar_moments()*umax_num_neigh_atoms + ii*umax_num_neigh_atoms + 0][2]);
+        mtp_basis_der[center_idx_modify*mtp_param.alpha_scalar_moments()*umax_num_neigh_atoms + ii*umax_num_neigh_atoms + neigh_idx_modify][direction_idx_modify]);
 printf("]\n");
 printf("1.2. The derivatives of MTP basis wrt. relative coordinates calculated by finite different method:\n\t[");
 for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++) {
-    double der_fdm = (mtp_basis_val_[0*mtp_param.alpha_scalar_moments() + ii] - mtp_basis_val[0*mtp_param.alpha_scalar_moments() + ii]) / 0.0001;
+    double der_fdm = (mtp_basis_val_[center_idx_modify*mtp_param.alpha_scalar_moments() + ii] - mtp_basis_val[center_idx_modify*mtp_param.alpha_scalar_moments() + ii]) / delta;
     printf("%10lf, ", der_fdm);
 }
 printf("]\n");
@@ -290,6 +294,17 @@ printf("]\n");
 
 TEST_F(MtpBasisTest, find_val_der4coeffs)
 {
+    int center_idx_modify = 0;
+    int neigh_idx_modify = 1;
+    int direction_idx_modify = 2;
+    int cidx = ilist[center_idx_modify];
+    int nidx = firstneigh[center_idx_modify * umax_num_neigh_atoms + neigh_idx_modify];
+    int itype_modify = types[cidx];
+    int jtype_modify = types[nidx];
+    int mu_modify = 0;
+    int xi_modify = 0;
+    double delta = 1e-4;
+
     //for (int ii=0; ii<1000; ii++)
     ai2pot::mtpr::MtpBasis<double>::find_val_der(
         mtp_basis_val,
@@ -318,9 +333,8 @@ TEST_F(MtpBasisTest, find_val_der4coeffs)
         umax_num_neigh_atoms,
         rmax,
         rmin);
-    int coeff_idx = (0*ntypes + 0)*ntypes*mtp_param.nmus()*chebyshev_size + 0*chebyshev_size + 0;   // [0, 0, 2, 0] = [center_type, neigh_type, mu, chebyshev_idx]
-    assert(1 < mtp_param.nmus());   // now_mu < max_mu
-    coeffs[coeff_idx] += 0.0001;
+    int coeff_idx = (itype_modify*ntypes + jtype_modify)*ntypes*mtp_param.nmus()*chebyshev_size + mu_modify*chebyshev_size + xi_modify;
+    coeffs[coeff_idx] += delta;
     ai2pot::mtpr::MtpBasis<double>::find_val_der(
         mtp_basis_val_,
         mtp_basis_der_,
@@ -355,12 +369,12 @@ TEST_F(MtpBasisTest, find_val_der4coeffs)
 printf("1. Check the derivatives of MTP basis wrt. coeffs:\n");
 printf("1.1. The derivatives of MTP basis wrt. coeffs calculated by custom code:\n\t[");
 for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++) {
-    printf("%10lf, ", mtp_basis_der2coeffs[0*mtp_param.alpha_scalar_moments()*num_coeffs + ii*num_coeffs + coeff_idx]); // [0, ii, coeff_idx] = [center_idx, mtp_basis_idx, coeff_idx]
+    printf("%10lf, ", mtp_basis_der2coeffs[center_idx_modify*mtp_param.alpha_scalar_moments()*num_coeffs + ii*num_coeffs + coeff_idx]); // [0, ii, coeff_idx] = [center_idx, mtp_basis_idx, coeff_idx]
 }
 printf("]\n");
 printf("1.2. The derivatives of MTP basis wrt. coeffs calculated by finite difference method:\n\t[");
 for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++) {
-    double der_fdm = (mtp_basis_val_[0*mtp_param.alpha_scalar_moments() + ii] - mtp_basis_val[0*mtp_param.alpha_scalar_moments() + ii]) / 0.0001;
+    double der_fdm = (mtp_basis_val_[center_idx_modify*mtp_param.alpha_scalar_moments() + ii] - mtp_basis_val[center_idx_modify*mtp_param.alpha_scalar_moments() + ii]) / delta;
     printf("%10lf, ", der_fdm);
 }
 printf("]\n");

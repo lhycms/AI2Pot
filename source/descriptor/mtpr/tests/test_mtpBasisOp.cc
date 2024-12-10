@@ -217,7 +217,7 @@ TEST_F(MtpBasisOpTest, backward)
     int center_modify = 0;
     int neigh_modify = 0;
     int direction_modify = 0;
-    int delta = 0.1;
+    int delta = 1e-3;
 
     brcs_tensor.requires_grad_(true);
     coeffs_tensor.requires_grad_(true);

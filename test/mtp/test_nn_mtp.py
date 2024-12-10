@@ -11,6 +11,7 @@ import lightning as L
 
 from ai2pot.data.mlffdataset import ScDataset
 from ai2pot.mtp.nn_mtp import DescriptorMtp, FittingNet, NNMtp, LitNNMtp
+from ai2pot.utils.prepot import LsShifter
 
 
 TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")
@@ -92,15 +93,7 @@ class NNMtpTest(unittest.TestCase):
         umax_num_neighs: int = 20
         fit_sizes_list: List[int] = [30]
         fit_activation: nn.Module = nn.Tanh()
-        self.nn_mtp = NNMtp(mtp_level=mtp_level,
-                            ntypes=ntypes,
-                            chebyshev_size=chebyshev_size,
-                            rmax=rmax,
-                            rmin=rmin,
-                            umax_num_neighs=umax_num_neighs,
-                            fit_sizes_list=fit_sizes_list,
-                            fit_activation=fit_activation,
-                            has_virials=True)
+        
         outcar_path: str = f"{ReNbSSe_OUTCAR_DIR}/OUTCAR"
         labeled_system: LabeledSystem = LabeledSystem(outcar_path)
         self.mlff_dataset: ScDataset = ScDataset(labeled_system=labeled_system,
@@ -113,7 +106,25 @@ class NNMtpTest(unittest.TestCase):
                                                       batch_size=8,
                                                       shuffle=True,
                                                       num_workers=4)
-        self.trainer = L.Trainer(max_epochs=10,
+
+        ls_shifter: LsShifter = LsShifter(ls=labeled_system)
+        energy_shifts_tensor: torch.Tensor = torch.tensor(
+                                                ls_shifter.types_energy_shifts,
+                                                dtype=torch.float32)
+        
+        self.nn_mtp = NNMtp(mtp_level=mtp_level,
+                            ntypes=ntypes,
+                            chebyshev_size=chebyshev_size,
+                            rmax=rmax,
+                            rmin=rmin,
+                            umax_num_neighs=umax_num_neighs,
+                            fit_sizes_list=fit_sizes_list,
+                            fit_activation=fit_activation,
+                            bias_mark=False,
+                            energy_shift_tensor=energy_shifts_tensor,
+                            has_virials=True)
+        
+        self.trainer = L.Trainer(max_epochs=100,
                                  accelerator="cpu",
                                  devices=1)
     
@@ -147,7 +158,7 @@ class NNMtpTest(unittest.TestCase):
                                                  lr_start=1E-3,
                                                  e_wgt_start=1.0,
                                                  e_wgt_end=1.0,
-                                                 f_wgt_start=1.0,
+                                                 f_wgt_start=100.0,
                                                  f_wgt_end=1.0,
                                                  v_wgt_start=0.0,
                                                  v_wgt_end=0.0)
@@ -157,6 +168,6 @@ class NNMtpTest(unittest.TestCase):
     def tearDown(self) -> None:
         print("NNMtpTest (TestCase) is tearing down...\n")
 
-    
+
 if __name__ == "__main__":
     unittest.main()

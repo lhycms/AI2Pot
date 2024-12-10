@@ -69,7 +69,7 @@ class ScDataset(Dataset):
                 torch.tensor(self.labeled_system["energies"][index], dtype=self.torch_float_dtype),
                 torch.tensor(self.labeled_system["forces"][index], dtype=self.torch_float_dtype)
             ]
-        
+
 
 class McDataset(Dataset):
     def __init__(self,
@@ -118,22 +118,23 @@ class McDataset(Dataset):
         
         num_real_atoms: int = ls.get_natoms()
         ilist: np.ndarray = np.zeros(shape=(self.max_num_atoms), 
-                                     dtype=np.int32)
+                                     dtype=np.int32) - 1
         numneigh: np.ndarray = np.zeros(shape=(self.max_num_atoms),
-                                        dtype=np.int32)
+                                        dtype=np.int32) - 1
         firstneigh: np.ndarray = np.zeros(shape=(self.max_num_atoms, self.umax_num_neigh_atoms),
-                                          dtype=np.int32)
+                                          dtype=np.int32) - 1
         relative_coords: np.ndarray = np.zeros(shape=(self.max_num_atoms, self.umax_num_neigh_atoms, 3),
-                                               dtype=self.npy_float_dtype)
+                                               dtype=self.npy_float_dtype) - 1
         types: np.ndarray = np.zeros(shape=(self.max_num_atoms),
-                                     dtype=np.int32)
+                                     dtype=np.int32) - 1
         forces: np.ndarray = np.zeros(shape=(self.max_num_atoms, 3),
-                                      dtype=self.npy_float_dtype)
+                                      dtype=self.npy_float_dtype) - 1
         if ls.has_virial():
             virials: np.ndarray = np.zeros(shape=(3, 3),
                                            dtype=self.npy_float_dtype)
         energies = ls["energies"][el_index]
         forces[:num_real_atoms] = ls["forces"][el_index]
+        
         if ls.has_virial():
             virials[:num_real_atoms] = ls["virials"][el_index]
         

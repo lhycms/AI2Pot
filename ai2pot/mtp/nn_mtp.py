@@ -46,6 +46,7 @@ class DescriptorMtp(nn.Module):
                 bfirstneigh,
                 brcs,
                 btypes) -> torch.Tensor:
+        brcs.requires_grad_(True)
         descriptor: torch.Tensor = mtpBasisOp(self.alpha_index_basic_tensor,
                                               self.alpha_index_times_tensor,
                                               self.alpha_moment_mapping_tensor,
@@ -155,7 +156,7 @@ class NNMtp(nn.Module):
                                            self.umax_num_neighs))
         self.register_module("batch_norm", nn.BatchNorm1d(num_features=self.descriptor_module.num_descriptors))
         self.fitting_modules_list: nn.ModuleList = nn.ModuleList()
-        if not energy_shift_tensor:
+        if energy_shift_tensor is False:
             energy_shift_tensor = torch.zeros(self.ntypes)
         for ii in range(ntypes):
             self.fitting_modules_list.append(FittingNet(num_descriptor=self.descriptor_module.num_descriptors,
@@ -186,7 +187,6 @@ class NNMtp(nn.Module):
             itype_natoms_tensor: torch.Tensor = itype_mask.count_nonzero(dim=1)
             flatten_descriptor: torch.Tensor = self.batch_norm(bdescriptor[itype_mask])
             flatten_ei: torch.Tensor = self.fitting_modules_list[itype](flatten_descriptor)
-            print(flatten_ei.size(), itype_natoms_tensor)
             for bidx, flatten_ei_frame in enumerate( torch.split(flatten_ei, itype_natoms_tensor.tolist()) ):
                 e_tot_sr[bidx] += flatten_ei_frame.sum()
 
@@ -248,6 +248,7 @@ class LitNNMtp(L.LightningModule):
         
     def get_efv_wgts(self):
         lr_current: float = self.optimizers().param_groups[0]['lr']
+        print("***+++ ", lr_current)
         rate: float = lr_current / self.lr_start
         e_wgt: float = self.e_wgt_end * (1 - rate) + self.e_wgt_start * rate
         f_wgt: float = self.f_wgt_end * (1 - rate) + self.f_wgt_start * rate
@@ -259,6 +260,11 @@ class LitNNMtp(L.LightningModule):
         if (self.has_virials):
             inum, ilist, numneigh, firstneigh, rcs, types, nghost, e_dft, fi_dft, v_dft = batch
             e_ml, fi_ml, v_ml = self.model(ilist, numneigh, firstneigh, rcs, types, nghost)
+            print("---MLFF---")
+            print(fi_ml[0][:3])
+            print("---DFT---")
+            print(fi_dft[0][:3])
+            print("*********")
             e_criterion_tensor: torch.Tensor = e_wgt * self.e_criterion(binum=inum, input_benergies=e_ml, target_benergies=e_dft)
             f_criterion_tensor: torch.Tensor = f_wgt * self.f_criterion(binum=inum, input_bforces=fi_ml, target_bforces=fi_dft)
             v_criterion_tensor: torch.Tensor = v_wgt * self.v_criterion(binum=inum, input_bvirials=v_ml, target_bvirials=v_dft)
@@ -267,7 +273,7 @@ class LitNNMtp(L.LightningModule):
             inum, ilist, numneigh, firstneigh, rcs, types, nghost, e_dft, fi_dft = batch
             e_ml, fi_ml, v_ml = self.model(ilist, numneigh, firstneigh, rcs, types, nghost)
             e_criterion_tensor: torch.Tensor = e_wgt * self.e_criterion(binum=inum, input_benergies=e_ml, target_benergies=e_dft)
-            v_criterion_tensor: torch.Tensor = f_wgt * self.f_criterion(binum=inum, input_bforces=fi_ml, target_bforces=fi_dft)
+            f_criterion_tensor: torch.Tensor = f_wgt * self.f_criterion(binum=inum, input_bforces=fi_ml, target_bforces=fi_dft)
             loss = e_criterion_tensor + f_criterion_tensor
         return loss
     
@@ -275,16 +281,14 @@ class LitNNMtp(L.LightningModule):
         optimizer: torch.optim.Optimizer = torch.optim.Adam(params=self.model.parameters(),
                                                             lr=self.lr_start)
         scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer=optimizer, gamma=0.97)
-        print("***+++")
-        return optimizer
-        #    {
-        #    'optimizer': optimizer,
-        #    'lr_scheduler': {
-        #        'scheduler': scheduler,
-        #        'interval': 'epoch',
-        #        'frequency': 1
-        #    }
-        #}
+        return {
+                'optimizer': optimizer,
+                'lr_scheduler': {
+                    'scheduler': scheduler,
+                    'interval': 'epoch',
+                    'frequency': 5
+                }
+        }
 
     #def on_epoch_end(self):
     #    current_lr: float = self.optimizers().param_groups[0]['lr']
