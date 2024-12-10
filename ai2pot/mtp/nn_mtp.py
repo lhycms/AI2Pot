@@ -179,13 +179,17 @@ class NNMtp(nn.Module):
                                                            bfirstneigh,
                                                            brcs,
                                                            btypes)
-        e_i_sr_list: List[torch.Tensor] = []
+        
+        e_tot_sr: torch.Tensor = torch.zeros(batch_size)
         for itype in range(self.ntypes):
             itype_mask: torch.Tensor = (torch.take(input=btypes, index=bilist.to(torch.int64)) == itype)
-            itype_descriptor: torch.Tensor = self.batch_norm(bdescriptor[itype_mask].view(-1, self.descriptor_module.num_descriptors)).view(batch_size, -1, self.descriptor_module.num_descriptors)
-            e_i_sr_list.append(self.fitting_modules_list[itype](itype_descriptor))
-        e_i_sr: torch.Tensor = torch.cat(e_i_sr_list, dim=1)
-        e_tot_sr: torch.Tensor = torch.sum(e_i_sr, dim=1)
+            itype_natoms_tensor: torch.Tensor = itype_mask.count_nonzero(dim=1)
+            flatten_descriptor: torch.Tensor = self.batch_norm(bdescriptor[itype_mask])
+            flatten_ei: torch.Tensor = self.fitting_modules_list[itype](flatten_descriptor)
+            print(flatten_ei.size(), itype_natoms_tensor)
+            for bidx, flatten_ei_frame in enumerate( torch.split(flatten_ei, itype_natoms_tensor.tolist()) ):
+                e_tot_sr[bidx] += flatten_ei_frame.sum()
+
         mask: List[Optional[torch.Tensor]] = [torch.ones_like(e_tot_sr,
                                                               device=brcs.device,
                                                               dtype=brcs.dtype)]
@@ -242,7 +246,7 @@ class LitNNMtp(L.LightningModule):
         self.v_wgt_start: float = v_wgt_start
         self.v_wgt_end: float = v_wgt_end
         
-    def get_efv_wgts(self, epoch: int):
+    def get_efv_wgts(self):
         lr_current: float = self.optimizers().param_groups[0]['lr']
         rate: float = lr_current / self.lr_start
         e_wgt: float = self.e_wgt_end * (1 - rate) + self.e_wgt_start * rate
@@ -251,7 +255,7 @@ class LitNNMtp(L.LightningModule):
         return [e_wgt, f_wgt, v_wgt]
         
     def training_step(self, batch, batch_idx):
-        e_wgt, f_wgt, v_wgt = self.get_efv_wgts(epoch=self.current_epoch)
+        e_wgt, f_wgt, v_wgt = self.get_efv_wgts()
         if (self.has_virials):
             inum, ilist, numneigh, firstneigh, rcs, types, nghost, e_dft, fi_dft, v_dft = batch
             e_ml, fi_ml, v_ml = self.model(ilist, numneigh, firstneigh, rcs, types, nghost)

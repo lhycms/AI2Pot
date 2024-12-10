@@ -83,16 +83,13 @@ public:
         CoordType *s_der2xyz_a_one,
         CoordType *s_der2coeffs_a_one,
         CoordType rmax_a,
-        int n_a_max,
         int n_a_basis,
         CoordType C3B_one,
         int iilist,
         int inumneigh,
-        int *ifirstneigh,
         CoordType *ircs,
         int *types,
-        int ntypes,
-        int umax_num_neigh_atoms);
+        int ntypes);
 
     static void accum_4b_descriptor_one();
 
@@ -177,16 +174,13 @@ void NepDescriptor<CoordType>::accum_3b_descriptor_one(
     CoordType *s_der2xyz_a_one,
     CoordType *s_der2coeffs_a_one,
     CoordType rmax_a,
-    int n_a_max,
     int n_a_basis,
     CoordType C3B_one,
     int iilist,
     int inumneigh,
-    int *ifirstneigh,
     CoordType *ircs,
     int *types,
-    int ntypes,
-    int umax_num_neigh_atoms)
+    int ntypes)
 {
     nep_val_a_one += C3B_one * s_val_a_one * s_val_a_one;
 

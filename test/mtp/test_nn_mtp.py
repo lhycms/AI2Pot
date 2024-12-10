@@ -142,11 +142,15 @@ class NNMtpTest(unittest.TestCase):
         self.nn_mtp.to(torch.float32)
         print("NNMtpTest.test_train:")
         print("---------------------")
-        for k, v in self.nn_mtp.named_parameters():
-            print('\t', k, v.size(), v.requires_grad)
-        
         self.nn_mtp.train()
-        lit_nn_mtp: L.LightningModule = LitNNMtp(model=self.nn_mtp)
+        lit_nn_mtp: L.LightningModule = LitNNMtp(model=self.nn_mtp,
+                                                 lr_start=1E-3,
+                                                 e_wgt_start=1.0,
+                                                 e_wgt_end=1.0,
+                                                 f_wgt_start=1.0,
+                                                 f_wgt_end=1.0,
+                                                 v_wgt_start=0.0,
+                                                 v_wgt_end=0.0)
         self.trainer.fit(model=lit_nn_mtp,
                          train_dataloaders=self.mlff_dataloader)
     

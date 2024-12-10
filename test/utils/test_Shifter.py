@@ -10,7 +10,7 @@ ReNbSSe_OUTCAR_PATH = os.path.join(TEST_FILES_DIR, "OUTCARs", "ReNbSSe", "OUTCAR
 ReNbSTe_OUTCAR_PATH = os.path.join(TEST_FILES_DIR, "OUTCARs", "ReNbSTe", "OUTCAR")
 
 
-class LsShifterTest(unittest):
+class LsShifterTest(unittest.TestCase):
     def setUp(self):
         print("LsShifterTest (TestCase) is setting up...")
         self.ls: LabeledSystem = LabeledSystem(ReNbSSe_OUTCAR_PATH)
