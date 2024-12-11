@@ -185,7 +185,7 @@ torch::autograd::variable_list MtpBasisFunction::backward(
 
         for (int bb=0; bb<batch_size; bb++) {
             float *out_der = bout_der_tensor[bb].data_ptr<float>();
-            float *out_der2coeffs = bout_der2coeffs_tensor.data_ptr<float>();
+            float *out_der2coeffs = bout_der2coeffs_tensor[bb].data_ptr<float>();
             float *mtp_basis_der = bmtp_basis_der_tensor[bb].data_ptr<float>();
             float *mtp_basis_der2coeffs = bmtp_basis_der2coeffs_tensor[bb].data_ptr<float>();
             float *grad_output = bgrad_output_tensor[bb].data_ptr<float>(); 
@@ -214,7 +214,7 @@ torch::autograd::variable_list MtpBasisFunction::backward(
 
         for (int bb=0; bb<batch_size; bb++) {
             double *out_der = bout_der_tensor[bb].data_ptr<double>();
-            double *out_der2coeffs = bout_der2coeffs_tensor.data_ptr<double>();
+            double *out_der2coeffs = bout_der2coeffs_tensor[bb].data_ptr<double>();
             double *mtp_basis_der = bmtp_basis_der_tensor[bb].data_ptr<double>();
             double *mtp_basis_der2coeffs = bmtp_basis_der2coeffs_tensor[bb].data_ptr<double>();
             double *grad_output = bgrad_output_tensor[bb].data_ptr<double>();
@@ -223,11 +223,11 @@ torch::autograd::variable_list MtpBasisFunction::backward(
                 for (int ee=0; ee<alpha_scalar_moments; ee++) {
                     for (int jj=0; jj<umax_num_neighs; jj++) {
                         out_der[ii*umax_num_neighs*3 + jj*3 + 0] += grad_output[ii*alpha_scalar_moments + ee]
-                            * mtp_basis_der[ii*alpha_scalar_moments*umax_num_neighs*3 + ee*umax_num_neighs + jj*3 + 0];
+                            * mtp_basis_der[ii*alpha_scalar_moments*umax_num_neighs*3 + ee*umax_num_neighs*3 + jj*3 + 0];
                         out_der[ii*umax_num_neighs*3 + jj*3 + 1] += grad_output[ii*alpha_scalar_moments + ee]
-                            * mtp_basis_der[ii*alpha_scalar_moments*umax_num_neighs*3 + ee*umax_num_neighs + jj*3 + 1];
+                            * mtp_basis_der[ii*alpha_scalar_moments*umax_num_neighs*3 + ee*umax_num_neighs*3 + jj*3 + 1];
                         out_der[ii*umax_num_neighs*3 + jj*3 + 2] += grad_output[ii*alpha_scalar_moments + ee]
-                            * mtp_basis_der[ii*alpha_scalar_moments*umax_num_neighs*3 + ee*umax_num_neighs + jj*3 + 2];
+                            * mtp_basis_der[ii*alpha_scalar_moments*umax_num_neighs*3 + ee*umax_num_neighs*3 + jj*3 + 2];
                     }
                     for (int kk=0; kk<num_coeffs; kk++)
                         out_der2coeffs[kk] += grad_output[ii*alpha_scalar_moments + ee]

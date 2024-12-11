@@ -333,7 +333,7 @@ TEST_F(MtpBasisTest, find_val_der4coeffs)
         umax_num_neigh_atoms,
         rmax,
         rmin);
-    int coeff_idx = (itype_modify*ntypes + jtype_modify)*ntypes*mtp_param.nmus()*chebyshev_size + mu_modify*chebyshev_size + xi_modify;
+    int coeff_idx = (itype_modify*ntypes + jtype_modify)*mtp_param.nmus()*chebyshev_size + mu_modify*chebyshev_size + xi_modify;
     coeffs[coeff_idx] += delta;
     ai2pot::mtpr::MtpBasis<double>::find_val_der(
         mtp_basis_val_,

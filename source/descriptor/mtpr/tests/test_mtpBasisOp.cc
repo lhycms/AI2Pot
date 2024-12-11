@@ -211,13 +211,13 @@ std::cout << "mtp_level = " << mtp_level << ": \n" << mtp_basis_tensor << std::e
 }
 
 
-TEST_F(MtpBasisOpTest, backward) 
+TEST_F(MtpBasisOpTest, backward_der2xyz)
 {
-    int batch_modify = 0;
-    int center_modify = 0;
-    int neigh_modify = 0;
+    int batch_modify = 5;
+    int center_modify = 1;
+    int neigh_modify = 5;
     int direction_modify = 0;
-    int delta = 1e-3;
+    double delta = 1e-3;
 
     brcs_tensor.requires_grad_(true);
     coeffs_tensor.requires_grad_(true);
@@ -261,13 +261,79 @@ TEST_F(MtpBasisOpTest, backward)
                                                            rmin)[0];
     at::Tensor result = mtp_basis_tensor.sum();
     result.backward();
-    std::cout << brcs_tensor.grad()[0][center_modify][neigh_modify][direction_modify] << std::endl;
+printf("1.1. Sum of descriptors detivative w.r.t rcs[%d][%d][%d] calculated by custom code:\n", center_modify, neigh_modify, direction_modify);
+std::cout << brcs_tensor.grad()[0][center_modify][neigh_modify][direction_modify] << std::endl;
 
     at::Tensor result_ = mtp_basis_tensor_.sum();
     result_.backward();
-    std::cout << result << std::endl;
-    std::cout << result_ << std::endl;
-    std::cout << (result_ - result) / delta << std::endl;
+//std::cout << result << std::endl;
+//std::cout << result_ << std::endl;
+printf("1.2. Sum of descriptors detivative w.r.t rcs[%d][%d][%d] calculated by finite difference method:\n", center_modify, neigh_modify, direction_modify);
+std::cout << (result_ - result) / delta << std::endl;
+}
+
+
+TEST_F(MtpBasisOpTest, backward_der2coeffs)
+{
+    int itype_modify = 1;
+    int jtype_modify = 1;
+    int mu_modify = 1;
+    int xi_modify = 5;
+    int coeff_idx_modify = (itype_modify*ntypes + jtype_modify)*nmus_tensor.item<int>()*chebyshev_size
+                           + mu_modify*chebyshev_size
+                           + xi_modify;
+    double delta = 1E-4;
+
+    brcs_tensor.requires_grad_(true);
+    coeffs_tensor.requires_grad_(true);
+    at::Tensor mtp_basis_tensor = ai2pot::mtpr::MtpBasisOp(alpha_index_basic_tensor,
+                                                           alpha_index_times_tensor,
+                                                           alpha_moment_mapping_tensor,
+                                                           num_mus4moms_tensor,
+                                                           mus4moms_tensor,
+                                                           nmus_tensor,
+                                                           ntypes,
+                                                           chebyshev_size,
+                                                           coeffs_tensor,
+                                                           bilist_tensor,
+                                                           bnumneigh_tensor,
+                                                           bfirstneigh_tensor,
+                                                           brcs_tensor,
+                                                           btypes_tensor,
+                                                           umax_num_neighs,
+                                                           rmax,
+                                                           rmin)[0];
+
+    at::Tensor coeffs_tensor_ = coeffs_tensor.clone();
+    double *coeffs_ = coeffs_tensor_.data_ptr<double>();
+    coeffs_[coeff_idx_modify] += delta;
+    at::Tensor mtp_basis_tensor_ = ai2pot::mtpr::MtpBasisOp(alpha_index_basic_tensor,
+                                                           alpha_index_times_tensor,
+                                                           alpha_moment_mapping_tensor,
+                                                           num_mus4moms_tensor,
+                                                           mus4moms_tensor,
+                                                           nmus_tensor,
+                                                           ntypes,
+                                                           chebyshev_size,
+                                                           coeffs_tensor_,
+                                                           bilist_tensor,
+                                                           bnumneigh_tensor,
+                                                           bfirstneigh_tensor,
+                                                           brcs_tensor,
+                                                           btypes_tensor,
+                                                           umax_num_neighs,
+                                                           rmax,
+                                                           rmin)[0];
+
+    at::Tensor result = mtp_basis_tensor.sum();
+    result.backward();
+printf("1.1. Sum of descriptors detivative w.r.t coeffs[%d][%d][%d][%d] calculated by custom code:\n", itype_modify, jtype_modify, mu_modify, xi_modify);
+std::cout << coeffs_tensor.grad()[coeff_idx_modify] << std::endl;
+
+    at::Tensor result_ = mtp_basis_tensor_.sum();
+    result_.backward();
+printf("1.2. Sum of descriptors detivative w.r.t coeffs[%d][%d][%d][%d] calculated by finite difference method:\n", itype_modify, jtype_modify, mu_modify, xi_modify);
+std::cout << (result_ - result) / delta << std::endl;
 }
 
 
