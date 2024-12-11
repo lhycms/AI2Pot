@@ -17,7 +17,6 @@ from ai2pot.utils.prepot import LsShifter
 TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")
 ReNbSSe_OUTCAR_DIR = os.path.join(TEST_FILES_DIR, "OUTCARs", "ReNbSSe")
 
-
 class DescriptorMtpTest(object):
     def setUp(self) -> None:
         print("DescriptorMtpTest (TestCase) is setting up...\n")
