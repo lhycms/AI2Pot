@@ -238,8 +238,10 @@ TEST_F(MtpBasisOpTest, backward_der2xyz)
                                                            umax_num_neighs,
                                                            rmax,
                                                            rmin)[0];
+    at::Tensor result = mtp_basis_tensor.sum();
+    result.backward();
     
-    at::Tensor brcs_tensor_ = brcs_tensor.clone();
+    at::Tensor brcs_tensor_ = brcs_tensor.clone().detach();
     double *brcs_ = brcs_tensor_.data_ptr<double>();
     brcs_[center_modify*umax_num_neighs*3 + neigh_modify*3 + direction_modify] += delta;
     at::Tensor mtp_basis_tensor_ = ai2pot::mtpr::MtpBasisOp(alpha_index_basic_tensor,
@@ -259,15 +261,12 @@ TEST_F(MtpBasisOpTest, backward_der2xyz)
                                                            umax_num_neighs,
                                                            rmax,
                                                            rmin)[0];
-    at::Tensor result = mtp_basis_tensor.sum();
-    result.backward();
-printf("1.1. Sum of descriptors detivative w.r.t rcs[%d][%d][%d] calculated by custom code:\n", center_modify, neigh_modify, direction_modify);
-std::cout << brcs_tensor.grad()[0][center_modify][neigh_modify][direction_modify] << std::endl;
-
     at::Tensor result_ = mtp_basis_tensor_.sum();
     result_.backward();
 //std::cout << result << std::endl;
 //std::cout << result_ << std::endl;
+printf("1.1. Sum of descriptors detivative w.r.t rcs[%d][%d][%d] calculated by custom code:\n", center_modify, neigh_modify, direction_modify);
+std::cout << brcs_tensor.grad()[0][center_modify][neigh_modify][direction_modify] << std::endl;
 printf("1.2. Sum of descriptors detivative w.r.t rcs[%d][%d][%d] calculated by finite difference method:\n", center_modify, neigh_modify, direction_modify);
 std::cout << (result_ - result) / delta << std::endl;
 }
@@ -304,7 +303,7 @@ TEST_F(MtpBasisOpTest, backward_der2coeffs)
                                                            rmax,
                                                            rmin)[0];
 
-    at::Tensor coeffs_tensor_ = coeffs_tensor.clone();
+    at::Tensor coeffs_tensor_ = coeffs_tensor.clone().detach();
     double *coeffs_ = coeffs_tensor_.data_ptr<double>();
     coeffs_[coeff_idx_modify] += delta;
     at::Tensor mtp_basis_tensor_ = ai2pot::mtpr::MtpBasisOp(alpha_index_basic_tensor,

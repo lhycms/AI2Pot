@@ -21,7 +21,7 @@ class MlffInput(object):
         self.dtype: torch._C.dtype = dtype
         self.device: torch._C.device = device
     
-    def find_struct_info(self,
+    def analyse_pymatgen(self,
                   structure: Structure):
         cell: np.ndarray = np.array(structure.lattice.matrix)
         unique_species = sorted(set(structure.species), key=lambda sp: sp.Z)

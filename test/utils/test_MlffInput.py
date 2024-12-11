@@ -40,7 +40,7 @@ class MlffInputTest(unittest.TestCase):
         
     def test_vertify_mtp_force(self):
         center_idx_modify: int = 0
-        neigh_idx_modify: int = 0
+        neigh_idx_modify: int = 1
         direction_idx_modify: int = 0
         
         mtp_level: int = 16
@@ -68,24 +68,28 @@ class MlffInputTest(unittest.TestCase):
                 umax_num_neighs=self.umax_num_neighs,
                 pbc_xyz=self.pbc_xyz,
                 sort=self.sort,
-                dtype=torch.float64).find_struct_info(self.structure,)
+                dtype=torch.float64).find_struct_info(self.structure)
         info[4].requires_grad_(True)
         d1 = nn_mtp.descriptor_module(*info[1:-1])
-        d1.sum().backward()
+        result1 = d1.sum()
+        result1.backward()
         print("---- Information for structure 1 ----")
         print("1.1. Descriptor for structure 1 = \n\t", d1[0][center_idx_modify][:5])
         print("1.2. Derivatives w.r.t. xyz = ", info[4].grad[0][center_idx_modify][neigh_idx_modify][direction_idx_modify])
         print("-------------------------------------")
         
         # 2. Structure_2
+        info_ = [item.clone() for item in info]
         delta = 1E-4
-        info[4].requires_grad_(False)
-        info[4][center_idx_modify][neigh_idx_modify][direction_idx_modify] += delta
-        info[4].requires_grad_(True)
-        d2 = nn_mtp.descriptor_module(*info[1:-1])
+        #info_[4].requires_grad_(False)
+        info_[4][center_idx_modify][neigh_idx_modify][direction_idx_modify] += delta
+        info_[4].requires_grad_(True)
+        d2 = nn_mtp.descriptor_module(*info_[1:-1])
+        result2 = d2.sum()
+        result2.backward()
         print("---- Information for structure 2 ----")
         print("2.1. Descriptor for structure 1 = \n\t", d2[0][center_idx_modify][:5])
-        print("2.2. Derivatives w.r.t. xyz = ", (d2.sum() - d1.sum()) / delta)
+        print("2.2. Derivatives w.r.t. xyz = ", (result2 - result1) / delta)
         print("-------------------------------------")
 
 
