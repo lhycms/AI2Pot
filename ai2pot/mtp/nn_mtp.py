@@ -188,7 +188,7 @@ class NNMtp(nn.Module):
             flatten_descriptor: torch.Tensor = self.batch_norm(bdescriptor[itype_mask])
             flatten_ei: torch.Tensor = self.fitting_modules_list[itype](flatten_descriptor)
             for bidx, flatten_ei_frame in enumerate( torch.split(flatten_ei, itype_natoms_tensor.tolist()) ):
-                e_tot_sr[bidx] += flatten_ei_frame.sum()
+                e_tot_sr[bidx] = torch.add(e_tot_sr[bidx], flatten_ei_frame.sum())
 
         mask: List[Optional[torch.Tensor]] = [torch.ones_like(e_tot_sr,
                                                               device=brcs.device,

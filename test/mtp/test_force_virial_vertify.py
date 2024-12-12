@@ -4,6 +4,7 @@ from typing import List
 
 import torch
 import torch.nn as nn
+import numpy as np
 from ai2pot.mtp.nn_mtp import NNMtp
 from ai2pot.utils.usepot import MlffInput
 from pymatgen.core import Structure
@@ -43,23 +44,24 @@ class NNMtpForceVirialTest(unittest.TestCase):
                                                device=self.device)
         self.structure: Structure = Structure.from_file(ReNbSSe_POSCAR)
     
+    
     def tearDown(self):
         print("NNMtpForceVirialTest (TestCase) is tearing down...\n")
+        
         
     def test_force(self):
         center_idx_modify: int = 0
         direction_idx_modify: int = 1
-        delta: float = 1e-4
+        delta: float = 1e-6
         
         # Structure 1
         nblist_info: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(structure=self.structure)
         etot, fi, v = self.nn_mtp(*nblist_info[1:])
-        
+
         # Structure 2
         lattice_: Structure = self.structure.lattice
         species_ = self.structure.species
         cart_coords_ = self.structure.cart_coords
-        cart_coords_[center_idx_modify][direction_idx_modify] += delta
         cart_coords_[center_idx_modify][direction_idx_modify] += delta
         structure_ = Structure(lattice=lattice_,
                                species=species_,
@@ -67,9 +69,50 @@ class NNMtpForceVirialTest(unittest.TestCase):
                                coords_are_cartesian=True)
         nblist_info_: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(structure=structure_)
         etot_, fi_, v_ = self.nn_mtp(*nblist_info_[1:])
+        
+        print("----------------------------------------------")
+        print("1.1. Before perturbation, force of atom[{0}] on {1} direction = ")
         print(fi[0][center_idx_modify][direction_idx_modify])
+        print("1.2. After perturbation, force of atom[{0}] on {1} direction = ")
+        print(fi_[0][center_idx_modify][direction_idx_modify])
+        print("1.3. Force of atom[{0}] on {1} direcotion calculated by $f_{i\alpha} = -\frac{\partial E_{tot}}{\partial r_{i\alpha}}$ = ")
         print(-(etot_ - etot) / delta)
-            
+        print("----------------------------------------------")
+        
+        
+    def test_virial(self):
+        direction1_idx_modify: int = 0
+        direction2_idx_modify: int = 1
+        delta: float = 1e-4
+        
+        # Structure 1
+        nblist_info: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(structure=self.structure)
+        etot, fi, v = self.nn_mtp(*nblist_info[1:])
+        
+        # Structure 2
+        lattice_: np.ndarray = np.zeros([3, 3])
+        for ii in range(3):
+            for jj in range(3):
+                lattice_[ii][jj] = self.structure.lattice.matrix[ii][jj]
+        lattice_[direction1_idx_modify][direction2_idx_modify] += delta
+        species_ = self.structure.species
+        frac_coords_ = self.structure.frac_coords
+        structure_ = Structure(lattice=lattice_,
+                               species=species_,
+                               coords=frac_coords_,
+                               coords_are_cartesian=False)
+        nblist_info_: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(structure=structure_)
+        etot_, fi_, v_ = self.nn_mtp(*nblist_info_[1:])
+        
+        print("----------------------------------------------")
+        print("2.1. Before perturbation, force of atom[{0}] on {1} direction = ")
+        print(v[0][direction1_idx_modify][direction2_idx_modify])
+        print("2.2. Before perturbation, force of atom[{0}] on {1} direction = ")
+        print(v_[0][direction1_idx_modify][direction2_idx_modify])
+        print("2.3. Before perturbation, force of atom[{0}] on {1} direction = ")
+        print(np.sum(fi[:, :, direction1_idx_modify].flatten().numpy() * self.structure.cart_coords[:, direction2_idx_modify]))
+        print("----------------------------------------------")
+
     
 if __name__ == "__main__":
     unittest.main()
