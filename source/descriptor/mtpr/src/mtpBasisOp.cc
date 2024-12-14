@@ -185,7 +185,7 @@ torch::autograd::variable_list MtpBasisFunction::backward(
 
         for (int bb=0; bb<batch_size; bb++) {
             float *out_der = bout_der_tensor[bb].data_ptr<float>();
-            float *out_der2coeffs = bout_der2coeffs_tensor[bb].data_ptr<float>();
+            float *out_der2coeffs = bout_der2coeffs_tensor.data_ptr<float>();
             float *mtp_basis_der = bmtp_basis_der_tensor[bb].data_ptr<float>();
             float *mtp_basis_der2coeffs = bmtp_basis_der2coeffs_tensor[bb].data_ptr<float>();
             float *grad_output = bgrad_output_tensor[bb].data_ptr<float>(); 
@@ -214,7 +214,7 @@ torch::autograd::variable_list MtpBasisFunction::backward(
 
         for (int bb=0; bb<batch_size; bb++) {
             double *out_der = bout_der_tensor[bb].data_ptr<double>();
-            double *out_der2coeffs = bout_der2coeffs_tensor[bb].data_ptr<double>();
+            double *out_der2coeffs = bout_der2coeffs_tensor.data_ptr<double>();
             double *mtp_basis_der = bmtp_basis_der_tensor[bb].data_ptr<double>();
             double *mtp_basis_der2coeffs = bmtp_basis_der2coeffs_tensor[bb].data_ptr<double>();
             double *grad_output = bgrad_output_tensor[bb].data_ptr<double>();

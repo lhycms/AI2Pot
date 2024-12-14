@@ -214,8 +214,8 @@ std::cout << "mtp_level = " << mtp_level << ": \n" << mtp_basis_tensor << std::e
 TEST_F(MtpBasisOpTest, backward_der2xyz)
 {
     int batch_modify = 5;
-    int center_modify = 1;
-    int neigh_modify = 5;
+    int center_modify = 2;
+    int neigh_modify = 12;
     int direction_modify = 0;
     double delta = 1e-3;
 

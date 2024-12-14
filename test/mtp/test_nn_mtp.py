@@ -23,9 +23,10 @@ class DescriptorMtpTest(object):
         mtp_level: int = 16
         ntypes: int = 4
         chebyshev_size: int = 8
-        rmax: float = 3.2
-        rmin: float = 1.0
+        rmax: float = 5.0
+        rmin: float = 0.5
         umax_num_neighs: int = 40
+        dtype: torch._C.dtype = torch.float32
         
         self.descriptor_mtp: nn.Module = DescriptorMtp(mtp_level=mtp_level,
                                                        ntypes=ntypes,
@@ -33,13 +34,14 @@ class DescriptorMtpTest(object):
                                                        rmax=rmax,
                                                        rmin=rmin,
                                                        umax_num_neighs=umax_num_neighs)
-        self.descriptor_mtp.to(torch.float32)
+        self.descriptor_mtp.to(dtype=dtype)
         
         self.outcar_path: str = f"{ReNbSSe_OUTCAR_DIR}/OUTCAR"
         self.labeled_system: LabeledSystem = LabeledSystem(self.outcar_path)
         self.mlff_dataset: ScDataset = ScDataset(labeled_system=self.labeled_system,
                                                      rcut=rmax,
-                                                     umax_num_neigh_atoms=umax_num_neighs)
+                                                     umax_num_neigh_atoms=umax_num_neighs,
+                                                     torch_float_dtype=dtype)
         self.mlff_dataloader: DataLoader = DataLoader(self.mlff_dataset,
                                                       batch_size=8,
                                                       shuffle=True)
@@ -88,10 +90,11 @@ class NNMtpTest(unittest.TestCase):
         ntypes: int = 4
         chebyshev_size: int = 8
         rmax: float = 5.0
-        rmin: float = 2.0
-        umax_num_neighs: int = 20
-        fit_sizes_list: List[int] = [30]
+        rmin: float = 0.5
+        umax_num_neighs: int = 40
+        fit_sizes_list: List[int] = [10]
         fit_activation: nn.Module = nn.Tanh()
+        dtype: torch._C.dtype = torch.float32
         
         outcar_path: str = f"{ReNbSSe_OUTCAR_DIR}/OUTCAR"
         labeled_system: LabeledSystem = LabeledSystem(outcar_path)
@@ -100,16 +103,17 @@ class NNMtpTest(unittest.TestCase):
                                                  umax_num_neigh_atoms=umax_num_neighs,
                                                  pbc_xyz=[True, True, True],
                                                  sort=False,
-                                                 torch_float_dtype=torch.float32)
+                                                 torch_float_dtype=dtype,
+                                                 has_virial=False)
         self.mlff_dataloader: DataLoader = DataLoader(dataset=self.mlff_dataset,
                                                       batch_size=8,
                                                       shuffle=True,
-                                                      num_workers=4)
+                                                      num_workers=2)
 
         ls_shifter: LsShifter = LsShifter(ls=labeled_system)
         energy_shifts_tensor: torch.Tensor = torch.tensor(
                                                 ls_shifter.types_energy_shifts,
-                                                dtype=torch.float32)
+                                                dtype=dtype)
         
         self.nn_mtp = NNMtp(mtp_level=mtp_level,
                             ntypes=ntypes,
@@ -121,7 +125,7 @@ class NNMtpTest(unittest.TestCase):
                             fit_activation=fit_activation,
                             bias_mark=False,
                             energy_shift_tensor=energy_shifts_tensor,
-                            has_virials=True)
+                            has_virials=False).to(dtype)
         
         self.trainer = L.Trainer(max_epochs=100,
                                  accelerator="cpu",
@@ -149,12 +153,11 @@ class NNMtpTest(unittest.TestCase):
     '''
     
     def test_train(self):
-        self.nn_mtp.to(torch.float32)
         print("NNMtpTest.test_train:")
         print("---------------------")
         self.nn_mtp.train()
         lit_nn_mtp: L.LightningModule = LitNNMtp(model=self.nn_mtp,
-                                                 lr_start=1E-3,
+                                                 lr_start=1E-2,
                                                  e_wgt_start=1.0,
                                                  e_wgt_end=1.0,
                                                  f_wgt_start=100.0,

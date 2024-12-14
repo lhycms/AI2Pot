@@ -76,7 +76,7 @@ protected:
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/26.almtp",
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/28.almtp"
         };
-        mtp_param._load(filenames[7]); // 7
+        mtp_param._load(filenames[11]); // 7
 //mtp_param.show();
 
         inum = 12;
@@ -210,8 +210,8 @@ protected:
 
 TEST_F(MtpBasisTest, find_val_der4rcs)
 {    
-    int center_idx_modify = 5;
-    int neigh_idx_modify = 6;
+    int center_idx_modify = 2;
+    int neigh_idx_modify = 12;
     int direction_idx_modify = 2;
     double delta = 1e-4;
     //for (int ii=0; ii<1000; ii++)

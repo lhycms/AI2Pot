@@ -16,7 +16,7 @@ class MtpBasisOpTest(unittest.TestCase):
     def setUp(self):
         print("MtpBasisOpTest (TestCase) is setting up...")
         
-        self.mtp_level: int  = 16
+        self.mtp_level: int = 16
         self.ntypes: int = 4
         self.chebyshev_size: int = 8
         self.rmax: float = 5.0
@@ -101,8 +101,10 @@ class MtpBasisOpTest(unittest.TestCase):
         
         print("---------------------------------------------------------------------------------------")
         print("1.1. Sum of descriptors derivative w.r.t. rcs[{0}][{1}][{2}] calculated by custom code:".format(center_idx_modify, neigh_idx_modify, direction_idx_modify))
+        print(descriptor.size(), result)
         print(nblist_info[4].grad[0][center_idx_modify][neigh_idx_modify][direction_idx_modify])
         print("1.2. Sum of descriptors derivative w.r.t rcs[{0}][{1}][{2}] calculated by finite difference code:".format(center_idx_modify, neigh_idx_modify, direction_idx_modify))
+        print(result_)
         print((result_ - result) / delta)
         print("---------------------------------------------------------------------------------------")
 
@@ -172,3 +174,4 @@ class MtpBasisOpTest(unittest.TestCase):
     
 if __name__ == "__main__":
     unittest.main()
+    

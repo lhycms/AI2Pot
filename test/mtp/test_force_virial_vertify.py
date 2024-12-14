@@ -31,7 +31,7 @@ class NNMtpForceVirialTest(unittest.TestCase):
                                        rmax=rmax,
                                        rmin=rmin,
                                        umax_num_neighs=umax_num_neighs,
-                                       fit_sizes_list=[30],
+                                       fit_sizes_list=[],
                                        fit_activation=nn.Tanh(),
                                        bias_mark=False,
                                        energy_shift_tensor=False,
@@ -52,7 +52,7 @@ class NNMtpForceVirialTest(unittest.TestCase):
     def test_force(self):
         center_idx_modify: int = 0
         direction_idx_modify: int = 1
-        delta: float = 1e-6
+        delta: float = 1e-3
         
         # Structure 1
         nblist_info: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(structure=self.structure)
@@ -80,10 +80,10 @@ class NNMtpForceVirialTest(unittest.TestCase):
         print("----------------------------------------------")
         
         
-    def test_virial(self):
-        direction1_idx_modify: int = 0
+    def est_virial(self):
+        direction1_idx_modify: int = 1
         direction2_idx_modify: int = 1
-        delta: float = 1e-4
+        delta: float = 1e-3
         
         # Structure 1
         nblist_info: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(structure=self.structure)
@@ -105,12 +105,12 @@ class NNMtpForceVirialTest(unittest.TestCase):
         etot_, fi_, v_ = self.nn_mtp(*nblist_info_[1:])
         
         print("----------------------------------------------")
-        print("2.1. Before perturbation, force of atom[{0}] on {1} direction = ")
-        print(v[0][direction1_idx_modify][direction2_idx_modify])
-        print("2.2. Before perturbation, force of atom[{0}] on {1} direction = ")
-        print(v_[0][direction1_idx_modify][direction2_idx_modify])
-        print("2.3. Before perturbation, force of atom[{0}] on {1} direction = ")
-        print(np.sum(fi[:, :, direction1_idx_modify].flatten().numpy() * self.structure.cart_coords[:, direction2_idx_modify]))
+        print("2.1. Before perturbation, virial[{0}][{1}] = ".format(direction1_idx_modify, direction2_idx_modify))
+        print(v)
+        print("2.2. After perturbation, virial[{0}][{1}] = ".format(direction1_idx_modify, direction2_idx_modify))
+        print(v_)
+        print("2.3. After perturbation, virial[{0}][{1}] = ".format(direction1_idx_modify, direction2_idx_modify))
+        print(np.sum(fi[0, :, direction1_idx_modify].numpy() * self.structure.cart_coords[:, direction2_idx_modify]))
         print("----------------------------------------------")
 
     

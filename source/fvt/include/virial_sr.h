@@ -41,9 +41,9 @@ void VirialSr<CoordType>::find_val_der(
                 for (int bb=0; bb<3; bb++) {
                     int tmp_de_idx = ii*umax_num_neighs*3 + jj*3 + aa;
                     int tmp_rij_idx = ii*umax_num_neighs*3 + jj*3 + bb;
-                    virial_sr_val[aa*3 + bb] += dei_drij[tmp_de_idx] * rcs[tmp_rij_idx];
-                    virial_sr_der1[(aa*3+bb)*inum*umax_num_neighs + ii*umax_num_neighs + jj] += rcs[tmp_rij_idx];
-                    virial_sr_der2[(aa*3+bb)*inum*umax_num_neighs + ii*umax_num_neighs + jj] += dei_drij[tmp_de_idx];
+                    virial_sr_val[aa*3 + bb] -= dei_drij[tmp_de_idx] * rcs[tmp_rij_idx];
+                    virial_sr_der1[(aa*3+bb)*inum*umax_num_neighs + ii*umax_num_neighs + jj] -= rcs[tmp_rij_idx];
+                    virial_sr_der2[(aa*3+bb)*inum*umax_num_neighs + ii*umax_num_neighs + jj] -= dei_drij[tmp_de_idx];
                 }
             }
         }
