@@ -36,7 +36,7 @@ class DescriptorMtp(nn.Module):
         self.num_descriptors: int = self.alpha_moment_mapping_tensor.size()[0]
         
         coeffs: torch.Tensor = torch.Tensor(self.ntypes*self.ntypes*self.nmus*self.chebyshev_size)
-        nn.init.normal_(coeffs, mean=0, std=1.0)
+        nn.init.normal_(coeffs, mean=0, std=0.1)
         self.register_parameter("coeffs", nn.Parameter(data=coeffs, requires_grad=True))
     
     
@@ -85,11 +85,11 @@ class FittingNet(nn.Module):
             if (ii == len(self.layer_sizes_list) - 2):
                 self.linears_list.append(
                     nn.Linear(self.layer_sizes_list[ii], self.layer_sizes_list[ii+1], bias=False))
-                nn.init.normal_(self.linears_list[ii].weight, mean=0.0, std=1.0)
+                nn.init.xavier_uniform_(self.linears_list[ii].weight)
             else:
                 self.linears_list.append(
                     nn.Linear(self.layer_sizes_list[ii], self.layer_sizes_list[ii+1], bias=self.bias_mark))
-                nn.init.normal_(self.linears_list[ii].weight, mean=0.0, std=1.0)
+                nn.init.xavier_uniform_(self.linears_list[ii].weight)
                 if (self.bias_mark):
                     nn.init.normal_(self.linears_list[ii].bias, mean=0.0, std=1.0)
         
@@ -109,7 +109,6 @@ class FittingNet(nn.Module):
                 hidden = self.fit_activation(hidden)
                 x = hidden
         x = x + self.type_bias + self.energy_shift_tensor
-        # size = (batch_size, num_atoms,)
         return x.squeeze(dim=-1)
     
     
@@ -122,7 +121,6 @@ class FittingNet(nn.Module):
             if (self.bias_mark):
                 if (ii != len(self.linears_list) - 1):
                     print("\t\t\t+ linear#{0}.bias.size() = ".format(ii), tmp_linear.bias.size())
-
 
 class NNMtp(nn.Module):
     def __init__(self,
@@ -180,7 +178,6 @@ class NNMtp(nn.Module):
                                                            bfirstneigh,
                                                            brcs,
                                                            btypes)
-        
         e_tot_sr: torch.Tensor = torch.zeros(batch_size)
         for itype in range(self.ntypes):
             itype_mask: torch.Tensor = (torch.take(input=btypes, index=bilist.to(torch.int64)) == itype)
@@ -189,7 +186,6 @@ class NNMtp(nn.Module):
             flatten_ei: torch.Tensor = self.fitting_modules_list[itype](flatten_descriptor)
             for bidx, flatten_ei_frame in enumerate( torch.split(flatten_ei, itype_natoms_tensor.tolist()) ):
                 e_tot_sr[bidx] = torch.add(e_tot_sr[bidx], flatten_ei_frame.sum())
-
         mask: List[Optional[torch.Tensor]] = [torch.ones_like(e_tot_sr,
                                                               device=brcs.device,
                                                               dtype=brcs.dtype)]
@@ -198,6 +194,8 @@ class NNMtp(nn.Module):
                                                               grad_outputs=mask,
                                                               retain_graph=True,
                                                               create_graph=True)[0]
+        
+        print("+++ ", eisr_rij_jacobian.max().item(), eisr_rij_jacobian.min().item(), eisr_rij_jacobian.mean().item(), eisr_rij_jacobian.std().item())
         force_sr: torch.Tensor = forceSrOp(bilist,
                                            bnumneigh,
                                            bfirstneigh,
@@ -248,7 +246,6 @@ class LitNNMtp(L.LightningModule):
         
     def get_efv_wgts(self):
         lr_current: float = self.optimizers().param_groups[0]['lr']
-        print("***+++ ", lr_current)
         rate: float = lr_current / self.lr_start
         e_wgt: float = self.e_wgt_end * (1 - rate) + self.e_wgt_start * rate
         f_wgt: float = self.f_wgt_end * (1 - rate) + self.f_wgt_start * rate
@@ -271,7 +268,12 @@ class LitNNMtp(L.LightningModule):
             loss = e_criterion_tensor + f_criterion_tensor + v_criterion_tensor
         else:
             inum, ilist, numneigh, firstneigh, rcs, types, nghost, e_dft, fi_dft = batch
-            e_ml, fi_ml, v_ml = self.model(ilist, numneigh, firstneigh, rcs, types, nghost)
+            e_ml, fi_ml = self.model(ilist, numneigh, firstneigh, rcs, types, nghost)
+            print("---MLFF---")
+            print(fi_ml[0][:3])
+            print("---DFT---")
+            print(fi_dft[0][:3])
+            print("*********")
             e_criterion_tensor: torch.Tensor = e_wgt * self.e_criterion(binum=inum, input_benergies=e_ml, target_benergies=e_dft)
             f_criterion_tensor: torch.Tensor = f_wgt * self.f_criterion(binum=inum, input_bforces=fi_ml, target_bforces=fi_dft)
             loss = e_criterion_tensor + f_criterion_tensor

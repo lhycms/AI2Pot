@@ -76,7 +76,7 @@ protected:
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/26.almtp",
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/28.almtp"
         };
-        mtp_param._load(filenames[11]); // 7
+        mtp_param._load(filenames[7]);
 //mtp_param.show();
 
         inum = 12;
@@ -210,7 +210,7 @@ protected:
 
 TEST_F(MtpBasisTest, find_val_der4rcs)
 {    
-    int center_idx_modify = 2;
+    int center_idx_modify = 0;
     int neigh_idx_modify = 12;
     int direction_idx_modify = 2;
     double delta = 1e-4;
@@ -272,7 +272,7 @@ TEST_F(MtpBasisTest, find_val_der4rcs)
         rmin);
 
 for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++)
-    printf("%10lf, ", mtp_basis_val[0*mtp_param.alpha_scalar_moments() + ii]);
+    printf("%.*lf, ", 15, mtp_basis_val[center_idx_modify*mtp_param.alpha_scalar_moments() + ii]);
 printf("\n");
 
 // Step 1. Check the derivatives of MTP basis wrt. relative coordinates

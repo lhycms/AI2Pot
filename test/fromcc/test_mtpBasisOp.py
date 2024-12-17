@@ -10,19 +10,19 @@ from ai2pot.utils.usepot import MlffInput
 
 TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")
 ReNbSSe_POSCAR = os.path.join(TEST_FILES_DIR, "POSCARs", "POSCAR")
-
+MoS2_POSCAR = os.path.join(TEST_FILES_DIR, "POSCARs", "MoS2", "POSCAR")
 
 class MtpBasisOpTest(unittest.TestCase):
     def setUp(self):
         print("MtpBasisOpTest (TestCase) is setting up...")
         
         self.mtp_level: int = 16
-        self.ntypes: int = 4
+        self.ntypes: int = 2
         self.chebyshev_size: int = 8
         self.rmax: float = 5.0
         self.rmin: float = 2.0
         self.umax_num_neigh: int = 30
-        self.dtype = torch.float32
+        self.dtype = torch.float64
         self.device = torch.device("cpu")
         
         self.mlff_input = MlffInput(rcut=self.rmax,
@@ -31,7 +31,7 @@ class MtpBasisOpTest(unittest.TestCase):
                                     sort=False,
                                     dtype=self.dtype,
                                     device=self.device)
-        self.structure = Structure.from_file(ReNbSSe_POSCAR)
+        self.structure = Structure.from_file(MoS2_POSCAR)
         
     def tearDown(self):
         print("MtpBasisOpTest (TestCase) is tearing down...")
@@ -46,7 +46,7 @@ class MtpBasisOpTest(unittest.TestCase):
         #print(mtp_param_info[5].size())
         
     def test_der2xyz(self):
-        center_idx_modify: int = 4
+        center_idx_modify: int = 0
         neigh_idx_modify: int = 7
         direction_idx_modify: int = 2
         delta: float = 1e-4
@@ -100,12 +100,18 @@ class MtpBasisOpTest(unittest.TestCase):
         result_.backward()
         
         print("---------------------------------------------------------------------------------------")
-        print("1.1. Sum of descriptors derivative w.r.t. rcs[{0}][{1}][{2}] calculated by custom code:".format(center_idx_modify, neigh_idx_modify, direction_idx_modify))
-        print(descriptor.size(), result)
-        print(nblist_info[4].grad[0][center_idx_modify][neigh_idx_modify][direction_idx_modify])
-        print("1.2. Sum of descriptors derivative w.r.t rcs[{0}][{1}][{2}] calculated by finite difference code:".format(center_idx_modify, neigh_idx_modify, direction_idx_modify))
-        print(result_)
-        print((result_ - result) / delta)
+        print("1.0. Descriptor[{0}, {1}, :] = ".format(0, center_idx_modify))
+        print(descriptor[0, center_idx_modify, :])
+        print("1.1. Sum of descriptors derivative w.r.t. rcs[{0}][{1}][{2}] calculated by custom code = {3}".format(
+                center_idx_modify, 
+                neigh_idx_modify, 
+                direction_idx_modify,
+                nblist_info[4].grad[0][center_idx_modify][neigh_idx_modify][direction_idx_modify].item()))
+        print("1.2. Sum of descriptors derivative w.r.t rcs[{0}][{1}][{2}] calculated by finite difference code = {3}".format(
+                center_idx_modify, 
+                neigh_idx_modify, 
+                direction_idx_modify,
+                ((result_ - result) / delta).item()))
         print("---------------------------------------------------------------------------------------")
 
 
@@ -165,10 +171,18 @@ class MtpBasisOpTest(unittest.TestCase):
         result_: torch.Tensor = descriptor_.sum()
         result_.backward()
         print("---------------------------------------------------------------------------------------")
-        print("2.1. Sum of descriptors detivative w.r.t coeffs[{0}][{1}][{2}][{3}] calculated by custom code:\n".format(itype_modify, jtype_modify, mu_modify, xi_modify))
-        print(coeffs_tensor.grad[coeff_idx_modify])
-        print("2.2. Sum of descriptors detivative w.r.t coeffs[{0}][{1}][{2}][{3}] calculated by finite difference method:\n".format(itype_modify, jtype_modify, mu_modify, xi_modify))
-        print((result_ - result) / delta)
+        print("2.1. Sum of descriptors detivative w.r.t coeffs[{0}][{1}][{2}][{3}] calculated by custom code = {4}".format(
+                itype_modify, 
+                jtype_modify, 
+                mu_modify, 
+                xi_modify,
+                coeffs_tensor.grad[coeff_idx_modify].item()))
+        print("2.2. Sum of descriptors detivative w.r.t coeffs[{0}][{1}][{2}][{3}] calculated by finite difference method = {4}".format(
+                itype_modify, 
+                jtype_modify, 
+                mu_modify, 
+                xi_modify,
+                ((result_ - result) / delta).item()))
         print("---------------------------------------------------------------------------------------")
 
     

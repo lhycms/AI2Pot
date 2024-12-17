@@ -12,6 +12,7 @@ from pymatgen.core import Structure
 
 TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")
 ReNbSSe_POSCAR = os.path.join(TEST_FILES_DIR, "POSCARs", "POSCAR")
+MoS2_POSCAR = os.path.join(TEST_FILES_DIR, "POSCARs", "MoS2", "POSCAR")
 
 class NNMtpForceVirialTest(unittest.TestCase):
     def setUp(self):
@@ -20,8 +21,8 @@ class NNMtpForceVirialTest(unittest.TestCase):
         ntypes: int = 4
         chebyshev_size: int = 8
         rmax: float = 5.0
-        rmin: float = 0.5
-        umax_num_neighs: int = 40
+        rmin: float = 2.0
+        umax_num_neighs: int = 20
         self.dtype = torch.float64
         self.device = torch.device("cpu")
         
@@ -31,7 +32,7 @@ class NNMtpForceVirialTest(unittest.TestCase):
                                        rmax=rmax,
                                        rmin=rmin,
                                        umax_num_neighs=umax_num_neighs,
-                                       fit_sizes_list=[],
+                                       fit_sizes_list=[30],
                                        fit_activation=nn.Tanh(),
                                        bias_mark=False,
                                        energy_shift_tensor=False,
@@ -71,12 +72,15 @@ class NNMtpForceVirialTest(unittest.TestCase):
         etot_, fi_, v_ = self.nn_mtp(*nblist_info_[1:])
         
         print("----------------------------------------------")
-        print("1.1. Before perturbation, force of atom[{0}] on {1} direction = ")
-        print(fi[0][center_idx_modify][direction_idx_modify])
-        print("1.2. After perturbation, force of atom[{0}] on {1} direction = ")
-        print(fi_[0][center_idx_modify][direction_idx_modify])
-        print("1.3. Force of atom[{0}] on {1} direcotion calculated by $f_{i\alpha} = -\frac{\partial E_{tot}}{\partial r_{i\alpha}}$ = ")
-        print(-(etot_ - etot) / delta)
+        print("1.1. Before perturbation, force of atom[{0}] on {1} direction = ",
+              fi[0][center_idx_modify][direction_idx_modify].item())
+        print("1.2. After perturbation, force of atom[{0}] on {1} direction = ",
+              fi_[0][center_idx_modify][direction_idx_modify].item())
+        print("1.3. Force of atom[{0}] on {1} direcotion calculated by $f_{i\\alpha} = -\\frac{\\partial E_{tot}}{\\partial r_{i\\alpha}}$ = ",
+              (-(etot_ - etot) / delta).item())
+        print("1.4. Energy difference = ", (etot_ - etot).item())
+        print("1.5. -F * dx = ", -fi[0][center_idx_modify][direction_idx_modify].item() * delta)
+        print("1.6. Energy difference - (-F * dx) = {0:.5f}".format((etot_ - etot).item() + fi[0][center_idx_modify][direction_idx_modify].item() * delta))
         print("----------------------------------------------")
         
         

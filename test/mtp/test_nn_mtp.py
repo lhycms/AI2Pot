@@ -9,13 +9,14 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 import lightning as L
 
-from ai2pot.data.mlffdataset import ScDataset
+from ai2pot.data.mlffdataset import ScDataset, ExtxyzDataset
 from ai2pot.mtp.nn_mtp import DescriptorMtp, FittingNet, NNMtp, LitNNMtp
 from ai2pot.utils.prepot import LsShifter
 
 
 TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")
-ReNbSSe_OUTCAR_DIR = os.path.join(TEST_FILES_DIR, "OUTCARs", "ReNbSSe")
+ReNbSSe_OUTCAR_PATH = os.path.join(TEST_FILES_DIR, "OUTCARs", "ReNbSSe", "OUTCAR")
+Cu_EXTXYZ_PATH = os.path.join(TEST_FILES_DIR, "XYZ", "Cu", "Cu.extxyz")
 
 class DescriptorMtpTest(object):
     def setUp(self) -> None:
@@ -36,14 +37,13 @@ class DescriptorMtpTest(object):
                                                        umax_num_neighs=umax_num_neighs)
         self.descriptor_mtp.to(dtype=dtype)
         
-        self.outcar_path: str = f"{ReNbSSe_OUTCAR_DIR}/OUTCAR"
-        self.labeled_system: LabeledSystem = LabeledSystem(self.outcar_path)
+        self.labeled_system: LabeledSystem = LabeledSystem(ReNbSSe_OUTCAR_PATH)
         self.mlff_dataset: ScDataset = ScDataset(labeled_system=self.labeled_system,
                                                      rcut=rmax,
                                                      umax_num_neigh_atoms=umax_num_neighs,
                                                      torch_float_dtype=dtype)
         self.mlff_dataloader: DataLoader = DataLoader(self.mlff_dataset,
-                                                      batch_size=8,
+                                                      batch_size=20,
                                                       shuffle=True)
         
     def test_forward(self):
@@ -87,33 +87,26 @@ class NNMtpTest(unittest.TestCase):
     def setUp(self) -> None:
         print("NNMtpTest (TestCase) is setting up...\n")
         mtp_level: int = 16
-        ntypes: int = 4
+        ntypes: int = 1
         chebyshev_size: int = 8
         rmax: float = 5.0
         rmin: float = 0.5
-        umax_num_neighs: int = 40
-        fit_sizes_list: List[int] = [10]
+        umax_num_neighs: int = 100
+        fit_sizes_list: List[int] = [30]
         fit_activation: nn.Module = nn.Tanh()
         dtype: torch._C.dtype = torch.float32
         
-        outcar_path: str = f"{ReNbSSe_OUTCAR_DIR}/OUTCAR"
-        labeled_system: LabeledSystem = LabeledSystem(outcar_path)
-        self.mlff_dataset: ScDataset = ScDataset(labeled_system=labeled_system,
+        self.mlff_dataset: ExtxyzDataset = ExtxyzDataset(filename=Cu_EXTXYZ_PATH,
                                                  rcut=rmax,
                                                  umax_num_neigh_atoms=umax_num_neighs,
                                                  pbc_xyz=[True, True, True],
                                                  sort=False,
                                                  torch_float_dtype=dtype,
-                                                 has_virial=False)
+                                                 has_virials=False)
         self.mlff_dataloader: DataLoader = DataLoader(dataset=self.mlff_dataset,
-                                                      batch_size=8,
+                                                      batch_size=1,
                                                       shuffle=True,
                                                       num_workers=2)
-
-        ls_shifter: LsShifter = LsShifter(ls=labeled_system)
-        energy_shifts_tensor: torch.Tensor = torch.tensor(
-                                                ls_shifter.types_energy_shifts,
-                                                dtype=dtype)
         
         self.nn_mtp = NNMtp(mtp_level=mtp_level,
                             ntypes=ntypes,
@@ -124,7 +117,7 @@ class NNMtpTest(unittest.TestCase):
                             fit_sizes_list=fit_sizes_list,
                             fit_activation=fit_activation,
                             bias_mark=False,
-                            energy_shift_tensor=energy_shifts_tensor,
+                            energy_shift_tensor=False,
                             has_virials=False).to(dtype)
         
         self.trainer = L.Trainer(max_epochs=100,
@@ -157,10 +150,10 @@ class NNMtpTest(unittest.TestCase):
         print("---------------------")
         self.nn_mtp.train()
         lit_nn_mtp: L.LightningModule = LitNNMtp(model=self.nn_mtp,
-                                                 lr_start=1E-2,
+                                                 lr_start=1E-3,
                                                  e_wgt_start=1.0,
                                                  e_wgt_end=1.0,
-                                                 f_wgt_start=100.0,
+                                                 f_wgt_start=1.0,
                                                  f_wgt_end=1.0,
                                                  v_wgt_start=0.0,
                                                  v_wgt_end=0.0)

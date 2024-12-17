@@ -1,1 +1,4 @@
-from .mlffdataset import ScDataset, McDataset
+from .mlffdataset import (ScDataset, 
+                          McDataset,
+                          ExtxyzDataset
+)
