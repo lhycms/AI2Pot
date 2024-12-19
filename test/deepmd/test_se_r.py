@@ -15,8 +15,8 @@ from ai2pot.deepmd.se_r import (EmbeddingNet,
                                 DpSeR)
 
 
-TEST_FILES_DIR: str = os.path.join(os.getenv("AI2POT_PATH"), "test_data")
-ReNbSSe_OUTCAR_DIR: str = os.path.join(TEST_FILES_DIR, "OUTCARs", "ReNbSSe")
+TEST_FILES_DIR: str = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")
+ReNbSSe_OUTCAR_PATH: str = os.path.join(TEST_FILES_DIR, "OUTCARs", "ReNbSSe", "OUTCAR")
 
 
 class EmbeddingNetTest(unittest.TestCase):
@@ -83,8 +83,7 @@ class DescripSeRTes(unittest.TestCase):
             M2=4)
         self.descrip_se_r.to(torch.float64)
 
-        self.outcar_path: str = f"{ReNbSSe_OUTCAR_DIR}/OUTCAR"
-        self.labeled_system: LabeledSystem = LabeledSystem(self.outcar_path)
+        self.labeled_system: LabeledSystem = LabeledSystem(ReNbSSe_OUTCAR_PATH)
         self.mlff_dataset: ScDataset = ScDataset(
             labeled_system=self.labeled_system,
             rcut=3.2,
@@ -133,8 +132,7 @@ class DpSeRTest(unittest.TestCase):
                                         energy_shift_tensor=False)
         self.dp_se_r.to(torch.float64)
 
-        self.outcar_path: str = f"{ReNbSSe_OUTCAR_DIR}/OUTCAR"
-        self.labeled_system: LabeledSystem = LabeledSystem(self.outcar_path)
+        self.labeled_system: LabeledSystem = LabeledSystem(ReNbSSe_OUTCAR_PATH)
         self.mlff_dataset: ScDataset = ScDataset(labeled_system=self.labeled_system,
                                                      rcut=rcut,
                                                      umax_num_neigh_atoms=umax_num_neighs)

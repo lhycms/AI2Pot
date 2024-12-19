@@ -86,12 +86,13 @@ class FittingNetTest(object):
 class NNMtpTest(unittest.TestCase):
     def setUp(self) -> None:
         print("NNMtpTest (TestCase) is setting up...\n")
-        mtp_level: int = 16
+        mtp_level: int = 12
         ntypes: int = 1
         chebyshev_size: int = 8
         rmax: float = 5.0
         rmin: float = 0.5
         umax_num_neighs: int = 100
+        batch_norm_mark: bool = False
         fit_sizes_list: List[int] = [30]
         fit_activation: nn.Module = nn.Tanh()
         dtype: torch._C.dtype = torch.float32
@@ -104,7 +105,7 @@ class NNMtpTest(unittest.TestCase):
                                                  torch_float_dtype=dtype,
                                                  has_virials=False)
         self.mlff_dataloader: DataLoader = DataLoader(dataset=self.mlff_dataset,
-                                                      batch_size=1,
+                                                      batch_size=16,
                                                       shuffle=True,
                                                       num_workers=2)
         
@@ -114,12 +115,14 @@ class NNMtpTest(unittest.TestCase):
                             rmax=rmax,
                             rmin=rmin,
                             umax_num_neighs=umax_num_neighs,
+                            batch_norm_mark=batch_norm_mark,
                             fit_sizes_list=fit_sizes_list,
                             fit_activation=fit_activation,
                             bias_mark=False,
                             energy_shift_tensor=False,
+                            has_forces=False,
                             has_virials=False).to(dtype)
-        
+        self.nn_mtp.train()
         self.trainer = L.Trainer(max_epochs=100,
                                  accelerator="cpu",
                                  devices=1)
@@ -144,7 +147,7 @@ class NNMtpTest(unittest.TestCase):
         t2 = time.time()
         print("Cost time: ", t2 - t1)
     '''
-    
+
     def test_train(self):
         print("NNMtpTest.test_train:")
         print("---------------------")

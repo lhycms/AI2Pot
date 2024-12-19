@@ -1,7 +1,10 @@
 import unittest
 import os
 from typing import List
+
 from pymatgen.core import Structure
+from ase import Atoms
+from ase.io import read as ase_read
 
 from ai2pot.utils import MlffInput
 
@@ -17,16 +20,19 @@ class MlffInputTest(unittest.TestCase):
         self.pbc_xyz: List[int] = [True, True, True]
         self.sort: bool = True
         self.structure: Structure = Structure.from_file(ReNbSSe_POSCAR_PATH)
+        self.atoms: Atoms = ase_read(ReNbSSe_POSCAR_PATH)
+        
+        self.mlff_input: MlffInput = MlffInput(rcut=self.rcut,
+                                               umax_num_neighs=self.umax_num_neighs,
+                                               pbc_xyz=self.pbc_xyz,
+                                               sort=self.sort)
     
     def tearDown(self):
         print("MlffInputTest (TestCase) is tearing down...")
         
-    def test_find_struct_info(self):
-        mlff_input: MlffInput = MlffInput(rcut=self.rcut,
-                                          umax_num_neighs=self.umax_num_neighs,
-                                          pbc_xyz=self.pbc_xyz,
-                                          sort=self.sort)
-        nblist_info4mlff = mlff_input.analyse_pymatgen(structure=self.structure)
+    def test_analyse_pymatgen(self):
+        nblist_info4mlff = self.mlff_input.analyse_pymatgen(structure=self.structure)
+        
         print(nblist_info4mlff[0].size())
         print(nblist_info4mlff[1].size())
         print(nblist_info4mlff[2].size())
@@ -34,6 +40,18 @@ class MlffInputTest(unittest.TestCase):
         print(nblist_info4mlff[4].size())
         print(nblist_info4mlff[5].size())
         print(nblist_info4mlff[6].size())
+        
+    def test_analyse_ase(self):
+        nblist_info4mlff = self.mlff_input.analyse_ase(atoms=self.atoms)
+        
+        print(nblist_info4mlff[0].size())
+        print(nblist_info4mlff[1].size())
+        print(nblist_info4mlff[2].size())
+        print(nblist_info4mlff[3].size())
+        print(nblist_info4mlff[4].size())
+        print(nblist_info4mlff[5].size())
+        print(nblist_info4mlff[6].size())
+        
 
 
 if __name__ == "__main__":

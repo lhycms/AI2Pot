@@ -213,7 +213,7 @@ TEST_F(MtpBasisTest, find_val_der4rcs)
     int center_idx_modify = 0;
     int neigh_idx_modify = 12;
     int direction_idx_modify = 2;
-    double delta = 1e-4;
+    double delta = 1e-5;
     //for (int ii=0; ii<1000; ii++)
     ai2pot::mtpr::MtpBasis<double>::find_val_der(
         mtp_basis_val,
@@ -303,7 +303,7 @@ TEST_F(MtpBasisTest, find_val_der4coeffs)
     int jtype_modify = types[nidx];
     int mu_modify = 0;
     int xi_modify = 0;
-    double delta = 1e-4;
+    double delta = 1e-5;
 
     //for (int ii=0; ii<1000; ii++)
     ai2pot::mtpr::MtpBasis<double>::find_val_der(
