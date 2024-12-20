@@ -184,6 +184,12 @@ class NNMtp(nn.Module):
                                                            bfirstneigh,
                                                            brcs,
                                                            btypes)
+        
+        
+        e_tot_sr: torch.Tensor = self.fitting_modules_list[0](bdescriptor).sum(dim=-1)
+        print(bdescriptor.size(), e_tot_sr.size())
+        
+        '''
         e_tot_sr: torch.Tensor = torch.zeros(batch_size)
         for itype in range(self.ntypes):
             itype_mask: torch.Tensor = (torch.take(input=btypes, index=bilist.to(torch.int64)) == itype)
@@ -195,6 +201,7 @@ class NNMtp(nn.Module):
             flatten_ei: torch.Tensor = self.fitting_modules_list[itype](flatten_descriptor)
             for bidx, flatten_ei_frame in enumerate( torch.split(flatten_ei, itype_natoms_tensor.tolist()) ):
                 e_tot_sr[bidx] = torch.add(e_tot_sr[bidx], flatten_ei_frame.sum())
+        '''
         
         if (self.has_forces):
             mask: List[Optional[torch.Tensor]] = [torch.ones_like(e_tot_sr,

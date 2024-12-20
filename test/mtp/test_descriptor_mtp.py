@@ -27,7 +27,7 @@ class MtpDescriptorDerTest(unittest.TestCase):
         self.device = torch.device("cpu")
         
         self.center_idx_modify: int = 0
-        self.neigh_idx_modify: int = 3
+        self.neigh_idx_modify: int = 6
         self.descriptor_idx_modify: int = 40
         self.delta: float = 1e-5
         
@@ -226,7 +226,11 @@ class MtpDescriptorDerTest(unittest.TestCase):
     def test_etot_der2xyz(self):
         direction_idx_modify: int = 1
         num_descriptor: int = self.descriptor_mtp.num_descriptors
-        linear: nn.Module = nn.Linear(num_descriptor, 1).to(self.dtype)
+        linear: nn.Module = nn.Sequential(
+            nn.Linear(num_descriptor, 80),
+            nn.Tanh(),
+            nn.Linear(80, 1)
+        ).to(self.dtype)
         
         nblist_info: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(self.structure)
         nblist_info[4].requires_grad_(True)
@@ -271,7 +275,11 @@ class MtpDescriptorDerTest(unittest.TestCase):
         coeff_idx_modify: int = (itype_modify*self.ntypes + jtype_modify)*self.nmus*self.chebyshev_size + mu_modify*self.chebyshev_size + xi_modify
         
         num_descriptor: int = self.descriptor_mtp.num_descriptors
-        linear: nn.Module = nn.Linear(num_descriptor, 1).to(self.dtype)
+        linear: nn.Module = nn.Sequential(
+            nn.Linear(num_descriptor, 80),
+            nn.Tanh(),
+            nn.Linear(80, 1)
+        ).to(self.dtype)
                 
         descriptor = self.descriptor_mtp(*nblist_info[1:-1])
         etot = linear(descriptor)[0].sum()

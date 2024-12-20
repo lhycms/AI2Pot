@@ -66,7 +66,7 @@ class NNMtpForceVirialTest(unittest.TestCase):
     def est_force_ReNbSSe(self):
         center_idx_modify: int = 5
         direction_idx_modify: int = 1
-        delta: float = 1e-3
+        delta: float = 1e-5
         
         # Structure 1
         nblist_info: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(structure=self.structure)
@@ -100,7 +100,7 @@ class NNMtpForceVirialTest(unittest.TestCase):
     def test_force_cu_cluster(self):
         center_idx_modify: int = 0
         direction_idx_modify: int = 2
-        delta: float = 1e-3
+        delta: float = 1e-5
         
         # Atoms 1
         nblist_info: List[torch.Tensor] = self.mlff_input.analyse_ase(atoms=self.atoms)

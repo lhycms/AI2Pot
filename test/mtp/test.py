@@ -54,7 +54,8 @@ nblist_info = mlff_input.analyse_pymatgen(structure=structure)
 etot = nn_mtp(*nblist_info[1:])[0]
 etot.backward()
 #print(etot.item())
-print( nblist_info[4].grad[0][center_idx_modify][neigh_idx_modify][direction_idx_modify].item() )
+print("etot = ", etot.item())
+print("derivative by custom code = ", nblist_info[4].grad[0][center_idx_modify][neigh_idx_modify][direction_idx_modify].item() )
 
 # Structure 2
 nblist_info_ = [tensor.clone().detach() for tensor in nblist_info]
@@ -62,4 +63,4 @@ nblist_info_[4][0][center_idx_modify][neigh_idx_modify][direction_idx_modify] +=
 nblist_info_[4].requires_grad_(True)
 etot_ = nn_mtp(*nblist_info_[1:])[0]
 #print(etot_.item())
-print( ((etot_ - etot) / delta).item() )
+print("derivative by finite difference method = ", ((etot_ - etot) / delta).item() )
