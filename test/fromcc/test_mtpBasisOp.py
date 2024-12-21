@@ -58,7 +58,7 @@ class MtpBasisOpTest(unittest.TestCase):
         mtp_parm_info: List[torch.Tensor] = mtpParamOp(self.mtp_level)
         nmus: int = mtp_parm_info[5].item()
         num_descriptor: int = mtp_parm_info[2].size(0)
-        coeffs_tensor: torch.Tensor = torch.ones(self.ntypes*self.ntypes*nmus*self.chebyshev_size, dtype=self.dtype) / 5
+        coeffs_tensor: torch.Tensor = torch.randn(self.ntypes*self.ntypes*nmus*self.chebyshev_size, dtype=self.dtype) / 10
         nblist_info: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(self.structure)
         nblist_info[4].requires_grad_(True)
         descriptor = mtpBasisOp(mtp_parm_info[0],
@@ -138,7 +138,7 @@ class MtpBasisOpTest(unittest.TestCase):
         nmus: int = mtp_param_info[5].item()
         coeff_idx_modify: int = (itype_modify*self.ntypes + jtype_modify)*nmus*self.chebyshev_size + mu_modify*self.chebyshev_size + xi_modify
         
-        coeffs_tensor: torch.Tensor = torch.ones(self.ntypes*self.ntypes*nmus*self.chebyshev_size, dtype=self.dtype) / 5
+        coeffs_tensor: torch.Tensor = torch.randn(self.ntypes*self.ntypes*nmus*self.chebyshev_size, dtype=self.dtype) / 10
         coeffs_tensor.requires_grad_(True)
         descriptor = mtpBasisOp(mtp_param_info[0],
                                 mtp_param_info[1],
@@ -213,7 +213,7 @@ class MtpBasisOpTest(unittest.TestCase):
         mtp_parm_info: List[torch.Tensor] = mtpParamOp(self.mtp_level)
         nmus: int = mtp_parm_info[5].item()
         num_descriptor: int = mtp_parm_info[2].size(0)
-        coeffs_tensor: torch.Tensor = torch.ones(self.ntypes*self.ntypes*nmus*self.chebyshev_size, dtype=self.dtype) / 5
+        coeffs_tensor: torch.Tensor = torch.randn(self.ntypes*self.ntypes*nmus*self.chebyshev_size, dtype=self.dtype) / 10
         nblist_info: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(self.structure)
         nblist_info[4].requires_grad_(True)
         descriptor = mtpBasisOp(mtp_parm_info[0],
@@ -293,7 +293,7 @@ class MtpBasisOpTest(unittest.TestCase):
         
         linear: nn.Module = nn.Linear(num_descriptor, 1).to(self.dtype)
         
-        coeffs_tensor: torch.Tensor = torch.ones(self.ntypes*self.ntypes*nmus*self.chebyshev_size, dtype=self.dtype) / 5
+        coeffs_tensor: torch.Tensor = torch.randn(self.ntypes*self.ntypes*nmus*self.chebyshev_size, dtype=self.dtype) / 10
         coeffs_tensor.requires_grad_(True)
         descriptor = mtpBasisOp(mtp_param_info[0],
                                 mtp_param_info[1],
@@ -370,7 +370,7 @@ class MtpBasisOpTest(unittest.TestCase):
         
         linear: nn.Module = nn.Linear(num_descriptor, 1).to(self.dtype)
         
-        coeffs_tensor: torch.Tensor = torch.ones(self.ntypes*self.ntypes*nmus*self.chebyshev_size, dtype=self.dtype) / 10
+        coeffs_tensor: torch.Tensor = torch.randn(self.ntypes*self.ntypes*nmus*self.chebyshev_size, dtype=self.dtype) / 10
         nblist_info: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(self.structure)
         nblist_info[4].requires_grad_(True)
         descriptor = mtpBasisOp(mtp_parm_info[0],
@@ -451,7 +451,7 @@ class MtpBasisOpTest(unittest.TestCase):
         
         linear: nn.Module = nn.Linear(num_descriptor, 1).to(self.dtype)
         
-        coeffs_tensor: torch.Tensor = torch.ones(self.ntypes*self.ntypes*nmus*self.chebyshev_size, dtype=self.dtype) / 10
+        coeffs_tensor: torch.Tensor = torch.randn(self.ntypes*self.ntypes*nmus*self.chebyshev_size, dtype=self.dtype) / 10
         coeffs_tensor.requires_grad_(True)
         descriptor = mtpBasisOp(mtp_param_info[0],
                                 mtp_param_info[1],

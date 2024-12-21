@@ -64,3 +64,4 @@ nblist_info_[4].requires_grad_(True)
 etot_ = nn_mtp(*nblist_info_[1:])[0]
 #print(etot_.item())
 print("derivative by finite difference method = ", ((etot_ - etot) / delta).item() )
+print("difference = ", nblist_info[4].grad[0][center_idx_modify][neigh_idx_modify][direction_idx_modify].item() - ((etot_ - etot) / delta).item() )

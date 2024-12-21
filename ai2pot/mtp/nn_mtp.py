@@ -37,7 +37,8 @@ class DescriptorMtp(nn.Module):
         
         #coeffs: torch.Tensor = torch.Tensor(self.ntypes*self.ntypes*self.nmus*self.chebyshev_size)
         #nn.init.normal_(coeffs, mean=0, std=0.5)
-        coeffs: torch.Tensor = torch.ones(self.ntypes*self.ntypes*self.nmus*self.chebyshev_size) / 5
+        coeffs: torch.Tensor = torch.zeros(self.ntypes*self.ntypes*self.nmus*self.chebyshev_size)
+        nn.init.normal_(coeffs, mean=0.0, std=0.1)
         self.register_parameter("coeffs", nn.Parameter(data=coeffs, requires_grad=True))
     
     def forward(self,
@@ -187,13 +188,12 @@ class NNMtp(nn.Module):
         
         
         e_tot_sr: torch.Tensor = self.fitting_modules_list[0](bdescriptor).sum(dim=-1)
-        print(bdescriptor.size(), e_tot_sr.size())
         
         '''
         e_tot_sr: torch.Tensor = torch.zeros(batch_size)
         for itype in range(self.ntypes):
-            itype_mask: torch.Tensor = (torch.take(input=btypes, index=bilist.to(torch.int64)) == itype)
-            itype_natoms_tensor: torch.Tensor = itype_mask.count_nonzero(dim=1)
+            itype_mask: torch.Tensor = (torch.gather(input=btypes, dim=1, index=bilist.to(torch.int64)) == itype)
+            itype_natoms_tensor: torch.Tensor = itype_mask.count_nonzero(dim=-1)
             if self.batch_norm_mark:
                 flatten_descriptor: torch.Tensor = self.batch_norm(bdescriptor[itype_mask])
             else:
@@ -202,7 +202,7 @@ class NNMtp(nn.Module):
             for bidx, flatten_ei_frame in enumerate( torch.split(flatten_ei, itype_natoms_tensor.tolist()) ):
                 e_tot_sr[bidx] = torch.add(e_tot_sr[bidx], flatten_ei_frame.sum())
         '''
-        
+    
         if (self.has_forces):
             mask: List[Optional[torch.Tensor]] = [torch.ones_like(e_tot_sr,
                                                                 device=brcs.device,
@@ -285,6 +285,10 @@ class LitNNMtp(L.LightningModule):
             e_criterion_tensor: torch.Tensor = e_wgt * self.e_criterion(binum=inum, input_benergies=e_ml, target_benergies=e_dft)
             f_criterion_tensor: torch.Tensor = f_wgt * self.f_criterion(binum=inum, input_bforces=fi_ml, target_bforces=fi_dft)
             loss = e_criterion_tensor + f_criterion_tensor
+            print(fi_ml[0][:3])
+            print(fi_dft[0][:3])
+            print("-------------")
+            print(e_ml, e_dft)
         if ((not self.has_forces) and (not self.has_virials)):
             inum, ilist, numneigh, firstneigh, rcs, types, nghost, e_dft, fi_dft = batch
             e_ml = self.model(ilist, numneigh, firstneigh, rcs, types, nghost)[0]
@@ -294,7 +298,7 @@ class LitNNMtp(L.LightningModule):
         return loss
     
     def configure_optimizers(self):
-        optimizer: torch.optim.Optimizer = torch.optim.SGD(params=self.model.parameters(),
+        optimizer: torch.optim.Optimizer = torch.optim.Adam(params=self.model.parameters(),
                                                             lr=self.lr_start)
         scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer=optimizer, gamma=0.97)
         return {

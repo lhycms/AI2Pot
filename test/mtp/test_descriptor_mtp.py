@@ -22,7 +22,7 @@ class MtpDescriptorDerTest(unittest.TestCase):
         self.chebyshev_size: int = 8
         self.rmax: float = 5.0
         self.rmin: float = 2.0
-        self.umax_num_neigh: int = 40
+        self.umax_num_neigh: int = 100
         self.dtype = torch.float64
         self.device = torch.device("cpu")
         

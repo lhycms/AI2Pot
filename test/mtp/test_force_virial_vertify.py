@@ -18,7 +18,7 @@ MoS2_POSCAR = os.path.join(TEST_FILES_DIR, "POSCARs", "MoS2", "POSCAR")
 class NNMtpForceVirialTest(unittest.TestCase):
     def setUp(self):
         print("NNMtpForceVirialTest (TestCase) is setting up...\n")
-        mtp_level: int = 14
+        mtp_level: int = 16
         ntypes: int = 4
         chebyshev_size: int = 8
         rmax: float = 5.0
@@ -128,14 +128,14 @@ class NNMtpForceVirialTest(unittest.TestCase):
               (-(etot_ - etot) / delta).item())
         print("1.4. Energy difference = ", (etot_ - etot).item())
         print("1.5. -F * dx = ", -fi[0][center_idx_modify][direction_idx_modify].item() * delta)
-        print("1.6. Energy difference - (-F * dx) = {0:.5f}".format((etot_ - etot).item() + fi[0][center_idx_modify][direction_idx_modify].item() * delta))
+        print("1.6. Energy difference - (-F * dx) = {0:.7f}".format((etot_ - etot).item() + fi[0][center_idx_modify][direction_idx_modify].item() * delta))
         print("----------------------------------------------")
         
         
-    def est_virial(self):
+    def test_virial(self):
         direction1_idx_modify: int = 1
         direction2_idx_modify: int = 1
-        delta: float = 1e-3
+        delta: float = 1e-5
         
         # Structure 1
         nblist_info: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(structure=self.structure)
@@ -159,9 +159,9 @@ class NNMtpForceVirialTest(unittest.TestCase):
         print("----------------------------------------------")
         print("2.1. Before perturbation, virial[{0}][{1}] = ".format(direction1_idx_modify, direction2_idx_modify))
         print(v)
+        #print("2.2. After perturbation, virial[{0}][{1}] = ".format(direction1_idx_modify, direction2_idx_modify))
+        #print(v_)
         print("2.2. After perturbation, virial[{0}][{1}] = ".format(direction1_idx_modify, direction2_idx_modify))
-        print(v_)
-        print("2.3. After perturbation, virial[{0}][{1}] = ".format(direction1_idx_modify, direction2_idx_modify))
         print(np.sum(fi[0, :, direction1_idx_modify].numpy() * self.structure.cart_coords[:, direction2_idx_modify]))
         print("----------------------------------------------")
 
