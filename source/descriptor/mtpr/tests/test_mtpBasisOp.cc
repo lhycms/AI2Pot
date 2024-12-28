@@ -13,6 +13,7 @@ class MtpBasisOpTest : public ::testing::Test
 protected:
     c10::TensorOptions float_options;
     c10::TensorOptions int_options;
+    at::Tensor binum_tensor;
     at::Tensor bilist_tensor;
     at::Tensor bnumneigh_tensor;
     at::Tensor bfirstneigh_tensor;
@@ -150,6 +151,7 @@ protected:
 
         umax_num_neighs = 20;
         inum = 12;
+        binum_tensor = at::tensor(inum, int_options);
         bilist_tensor = at::zeros({1, inum}, int_options);
         bnumneigh_tensor = at::zeros({1, inum}, int_options);
         bfirstneigh_tensor = at::zeros({1, inum, umax_num_neighs}, int_options);
@@ -198,6 +200,7 @@ TEST_F(MtpBasisOpTest, forward)
                                                            ntypes,
                                                            chebyshev_size,
                                                            coeffs_tensor,
+                                                           binum_tensor,
                                                            bilist_tensor,
                                                            bnumneigh_tensor,
                                                            bfirstneigh_tensor,
@@ -230,6 +233,7 @@ TEST_F(MtpBasisOpTest, backward_der2xyz)
                                                            ntypes,
                                                            chebyshev_size,
                                                            coeffs_tensor,
+                                                           binum_tensor,
                                                            bilist_tensor,
                                                            bnumneigh_tensor,
                                                            bfirstneigh_tensor,
@@ -253,6 +257,7 @@ TEST_F(MtpBasisOpTest, backward_der2xyz)
                                                            ntypes,
                                                            chebyshev_size,
                                                            coeffs_tensor,
+                                                           binum_tensor,
                                                            bilist_tensor,
                                                            bnumneigh_tensor,
                                                            bfirstneigh_tensor,
@@ -294,6 +299,7 @@ TEST_F(MtpBasisOpTest, backward_der2coeffs)
                                                            ntypes,
                                                            chebyshev_size,
                                                            coeffs_tensor,
+                                                           binum_tensor,
                                                            bilist_tensor,
                                                            bnumneigh_tensor,
                                                            bfirstneigh_tensor,
@@ -315,6 +321,7 @@ TEST_F(MtpBasisOpTest, backward_der2coeffs)
                                                            ntypes,
                                                            chebyshev_size,
                                                            coeffs_tensor_,
+                                                           binum_tensor,
                                                            bilist_tensor,
                                                            bnumneigh_tensor,
                                                            bfirstneigh_tensor,

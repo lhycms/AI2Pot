@@ -19,6 +19,7 @@ torch::autograd::variable_list MtpBasisFunction::forward(
     int ntypes,
     int chebyshev_size,
     const at::Tensor &coeffs_tensor,
+    const at::Tensor &binum_tensor,
     const at::Tensor &bilist_tensor,
     const at::Tensor &bnumneigh_tensor,
     const at::Tensor &bfirstnumneigh_tensor,
@@ -49,6 +50,7 @@ torch::autograd::variable_list MtpBasisFunction::forward(
     int *num_mus4moms = num_mus4moms_tensor.data_ptr<int>();
     int *mus4moms = mus4moms_tensor.data_ptr<int>();
     int nmus = nmus_tensor.item<int>();
+    int *binum = binum_tensor.data_ptr<int>();
 
     c10::TensorOptions int_options = c10::TensorOptions()
         .dtype(torch::kInt32)
@@ -63,8 +65,11 @@ torch::autograd::variable_list MtpBasisFunction::forward(
             .dtype(torch::kFloat32)
             .device(brcs_tensor.device());
         bmtp_basis_val_tensor = at::zeros({batch_size, nlocal, alpha_scalar_moments}, float_options);
+        bmtp_basis_val_tensor.requires_grad_(true);
         bmtp_basis_der_tensor = at::zeros({batch_size, nlocal, alpha_scalar_moments, umax_num_neighs, 3}, float_options);
+        bmtp_basis_der_tensor.requires_grad_(true);
         bmtp_basis_der2coeffs_tensor = at::zeros({batch_size, nlocal, alpha_scalar_moments, num_coeffs}, float_options);
+        bmtp_basis_der2coeffs_tensor.requires_grad_(true);
 
         for (int bb=0; bb<batch_size; bb++) {
             float *mtp_basis_val = bmtp_basis_val_tensor[bb].data_ptr<float>();
@@ -94,7 +99,7 @@ torch::autograd::variable_list MtpBasisFunction::forward(
                 num_mus4moms,
                 mus4moms,
                 nmus,
-                nlocal,
+                binum[bb],
                 ilist,
                 numneigh,
                 firstneigh,
@@ -110,8 +115,11 @@ torch::autograd::variable_list MtpBasisFunction::forward(
             .dtype(torch::kFloat64)
             .device(brcs_tensor.device());
         bmtp_basis_val_tensor = at::zeros({batch_size, nlocal, alpha_scalar_moments}, float_options);
+        bmtp_basis_val_tensor.requires_grad_(true);
         bmtp_basis_der_tensor = at::zeros({batch_size, nlocal, alpha_scalar_moments, umax_num_neighs, 3}, float_options);
+        bmtp_basis_der_tensor.requires_grad_(true);
         bmtp_basis_der2coeffs_tensor = at::zeros({batch_size, nlocal, alpha_scalar_moments, num_coeffs}, float_options);
+        bmtp_basis_der2coeffs_tensor.requires_grad_(true);
 
         for (int bb=0; bb<batch_size; bb++) {
             double *mtp_basis_val = bmtp_basis_val_tensor[bb].data_ptr<double>();
@@ -141,7 +149,7 @@ torch::autograd::variable_list MtpBasisFunction::forward(
                 num_mus4moms,
                 mus4moms,
                 nmus,
-                nlocal,
+                binum[bb],
                 ilist,
                 numneigh,
                 firstneigh,
@@ -153,7 +161,7 @@ torch::autograd::variable_list MtpBasisFunction::forward(
                 rmin);
         }
     }
-    ctx->save_for_backward({bmtp_basis_der_tensor, bmtp_basis_der2coeffs_tensor});
+    ctx->save_for_backward({binum_tensor, bmtp_basis_der_tensor, bmtp_basis_der2coeffs_tensor});
     return {bmtp_basis_val_tensor};
 }
 
@@ -164,13 +172,15 @@ torch::autograd::variable_list MtpBasisFunction::backward(
     at::Tensor bgrad_output_tensor = bgrad_outputs_tensor[0];
     if ( !bgrad_output_tensor.is_contiguous() )
         bgrad_output_tensor = bgrad_output_tensor.contiguous();
-    at::Tensor bmtp_basis_der_tensor = ctx->get_saved_variables()[0];
-    at::Tensor bmtp_basis_der2coeffs_tensor = ctx->get_saved_variables()[1];
+    at::Tensor binum_tensor = ctx->get_saved_variables()[0];
+    at::Tensor bmtp_basis_der_tensor = ctx->get_saved_variables()[1];
+    at::Tensor bmtp_basis_der2coeffs_tensor = ctx->get_saved_variables()[2];
     int batch_size = (int)bgrad_output_tensor.size(0);
     int nlocal = (int)bgrad_output_tensor.size(1);
     int alpha_scalar_moments = (int)bgrad_output_tensor.size(2);
     int umax_num_neighs = (int)bmtp_basis_der_tensor.size(3);
     int num_coeffs = (int)bmtp_basis_der2coeffs_tensor.size(3);
+    int *binum = binum_tensor.data_ptr<int>();
 
     c10::TensorOptions float_options;
     at::Tensor bout_der_tensor;
@@ -181,16 +191,18 @@ torch::autograd::variable_list MtpBasisFunction::backward(
             .dtype(torch::kFloat32)
             .device(bgrad_output_tensor.device());
         bout_der_tensor = at::zeros({batch_size, nlocal, umax_num_neighs, 3}, float_options);
+        bout_der_tensor.requires_grad_(true);
         bout_der2coeffs_tensor = at::zeros({num_coeffs}, float_options);
+        bout_der2coeffs_tensor.requires_grad_(true);
 
         for (int bb=0; bb<batch_size; bb++) {
             float *out_der = bout_der_tensor[bb].data_ptr<float>();
             float *out_der2coeffs = bout_der2coeffs_tensor.data_ptr<float>();
             float *mtp_basis_der = bmtp_basis_der_tensor[bb].data_ptr<float>();
             float *mtp_basis_der2coeffs = bmtp_basis_der2coeffs_tensor[bb].data_ptr<float>();
-            float *grad_output = bgrad_output_tensor[bb].data_ptr<float>(); 
+            float *grad_output = bgrad_output_tensor[bb].data_ptr<float>();
             
-            for (int ii=0; ii<nlocal; ii++) 
+            for (int ii=0; ii<binum[bb]; ii++) 
                 for (int ee=0; ee<alpha_scalar_moments; ee++) {
                     for (int jj=0; jj<umax_num_neighs; jj++) {
                         out_der[ii*umax_num_neighs*3 + jj*3 + 0] += grad_output[ii*alpha_scalar_moments + ee]
@@ -210,7 +222,9 @@ torch::autograd::variable_list MtpBasisFunction::backward(
             .dtype(torch::kFloat64)
             .device(bgrad_output_tensor.device());
         bout_der_tensor = at::zeros({batch_size, nlocal, umax_num_neighs, 3}, float_options);
+        bout_der_tensor.requires_grad_(true);
         bout_der2coeffs_tensor = at::zeros({num_coeffs}, float_options);
+        bout_der2coeffs_tensor.requires_grad_(true);
 
         for (int bb=0; bb<batch_size; bb++) {
             double *out_der = bout_der_tensor[bb].data_ptr<double>();
@@ -219,7 +233,7 @@ torch::autograd::variable_list MtpBasisFunction::backward(
             double *mtp_basis_der2coeffs = bmtp_basis_der2coeffs_tensor[bb].data_ptr<double>();
             double *grad_output = bgrad_output_tensor[bb].data_ptr<double>();
 
-            for (int ii=0; ii<nlocal; ii++) {
+            for (int ii=0; ii<binum[bb]; ii++) {
                 for (int ee=0; ee<alpha_scalar_moments; ee++) {
                     for (int jj=0; jj<umax_num_neighs; jj++) {
                         out_der[ii*umax_num_neighs*3 + jj*3 + 0] += grad_output[ii*alpha_scalar_moments + ee]
@@ -240,7 +254,7 @@ torch::autograd::variable_list MtpBasisFunction::backward(
         at::Tensor(), at::Tensor(), at::Tensor(), at::Tensor(), at::Tensor(), at::Tensor(),
         at::Tensor(), at::Tensor(),
         bout_der2coeffs_tensor,
-        at::Tensor(), at::Tensor(), at::Tensor(),
+        at::Tensor(), at::Tensor(), at::Tensor(), at::Tensor(),
         bout_der_tensor,
         at::Tensor(), at::Tensor(), at::Tensor(), at::Tensor()};
 }
@@ -256,6 +270,7 @@ torch::autograd::variable_list MtpBasisOp(
     int ntypes,
     int chebyshev_size,
     const at::Tensor &coeffs_tensor,
+    const at::Tensor &binum_tensor,
     const at::Tensor &bilist_tensor,
     const at::Tensor &bnumneigh_tensor,
     const at::Tensor &bfirstneigh_tensor,
@@ -275,6 +290,7 @@ torch::autograd::variable_list MtpBasisOp(
         ntypes,
         chebyshev_size,
         coeffs_tensor,
+        binum_tensor,
         bilist_tensor,
         bnumneigh_tensor,
         bfirstneigh_tensor,
