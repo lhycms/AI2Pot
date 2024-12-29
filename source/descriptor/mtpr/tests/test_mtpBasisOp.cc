@@ -151,7 +151,7 @@ protected:
 
         umax_num_neighs = 20;
         inum = 12;
-        binum_tensor = at::tensor(inum, int_options);
+        binum_tensor = at::tensor({inum}, int_options);
         bilist_tensor = at::zeros({1, inum}, int_options);
         bnumneigh_tensor = at::zeros({1, inum}, int_options);
         bfirstneigh_tensor = at::zeros({1, inum, umax_num_neighs}, int_options);

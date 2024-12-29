@@ -22,7 +22,7 @@ torch::autograd::variable_list MtpBasisFunction::forward(
     const at::Tensor &binum_tensor,
     const at::Tensor &bilist_tensor,
     const at::Tensor &bnumneigh_tensor,
-    const at::Tensor &bfirstnumneigh_tensor,
+    const at::Tensor &bfirstneigh_tensor,
     const at::Tensor &brcs_tensor,
     const at::Tensor &btypes_tensor,
     int umax_num_neighs,
@@ -31,7 +31,7 @@ torch::autograd::variable_list MtpBasisFunction::forward(
 {
     assert(bilist_tensor.scalar_type() == torch::kInt32);
     assert(bnumneigh_tensor.scalar_type() == torch::kInt32);
-    assert(bfirstnumneigh_tensor.scalar_type() == torch::kInt32);
+    assert(bfirstneigh_tensor.scalar_type() == torch::kInt32);
     assert(btypes_tensor.scalar_type() == torch::kInt32);
     assert(coeffs_tensor.scalar_type() == brcs_tensor.scalar_type());
     assert( (int)coeffs_tensor.flatten().size(0) == (ntypes * ntypes * nmus_tensor.item<int>() * chebyshev_size) );
@@ -78,7 +78,7 @@ torch::autograd::variable_list MtpBasisFunction::forward(
             float *coeffs = coeffs_tensor.data_ptr<float>();
             int *ilist = bilist_tensor[bb].data_ptr<int>();
             int *numneigh = bnumneigh_tensor[bb].data_ptr<int>();
-            int *firstneigh = bfirstnumneigh_tensor[bb].data_ptr<int>();
+            int *firstneigh = bfirstneigh_tensor[bb].data_ptr<int>();
             float (*rcs)[3] = (float (*)[3])brcs_tensor[bb].data_ptr<float>();
             int *types = btypes_tensor[bb].data_ptr<int>();
 
@@ -128,7 +128,7 @@ torch::autograd::variable_list MtpBasisFunction::forward(
             double *coeffs = coeffs_tensor.data_ptr<double>();
             int *ilist = bilist_tensor[bb].data_ptr<int>();
             int *numneigh = bnumneigh_tensor[bb].data_ptr<int>();
-            int *firstneigh = bfirstnumneigh_tensor[bb].data_ptr<int>();
+            int *firstneigh = bfirstneigh_tensor[bb].data_ptr<int>();
             double (*rcs)[3] = (double (*)[3])brcs_tensor[bb].data_ptr<double>();
             int *types = btypes_tensor[bb].data_ptr<int>();
 
