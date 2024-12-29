@@ -24,7 +24,7 @@ class ScDatasetTest(unittest.TestCase):
             umax_num_neigh_atoms=20)
         self.mlff_dataloader: DataLoader = DataLoader(
             self.mlff_dataset, 
-            batch_size=5, 
+            batch_size=1, 
             shuffle=True)
     
     def test_getitem(self):
@@ -35,14 +35,24 @@ class ScDatasetTest(unittest.TestCase):
                 print(type(ii))
     
     def test_dataloader(self):
-        for ii, data in enumerate(self.mlff_dataloader):
-            print("\tSize of Batch#{0} = {1}".format(ii, data[0].size()[0]))  # data[0]: batch of inum
+        for batch_idx, batch_data in enumerate(self.mlff_dataloader):
+            print("\tbinum.size() inner Batch#{0} = {1}".format(batch_idx, batch_data[0].size()))
+            print("\tbilist.size() inner Batch#{0} = {1}".format(batch_idx, batch_data[1].size()))
+            print("\tbnumneigh.size() inner Batch#{0} = {1}".format(batch_idx, batch_data[2].size()))
+            print("\tbfirstneigh.size() inner Batch#{0} = {1}".format(batch_idx, batch_data[3].size()))
+            print("\tbrcs.size() inner Batch#{0} = {1}".format(batch_idx, batch_data[4].size()))
+            print("\tbtypes.size() inner Batch#{0} = {1}".format(batch_idx, batch_data[5].size()))
+            print("\tbnghost.size() inner Batch#{0} = {1}".format(batch_idx, batch_data[6].size()))
+            print("\tbenergies.size() inner Batch#{0} = {1}".format(batch_idx, batch_data[7].size()))
+            print("\tbforces.size() inner Batch#{0} = {1}".format(batch_idx, batch_data[8].size()))
+            print("\tbvirials.size() inner Batch#{0} = {1}".format(batch_idx, batch_data[9].size()))
+            print("\n")
 
     def tearDown(self):
         print("ScDatasetTest is tearing down...")
 
 
-class McDatasetT(unittest.TestCase):
+class McDatasetTest(object):
     def setUp(self) -> None:
         print("McDatasetTest is setting up...\n")
         self.outcars_dir: str = Multi_Components_OUTCARS_DIR

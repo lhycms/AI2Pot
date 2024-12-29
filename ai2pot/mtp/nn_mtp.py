@@ -42,6 +42,7 @@ class DescriptorMtp(nn.Module):
         self.register_parameter("coeffs", nn.Parameter(data=coeffs, requires_grad=True))
     
     def forward(self,
+                binum,
                 bilist,
                 bnumneigh,
                 bfirstneigh,
@@ -57,6 +58,7 @@ class DescriptorMtp(nn.Module):
                                               self.ntypes,
                                               self.chebyshev_size,
                                               self.coeffs,
+                                              binum,
                                               bilist,
                                               bnumneigh,
                                               bfirstneigh,
@@ -172,15 +174,17 @@ class NNMtp(nn.Module):
         self.has_virials: bool = has_virials
     
     def forward(self,
+                binum: torch.Tensor,
                 bilist: torch.Tensor,
                 bnumneigh: torch.Tensor,
                 bfirstneigh: torch.Tensor,
                 brcs: torch.Tensor,
                 btypes: torch.Tensor,
                 bnghost: torch.Tensor) -> torch.Tensor:
+        brcs.requires_grad_(True)
         batch_size: int = bilist.size()[0]
-        brcs.requires_grad_()
-        bdescriptor: torch.Tensor = self.descriptor_module(bilist,
+        bdescriptor: torch.Tensor = self.descriptor_module(binum,
+                                                           bilist,
                                                            bnumneigh,
                                                            bfirstneigh,
                                                            brcs,
@@ -188,7 +192,6 @@ class NNMtp(nn.Module):
         
         
         e_tot_sr: torch.Tensor = self.fitting_modules_list[0](bdescriptor).sum(dim=-1)
-        
         '''
         e_tot_sr: torch.Tensor = torch.zeros(batch_size)
         for itype in range(self.ntypes):
@@ -202,16 +205,24 @@ class NNMtp(nn.Module):
             for bidx, flatten_ei_frame in enumerate( torch.split(flatten_ei, itype_natoms_tensor.tolist()) ):
                 e_tot_sr[bidx] = torch.add(e_tot_sr[bidx], flatten_ei_frame.sum())
         '''
-    
+        dd_drcs: torch.Tensor = torch.autograd.grad(outputs=[bdescriptor],
+                                                    inputs=[brcs],
+                                                    grad_outputs=[torch.ones_like(bdescriptor)],
+                                                    retain_graph=True,
+                                                    create_graph=True)[0]
+        print("***++++++++++")
+        print("\tbdescriptor.requires_grad = ", bdescriptor.requires_grad)
+        print("\tbrcs.requires_grad = ", brcs.requires_grad)
+        print("\tdd_drcs.requires_grad = ", dd_drcs.requires_grad)
+        print("***++++++++++")
+        
+        
         if (self.has_forces):
-            mask: List[Optional[torch.Tensor]] = [torch.ones_like(e_tot_sr,
-                                                                device=brcs.device,
-                                                                dtype=brcs.dtype)]
-            eisr_rij_jacobian: torch.Tensor = torch.autograd.grad([e_tot_sr],
-                                                                [brcs],
-                                                                grad_outputs=mask,
-                                                                retain_graph=True,
-                                                                create_graph=True)[0]
+            eisr_rij_jacobian: torch.Tensor = torch.autograd.grad(outputs=[e_tot_sr],
+                                                                  inputs=[brcs],
+                                                                  grad_outputs=[torch.ones_like(e_tot_sr)],
+                                                                  retain_graph=True,
+                                                                  create_graph=True)[0]
             force_sr: torch.Tensor = forceSrOp(bilist,
                                                bnumneigh,
                                                bfirstneigh,
@@ -273,27 +284,30 @@ class LitNNMtp(L.LightningModule):
     def training_step(self, batch, batch_idx):
         e_wgt, f_wgt, v_wgt = self.get_efv_wgts()
         if (self.has_forces and self.has_virials):
-            inum, ilist, numneigh, firstneigh, rcs, types, nghost, e_dft, fi_dft, v_dft = batch
-            e_ml, fi_ml, v_ml = self.model(ilist, numneigh, firstneigh, rcs, types, nghost)
-            e_criterion_tensor: torch.Tensor = e_wgt * self.e_criterion(binum=inum, input_benergies=e_ml, target_benergies=e_dft)
-            f_criterion_tensor: torch.Tensor = f_wgt * self.f_criterion(binum=inum, input_bforces=fi_ml, target_bforces=fi_dft)
-            v_criterion_tensor: torch.Tensor = v_wgt * self.v_criterion(binum=inum, input_bvirials=v_ml, target_bvirials=v_dft)
+            binum, bilist, bnumneigh, bfirstneigh, brcs, btypes, bnghost, be_dft, bfi_dft, bv_dft = batch
+            be_ml, bfi_ml, bv_ml = self.model(binum, bilist, bnumneigh, bfirstneigh, brcs, btypes, bnghost)
+            e_criterion_tensor: torch.Tensor = e_wgt * self.e_criterion(binum=binum, input_benergies=be_ml, target_benergies=be_dft)
+            print("***+++ 1")
+            f_criterion_tensor: torch.Tensor = f_wgt * self.f_criterion(binum=binum, input_bforces=bfi_ml, target_bforces=bfi_dft)
+            print("***+++ 2")
+            print(bv_ml.size(), bv_dft.size())
+            v_criterion_tensor: torch.Tensor = v_wgt * self.v_criterion(binum=binum, input_bvirials=bv_ml, target_bvirials=bv_dft)
+            print("***+++ 3")
             loss = e_criterion_tensor + f_criterion_tensor + v_criterion_tensor
         if (self.has_forces and (not self.has_virials)):
-            inum, ilist, numneigh, firstneigh, rcs, types, nghost, e_dft, fi_dft = batch
-            e_ml, fi_ml = self.model(ilist, numneigh, firstneigh, rcs, types, nghost)
-            e_criterion_tensor: torch.Tensor = e_wgt * self.e_criterion(binum=inum, input_benergies=e_ml, target_benergies=e_dft)
-            f_criterion_tensor: torch.Tensor = f_wgt * self.f_criterion(binum=inum, input_bforces=fi_ml, target_bforces=fi_dft)
+            binum, bilist, bnumneigh, bfirstneigh, brcs, btypes, bnghost, be_dft, bfi_dft = batch
+            be_ml, bfi_ml = self.model(binum, bilist, bnumneigh, bfirstneigh, brcs, btypes, bnghost)
+            e_criterion_tensor: torch.Tensor = e_wgt * self.e_criterion(binum=binum, input_benergies=be_ml, target_benergies=be_dft)
+            f_criterion_tensor: torch.Tensor = f_wgt * self.f_criterion(binum=binum, input_bforces=bfi_ml, target_bforces=bfi_dft)
             loss = e_criterion_tensor + f_criterion_tensor
-            print(fi_ml[0][:3])
-            print(fi_dft[0][:3])
+            print(bfi_ml[0][:3])
+            print(bfi_dft[0][:3])
             print("-------------")
-            print(e_ml, e_dft)
+            print(be_ml, be_dft)
         if ((not self.has_forces) and (not self.has_virials)):
-            inum, ilist, numneigh, firstneigh, rcs, types, nghost, e_dft, fi_dft = batch
-            e_ml = self.model(ilist, numneigh, firstneigh, rcs, types, nghost)[0]
-            #print(e_ml, e_dft)
-            e_criterion_tensor: torch.Tensor = e_wgt * self.e_criterion(binum=inum, input_benergies=e_ml, target_benergies=e_dft)
+            binum, bilist, bnumneigh, bfirstneigh, brcs, btypes, bnghost, be_dft, bfi_dft = batch
+            be_ml = self.model(binum, bilist, bnumneigh, bfirstneigh, brcs, btypes, bnghost)[0]
+            e_criterion_tensor: torch.Tensor = e_wgt * self.e_criterion(binum=binum, input_benergies=be_ml, target_benergies=be_dft)
             loss = e_criterion_tensor
         return loss
     

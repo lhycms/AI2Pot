@@ -46,18 +46,19 @@ class DescriptorMtpTest(object):
                                                      umax_num_neigh_atoms=umax_num_neighs,
                                                      torch_float_dtype=dtype)
         self.mlff_dataloader: DataLoader = DataLoader(self.mlff_dataset,
-                                                      batch_size=20,
+                                                      batch_size=1,
                                                       shuffle=True)
         
     def test_forward(self):
         for ii, batch_data in enumerate(self.mlff_dataloader):
-            descriptor: torch.Tensor = self.descriptor_mtp(batch_data[1],
+            descriptor: torch.Tensor = self.descriptor_mtp(batch_data[0],
+                                                           batch_data[1],
                                                            batch_data[2],
                                                            batch_data[3],
                                                            batch_data[4],
                                                            batch_data[5])
             print("\t{0}. In Batch#{1}, descrip.size() = ".format(ii+1, ii), descriptor.size())
-        
+    
     def tearDown(self) -> None:
         print("DescriptorMtpTest (TestCase) is tearing down...\n")
         
@@ -146,12 +147,16 @@ class NNMtpTest(unittest.TestCase):
         
 
     def est_forward(self):
-        self.nn_mtp.to(torch.float32)
         t1 = time.time()
         print("NNMtpTest.test_forward:")
         print("-----------------------")
+        for k, v in self.nn_mtp.descriptor_module.named_parameters():
+            print(k, v.dtype)
+        for k, v in self.nn_mtp.named_buffers():
+            print(k, v.dtype)
         for ii, batch_data in enumerate(self.mlff_dataloader):
-            etot, fi, v = self.nn_mtp(batch_data[1],
+            etot, fi, v = self.nn_mtp(batch_data[0],
+                                      batch_data[1],
                                       batch_data[2],
                                       batch_data[3],
                                       batch_data[4].requires_grad_(True),
@@ -194,7 +199,7 @@ class NNMtpTest(unittest.TestCase):
         itype_idx_modify: int = nblist_info[5][0, self.center_idx_modify]
         jtype_idx_modify: int = nblist_info[5][0, self.neigh_idx_modify]
         nblist_info[4].requires_grad_(True)
-        etot, fi, v = self.nn_mtp(*nblist_info[1:])
+        etot, fi, v = self.nn_mtp(*nblist_info)
         etot.backward()
         
         # 2. Structure 2
@@ -202,7 +207,7 @@ class NNMtpTest(unittest.TestCase):
         nblist_info_[4].requires_grad_(False)
         nblist_info_[4][0][self.center_idx_modify][self.neigh_idx_modify][direction_idx_modify] += self.delta
         nblist_info_[4].requires_grad_(True)
-        etot_, fi_, v_ = self.nn_mtp(*nblist_info_[1:])
+        etot_, fi_, v_ = self.nn_mtp(*nblist_info_)
         
         print("--------------------------------------")
         print("1.0. Etot = {0:.5f}".format(etot.item()))
@@ -225,17 +230,65 @@ class NNMtpTest(unittest.TestCase):
         print("--------------------------------------")
     
     
-    def test_etot_der2coeffs(self):
+    def est_etot_der2coeffs(self):
         pass
     
     
-    def test_fi_der2xyz(self):
-        pass
+    def est_fi_der2xyz(self):
+        direction_idx_modify: int = 1
+        
+        structure: Structure = Structure.from_file(ReNbSSe_POSCAR_PATH)
+        
+        # 1. Structure 1
+        nblist_info: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(structure)
+        itype_idx_modify: int = nblist_info[5][0, self.center_idx_modify]
+        jtype_idx_modify: int = nblist_info[5][0, self.neigh_idx_modify]
+        nblist_info[4].requires_grad_(True)
+        etot, fi, v = self.nn_mtp(*nblist_info[1:])
+        single_fi = fi[0][self.center_idx_modify][direction_idx_modify]
+        print(single_fi)
+        single_fi.backward()
+        
+        # 2. Structure 2
+        nblist_info_: List[torch.Tensor] = [tensor.clone().detach() for tensor in nblist_info]
+        nblist_info_[4].requires_grad_(False)
+        nblist_info_[4][0][self.center_idx_modify][self.neigh_idx_modify][direction_idx_modify] += self.delta
+        nblist_info_[4].requires_grad_(True)
+        etot_, fi_, v_ = self.nn_mtp(*nblist_info_[1:])
+        single_fi_ = fi_[0][self.center_idx_modify][direction_idx_modify]
+        print(single_fi_)
+        #single_fi_.backward()
+        
+        print("--------------------------------------")
+        print("1.0. fi = {0:.5f}".format(etot.item()))
+        print("1.1. Etot derivative w.r.t. rcs[{0}][{1}][{2}] calculated by custom code = ".format(
+            self.center_idx_modify,
+            self.neigh_idx_modify,
+            direction_idx_modify),
+            #nblist_info[4].grad[0][self.center_idx_modify][self.neigh_idx_modify][direction_idx_modify].item()
+        )
+        print("1.2. Etot derivative w.r.t. rcs[{0}][{1}][{2}] calculated by finite difference method = ".format(
+            self.center_idx_modify,
+            self.neigh_idx_modify,
+            direction_idx_modify),
+            ((single_fi_ - single_fi) / self.delta).item()
+        )
+        #print("1.3. Difference between custom code and finite difference method = {0:.7f}".format(
+        #    ((etot_ - etot) / self.delta).item() - nblist_info[4].grad[0][self.center_idx_modify][self.neigh_idx_modify][direction_idx_modify].item()
+        #    )
+        #)
+        print("--------------------------------------")
     
     
     def test_fi_der2coeffs(self):
         pass
+
+    def test_v_der2xyz(self):
+        pass
     
+    
+    def test_v_der2coeffs(self):
+        pass
 
 
 if __name__ == "__main__":

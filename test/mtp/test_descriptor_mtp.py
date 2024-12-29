@@ -56,14 +56,14 @@ class MtpDescriptorDerTest(unittest.TestCase):
         
         nblist_info: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(self.structure)
         nblist_info[4].requires_grad_(True)
-        descriptor = self.descriptor_mtp(*nblist_info[1:-1])
+        descriptor = self.descriptor_mtp(*nblist_info[:-1])
         single_descriptor = descriptor[0][self.center_idx_modify][self.descriptor_idx_modify]
         single_descriptor.backward()
         
         nblist_info_: List[torch.Tensor] = [tensor.clone().detach() for tensor in nblist_info]
         nblist_info_[4][0][self.center_idx_modify][self.neigh_idx_modify][direction_idx_modify] += self.delta
         nblist_info_[4].requires_grad_(True)
-        descriptor_ = self.descriptor_mtp(*nblist_info_[1:-1])
+        descriptor_ = self.descriptor_mtp(*nblist_info_[:-1])
         single_descriptor_ = descriptor_[0][self.center_idx_modify][self.descriptor_idx_modify]
         
         print("---------------------------------------------------------------------------------------")
@@ -98,7 +98,7 @@ class MtpDescriptorDerTest(unittest.TestCase):
         xi_modify: int = 1
         coeff_idx_modify: int = (itype_modify*self.ntypes + jtype_modify)*self.nmus*self.chebyshev_size + mu_modify*self.chebyshev_size + xi_modify
         
-        descriptor = self.descriptor_mtp(*nblist_info[1:-1])
+        descriptor = self.descriptor_mtp(*nblist_info[:-1])
         single_descriptor: torch.Tensor = descriptor[0, self.center_idx_modify, self.descriptor_idx_modify]
         single_descriptor.backward()
         
@@ -112,7 +112,7 @@ class MtpDescriptorDerTest(unittest.TestCase):
                                              rmin=self.rmin,
                                              umax_num_neighs=self.umax_num_neigh).to(self.dtype)
         self.descriptor_mtp_.register_parameter("coeffs", nn.Parameter(coeffs_tensor_, requires_grad=True))
-        descriptor_ = self.descriptor_mtp_(*nblist_info[1:-1])
+        descriptor_ = self.descriptor_mtp_(*nblist_info[:-1])
         single_descriptor_: torch.Tensor = descriptor_[0, self.center_idx_modify, self.descriptor_idx_modify]
         print("---------------------------------------------------------------------------------------")
         print("2.0. Descriptor[0, {0}, {1}] = {2}".format(self.center_idx_modify, self.descriptor_idx_modify, single_descriptor.item()))
@@ -144,14 +144,14 @@ class MtpDescriptorDerTest(unittest.TestCase):
         
         nblist_info: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(self.structure)
         nblist_info[4].requires_grad_(True)
-        descriptor = self.descriptor_mtp(*nblist_info[1:-1])
+        descriptor = self.descriptor_mtp(*nblist_info[:-1])
         sum_descriptor: torch.Tensor = descriptor.sum()
         sum_descriptor.backward()
         
         nblist_info_: List[torch.Tensor] = [tensor.clone().detach() for tensor in nblist_info]
         nblist_info_[4][0][self.center_idx_modify][self.neigh_idx_modify][direction_idx_modify] += self.delta
         nblist_info_[4].requires_grad_(True)
-        descriptor_ = self.descriptor_mtp(*nblist_info_[1:-1])
+        descriptor_ = self.descriptor_mtp(*nblist_info_[:-1])
         sum_descriptor_ = descriptor_.sum()
         
         print("---------------------------------------------------------------------------------------")
@@ -183,7 +183,7 @@ class MtpDescriptorDerTest(unittest.TestCase):
         xi_modify: int = 1
         coeff_idx_modify: int = (itype_modify*self.ntypes + jtype_modify)*self.nmus*self.chebyshev_size + mu_modify*self.chebyshev_size + xi_modify
         
-        descriptor = self.descriptor_mtp(*nblist_info[1:-1])
+        descriptor = self.descriptor_mtp(*nblist_info[:-1])
         sum_descriptor: torch.Tensor = descriptor.sum()
         sum_descriptor.backward()
         
@@ -197,7 +197,7 @@ class MtpDescriptorDerTest(unittest.TestCase):
                                              rmin=self.rmin,
                                              umax_num_neighs=self.umax_num_neigh).to(self.dtype)
         self.descriptor_mtp_.register_parameter("coeffs", nn.Parameter(coeffs_tensor_, requires_grad=True))
-        descriptor_ = self.descriptor_mtp_(*nblist_info[1:-1])
+        descriptor_ = self.descriptor_mtp_(*nblist_info[:-1])
         sum_descriptor_: torch.Tensor = descriptor_.sum()
         
         print("---------------------------------------------------------------------------------------")
@@ -234,14 +234,14 @@ class MtpDescriptorDerTest(unittest.TestCase):
         
         nblist_info: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(self.structure)
         nblist_info[4].requires_grad_(True)
-        descriptor = self.descriptor_mtp(*nblist_info[1:-1])
+        descriptor = self.descriptor_mtp(*nblist_info[:-1])
         etot = linear(descriptor)[0].sum()
         etot.backward()
         
         nblist_info_: List[torch.Tensor] = [tensor.clone().detach() for tensor in nblist_info]
         nblist_info_[4][0][self.center_idx_modify][self.neigh_idx_modify][direction_idx_modify] += self.delta
         nblist_info_[4].requires_grad_(True)
-        descriptor_ = self.descriptor_mtp(*nblist_info_[1:-1])
+        descriptor_ = self.descriptor_mtp(*nblist_info_[:-1])
         etot_ = linear(descriptor_)[0].sum()
         
         print("---------------------------------------------------------------------------------------")
@@ -281,7 +281,7 @@ class MtpDescriptorDerTest(unittest.TestCase):
             nn.Linear(80, 1)
         ).to(self.dtype)
                 
-        descriptor = self.descriptor_mtp(*nblist_info[1:-1])
+        descriptor = self.descriptor_mtp(*nblist_info[:-1])
         etot = linear(descriptor)[0].sum()
         etot.backward()
         
@@ -295,7 +295,7 @@ class MtpDescriptorDerTest(unittest.TestCase):
                                              rmin=self.rmin,
                                              umax_num_neighs=self.umax_num_neigh).to(self.dtype)
         self.descriptor_mtp_.register_parameter("coeffs", nn.Parameter(coeffs_tensor_, requires_grad=True))
-        descriptor_ = self.descriptor_mtp_(*nblist_info[1:-1])
+        descriptor_ = self.descriptor_mtp_(*nblist_info[:-1])
         etot_ = linear(descriptor_)[0].sum()
         
         print("---------------------------------------------------------------------------------------")

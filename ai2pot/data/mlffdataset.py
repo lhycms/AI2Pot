@@ -273,7 +273,7 @@ class ExtxyzDataset(Dataset):
                 torch.tensor(self.atoms_list[index].get_total_energy(), dtype=self.torch_float_dtype),
                 torch.tensor(forces, dtype=self.torch_float_dtype),
                 # ASE calculated in units of eV/A^3, virial: eV
-                torch.tensor(-1.0 * self.atoms_list[index].get_stress(voigt=False).reshape(9) * self.atoms_list[index].get_volume())
+                torch.tensor(-1.0 * self.atoms_list[index].get_stress(voigt=False).reshape(9) * self.atoms_list[index].get_volume()).view(3, 3)
             ]
         else:
             return [
