@@ -208,13 +208,13 @@ class ExtxyzDataset(Dataset):
                  pbc_xyz: List[bool] = [True, True, True],
                  sort: bool = False,
                  torch_float_dtype: torch._C.dtype = torch.float32,
-                 has_virials: bool = False):
+                 has_virial: bool = False):
         self.atoms_list: List[Atoms] = ase_read(filename=filename, index=":")
         self.rcut: float = rcut
         self.umax_num_neigh_atoms: int = umax_num_neigh_atoms
         self.pbc_xyz: List[bool] = pbc_xyz
         self.sort: bool= sort
-        self.has_virial: bool = has_virials
+        self.has_virial: bool = has_virial
         if (torch_float_dtype == torch.float32):
             self.npy_float_dtype = np.float32
             self.torch_float_dtype = torch.float32
