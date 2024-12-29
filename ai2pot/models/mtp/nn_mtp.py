@@ -1,13 +1,13 @@
-from typing import List, Union, Dict, Any, Optional
+from typing import List, Union, Dict, Any
 
 import torch
 import torch.nn as nn
 import lightning as L
 
 from ai2pot.fromcc import mtpParamOp, mtpBasisOp, forceSrOp, virialSrOp
-from ai2pot.loss import (ERmse,
-                         FRmse,
-                         VRmse)
+from ai2pot.models.potential_loss import (ERmse,
+                                          FRmse,
+                                          VRmse)
 
 
 class DescriptorMtp(nn.Module):
