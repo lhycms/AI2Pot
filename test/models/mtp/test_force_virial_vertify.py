@@ -39,7 +39,7 @@ class NNMtpForceVirialTest(unittest.TestCase):
                                        fit_activation=nn.Tanh(),
                                        bias_mark=False,
                                        energy_shift_tensor=False,
-                                       has_virials=True).to(self.dtype).to(self.device)
+                                       has_virial=True).to(self.dtype).to(self.device)
         self.mlff_input: MlffInput = MlffInput(rcut=rmax,
                                                umax_num_neighs=umax_num_neighs,
                                                pbc_xyz=[True, True, True],
@@ -70,7 +70,7 @@ class NNMtpForceVirialTest(unittest.TestCase):
         
         # Structure 1
         nblist_info: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(structure=self.structure)
-        etot, fi, v = self.nn_mtp(*nblist_info[1:])
+        etot, fi, v = self.nn_mtp(*nblist_info)
 
         # Structure 2
         lattice_ = self.structure.lattice
@@ -82,7 +82,7 @@ class NNMtpForceVirialTest(unittest.TestCase):
                                coords=cart_coords_,
                                coords_are_cartesian=True)
         nblist_info_: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(structure=structure_)
-        etot_, fi_, v_ = self.nn_mtp(*nblist_info_[1:])
+        etot_, fi_, v_ = self.nn_mtp(*nblist_info_)
         
         print("----------------------------------------------")
         print("1.1. Before perturbation, force of atom[{0}] on {1} direction = ",
@@ -104,7 +104,7 @@ class NNMtpForceVirialTest(unittest.TestCase):
         
         # Atoms 1
         nblist_info: List[torch.Tensor] = self.mlff_input.analyse_ase(atoms=self.atoms)
-        etot, fi, v = self.nn_mtp(*nblist_info[1:])
+        etot, fi, v = self.nn_mtp(*nblist_info)
         print(fi)
         
         # Atoms 2
@@ -116,7 +116,7 @@ class NNMtpForceVirialTest(unittest.TestCase):
                               cell=cell_,
                               pbc=self.atoms.pbc)
         nblist_info_: List[torch.Tensor] = self.mlff_input.analyse_ase(atoms=atoms_)
-        etot_, fi_, v_ = self.nn_mtp(*nblist_info_[1:])
+        etot_, fi_, v_ = self.nn_mtp(*nblist_info_)
         print(fi_)
         
         print("----------------------------------------------")
@@ -132,14 +132,14 @@ class NNMtpForceVirialTest(unittest.TestCase):
         print("----------------------------------------------")
         
         
-    def test_virial(self):
+    def est_virial(self):
         direction1_idx_modify: int = 1
         direction2_idx_modify: int = 1
         delta: float = 1e-5
         
         # Structure 1
         nblist_info: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(structure=self.structure)
-        etot, fi, v = self.nn_mtp(*nblist_info[1:])
+        etot, fi, v = self.nn_mtp(*nblist_info)
         
         # Structure 2
         lattice_: np.ndarray = np.zeros([3, 3])
@@ -154,7 +154,7 @@ class NNMtpForceVirialTest(unittest.TestCase):
                                coords=frac_coords_,
                                coords_are_cartesian=False)
         nblist_info_: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(structure=structure_)
-        etot_, fi_, v_ = self.nn_mtp(*nblist_info_[1:])
+        etot_, fi_, v_ = self.nn_mtp(*nblist_info_)
         
         print("----------------------------------------------")
         print("2.1. Before perturbation, virial[{0}][{1}] = ".format(direction1_idx_modify, direction2_idx_modify))

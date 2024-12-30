@@ -134,8 +134,6 @@ class NNMtp(nn.Module):
                                                            bfirstneigh,
                                                            brcs,
                                                            btypes)
-        
-        
         e_tot_sr: torch.Tensor = self.fitting_modules_list[0](bdescriptor).sum(dim=-1)
         '''
         e_tot_sr: torch.Tensor = torch.zeros(batch_size)
@@ -150,17 +148,6 @@ class NNMtp(nn.Module):
             for bidx, flatten_ei_frame in enumerate( torch.split(flatten_ei, itype_natoms_tensor.tolist()) ):
                 e_tot_sr[bidx] = torch.add(e_tot_sr[bidx], flatten_ei_frame.sum())
         '''
-        dd_drcs: torch.Tensor = torch.autograd.grad(outputs=[bdescriptor],
-                                                    inputs=[brcs],
-                                                    grad_outputs=[torch.ones_like(bdescriptor)],
-                                                    retain_graph=True,
-                                                    create_graph=True)[0]
-        print("***++++++++++")
-        print("\tbdescriptor.requires_grad = ", bdescriptor.requires_grad)
-        print("\tbrcs.requires_grad = ", brcs.requires_grad)
-        print("\tdd_drcs.requires_grad = ", dd_drcs.requires_grad)
-        print("***++++++++++")
-        
         
         if (self.has_forces):
             eisr_rij_jacobian: torch.Tensor = torch.autograd.grad(outputs=[e_tot_sr],
@@ -168,7 +155,8 @@ class NNMtp(nn.Module):
                                                                   grad_outputs=[torch.ones_like(e_tot_sr)],
                                                                   retain_graph=True,
                                                                   create_graph=True)[0]
-            force_sr: torch.Tensor = forceSrOp(bilist,
+            force_sr: torch.Tensor = forceSrOp(binum,
+                                               bilist,
                                                bnumneigh,
                                                bfirstneigh,
                                                bnghost[0].item(),   # int32

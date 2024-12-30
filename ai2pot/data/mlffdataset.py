@@ -234,7 +234,7 @@ class ExtxyzDataset(Dataset):
         atom_types: List[int] = np.array( [self.type_map[symbol] for symbol in self.atoms_list[index].get_atomic_numbers()] ).astype(np.int32)
         coords: np.ndarray = self.atoms_list[index].get_positions().astype(self.npy_float_dtype)
 
-        num_real_atoms: int = self.atoms_list[index].get_number_of_atoms()
+        num_real_atoms: int = len(self.atoms_list[index])
         ilist: np.ndarray = np.zeros(shape=(self.max_num_atoms),
                                      dtype=np.int32) - 1
         numneigh: np.ndarray = np.zeros(shape=(self.max_num_atoms),
@@ -291,7 +291,7 @@ class ExtxyzDataset(Dataset):
     def _get_max_num_atoms(self):
         max_num_atoms: int = 0
         for atoms in self.atoms_list:
-            if (atoms.get_number_of_atoms() > max_num_atoms):
+            if (len(atoms) > max_num_atoms):
                 max_num_atoms = len(atoms)
         return max_num_atoms
 

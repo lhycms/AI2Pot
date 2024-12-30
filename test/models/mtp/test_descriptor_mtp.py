@@ -114,6 +114,7 @@ class MtpDescriptorDerTest(unittest.TestCase):
         self.descriptor_mtp_.register_parameter("coeffs", nn.Parameter(coeffs_tensor_, requires_grad=True))
         descriptor_ = self.descriptor_mtp_(*nblist_info[:-1])
         single_descriptor_: torch.Tensor = descriptor_[0, self.center_idx_modify, self.descriptor_idx_modify]
+        
         print("---------------------------------------------------------------------------------------")
         print("2.0. Descriptor[0, {0}, {1}] = {2}".format(self.center_idx_modify, self.descriptor_idx_modify, single_descriptor.item()))
         print("2.1. Descriptors[0, {0}, {1}] detivative w.r.t coeffs[{2}][{3}][{4}][{5}] calculated by custom code = {6:.6f}".format(

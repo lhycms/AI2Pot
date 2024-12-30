@@ -1,4 +1,5 @@
 #include <torch/torch.h>
+#include <iostream>
 
 #include "../include/force_sr.h"
 #include "../include/force_sr_op.h"
@@ -134,24 +135,20 @@ torch::autograd::variable_list ForceSrFunction::backward(
             int *numneigh = bnumneigh_tensor[bb].data_ptr<int>();
             int *firstneigh = bfirstneigh_tensor[bb].data_ptr<int>();
 
-            for (int ii=0; ii<binum[bb]; ii++) {
-                int center_idx = ilist[ii];
-                for (int jj=0; jj<numneigh[ii]; jj++) {
-                    int neigh_idx = firstneigh[ii*umax_num_neighs + jj];
-                    for (int kk=0; kk<3; kk++) {
-                        int tmp_de_idx = ii*umax_num_neighs*3 + jj*3 + kk;
-                        out_der[tmp_de_idx] += grad_output[center_idx*3 + kk] 
-                                               * force_sr_der[(center_idx*3 + kk)*binum[bb]*umax_num_neighs + ii*umax_num_neighs + jj];
-                        out_der[tmp_de_idx] += grad_output[neigh_idx*3 + kk]
-                                               * force_sr_der[(neigh_idx*3 + kk)*binum[bb]*umax_num_neighs + ii*umax_num_neighs + jj];
-                    }
-                }
-            }
+            ForceSr<float>::find_der_backward(out_der,
+                                              grad_output,
+                                              force_sr_der,
+                                              binum[bb],
+                                              ilist,
+                                              numneigh,
+                                              firstneigh,
+                                              nghost,
+                                              umax_num_neighs);
 
         }
     } else {
         float_options = c10::TensorOptions()
-            .dtype(bforce_sr_der_tensor.scalar_type())
+            .dtype(torch::kFloat64)
             .device(bforce_sr_der_tensor.device());
         bout_der_tensor = at::zeros({nbatches, nlocal, umax_num_neighs, 3}, float_options);
         bout_der_tensor.requires_grad_(true);
@@ -164,23 +161,21 @@ torch::autograd::variable_list ForceSrFunction::backward(
             int *numneigh = bnumneigh_tensor[bb].data_ptr<int>();
             int *firstneigh = bfirstneigh_tensor[bb].data_ptr<int>();
 
-            for (int ii=0; ii<binum[bb]; ii++) {
-                int center_idx = ilist[ii];
-                for (int jj=0; jj<numneigh[ii]; jj++) {
-                    int neigh_idx = firstneigh[ii*umax_num_neighs + jj];
-                    for (int kk=0; kk<3; kk++) {
-                        int tmp_de_idx = ii*umax_num_neighs*3 + jj*3 + kk;
-                        out_der[tmp_de_idx] += grad_output[center_idx*3 + kk]
-                                               * force_sr_der[(center_idx*3 + kk)*binum[bb]*umax_num_neighs + ii*umax_num_neighs + jj];
-                        out_der[tmp_de_idx] += grad_output[neigh_idx*3 + kk]
-                                               * force_sr_der[(neigh_idx*3 + kk)*binum[bb]*umax_num_neighs + ii*umax_num_neighs + jj];
-                    }
-                }
-            }
+            ForceSr<double>::find_der_backward(out_der,
+                                               grad_output,
+                                               force_sr_der,
+                                               binum[bb],
+                                               ilist,
+                                               numneigh,
+                                               firstneigh,
+                                               nghost,
+                                               umax_num_neighs);
         }
     }
+
     return {at::Tensor(), at::Tensor(), at::Tensor(), 
-            at::Tensor(), at::Tensor(), bout_der_tensor};
+            at::Tensor(), at::Tensor(), at::Tensor(),
+            bout_der_tensor};
 }
 
 

@@ -12,6 +12,7 @@ class ForceSrOpTest : public ::testing::Test
 protected:
     c10::TensorOptions float_options;
     c10::TensorOptions int_options;
+    at::Tensor binum_tensor;
     at::Tensor bilist_tensor;
     at::Tensor bnumneigh_tensor;
     at::Tensor bfirstnumneigh_tensor;
@@ -137,6 +138,7 @@ protected:
 
         umax_num_neighs = 20;
         inum = 12;
+        binum_tensor = at::tensor({inum}, int_options);
         bilist_tensor = at::zeros({1, inum}, int_options);
         bnumneigh_tensor = at::zeros({1, inum}, int_options);
         bfirstnumneigh_tensor = at::zeros({1, inum, umax_num_neighs}, int_options);
@@ -173,22 +175,24 @@ TEST_F(ForceSrOpTest, forward_and_backward)
     int neighbor_modify = 1;
     int direction_modify = 0;
     bdei_drij_tensor.requires_grad_(true);
-    at::Tensor force_sr_tensor = ai2pot::fvt::ForceSrOp(bilist_tensor,
-                             bnumneigh_tensor,
-                             bfirstnumneigh_tensor,
-                             nghost,
-                             umax_num_neighs,
-                             bdei_drij_tensor)[0];
+    at::Tensor force_sr_tensor = ai2pot::fvt::ForceSrOp(binum_tensor,
+                                                        bilist_tensor,
+                                                        bnumneigh_tensor,
+                                                        bfirstnumneigh_tensor,
+                                                        nghost,
+                                                        umax_num_neighs,
+                                                        bdei_drij_tensor)[0];
     force_sr_tensor.sum().backward();
     at::Tensor grad = bdei_drij_tensor.grad()[0][center_modify][neighbor_modify][direction_modify];
 
     dei_drij[center_modify*umax_num_neighs*3 + neighbor_modify*3 + direction_modify] += 0.001;
-    at::Tensor force_sr_tensor_ = ai2pot::fvt::ForceSrOp(bilist_tensor,
-                             bnumneigh_tensor,
-                             bfirstnumneigh_tensor,
-                             nghost,
-                             umax_num_neighs,
-                             bdei_drij_tensor)[0];
+    at::Tensor force_sr_tensor_ = ai2pot::fvt::ForceSrOp(binum_tensor,
+                                                         bilist_tensor,
+                                                         bnumneigh_tensor,
+                                                         bfirstnumneigh_tensor,
+                                                         nghost,
+                                                         umax_num_neighs,
+                                                         bdei_drij_tensor)[0];
     at::Tensor grad_ = (force_sr_tensor_.sum() - force_sr_tensor.sum()) / 0.001;
     std::cout << force_sr_tensor_.sum() << std::endl;
     std::cout << force_sr_tensor.sum() << std::endl;

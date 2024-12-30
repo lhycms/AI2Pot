@@ -18,6 +18,17 @@ public:
         int nghost,
         int umax_num_neighs,
         CoordType *dei_drij);
+
+    static void find_der_backward(
+        CoordType *out_der,
+        CoordType *grad_output,
+        CoordType *force_sr_der,
+        int inum,
+        int *ilist,
+        int *numneigh,
+        int *firstneigh,
+        int nghost,
+        int umax_num_neighs);
 };  // class : ForceSr
 
 
@@ -68,6 +79,49 @@ void ForceSr<CoordType>::find_val_der(
         }
     }
 }
+
+
+/**
+ * @brief out_der = grad_output * force_sr_der
+ * 
+ * @tparam CoordType 
+ * @param out_der .size() = [inum, umax_num_neighs, 3]
+ * @param grad_output .size() = [(inum+nghost), 3]
+ * @param force_sr_der .size() = [(inum+nghost), 3, inum, umax_num_neighs]
+ * @param inum 
+ * @param ilist 
+ * @param numneigh 
+ * @param firstneigh 
+ * @param nghost 
+ * @param umax_num_neighs 
+ */
+template <typename CoordType>
+void ForceSr<CoordType>::find_der_backward(
+        CoordType *out_der,
+        CoordType *grad_output,
+        CoordType *force_sr_der,
+        int inum,
+        int *ilist,
+        int *numneigh,
+        int *firstneigh,
+        int nghost,
+        int umax_num_neighs)
+{
+    for (int ii=0; ii<inum; ii++) {
+        int center_idx = ilist[ii];
+        for (int jj=0; jj<numneigh[ii]; jj++) {
+            int neigh_idx = firstneigh[ii*umax_num_neighs + jj];
+            for (int kk=0; kk<3; kk++) {
+                int tmp_de_idx = ii*umax_num_neighs*3 + jj*3 + kk;
+                out_der[tmp_de_idx] += grad_output[center_idx*3 + kk]
+                                       * force_sr_der[(center_idx*3 + kk)*inum*umax_num_neighs + ii*umax_num_neighs + jj];
+                out_der[tmp_de_idx] += grad_output[neigh_idx*3 + kk]
+                                       * force_sr_der[(neigh_idx*3 + kk)*inum*umax_num_neighs + ii*umax_num_neighs + jj];
+            }
+        }
+    }
+}
+
 
 };  // namespace : fvt
 };  // namespace : ai2pot
