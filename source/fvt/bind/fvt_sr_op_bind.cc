@@ -9,7 +9,8 @@
 TORCH_LIBRARY(fvt, m) {
     m.def(
         "ForceSrOp",
-        [](const at::Tensor &bilist_tensor,
+        [](const at::Tensor &binum_tensor,
+           const at::Tensor &bilist_tensor,
            const at::Tensor &bnumneigh_tensor,
            const at::Tensor &bfirstneigh_tensor,
            int64_t nghost,
@@ -18,12 +19,13 @@ TORCH_LIBRARY(fvt, m) {
         {   
             assert(nghost <= INT_MAX);
             assert(umax_num_neighs <= INT_MAX);
-            return ai2pot::fvt::ForceSrOp(bilist_tensor,
-                                            bnumneigh_tensor,
-                                            bfirstneigh_tensor,
-                                            (int)nghost,
-                                            (int)umax_num_neighs,
-                                            bdei_drij_tensor);
+            return ai2pot::fvt::ForceSrOp(binum_tensor,
+                                          bilist_tensor,
+                                          bnumneigh_tensor,
+                                          bfirstneigh_tensor,
+                                          (int)nghost,
+                                          (int)umax_num_neighs,
+                                          bdei_drij_tensor);
         }
     );
 

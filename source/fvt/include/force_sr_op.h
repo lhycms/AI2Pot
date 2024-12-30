@@ -11,6 +11,7 @@ class ForceSrFunction : public torch::autograd::Function<ForceSrFunction>
 public:
     static torch::autograd::variable_list forward(
         torch::autograd::AutogradContext *ctx,
+        const at::Tensor& binum_tensor,
         const at::Tensor& bilist_tensor,
         const at::Tensor& bnumneigh_tensor,
         const at::Tensor& bfirstneigh_tensor,
@@ -25,6 +26,7 @@ public:
 
 
 torch::autograd::variable_list ForceSrOp(
+    const at::Tensor& binum_tensor,
     const at::Tensor& bilist_tensor,
     const at::Tensor& bnumneigh_tensor,
     const at::Tensor& bfirstneigh_tensor,
