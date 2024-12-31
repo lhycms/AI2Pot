@@ -20,6 +20,8 @@ protected:
     double *mtp_basis_val_;
     double (*mtp_basis_der_)[3];
     double *mtp_basis_der2coeffs_;
+    bool calculate_der2xyz;
+    bool calculate_der2coeffs;
     int chebyshev_size;
     double *coeffs;
     int nmus;
@@ -59,6 +61,8 @@ protected:
     }
 
     void SetUp() override {
+        calculate_der2xyz = true;
+        calculate_der2coeffs = true;
         
         filenames = {
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/depreciated-02.almtp", 
@@ -219,6 +223,8 @@ TEST_F(MtpBasisTest, find_val_der4rcs)
         mtp_basis_val,
         mtp_basis_der,
         mtp_basis_der2coeffs,
+        calculate_der2xyz,
+        calculate_der2coeffs,
         chebyshev_size,
         coeffs,
         mtp_param.alpha_moments_count(),
@@ -247,6 +253,8 @@ TEST_F(MtpBasisTest, find_val_der4rcs)
         mtp_basis_val_,
         mtp_basis_der_,
         mtp_basis_der2coeffs_,
+        calculate_der2xyz,
+        calculate_der2coeffs,
         chebyshev_size,
         coeffs,
         mtp_param.alpha_moments_count(),
@@ -310,6 +318,8 @@ TEST_F(MtpBasisTest, find_val_der4coeffs)
         mtp_basis_val,
         mtp_basis_der,
         mtp_basis_der2coeffs,
+        calculate_der2xyz,
+        calculate_der2coeffs,
         chebyshev_size,
         coeffs,
         mtp_param.alpha_moments_count(),
@@ -339,6 +349,8 @@ TEST_F(MtpBasisTest, find_val_der4coeffs)
         mtp_basis_val_,
         mtp_basis_der_,
         mtp_basis_der2coeffs_,
+        calculate_der2xyz,
+        calculate_der2coeffs,
         chebyshev_size,
         coeffs,
         mtp_param.alpha_moments_count(),

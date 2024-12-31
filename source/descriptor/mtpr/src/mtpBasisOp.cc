@@ -56,9 +56,19 @@ torch::autograd::variable_list MtpBasisFunction::forward(
         .dtype(torch::kInt32)
         .device(brcs_tensor.device());
     c10::TensorOptions float_options;
-    at::Tensor bmtp_basis_val_tensor;
-    at::Tensor bmtp_basis_der_tensor;
-    at::Tensor bmtp_basis_der2coeffs_tensor;
+    bool calculate_der2xyz = false;
+    bool calculate_der2coeffs = false;
+    if (brcs_tensor.requires_grad())
+        calculate_der2xyz = true;
+    if (coeffs_tensor.requires_grad())
+        calculate_der2coeffs = true;
+
+    at::Tensor bmtp_basis_val_tensor = at::Tensor();
+    at::Tensor bmtp_basis_der_tensor = at::Tensor();
+    at::Tensor bmtp_basis_der2coeffs_tensor = at::Tensor();
+    at::Tensor mtp_size_tensor = at::zeros(2, int_options);
+    mtp_size_tensor[0] = alpha_scalar_moments;
+    mtp_size_tensor[1] = num_coeffs;
 
     if (brcs_tensor.scalar_type() == torch::kFloat32) {
         float_options = c10::TensorOptions()
@@ -66,15 +76,19 @@ torch::autograd::variable_list MtpBasisFunction::forward(
             .device(brcs_tensor.device());
         bmtp_basis_val_tensor = at::zeros({batch_size, nlocal, alpha_scalar_moments}, float_options);
         bmtp_basis_val_tensor.requires_grad_(true);
-        bmtp_basis_der_tensor = at::zeros({batch_size, nlocal, alpha_scalar_moments, umax_num_neighs, 3}, float_options);
-        bmtp_basis_der_tensor.requires_grad_(true);
-        bmtp_basis_der2coeffs_tensor = at::zeros({batch_size, nlocal, alpha_scalar_moments, num_coeffs}, float_options);
-        bmtp_basis_der2coeffs_tensor.requires_grad_(true);
+        if (calculate_der2xyz) {
+            bmtp_basis_der_tensor = at::zeros({batch_size, nlocal, alpha_scalar_moments, umax_num_neighs, 3}, float_options);
+            bmtp_basis_der_tensor.requires_grad_(calculate_der2xyz);
+        }
+        if (calculate_der2coeffs) {
+            bmtp_basis_der2coeffs_tensor = at::zeros({batch_size, nlocal, alpha_scalar_moments, num_coeffs}, float_options);
+            bmtp_basis_der2coeffs_tensor.requires_grad_(calculate_der2coeffs);
+        }
 
         for (int bb=0; bb<batch_size; bb++) {
             float *mtp_basis_val = bmtp_basis_val_tensor[bb].data_ptr<float>();
-            float (*mtp_basis_der)[3] = (float (*)[3])bmtp_basis_der_tensor[bb].data_ptr<float>();
-            float *mtp_basis_der2coeffs = bmtp_basis_der2coeffs_tensor[bb].data_ptr<float>();
+            float (*mtp_basis_der)[3] = (calculate_der2xyz) ? (float (*)[3])bmtp_basis_der_tensor[bb].data_ptr<float>() : nullptr;
+            float *mtp_basis_der2coeffs = (calculate_der2coeffs) ? bmtp_basis_der2coeffs_tensor[bb].data_ptr<float>() : nullptr;
             float *coeffs = coeffs_tensor.data_ptr<float>();
             int *ilist = bilist_tensor[bb].data_ptr<int>();
             int *numneigh = bnumneigh_tensor[bb].data_ptr<int>();
@@ -86,6 +100,8 @@ torch::autograd::variable_list MtpBasisFunction::forward(
                 mtp_basis_val,
                 mtp_basis_der,
                 mtp_basis_der2coeffs,
+                calculate_der2xyz,
+                calculate_der2coeffs,
                 chebyshev_size,
                 coeffs,
                 alpha_moments_count,
@@ -116,15 +132,19 @@ torch::autograd::variable_list MtpBasisFunction::forward(
             .device(brcs_tensor.device());
         bmtp_basis_val_tensor = at::zeros({batch_size, nlocal, alpha_scalar_moments}, float_options);
         bmtp_basis_val_tensor.requires_grad_(true);
-        bmtp_basis_der_tensor = at::zeros({batch_size, nlocal, alpha_scalar_moments, umax_num_neighs, 3}, float_options);
-        bmtp_basis_der_tensor.requires_grad_(true);
-        bmtp_basis_der2coeffs_tensor = at::zeros({batch_size, nlocal, alpha_scalar_moments, num_coeffs}, float_options);
-        bmtp_basis_der2coeffs_tensor.requires_grad_(true);
+        if (calculate_der2xyz) {
+            bmtp_basis_der_tensor = at::zeros({batch_size, nlocal, alpha_scalar_moments, umax_num_neighs, 3}, float_options);
+            bmtp_basis_der_tensor.requires_grad_(calculate_der2xyz);
+        }
+        if (calculate_der2coeffs) {
+            bmtp_basis_der2coeffs_tensor = at::zeros({batch_size, nlocal, alpha_scalar_moments, num_coeffs}, float_options);
+            bmtp_basis_der2coeffs_tensor.requires_grad_(calculate_der2coeffs);
+        }
 
         for (int bb=0; bb<batch_size; bb++) {
             double *mtp_basis_val = bmtp_basis_val_tensor[bb].data_ptr<double>();
-            double (*mtp_basis_der)[3] = (double (*)[3])bmtp_basis_der_tensor[bb].data_ptr<double>();
-            double *mtp_basis_der2coeff = bmtp_basis_der2coeffs_tensor[bb].data_ptr<double>();
+            double (*mtp_basis_der)[3] = (calculate_der2xyz) ? (double (*)[3])bmtp_basis_der_tensor[bb].data_ptr<double>() : nullptr;
+            double *mtp_basis_der2coeff = (calculate_der2coeffs) ? bmtp_basis_der2coeffs_tensor[bb].data_ptr<double>() : nullptr;
             double *coeffs = coeffs_tensor.data_ptr<double>();
             int *ilist = bilist_tensor[bb].data_ptr<int>();
             int *numneigh = bnumneigh_tensor[bb].data_ptr<int>();
@@ -136,6 +156,8 @@ torch::autograd::variable_list MtpBasisFunction::forward(
                 mtp_basis_val,
                 mtp_basis_der,
                 mtp_basis_der2coeff,
+                calculate_der2xyz,
+                calculate_der2coeffs,
                 chebyshev_size,
                 coeffs,
                 alpha_moments_count,
@@ -161,9 +183,14 @@ torch::autograd::variable_list MtpBasisFunction::forward(
                 rmin);
         }
     }
-    ctx->save_for_backward({binum_tensor, bmtp_basis_der_tensor, bmtp_basis_der2coeffs_tensor});
+    ctx->save_for_backward({binum_tensor,
+                            brcs_tensor,
+                            mtp_size_tensor,
+                            bmtp_basis_der_tensor,
+                            bmtp_basis_der2coeffs_tensor});
     return {bmtp_basis_val_tensor};
 }
+
 
 torch::autograd::variable_list MtpBasisFunction::backward(
         torch::autograd::AutogradContext *ctx,
@@ -173,16 +200,26 @@ torch::autograd::variable_list MtpBasisFunction::backward(
     if ( !bgrad_output_tensor.is_contiguous() )
         bgrad_output_tensor = bgrad_output_tensor.contiguous();
     at::Tensor binum_tensor = ctx->get_saved_variables()[0];
-    at::Tensor bmtp_basis_der_tensor = ctx->get_saved_variables()[1];
-    at::Tensor bmtp_basis_der2coeffs_tensor = ctx->get_saved_variables()[2];
-    int batch_size = (int)bgrad_output_tensor.size(0);
-    int nlocal = (int)bgrad_output_tensor.size(1);
-    int alpha_scalar_moments = (int)bgrad_output_tensor.size(2);
-    int umax_num_neighs = (int)bmtp_basis_der_tensor.size(3);
-    int num_coeffs = (int)bmtp_basis_der2coeffs_tensor.size(3);
+    at::Tensor brcs_tensor = ctx->get_saved_variables()[1];
+    at::Tensor mtp_size_tensor = ctx->get_saved_variables()[2];
+    at::Tensor bmtp_basis_der_tensor = ctx->get_saved_variables()[3];
+    at::Tensor bmtp_basis_der2coeffs_tensor = ctx->get_saved_variables()[4];
+
+    int batch_size = (int)brcs_tensor.size(0);
+    int nlocal = (int)brcs_tensor.size(1);
+    int umax_num_neighs = (int)brcs_tensor.size(2);
+    int alpha_scalar_moments = (int)mtp_size_tensor[0].item<int>();
+    int num_coeffs = (int)mtp_size_tensor[1].item<int>();
     int *binum = binum_tensor.data_ptr<int>();
 
     c10::TensorOptions float_options;
+    bool calculate_der2xyz = false;
+    bool calculate_der2coeffs = false;
+    if (bmtp_basis_der_tensor.numel())
+        calculate_der2xyz = true;
+    if (bmtp_basis_der2coeffs_tensor.numel())
+        calculate_der2coeffs = true;
+
     at::Tensor bout_der_tensor;
     at::Tensor bout_der2coeffs_tensor;
 
@@ -190,64 +227,65 @@ torch::autograd::variable_list MtpBasisFunction::backward(
         float_options = c10::TensorOptions()
             .dtype(torch::kFloat32)
             .device(bgrad_output_tensor.device());
-        bout_der_tensor = at::zeros({batch_size, nlocal, umax_num_neighs, 3}, float_options);
-        bout_der_tensor.requires_grad_(true);
-        bout_der2coeffs_tensor = at::zeros({num_coeffs}, float_options);
-        bout_der2coeffs_tensor.requires_grad_(true);
+        if (calculate_der2xyz) {
+            bout_der_tensor = at::zeros({batch_size, nlocal, umax_num_neighs, 3}, float_options);
+            bout_der_tensor.requires_grad_(calculate_der2xyz);
+        }
+        if (calculate_der2coeffs) {
+            bout_der2coeffs_tensor = at::zeros({num_coeffs}, float_options);
+            bout_der2coeffs_tensor.requires_grad_(calculate_der2coeffs);
+        }
 
         for (int bb=0; bb<batch_size; bb++) {
-            float *out_der = bout_der_tensor[bb].data_ptr<float>();
-            float *out_der2coeffs = bout_der2coeffs_tensor.data_ptr<float>();
-            float *mtp_basis_der = bmtp_basis_der_tensor[bb].data_ptr<float>();
-            float *mtp_basis_der2coeffs = bmtp_basis_der2coeffs_tensor[bb].data_ptr<float>();
+            float *out_der = (calculate_der2xyz) ? bout_der_tensor[bb].data_ptr<float>() : nullptr;
+            float *out_der2coeffs = (calculate_der2coeffs) ? bout_der2coeffs_tensor.data_ptr<float>() : nullptr;
+            float *mtp_basis_der = (calculate_der2xyz) ? bmtp_basis_der_tensor[bb].data_ptr<float>() : nullptr;
+            float *mtp_basis_der2coeffs = (calculate_der2coeffs) ? bmtp_basis_der2coeffs_tensor[bb].data_ptr<float>() : nullptr;
             float *grad_output = bgrad_output_tensor[bb].data_ptr<float>();
             
-            for (int ii=0; ii<binum[bb]; ii++) 
-                for (int ee=0; ee<alpha_scalar_moments; ee++) {
-                    for (int jj=0; jj<umax_num_neighs; jj++) {
-                        out_der[ii*umax_num_neighs*3 + jj*3 + 0] += grad_output[ii*alpha_scalar_moments + ee]
-                            * mtp_basis_der[ii*alpha_scalar_moments*umax_num_neighs*3 + ee*umax_num_neighs*3 + jj*3 + 0];
-                        out_der[ii*umax_num_neighs*3 + jj*3 + 1] += grad_output[ii*alpha_scalar_moments + ee]
-                            * mtp_basis_der[ii*alpha_scalar_moments*umax_num_neighs*3 + ee*umax_num_neighs*3 + jj*3 + 1];
-                        out_der[ii*umax_num_neighs*3 + jj*3 + 2] += grad_output[ii*alpha_scalar_moments + ee]
-                            * mtp_basis_der[ii*alpha_scalar_moments*umax_num_neighs*3 + ee*umax_num_neighs*3 + jj*3 + 2];
-                    }
-                    for (int kk=0; kk<num_coeffs; kk++)
-                        out_der2coeffs[kk] += grad_output[ii*alpha_scalar_moments + ee]
-                            * mtp_basis_der2coeffs[ii*alpha_scalar_moments*num_coeffs + ee*num_coeffs + kk];
-                }
+            MtpBasis<float>::find_der_backward(out_der,
+                                               out_der2coeffs,
+                                               calculate_der2xyz,
+                                               calculate_der2coeffs,
+                                               grad_output,
+                                               mtp_basis_der,
+                                               mtp_basis_der2coeffs,
+                                               alpha_scalar_moments,
+                                               binum[bb],
+                                               umax_num_neighs,
+                                               num_coeffs);
         }
     } else {
-        c10::TensorOptions float_options = c10::TensorOptions()
+        float_options = c10::TensorOptions()
             .dtype(torch::kFloat64)
             .device(bgrad_output_tensor.device());
-        bout_der_tensor = at::zeros({batch_size, nlocal, umax_num_neighs, 3}, float_options);
-        bout_der_tensor.requires_grad_(true);
-        bout_der2coeffs_tensor = at::zeros({num_coeffs}, float_options);
-        bout_der2coeffs_tensor.requires_grad_(true);
+        if (calculate_der2xyz) {
+            bout_der_tensor = at::zeros({batch_size, nlocal, umax_num_neighs, 3}, float_options);
+            bout_der_tensor.requires_grad_(calculate_der2xyz);
+        }
+        if (calculate_der2coeffs) {
+            bout_der2coeffs_tensor = at::zeros({num_coeffs}, float_options);
+            bout_der2coeffs_tensor.requires_grad_(calculate_der2coeffs);
+        }
 
         for (int bb=0; bb<batch_size; bb++) {
-            double *out_der = bout_der_tensor[bb].data_ptr<double>();
-            double *out_der2coeffs = bout_der2coeffs_tensor.data_ptr<double>();
-            double *mtp_basis_der = bmtp_basis_der_tensor[bb].data_ptr<double>();
-            double *mtp_basis_der2coeffs = bmtp_basis_der2coeffs_tensor[bb].data_ptr<double>();
+            double *out_der = (calculate_der2xyz) ? bout_der_tensor[bb].data_ptr<double>() : nullptr;
+            double *out_der2coeffs = (calculate_der2coeffs) ? bout_der2coeffs_tensor.data_ptr<double>() : nullptr;
+            double *mtp_basis_der = (calculate_der2xyz) ? bmtp_basis_der_tensor[bb].data_ptr<double>() : nullptr;
+            double *mtp_basis_der2coeffs = (calculate_der2coeffs) ? bmtp_basis_der2coeffs_tensor[bb].data_ptr<double>() : nullptr;
             double *grad_output = bgrad_output_tensor[bb].data_ptr<double>();
 
-            for (int ii=0; ii<binum[bb]; ii++) {
-                for (int ee=0; ee<alpha_scalar_moments; ee++) {
-                    for (int jj=0; jj<umax_num_neighs; jj++) {
-                        out_der[ii*umax_num_neighs*3 + jj*3 + 0] += grad_output[ii*alpha_scalar_moments + ee]
-                            * mtp_basis_der[ii*alpha_scalar_moments*umax_num_neighs*3 + ee*umax_num_neighs*3 + jj*3 + 0];
-                        out_der[ii*umax_num_neighs*3 + jj*3 + 1] += grad_output[ii*alpha_scalar_moments + ee]
-                            * mtp_basis_der[ii*alpha_scalar_moments*umax_num_neighs*3 + ee*umax_num_neighs*3 + jj*3 + 1];
-                        out_der[ii*umax_num_neighs*3 + jj*3 + 2] += grad_output[ii*alpha_scalar_moments + ee]
-                            * mtp_basis_der[ii*alpha_scalar_moments*umax_num_neighs*3 + ee*umax_num_neighs*3 + jj*3 + 2];
-                    }
-                    for (int kk=0; kk<num_coeffs; kk++)
-                        out_der2coeffs[kk] += grad_output[ii*alpha_scalar_moments + ee]
-                            * mtp_basis_der2coeffs[ii*alpha_scalar_moments*num_coeffs + ee*num_coeffs + kk];
-                }
-            }
+            MtpBasis<double>::find_der_backward(out_der,
+                                                out_der2coeffs,
+                                                calculate_der2xyz,
+                                                calculate_der2coeffs,
+                                                grad_output,
+                                                mtp_basis_der,
+                                                mtp_basis_der2coeffs,
+                                                alpha_scalar_moments,
+                                                binum[bb],
+                                                umax_num_neighs,
+                                                num_coeffs);
         }
     }
     return {
