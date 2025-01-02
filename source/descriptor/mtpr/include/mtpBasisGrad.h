@@ -133,7 +133,45 @@ void MtpBasisGrad<CoordType>::find_val_der(
                 continue;
             distance_ij_inv = 1 / distance_ij;
             p_RadialBasis->build(distance_ij);
-            
+
+            auto_dist_powers_[0] = 1;
+            for (int a=0; a<3; a++)
+                auto_coords_powers_[0][a] = 1;
+            for (int k=1; k<max_alpha_index_basic; k++) {
+                auto_dist_powers_[k] = auto_dist_powers_[k-1] * distance_ij;
+                for (int a=0; a<3; a++)
+                    auto_coords_powers_[k][a] = auto_coords_powers_[k-1][a] * NeighVect[a];
+            }
+
+            for (int i=0; i<alpha_index_basic_count; i++)
+            {
+                int mu = alpha_index_basic[i][0];
+                int k = alpha_index_basic[i][1] + alpha_index_basic[i][2] + alpha_index_basic[i][3];
+                CoordType powk = 1 / auto_dist_powers_[k];
+                CoordType pow0 = auto_coords_powers_[alpha_index_basic[i][1]][0];
+                CoordType pow1 = auto_coords_powers_[alpha_index_basic[i][2]][1];
+                CoordType pow2 = auto_coords_powers_[alpha_index_basic[i][3]][2];
+                CoordType mult0 = pow0 * pow1 * pow2;
+
+                for (int xi=0; xi<chebyshev_size; xi++) {
+                    int idx = (type_central*ntypes + type_outer)*nmus*chebyshev_size + mu*chebyshev_size + xi;
+                    
+                    CoordType A = p_RadialBasis->vals()[xi];
+                    CoordType B = mult0;
+                    CoordType C = powk;
+                    CoordType Ad[3] = p_RadialBasis->ders2r()[xi];
+                    CoordType Bd[3] = ;
+                    CoordType Cd[3] = ;
+                    CoordType Add[3] = p_RadialBasis->ders2r_ders2r()[xi];
+                    CoordType Bdd[3] = ;
+                    CoordType Cdd[3] = ;
+
+                    mom_vals[i] += coeffs[idx] * A * B * C;
+                    mom_ders[i*umax_num_neigh_atoms*3 + jj][0] += coeffs[idx] * Ad;
+                    mom_ders[i*umax_num_neigh_atoms*3 + jj][1] += ;
+                    mom_ders[i*umax_num_neigh_atoms*3 + jj][2] += ;
+                }
+            }
             
         }
     }

@@ -278,7 +278,7 @@ void MtpBasis<CoordType>::find_val_der(
         {
             mtp_basis_val[ii*alpha_scalar_moments + i] = mom_vals[alpha_moment_mapping[i]];
 
-            if (calculate_der2xyz){
+            if (calculate_der2xyz) {
                 for (int jj=0; jj<numneigh[ii]; jj++)
                     for (int a=0; a<3; a++)
                         mtp_basis_der[ii*alpha_scalar_moments*umax_num_neigh_atoms + i*umax_num_neigh_atoms + jj][a] = mom_ders[alpha_moment_mapping[i]*umax_num_neigh_atoms + jj][a];
