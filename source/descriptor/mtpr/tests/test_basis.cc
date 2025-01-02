@@ -106,8 +106,21 @@ TEST_F(SwitchFunctionTest, der_accuracy)
     double value2 = swf.val(distance_ij + 0.0001);
     double der2r_ = (value2 - value1) / 0.0001;
 
-std::cout << "Custom code method: Deriv wrt. r = " << der2r << std::endl;
-std::cout << "Finite difference method: Deriv wrt. r = " << der2r_ << std::endl;
+std::cout << "1. Custom code method: Deriv wrt. r = " << der2r << std::endl;
+std::cout << "2. Finite difference method: Deriv wrt. r = " << der2r_ << std::endl;
+}
+
+TEST_F(SwitchFunctionTest, der_der_accuracy)
+{
+    distance_ij = 3.14;
+    ai2pot::mtpr::SwitchFunction<double> swf(rmax, rmin);
+
+    double der2r = swf.der2r(distance_ij);
+    double der2r_ = swf.der2r(distance_ij + 1E-5);
+    double der2r_der2r = swf.der2r_der2r(distance_ij);
+
+std::cout << "1. Custom code method: Deriv2 wrt. r2 = " << der2r_der2r << std::endl;
+std::cout << "2. Finite difference method: Deriv2 wrt. r2 = " << (der2r_ - der2r) / 1E-5 << std::endl;
 }
 
 
@@ -147,6 +160,36 @@ printf("\n");
 printf("2. Finite difference method: deriv of RB_Chebyshev wrt. r:\n\t");
 for (int ii=0; ii<rb2_ptr->size(); ii++) {
     double tmp_der2r = (rb2_ptr->vals()[ii] - rb1_ptr->vals()[ii]) / 0.0001;
+    printf("%10lf, ", tmp_der2r);
+}
+printf("\n");
+
+    delete rb1_ptr;
+    delete rb2_ptr;
+}
+
+TEST_F(RB_ChebyshevTest, der_der_accuracy)
+{
+    distance_ij = 3.14;
+    ai2pot::mtpr::RB_Chebyshev<double>* rb1_ptr = new ai2pot::mtpr::RB_Chebyshev<double>(size, rmax, rmin);
+    rb1_ptr->build(distance_ij);
+
+    double distance_ij_ = 3.14 + 1e-5;
+    ai2pot::mtpr::RB_Chebyshev<double>* rb2_ptr = new ai2pot::mtpr::RB_Chebyshev<double>(size, rmax, rmin);
+    rb2_ptr->build(distance_ij_);
+
+printf("0. Value of deriv of RB_Chebyshev:\n");
+for (int ii=0; ii<rb1_ptr->size(); ii++)
+    printf("%10lf, ", rb1_ptr->ders2r()[ii]);
+printf("\n");
+
+printf("1. Custom code method: deriv2 of RB_Chebyshev wrt. r2:\n\t");
+for (int ii=0; ii<rb1_ptr->size(); ii++)
+    printf("%10lf, ", rb1_ptr->ders2r_ders2r()[ii]);
+printf("\n");
+printf("2. Finite difference method: deriv2 of RB_Chebyshev wrt. r2:\n\t");
+for (int ii=0; ii<rb2_ptr->size(); ii++) {
+    double tmp_der2r = (rb2_ptr->ders2r()[ii] - rb1_ptr->ders2r()[ii]) / 1e-5;
     printf("%10lf, ", tmp_der2r);
 }
 printf("\n");
@@ -214,6 +257,9 @@ TEST_F(RB_ChebyshevTest, assignment_operator_move)
     ASSERT_EQ(rb1_ptr->vals(), nullptr);
     ASSERT_EQ(rb1_ptr->ders2uu(), nullptr);
     ASSERT_EQ(rb1_ptr->ders2r(), nullptr);
+
+    delete rb1_ptr;
+    delete rb2_ptr;
 }
 
 
@@ -241,6 +287,36 @@ printf("\n");
 printf("2. Finite difference method: deriv of Radial Q wrt. r:\n\t");
 for (int ii=0; ii<rq2_ptr->size(); ii++) {
     double tmp_der = (rq2_ptr->vals()[ii] - rq1_ptr->vals()[ii]) / 0.001;
+    printf("%10lf, ", tmp_der);
+}
+printf("\n");
+
+    delete rq1_ptr;
+    delete rq2_ptr;
+}
+
+TEST_F(RQ_ChebyshevTest, der_der_accuracy) {
+    distance_ij = 3.14;
+    ai2pot::mtpr::RQ_Chebyshev<double>* rq1_ptr = new ai2pot::mtpr::RQ_Chebyshev<double>(size, rmax, rmin);
+    rq1_ptr->build(distance_ij);
+    ai2pot::mtpr::RQ_Chebyshev<double>* rq2_ptr = new ai2pot::mtpr::RQ_Chebyshev<double>(size, rmax, rmin);
+    rq2_ptr->build(distance_ij + 1e-5);
+
+printf("0. Deriv of RQ_Chebyshev:\n");
+for (int ii=0; ii<rq1_ptr->size(); ii++) {
+    printf("%10lf, ", rq1_ptr->ders2r()[ii]);
+}
+printf("\n");
+
+printf("1. Custom code method: deriv2 of Radial Q wrt. r2:\n\t");
+for (int ii=0; ii<rq1_ptr->size(); ii++) {
+    printf("%10lf, ", rq1_ptr->ders2r_ders2r()[ii]);
+}
+printf("\n");
+
+printf("2. Finite difference method: deriv2 of Radial Q wrt. r2:\n\t");
+for (int ii=0; ii<rq2_ptr->size(); ii++) {
+    double tmp_der = (rq2_ptr->ders2r()[ii] - rq1_ptr->ders2r()[ii]) / 1E-5;
     printf("%10lf, ", tmp_der);
 }
 printf("\n");
