@@ -63,9 +63,9 @@ torch::autograd::variable_list MtpBasisFunction::forward(
     if (coeffs_tensor.requires_grad())
         calculate_der2coeffs = true;
 
-    at::Tensor bmtp_basis_val_tensor = at::Tensor();
-    at::Tensor bmtp_basis_der_tensor = at::Tensor();
-    at::Tensor bmtp_basis_der2coeffs_tensor = at::Tensor();
+    at::Tensor bmtp_basis_val_tensor;
+    at::Tensor bmtp_basis_der_tensor;
+    at::Tensor bmtp_basis_der2coeffs_tensor;
     at::Tensor mtp_size_tensor = at::zeros(2, int_options);
     mtp_size_tensor[0] = alpha_scalar_moments;
     mtp_size_tensor[1] = num_coeffs;

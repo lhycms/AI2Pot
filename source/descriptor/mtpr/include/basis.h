@@ -21,6 +21,8 @@ public:
 
     CoordType der2r(CoordType distance_ij);
 
+    CoordType der2r_der2r(CoordType distance_ij);
+
 private:
     CoordType _rmax = 0;
     CoordType _rmin = 0;
@@ -115,6 +117,7 @@ private:
     RB_Chebyshev<CoordType>* _rb_ptr = nullptr;
     CoordType* _vals = nullptr;
     CoordType* _ders2r = nullptr;
+    CoordType* _ders2r_ders2r = nullptr;
 };  // class : RQ_Chebyshev
 
 
@@ -150,6 +153,21 @@ CoordType SwitchFunction<CoordType>::der2r(CoordType distance_ij)
         return 0;
     } else if ( (distance_ij>=this->_rmin) && (distance_ij<this->_rmax) ) {
         return 1 / (this->_rmax - this->_rmin) * (-30*std::pow(uu, 4) + 60*std::pow(uu, 3) - 30*std::pow(uu, 2));
+    } else {
+        return 0;
+    }
+}
+
+
+template <typename CoordType>
+CoordType SwitchFunction<CoordType>::der2r_der2r(CoordType distance_ij)
+{
+    CoordType uu = (distance_ij - this->_rmin) / (this->_rmax - this->_rmin);
+
+    if (distance_ij < this->_rmin) {
+        return 0;
+    } else if ( (distance_ij>=this->_rmin) && (distance_ij<this->_rmax) ) {
+        return 1 / (this->_rmax - this->_rmin) * (-120 * std::pow(uu, 3) + 180*std::pow(uu, 2) - 60*uu);
     } else {
         return 0;
     }

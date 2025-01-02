@@ -190,10 +190,10 @@ void MtpBasis<CoordType>::find_val_der(
                     if (calculate_der2coeffs)
                         mom_ders2coeffs[i*num_coeffs + idx] += p_RadialBasis->vals()[xi] * powk * mult0;
                     
-                    CoordType shuffle_mom_ders_part = distance_ij_inv *
-                                    ( coeffs[idx] * p_RadialBasis->ders2r()[xi] * powk * mult0
-                                    - coeffs[idx] * p_RadialBasis->vals()[xi] * k * powk * distance_ij_inv * mult0 );
                     if (calculate_der2xyz) {
+                        CoordType shuffle_mom_ders_part = distance_ij_inv *
+                                        ( coeffs[idx] * p_RadialBasis->ders2r()[xi] * powk * mult0
+                                        - coeffs[idx] * p_RadialBasis->vals()[xi] * k * powk * distance_ij_inv * mult0 );
                         mom_ders[i*umax_num_neigh_atoms + jj][0] += NeighbVect[0] * shuffle_mom_ders_part;
                         mom_ders[i*umax_num_neigh_atoms + jj][1] += NeighbVect[1] * shuffle_mom_ders_part;
                         mom_ders[i*umax_num_neigh_atoms + jj][2] += NeighbVect[2] * shuffle_mom_ders_part;
