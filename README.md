@@ -1,4 +1,7 @@
-# AI2Pot
+# `AI2Pot`
+Copyright (2025) Hanyu Liu. This is AI2Pot software package. This software is distributed under the GNU General Public License (GPL) version 3.
+
+# What is AI2Pot
 Ab Initio and Artificial Intelligence POTential framework, applied in materials and molecular systems, with the ability to predict scalars and tensors.
 
 # Installation
