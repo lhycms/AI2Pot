@@ -1,3 +1,18 @@
+/*
+    Copyright 2025 Hanyu Liu
+    This file is part of AI2Pot.
+    AI2Pot is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+    AI2Pot is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+    You should have received a copy of the GNU General Public License
+    along with AI2Pot.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #ifndef AI2POT_MTP_BASIS_GRAD_H
 #define AI2POT_MTP_BASIS_GRAD_H
 #include <stdlib.h>
@@ -17,8 +32,8 @@ public:
     static void find_val_der(
         CoordType *(mbg_val)[3],
         CoordType *mbg_der2coeffs,
-        bool calculate_der2xyz,
-        bool calculate_der2coeffs,
+        bool calculate_val,
+        bool calculate_der,
         int chebyshev_size,
         CoordType *coeffs,
         const int alpha_moments_count,
@@ -200,7 +215,37 @@ void MtpBasisGrad<CoordType>::find_val_der(
             }
         }
 
-        
+        for (int i=0; i<alpha_index_times_count; i++)
+        {
+            CoordType val0 = mom_vals[alpha_index_times[i][0]];
+            CoordType val1 = mom_vals[alpha_index_times[i][1]];
+            CoordType val2 = mom_vals[alpha_index_times[i][2]];
+
+            mom_vals[alpha_index_times[i][3]] += val2 * val0 * val1;
+
+            for (int tmp_type_central=0; tmp_type_central<ntypes; tmp_type_central++) {
+                for (int tmp_type_outer=0; tmp_type_outer<ntypes; tmp_type_outer++) {
+                    for (int q=0; q<num_mus4moms[alpha_index_times[i][0]]; q++) {
+                        for (int xi=0; xi<chebyshev_size; xi++) {
+                            int idx0 = (tmp_type_central*ntypes + tmp_type_outer)*nmus*chebyshev_size
+                                       + mus4moms_ptr[alpha_index_times[i][0]*max_num_mus4mom + q]*chebyshev_size
+                                       + xi;
+                            
+                        }
+                    }
+
+                    for (int q=0; q<num_mus4moms[alpha_index_times[i][1]]; q++) {
+                        for (int xi=0; xi<chebyshev_size; xi++) {
+                            int idx1 = (tmp_type_central*ntypes + tmp_type_outer)*nmus*chebyshev_size
+                                       + mus4moms_ptr[alpha_index_times[i][1]*max_num_mus4mom + q]*chebyshev_size
+                                       + xi;
+                            
+                        }
+                    }
+                }
+            }
+
+        }
 
     }
 
@@ -210,6 +255,7 @@ void MtpBasisGrad<CoordType>::find_val_der(
     free(mom_der2coeffs);
     free(auto_dist_powers_);
     free(auto_coords_powers_);
+    delete p_RadialBasis;
 }
 
 
