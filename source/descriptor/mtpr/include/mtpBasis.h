@@ -48,8 +48,8 @@ public:
         int *types,
         int ntypes,
         int umax_num_neigh_atoms,
-        double rmax,
-        double rmin);
+        CoordType rmax,
+        CoordType rmin);
 
     static void find_der_backward(
         CoordType *out_der,
@@ -94,8 +94,8 @@ void MtpBasis<CoordType>::find_val_der(
     int *types,
     int ntypes,
     int umax_num_neigh_atoms,
-    double rmax,
-    double rmin)
+    CoordType rmax,
+    CoordType rmin)
 {
     // Step 1.
     //memset(mtp_basis_val, 0, sizeof(CoordType) * inum * alpha_scalar_moments);
