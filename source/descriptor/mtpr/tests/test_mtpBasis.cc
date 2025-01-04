@@ -238,7 +238,7 @@ TEST_F(MtpBasisTest, find_val_der4rcs)
         mtp_param.max_num_mus4mom(),
         mtp_param.num_mus4moms(),
         mtp_param.mus4moms_ptr(),
-        nmus,
+        mtp_param.nmus(),
         inum,
         ilist,
         numneigh,

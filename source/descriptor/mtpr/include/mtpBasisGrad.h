@@ -30,9 +30,8 @@ template <typename CoordType>
 class MtpBasisGrad {
 public:
     static void find_val_der(
-        CoordType *(mbg_val)[3],
+        CoordType (*mbg_val)[3],
         CoordType *mbg_der2coeffs,
-        bool calculate_val,
         bool calculate_der,
         int chebyshev_size,
         CoordType *coeffs,
@@ -64,10 +63,9 @@ public:
 
 template <typename CoordType>
 void MtpBasisGrad<CoordType>::find_val_der(
-    CoordType *(mbg_val)[3],
+    CoordType (*mbg_val)[3],
     CoordType *mbg_der2coeffs,
-    bool calculate_der2xyz,
-    bool calculate_der2coeffs,
+    bool calculate_der,
     int chebyshev_size,
     CoordType *coeffs,
     const int alpha_moments_count,
@@ -120,7 +118,7 @@ void MtpBasisGrad<CoordType>::find_val_der(
     CoordType *auto_dist_powers_;
     CoordType (*auto_coords_powers_)[3];
     auto_dist_powers_ = (CoordType*)malloc(sizeof(CoordType) * max_alpha_index_basic);
-    auto_coords_powers_ = (CoordType*)malloc(sizeof(CoordType) * max_alpha_index_basic * 3);
+    auto_coords_powers_ = (CoordType (*)[3])malloc(sizeof(CoordType) * max_alpha_index_basic * 3);
     memset(auto_dist_powers_, 0, sizeof(CoordType) * max_alpha_index_basic);
     memset(auto_coords_powers_, 0, sizeof(CoordType) * max_alpha_index_basic * 3);
     CoordType NeighbVect[3];
@@ -130,8 +128,7 @@ void MtpBasisGrad<CoordType>::find_val_der(
     int type_outer;
     int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
 
-    RQ_Chebyshev<CoordType> p_RadialBasis = new RQ_Chebyshev<CoordType>(chebyshev_size, rmax, rmin);
-
+    RQ_Chebyshev<CoordType> *p_RadialBasis = new RQ_Chebyshev<CoordType>(chebyshev_size, rmax, rmin);
     // Step 2.
     for (int ii=0; ii<inum; ii++)
     {
@@ -297,7 +294,7 @@ void MtpBasisGrad<CoordType>::find_val_der(
 
                         for (int q=0; q<num_mus4moms[alpha_index_times[i][1]]; q++) {
                             for (int xi=0; xi<chebyshev_size; xi++) {
-                                for (int aa=0; a<3; a++) {
+                                for (int a=0; a<3; a++) {
                                     int cidx1 = (tmp_type_central*ntypes + tmp_type_outer)*nmus*chebyshev_size
                                                 + mus4moms_ptr[alpha_index_times[i][1]*max_num_mus4mom + q]*chebyshev_size
                                                 + xi;
@@ -321,27 +318,25 @@ void MtpBasisGrad<CoordType>::find_val_der(
             }
         }
 
-
         for (int i=0; i<alpha_scalar_moments; i++) {
             for (int jj=0; jj<numneigh[ii]; jj++) {
                 for (int a=0; a<3; a++)
                     NeighbVect[a] = relative_coords[ii*umax_num_neigh_atoms + jj][a];
                 distance_ij = std::sqrt( std::pow(NeighbVect[0], 2) 
-                                        + std::pow(NeighbVect[1], 2)
-                                        + std::pow(NeighbVect[2], 2));
+                                       + std::pow(NeighbVect[1], 2)
+                                       + std::pow(NeighbVect[2], 2));
                 if (distance_ij > rmax)
                     continue;
 
                 for (int a=0; a<3; a++) {
-                    for (int idx=0; idx<num_coeffs; idx) {
-                        mbg_val[ii*alpha_scalar_moments*num_coeffs + i*num_coeffs + idx] = mom_der2coeffs[alpha_moment_mapping[i]*num_coeffs + idx];
+                    mbg_val[ii*alpha_scalar_moments*umax_num_neigh_atoms*3 + i*umax_num_neigh_atoms*3 + jj*3 + a][a] = 
+                        mom_ders[alpha_moment_mapping[i]*umax_num_neigh_atoms*3 + jj*3 + a][3];
+                    for (int idx=0; idx<num_coeffs; idx++) {
                         mbg_der2coeffs[ii*alpha_scalar_moments*umax_num_neigh_atoms*3*num_coeffs + i*umax_num_neigh_atoms*3*num_coeffs + jj*3*num_coeffs + a*num_coeffs + idx] =
                             mom_ders_der2coeffs[alpha_moment_mapping[i]*umax_num_neigh_atoms*3*num_coeffs + jj*3*num_coeffs + a*num_coeffs + idx];
                     }
                 }
             }
-
-            
         }
     }
 
