@@ -63,7 +63,7 @@ protected:
     void SetUp() override {
         calculate_der2xyz = true;
         calculate_der2coeffs = true;
-        
+
         filenames = {
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/depreciated-02.almtp", 
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/depreciated-04.almtp",
@@ -219,6 +219,7 @@ TEST_F(MtpBasisTest, find_val_der4rcs)
     int direction_idx_modify = 2;
     double delta = 1e-5;
     //for (int ii=0; ii<1000; ii++)
+
     ai2pot::mtpr::MtpBasis<double>::find_val_der(
         mtp_basis_val,
         mtp_basis_der,

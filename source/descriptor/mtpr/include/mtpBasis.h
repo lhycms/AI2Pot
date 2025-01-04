@@ -275,6 +275,14 @@ void MtpBasis<CoordType>::find_val_der(
             if (calculate_der2xyz) {
                 for (int jj=0; jj<numneigh[ii]; jj++)
                 {
+                    for (int a=0; a<3; a++)
+                        NeighbVect[a] = relative_coords[ii*umax_num_neigh_atoms + jj][a];
+                    distance_ij = std::sqrt( std::pow(NeighbVect[0], 2)
+                                           + std::pow(NeighbVect[1], 2)
+                                           + std::pow(NeighbVect[2], 2) );
+                    if (distance_ij > rmax)
+                        continue;
+
                     mom_ders[alpha_index_times[i][3]*umax_num_neigh_atoms + jj][0] += val2 * 
                             ( mom_ders[alpha_index_times[i][0]*umax_num_neigh_atoms + jj][0] * val1
                             + val0 * mom_ders[alpha_index_times[i][1]*umax_num_neigh_atoms + jj][0] );
@@ -294,9 +302,18 @@ void MtpBasis<CoordType>::find_val_der(
             mtp_basis_val[ii*alpha_scalar_moments + i] = mom_vals[alpha_moment_mapping[i]];
 
             if (calculate_der2xyz) {
-                for (int jj=0; jj<numneigh[ii]; jj++)
+                for (int jj=0; jj<numneigh[ii]; jj++) {
+                    for (int a=0; a<3; a++)
+                        NeighbVect[a] = relative_coords[ii*umax_num_neigh_atoms + jj][a];
+                    distance_ij = std::sqrt( std::pow(NeighbVect[0], 2)
+                                           + std::pow(NeighbVect[1], 2) 
+                                           + std::pow(NeighbVect[2], 2));
+                    if (distance_ij > rmax)
+                        continue;
+
                     for (int a=0; a<3; a++)
                         mtp_basis_der[ii*alpha_scalar_moments*umax_num_neigh_atoms + i*umax_num_neigh_atoms + jj][a] = mom_ders[alpha_moment_mapping[i]*umax_num_neigh_atoms + jj][a];
+                }
             }
             if (calculate_der2coeffs) {
                 for (int idx=0; idx<num_coeffs; idx++)

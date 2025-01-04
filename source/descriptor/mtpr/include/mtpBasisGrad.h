@@ -253,6 +253,14 @@ void MtpBasisGrad<CoordType>::find_val_der(
 
             for (int jj=0; jj<numneigh[ii]; jj++)
             {
+                for (int a=0; a<3; a++)
+                    NeighbVect[a] = relative_coords[ii*umax_num_neigh_atoms + jj][a];
+                distance_ij = std::sqrt( std::pow(NeighbVect[0], 2)
+                                       + std::pow(NeighbVect[1], 2)
+                                       + std::pow(NeighbVect[2], 2) );
+                if (distance_ij > rmax)
+                    continue;
+
                 mom_ders[alpha_index_times[i][3]*umax_num_neigh_atoms + jj][0] += val2 *
                     ( mom_ders[alpha_index_times[i][0]*umax_num_neigh_atoms + jj][0] * val1
                     + val0 * mom_ders[alpha_index_times[i][1]*umax_num_neigh_atoms + jj][0]);
@@ -315,15 +323,25 @@ void MtpBasisGrad<CoordType>::find_val_der(
 
 
         for (int i=0; i<alpha_scalar_moments; i++) {
-            for (int idx=0; idx<num_coeffs; idx) {
-                mbg_val[ii*alpha_scalar_moments*num_coeffs + i*num_coeffs + idx] = mom_der2coeffs[alpha_moment_mapping[i]*num_coeffs + idx];
-                for (int jj=0; jj<numneigh[ii]; jj++) {
-                    for (int a=0; a<3; a++) {
+            for (int jj=0; jj<numneigh[ii]; jj++) {
+                for (int a=0; a<3; a++)
+                    NeighbVect[a] = relative_coords[ii*umax_num_neigh_atoms + jj][a];
+                distance_ij = std::sqrt( std::pow(NeighbVect[0], 2) 
+                                        + std::pow(NeighbVect[1], 2)
+                                        + std::pow(NeighbVect[2], 2));
+                if (distance_ij > rmax)
+                    continue;
+
+                for (int a=0; a<3; a++) {
+                    for (int idx=0; idx<num_coeffs; idx) {
+                        mbg_val[ii*alpha_scalar_moments*num_coeffs + i*num_coeffs + idx] = mom_der2coeffs[alpha_moment_mapping[i]*num_coeffs + idx];
                         mbg_der2coeffs[ii*alpha_scalar_moments*umax_num_neigh_atoms*3*num_coeffs + i*umax_num_neigh_atoms*3*num_coeffs + jj*3*num_coeffs + a*num_coeffs + idx] =
                             mom_ders_der2coeffs[alpha_moment_mapping[i]*umax_num_neigh_atoms*3*num_coeffs + jj*3*num_coeffs + a*num_coeffs + idx];
                     }
                 }
             }
+
+            
         }
     }
 
