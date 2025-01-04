@@ -231,6 +231,9 @@ void MtpBasisGrad<CoordType>::find_val_der(
                                        + mus4moms_ptr[alpha_index_times[i][0]*max_num_mus4mom + q]*chebyshev_size
                                        + xi;
                             
+                            mom_der2coeffs[alpha_index_times[i][3]*num_coeffs + idx0] += val2
+                                * mom_der2coeffs[alpha_index_times[i][0]*num_coeffs + idx0]
+                                * val1;
                         }
                     }
 
@@ -240,6 +243,70 @@ void MtpBasisGrad<CoordType>::find_val_der(
                                        + mus4moms_ptr[alpha_index_times[i][1]*max_num_mus4mom + q]*chebyshev_size
                                        + xi;
                             
+                            mom_der2coeffs[alpha_index_times[i][3]*num_coeffs + idx1] += val2
+                                * val0
+                                * mom_der2coeffs[alpha_index_times[i][1]*num_coeffs + idx1];
+                        }
+                    }
+                }
+            }
+
+            for (int jj=0; jj<numneigh[ii]; jj++)
+            {
+                mom_ders[alpha_index_times[i][3]*umax_num_neigh_atoms + jj][0] += val2 *
+                    ( mom_ders[alpha_index_times[i][0]*umax_num_neigh_atoms + jj][0] * val1
+                    + val0 * mom_ders[alpha_index_times[i][1]*umax_num_neigh_atoms + jj][0]);
+                mom_ders[alpha_index_times[i][3]*umax_num_neigh_atoms + jj][1] += val2 *
+                    ( mom_ders[alpha_index_times[i][0]*umax_num_neigh_atoms + jj][1] * val1
+                    + val0 * mom_ders[alpha_index_times[i][1]*umax_num_neigh_atoms + jj][1]);
+                mom_ders[alpha_index_times[i][3]*umax_num_neigh_atoms + jj][2] += val2 *
+                    ( mom_ders[alpha_index_times[i][0]*umax_num_neigh_atoms + jj][2] * val1
+                    + val0 * mom_ders[alpha_index_times[i][1]*umax_num_neigh_atoms + jj][2]);
+
+                for (int tmp_type_central=0; tmp_type_central<ntypes; tmp_type_central++) {
+                    for (int tmp_type_outer=0; tmp_type_outer<ntypes; tmp_type_outer++) {
+                        for (int q=0; q<num_mus4moms[alpha_index_times[i][0]]; q++) {
+                            for (int xi=0; xi<chebyshev_size; xi++) {
+                                for (int a=0; a<3; a++) {
+                                    int cidx0 = (tmp_type_central*ntypes + tmp_type_outer)*nmus*chebyshev_size
+                                                + mus4moms_ptr[alpha_index_times[i][0]*max_num_mus4mom + q]*chebyshev_size
+                                                + xi;
+                                    int idx0 = ( alpha_index_times[i][0]*umax_num_neigh_atoms*3*num_coeffs 
+                                               + jj*3*num_coeffs
+                                               + a*num_coeffs
+                                               + cidx0);
+                                    int idx3 = ( alpha_index_times[i][3]*umax_num_neigh_atoms*3*num_coeffs
+                                               + jj*3*num_coeffs
+                                               + a*num_coeffs
+                                               + cidx0);
+                                    
+                                    mom_ders_der2coeffs[idx3] += val2 * (
+                                        mom_ders_der2coeffs[idx0] * val1
+                                        + mom_der2coeffs[alpha_index_times[i][0]*num_coeffs + cidx0] * mom_ders[alpha_index_times[i][1]*umax_num_neigh_atoms + jj][a]);
+                                }
+                            }
+                        }
+
+                        for (int q=0; q<num_mus4moms[alpha_index_times[i][1]]; q++) {
+                            for (int xi=0; xi<chebyshev_size; xi++) {
+                                for (int aa=0; a<3; a++) {
+                                    int cidx1 = (tmp_type_central*ntypes + tmp_type_outer)*nmus*chebyshev_size
+                                                + mus4moms_ptr[alpha_index_times[i][1]*max_num_mus4mom + q]*chebyshev_size
+                                                + xi;
+                                    int idx1 = ( alpha_index_times[i][1]*umax_num_neigh_atoms*3*num_coeffs
+                                               + jj*3*num_coeffs
+                                               + a*num_coeffs
+                                               + cidx1);
+                                    int idx3 = ( alpha_index_times[i][3]*umax_num_neigh_atoms*3*num_coeffs
+                                               + jj*3*num_coeffs
+                                               + a*num_coeffs
+                                               + cidx1);
+                                    
+                                    mom_ders_der2coeffs[idx3] += val2 * (
+                                        val0 * mom_ders_der2coeffs[idx1]
+                                        + mom_der2coeffs[alpha_index_times[i][1]*num_coeffs + cidx1] * mom_ders[alpha_index_times[i][0]*umax_num_neigh_atoms + jj][a]);
+                                }
+                            }
                         }
                     }
                 }
@@ -247,6 +314,10 @@ void MtpBasisGrad<CoordType>::find_val_der(
 
         }
 
+
+        for (int i=0; i<alpha_scalar_moments; i++) {
+            
+        }
     }
 
     // Step . Free
