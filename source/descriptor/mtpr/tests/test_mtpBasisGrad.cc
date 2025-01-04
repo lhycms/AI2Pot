@@ -184,7 +184,17 @@ protected:
     }
 
     void TearDown() override {
+        free(mbg_val);
+        free(mbg_val_);
+        free(mbg_der2coeffs);
+        free(mbg_der2coeffs_);
+        free(coeffs);
 
+        free(ilist);
+        free(numneigh);
+        free(firstneigh);
+        free(rcs);
+        free(types);
     }
 };  // class : MtpBasisGradTest
 

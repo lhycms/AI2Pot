@@ -329,8 +329,8 @@ void MtpBasisGrad<CoordType>::find_val_der(
                     continue;
 
                 for (int a=0; a<3; a++) {
-                    mbg_val[ii*alpha_scalar_moments*umax_num_neigh_atoms*3 + i*umax_num_neigh_atoms*3 + jj*3 + a][a] = 
-                        mom_ders[alpha_moment_mapping[i]*umax_num_neigh_atoms*3 + jj*3 + a][3];
+                    mbg_val[ii*alpha_scalar_moments*umax_num_neigh_atoms + i*umax_num_neigh_atoms + jj][a] = 
+                        mom_ders[alpha_moment_mapping[i]*umax_num_neigh_atoms + jj][a];
                     for (int idx=0; idx<num_coeffs; idx++) {
                         mbg_der2coeffs[ii*alpha_scalar_moments*umax_num_neigh_atoms*3*num_coeffs + i*umax_num_neigh_atoms*3*num_coeffs + jj*3*num_coeffs + a*num_coeffs + idx] =
                             mom_ders_der2coeffs[alpha_moment_mapping[i]*umax_num_neigh_atoms*3*num_coeffs + jj*3*num_coeffs + a*num_coeffs + idx];
@@ -344,6 +344,7 @@ void MtpBasisGrad<CoordType>::find_val_der(
     free(mom_vals);
     free(mom_ders);
     free(mom_der2coeffs);
+    free(mom_ders_der2coeffs);
     free(auto_dist_powers_);
     free(auto_coords_powers_);
     delete p_RadialBasis;
