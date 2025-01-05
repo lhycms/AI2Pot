@@ -189,6 +189,8 @@ protected:
     }
 
     void TearDown() override {
+        free(mtp_basis_val);
+        free(mtp_basis_val_);
         free(mbg_val);
         free(mbg_val_);
         free(mbg_der2coeffs);
