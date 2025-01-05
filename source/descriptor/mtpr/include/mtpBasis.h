@@ -245,28 +245,26 @@ void MtpBasis<CoordType>::find_val_der(
             mom_vals[alpha_index_times[i][3]] += val2 * val0 * val1;
 
             if (calculate_der2coeffs) {
-                for (int tmp_type_central=0; tmp_type_central<ntypes; tmp_type_central++) {
-                    for (int tmp_type_outer=0; tmp_type_outer<ntypes; tmp_type_outer++) {
-                        for (int q=0; q<num_mus4moms[alpha_index_times[i][0]]; q++) {
-                            for (int xi=0; xi<chebyshev_size; xi++) {
-                                int idx0 = (tmp_type_central*ntypes + tmp_type_outer)*nmus*chebyshev_size 
-                                        + mus4moms_ptr[alpha_index_times[i][0]*max_num_mus4mom + q]*chebyshev_size
-                                        + xi;
+                for (int tmp_type_outer=0; tmp_type_outer<ntypes; tmp_type_outer++) {
+                    for (int q=0; q<num_mus4moms[alpha_index_times[i][0]]; q++) {
+                        for (int xi=0; xi<chebyshev_size; xi++) {
+                            int idx0 = (type_central*ntypes + tmp_type_outer)*nmus*chebyshev_size 
+                                    + mus4moms_ptr[alpha_index_times[i][0]*max_num_mus4mom + q]*chebyshev_size
+                                    + xi;
 
-                                mom_ders2coeffs[alpha_index_times[i][3]*num_coeffs + idx0] += val2
-                                    * mom_ders2coeffs[alpha_index_times[i][0]*num_coeffs + idx0]
-                                    * val1;
-                            }
+                            mom_ders2coeffs[alpha_index_times[i][3]*num_coeffs + idx0] += val2
+                                * mom_ders2coeffs[alpha_index_times[i][0]*num_coeffs + idx0]
+                                * val1;
                         }
-                        for (int q=0; q<num_mus4moms[alpha_index_times[i][1]]; q++) {
-                            for (int xi=0; xi<chebyshev_size; xi++) {
-                                int idx1 = (tmp_type_central*ntypes + tmp_type_outer)*nmus*chebyshev_size
-                                        + mus4moms_ptr[alpha_index_times[i][1]*max_num_mus4mom + q]*chebyshev_size
-                                        + xi;
-                                mom_ders2coeffs[alpha_index_times[i][3]*num_coeffs + idx1] += val2
-                                    * val0
-                                    * mom_ders2coeffs[alpha_index_times[i][1]*num_coeffs + idx1];
-                            }
+                    }
+                    for (int q=0; q<num_mus4moms[alpha_index_times[i][1]]; q++) {
+                        for (int xi=0; xi<chebyshev_size; xi++) {
+                            int idx1 = (type_central*ntypes + tmp_type_outer)*nmus*chebyshev_size
+                                    + mus4moms_ptr[alpha_index_times[i][1]*max_num_mus4mom + q]*chebyshev_size
+                                    + xi;
+                            mom_ders2coeffs[alpha_index_times[i][3]*num_coeffs + idx1] += val2
+                                * val0
+                                * mom_ders2coeffs[alpha_index_times[i][1]*num_coeffs + idx1];
                         }
                     }
                 }

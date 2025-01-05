@@ -12,9 +12,11 @@
 class MtpBasisGradTest : public ::testing::Test
 {
 protected:
+    double *mtp_basis_val;
     double (*mbg_val)[3];
     double *mbg_der2coeffs;
-    double *mbg_val_;
+    double *mtp_basis_val_;
+    double (*mbg_val_)[3];
     double *mbg_der2coeffs_;
     bool calculate_der;
     int chebyshev_size;
@@ -83,9 +85,12 @@ protected:
         rmax = 5.0;
         rmin = 2.0;
         umax_num_neigh_atoms = 20;
+
+        mtp_basis_val = (double*)malloc(sizeof(double) * inum * mtp_param.alpha_scalar_moments());
         mbg_val = (double (*)[3])malloc(sizeof(double) * inum * mtp_param.alpha_scalar_moments() * umax_num_neigh_atoms * 3);
         mbg_der2coeffs = (double*)malloc(sizeof(double) * inum * mtp_param.alpha_scalar_moments() * umax_num_neigh_atoms * 3 * ntypes * ntypes * nmus * chebyshev_size);
-        mbg_val_ = (double*)malloc(sizeof(double) * inum * mtp_param.alpha_scalar_moments() * umax_num_neigh_atoms * 3);
+        mtp_basis_val_ = (double*)malloc(sizeof(double) * inum * mtp_param.alpha_scalar_moments());
+        mbg_val_ = (double (*)[3])malloc(sizeof(double) * inum * mtp_param.alpha_scalar_moments() * umax_num_neigh_atoms * 3);
         mbg_der2coeffs_ = (double*)malloc(sizeof(double) * inum * mtp_param.alpha_scalar_moments() * umax_num_neigh_atoms * 3 * ntypes * ntypes * nmus * chebyshev_size);
         coeffs = (double*)malloc(sizeof(double) * ntypes * ntypes * ntypes * mtp_param.nmus() * chebyshev_size);
         for (int ii=0; ii<ntypes*ntypes*nmus*chebyshev_size; ii++)
@@ -204,9 +209,18 @@ TEST_F(MtpBasisGradTest, mbg_der2coeff_accuracy)
     int center_idx_modify = 0;
     int neigh_idx_modify = 12;
     int direction_idx_modify = 2;
+
+    int itype_idx_modify = types[ilist[center_idx_modify]];
+    int jtype_idx_modify = types[firstneigh[center_idx_modify*umax_num_neigh_atoms + neigh_idx_modify]];
+    int mu_idx_modify = 0;
+    int cheby_idx_modify = 0;
+    int coeff_idx_modify = (itype_idx_modify*ntypes + jtype_idx_modify)*nmus*chebyshev_size + mu_idx_modify*chebyshev_size + cheby_idx_modify;
+    int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
+    
     double delta = 1e-5;
 
     ai2pot::mtpr::MtpBasisGrad<double>::find_val_der(
+        mtp_basis_val,
         mbg_val,
         mbg_der2coeffs,
         calculate_der,
@@ -233,7 +247,82 @@ TEST_F(MtpBasisGradTest, mbg_der2coeff_accuracy)
         umax_num_neigh_atoms,
         rmax,
         rmin);
-    
+    coeffs[coeff_idx_modify] += delta;
+    ai2pot::mtpr::MtpBasisGrad<double>::find_val_der(
+        mtp_basis_val_,
+        mbg_val_,
+        mbg_der2coeffs_,
+        calculate_der,
+        chebyshev_size,
+        coeffs,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        mtp_param.max_num_mus4mom(),
+        mtp_param.num_mus4moms(),
+        mtp_param.mus4moms_ptr(),
+        mtp_param.nmus(),
+        inum,
+        ilist,
+        numneigh,
+        firstneigh,
+        (double (*)[3])rcs,
+        types,
+        ntypes,
+        umax_num_neigh_atoms,
+        rmax,
+        rmin);    
+
+
+printf("0. Value of mtp basis val:\n\t[");
+for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++)
+    printf("%.*lf, ", 15, mtp_basis_val[center_idx_modify*mtp_param.alpha_scalar_moments() + ii]);
+printf("\n\n");
+
+
+printf("1. Value of mbg (mtp basis gradient w.r.t. rcs):\n\t");
+for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++)
+    printf("%10lf, ", 
+        mbg_val[center_idx_modify*mtp_param.alpha_scalar_moments()*umax_num_neigh_atoms + ii*umax_num_neigh_atoms + neigh_idx_modify][direction_idx_modify]);
+printf("]\n\n");
+
+printf("2. Derivative w.r.t coeffs of mbg (mtp basis gradient w.r.t rcs):\n");
+printf("2.1. Deriv of mbg w.r.t coeffs calculated with custom code:\n\t[");
+for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++) {
+    int idx = center_idx_modify*mtp_param.alpha_scalar_moments()*umax_num_neigh_atoms*3*num_coeffs
+              + ii*umax_num_neigh_atoms*3*num_coeffs
+              + neigh_idx_modify*3*num_coeffs
+              + direction_idx_modify*num_coeffs
+              + (itype_idx_modify*ntypes + jtype_idx_modify)*nmus*chebyshev_size + mu_idx_modify*chebyshev_size + cheby_idx_modify;
+    printf("%10lf, ", mbg_der2coeffs[idx]);
+}
+printf("]\n");
+
+printf("2.2. Deriv of mbg w.r.t coeffs calculated with custom code:\n\t[");
+for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++) {
+    int idx = center_idx_modify*mtp_param.alpha_scalar_moments()*umax_num_neigh_atoms*3*num_coeffs
+              + ii*umax_num_neigh_atoms*3*num_coeffs
+              + neigh_idx_modify*3*num_coeffs
+              + direction_idx_modify*num_coeffs
+              + (itype_idx_modify*ntypes + jtype_idx_modify)*nmus*chebyshev_size + mu_idx_modify*chebyshev_size + cheby_idx_modify;
+    printf("%10lf, ", mbg_der2coeffs_[idx]);
+}
+printf("]\n");
+
+printf("2.3. Deriv of mbg w.r.t rcs calculated with finite difference method:\n\t[");
+for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++) {
+    int idx = center_idx_modify*mtp_param.alpha_scalar_moments()*umax_num_neigh_atoms
+              + ii*umax_num_neigh_atoms
+              + neigh_idx_modify;
+    double der_fdm = (mbg_val_[idx][direction_idx_modify] - mbg_val[idx][direction_idx_modify]) / delta;
+    printf("%10lf, ", der_fdm);
+}
+printf("]\n");
+
 }
 
 
