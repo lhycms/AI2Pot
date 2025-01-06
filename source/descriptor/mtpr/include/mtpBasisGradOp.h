@@ -13,3 +13,45 @@
     along with AI2Pot.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef AI2POT_MTP_BASIS_GRAD_OP
+#define AI2POT_MTP_BASIS_GRAD_OP
+#include <torch/torch.h>
+#include <ATen/ATen.h>
+
+namespace ai2pot {
+namespace mtpr {
+
+class MtpBasisGradFunction : public torch::autograd::Function<MtpBasisGradFunction>
+{
+public:
+    static torch::autograd::variable_list forward(
+        torch::autograd::AutogradContext *ctx,
+        const at::Tensor &alpha_index_basic_tensor,
+        const at::Tensor &alpha_index_times_tensor,
+        const at::Tensor &alpha_moment_mapping_tensor,
+        const at::Tensor &num_mus4moms_tensor,
+        const at::Tensor &mus4moms_tensor,
+        const at::Tensor &nmus_tensor,
+        int ntypes,
+        int chebyshev_size,
+        const at::Tensor &coeffs_tensor,
+        const at::Tensor &binum_tensor,
+        const at::Tensor &bilist_tensor,
+        const at::Tensor &bnumneigh_tensor,
+        const at::Tensor &bfirstneigh_tensor,
+        const at::Tensor &brcs_tensor,
+        const at::Tensor &btypes_tensor,
+        int umax_num_neighs,
+        double rmax,
+        double rmin);
+
+    static torch::autograd::variable_list backward(
+        torch::autograd::AutogradContext *ctx,
+        torch::autograd::variable_list bgrad_outputs_tensor);
+};  // class : MtpBasisGradFunction
+
+};  // namespace : mtpr
+};  // namespace : ai2pot
+
+
+#endif

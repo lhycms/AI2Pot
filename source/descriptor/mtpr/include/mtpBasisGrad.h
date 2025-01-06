@@ -33,7 +33,7 @@ public:
         CoordType *mtp_basis_val,
         CoordType (*mbg_val)[3],
         CoordType *mbg_der2coeffs,
-        bool calculate_der,
+        bool calculate_mtp_basis,
         int chebyshev_size,
         CoordType *coeffs,
         const int alpha_moments_count,
@@ -55,8 +55,8 @@ public:
         int *types,
         int ntypes,
         int umax_num_neigh_atoms,
-        CoordType rmax,
-        CoordType rmin);
+        double rmax,
+        double rmin);
 
     static void find_der_backward();
 };
@@ -67,7 +67,7 @@ void MtpBasisGrad<CoordType>::find_val_der(
     CoordType *mtp_basis_val,
     CoordType (*mbg_val)[3],
     CoordType *mbg_der2coeffs,
-    bool calculate_der,
+    bool calculate_mtp_basis,
     int chebyshev_size,
     CoordType *coeffs,
     const int alpha_moments_count,
@@ -89,8 +89,8 @@ void MtpBasisGrad<CoordType>::find_val_der(
     int *types,
     int ntypes,
     int umax_num_neigh_atoms,
-    CoordType rmax,
-    CoordType rmin)
+    double rmax,
+    double rmin)
 {
     // Step 1. 
     //memset(mbg_val, 0, sizeof(CoordType) * inum * alpha_moments_count * umax_num_neigh_atoms * 3);
@@ -309,7 +309,8 @@ void MtpBasisGrad<CoordType>::find_val_der(
         }
 
         for (int i=0; i<alpha_scalar_moments; i++) {
-            mtp_basis_val[ii*alpha_scalar_moments + i] = mom_vals[alpha_moment_mapping[i]];
+            if (calculate_mtp_basis)
+                mtp_basis_val[ii*alpha_scalar_moments + i] = mom_vals[alpha_moment_mapping[i]];
 
             for (int jj=0; jj<numneigh[ii]; jj++) {
                 for (int a=0; a<3; a++)

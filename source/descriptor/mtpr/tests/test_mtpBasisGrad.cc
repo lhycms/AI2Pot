@@ -12,13 +12,14 @@
 class MtpBasisGradTest : public ::testing::Test
 {
 protected:
+    bool calculate_mtp_basis;
+
     double *mtp_basis_val;
     double (*mbg_val)[3];
     double *mbg_der2coeffs;
     double *mtp_basis_val_;
     double (*mbg_val_)[3];
     double *mbg_der2coeffs_;
-    bool calculate_der;
     int chebyshev_size;
     double *coeffs;
     int nmus;
@@ -58,7 +59,7 @@ protected:
     }
 
     void SetUp() override {
-        calculate_der = false;
+        calculate_mtp_basis = true;
 
         filenames = {
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/depreciated-02.almtp", 
@@ -225,7 +226,7 @@ TEST_F(MtpBasisGradTest, mbg_der2coeff_accuracy)
         mtp_basis_val,
         mbg_val,
         mbg_der2coeffs,
-        calculate_der,
+        calculate_mtp_basis,
         chebyshev_size,
         coeffs,
         mtp_param.alpha_moments_count(),
@@ -254,7 +255,7 @@ TEST_F(MtpBasisGradTest, mbg_der2coeff_accuracy)
         mtp_basis_val_,
         mbg_val_,
         mbg_der2coeffs_,
-        calculate_der,
+        calculate_mtp_basis,
         chebyshev_size,
         coeffs,
         mtp_param.alpha_moments_count(),
