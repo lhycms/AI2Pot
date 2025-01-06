@@ -28,6 +28,9 @@ if (TORCH_OP)
         target_compile_definitions(mtpBasisOp PRIVATE MAX_MTP_LEVEL=${MAX_MTP_LEVEL})
     endif()
 
+    add_library(mtpBasisGradOp SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/mtpBasisGradOp.cc)
+    target_link_libraries(mtpBasisGradOp PRIVATE ${TORCH_LIBRARIES})
+
     add_library(mtpr_bind SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bind/mtpr_bind.cc)
     target_include_directories(mtpr_bind PRIVATE ${PYTHON_INCLUDE_DIRS})
     target_link_libraries(mtpr_bind PRIVATE mtpParamOp mtpBasisOp ${TORCH_LIBRARIES} ${PYTHON_LIBRARIES})
@@ -55,7 +58,12 @@ if (BUILD_TEST)
 
         add_executable(test_mtpBasisOp ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mtpBasisOp.cc)
         target_link_libraries(test_mtpBasisOp PRIVATE ${TORCH_LIBRARIES} mtpBasisOp mtpParamOp gtest gtest_main)
-        set_target_properties(test_mtpBasis PROPERTIES COMPILE_FLAGS "-g")
+        #set_target_properties(test_mtpBasis PROPERTIES COMPILE_FLAGS "-g")
+        gtest_discover_tests(test_mtpBasisOp DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT})
+
+        add_executable(test_mtpBasisGradOp ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mtpBasisGradOp.cc)
+        target_link_libraries(test_mtpBasisGradOp PRIVATE ${TORCH_LIBRARIES} mtpBasisGradOp mtpParamOp gtest gtest_main)
+        #set_target_properties(test_mtpBasisGradOp PROPERTIES COMPILE_FLAGS "-g")
         gtest_discover_tests(test_mtpBasisOp DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT})
     endif()
 

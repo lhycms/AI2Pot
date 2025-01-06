@@ -58,7 +58,14 @@ public:
         double rmax,
         double rmin);
 
-    static void find_der_backward();
+    static void find_der_backward(
+        CoordType *out_der2coeffs,
+        CoordType *grad_output,
+        CoordType *mbg_der2coeffs,
+        int inum,
+        int *numneigh,
+        int umax_num_neighs,
+        int num_coeffs);
 };
 
 
@@ -344,8 +351,25 @@ void MtpBasisGrad<CoordType>::find_val_der(
 }
 
 
+template <typename CoordType>
+void MtpBasisGrad<CoordType>::find_der_backward(
+    CoordType *out_der2coeffs,
+    CoordType *grad_output,
+    CoordType *mbg_der2coeffs,
+    int inum,
+    int *numneigh,
+    int umax_num_neighs,
+    int num_coeffs)
+{
+    for (int ii=0; ii<inum; ii++)
+        for (int jj=0; jj<numneigh[ii]; jj++)
+            for (int a=0; a<3; a++)
+                for (int idx=0; idx<num_coeffs; idx++)
+                    out_der2coeffs[idx] += grad_output[ii*umax_num_neighs*3 + jj*3 + a]
+                        * mbg_der2coeffs[ii*umax_num_neighs*3*num_coeffs + jj*3*num_coeffs + a*num_coeffs + idx];
+}
+
 };  // namespace : mtpr
 };  // namespace : ai2pot
-
 
 #endif

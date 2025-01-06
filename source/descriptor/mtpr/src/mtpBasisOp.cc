@@ -18,6 +18,8 @@
 
 #include "../include/mtpBasis.h"
 #include "../include/mtpBasisOp.h"
+#include "../include/mtpBasisGrad.h"
+#include "../include/mtpBasisGradOp.h"
 
 
 namespace ai2pot {
