@@ -15,6 +15,7 @@
 
 #include <stdexcept>
 #include "../include/envMatrixOp.h"
+#include "../include/dp_utils.h"
 
 
 namespace ai2pot {
@@ -65,9 +66,14 @@ torch::autograd::variable_list EnvMatrixFunction::forward(
     
     // Step 2. Init return variables
     c10::Device device = relative_coords_tensor.device();
+    c10::TensorOptions int_options = torch::TensorOptions()
+                                        .dtype(torch::kInt32)
+                                        .device(relative_coords_tensor.device());
     c10::TensorOptions float_options;
+    at::Tensor dp_firstneigh_tensor = at::zeros({batch_size, inum, umax_num_neigh_atoms}, int_options);
     at::Tensor tilde_r_tensor;
     at::Tensor tilde_r_deriv_tensor;
+
     if (relative_coords_tensor.scalar_type() == torch::kFloat32) {
         float_options = c10::TensorOptions().dtype(torch::kFloat32).device(device);
         tilde_r_tensor = at::zeros(
@@ -91,6 +97,7 @@ torch::autograd::variable_list EnvMatrixFunction::forward(
         int* ilist = ilist_tensor[ii].data_ptr<int>();
         int* numneigh = numneigh_tensor[ii].data_ptr<int>();
         int* firstneigh = firstneigh_tensor[ii].data_ptr<int>();
+        int* dp_firstneigh = dp_firstneigh_tensor[ii].data_ptr<int>();
         int* types = types_tensor[ii].data_ptr<int>();
         int* umax_num_neigh_atoms_lst = umax_num_neigh_atoms_lst_tensor.data_ptr<int>();
         
@@ -98,6 +105,17 @@ torch::autograd::variable_list EnvMatrixFunction::forward(
             float* tilde_r = tilde_r_tensor[ii].data_ptr<float>();
             float* tilde_r_deriv = tilde_r_deriv_tensor[ii].data_ptr<float>();
             float* relative_coords = relative_coords_tensor[ii].data_ptr<float>();
+
+            find_dp_firstneigh(dp_firstneigh,
+                               inum,
+                               ilist,
+                               numneigh,
+                               firstneigh,
+                               relative_coords,
+                               types,
+                               ntypes,
+                               umax_num_neigh_atoms_lst);
+
             EnvMatrix<float>::find_value_deriv(
                 tilde_r,
                 tilde_r_deriv,
@@ -105,6 +123,7 @@ torch::autograd::variable_list EnvMatrixFunction::forward(
                 ilist,
                 numneigh,
                 firstneigh,
+                dp_firstneigh,
                 relative_coords,
                 types,
                 ntypes,
@@ -115,6 +134,17 @@ torch::autograd::variable_list EnvMatrixFunction::forward(
             double* tilde_r = tilde_r_tensor[ii].data_ptr<double>();
             double* tilde_r_deriv = tilde_r_deriv_tensor[ii].data_ptr<double>();
             double* relative_coords = relative_coords_tensor[ii].data_ptr<double>();
+
+            find_dp_firstneigh(dp_firstneigh,
+                               inum,
+                               ilist,
+                               numneigh,
+                               firstneigh,
+                               relative_coords,
+                               types,
+                               ntypes,
+                               umax_num_neigh_atoms_lst);
+
             EnvMatrix<double>::find_value_deriv(
                 tilde_r,
                 tilde_r_deriv,
@@ -122,6 +152,7 @@ torch::autograd::variable_list EnvMatrixFunction::forward(
                 ilist,
                 numneigh,
                 firstneigh,
+                dp_firstneigh,
                 relative_coords,
                 types,
                 ntypes,
