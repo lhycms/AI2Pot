@@ -257,5 +257,46 @@ torch::autograd::variable_list MtpBasisGradFunction::backward(
 }
 
 
+torch::autograd::variable_list MtpBasisGradOp(
+    const at::Tensor &alpha_index_basic_tensor,
+    const at::Tensor &alpha_index_times_tensor,
+    const at::Tensor &alpha_moment_mapping_tensor,
+    const at::Tensor &num_mus4moms_tensor,
+    const at::Tensor &mus4moms_tensor,
+    const at::Tensor &nmus_tensor,
+    int ntypes,
+    int chebyshev_size,
+    const at::Tensor &coeffs_tensor,
+    const at::Tensor &binum_tensor,
+    const at::Tensor &bilist_tensor,
+    const at::Tensor &bnumneigh_tensor,
+    const at::Tensor &bfirstneigh_tensor,
+    const at::Tensor &brcs_tensor,
+    const at::Tensor &btypes_tensor,
+    int umax_num_neighs,
+    double rmax,
+    double rmin)
+{
+    return MtpBasisGradFunction::apply(
+        alpha_index_basic_tensor,
+        alpha_index_times_tensor,
+        alpha_moment_mapping_tensor,
+        num_mus4moms_tensor,
+        mus4moms_tensor,
+        nmus_tensor,
+        ntypes,
+        chebyshev_size,
+        coeffs_tensor,
+        binum_tensor,
+        bilist_tensor,
+        bnumneigh_tensor,
+        bfirstneigh_tensor,
+        brcs_tensor,
+        btypes_tensor,
+        umax_num_neighs,
+        rmax,
+        rmin);
+}
+
 };  // namespace : mtpr
 };  // namespace : ai2pot

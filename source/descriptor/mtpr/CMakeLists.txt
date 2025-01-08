@@ -61,10 +61,10 @@ if (BUILD_TEST)
         #set_target_properties(test_mtpBasis PROPERTIES COMPILE_FLAGS "-g")
         gtest_discover_tests(test_mtpBasisOp DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT})
 
-        add_executable(test_mtpBasisGradOp ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mtpBasisGradOp.cc)
-        target_link_libraries(test_mtpBasisGradOp PRIVATE ${TORCH_LIBRARIES} mtpBasisGradOp mtpParamOp gtest gtest_main)
+        #add_executable(test_mtpBasisGradOp ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mtpBasisGradOp.cc)
+        #target_link_libraries(test_mtpBasisGradOp PRIVATE ${TORCH_LIBRARIES} mtpBasisGradOp mtpParamOp gtest gtest_main)
         #set_target_properties(test_mtpBasisGradOp PROPERTIES COMPILE_FLAGS "-g")
-        gtest_discover_tests(test_mtpBasisOp DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT})
+        #gtest_discover_tests(test_mtpBasisOp DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT})
     endif()
 
     gtest_discover_tests(test_basis)

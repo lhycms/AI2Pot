@@ -4,6 +4,45 @@ import torch
 import torch.nn as nn
 
 
+
+class DpResNetLinear(nn.Module):
+    # output * resnet + input
+    def __init__(self, 
+                 in_features: int,
+                 out_features: int,
+                 bias_mark: bool = True,
+                 activation_fn: nn.Module = nn.Tanh()):
+        super(DpResNetLinear, self).__init__()
+        self.in_features: int = in_features
+        self.out_features: int = out_features
+        self.bias_mark: bool = bias_mark
+        self.activation_fn: nn.Module = activation_fn
+        self.linear: nn.Module = nn.Linear(in_features=in_features, 
+                                           out_features=out_features, 
+                                           bias=bias_mark)
+        nn.init.normal_(self.linear.weight,
+                        mean=0.0,
+                        std=1.0 / torch.sqrt(in_features + out_features))
+        if bias_mark:
+            nn.init.normal_(self.linear.bias, mean=0.0, std=1.0)
+        if ( (in_features == out_features) or (in_features*2 == out_features) ):
+            resnet_tensor: torch.Tensor = torch.Tensor(1, out_features)
+            nn.init.normal_(resnet_tensor, mean=0.1, std=0.001)
+            self.resnet_tensor: nn.Parameter = nn.Parameter(data=resnet_tensor, reqires_grad=True)
+    
+    def foward(self, x: torch.Tensor):
+        hidden: torch.TensorType = self.linear(x)
+        hidden = self.activation_fn(hidden)
+        if (self.in_features == self.out_features):
+            x = self.resnet_tensor * hidden + x
+        elif(self.in_features * 2 == self.out_features):
+            x = self.resnet_tensor * hidden + torch.cat([x, x], dim=-1)
+        else:
+            x = hidden
+        return x
+
+
+
 class FittingNet(nn.Module):
     '''FittingNet for specific element.'''
     def __init__(self,

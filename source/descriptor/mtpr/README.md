@@ -468,4 +468,7 @@ ScDatasetTest is tearing down...
 5. `brcs_tensor`: [`1`, natoms, umax_num_neigh_atoms, 3]
 6. `types_tensor`: [`1`, natoms+nghost]
 
+$$\frac{\partial {\frac{\partial D_{ik}}{\partial r_{ij}}}}{\partial c_{Z_i Z_j n \xi}}$$
+.shape = $[N_{atom}, N_{descriptors}, N_{neighbors}, 3, N_{coeffs}]$
+
 </font>

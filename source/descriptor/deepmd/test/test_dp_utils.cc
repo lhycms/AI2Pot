@@ -1,13 +1,12 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include <stdio.h>
-#include <cmath>
 
+#include "../../../nblist/include/structure.h"
+#include "../../../nblist/include/neighborList.h"
 #include "../include/dp_utils.h"
-#include "../include/envMatrix.h"
 
-
-class EnvMatrixTest : public ::testing::Test {
+class DpUtilsTest : public ::testing::Test {
 protected:
     int num_atoms;
     double basis_vectors[3][3];
@@ -24,27 +23,23 @@ protected:
     int* ilist;
     int* numneigh;
     int* firstneigh;
-    int* dp_firstneigh;
     double* relative_coords;
     int* types;
     int ntypes;
     int umax_num_neigh_atoms;
     int* umax_num_neigh_atoms_lst;
-
-    double* tilde_r;
-    double* tilde_r_deriv;
-    
+    int* dp_firstneigh;
 
     static void SetUpTestSuite() {
-        std::cout << "EnvMatrixTest (TestSuite) is setting up.\n";
+        std::cout << "DpUtilsTest (TestSuite) is setting up...\n";
     }
 
     static void TearDownTestSuite() {
-        std::cout << "EnvMatrixTest (TestSuite) is tearing down.\n";
+        std::cout << "DpUtilsTest (TestSuite) is tearing down...\n";
     }
 
     void SetUp() override {
-        num_atoms = 12;
+        num_atoms = 12;        
         basis_vectors[0][0] = 3.1903157348;
         basis_vectors[0][1] = 5.5257885468;
         basis_vectors[0][2] = 0.0000000000;
@@ -125,14 +120,9 @@ protected:
         ilist = (int*)malloc(sizeof(int) * inum);
         numneigh = (int*)malloc(sizeof(int) * inum);
         firstneigh = (int*)malloc(sizeof(int) * inum * umax_num_neigh_atoms);
-        dp_firstneigh = (int*)malloc(sizeof(int) * inum * umax_num_neigh_atoms);
         relative_coords = (double*)malloc(sizeof(double) * inum * umax_num_neigh_atoms * 3);
         types = (int*)malloc(sizeof(int) * inum);
-
-
-        tilde_r = (double*)malloc(sizeof(double) * inum * umax_num_neigh_atoms * 4);
-        tilde_r_deriv = (double*)malloc(sizeof(double) * inum * umax_num_neigh_atoms * 4 * 3);
-
+        dp_firstneigh = (int*)malloc(sizeof(int) * inum * umax_num_neigh_atoms);
 
         neighbor_list.find_info4mlff(
             inum,
@@ -143,17 +133,6 @@ protected:
             types,
             nghost,
             umax_num_neigh_atoms);
-
-        ai2pot::deepPotSE::find_dp_firstneigh<double>(
-            dp_firstneigh,
-            inum,
-            ilist,
-            numneigh,
-            firstneigh,
-            relative_coords,
-            types,
-            ntypes,
-            umax_num_neigh_atoms_lst);
     }
 
     void TearDown() override {
@@ -163,62 +142,35 @@ protected:
         free(relative_coords);
         free(types);
         free(umax_num_neigh_atoms_lst);
-        free(tilde_r);
-        free(tilde_r_deriv);
+        free(dp_firstneigh);
     }
-};  // class : EnvMatrixTest
+};
 
 
-TEST_F(EnvMatrixTest, find_value_deriv) {
-    ai2pot::deepPotSE::EnvMatrix<double>::find_value_deriv(
-        tilde_r,
-        tilde_r_deriv,
+TEST_F(DpUtilsTest, find_dp_firstneigh) {
+    ai2pot::deepPotSE::find_dp_firstneigh<double>(
+        dp_firstneigh,
         inum,
         ilist,
         numneigh,
         firstneigh,
-        dp_firstneigh,
         relative_coords,
         types,
         ntypes,
-        umax_num_neigh_atoms_lst,
-        rcut,
-        rcut_smooth);
-
-
-for (int ii=0; ii<inum; ii++) {
-    for (int jj=0; jj<umax_num_neigh_atoms; jj++) {
-        printf("[%3d, %3d] : [%10f, %10f, %10f, %10f]\n", ii, jj,
-            tilde_r[ii*umax_num_neigh_atoms*4 + jj*4 + 0],
-            tilde_r[ii*umax_num_neigh_atoms*4 + jj*4 + 1],
-            tilde_r[ii*umax_num_neigh_atoms*4 + jj*4 + 2],
-            tilde_r[ii*umax_num_neigh_atoms*4 + jj*4 + 3]);
+        umax_num_neigh_atoms_lst);
+    
+    neighbor_list.show_in_prim_index();
+    for (int ii=0; ii<inum; ii++) {
+        printf("%d: ", ii);
+        for (int jj=0; jj<umax_num_neigh_atoms; jj++) {
+            printf("%d, ", dp_firstneigh[ii*umax_num_neigh_atoms + jj]);
+        }
+        printf("\n");
     }
 }
 
-for (int ii=0; ii<inum; ii++) {
-    for (int jj=0; jj<umax_num_neigh_atoms; jj++) {
-        printf("[%3d, %3d] -- [%10f, %10f, %10f], [%10f, %10f, %10f], [%10f, %10f, %10f], [%10f, %10f, %10f]\n", 
-            ii, jj, 
-            -tilde_r_deriv[ii*umax_num_neigh_atoms*4*3 + jj*4*3 + 0*3 + 0], 
-            -tilde_r_deriv[ii*umax_num_neigh_atoms*4*3 + jj*4*3 + 0*3 + 1], 
-            -tilde_r_deriv[ii*umax_num_neigh_atoms*4*3 + jj*4*3 + 0*3 + 2],
-            -tilde_r_deriv[ii*umax_num_neigh_atoms*4*3 + jj*4*3 + 1*3 + 0], 
-            -tilde_r_deriv[ii*umax_num_neigh_atoms*4*3 + jj*4*3 + 1*3 + 1], 
-            -tilde_r_deriv[ii*umax_num_neigh_atoms*4*3 + jj*4*3 + 1*3 + 2],
-            -tilde_r_deriv[ii*umax_num_neigh_atoms*4*3 + jj*4*3 + 2*3 + 0], 
-            -tilde_r_deriv[ii*umax_num_neigh_atoms*4*3 + jj*4*3 + 2*3 + 1], 
-            -tilde_r_deriv[ii*umax_num_neigh_atoms*4*3 + jj*4*3 + 2*3 + 2],
-            -tilde_r_deriv[ii*umax_num_neigh_atoms*4*3 + jj*4*3 + 3*3 + 0], 
-            -tilde_r_deriv[ii*umax_num_neigh_atoms*4*3 + jj*4*3 + 3*3 + 1], 
-            -tilde_r_deriv[ii*umax_num_neigh_atoms*4*3 + jj*4*3 + 3*3 + 2]);
-    }
-}
 
-}
-
-
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }

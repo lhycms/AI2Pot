@@ -305,6 +305,7 @@ torch::autograd::variable_list MtpBasisFunction::backward(
                                                 num_coeffs);
         }
     }
+    
     return {
         at::Tensor(), at::Tensor(), at::Tensor(), at::Tensor(), at::Tensor(), at::Tensor(),
         at::Tensor(), at::Tensor(),

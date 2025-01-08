@@ -48,12 +48,8 @@ class LitPotential(L.LightningModule):
             binum, bilist, bnumneigh, bfirstneigh, brcs, btypes, bnghost, be_dft, bfi_dft, bv_dft = batch
             be_ml, bfi_ml, bv_ml = self.model(binum, bilist, bnumneigh, bfirstneigh, brcs, btypes, bnghost)
             e_criterion_tensor: torch.Tensor = e_wgt * self.e_criterion(binum=binum, input_benergies=be_ml, target_benergies=be_dft)
-            print("***+++ 1")
             f_criterion_tensor: torch.Tensor = f_wgt * self.f_criterion(binum=binum, input_bforces=bfi_ml, target_bforces=bfi_dft)
-            print("***+++ 2")
-            print(bv_ml.size(), bv_dft.size())
             v_criterion_tensor: torch.Tensor = v_wgt * self.v_criterion(binum=binum, input_bvirials=bv_ml, target_bvirials=bv_dft)
-            print("***+++ 3")
             loss = e_criterion_tensor + f_criterion_tensor + v_criterion_tensor
         if (self.has_forces and (not self.has_virial)):
             binum, bilist, bnumneigh, bfirstneigh, brcs, btypes, bnghost, be_dft, bfi_dft = batch
@@ -70,21 +66,29 @@ class LitPotential(L.LightningModule):
             be_ml = self.model(binum, bilist, bnumneigh, bfirstneigh, brcs, btypes, bnghost)[0]
             e_criterion_tensor: torch.Tensor = e_wgt * self.e_criterion(binum=binum, input_benergies=be_ml, target_benergies=be_dft)
             loss = e_criterion_tensor
+            print("-------------")
+            print(self.model.descriptor_module.coeffs.requires_grad)
+            print(self.model.descriptor_module.coeffs.grad)
+            print(be_ml, be_dft)
+            print("-------------")
         return loss
     
     def configure_optimizers(self):
         optimizer: torch.optim.Optimizer = torch.optim.Adam(params=self.model.parameters(),
                                                             lr=self.lr_start)
-        scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer=optimizer, gamma=0.97)
+        
+        scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer=optimizer,
+                                                           gamma=0.9)
         return {
                 'optimizer': optimizer,
                 'lr_scheduler': {
                     'scheduler': scheduler,
                     'interval': 'epoch',
-                    'frequency': 2
+                    'frequency': 1
                 }
         }
 
     #def on_epoch_end(self):
     #    current_lr: float = self.optimizers().param_groups[0]['lr']
     #    self.log('learning_rate', current_lr, prog_bar=True)
+    

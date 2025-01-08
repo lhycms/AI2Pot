@@ -12,6 +12,8 @@
     You should have received a copy of the GNU General Public License
     along with AI2Pot.  If not, see <http://www.gnu.org/licenses/>.
 */
+#ifndef AI2POT_ENV_MATRIX_OP_H
+#define AI2POT_ENV_MATRIX_OP_H
 
 #include <torch/torch.h>
 #include "./envMatrix.h"
@@ -51,3 +53,5 @@ torch::autograd::variable_list EnvMatrixOp(
 
 };  // namespace : deepPotSE
 };  // namespace : ai2pot
+
+#endif
