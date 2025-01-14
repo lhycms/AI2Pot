@@ -94,9 +94,6 @@ public:
         const int (*alpha_index_basic)[4],
         const int alpha_index_times_count,
         const int (*alpha_index_times)[4],
-        const int max_num_mus4mom,
-        const int *num_mus4moms,
-        const int *mus4moms_ptr,
         int nmus,
         int silist,
         int snumneigh,
@@ -413,9 +410,6 @@ void MomValDer<CoordType>::find_val_der_one(
         const int (*alpha_index_basic)[4],
         const int alpha_index_times_count,
         const int (*alpha_index_times)[4],
-        const int max_num_mus4mom,
-        const int *num_mus4moms,
-        const int *mus4moms_ptr,
         int nmus,
         int silist,
         int snumneigh,
@@ -428,7 +422,7 @@ void MomValDer<CoordType>::find_val_der_one(
         CoordType rmin)
 {
     memset(mom_vals, 0, sizeof(CoordType) * alpha_moments_count);
-    memset(mom_ders, 0, sizeof(CoordType) * alpha_moments_count * umax_num_neigh_atoms * 3);
+    memset(mom_ders, 0, sizeof(CoordType) * alpha_index_basic * umax_num_neigh_atoms * 3);
     
     // Step 1.
     int max_alpha_index_basic = 0;
@@ -530,7 +524,7 @@ void MomValDer<CoordType>::find_val_der_one(
     {
         CoordType val0 = mom_vals[alpha_index_times[i][0]];
         CoordType val1 = mom_vals[alpha_index_times[i][1]];
-        CoordType val2 = mom_vals[alpha_index_times[i][2]];
+        CoordType val2 = alpha_index_times[i][2];
         mom_vals[alpha_index_times[i][3]] += val2 * val0 * val1;
     }
 
