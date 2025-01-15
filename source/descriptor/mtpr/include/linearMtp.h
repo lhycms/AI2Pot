@@ -1,5 +1,5 @@
-#ifndef AI2POT_MTP_BASIS_TO_EFV_H
-#define AI2POT_MTP_BASIS_TO_EFV_H
+#ifndef AI2POT_LINEAR_MTP_H
+#define AI2POT_LINEAR_MTP_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,7 +13,7 @@ namespace mtpr {
 
 
 template <typename CoordType>
-class LinearMtpToEFV {
+class LinearMtp {
 public:
     static void find_efv(
         CoordType &etot,
@@ -43,7 +43,7 @@ public:
 
 
 template <typename CoordType>
-void LinearMtpToEFV<CoordType>::find_efv(
+void LinearMtp<CoordType>::find_efv(
     CoordType &etot,
     int chebyshev_size,
     CoordType *coeffs,
