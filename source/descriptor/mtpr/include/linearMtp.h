@@ -152,10 +152,17 @@ void LinearMtp<CoordType>::find_efv(
                                                        * val2
                                                        * val1;
         }
-        for (int i=0; i<alpha_index_basic_count; i++)
-            for (int jj=0; jj<numneigh[ii]; jj++)
-                for (int a=0; a<3; a++)
+        for (int i=0; i<alpha_index_basic_count; i++) {
+            for (int jj=0; jj<numneigh[ii]; jj++) {
+                for (int a=0; a<3; a++) {
                     e_site_ders[jj][a] = e_site_der2mom[i] * mom_ders[i*umax_num_neigh_atoms+jj][a];
+
+                    for (int b=0; b<3; b++) {
+
+                    }
+                }
+            }
+        }
 
         // Linear Force
         
