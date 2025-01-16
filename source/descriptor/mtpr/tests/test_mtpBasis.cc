@@ -229,8 +229,8 @@ protected:
 
 TEST_F(MtpBasisTest, find_val_der4rcs)
 {    
-    int center_idx_modify = 4;
-    int neigh_idx_modify = 12;
+    int center_idx_modify = 2;
+    int neigh_idx_modify = 17;
     int direction_idx_modify = 2;
     double delta = 1e-5;
     //for (int ii=0; ii<1000; ii++)
@@ -415,8 +415,8 @@ printf("]\n");
 
 TEST_F(MtpBasisTest, MomsValDer)
 {
-    int center_idx_modify = 5;
-    int neigh_idx_modify = 0;
+    int center_idx_modify = 2;
+    int neigh_idx_modify = 17;
     int direction_idx_modify = 2;
     double delta = 1E-5;
 

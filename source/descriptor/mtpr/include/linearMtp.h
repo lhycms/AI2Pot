@@ -96,7 +96,7 @@ void LinearMtp<CoordType>::find_efv(
     CoordType (*e_site_ders)[3];
     mom_vals = (CoordType*)malloc(sizeof(CoordType) * alpha_moments_count);
     mom_ders = (CoordType (*)[3])malloc(sizeof(CoordType) * alpha_index_basic_count * umax_num_neigh_atoms * 3);
-    e_site_der2mom = (CoordType *)malloc(sizeof(CoordType) * alpha_scalar_moments);
+    e_site_der2mom = (CoordType *)malloc(sizeof(CoordType) * alpha_moments_count);
     e_site_ders = (CoordType (*)[3])malloc(sizeof(CoordType) * umax_num_neigh_atoms * 3);
 
     int type_central;
@@ -104,13 +104,14 @@ void LinearMtp<CoordType>::find_efv(
 
     // Step 2.
     etot = 0;
+    CoordType e_site;
     memset(force, 0, sizeof(CoordType) * (inum+nghost) * 3);
     memset(virial, 0, sizeof(CoordType) * 9);
     for (int ii=0; ii<inum; ii++)
     {
         memset(mom_vals, 0, sizeof(CoordType) * alpha_moments_count);
         memset(mom_ders, 0, sizeof(CoordType) * alpha_index_basic_count * umax_num_neigh_atoms * 3);
-        memset(e_site_der2mom, 0, sizeof(CoordType) * alpha_scalar_moments);
+        memset(e_site_der2mom, 0, sizeof(CoordType) * alpha_moments_count);
         memset(e_site_ders, 0, sizeof(CoordType) * umax_num_neigh_atoms * 3);
 
         int center_idx = ilist[ii];
@@ -137,7 +138,7 @@ void LinearMtp<CoordType>::find_efv(
             rmin);
 
         // Linear Energy
-        CoordType e_site = type_bias[type_central];
+        e_site = type_bias[type_central];
         for (int i=0; i<alpha_scalar_moments; i++)
             e_site += linear_coeffs[i] * mom_vals[alpha_moment_mapping[i]];
         etot += e_site;
@@ -145,7 +146,7 @@ void LinearMtp<CoordType>::find_efv(
         // Linear Energy derivative w.r.t. xyz
         for (int i=0; i<alpha_scalar_moments; i++)
             e_site_der2mom[alpha_moment_mapping[i]] = linear_coeffs[i];
-/*
+
         for (int i=alpha_index_times_count-1; i>=0; i--) {
             CoordType val0 = mom_vals[alpha_index_times[i][0]];
             CoordType val1 = mom_vals[alpha_index_times[i][1]];
@@ -158,7 +159,6 @@ void LinearMtp<CoordType>::find_efv(
                                                        * val2
                                                        * val1;
         }
-printf("*** %d, %d, %d\n", numneigh[0], numneigh[1], numneigh[2]);
 
         for (int i=0; i<alpha_index_basic_count; i++) {
             for (int jj=0; jj<numneigh[ii]; jj++) {
@@ -176,7 +176,7 @@ printf("*** %d, %d, %d\n", numneigh[0], numneigh[1], numneigh[2]);
                 }
             }
         }
-*/  
+
     }
 
     // Step . Free
