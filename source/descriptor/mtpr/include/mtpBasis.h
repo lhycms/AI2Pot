@@ -486,9 +486,9 @@ void MomsValDer<CoordType>::find_val_der(
                 CoordType A = p_RadialBasis->vals()[xi];
                 CoordType B = mult0;
                 CoordType C = powk;
-                CoordType A_ders[3];
-                CoordType B_ders[3];
-                CoordType C_ders[3];
+                CoordType A_ders[3] = {0., 0., 0.};
+                CoordType B_ders[3] = {0., 0., 0.};
+                CoordType C_ders[3] = {0., 0., 0.};
                 A_ders[0] = p_RadialBasis->ders2r()[xi] * NeighbVect[0] * distance_ij_inv;
                 A_ders[1] = p_RadialBasis->ders2r()[xi] * NeighbVect[1] * distance_ij_inv;
                 A_ders[2] = p_RadialBasis->ders2r()[xi] * NeighbVect[2] * distance_ij_inv;
