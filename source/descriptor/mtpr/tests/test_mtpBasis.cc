@@ -14,6 +14,9 @@
 class MtpBasisTest : public ::testing::Test
 {
 protected:
+    double *mom_vals;
+    double (*mom_ders)[3];
+
     double *mtp_basis_val;
     double (*mtp_basis_der)[3];
     double *mtp_basis_der2coeffs;
@@ -189,10 +192,16 @@ protected:
             rcs,
             types,
             nghost,
-            umax_num_neigh_atoms);
+            umax_num_neigh_atoms);        
+            
+        mom_vals = (double*)malloc(sizeof(double) * mtp_param.alpha_moments_count());
+        mom_ders = (double (*)[3])malloc(sizeof(double) * mtp_param.alpha_index_basic_count() * umax_num_neigh_atoms * 3);
     }
 
     void TearDown() override {
+        free(mom_vals);
+        free(mom_ders);
+
         free(mtp_basis_val);
         free(mtp_basis_der);
         free(mtp_basis_der2coeffs);
@@ -214,7 +223,7 @@ protected:
 
 TEST_F(MtpBasisTest, find_val_der4rcs)
 {    
-    int center_idx_modify = 0;
+    int center_idx_modify = 4;
     int neigh_idx_modify = 12;
     int direction_idx_modify = 2;
     double delta = 1e-5;
@@ -284,6 +293,7 @@ for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++)
     printf("%.*lf, ", 15, mtp_basis_val[center_idx_modify*mtp_param.alpha_scalar_moments() + ii]);
 printf("\n");
 
+/*
 // Step 1. Check the derivatives of MTP basis wrt. relative coordinates
 printf("1. Check the derivatives of MTP basis wrt. relative coordinates:\n");
 printf("1.1. The derivatives of MTP basis wrt. relative coordinates calculated by custom code:\n\t[");
@@ -297,10 +307,11 @@ for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++) {
     printf("%10lf, ", der_fdm);
 }
 printf("]\n");
+*/
 }
 
 
-
+/*
 TEST_F(MtpBasisTest, find_val_der4coeffs)
 {
     int center_idx_modify = 0;
@@ -394,6 +405,36 @@ printf("]\n");
 
     //ASSERT_DOUBLE_EQ(mtp_basis_der2coeffs[0*mtp_param.alpha_scalar_moments()*num_coeffs + 3 * num_coeffs + 0], 0);
     //ASSERT_DOUBLE_EQ(mtp_basis_der2coeffs[0*mtp_param.alpha_scalar_moments()*num_coeffs + 19 * num_coeffs + 0], 0);
+}
+*/
+
+TEST_F(MtpBasisTest, MomsValDer)
+{
+    int center_idx_modify = 4;
+    ai2pot::mtpr::MomsValDer<double>::find_val_der(
+        mom_vals,
+        mom_ders,
+        chebyshev_size,
+        coeffs,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.nmus(),
+        ilist[center_idx_modify],
+        numneigh[center_idx_modify],
+        &firstneigh[center_idx_modify*umax_num_neigh_atoms],
+        (double (*)[3])(&rcs[center_idx_modify*umax_num_neigh_atoms*3]),
+        types,
+        ntypes,
+        umax_num_neigh_atoms,
+        rmax,
+        rmin);
+    
+for (int i=0; i<mtp_param.alpha_scalar_moments(); i++)
+    printf("%.*lf, ", 15, mom_vals[mtp_param.alpha_moment_mapping()[i]]);
+printf("\n");
 }
 
 

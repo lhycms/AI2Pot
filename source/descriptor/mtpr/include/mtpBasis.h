@@ -82,9 +82,9 @@ public:
 
 
 template <typename CoordType>
-class MomValDer {
+class MomsValDer {
 public:
-    static void find_val_der_one(
+    static void find_val_der(
         CoordType *mom_vals,
         CoordType (*mom_ders)[3],
         int chebyshev_size,
@@ -400,7 +400,7 @@ void MtpBasis<CoordType>::find_der_backward(
 
 
 template <typename CoordType>
-void MomValDer<CoordType>::find_val_der_one(
+void MomsValDer<CoordType>::find_val_der(
         CoordType *mom_vals,
         CoordType (*mom_ders)[3],
         int chebyshev_size,
@@ -421,23 +421,24 @@ void MomValDer<CoordType>::find_val_der_one(
         CoordType rmax,
         CoordType rmin)
 {
-    memset(mom_vals, 0, sizeof(CoordType) * alpha_moments_count);
-    memset(mom_ders, 0, sizeof(CoordType) * alpha_index_basic * umax_num_neigh_atoms * 3);
     
+    memset(mom_vals, 0, sizeof(CoordType) * alpha_moments_count);
+    memset(mom_ders, 0, sizeof(CoordType) * alpha_index_basic_count * umax_num_neigh_atoms * 3);
+
     // Step 1.
     int max_alpha_index_basic = 0;
     for (int ii=0; ii<alpha_index_basic_count; ii++) {
         int now_alpha_index_basic = alpha_index_basic[ii][1] + alpha_index_basic[ii][2] + alpha_index_basic[ii][3];
-        if (now_alpha_index_basic > max_alpha_index_basic) 
+        if (now_alpha_index_basic > max_alpha_index_basic)
             max_alpha_index_basic = now_alpha_index_basic;
     }
     max_alpha_index_basic++;
-
+    
     CoordType *auto_dist_powers_;
     CoordType (*auto_coords_powers_)[3];
     auto_dist_powers_ = (CoordType*)malloc(sizeof(CoordType) * max_alpha_index_basic);
     auto_coords_powers_ = (CoordType (*)[3])malloc(sizeof(CoordType) * max_alpha_index_basic * 3);
-
+    
     CoordType NeighbVect[3];
     CoordType distance_ij;
     CoordType distance_ij_inv;
@@ -454,7 +455,7 @@ void MomValDer<CoordType>::find_val_der_one(
         for (int a=0; a<3; a++)
             NeighbVect[a] = srelative_coords[jj][a];
         distance_ij = std::sqrt( std::pow(NeighbVect[0], 2)
-                                 + std::pow(NeighbVect[1]. 2)
+                                 + std::pow(NeighbVect[1], 2)
                                  + std::pow(NeighbVect[2], 2));
         if (distance_ij > rmax)
             continue;
@@ -465,7 +466,7 @@ void MomValDer<CoordType>::find_val_der_one(
         for (int a=0; a<3; a++)
             auto_coords_powers_[0][a] = 1;
         for (int k=1; k<max_alpha_index_basic; k++) {
-            auto_dist_powers_[k] = auto_coords_powers_[k-1] * distance_ij;
+            auto_dist_powers_[k] = auto_dist_powers_[k-1] * distance_ij;
             for (int a=0; a<3; a++)
                 auto_coords_powers_[k][a] = auto_coords_powers_[k-1][a] * NeighbVect[a];
         }
@@ -474,7 +475,7 @@ void MomValDer<CoordType>::find_val_der_one(
         {
             int mu = alpha_index_basic[i][0];
             int k = alpha_index_basic[i][1] + alpha_index_basic[i][2] + alpha_index_basic[i][3];
-            CoordType powk = 1.0 / auto_dist_powers_;
+            CoordType powk = 1.0 / auto_dist_powers_[k];
             CoordType pow0 = auto_coords_powers_[alpha_index_basic[i][1]][0];
             CoordType pow1 = auto_coords_powers_[alpha_index_basic[i][2]][1];
             CoordType pow2 = auto_coords_powers_[alpha_index_basic[i][3]][2];
@@ -514,12 +515,12 @@ void MomValDer<CoordType>::find_val_der_one(
                 C_ders[2] = -k * powk * distance_ij_inv * distance_ij_inv * NeighbVect[2];
                 mom_vals[i] += coeffs[idx] * A * B * C;
                 for (int a=0; a<3; a++)
-                    mom_ders[i*umax_num_neigh_atoms + jj][a] += coeffs[idx] 
+                    mom_ders[i*umax_num_neigh_atoms + jj][a] += coeffs[idx]
                                 * (A_ders[a]*B*C + A*B_ders[a]*C + A*B*C_ders[a]);
             }
         }
     }
-
+    
     for (int i=0; i<alpha_index_times_count; i++)
     {
         CoordType val0 = mom_vals[alpha_index_times[i][0]];
@@ -527,7 +528,7 @@ void MomValDer<CoordType>::find_val_der_one(
         CoordType val2 = alpha_index_times[i][2];
         mom_vals[alpha_index_times[i][3]] += val2 * val0 * val1;
     }
-
+    
     // Step . Free
     free(auto_dist_powers_);
     free(auto_coords_powers_);

@@ -1,3 +1,18 @@
+/*
+    Copyright 2025 Hanyu Liu
+    This file is part of AI2Pot.
+    AI2Pot is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+    AI2Pot is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+    You should have received a copy of the GNU General Public License
+    along with AI2Pot.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #ifndef AI2POT_LINEAR_MTP_H
 #define AI2POT_LINEAR_MTP_H
 
@@ -17,6 +32,8 @@ class LinearMtp {
 public:
     static void find_efv(
         CoordType &etot,
+        CoordType (*force)[3],
+        CoordType *virial,
         int chebyshev_size, 
         CoordType *coeffs,
         CoordType *linear_coeffs,
@@ -37,6 +54,7 @@ public:
         int *types,
         int ntypes,
         int umax_num_neigh_atoms,
+        int nghost,
         CoordType rmax,
         CoordType rmin);
 };  // class : MtpBasisToE
@@ -45,6 +63,8 @@ public:
 template <typename CoordType>
 void LinearMtp<CoordType>::find_efv(
     CoordType &etot,
+    CoordType (*force)[3],
+    CoordType *virial,
     int chebyshev_size,
     CoordType *coeffs,
     CoordType *linear_coeffs,
@@ -65,6 +85,7 @@ void LinearMtp<CoordType>::find_efv(
     int *types,
     int ntypes,
     int umax_num_neigh_atoms,
+    int nghost,
     CoordType rmax,
     CoordType rmin)
 {
@@ -78,39 +99,23 @@ void LinearMtp<CoordType>::find_efv(
     e_site_der2mom = (CoordType *)malloc(sizeof(CoordType) * alpha_scalar_moments);
     e_site_ders = (CoordType (*)[3])malloc(sizeof(CoordType) * umax_num_neigh_atoms * 3);
 
-    int max_alpha_index_basic = 0;
-    for (int ii=0; ii<alpha_index_basic_count; ii++) {
-        int now_alpha_index_basic = alpha_index_basic[ii][1] + alpha_index_basic[ii][2] + alpha_index_basic[ii][3];
-        if (now_alpha_index_basic > max_alpha_index_basic) 
-            max_alpha_index_basic = now_alpha_index_basic;
-    }
-    max_alpha_index_basic++;
-
-    CoordType *auto_dist_powers_;
-    CoordType (*auto_coords_powers_)[3];
-    auto_dist_powers_ = (CoordType*)malloc(sizeof(CoordType) * max_alpha_index_basic);
-    auto_coords_powers_ = (CoordType*)malloc(sizeof(CoordType) * max_alpha_index_basic * 3);
-    CoordType NeighbVect[3];
-    CoordType distance_ij;
-    CoordType distance_ij_inv;
     int type_central;
-    int type_outer;
     int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
-
-    RQ_Chebyshev<CoordType> *p_RadialBasis = new RQ_Chebyshev<CoordType>(chebyshev_size, rmax, rmin);
-
 
     // Step 2.
     etot = 0;
+    memset(force, 0, sizeof(CoordType) * (inum+nghost) * 3);
+    memset(virial, 0, sizeof(CoordType) * 9);
     for (int ii=0; ii<inum; ii++)
     {
         memset(mom_vals, 0, sizeof(CoordType) * alpha_moments_count);
-        memset(mom_ders, 0, sizeof(CoordType) * alpha_index_basic_count * 3);
+        memset(mom_ders, 0, sizeof(CoordType) * alpha_index_basic_count * umax_num_neigh_atoms * 3);
         memset(e_site_der2mom, 0, sizeof(CoordType) * alpha_scalar_moments);
         memset(e_site_ders, 0, sizeof(CoordType) * umax_num_neigh_atoms * 3);
 
+        int center_idx = ilist[ii];
         type_central = types[ilist[ii]];
-        MomValDer<CoordType>::find_val_der_one(
+        MomsValDer<CoordType>::find_val_der(
             mom_vals,
             mom_ders,
             chebyshev_size,
@@ -123,8 +128,8 @@ void LinearMtp<CoordType>::find_efv(
             nmus,
             ilist[ii],
             numneigh[ii],
-            firstneigh[ii*umax_num_neigh_atoms],
-            relative_coords[ii*umax_num_neigh_atoms],
+            &firstneigh[ii*umax_num_neigh_atoms],
+            &relative_coords[ii*umax_num_neigh_atoms],
             types,
             ntypes,
             umax_num_neigh_atoms,
@@ -140,6 +145,7 @@ void LinearMtp<CoordType>::find_efv(
         // Linear Energy derivative w.r.t. xyz
         for (int i=0; i<alpha_scalar_moments; i++)
             e_site_der2mom[alpha_moment_mapping[i]] = linear_coeffs[i];
+/*
         for (int i=alpha_index_times_count-1; i>=0; i--) {
             CoordType val0 = mom_vals[alpha_index_times[i][0]];
             CoordType val1 = mom_vals[alpha_index_times[i][1]];
@@ -152,33 +158,32 @@ void LinearMtp<CoordType>::find_efv(
                                                        * val2
                                                        * val1;
         }
+printf("*** %d, %d, %d\n", numneigh[0], numneigh[1], numneigh[2]);
+
         for (int i=0; i<alpha_index_basic_count; i++) {
             for (int jj=0; jj<numneigh[ii]; jj++) {
+                int neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
                 for (int a=0; a<3; a++) {
                     e_site_ders[jj][a] = e_site_der2mom[i] * mom_ders[i*umax_num_neigh_atoms+jj][a];
+                    // Linear Force
+                    force[center_idx][a] += e_site_ders[jj][a];
+                    force[neigh_idx][a] -= e_site_ders[jj][a];
 
+                    // Linear Virial
                     for (int b=0; b<3; b++) {
-
+                        virial[a*3 + b] -= e_site_ders[jj][a] * relative_coords[ii*umax_num_neigh_atoms + jj][b];
                     }
                 }
             }
         }
-
-        // Linear Force
-        
-
-        // Linear Virial
-
+*/  
     }
 
     // Step . Free
     free(mom_vals);
     free(mom_ders);
-    free(auto_dist_powers_);
-    free(auto_coords_powers_);
     free(e_site_der2mom);
     free(e_site_ders);
-    delete p_RadialBasis;
 }
 
 };  // namespace : mtpr

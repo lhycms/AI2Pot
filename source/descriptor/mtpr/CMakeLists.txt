@@ -51,6 +51,9 @@ if (BUILD_TEST)
     add_executable(test_mtpBasisGrad ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mtpBasisGrad.cc)
     target_link_libraries(test_mtpBasisGrad PRIVATE mtpParam gtest gtest_main)
 
+    add_executable(test_linearMtp ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_linearMtp.cc)
+    target_link_libraries(test_linearMtp PRIVATE mtpParam gtest gtest_main)
+
     if (TORCH_OP)
         add_executable(test_mtpParamOp ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mtpParamOp.cc)
         target_link_libraries(test_mtpParamOp PRIVATE ${TORCH_LIBRARIES} mtpParamOp mtpParam gtest gtest_main)
