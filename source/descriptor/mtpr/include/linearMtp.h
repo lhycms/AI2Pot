@@ -159,7 +159,7 @@ void LinearMtp<CoordType>::find_efv(
                                                        * val2
                                                        * val1;
         }
-
+        
         for (int i=0; i<alpha_index_basic_count; i++) {
             for (int jj=0; jj<numneigh[ii]; jj++) {
                 int neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
@@ -170,9 +170,8 @@ void LinearMtp<CoordType>::find_efv(
                     force[neigh_idx][a] -= e_site_ders[jj][a];
 
                     // Linear Virial
-                    for (int b=0; b<3; b++) {
+                    for (int b=0; b<3; b++)
                         virial[a*3 + b] -= e_site_ders[jj][a] * relative_coords[ii*umax_num_neigh_atoms + jj][b];
-                    }
                 }
             }
         }

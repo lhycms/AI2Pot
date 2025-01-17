@@ -19,6 +19,9 @@ protected:
     double etot;
     double (*force)[3];
     double *virial;
+    double etot_;
+    double (*force_)[3];
+    double *virial_;
     int chebyshev_size;
     double *coeffs;
     int nmus;
@@ -89,7 +92,7 @@ protected:
         umax_num_neigh_atoms = 20;
         coeffs = (double*)malloc(sizeof(double) * ntypes * ntypes * mtp_param.nmus() * chebyshev_size);
         for (int ii=0; ii<ntypes*ntypes*mtp_param.nmus()*chebyshev_size; ii++)
-            coeffs[ii] = 1.0;
+            coeffs[ii] = 0.5;
 
         // Establish neighbor list
         num_atoms = 12;
@@ -185,19 +188,24 @@ protected:
         etot = 0;
         force = (double (*)[3])malloc(sizeof(double) * (nghost+inum) * 3);
         virial = (double*)malloc(sizeof(double) * 9);
+        etot_ = 0;
+        force_ = (double (*)[3])malloc(sizeof(double) * (nghost+inum) * 3);
+        virial_ = (double*)malloc(sizeof(double) * 9);
 
         linear_coeffs = (double*)malloc(sizeof(double) * mtp_param.alpha_scalar_moments());
         type_bias = (double*)malloc(sizeof(double) * ntypes);
 
         for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++)
-            linear_coeffs[ii] = 1.0 + ii * 0.01;
-        type_bias[0] = 101;
-        type_bias[1] = 202;
+            linear_coeffs[ii] = 0.1 + ii * 0.001;
+        type_bias[0] = -7;
+        type_bias[1] = -8;
     }
 
     void TearDown() override {
         free(force);
+        free(force_);
         free(virial);
+        free(virial_);
         free(coeffs);
         free(ilist);
         free(numneigh);
@@ -211,6 +219,10 @@ protected:
 
 
 TEST_F(LinearMtpTest, find_efv) {
+    int center_idx_modify = 0;
+    int direction1_idx_modify = 0;
+    int direction2_idx_modify = 0;
+
     ai2pot::mtpr::LinearMtp<double>::find_efv(
         etot,
         force,
@@ -238,7 +250,97 @@ TEST_F(LinearMtpTest, find_efv) {
         nghost,
         rmax,
         rmin);
+printf("1. etot = %g\n", etot);
+printf("2. force[%d][%d] = %g\n", center_idx_modify, direction1_idx_modify, force[center_idx_modify][direction1_idx_modify]);
+printf("3. virial[%d][%d] = %g\n", direction1_idx_modify, direction2_idx_modify, virial[direction1_idx_modify*3 + direction2_idx_modify]);
 }
+
+
+TEST_F(LinearMtpTest, force_accuracy) {
+    int center_idx_modify = 0;
+    int direction1_idx_modify = 0;
+    int direction2_idx_modify = 0;
+    double delta = 1E-5;
+
+    ai2pot::mtpr::LinearMtp<double>::find_efv(
+        etot,
+        force,
+        virial,
+        chebyshev_size,
+        coeffs,
+        linear_coeffs,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        nmus,
+        inum,
+        ilist,
+        numneigh,
+        firstneigh,
+        (double (*)[3])rcs,
+        types,
+        ntypes,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin);
+
+    // *** delta
+    double cart_coords[inum][3] = {0};
+    for (int ii=0; ii<inum; ii++)
+        for (int aa=0; aa<3; aa++)
+            cart_coords[ii][aa] = structure.get_cart_coords()[ii][aa];
+    cart_coords[center_idx_modify][direction1_idx_modify] += delta;
+    structure = ai2pot::Structure<double>(num_atoms, basis_vectors, atomic_numbers, cart_coords, true);
+    neighbor_list = ai2pot::NeighborList<double>(structure, rcut, bin_size_xyz, pbc_xyz, true);
+    neighbor_list.find_info4mlff(
+            inum,
+            ilist,
+            numneigh,
+            firstneigh,
+            rcs,
+            types,
+            nghost,
+            umax_num_neigh_atoms);
+    // *** delta
+
+    ai2pot::mtpr::LinearMtp<double>::find_efv(
+        etot_,
+        force_,
+        virial_,
+        chebyshev_size,
+        coeffs,
+        linear_coeffs,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        nmus,
+        inum,
+        ilist,
+        numneigh,
+        firstneigh,
+        (double (*)[3])rcs,
+        types,
+        ntypes,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin);
+
+printf("1.1. force[%d][%d] calculated by custom code = %g\n", center_idx_modify, direction1_idx_modify, force[center_idx_modify][direction1_idx_modify]);
+printf("1.2. force[%d][%d] calculated by finite difference method = %g\n", center_idx_modify, direction1_idx_modify, -(etot_ - etot) / delta);
+}
+
 
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
