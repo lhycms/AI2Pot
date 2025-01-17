@@ -15,10 +15,12 @@
 
 #ifndef AI2POT_MTP_LOSS_H
 #define AI2POT_MTP_LOSS_H
+#include <stdlib.h>
+#include <cstring>
+#include <cmath>
 
 namespace ai2pot {
 namespace mtpr {
-
 
 template <typename CoordType>
 class MtpLoss {
@@ -27,8 +29,104 @@ public:
         CoordType &loss,
         CoordType e_weight,
         CoordType f_weight,
-        CoordType v_weight);
+        CoordType v_weight,
+        CoordType etot_ml,
+        CoordType etot_dft,
+        CoordType (*force_ml)[3],
+        CoordType (*force_dft)[3],
+        CoordType *virial_ml,
+        CoordType *virial_dft,
+        int inum);
+
+    static void find_loss_backward(
+        CoordType &loss_der2e,
+        CoordType (*loss_der2f)[3],
+        CoordType *loss_der2v,
+        CoordType e_weight,
+        CoordType f_weight,
+        CoordType v_weight,
+        CoordType etot_ml,
+        CoordType etot_dft,
+        CoordType (*force_ml)[3],
+        CoordType (*force_dft)[3],
+        CoordType *virial_ml,
+        CoordType *virial_dft,
+        int inum);
 };  // class : MtpLoss
+
+
+template <typename CoordType>
+void MtpLoss<CoordType>::find_loss(
+    CoordType &loss,
+    CoordType e_weight,
+    CoordType f_weight,
+    CoordType v_weight,
+    CoordType etot_ml,
+    CoordType etot_dft,
+    CoordType (*force_ml)[3],
+    CoordType (*force_dft)[3],
+    CoordType *virial_ml,
+    CoordType *virial_dft,
+    int inum)
+{
+    loss = 0;
+
+    // Force term
+    CoordType f_loss = 0;
+    for (int ii=0; ii<inum; ii++)
+        for (int aa=0; aa<3; aa++)
+            f_loss += std::pow(force_ml[ii][aa] - force_dft[ii][aa], 2);
+    f_loss = f_weight / (3 * inum) * f_loss;
+
+    // Virial term
+    CoordType v_loss = 0;
+    for (int aa=0; aa<3; aa++)
+        for (int bb=0; bb<3; bb++)
+            v_loss += std::pow(virial_ml[aa*3+bb] - virial_dft[aa*3+bb], 2);
+    v_loss = v_weight / (9 * inum) * v_loss;
+
+    // Energy term
+    CoordType e_loss = 0;
+    e_loss += e_weight / inum * std::pow((etot_ml - etot_dft), 2);
+
+    loss = f_loss + v_loss + e_loss;
+}
+
+
+template <typename CoordType>
+void MtpLoss<CoordType>::find_loss_backward(
+    CoordType &loss_der2e,
+    CoordType (*loss_der2f)[3],
+    CoordType *loss_der2v,
+    CoordType e_weight,
+    CoordType f_weight,
+    CoordType v_weight,
+    CoordType etot_ml,
+    CoordType etot_dft,
+    CoordType (*force_ml)[3],
+    CoordType (*force_dft)[3],
+    CoordType *virial_ml,
+    CoordType *virial_dft,
+    int inum)
+{
+    loss_der2e = 0;
+    memset(loss_der2f, 0, sizeof(CoordType) * inum * 3);
+    memset(loss_der2v, 0, sizeof(CoordType) * 9);
+
+    // loss_der2e
+    loss_der2e = e_weight / inum * 2.0 * (etot_ml - etot_dft);
+
+    // loss_der2f
+    for (int ii=0; ii<inum; ii++)
+        for (int aa=0; aa<3; aa++)
+            loss_der2f[ii][aa] = f_weight / (3 * inum) * 2.0 * (force_ml[ii][aa] - force_dft[ii][aa]);
+
+    // loss_der2v
+    for (int aa=0; aa<3; aa++)
+        for (int bb=0; bb<3; bb++)
+            loss_der2v[aa*3 + bb] = v_weight / (9 * inum) * 2.0 * (virial_ml[aa][bb] - virial_dft[aa][bb]);
+}
+
 
 };  // namespace : mtpr
 };  // namespace : ai2pot

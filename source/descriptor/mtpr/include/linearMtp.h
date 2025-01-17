@@ -22,6 +22,7 @@
 #include "./basis.h"
 #include "./mtpParam.h"
 #include "./mtpBasis.h"
+#include "./mtpLoss.h"
 
 namespace ai2pot {
 namespace mtpr {
@@ -57,6 +58,42 @@ public:
         int nghost,
         CoordType rmax,
         CoordType rmin);
+
+    static void find_efv_backward();
+
+    static void find_loss(
+        CoordType &loss,
+        CoordType e_weight,
+        CoordType f_weight,
+        CoordType v_weight,
+        CoordType etot_dft,
+        CoordType (*force_dft)[3],
+        CoordType *virial_dft,
+        int chebyshev_size,
+        CoordType *coeffs,
+        CoordType *linear_coeffs,
+        CoordType *type_bias,
+        const int alpha_moments_count,
+        const int alpha_index_basic_count,
+        const int (*alpha_index_basic)[4],
+        const int alpha_index_times_count,
+        const int (*alpha_index_times)[4],
+        const int alpha_scalar_moments,
+        const int *alpha_moment_mapping,
+        int nmus,
+        int inum,
+        int *ilist,
+        int *numneigh,
+        int *firstneigh,
+        CoordType (*relative_coords)[3],
+        int *types,
+        int ntypes,
+        int umax_num_neigh_atoms,
+        int nghost,
+        CoordType rmax,
+        CoordType rmin);
+
+    static void find_loss_backward();
 };  // class : MtpBasisToE
 
 
@@ -106,7 +143,7 @@ void LinearMtp<CoordType>::find_efv(
 
     // Step 2.
     etot = 0;
-    CoordType e_site;
+    CoordType e_site = 0;
     memset(force, 0, sizeof(CoordType) * (inum+nghost) * 3);
     memset(virial, 0, sizeof(CoordType) * 9);
     for (int ii=0; ii<inum; ii++)
@@ -195,6 +232,93 @@ void LinearMtp<CoordType>::find_efv(
     free(e_site_der2mom);
     free(e_site_ders);
 }
+
+
+template <typename CoordType>
+void LinearMtp<CoordType>::find_loss(
+    CoordType &loss,
+    CoordType e_weight,
+    CoordType f_weight,
+    CoordType v_weight,
+    CoordType etot_dft,
+    CoordType (*force_dft)[3],
+    CoordType *virial_dft,
+    int chebyshev_size,
+    CoordType *coeffs,
+    CoordType *linear_coeffs,
+    CoordType *type_bias,
+    const int alpha_moments_count,
+    const int alpha_index_basic_count,
+    const int (*alpha_index_basic)[4],
+    const int alpha_index_times_count,
+    const int (*alpha_index_times)[4],
+    const int alpha_scalar_moments,
+    const int *alpha_moment_mapping,
+    int nmus,
+    int inum,
+    int *ilist,
+    int *numneigh,
+    int *firstneigh,
+    CoordType (*relative_coords)[3],
+    int *types,
+    int ntypes,
+    int umax_num_neigh_atoms,
+    int nghost,
+    CoordType rmax,
+    CoordType rmin)
+{
+    CoordType etot;
+    CoordType (*force)[3];
+    CoordType *virial;
+
+    force = (CoordType (*)[3])malloc(sizeof(CoordType) * inum * 3);
+    virial = (CoordType*)malloc(sizeof(CoordType) * 9);
+    
+    find_efv(
+        etot,
+        force,
+        virial,
+        chebyshev_size,
+        coeffs,
+        linear_coeffs,
+        type_bias,
+        alpha_moments_count,
+        alpha_index_basic_count,
+        alpha_index_basic,
+        alpha_index_times_count,
+        alpha_index_times,
+        alpha_scalar_moments,
+        alpha_moment_mapping,
+        nmus,
+        inum,
+        ilist,
+        numneigh,
+        firstneigh,
+        relative_coords,
+        types,
+        ntypes,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin);
+    MtpLoss<CoordType>::find_loss(
+        loss,
+        e_weight,
+        f_weight,
+        v_weight,
+        etot,
+        etot_dft,
+        force,
+        force_dft,
+        virial,
+        virial_dft,
+        inum);
+    
+
+    free(force);
+    free(virial);
+}
+
 
 };  // namespace : mtpr
 };  // namespace : ai2pot
