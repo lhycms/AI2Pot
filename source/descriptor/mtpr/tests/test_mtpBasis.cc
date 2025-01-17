@@ -85,7 +85,7 @@ protected:
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/26.almtp",
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/28.almtp"
         };
-        mtp_param._load(filenames[7]);
+        mtp_param._load(filenames[11]);
 //mtp_param.show();
 
         inum = 12;
@@ -103,7 +103,7 @@ protected:
         mtp_basis_der2coeffs_ = (double*)malloc(sizeof(double) * inum * mtp_param.alpha_scalar_moments() * ntypes * ntypes * mtp_param.nmus() * chebyshev_size);
         coeffs = (double*)malloc(sizeof(double) * ntypes * ntypes * mtp_param.nmus() * chebyshev_size);
         for (int ii=0; ii<ntypes*ntypes*mtp_param.nmus()*chebyshev_size; ii++)
-            coeffs[ii] = 1.0;
+            coeffs[ii] = 0.8;
 
         // Establish neighbor list
         num_atoms = 12;
@@ -415,10 +415,10 @@ printf("]\n");
 
 TEST_F(MtpBasisTest, MomsValDer)
 {
-    int center_idx_modify = 2;
-    int neigh_idx_modify = 17;
+    int center_idx_modify = 3;
+    int neigh_idx_modify = 0;
     int direction_idx_modify = 2;
-    double delta = 1E-5;
+    double delta = 1E-7;
 
     ai2pot::mtpr::MomsValDer<double>::find_val_der(
         mom_vals,

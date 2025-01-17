@@ -101,6 +101,8 @@ void LinearMtp<CoordType>::find_efv(
 
     int type_central;
     int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
+    CoordType NeighbVect[3] = {0.};
+    CoordType distance_ij;
 
     // Step 2.
     etot = 0;
@@ -162,6 +164,15 @@ void LinearMtp<CoordType>::find_efv(
         
         for (int i=0; i<alpha_index_basic_count; i++) {
             for (int jj=0; jj<numneigh[ii]; jj++) {
+                NeighbVect[0] = relative_coords[ii*umax_num_neigh_atoms+jj][0];
+                NeighbVect[1] = relative_coords[ii*umax_num_neigh_atoms+jj][1];
+                NeighbVect[2] = relative_coords[ii*umax_num_neigh_atoms+jj][2];
+                distance_ij = std::sqrt( std::pow(NeighbVect[0], 2)
+                                       + std::pow(NeighbVect[1], 2)
+                                       + std::pow(NeighbVect[2], 2) );
+                if (distance_ij > rmax)
+                    continue;
+
                 int neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
                 for (int a=0; a<3; a++) {
                     e_site_ders[jj][a] = e_site_der2mom[i] * mom_ders[i*umax_num_neigh_atoms+jj][a];
