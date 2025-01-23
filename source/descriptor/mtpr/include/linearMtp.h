@@ -59,7 +59,33 @@ public:
         CoordType rmax,
         CoordType rmin);
 
-    static void find_efv_backward();
+    static void find_e_backward(
+        CoordType *e_der2coeffs,
+        CoordType *e_der2linear_coeffs,
+        CoordType *e_der2type_bias,
+        int chebyshev_size,
+        CoordType *coeffs,
+        CoordType *linear_coeffs,
+        CoordType *type_bias,
+        const int alpha_moments_count,
+        const int alpha_index_basic_count,
+        const int (*alpha_index_basic)[4],
+        const int alpha_index_times_count,
+        const int (*alpha_index_times)[4],
+        const int alpha_scalar_moments,
+        const int *alpha_moment_mapping,
+        int nmus,
+        int inum,
+        int *ilist,
+        int *numneigh,
+        int *firstneigh,
+        CoordType (*relative_coords)[3],
+        int *types,
+        int ntypes,
+        int umax_num_neigh_atoms,
+        int nghost,
+        CoordType rmax,
+        CoordType rmin);
 
     static void find_loss(
         CoordType &loss,
@@ -93,7 +119,34 @@ public:
         CoordType rmax,
         CoordType rmin);
 
-    static void find_loss_backward();
+    static void find_loss_backward(
+        CoordType *loss_der2coeffs,
+        CoordType *loss_der2linear_coeffs,
+        CoordType *loss_der2type_bias,
+        CoordType *loss_
+        int chebyshev_size,
+        CoordType *coeffs,
+        CoordType *linear_coeffs,
+        CoordType *type_bias,
+        const int alpha_moments_count,
+        const int alpha_index_basic_count,
+        const int (*alpha_index_basic)[4],
+        const int alpha_index_times_count,
+        const int (*alpha_index_times)[4],
+        const int alpha_scalar_moments,
+        const int *alpha_moment_mapping,
+        int nmus,
+        int inum,
+        int *ilist,
+        int *numneigh,
+        int *firstneigh,
+        CoordType (*relative_coords)[3],
+        int *types,
+        int ntypes,
+        int umax_num_neigh_atoms,
+        int nghost,
+        CoordType rmax,
+        CoordType rmin);
 };  // class : MtpBasisToE
 
 
@@ -234,6 +287,40 @@ void LinearMtp<CoordType>::find_efv(
 }
 
 
+
+template <typename CoordType>
+void LinearMtp<CoordType>::find_e_backward(
+    CoordType *e_der2coeffs,
+    CoordType *e_der2linear_coeffs,
+    CoordType *e_der2type_bias,
+    int chebyshev_size,
+    CoordType *coeffs,
+    CoordType *linear_coeffs,
+    CoordType *type_bias,
+    const int alpha_moments_count,
+    const int alpha_index_basic_count,
+    const int (*alpha_index_basic)[4],
+    const int alpha_index_times_count,
+    const int (*alpha_index_times)[4],
+    const int alpha_scalar_moments,
+    const int *alpha_moment_mapping,
+    int nmus,
+    int inum,
+    int *ilist,
+    int *numneigh,
+    int *firstneigh,
+    CoordType (*relative_coords)[3],
+    int *types,
+    int ntypes,
+    int umax_num_neigh_atoms,
+    int nghost,
+    CoordType rmax,
+    CoordType rmin)
+{
+    
+}
+
+
 template <typename CoordType>
 void LinearMtp<CoordType>::find_loss(
     CoordType &loss,
@@ -314,7 +401,6 @@ void LinearMtp<CoordType>::find_loss(
         virial_dft,
         inum);
     
-
     free(force);
     free(virial);
 }
