@@ -257,13 +257,16 @@ void MtpLoss<CoordType>::accumulate_loss_der2coeffs_one(
     CoordType *mom_vals;
     CoordType (*mom_ders)[3];
     CoordType *e_site_der2mom;
+    CoordType *mom_der2coeffs;
 
     mom_vals = (CoordType*)malloc(sizeof(CoordType) * alpha_moments_count);
     mom_ders = (CoordType (*)[3])malloc(sizeof(CoordType) * alpha_index_basic_count * umax_num_neigh_atoms * 3);
     e_site_der2mom = (CoordType*)malloc(sizeof(CoordType) * alpha_moments_count);
+    mom_der2coeffs = (CoordType*)malloc(sizeof(CoordType) * alpha_index_basic_count * ntypes * nmus * chebyshev_size);
     memset(mom_vals, 0, sizeof(CoordType) * alpha_moments_count);
     memset(mom_ders, 0, sizeof(CoordType) * alpha_index_basic_count * umax_num_neigh_atoms * 3);
     memset(e_site_der2mom, 0, sizeof(CoordType) * alpha_moments_count);
+    memset(mom_der2coeffs, 0, sizeof(CoordType) * alpha_index_basic_count * ntypes * nmus * chebyshev_size);
 
     // Step 1.1.
     int max_alpha_index_basic = 0;
@@ -357,6 +360,7 @@ void MtpLoss<CoordType>::accumulate_loss_der2coeffs_one(
                 for (int a=0; a<3; a++)
                     mom_ders[i*umax_num_neigh_atoms + jj][a] += coeffs[idx]
                             * (A_ders[a]*B*C + A*B_ders[a]*C + A*B*C_ders[a]);
+                mom_der2coeffs[i*ntypes*nmus*chebyshev_size + type_outer*nmus*chebyshev_size + mu*chebyshev_size + xi] += A * B * C;
             }
         }
     }
@@ -388,43 +392,34 @@ void MtpLoss<CoordType>::accumulate_loss_der2coeffs_one(
                                                    * val2;
     }
 
-    // Step 2.3. 
-    for (int i=0; i<alpha_index_basic_count; i++)
-        for (int jj=0; jj<snumneigh; jj++)
-            for (int a=0; a<3; a++)
-                //
-                loss_der2linear_coeffs_part_eders[i] += loss_der2eders[jj][a] * mom_ders[i*umax_num_neigh_atoms+jj][a];
-    
-    // loss_der2moms -- e_site part
-    for (int i=0; i<alpha_index_basic_count; i++)
-        //
-        loss_der2moms[i] = loss_der2e * e_site_der2mom[i];
-    
-    for (int i=0; i<alpha_index_times_count; i++) {
-        CoordType val0 = mom_vals[alpha_index_times[i][0]];
-        CoordType val1 = mom_vals[alpha_index_times[i][1]];
-        CoordType val2 = alpha_index_times[i][2];
-
-        loss_der2linear_coeffs_part_eders[alpha_index_times[i][3]] += 
-            loss_der2linear_coeffs_part_eders[alpha_index_times[i][0]]
-            * val1 * val2;
-        loss_der2linear_coeffs_part_eders[alpha_index_times[i][3]] +=
-            loss_der2linear_coeffs_part_eders[alpha_index_times[i][1]]
-            * val0 * val2;
+    // Step 2.3. E_site part
+    type_central = types[silist];
+    for (int i=0; i<alpha_index_basic_count; i++) {
+        int mu = alpha_index_basic[i][0];
+        for (int jj=0; jj<snumneigh; jj++) {
+            type_outer = types[sfirstneigh[jj]];
+            for (int xi=0; xi<chebyshev_size; xi++) {
+                int idx = (type_central*ntypes + type_outer)*nmus*chebyshev_size + mu*chebyshev_size + xi;
+                loss_der2coeffs[idx] += loss_der2e 
+                                        * e_site_der2mom[i] 
+                                        * mom_der2coeffs[i*ntypes*nmus*chebyshev_size + type_outer*nmus*chebyshev_size + mu*chebyshev_size + xi];
+            }
+        }
     }
 
-    // loss_der2moms -- eders part
-    for (int i=0; i<alpha_index_times_count; i++) {
-        double val2 = alpha_index_times[i][2];
+    for (int i=0; i<alpha_scalar_moments; i++)
+        loss_der2linear_coeffs[i] += loss_der2e * mom_vals[alpha_moment_mapping[i]];
+    
+    loss_der2type_bias[type_outer] += loss_der2e * 1.0;
 
-        loss_der2moms[alpha_index_times[i][0]] += loss
-    }
-
+    // Step 2.4. eders part
 
 
     // Step . Free
     free(mom_vals);
     free(mom_ders);
+    free(e_site_der2mom);
+    free(mom_der2coeffs);
     delete p_RadialBasis;
 }
 
