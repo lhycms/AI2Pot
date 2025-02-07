@@ -22,7 +22,7 @@
 #include "./basis.h"
 #include "./mtpParam.h"
 #include "./mtpBasis.h"
-#include "./mtpLoss.h"
+#include "./linearMtpLoss.h"
 
 namespace ai2pot {
 namespace mtpr {
@@ -123,7 +123,7 @@ public:
         CoordType *loss_der2coeffs,
         CoordType *loss_der2linear_coeffs,
         CoordType *loss_der2type_bias,
-        CoordType *loss_
+        CoordType *loss_,
         int chebyshev_size,
         CoordType *coeffs,
         CoordType *linear_coeffs,
@@ -183,11 +183,9 @@ void LinearMtp<CoordType>::find_efv(
     CoordType *mom_vals;
     CoordType (*mom_ders)[3];
     CoordType *e_site_der2mom;
-    CoordType (*e_site_ders)[3];
     mom_vals = (CoordType*)malloc(sizeof(CoordType) * alpha_moments_count);
     mom_ders = (CoordType (*)[3])malloc(sizeof(CoordType) * alpha_index_basic_count * umax_num_neigh_atoms * 3);
     e_site_der2mom = (CoordType *)malloc(sizeof(CoordType) * alpha_moments_count);
-    e_site_ders = (CoordType (*)[3])malloc(sizeof(CoordType) * umax_num_neigh_atoms * 3);
 
     int type_central;
     int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
@@ -204,7 +202,6 @@ void LinearMtp<CoordType>::find_efv(
         memset(mom_vals, 0, sizeof(CoordType) * alpha_moments_count);
         memset(mom_ders, 0, sizeof(CoordType) * alpha_index_basic_count * umax_num_neigh_atoms * 3);
         memset(e_site_der2mom, 0, sizeof(CoordType) * alpha_moments_count);
-        memset(e_site_ders, 0, sizeof(CoordType) * umax_num_neigh_atoms * 3);
 
         int center_idx = ilist[ii];
         type_central = types[ilist[ii]];
@@ -252,28 +249,30 @@ void LinearMtp<CoordType>::find_efv(
                                                        * val1;
         }
         
-        for (int i=0; i<alpha_index_basic_count; i++) {
-            for (int jj=0; jj<numneigh[ii]; jj++) {
-                NeighbVect[0] = relative_coords[ii*umax_num_neigh_atoms+jj][0];
-                NeighbVect[1] = relative_coords[ii*umax_num_neigh_atoms+jj][1];
-                NeighbVect[2] = relative_coords[ii*umax_num_neigh_atoms+jj][2];
-                distance_ij = std::sqrt( std::pow(NeighbVect[0], 2)
-                                       + std::pow(NeighbVect[1], 2)
-                                       + std::pow(NeighbVect[2], 2) );
-                if (distance_ij > rmax)
-                    continue;
+        for (int jj=0; jj<numneigh[ii]; jj++) {
+            int neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
+            NeighbVect[0] = relative_coords[ii*umax_num_neigh_atoms+jj][0];
+            NeighbVect[1] = relative_coords[ii*umax_num_neigh_atoms+jj][1];
+            NeighbVect[2] = relative_coords[ii*umax_num_neigh_atoms+jj][2];
+            distance_ij = std::sqrt( std::pow(NeighbVect[0], 2)
+                                     + std::pow(NeighbVect[1], 2)
+                                     + std::pow(NeighbVect[2], 2) );
+            if (distance_ij > rmax)
+                continue;
 
-                int neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
-                for (int a=0; a<3; a++) {
-                    e_site_ders[jj][a] = e_site_der2mom[i] * mom_ders[i*umax_num_neigh_atoms+jj][a];
-                    // Linear Force
-                    force[center_idx][a] += e_site_ders[jj][a];
-                    force[neigh_idx][a] -= e_site_ders[jj][a];
+            for (int aa=0; aa<3; aa++) {
+                CoordType e_site_ders_ija = 0;
+                // eders_ija
+                for (int i=0; i<alpha_index_basic_count; i++)
+                    e_site_ders_ija += e_site_der2mom[i] * mom_ders[i*umax_num_neigh_atoms + jj][aa];
 
-                    // Linear Virial
-                    for (int b=0; b<3; b++)
-                        virial[a*3 + b] -= e_site_ders[jj][a] * relative_coords[ii*umax_num_neigh_atoms + jj][b];
-                }
+                // Linear Force
+                force[center_idx][aa] += e_site_ders_ija;
+                force[neigh_idx][aa] -= e_site_ders_ija;
+
+                // Linear Virial
+                for (int bb=0; bb<3; bb++)
+                    virial[aa*3 + bb] -= e_site_ders_ija * NeighbVect[bb];
             }
         }
 
@@ -283,7 +282,6 @@ void LinearMtp<CoordType>::find_efv(
     free(mom_vals);
     free(mom_ders);
     free(e_site_der2mom);
-    free(e_site_ders);
 }
 
 
@@ -317,7 +315,7 @@ void LinearMtp<CoordType>::find_e_backward(
     CoordType rmax,
     CoordType rmin)
 {
-    
+
 }
 
 
@@ -390,6 +388,8 @@ void LinearMtp<CoordType>::find_loss(
         rmin);
     MtpLoss<CoordType>::find_loss(
         loss,
+        inum,
+        ilist,
         e_weight,
         f_weight,
         v_weight,
@@ -398,8 +398,7 @@ void LinearMtp<CoordType>::find_loss(
         force,
         force_dft,
         virial,
-        virial_dft,
-        inum);
+        virial_dft);
     
     free(force);
     free(virial);

@@ -19,12 +19,22 @@ protected:
     double *mom_vals;
     double (*mom_ders)[3];
 
+    double loss;
+    double loss_;
+    double e_weight;
+    double f_weight;
+    double v_weight;
+
     double etot;
     double (*force)[3];
     double *virial;
     double etot_;
     double (*force_)[3];
     double *virial_;
+    double etot_dft;
+    double (*force_dft)[3];
+    double *virial_dft;
+
     int chebyshev_size;
     double *coeffs;
     int nmus;
@@ -86,6 +96,10 @@ protected:
         mtp_param._load(filenames[5]);
 //mtp_param.show();
 
+        e_weight = 1.0;
+        f_weight = 1.0;
+        v_weight = 0.1;
+
         inum = 12;
         ntypes = 2;
         chebyshev_size = 8;
@@ -95,7 +109,7 @@ protected:
         umax_num_neigh_atoms = 20;
         coeffs = (double*)malloc(sizeof(double) * ntypes * ntypes * mtp_param.nmus() * chebyshev_size);
         for (int ii=0; ii<ntypes*ntypes*mtp_param.nmus()*chebyshev_size; ii++)
-            coeffs[ii] = 0.8;
+            coeffs[ii] = 0.1;
 
         // Establish neighbor list
         num_atoms = 12;
@@ -197,6 +211,14 @@ protected:
         etot_ = 0;
         force_ = (double (*)[3])malloc(sizeof(double) * (nghost+inum) * 3);
         virial_ = (double*)malloc(sizeof(double) * 9);
+        etot_dft = 0;
+        force_dft = (double (*)[3])malloc(sizeof(double) * (nghost+inum) * 3);
+        virial_dft = (double*)malloc(sizeof(double) * 9);
+        for (int ii=0; ii<(inum+nghost); ii++)
+            for (int aa=0; aa<3; aa++)
+                force[ii][aa] = 0.0;
+        for (int ab=0; ab<9; ab++)
+            virial_dft[ab] = 0.0;
 
         linear_coeffs = (double*)malloc(sizeof(double) * mtp_param.alpha_scalar_moments());
         type_bias = (double*)malloc(sizeof(double) * ntypes);
@@ -351,6 +373,49 @@ TEST_F(LinearMtpTest, force_accuracy) {
 
 printf("1.1. force[%d][%d] calculated by custom code = %g\n", center_idx_modify, direction1_idx_modify, force[center_idx_modify][direction1_idx_modify]);
 printf("1.2. force[%d][%d] calculated by finite difference method = %g\n", center_idx_modify, direction1_idx_modify, -(etot_ - etot) / delta);
+}
+
+
+TEST_F(LinearMtpTest, find_loss) {
+    int center_idx_modify = 0;
+    int neigh_idx_modify = 17;
+    int direction1_idx_modify = 2;
+    int direction2_idx_modify = 0;
+    double delta = 1E-7;
+
+
+    ai2pot::mtpr::LinearMtp<double>::find_loss(
+        loss,
+        e_weight,
+        f_weight,
+        v_weight,
+        etot_dft,
+        force_dft,
+        virial_dft,
+        chebyshev_size,
+        coeffs,
+        linear_coeffs,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        nmus,
+        inum,
+        ilist,
+        numneigh,
+        firstneigh,
+        (double (*)[3])rcs,
+        types,
+        ntypes,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin);
+printf("1. loss = %g\n", loss);
 }
 
 
