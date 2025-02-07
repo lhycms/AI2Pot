@@ -383,7 +383,6 @@ TEST_F(LinearMtpTest, find_loss) {
     int direction2_idx_modify = 0;
     double delta = 1E-7;
 
-
     ai2pot::mtpr::LinearMtp<double>::find_loss(
         loss,
         e_weight,
