@@ -65,6 +65,10 @@ protected:
     double *linear_coeffs;
     double *type_bias;
 
+    double *loss_der2coeffs;
+    double *loss_der2linear_coeffs;
+    double *loss_der2type_bias;
+
     ai2pot::Structure<double> structure;
     ai2pot::NeighborList<double> neighbor_list;
 
@@ -213,7 +217,9 @@ protected:
         virial_ = (double*)malloc(sizeof(double) * 9);
         etot_dft = 0;
         force_dft = (double (*)[3])malloc(sizeof(double) * (nghost+inum) * 3);
+        memset(force_dft, 0.0, sizeof(double) * (inum+nghost) * 3);
         virial_dft = (double*)malloc(sizeof(double) * 9);
+        memset(virial_dft, 0.0, sizeof(double) * 9);
         for (int ii=0; ii<(inum+nghost); ii++)
             for (int aa=0; aa<3; aa++)
                 force[ii][aa] = 0.0;
@@ -227,6 +233,10 @@ protected:
             linear_coeffs[ii] = 0.1 + ii * 0.01;
         type_bias[0] = -7;
         type_bias[1] = -8;
+
+        loss_der2coeffs = (double*)malloc(sizeof(double) * ntypes * ntypes * nmus * chebyshev_size);
+        loss_der2linear_coeffs = (double*)malloc(sizeof(double) * mtp_param.alpha_scalar_moments());
+        loss_der2type_bias = (double*)malloc(sizeof(double) * ntypes);
     }
 
     void TearDown() override {
@@ -235,16 +245,24 @@ protected:
 
         free(force);
         free(force_);
+        free(force_dft);
         free(virial);
         free(virial_);
-        free(coeffs);
+        free(virial_dft);
+
         free(ilist);
         free(numneigh);
         free(firstneigh);
         free(rcs);
         free(types);
+        
+        free(coeffs);
         free(linear_coeffs);
         free(type_bias);
+
+        free(loss_der2coeffs);
+        free(loss_der2linear_coeffs);
+        free(loss_der2type_bias);
     }
 };
 
@@ -288,6 +306,7 @@ printf("1. etot = %g\n", etot);
 printf("2. force[%d][%d] = %g\n", center_idx_modify, direction1_idx_modify, force[center_idx_modify][direction1_idx_modify]);
 printf("3. virial[%d][%d] = %g\n", direction1_idx_modify, direction2_idx_modify, virial[direction1_idx_modify*3 + direction2_idx_modify]);
 }
+
 
 
 TEST_F(LinearMtpTest, force_accuracy) {
@@ -376,6 +395,7 @@ printf("1.2. force[%d][%d] calculated by finite difference method = %g\n", cente
 }
 
 
+
 TEST_F(LinearMtpTest, find_loss) {
     int center_idx_modify = 0;
     int neigh_idx_modify = 17;
@@ -415,6 +435,43 @@ TEST_F(LinearMtpTest, find_loss) {
         rmax,
         rmin);
 printf("1. loss = %g\n", loss);
+}
+
+
+TEST_F(LinearMtpTest, find_loss_backward) {
+    ai2pot::mtpr::LinearMtp<double>::find_loss_backward(
+        loss_der2coeffs,
+        loss_der2linear_coeffs,
+        loss_der2type_bias,
+        e_weight,
+        f_weight,
+        v_weight,
+        etot_dft,
+        force_dft,
+        virial_dft,
+        chebyshev_size,
+        coeffs,
+        linear_coeffs,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        mtp_param.nmus(),
+        inum,
+        ilist,
+        numneigh,
+        firstneigh,
+        (double (*)[3])rcs,
+        types,
+        ntypes,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin);
 }
 
 

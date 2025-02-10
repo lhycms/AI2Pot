@@ -56,7 +56,7 @@ void MtpLoss<CoordType>::find_loss(
     CoordType *virial_ml,
     CoordType *virial_dft)
 {
-    loss = 0;
+    loss = 0.0;
 
     // Force term
     CoordType f_loss = 0;
@@ -77,12 +77,10 @@ void MtpLoss<CoordType>::find_loss(
 
     // Energy term
     CoordType e_loss = 0;
-    e_loss += e_weight / inum * std::pow((etot_ml - etot_dft), 2);
+    e_loss += e_weight / inum * std::pow(etot_ml - etot_dft, 2);
 
     loss = f_loss + v_loss + e_loss;
 }
-
-
 
 
 };  // namespace : mtpr

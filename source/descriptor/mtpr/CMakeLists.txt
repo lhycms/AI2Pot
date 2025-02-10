@@ -53,6 +53,7 @@ if (BUILD_TEST)
 
     add_executable(test_linearMtp ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_linearMtp.cc)
     target_link_libraries(test_linearMtp PRIVATE mtpParam gtest gtest_main)
+    target_compile_options(test_linearMtp PRIVATE -g)
 
     if (TORCH_OP)
         add_executable(test_mtpParamOp ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mtpParamOp.cc)

@@ -194,13 +194,13 @@ void LinearMtp<CoordType>::find_efv(
 
     int type_central;
     int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
-    CoordType NeighbVect[3] = {0.};
+    CoordType NeighbVect[3];
     CoordType distance_ij;
 
     // Step 2.
     etot = 0;
     CoordType e_site = 0;
-    memset(force, 0, sizeof(CoordType) * (inum+nghost) * 3);
+    memset(force, 0, sizeof(CoordType) * inum * 3);
     memset(virial, 0, sizeof(CoordType) * 9);
     for (int ii=0; ii<inum; ii++)
     {
@@ -280,7 +280,6 @@ void LinearMtp<CoordType>::find_efv(
                     virial[aa*3 + bb] -= e_site_ders_ija * NeighbVect[bb];
             }
         }
-
     }
 
     // Step . Free
@@ -361,8 +360,10 @@ void LinearMtp<CoordType>::find_loss(
     CoordType (*force)[3];
     CoordType *virial;
 
-    force = (CoordType (*)[3])malloc(sizeof(CoordType) * inum * 3);
+    assert(nghost == 0);
+    force = (CoordType (*)[3])malloc(sizeof(CoordType) * (inum+nghost) * 3);
     virial = (CoordType*)malloc(sizeof(CoordType) * 9);
+    
     
     find_efv(
         etot,
@@ -404,7 +405,7 @@ void LinearMtp<CoordType>::find_loss(
         force_dft,
         virial,
         virial_dft);
-    
+
     free(force);
     free(virial);
 }
@@ -459,7 +460,7 @@ void LinearMtp<CoordType>::find_loss_backward(
     max_alpha_index_basic++;
 
     CoordType *auto_dist_powers_;
-    CoordType *auto_coords_powers_[3];
+    CoordType (*auto_coords_powers_)[3];
     auto_dist_powers_ = (CoordType*)malloc(sizeof(CoordType) * max_alpha_index_basic);
     auto_coords_powers_ = (CoordType (*)[3])malloc(sizeof(CoordType) * max_alpha_index_basic * 3);
 
@@ -527,13 +528,13 @@ void LinearMtp<CoordType>::find_loss_backward(
             distance_ij_inv = 1.0 / distance_ij;
             p_RadialBasis->build(distance_ij);
 
-            auto_dist_powers_ = 1.0;
+            auto_dist_powers_[0] = 1.0;
             for (int aa=0; aa<3; aa++)
-                auto_coords_powers_[aa] = 1.0;
+                auto_coords_powers_[0][aa] = 1.0;
             for (int k=1; k<max_alpha_index_basic; k++) {
                 auto_dist_powers_[k] = auto_dist_powers_[k-1] * distance_ij;
                 for (int aa=0; aa<3; aa++)
-                    auto_coords_powers_[k][a] = auto_coords_powers_[k-1][a] * NeighbVect[a];
+                    auto_coords_powers_[k][aa] = auto_coords_powers_[k-1][aa] * NeighbVect[aa];
             }
 
             for (int i=0; i<alpha_index_basic_count; i++) {
@@ -579,10 +580,10 @@ void LinearMtp<CoordType>::find_loss_backward(
                     C_ders[2] = -k * powk * distance_ij_inv * distance_ij_inv * NeighbVect[2];
                     mom_vals[i] += coeffs[idx] * A * B * C;
 
-                    CoordType tmp_deriv = (A_ders[aa] * B * C
-                                          + A * B_ders[aa] * C
-                                          + A * B * C_ders[aa]);
                     for (int aa=0; aa<3; aa++) {
+                        CoordType tmp_deriv = coeffs[idx] * (A_ders[aa] * B * C
+                                                             + A * B_ders[aa] * C
+                                                             + A * B * C_ders[aa]);
                         dloss_combination[i] += 2*f_weight/(3*inum)
                                                 * (force_ml[center_idx][aa] - force_dft[center_idx][aa])
                                                 * tmp_deriv;
@@ -614,7 +615,7 @@ void LinearMtp<CoordType>::find_loss_backward(
             e_site_der2mom[alpha_moment_mapping[i]] = linear_coeffs[i];
 
         // Step 4.2. Pass to basic moments
-        for (int i=alpha_index_times_count-1; i>=0 i--) {
+        for (int i=alpha_index_times_count-1; i>=0; i--) {
             CoordType val0 = mom_vals[alpha_index_times[i][0]];
             CoordType val1 = mom_vals[alpha_index_times[i][1]];
             CoordType val2 = alpha_index_times[i][2];
@@ -643,7 +644,7 @@ void LinearMtp<CoordType>::find_loss_backward(
             for (int aa=0; aa<3; aa++)
                 auto_coords_powers_[0][aa] = 1.0;
             for (int k=1; k<max_alpha_index_basic; k++) {
-                auto_dist_powers_[k] = auto_coords_powers_[k-1] * distance_ij;
+                auto_dist_powers_[k] = auto_dist_powers_[k-1] * distance_ij;
                 for (int aa=0; aa<3; aa++)
                     auto_coords_powers_[k][aa] = auto_coords_powers_[k-1][aa] * NeighbVect[aa];
             }
@@ -694,10 +695,10 @@ void LinearMtp<CoordType>::find_loss_backward(
                                             * e_site_der2mom[i]
                                             * A * B * C;
                     
-                    CoordType tmp_deriv = (A_ders[aa] * B * C
-                                          + A * B_ders[aa] * C
-                                          + A * B * C_ders[aa]);
                     for (int aa=0; aa<3; aa++) {
+                        CoordType tmp_deriv = coeffs[idx] * (A_ders[aa] * B * C
+                                                             + A * B_ders[aa] * C
+                                                             + A * B * C_ders[aa]);
                         loss_der2coeffs[idx] += 2*f_weight/(3*inum)
                                                 * (force_ml[center_idx][aa] - force_dft[center_idx][aa])
                                                 * e_site_der2mom[i]
@@ -721,16 +722,16 @@ void LinearMtp<CoordType>::find_loss_backward(
 
         // Step 4.4. Loss derivative w.r.t. linear_coeffs
         for (int i=0; i<alpha_scalar_moments; i++) {
-            loss_der2linear_coeffs[i] = 2*e_weight/inum 
-                                        * (etot_ml - etot_dft) 
-                                        * mom_vals[alpha_moment_mapping[i]];
+            loss_der2linear_coeffs[i] += 2*e_weight/inum 
+                                         * (etot_ml - etot_dft) 
+                                         * mom_vals[alpha_moment_mapping[i]];
             
             loss_der2linear_coeffs[i] += dloss_combination[alpha_moment_mapping[i]];
         }
 
         // Step 4.5. Loss derivative w.r.t. type_bias
         for (int i=0; i<ntypes; i++)
-            loss_der2type_bias[i] = 2*e_weight/inum*(etot_ml - etot_dft);
+            loss_der2type_bias[i] += 2*e_weight/inum*(etot_ml - etot_dft);
     }
 
 
