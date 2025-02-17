@@ -51,11 +51,11 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
     double rmax,
     double rmin)
 {
-    int nbatches = betot_dft_tensor.size(0);
-    int alpha_index_basic_count = alpha_index_basic.size(0);
-    int alpha_index_times_count = alpha_index_times.size(0);
-    int alpha_scalar_moment = alpha_moment_mapping.size(0);
-    int umax_num_neighs = bfirstneigh_tensor.size(2);
+    int nbatches = (int)betot_dft_tensor.size(0);
+    int alpha_index_basic_count = (int)alpha_index_basic.size(0);
+    int alpha_index_times_count = (int)alpha_index_times.size(0);
+    int alpha_scalar_moment = (int)alpha_moment_mapping.size(0);
+    int umax_num_neighs = (int)bfirstneigh_tensor.size(2);
 
     c10::TensorOptions int_options = c10::TensorOptions()
                                         .dtype(torch::kInt32)
@@ -211,11 +211,11 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
 
 torch::autograd::variable_list LinearMtpToLossFunction::backward(
     torch::autograd::AutogradContext *ctx,
-    torch::autograd::variable_list grad_outputs_tensor)
+    torch::autograd::variable_list bgrad_outputs_tensor)
 {
-    at::Tensor grad_output_tensor = grad_outputs_tensor[0];
-    if ( !grad_output_tensor.is_contiguous() )
-        grad_output_tensor = grad_output_tensor.contiguous();
+    at::Tensor bgrad_output_tensor = bgrad_outputs_tensor[0];
+    if ( !bgrad_output_tensor.is_contiguous() )
+        bgrad_output_tensor = bgrad_output_tensor.contiguous();
     
     double e_weight = ctx->save_for_backward()[0];
     double f_weight = ctx->save_for_backward()[1];
@@ -242,8 +242,22 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
     int nghost = ctx->save_for_backward()[22];
     double rmax = ctx->save_for_backward()[23];
     double rmin = ctx->save_for_backward()[24];
-    
 
+    int nbatches = (int)bgrad_output_tensor.size(0);
+    int alpha_index_basic_count = (int)alpha_index_basic_tensor.size(0);
+    int alpha_index_times_count = (int)alpha_index_times_tensor.size(0);
+    int alpha_scalar_moment = (int)alpha_moment_mapping_tensor.size(0);
+    int umax_num_neighs = (int)bfirstneigh_tensor.size(2);
+
+    c10::TensorOptions int_options = c10::TensorOptions()
+                                        .dtype(torch::kInt32)
+                                        .device(brcs_tensor.device());
+    c10::TensorOptions float_options;
+
+    at::Tensor bloss_der2coeffs_tensor;
+    at::Tensor bloss_der2linear_coeffs_tensor;
+    at::Tensor bloss_der2type_bias_tensor;
+    
 }
 
 
