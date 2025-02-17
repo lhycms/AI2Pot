@@ -73,7 +73,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
         for (int bb=0; bb<nbatches; bb++) {
             float *loss = bloss_tensor[bb].data_ptr<float>();
             float *etot_dft = betot_dft_tensor[bb].data_ptr<float>();
-            float *force_dft = bforce_dft_tensor[bb].data_ptr<float>();
+            float (*force_dft)[3] = (float (*)[3])bforce_dft_tensor[bb].data_ptr<float>();
             float *virial_dft = bvirial_dft_tensor[bb].data_ptr<float>();
             float *coeffs = coeffs_tensor.data_ptr<float>();
             float *linear_coeffs = linear_coeffs_tensor.data_ptr<float>();
@@ -85,16 +85,15 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
             int *ilist = bilist_tensor[bb].data_ptr<int>();
             int *numneigh = bnumneigh_tensor[bb].data_ptr<int>();
             int *firstneigh = bfirstneigh_tensor[bb].data_ptr<int>();
-            float *rcs = brcs_tensor[bb].data_ptr<float>();
+            float (*rcs)[3] = (float (*)[3])brcs_tensor[bb].data_ptr<float>();
             int *types = btypes_tensor[bb].data_ptr<int>();
 
-
             LinearMtp<float>::find_loss(
-                loss,
+                (*loss),
                 e_weight,
                 f_weight,
                 v_weight,
-                etot_dft,
+                (*etot_dft),
                 force_dft,
                 virial_dft,
                 chebyshev_size,
@@ -113,7 +112,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                 ilist,
                 numneigh,
                 firstneigh,
-                (float (*)[3])rcs,
+                rcs,
                 types,
                 ntypes,
                 umax_num_neighs,
@@ -122,7 +121,61 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                 rmin);
         }
     } else {
-        
+        float_options = c10::TensorOptions()
+                            .dtype(torch::kFloat64)
+                            .device(brcs_tensor.device());
+        bloss_tensor = at::zeros({nbatches}, float_options);
+
+        for (int bb=0; bb<nbatches; bb++) {
+            double *loss = bloss_tensor[bb].data_ptr<double>();
+            double *etot_dft = betot_dft_tensor[bb].data_ptr<double>();
+            double (*force_dft)[3] = (double (*)[3])bforce_dft_tensor[bb].data_ptr<double>();
+            double *virial_dft = bvirial_dft_tensor[bb].data_ptr<double>();
+            double *coeffs = coeffs_tensor.data_ptr<double>();
+            double *linear_coeffs = linear_coeffs_tensor.data_ptr<double>();
+            double *type_bias = type_bias_tensor.data_ptr<double>();
+            int (*alpha_index_basic)[4] = (int (*)[4])alpha_index_basic_tensor.data_ptr<int>();
+            int (*alpha_index_times)[4] = (int (*)[4])alpha_index_times_tensor.data_ptr<int>();
+            int *alpha_moment_mapping = alpha_moment_mapping_tensor.data_ptr<int>();
+            int inum = binum_tensor[bb].item<int>();
+            int *ilist = bilist_tensor[bb].data_ptr<int>();
+            int *numneigh = bnumneigh_tensor[bb].data_ptr<int>();
+            int *firstneigh = bfirstneigh_tensor[bb].data_ptr<int>();
+            double (*rcs)[3] = (double (*)[3])brcs_tensor[bb].data_ptr<double>();
+            int *types = btypes_tensor[bb].data_ptr<int>();
+
+            LinearMtp<double>::find_loss(
+                (*loss),
+                e_weight,
+                f_weight,
+                v_weight,
+                (*etot_dft),
+                force_dft,
+                virial_dft,
+                chebyshev_size,
+                coeffs,
+                linear_coeffs,
+                type_bias,
+                alpha_moments_count,
+                alpha_index_basic_count,
+                alpha_index_basic,
+                alpha_index_times_count,
+                alpha_index_times,
+                alpha_scalar_moment,
+                alpha_moment_mapping,
+                nmus,
+                inum,
+                ilist,
+                numneigh,
+                firstneigh,
+                rcs,
+                types,
+                ntypes,
+                umax_num_neighs,
+                nghost,
+                rmax,
+                rmin);
+        }
     }
 
 
@@ -153,6 +206,44 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                             rmin});
 
     return {bloss_tensor};
+}
+
+
+torch::autograd::variable_list LinearMtpToLossFunction::backward(
+    torch::autograd::AutogradContext *ctx,
+    torch::autograd::variable_list grad_outputs_tensor)
+{
+    at::Tensor grad_output_tensor = grad_outputs_tensor[0];
+    if ( !grad_output_tensor.is_contiguous() )
+        grad_output_tensor = grad_output_tensor.contiguous();
+    
+    double e_weight = ctx->save_for_backward()[0];
+    double f_weight = ctx->save_for_backward()[1];
+    double v_weight = ctx->save_for_backward()[2];
+    at::Tensor betot_dft_tensor = ctx->save_for_backward()[3];
+    at::Tensor bforce_dft_tensor = ctx->save_for_backward()[4];
+    at::Tensor bvirial_dft_tensor = ctx->save_for_backward()[5];
+    int chebyshev_size = ctx->save_for_backward()[6];
+    at::Tensor coeffs_tensor = ctx->save_for_backward()[7];
+    at::Tensor linear_coeffs_tensor = ctx->save_for_backward()[8];
+    at::Tensor type_bias_tensor = ctx->save_for_backward()[9];
+    int alpha_moments_count = ctx->save_for_backward()[10];
+    at::Tensor alpha_index_basic_tensor = ctx->save_for_backward()[11];
+    at::Tensor alpha_index_times_tensor = ctx->save_for_backward()[12];
+    at::Tensor alpha_moment_mapping_tensor = ctx->save_for_backward()[13];
+    int nmus = ctx->save_for_backward()[14];
+    at::Tensor binum_tensor = ctx->save_for_backward()[15];
+    at::Tensor bilist_tensor = ctx->save_for_backward()[16];
+    at::Tensor bnumneigh_tensor = ctx->save_for_backward()[17];
+    at::Tensor bfirstneigh_tensor = ctx->save_for_backward()[18];
+    at::Tensor brcs_tensor = ctx->save_for_backward()[19];
+    at::Tensor btypes_tensor = ctx->save_for_backward()[20];
+    int ntypes = ctx->save_for_backward()[21];
+    int nghost = ctx->save_for_backward()[22];
+    double rmax = ctx->save_for_backward()[23];
+    double rmin = ctx->save_for_backward()[24];
+    
+
 }
 
 
