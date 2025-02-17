@@ -242,6 +242,8 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
     int nghost = ctx->save_for_backward()[22];
     double rmax = ctx->save_for_backward()[23];
     double rmin = ctx->save_for_backward()[24];
+    int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
+    int num_linear_coeffs = linear_coeffs_tensor.size(0);
 
     int nbatches = (int)bgrad_output_tensor.size(0);
     int alpha_index_basic_count = (int)alpha_index_basic_tensor.size(0);
@@ -258,6 +260,28 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
     at::Tensor bloss_der2linear_coeffs_tensor;
     at::Tensor bloss_der2type_bias_tensor;
     
+    // To do
+    if (bgrad_output_tensor.dtype() == torch::kFloat32) {
+        float_options = c10::TensorOptions()
+                            .dtype(torch::kFloat32)
+                            .device(bgrad_output_tensor.device());
+        bloss_der2coeffs_tensor = at::zeros({nbatches, num_coeffs}, float_options);
+        bloss_der2linear_coeffs_tensor = at::zeros({nbatches, num_linear_coeffs}, float_options);
+        bloss_der2type_bias_tensor = at::zeros({nbatches, ntypes}, float_options);
+
+
+    } else {
+        float_options = c10::TensorOptions()
+                            .dtype(torch::kFloat64)
+                            .device(bgrad_output_tensor.device());
+        bloss_der2coeffs_tensor = at::zeros({nbatches, num_coeffs}, float_options);
+        bloss_der2linear_coeffs_tensor = at::zeros({nbatches, num_linear_coeffs}, float_options);
+        bloss_der2type_bias_tensor = at::zeros({nbatches, ntypes}, float_options);
+
+
+    }
+
+    return {};
 }
 
 
