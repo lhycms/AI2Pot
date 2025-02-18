@@ -45,7 +45,9 @@ protected:
     at::Tensor bforce_dft_tensor;
     at::Tensor bvirial_dft_tensor;
     int chebyshev_size;
-    
+    int nmus;
+    int alpha_moments_count;
+
     at::Tensor coeffs_tensor;
     at::Tensor linear_coeffs_tensor;
     at::Tensor type_bias_tensor;
@@ -110,6 +112,24 @@ protected:
                         .dtype(torch::kInt32)
                         .device(c10::kCPU);
 
+        alpha_index_basic_tensor = at::zeros({mtp_param.alpha_index_basic_count(), 4}, int_options);
+        alpha_index_times_tensor = at::zeros({mtp_param.alpha_index_times_count(), 4}, int_options);
+        alpha_moment_mapping_tensor = at::zeros({mtp_param.alpha_scalar_moments()}, int_options);
+        int (*alpha_index_basic)[4] = (int (*)[4])alpha_index_basic_tensor.data_ptr<int>();
+        int (*alpha_index_times)[4] = (int (*)[4])alpha_index_times_tensor.data_ptr<int>();
+        int *alpha_moment_mapping = alpha_moment_mapping_tensor.data_ptr<int>();
+        for (int i=0; i<mtp_param.alpha_index_basic_count(); i++)
+            for (int aa=0; aa<4; aa++)
+                alpha_index_basic[i][aa] = mtp_param.alpha_index_basic()[i][aa];
+        for (int i=0; i<mtp_param.alpha_index_times_count(); i++)
+            for (int aa=0; aa<4; aa++)
+                alpha_index_times[i][aa] = mtp_param.alpha_index_times()[i][aa];
+        for (int i=0; i<mtp_param.alpha_scalar_moments(); i++)
+            alpha_moment_mapping[i] = mtp_param.alpha_moment_mapping()[i];
+
+        rmax = 5.0;
+        rmin = 2.0;
+        
         // Establish neighbor list
         ntypes = 2;
         num_atoms = 12;
@@ -186,18 +206,18 @@ protected:
         nblist = ai2pot::NeighborList<double>(structure, rcut, bin_size_xyz, pbc_xyz, false);
         umax_num_neigh_atoms = 19;
 
-        int alpha_moment_count = mtp_param.alpha_moments_count();
+        alpha_moments_count = mtp_param.alpha_moments_count();
         int alpha_index_basic_count = mtp_param.alpha_index_basic_count();
         int alpha_index_times_count = mtp_param.alpha_index_times_count();
         int alpha_scalar_moments = mtp_param.alpha_scalar_moments();
-        int nmus = mtp_param.nmus();
+        nmus = mtp_param.nmus();
         chebyshev_size = 8;
         int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
 
         e_weight = 1.0;
         f_weight = 1.0;
         v_weight = 0.1;
-        betot_dft_tensor = at::zeros({1, num_atoms}, float_options);
+        betot_dft_tensor = at::zeros({1}, float_options);
         bforce_dft_tensor = at::zeros({1, num_atoms, 3}, float_options);
         bvirial_dft_tensor = at::zeros({1, 9}, float_options);
         coeffs_tensor = at::zeros({num_coeffs}, float_options);
@@ -209,8 +229,19 @@ protected:
         bfirstneigh_tensor = at::zeros({1, num_atoms, umax_num_neigh_atoms}, int_options);
         brcs_tensor = at::zeros({1, num_atoms, umax_num_neigh_atoms, 3}, float_options);
         btypes_tensor = at::zeros({1, num_atoms}, int_options);
+        
+        double *coeffs = coeffs_tensor.data_ptr<double>();
+        double *linear_coeffs = linear_coeffs_tensor.data_ptr<double>();
+        double *type_bias = type_bias_tensor.data_ptr<double>();
 
+        for (int ii=0; ii<ntypes*ntypes*mtp_param.nmus()*chebyshev_size; ii++)
+            coeffs[ii] = 0.1;
+        for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++)
+            linear_coeffs[ii] = 0.1 + ii * 0.01;
+        type_bias[0] = -7;
+        type_bias[1] = -8;
 
+        binum_tensor[0] = num_atoms;
         int *ilist = bilist_tensor[0].data_ptr<int>();
         int *numneigh = bnumneigh_tensor[0].data_ptr<int>();
         int *firstneigh = bfirstneigh_tensor[0].data_ptr<int>();
@@ -225,7 +256,7 @@ protected:
             types,
             nghost,
             umax_num_neigh_atoms);
-nblist.show_in_distances();
+//nblist.show_in_distances();
     }
 
     void TearDown() override {
@@ -235,7 +266,33 @@ nblist.show_in_distances();
 
 
 TEST_F(LinearMtpOpTest, apply) {
-
+    at::Tensor loss_tensor = ai2pot::mtpr::LinearMtpToLossOp(
+        e_weight,
+        f_weight,
+        v_weight,
+        betot_dft_tensor,
+        bforce_dft_tensor,
+        bvirial_dft_tensor,
+        chebyshev_size,
+        coeffs_tensor,
+        linear_coeffs_tensor,
+        type_bias_tensor,
+        alpha_moments_count,
+        alpha_index_basic_tensor,
+        alpha_index_times_tensor,
+        alpha_moment_mapping_tensor,
+        nmus,
+        binum_tensor,
+        bilist_tensor,
+        bnumneigh_tensor,
+        bfirstneigh_tensor,
+        brcs_tensor,
+        btypes_tensor,
+        ntypes,
+        nghost,
+        rmax,
+        rmin)[0];
+std::cout << loss_tensor << std::endl;
 }
 
 

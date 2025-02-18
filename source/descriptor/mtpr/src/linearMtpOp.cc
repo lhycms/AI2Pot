@@ -143,7 +143,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
             int *firstneigh = bfirstneigh_tensor[bb].data_ptr<int>();
             double (*rcs)[3] = (double (*)[3])brcs_tensor[bb].data_ptr<double>();
             int *types = btypes_tensor[bb].data_ptr<int>();
-
+printf("+++ %g\n", (*loss));
             LinearMtp<double>::find_loss(
                 (*loss),
                 e_weight,
@@ -175,6 +175,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                 nghost,
                 rmax,
                 rmin);
+printf("+++ %g\n", (*loss));
         }
     }
 
@@ -425,7 +426,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
 }
 
 
-torch::autograd::variable_list LinearMtpToLoss(
+torch::autograd::variable_list LinearMtpToLossOp(
     double e_weight,
     double f_weight,
     double v_weight,

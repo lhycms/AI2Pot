@@ -364,7 +364,6 @@ void LinearMtp<CoordType>::find_loss(
     force = (CoordType (*)[3])malloc(sizeof(CoordType) * (inum+nghost) * 3);
     virial = (CoordType*)malloc(sizeof(CoordType) * 9);
     
-    
     find_efv(
         etot,
         force,
@@ -392,6 +391,9 @@ void LinearMtp<CoordType>::find_loss(
         nghost,
         rmax,
         rmin);
+printf("+++ etot = %g\n", etot);
+for (int ii=0; ii<inum; ii++)
+    printf("[%g, %g, %g]\n", force[ii][0], force[ii][1], force[ii][2]);
     MtpLoss<CoordType>::find_loss(
         loss,
         inum,

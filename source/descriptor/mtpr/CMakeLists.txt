@@ -56,7 +56,7 @@ if (BUILD_TEST)
 
     add_executable(test_linearMtp ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_linearMtp.cc)
     target_link_libraries(test_linearMtp PRIVATE mtpParam gtest gtest_main)
-    target_compile_options(test_linearMtp PRIVATE -g)
+    #target_compile_options(test_linearMtp PRIVATE -g)
 
     if (TORCH_OP)
         add_executable(test_mtpParamOp ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mtpParamOp.cc)
@@ -69,7 +69,7 @@ if (BUILD_TEST)
         gtest_discover_tests(test_mtpBasisOp DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT})
 
         add_executable(test_linearMtpOp ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_linearMtpOp.cc)
-        target_link_libraries(test_linearMtpOp PRIVATE ${TORCH_LIBRARIES} mtpParamOp mtpParam gtest gtest_main)
+        target_link_libraries(test_linearMtpOp PRIVATE linearMtpOp ${TORCH_LIBRARIES} mtpParamOp mtpParam gtest gtest_main)
         gtest_discover_tests(test_linearMtpOp DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT})
 
         #add_executable(test_mtpBasisGradOp ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mtpBasisGradOp.cc)
