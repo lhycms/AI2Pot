@@ -34,6 +34,9 @@ if (TORCH_OP)
     add_library(mtpr_bind SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bind/mtpr_bind.cc)
     target_include_directories(mtpr_bind PRIVATE ${PYTHON_INCLUDE_DIRS})
     target_link_libraries(mtpr_bind PRIVATE mtpParamOp mtpBasisOp ${TORCH_LIBRARIES} ${PYTHON_LIBRARIES})
+
+    add_library(linearMtpOp SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/linearMtpOp.cc)
+    target_link_libraries(linearMtpOp PRIVATE ${TORCH_LIBRARIES})
 endif()
 
 

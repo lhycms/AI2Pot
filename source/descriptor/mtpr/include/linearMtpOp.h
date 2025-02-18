@@ -49,6 +49,7 @@ public:
         at::Tensor brcs_tensor,
         at::Tensor btypes_tensor,
         int ntypes,
+        int nghost,
         double rmax,
         double rmin);
 

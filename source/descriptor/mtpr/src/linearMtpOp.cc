@@ -52,9 +52,9 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
     double rmin)
 {
     int nbatches = (int)betot_dft_tensor.size(0);
-    int alpha_index_basic_count = (int)alpha_index_basic.size(0);
-    int alpha_index_times_count = (int)alpha_index_times.size(0);
-    int alpha_scalar_moment = (int)alpha_moment_mapping.size(0);
+    int alpha_index_basic_count = (int)alpha_index_basic_tensor.size(0);
+    int alpha_index_times_count = (int)alpha_index_times_tensor.size(0);
+    int alpha_scalar_moment = (int)alpha_moment_mapping_tensor.size(0);
     int umax_num_neighs = (int)bfirstneigh_tensor.size(2);
 
     c10::TensorOptions int_options = c10::TensorOptions()
@@ -64,7 +64,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
 
     at::Tensor bloss_tensor;
 
-    if (brcs_tensor.dtype == torch::kFloat32) {
+    if (brcs_tensor.dtype() == torch::kFloat32) {
         float_options = c10::TensorOptions()
                             .dtype(torch::kFloat32)
                             .device(brcs_tensor.device());
@@ -72,7 +72,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
 
         for (int bb=0; bb<nbatches; bb++) {
             float *loss = bloss_tensor[bb].data_ptr<float>();
-            float *etot_dft = betot_dft_tensor[bb].data_ptr<float>();
+            float etot_dft = betot_dft_tensor[bb].item<float>();
             float (*force_dft)[3] = (float (*)[3])bforce_dft_tensor[bb].data_ptr<float>();
             float *virial_dft = bvirial_dft_tensor[bb].data_ptr<float>();
             float *coeffs = coeffs_tensor.data_ptr<float>();
@@ -93,7 +93,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                 e_weight,
                 f_weight,
                 v_weight,
-                (*etot_dft),
+                etot_dft,
                 force_dft,
                 virial_dft,
                 chebyshev_size,
@@ -128,7 +128,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
 
         for (int bb=0; bb<nbatches; bb++) {
             double *loss = bloss_tensor[bb].data_ptr<double>();
-            double *etot_dft = betot_dft_tensor[bb].data_ptr<double>();
+            double etot_dft = betot_dft_tensor[bb].item<double>();
             double (*force_dft)[3] = (double (*)[3])bforce_dft_tensor[bb].data_ptr<double>();
             double *virial_dft = bvirial_dft_tensor[bb].data_ptr<double>();
             double *coeffs = coeffs_tensor.data_ptr<double>();
@@ -149,7 +149,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                 e_weight,
                 f_weight,
                 v_weight,
-                (*etot_dft),
+                etot_dft,
                 force_dft,
                 virial_dft,
                 chebyshev_size,
@@ -178,33 +178,38 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
         }
     }
 
-
-    ctx->save_for_backward({e_weight, 
-                            f_weight, 
-                            v_weight,
+    float_options = c10::TensorOptions()
+                        .dtype(torch::kFloat64)
+                        .device(brcs_tensor.device());
+    ctx->save_for_backward({at::tensor(e_weight, float_options), 
+                            at::tensor(f_weight, float_options), 
+                            at::tensor(v_weight, float_options),
                             betot_dft_tensor, 
                             bforce_dft_tensor,
                             bvirial_dft_tensor,
-                            chebyshev_size,
+                            at::tensor(chebyshev_size, int_options),
                             coeffs_tensor,
                             linear_coeffs_tensor,
                             type_bias_tensor,
-                            alpha_moments_count,
+                            at::tensor(alpha_moments_count, int_options),
                             alpha_index_basic_tensor,
                             alpha_index_times_tensor,
                             alpha_moment_mapping_tensor,
-                            nmus,
+                            at::tensor(nmus, int_options),
                             binum_tensor,
                             bilist_tensor,
                             bnumneigh_tensor,
                             bfirstneigh_tensor,
                             brcs_tensor,
                             btypes_tensor,
-                            ntypes,
-                            nghost,
-                            rmax,
-                            rmin});
+                            at::tensor(ntypes, int_options),
+                            at::tensor(nghost, int_options),
+                            at::tensor(rmax, float_options),
+                            at::tensor(rmin, float_options)
+                            });
 
+    if (brcs_tensor.requires_grad())
+        bloss_tensor.requires_grad_(true);
     return {bloss_tensor};
 }
 
@@ -217,33 +222,33 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
     if ( !bgrad_output_tensor.is_contiguous() )
         bgrad_output_tensor = bgrad_output_tensor.contiguous();
     
-    double e_weight = ctx->save_for_backward()[0];
-    double f_weight = ctx->save_for_backward()[1];
-    double v_weight = ctx->save_for_backward()[2];
-    at::Tensor betot_dft_tensor = ctx->save_for_backward()[3];
-    at::Tensor bforce_dft_tensor = ctx->save_for_backward()[4];
-    at::Tensor bvirial_dft_tensor = ctx->save_for_backward()[5];
-    int chebyshev_size = ctx->save_for_backward()[6];
-    at::Tensor coeffs_tensor = ctx->save_for_backward()[7];
-    at::Tensor linear_coeffs_tensor = ctx->save_for_backward()[8];
-    at::Tensor type_bias_tensor = ctx->save_for_backward()[9];
-    int alpha_moments_count = ctx->save_for_backward()[10];
-    at::Tensor alpha_index_basic_tensor = ctx->save_for_backward()[11];
-    at::Tensor alpha_index_times_tensor = ctx->save_for_backward()[12];
-    at::Tensor alpha_moment_mapping_tensor = ctx->save_for_backward()[13];
-    int nmus = ctx->save_for_backward()[14];
-    at::Tensor binum_tensor = ctx->save_for_backward()[15];
-    at::Tensor bilist_tensor = ctx->save_for_backward()[16];
-    at::Tensor bnumneigh_tensor = ctx->save_for_backward()[17];
-    at::Tensor bfirstneigh_tensor = ctx->save_for_backward()[18];
-    at::Tensor brcs_tensor = ctx->save_for_backward()[19];
-    at::Tensor btypes_tensor = ctx->save_for_backward()[20];
-    int ntypes = ctx->save_for_backward()[21];
-    int nghost = ctx->save_for_backward()[22];
-    double rmax = ctx->save_for_backward()[23];
-    double rmin = ctx->save_for_backward()[24];
+    double e_weight = ctx->get_saved_variables()[0].item<double>();
+    double f_weight = ctx->get_saved_variables()[1].item<double>();
+    double v_weight = ctx->get_saved_variables()[2].item<double>();
+    at::Tensor betot_dft_tensor = ctx->get_saved_variables()[3];
+    at::Tensor bforce_dft_tensor = ctx->get_saved_variables()[4];
+    at::Tensor bvirial_dft_tensor = ctx->get_saved_variables()[5];
+    int chebyshev_size = ctx->get_saved_variables()[6].item<int>();
+    at::Tensor coeffs_tensor = ctx->get_saved_variables()[7];
+    at::Tensor linear_coeffs_tensor = ctx->get_saved_variables()[8];
+    at::Tensor type_bias_tensor = ctx->get_saved_variables()[9];
+    int alpha_moments_count = ctx->get_saved_variables()[10].item<int>();
+    at::Tensor alpha_index_basic_tensor = ctx->get_saved_variables()[11];
+    at::Tensor alpha_index_times_tensor = ctx->get_saved_variables()[12];
+    at::Tensor alpha_moment_mapping_tensor = ctx->get_saved_variables()[13];
+    int nmus = ctx->get_saved_variables()[14].item<int>();
+    at::Tensor binum_tensor = ctx->get_saved_variables()[15];
+    at::Tensor bilist_tensor = ctx->get_saved_variables()[16];
+    at::Tensor bnumneigh_tensor = ctx->get_saved_variables()[17];
+    at::Tensor bfirstneigh_tensor = ctx->get_saved_variables()[18];
+    at::Tensor brcs_tensor = ctx->get_saved_variables()[19];
+    at::Tensor btypes_tensor = ctx->get_saved_variables()[20];
+    int ntypes = ctx->get_saved_variables()[21].item<int>();
+    int nghost = ctx->get_saved_variables()[22].item<int>();
+    double rmax = ctx->get_saved_variables()[23].item<double>();
+    double rmin = ctx->get_saved_variables()[24].item<double>();
     int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
-    int num_linear_coeffs = linear_coeffs_tensor.size(0);
+    int num_linear_coeffs = (int)linear_coeffs_tensor.size(0);
 
     int nbatches = (int)bgrad_output_tensor.size(0);
     int alpha_index_basic_count = (int)alpha_index_basic_tensor.size(0);
@@ -269,7 +274,61 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
         bloss_der2linear_coeffs_tensor = at::zeros({nbatches, num_linear_coeffs}, float_options);
         bloss_der2type_bias_tensor = at::zeros({nbatches, ntypes}, float_options);
 
+        for (int bb=0; bb<nbatches; bb++) {
+            float *loss_der2coeffs = bloss_der2coeffs_tensor[bb].data_ptr<float>();
+            float *loss_der2linear_coeffs = bloss_der2linear_coeffs_tensor[bb].data_ptr<float>();
+            float *loss_der2type_bias = bloss_der2type_bias_tensor[bb].data_ptr<float>();
+            float etot_dft = betot_dft_tensor[bb].item<float>();
+            float (*force_dft)[3] = (float (*)[3])bforce_dft_tensor[bb].data_ptr<float>();
+            float *virial_dft = bvirial_dft_tensor[bb].data_ptr<float>();
+            float *coeffs = coeffs_tensor.data_ptr<float>();
+            float *linear_coeffs = linear_coeffs_tensor.data_ptr<float>();
+            float *type_bias = type_bias_tensor.data_ptr<float>();
+            int (*alpha_index_basic)[4] = (int (*)[4])alpha_index_basic_tensor.data_ptr<int>();
+            int (*alpha_index_times)[4] = (int (*)[4])alpha_index_times_tensor.data_ptr<int>();
+            int *alpha_moment_mapping = alpha_moment_mapping_tensor.data_ptr<int>();
+            int inum = binum_tensor[bb].item<int>();
+            int *ilist = bilist_tensor[bb].data_ptr<int>();
+            int *numneigh = bnumneigh_tensor[bb].data_ptr<int>();
+            int *firstneigh = bfirstneigh_tensor[bb].data_ptr<int>();
+            float (*rcs)[3] = (float (*)[3])brcs_tensor[bb].data_ptr<float>();
+            int *types = btypes_tensor[bb].data_ptr<int>();
 
+
+            LinearMtp<float>::find_loss_backward(
+                loss_der2coeffs,
+                loss_der2linear_coeffs,
+                loss_der2type_bias,
+                e_weight,
+                f_weight,
+                v_weight,
+                etot_dft,
+                force_dft,
+                virial_dft,
+                chebyshev_size,
+                coeffs,
+                linear_coeffs,
+                type_bias,
+                alpha_moments_count,
+                alpha_index_basic_count,
+                alpha_index_basic,
+                alpha_index_times_count,
+                alpha_index_times,
+                alpha_scalar_moment,
+                alpha_moment_mapping,
+                nmus,
+                inum,
+                ilist,
+                numneigh,
+                firstneigh,
+                rcs,
+                types,
+                ntypes,
+                umax_num_neighs,
+                nghost,
+                rmax,
+                rmin);
+        }
     } else {
         float_options = c10::TensorOptions()
                             .dtype(torch::kFloat64)
@@ -278,10 +337,91 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
         bloss_der2linear_coeffs_tensor = at::zeros({nbatches, num_linear_coeffs}, float_options);
         bloss_der2type_bias_tensor = at::zeros({nbatches, ntypes}, float_options);
 
+        for (int bb=0; bb<nbatches; bb++) {
+            double *loss_der2coeffs = bloss_der2coeffs_tensor[bb].data_ptr<double>();
+            double *loss_der2linear_coeffs = bloss_der2linear_coeffs_tensor[bb].data_ptr<double>();
+            double *loss_der2type_bias = bloss_der2type_bias_tensor[bb].data_ptr<double>();
+            double etot_dft = betot_dft_tensor[bb].item<double>();
+            double (*force_dft)[3] = (double (*)[3])bforce_dft_tensor[bb].data_ptr<double>();
+            double *virial_dft = bvirial_dft_tensor[bb].data_ptr<double>();
+            double *coeffs = coeffs_tensor.data_ptr<double>();
+            double *linear_coeffs = linear_coeffs_tensor.data_ptr<double>();
+            double *type_bias = type_bias_tensor.data_ptr<double>();
+            int (*alpha_index_basic)[4] = (int (*)[4])alpha_index_basic_tensor.data_ptr<int>();
+            int (*alpha_index_times)[4] = (int (*)[4])alpha_index_times_tensor.data_ptr<int>();
+            int *alpha_moment_mapping = alpha_moment_mapping_tensor.data_ptr<int>();
+            int inum = binum_tensor[bb].item<int>();
+            int *ilist = bilist_tensor[bb].data_ptr<int>();
+            int *numneigh = bnumneigh_tensor[bb].data_ptr<int>();
+            int *firstneigh = bfirstneigh_tensor[bb].data_ptr<int>();
+            double (*rcs)[3] = (double (*)[3])brcs_tensor[bb].data_ptr<double>();
+            int *types = btypes_tensor[bb].data_ptr<int>();
 
+            LinearMtp<double>::find_loss_backward(
+                loss_der2coeffs,
+                loss_der2linear_coeffs,
+                loss_der2type_bias,
+                e_weight,
+                f_weight,
+                v_weight,
+                etot_dft,
+                force_dft,
+                virial_dft,
+                chebyshev_size,
+                coeffs,
+                linear_coeffs,
+                type_bias,
+                alpha_moments_count,
+                alpha_index_basic_count,
+                alpha_index_basic,
+                alpha_index_times_count,
+                alpha_index_times,
+                alpha_scalar_moment,
+                alpha_moment_mapping,
+                nmus,
+                inum,
+                ilist,
+                numneigh,
+                firstneigh,
+                rcs,
+                types,
+                ntypes,
+                umax_num_neighs,
+                nghost,
+                rmax,
+                rmin);
+        }
     }
 
-    return {};
+    bloss_der2coeffs_tensor.requires_grad_(true);
+    bloss_der2linear_coeffs_tensor.requires_grad_(true);
+    bloss_der2type_bias_tensor.requires_grad_(true);
+    return {at::Tensor(), 
+            at::Tensor(),
+            at::Tensor(),
+            at::Tensor(), 
+            at::Tensor(), 
+            at::Tensor(),
+            at::Tensor(),
+            bloss_der2coeffs_tensor,
+            bloss_der2linear_coeffs_tensor,
+            bloss_der2type_bias_tensor,
+            at::Tensor(),
+            at::Tensor(), 
+            at::Tensor(),
+            at::Tensor(),
+            at::Tensor(),
+            at::Tensor(), 
+            at::Tensor(), 
+            at::Tensor(),
+            at::Tensor(), 
+            at::Tensor(), 
+            at::Tensor(),
+            at::Tensor(),
+            at::Tensor(), 
+            at::Tensor(), 
+            at::Tensor()
+            };
 }
 
 
