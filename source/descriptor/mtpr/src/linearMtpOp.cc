@@ -143,7 +143,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
             int *firstneigh = bfirstneigh_tensor[bb].data_ptr<int>();
             double (*rcs)[3] = (double (*)[3])brcs_tensor[bb].data_ptr<double>();
             int *types = btypes_tensor[bb].data_ptr<int>();
-printf("+++ %g\n", (*loss));
+
             LinearMtp<double>::find_loss(
                 (*loss),
                 e_weight,
@@ -175,7 +175,6 @@ printf("+++ %g\n", (*loss));
                 nghost,
                 rmax,
                 rmin);
-printf("+++ %g\n", (*loss));
         }
     }
 
@@ -266,7 +265,6 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
     at::Tensor bloss_der2linear_coeffs_tensor;
     at::Tensor bloss_der2type_bias_tensor;
     
-    // To do
     if (bgrad_output_tensor.dtype() == torch::kFloat32) {
         float_options = c10::TensorOptions()
                             .dtype(torch::kFloat32)
@@ -397,6 +395,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
     bloss_der2coeffs_tensor.requires_grad_(true);
     bloss_der2linear_coeffs_tensor.requires_grad_(true);
     bloss_der2type_bias_tensor.requires_grad_(true);
+
     return {at::Tensor(), 
             at::Tensor(),
             at::Tensor(),

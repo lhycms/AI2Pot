@@ -129,7 +129,7 @@ protected:
 
         rmax = 5.0;
         rmin = 2.0;
-        
+
         // Establish neighbor list
         ntypes = 2;
         num_atoms = 12;
@@ -221,8 +221,11 @@ protected:
         bforce_dft_tensor = at::zeros({1, num_atoms, 3}, float_options);
         bvirial_dft_tensor = at::zeros({1, 9}, float_options);
         coeffs_tensor = at::zeros({num_coeffs}, float_options);
+        coeffs_tensor.requires_grad_(true);
         linear_coeffs_tensor = at::zeros({alpha_scalar_moments}, float_options);
+        linear_coeffs_tensor.requires_grad_(true);
         type_bias_tensor = at::zeros({ntypes}, float_options);
+        type_bias_tensor.requires_grad_(true);
         binum_tensor = at::zeros({1}, int_options);
         bilist_tensor = at::zeros({1, num_atoms}, int_options);
         bnumneigh_tensor = at::zeros({1, num_atoms}, int_options);
@@ -292,7 +295,11 @@ TEST_F(LinearMtpOpTest, apply) {
         nghost,
         rmax,
         rmin)[0];
-std::cout << loss_tensor << std::endl;
+std::cout << "loss_tensor:\n" << loss_tensor << std::endl;
+    loss_tensor.backward();
+std::cout << coeffs_tensor.grad() << std::endl;
+std::cout << linear_coeffs_tensor.grad() << std::endl;
+std::cout << type_bias_tensor.grad() << std::endl;
 }
 
 
