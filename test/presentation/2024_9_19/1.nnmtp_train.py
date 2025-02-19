@@ -5,7 +5,8 @@ from torch.utils.data import DataLoader
 import lightning as L
 
 from ai2pot.data import ScDataset
-from ai2pot.mtp import NNMtp, LitNNMtp
+from ai2pot.models.mtp import NNMtp
+from ai2pot.models.potential_train import LitPotential
 
 
 # 1. 初始化 Dataset
@@ -26,7 +27,7 @@ nn_mtp = NNMtp(mtp_level=16,
                fit_sizes_list=[],
                fit_activation=nn.Tanh())
 nn_mtp.to(torch.float64)
-lit_nn_mtp = LitNNMtp(model=nn_mtp)
+lit_nn_mtp = LitPotential(model=nn_mtp)
 dataloader = DataLoader(dataset=mlff_dataset, batch_size=5, shuffle=True)
 # 3. 开始训练
 trainer = L.Trainer(max_epochs=3)

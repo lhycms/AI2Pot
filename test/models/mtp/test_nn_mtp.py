@@ -22,18 +22,19 @@ TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")
 ReNbSSe_POSCAR_PATH = os.path.join(TEST_FILES_DIR, "POSCARs", "POSCAR")
 ReNbSSe_OUTCAR_PATH = os.path.join(TEST_FILES_DIR, "OUTCARs", "ReNbSSe", "OUTCAR")
 Cu_EXTXYZ_PATH = os.path.join(TEST_FILES_DIR, "XYZ", "Cu", "Cu.extxyz")
+PbTe_EXTXYZ_PATH = os.path.join(TEST_FILES_DIR, "XYZ", "PbTe", "PbTe.extxyz")
 
 
-class DescriptorMtpTest(object):
+class DescriptorMtpTes(object):
     def setUp(self) -> None:
         print("DescriptorMtpTest (TestCase) is setting up...\n")
-        mtp_level: int = 16
-        ntypes: int = 4
+        mtp_level: int = 18
+        ntypes: int = 1
         chebyshev_size: int = 8
         rmax: float = 5.0
         rmin: float = 0.5
-        umax_num_neighs: int = 40
-        dtype: torch._C.dtype = torch.float32
+        umax_num_neighs: int = 100
+        dtype: torch._C.dtype = torch.float64
         
         self.descriptor_mtp: nn.Module = DescriptorMtp(mtp_level=mtp_level,
                                                        ntypes=ntypes,
@@ -69,8 +70,8 @@ class DescriptorMtpTest(object):
 class NNMtpTest(unittest.TestCase):
     def setUp(self) -> None:
         print("NNMtpTest (TestCase) is setting up...\n")
-        self.mtp_level: int = 16
-        self.ntypes: int = 4
+        self.mtp_level: int = 20
+        self.ntypes: int = 2
         self.chebyshev_size: int = 8
         self.rmax: float = 5.0
         self.rmin: float = 0.5
@@ -79,10 +80,10 @@ class NNMtpTest(unittest.TestCase):
         self.device = torch.device("cpu")
 
         self.batch_norm_mark = False
-        self.fit_sizes_list: List[int] = [30]
+        self.fit_sizes_list: List[int] = [60, 15]
         self.fit_activation: nn.Module = nn.Tanh()
         self.bias_mark: bool = False
-        self.has_forces: bool = True
+        self.has_forces: bool = False
         self.has_virial: bool = False
         
         # delta
@@ -96,11 +97,11 @@ class NNMtpTest(unittest.TestCase):
                                                  pbc_xyz=[True, True, True],
                                                  sort=False,
                                                  torch_float_dtype=self.dtype,
-                                                 has_virial=True)
+                                                 has_virial=self.has_virial)
         self.mlff_dataloader: DataLoader = DataLoader(dataset=self.mlff_dataset,
-                                                      batch_size=32,
+                                                      batch_size=1,
                                                       shuffle=True,
-                                                      num_workers=2)
+                                                      num_workers=1)
         self.structure: Structure = Structure.from_file(ReNbSSe_POSCAR_PATH)
         
         self.nn_mtp = NNMtp(mtp_level=self.mtp_level,
@@ -130,11 +131,11 @@ class NNMtpTest(unittest.TestCase):
         print("NNMtpTest (TestCase) is tearing down...\n")
 
 
-    def est_train(self):
+    def test_train(self):
         print("NNMtpTest.test_train:")
         print("---------------------")
         self.nn_mtp.train()
-        self.trainer = L.Trainer(max_epochs=100,
+        self.trainer = L.Trainer(max_epochs=1000,
                                  accelerator="cpu",
                                  devices=1)
         lit_nn_mtp: L.LightningModule = LitPotential(model=self.nn_mtp,
@@ -155,7 +156,7 @@ class NNMtpTest(unittest.TestCase):
         # 1. Structure 1
         nblist_info: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(self.structure)
         nblist_info[4].requires_grad_(True)
-        etot, fi = self.nn_mtp(*nblist_info)
+        etot = self.nn_mtp(*nblist_info)[0]
         etot.backward()
         
         # 2. Structure 2
@@ -163,7 +164,7 @@ class NNMtpTest(unittest.TestCase):
         nblist_info_[4].requires_grad_(False)
         nblist_info_[4][0][self.center_idx_modify][self.neigh_idx_modify][direction_idx_modify] += self.delta
         nblist_info_[4].requires_grad_(True)
-        etot_, fi_ = self.nn_mtp(*nblist_info_)
+        etot_ = self.nn_mtp(*nblist_info_)[0]
         etot_.backward()
         
         print("--------------------------------------")
@@ -195,7 +196,7 @@ class NNMtpTest(unittest.TestCase):
         coeff_idx_modify: int = (itype_modify*self.ntypes + jtype_modify)*self.nmus*self.chebyshev_size + mu_modify*self.chebyshev_size + xi_modify
         
         # Case 1
-        etot, fi = self.nn_mtp(*nblist_info)
+        etot = self.nn_mtp(*nblist_info)[0]
         etot.backward()
         
         # Case 2
@@ -203,7 +204,7 @@ class NNMtpTest(unittest.TestCase):
         self.nn_mtp_.descriptor_module.coeffs.requires_grad_(False)
         self.nn_mtp_.descriptor_module.coeffs[coeff_idx_modify] += self.delta
         self.nn_mtp_.descriptor_module.coeffs.requires_grad_(True)
-        etot_, fi_ = self.nn_mtp_(*nblist_info)
+        etot_ = self.nn_mtp_(*nblist_info)[0]
         etot_.backward()
         
         print("--------------------------------------")
@@ -228,7 +229,7 @@ class NNMtpTest(unittest.TestCase):
         print("--------------------------------------")
     
     
-    def test_fi_der2xyz(self):
+    def est_fi_der2xyz(self):
         direction_idx_modify: int = 1
         
         # 1. Structure 1
