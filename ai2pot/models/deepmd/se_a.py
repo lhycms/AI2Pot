@@ -86,9 +86,32 @@ class DeepPotSeADescriptor(nn.Module):
         self.M2: int = M2
         self.bias_mark: bool = bias_mark
         self.activation_fn: nn.Module = activation_fn
-    
-    def forward(self):
-        pass
+        
+        self.neigh_breakpoints_list: List[int] = [0]
+        for ii in range(ntypes):
+            self.neigh_breakpoints_list.append(self.neigh_breakpoints_list[ii-1] + umax_num_neighs_tensor[ii])
+        
+        self.embedding_nets: nn.ModuleList = nn.ModuleList()
+        for _ in range(ntypes):
+            for _ in range(ntypes):
+                self.embedding_sizes_list.append(EmbeddingNet(layer_sizes_list=embedding_sizes_list,
+                                                              bias_mark=self.bias_mark,
+                                                              activation_fn=self.activation_fn))
+        
+    def forward(self,
+                binum_tensor: torch.Tensor,
+                bilist_tensor: torch.Tensor,
+                bnumneigh_tensor: torch.Tensor,
+                bfirstneigh_tensor: torch.Tensor,
+                brcs_tensor: torch.Tensor,
+                btypes_tensor: torch.Tensor,
+                bnghost_tensor: torch.Tensor):
+        for itype in range(self.ntypes):
+            for jtype in range(self.ntypes):
+                # merge the `batch dim` and `natoms dim`
+                mask_itype: torch.Tensor = (torch.gather(input=btypes_tensor, dim=1, index=bilist_tensor) == itype)
+                pass
+
     
     
 
@@ -140,4 +163,4 @@ class DeepPotSeA(nn.Module):
                 btypes_tensor: torch.Tensor,
                 bnghost_tensor: torch.Tensor):
         pass
-        
+    

@@ -16,6 +16,7 @@ class Nblist(object):
         cell: np.ndarray = self.structure.lattice.matrix
         unique_species = sorted(set(self.structure.species), key=lambda sp: sp.Z)
         type_map: Dict[str, int] = {element: idx for idx, element in enumerate(unique_species)}
+        type_map_inv: Dict[str, int] = {idx: element.Z for idx, element in enumerate(unique_species)}
         types: np.ndarray = np.array([type_map[el] for el in self.structure.species])
         coords: np.ndarray = self.structure.frac_coords
         nblist_info = nblist.find_info4mlff(cell,
@@ -29,6 +30,7 @@ class Nblist(object):
         setattr(self, "_rcut", rcut)
         setattr(self, "_umax_num_neigh_atoms", umax_num_neigh_atoms)
         setattr(self, "_type_map", type_map)
+        setattr(self, "_type_map_inv", type_map_inv)
     
         setattr(self, "_inum", nblist_info[0])
         setattr(self, "_ilist", nblist_info[1])
@@ -149,3 +151,11 @@ class Nblist(object):
     @type_map.setter
     def type_map(self, value: Dict[Element, int]):
         self._type_map = value
+
+    @property
+    def type_map_inv(self) -> Dict[int, int]:
+        return self._type_map_inv
+    
+    @type_map_inv.setter
+    def type_map(self, value: Dict[int, int]):
+        self._type_map_inv = value

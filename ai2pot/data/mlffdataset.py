@@ -222,7 +222,7 @@ class ExtxyzDataset(Dataset):
             self.npy_float_dtype = np.float64
             self.torch_float_dtype = torch.float64
         self.max_num_atoms: int = self._get_max_num_atoms()
-        self.type_map: Dict[int, int] = self._get_type_map()
+        self.type_map: Dict[int, int] = self._get_type_map()    # {atomic_numbers : types}
 
     
     def __len__(self):
@@ -235,18 +235,12 @@ class ExtxyzDataset(Dataset):
         coords: np.ndarray = self.atoms_list[index].get_positions().astype(self.npy_float_dtype)
 
         num_real_atoms: int = len(self.atoms_list[index])
-        ilist: np.ndarray = np.zeros(shape=(self.max_num_atoms),
-                                     dtype=np.int32) - 1
-        numneigh: np.ndarray = np.zeros(shape=(self.max_num_atoms),
-                                        dtype=np.int32) - 1
-        firstneigh: np.ndarray = np.zeros(shape=(self.max_num_atoms, self.umax_num_neigh_atoms),
-                                          dtype=np.int32) - 1
-        relative_coords: np.ndarray = np.zeros(shape=(self.max_num_atoms, self.umax_num_neigh_atoms, 3),
-                                               dtype=self.npy_float_dtype) - 1
-        types: np.ndarray = np.zeros(shape=(self.max_num_atoms),
-                                     dtype=np.int32) - 1
-        forces: np.ndarray = np.zeros(shape=(self.max_num_atoms, 3),
-                                      dtype=self.npy_float_dtype) - 1
+        ilist: np.ndarray = np.zeros(shape=(self.max_num_atoms), dtype=np.int32)
+        numneigh: np.ndarray = np.zeros(shape=(self.max_num_atoms), dtype=np.int32)
+        firstneigh: np.ndarray = np.zeros(shape=(self.max_num_atoms, self.umax_num_neigh_atoms), dtype=np.int32)
+        relative_coords: np.ndarray = np.zeros(shape=(self.max_num_atoms, self.umax_num_neigh_atoms, 3), dtype=self.npy_float_dtype)
+        types: np.ndarray = np.zeros(shape=(self.max_num_atoms), dtype=np.int32)
+        forces: np.ndarray = np.zeros(shape=(self.max_num_atoms, 3), dtype=self.npy_float_dtype)
         
         inum, ilist[:num_real_atoms], numneigh[:num_real_atoms], firstneigh[:num_real_atoms], \
         relative_coords[:num_real_atoms], types[:num_real_atoms], nghost = \
