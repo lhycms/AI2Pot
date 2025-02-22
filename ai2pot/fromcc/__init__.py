@@ -25,6 +25,8 @@ torch.ops.load_library(mtpr_bind_so_path)
 # name
 mtpParamOp = torch.ops.mtpr.mtpParamOp
 mtpBasisOp = torch.ops.mtpr.mtpBasisOp
+linearMtpToLossOp = torch.ops.mtpr.linearMtpToLossOp
+linearMtpToEFLossOp = torch.ops.mtpr.linearMtpToEFLossOp
 
 ### Part 3. fvt
 fvt_sr_lib_dir: str = os.path.join(ai2pot_source_build_lib_dir, "fvt")

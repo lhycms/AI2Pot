@@ -26,7 +26,7 @@ class DescriptorMtp(nn.Module):
         self.rmax: float = rmax
         self.rmin: float = rmin
         self.umax_num_neighs: int = umax_num_neighs
-        mtp_param_info: List[torch.Tensor] = mtpParamOp(self.mtp_level)
+        mtp_param_info: List[torch.Tensor] = mtpParamOp(self.mtp_level)[1:]
         self.register_buffer("alpha_index_basic_tensor", mtp_param_info[0])
         self.register_buffer("alpha_index_times_tensor", mtp_param_info[1])
         self.register_buffer("alpha_moment_mapping_tensor", mtp_param_info[2])

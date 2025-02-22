@@ -295,13 +295,45 @@ TEST_F(LinearMtpOpTest, apply) {
         nghost,
         rmax,
         rmin)[0];
-std::cout << "loss_tensor:\n" << loss_tensor << std::endl;
+std::cout << "1.1. loss_tensor=\n" << loss_tensor << std::endl;
     loss_tensor.backward();
-std::cout << coeffs_tensor.grad() << std::endl;
-std::cout << linear_coeffs_tensor.grad() << std::endl;
-std::cout << type_bias_tensor.grad() << std::endl;
+std::cout << "1.2. coeffs_tensor.grad()=\n" << coeffs_tensor.grad() << std::endl;
+std::cout << "1.3. linear_coeffs_tensor.grad()=\n" << linear_coeffs_tensor.grad() << std::endl;
+std::cout << "1.4. type_bias_tensor.grad() = \n" << type_bias_tensor.grad() << std::endl;
 }
 
+
+TEST_F(LinearMtpOpTest, ef_apply) {
+    at::Tensor loss_tensor = ai2pot::mtpr::LinearMtpToEFLossOp(
+        e_weight,
+        f_weight,
+        betot_dft_tensor,
+        bforce_dft_tensor,
+        chebyshev_size,
+        coeffs_tensor,
+        linear_coeffs_tensor,
+        type_bias_tensor,
+        alpha_moments_count,
+        alpha_index_basic_tensor,
+        alpha_index_times_tensor,
+        alpha_moment_mapping_tensor,
+        nmus,
+        binum_tensor,
+        bilist_tensor,
+        bnumneigh_tensor,
+        bfirstneigh_tensor,
+        brcs_tensor,
+        btypes_tensor,
+        ntypes,
+        nghost,
+        rmax,
+        rmin)[0];
+std::cout << "2.1. loss_tensor=\n" << loss_tensor << std::endl;
+    loss_tensor.backward();
+std::cout << "2.2. coeffs_tensor.grad()=\n" << coeffs_tensor.grad() << std::endl;
+std::cout << "2.3. linear_coeffs_tensor.grad()=\n" << linear_coeffs_tensor.grad() << std::endl;
+std::cout << "2.4. type_bias_tensor.grad() = \n" << type_bias_tensor.grad() << std::endl;
+}
 
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);

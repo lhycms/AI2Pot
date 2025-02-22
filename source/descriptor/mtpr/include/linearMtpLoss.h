@@ -95,7 +95,7 @@ void MtpLoss<CoordType>::find_loss(
 
 
 template <typename CoordType>
-static void MtpLoss<CoordType>::find_ef_loss(
+void MtpLoss<CoordType>::find_ef_loss(
     CoordType &loss,
     int inum,
     int *ilist,

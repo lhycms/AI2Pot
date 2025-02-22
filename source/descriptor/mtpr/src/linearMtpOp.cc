@@ -544,7 +544,6 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
                 (*loss),
                 e_weight,
                 f_weight,
-                v_weight,
                 etot_dft,
                 force_dft,
                 chebyshev_size,
@@ -670,7 +669,6 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
             float *loss_der2type_bias = bloss_der2type_bias_tensor[bb].data_ptr<float>();
             float etot_dft = betot_dft_tensor[bb].item<float>();
             float (*force_dft)[3] = (float (*)[3])bforce_dft_tensor[bb].data_ptr<float>();
-            float *virial_dft = bvirial_dft_tensor[bb].data_ptr<float>();
             float *coeffs = coeffs_tensor.data_ptr<float>();
             float *linear_coeffs = linear_coeffs_tensor.data_ptr<float>();
             float *type_bias = type_bias_tensor.data_ptr<float>();
