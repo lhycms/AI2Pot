@@ -7,7 +7,6 @@ from ai2pot.models.potential_loss import (ERmse,
                                           VRmse)
 
 
-
 class LitPotential(L.LightningModule):
     def __init__(self,
                  model: nn.Module,
@@ -93,7 +92,6 @@ class LitPotential(L.LightningModule):
     #    self.log('learning_rate', current_lr, prog_bar=True)
 
 
-
 class LitPotentialToLoss(L.LightningModule):
     def __init__(self,
                  model: nn.Module,
@@ -101,10 +99,10 @@ class LitPotentialToLoss(L.LightningModule):
                  lr_end: float = 1e-5,
                  e_wgt_start: float = 1.0,
                  e_wgt_end: float = 10.0,
-                 f_wgt_start: float = 1000.0,
-                 f_wgt_end: float = 10.0,
-                 v_wgt_start: float = 0.0,
-                 v_wgt_end: float = 0.0):
+                 f_wgt_start: float = 100.0,
+                 f_wgt_end: float = 1.0,
+                 v_wgt_start: float = 10.0,
+                 v_wgt_end: float = 1.0):
         super(LitPotentialToLoss, self).__init__()
         self.model: nn.Module = model
         self.lr_start: float = lr_start
@@ -129,16 +127,41 @@ class LitPotentialToLoss(L.LightningModule):
     def training_step(self, batch, batch_idx):
         e_wgt, f_wgt, v_wgt = self.get_efv_wgts()
         if (self.model.fit_virial):
-            pass
+            binum, bilist, bnumneigh, bfirstneigh, brcs, btypes, bnghost, betot_dft_tensor, bforce_dft_tensor, bvirial_dft_tensor = batch
+            bmse_tensor: torch.Tensor = self.model(e_wgt,
+                                                   f_wgt,
+                                                   v_wgt,
+                                                   betot_dft_tensor,
+                                                   bforce_dft_tensor,
+                                                   bvirial_dft_tensor,
+                                                   binum,
+                                                   bilist,
+                                                   bnumneigh,
+                                                   bfirstneigh,
+                                                   brcs,
+                                                   btypes,
+                                                   bnghost[0].item())
         else:
-            pass
+            binum, bilist, bnumneigh, bfirstneigh, brcs, btypes, bnghost, betot_dft_tensor, bforce_dft_tensor = batch
+            bmse_tensor: torch.Tensor = self.model(e_wgt,
+                                                   f_wgt,
+                                                   betot_dft_tensor,
+                                                   bforce_dft_tensor,
+                                                   binum,
+                                                   bilist,
+                                                   bnumneigh,
+                                                   bfirstneigh,
+                                                   brcs,
+                                                   btypes,
+                                                   bnghost[0].item())
+        return bmse_tensor.mean()
     
     
     def configure_optimizers(self):
-        optimizer: torch.optim.Optimizer = torch.optim.Adam(params=self.model.parameters(),
-                                                            lr=self.lr_start)
+        optimizer: torch.optim.Optimizer = torch.optim.AdamW(params=self.model.parameters(),
+                                                             lr=self.lr_start)
         scheduler_exp = torch.optim.lr_scheduler.ExponentialLR(optimizer=optimizer,
-                                                               gamma=0.9)
+                                                               gamma=0.96)
         
         def lr_lambda(epoch):
             current_lr = scheduler_exp.get_last_lr()[0]

@@ -27,25 +27,25 @@ class LinearMtp(nn.Module):
         self.fit_virial: bool = fit_virial
         
         mtp_param_info: List[torch.Tensor] = mtpParamOp(self.mtp_level)
-        self.register_buffer(name="alpha_moments_count", tensor=mtp_param_info[0])
+        self.register_buffer(name="alpha_moments_count_tensor", tensor=mtp_param_info[0])
         self.alpha_moments_count: int = mtp_param_info[0].item()
         self.register_buffer(name="alpha_index_basic_tensor", tensor=mtp_param_info[1])
         self.register_buffer(name="alpha_index_times_tensor", tensor=mtp_param_info[2])
         self.register_buffer(name="alpha_moment_mapping_tensor", tensor=mtp_param_info[3])
         self.register_buffer(name="nmus_tensor", tensor=mtp_param_info[6])
-        self.nmus: int = mtp_param_info[5].item()
+        self.nmus: int = mtp_param_info[6].item()
         self.num_descriptors: int = self.alpha_moment_mapping_tensor.size()[0]
         
         coeffs_tensor: torch.Tensor = torch.Tensor(self.ntypes*self.ntypes*self.nmus*self.chebyshev_size)
-        nn.init.xavier_uniform_(coeffs_tensor, gain=1.0)
+        nn.init.normal_(coeffs_tensor, mean=0.0, std=0.1)
         self.register_parameter(name="coeffs_tensor", param=nn.Parameter(data=coeffs_tensor))
         
         linear_coeffs_tensor: torch.Tensor = torch.Tensor(self.num_descriptors)
-        nn.init.xavier_uniform_(linear_coeffs_tensor, gain=1.0)
+        nn.init.normal_(linear_coeffs_tensor, mean=0.0, std=0.1)
         self.register_parameter(name="linear_coeffs_tensor", param=nn.Parameter(data=linear_coeffs_tensor))
         
         type_bias_tensor: torch.Tensor = torch.Tensor(self.ntypes)
-        nn.init.xavier_uniform_(type_bias_tensor, gain=1.0)
+        nn.init.normal_(type_bias_tensor, mean=0.0, std=0.1)
         self.register_parameter(name="type_bias_tensor", param=nn.Parameter(data=type_bias_tensor))
     
     
@@ -95,7 +95,7 @@ class LinearMtp(nn.Module):
                                                       self.ntypes,
                                                       nghost,
                                                       self.rmax,
-                                                      self.rmin)
+                                                      self.rmin)[0]
         return bmse_tensor
     
     
@@ -133,7 +133,7 @@ class LinearMtp(nn.Module):
                                                         self.ntypes,
                                                         nghost,
                                                         self.rmax,
-                                                        self.rmin)
+                                                        self.rmin)[0]
         return bmse_tensor
     
     

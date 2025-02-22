@@ -120,7 +120,7 @@ void MtpLoss<CoordType>::find_ef_loss(
     
     // Energy term
     CoordType e_loss = 0.0;
-    e_loss += e_weight / inum * std::pow(etot_ml - etot_dft, 2);
+    e_loss = e_weight / inum * std::pow(etot_ml - etot_dft, 2);
 
     loss = f_loss + e_loss;
 }
