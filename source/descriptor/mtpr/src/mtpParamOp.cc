@@ -54,7 +54,8 @@ torch::autograd::variable_list MtpParamFunction::forward(
             mus4moms[ii*mtp_param.max_num_mus4mom() + jj] = mtp_param.mus4moms_ptr()[ii*mtp_param.max_num_mus4mom() + jj];
     }
     
-    return {alpha_index_basic_tensor, 
+    return {torch::tensor(mtp_param.alpha_moments_count(), int_options),
+            alpha_index_basic_tensor, 
             alpha_index_times_tensor, 
             alpha_moment_mapping_tensor, 
             num_mus4moms_tensor, 

@@ -38,6 +38,17 @@ public:
         CoordType (*force_dft)[3],
         CoordType *virial_ml,
         CoordType *virial_dft);
+    
+    static void find_ef_loss(
+        CoordType &loss,
+        int inum,
+        int *ilist,
+        CoordType e_weight,
+        CoordType f_weight,
+        CoordType etot_ml,
+        CoordType etot_dft,
+        CoordType (*force_ml)[3],
+        CoordType (*force_dft)[3]);
 };  // class : MtpLoss
 
 
@@ -80,6 +91,38 @@ void MtpLoss<CoordType>::find_loss(
     e_loss += e_weight / inum * std::pow(etot_ml - etot_dft, 2);
 
     loss = f_loss + v_loss + e_loss;
+}
+
+
+template <typename CoordType>
+static void MtpLoss<CoordType>::find_ef_loss(
+    CoordType &loss,
+    int inum,
+    int *ilist,
+    CoordType e_weight,
+    CoordType f_weight,
+    CoordType etot_ml,
+    CoordType etot_dft,
+    CoordType (*force_ml)[3],
+    CoordType (*force_dft)[3])
+{
+    loss = 0.0;
+
+    // Force term
+    CoordType f_loss = 0.0;
+    for (int ii=0; ii<inum; ii++) {
+        int center_idx = ilist[ii];
+        for (int aa=0; aa<3; aa++) {
+            f_loss += std::pow(force_ml[center_idx][aa] - force_dft[center_idx][aa], 2);
+        }
+    }
+    f_loss = f_weight / (3 * inum) * f_loss;
+    
+    // Energy term
+    CoordType e_loss = 0.0;
+    e_loss += e_weight / inum * std::pow(etot_ml - etot_dft, 2);
+
+    loss = f_loss + e_loss;
 }
 
 

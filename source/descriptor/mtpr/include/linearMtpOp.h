@@ -56,7 +56,42 @@ public:
     static torch::autograd::variable_list backward(
         torch::autograd::AutogradContext *ctx,
         torch::autograd::variable_list bgrad_outputs_tensor);
-};  // class : LinearMtpToLoss
+};  // class : LinearMtpToLossFunction
+
+
+class LinearMtpToEFLossFunction : public torch::autograd::Function<LinearMtpToEFLossFunction>
+{
+public:
+    static torch::autograd::variable_list forward(
+        torch::autograd::AutogradContext *ctx,
+        double e_weight,
+        double f_weight,
+        const at::Tensor& betot_dft_tensor,
+        const at::Tensor& bforce_dft_tensor,
+        int chebyshev_size,
+        const at::Tensor& coeffs_tensor,
+        const at::Tensor& linear_coeffs_tensor,
+        const at::Tensor& type_bias_tensor,
+        int alpha_moments_count,
+        const at::Tensor& alpha_index_basic,
+        const at::Tensor& alpha_index_times,
+        const at::Tensor& alpha_moment_mapping,
+        int nmus,
+        const at::Tensor& binum_tensor,
+        const at::Tensor& bilist_tensor,
+        const at::Tensor& bnumneigh_tensor,
+        const at::Tensor& bfirstneigh_tensor,
+        const at::Tensor& brcs_tensor,
+        const at::Tensor& btypes_tensor,
+        int ntypes,
+        int nghost,
+        double rmax,
+        double rmin);
+
+    static torch::autograd::variable_list backward(
+        torch::autograd::AutogradContext *ctx,
+        torch::autograd::variable_list bgrad_outputs_tensor);
+};  // class : LinearMtpToEFLossFunction
 
 
 torch::autograd::variable_list LinearMtpToLossOp(
@@ -66,6 +101,32 @@ torch::autograd::variable_list LinearMtpToLossOp(
     const at::Tensor& betot_dft_tensor,
     const at::Tensor& bforce_dft_tensor,
     const at::Tensor& bvirial_dft_tensor,
+    int chebyshev_size,
+    const at::Tensor& coeffs_tensor,
+    const at::Tensor& linear_coeffs_tensor,
+    const at::Tensor& type_bias_tensor,
+    int alpha_moments_count,
+    const at::Tensor& alpha_index_basic_tensor,
+    const at::Tensor& alpha_index_times_tensor,
+    const at::Tensor& alpha_moment_mapping_tensor,
+    int nmus,
+    const at::Tensor& binum_tensor,
+    const at::Tensor& bilist_tensor,
+    const at::Tensor& bnumneigh_tensor,
+    const at::Tensor& bfirstneigh_tensor,
+    const at::Tensor& brcs_tensor,
+    const at::Tensor& btypes_tensor,
+    int ntypes,
+    int nghost,
+    double rmax,
+    double rmin);
+
+
+torch::autograd::variable_list LinearMtpToEFLossOp(
+    double e_weight,
+    double f_weight,
+    const at::Tensor& betot_dft_tensor,
+    const at::Tensor& bforce_dft_tensor,
     int chebyshev_size,
     const at::Tensor& coeffs_tensor,
     const at::Tensor& linear_coeffs_tensor,
