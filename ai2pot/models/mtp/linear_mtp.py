@@ -3,7 +3,7 @@ from typing import List
 import torch
 import torch.nn as nn
 
-from ai2pot.fromcc import (mtpParamOp, 
+from ai2pot.fromcc import (mtpParamOp,
                            linearMtpToLossOp,
                            linearMtpToEFLossOp)
 

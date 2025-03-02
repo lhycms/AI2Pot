@@ -102,7 +102,8 @@ class LitPotentialToLoss(L.LightningModule):
                  f_wgt_start: float = 100.0,
                  f_wgt_end: float = 1.0,
                  v_wgt_start: float = 10.0,
-                 v_wgt_end: float = 1.0):
+                 v_wgt_end: float = 1.0,
+                 lr_decay_epoch: int = 30):
         super(LitPotentialToLoss, self).__init__()
         self.model: nn.Module = model
         self.lr_start: float = lr_start
@@ -113,6 +114,7 @@ class LitPotentialToLoss(L.LightningModule):
         self.f_wgt_end: float = f_wgt_end
         self.v_wgt_start: float = v_wgt_start
         self.v_wgt_end: float = v_wgt_end
+        self.lr_decay_epoch: int = lr_decay_epoch
     
     
     def get_efv_wgts(self):
@@ -154,18 +156,27 @@ class LitPotentialToLoss(L.LightningModule):
                                                    brcs,
                                                    btypes,
                                                    bnghost[0].item())
+        print(self.optimizers().param_groups[0]['lr'])
+        print("---------------------------------------")
+        try:
+            print(self.model.coeffs_tensor[:10])
+            print(self.model.coeffs_tensor.grad[:10])
+        except:
+            pass
+        #print("---------------------------------------")
+        #print(self.model.linear_coeffs_tensor)
+        #print("---------------------------------------")
+        #print(self.model.type_bias_tensor)
         return bmse_tensor.mean()
     
     
     def configure_optimizers(self):
         optimizer: torch.optim.Optimizer = torch.optim.AdamW(params=self.model.parameters(),
                                                              lr=self.lr_start)
-        scheduler_exp = torch.optim.lr_scheduler.ExponentialLR(optimizer=optimizer,
-                                                               gamma=0.96)
         
-        def lr_lambda(epoch):
-            current_lr = scheduler_exp.get_last_lr()[0]
-            return max(current_lr, self.lr_end)
+        def lr_lambda(epoch: int):
+            lr_currrent: float = self.lr_start * (self.lr_end / self.lr_start) ** (epoch / self.lr_decay_epoch)
+            return max(lr_currrent, self.lr_end) / self.lr_start
 
         scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
         
