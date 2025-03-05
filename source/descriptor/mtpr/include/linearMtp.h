@@ -1348,8 +1348,8 @@ void LinearMtp<CoordType>::find_ef_loss_backward(
         }
 
         // Step 4.5. Loss derivative w.r.t. type_bias
-        for (int i=0; i<ntypes; i++)
-            loss_der2type_bias[i] += 2*e_weight/inum*(etot_ml - etot_dft);
+        //for (int i=0; i<ntypes; i++)
+        loss_der2type_bias[type_central] += 2*e_weight/inum*(etot_ml - etot_dft);
     }
 
 
