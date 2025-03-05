@@ -130,7 +130,6 @@ class MlffToLossInput(object):
                                             is_cart_coord=True,
                                             pbc_xyz=self.pbc_xyz,
                                             sort=self.sort)
-        print(nblist_info[5])
         return [
             e_weight,
             f_weight,

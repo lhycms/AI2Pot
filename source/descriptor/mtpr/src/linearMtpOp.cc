@@ -396,6 +396,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
     bloss_der2linear_coeffs_tensor.requires_grad_(true);
     bloss_der2type_bias_tensor.requires_grad_(true);
 
+
     return {at::Tensor(), 
             at::Tensor(),
             at::Tensor(),
@@ -403,9 +404,9 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
             at::Tensor(), 
             at::Tensor(),
             at::Tensor(),
-            bloss_der2coeffs_tensor,
-            bloss_der2linear_coeffs_tensor,
-            bloss_der2type_bias_tensor,
+            torch::matmul(bgrad_output_tensor, bloss_der2coeffs_tensor),
+            torch::matmul(bgrad_output_tensor, bloss_der2linear_coeffs_tensor),
+            torch::matmul(bgrad_output_tensor,bloss_der2type_bias_tensor),
             at::Tensor(),
             at::Tensor(), 
             at::Tensor(),
@@ -613,7 +614,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
     at::Tensor bgrad_output_tensor = bgrad_outputs_tensor[0];
     if ( !bgrad_output_tensor.is_contiguous() )
         bgrad_output_tensor = bgrad_output_tensor.contiguous();
-    
+
     double e_weight = ctx->get_saved_variables()[0].item<double>();
     double f_weight = ctx->get_saved_variables()[1].item<double>();
     at::Tensor betot_dft_tensor = ctx->get_saved_variables()[2];
@@ -785,9 +786,9 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
             at::Tensor(), 
             at::Tensor(),
             at::Tensor(),
-            bloss_der2coeffs_tensor,
-            bloss_der2linear_coeffs_tensor,
-            bloss_der2type_bias_tensor,
+            torch::matmul(bgrad_output_tensor, bloss_der2coeffs_tensor),
+            torch::matmul(bgrad_output_tensor, bloss_der2linear_coeffs_tensor),
+            torch::matmul(bgrad_output_tensor, bloss_der2type_bias_tensor),
             at::Tensor(),
             at::Tensor(), 
             at::Tensor(),
