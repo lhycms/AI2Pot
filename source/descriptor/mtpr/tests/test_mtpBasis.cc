@@ -85,7 +85,7 @@ protected:
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/26.almtp",
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/28.almtp"
         };
-        mtp_param._load(filenames[11]);
+        mtp_param._load(filenames[4]);
 //mtp_param.show();
 
         inum = 12;
@@ -316,7 +316,7 @@ printf("]\n");
 }
 
 
-/*
+
 TEST_F(MtpBasisTest, find_val_der4coeffs)
 {
     int center_idx_modify = 0;
@@ -411,11 +411,11 @@ printf("]\n");
     //ASSERT_DOUBLE_EQ(mtp_basis_der2coeffs[0*mtp_param.alpha_scalar_moments()*num_coeffs + 3 * num_coeffs + 0], 0);
     //ASSERT_DOUBLE_EQ(mtp_basis_der2coeffs[0*mtp_param.alpha_scalar_moments()*num_coeffs + 19 * num_coeffs + 0], 0);
 }
-*/
+
 
 TEST_F(MtpBasisTest, MomsValDer)
 {
-    int center_idx_modify = 3;
+    int center_idx_modify = 11;
     int neigh_idx_modify = 0;
     int direction_idx_modify = 2;
     double delta = 1E-7;

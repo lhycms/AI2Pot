@@ -112,7 +112,7 @@ protected:
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/26.almtp",
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/28.almtp"
         };
-        mtp_param._load(filenames[5]);
+        mtp_param._load(filenames[4]);
 //mtp_param.show();
 
         e_weight = 1.0;
@@ -128,7 +128,7 @@ protected:
         umax_num_neigh_atoms = 20;
         coeffs = (double*)malloc(sizeof(double) * ntypes * ntypes * mtp_param.nmus() * chebyshev_size);
         for (int ii=0; ii<ntypes*ntypes*mtp_param.nmus()*chebyshev_size; ii++)
-            coeffs[ii] = 0.1;
+            coeffs[ii] = 0.8;
 
         // Establish neighbor list
         num_atoms = 12;
