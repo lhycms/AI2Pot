@@ -937,9 +937,10 @@ void LinearMtp<CoordType>::find_loss_backward(
             distance_ij = std::sqrt( std::pow(NeighbVect[0], 2)
                                     + std::pow(NeighbVect[1], 2)
                                     + std::pow(NeighbVect[2], 2) );
-            distance_ij_inv = 1.0 / distance_ij;
             if (distance_ij > rmax)
                 continue;
+            distance_ij_inv = 1.0 / distance_ij;
+            p_RadialBasis->build(distance_ij);
 
             auto_dist_powers_[0] = 1.0;
             for (int aa=0; aa<3; aa++)
@@ -1031,8 +1032,7 @@ void LinearMtp<CoordType>::find_loss_backward(
         }
 
         // Step 4.5. Loss derivative w.r.t. type_bias
-        for (int i=0; i<ntypes; i++)
-            loss_der2type_bias[i] += 2*e_weight/inum*(etot_ml - etot_dft);
+        loss_der2type_bias[type_central] += 2*e_weight/inum*(etot_ml - etot_dft);
     }
 
     // Step . Free

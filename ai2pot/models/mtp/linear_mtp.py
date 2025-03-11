@@ -45,7 +45,7 @@ class LinearMtp(nn.Module):
         self.register_parameter(name="linear_coeffs_tensor", param=nn.Parameter(data=linear_coeffs_tensor))
         
         type_bias_tensor: torch.Tensor = torch.Tensor(self.ntypes)
-        nn.init.normal_(type_bias_tensor, mean=0.0, std=0.1)
+        nn.init.normal_(type_bias_tensor, mean=0.0, std=1.0)
         self.register_parameter(name="type_bias_tensor", param=nn.Parameter(data=type_bias_tensor))
     
     

@@ -17,7 +17,7 @@ PbTe_EXTXYZ_PATH = os.path.join(TEST_FILES_DIR, "XYZ", "11_NEP_potential_PbTe", 
 class LinearMtpTest(unittest.TestCase):
     def setUp(self):
         print("LinearMtp (TestCase) is setting up...\n")
-        mtp_level: int = 18
+        mtp_level: int = 12
         ntypes: int = 2
         chebyshev_size: int = 8
         rmax: float = 5.0
@@ -54,9 +54,14 @@ class LinearMtpTest(unittest.TestCase):
                                                                             v_wgt_start=0.0,
                                                                             v_wgt_end=0.0,
                                                                             lr_decay_epoch=lr_decay_epoch)
-        self.trainer: L.Trainer = L.Trainer(max_epochs=30,
+        self.trainer: L.Trainer = L.Trainer(max_epochs=50,
                                             accelerator="cpu",
                                             devices=1)
+    
+    
+    def tearDown(self):
+        print("LinearMtp (TestCase) is tearing down...\n")
+    
     
     def test_train(self):
         self.trainer.fit(model=self.lit_potential_to_loss,

@@ -112,7 +112,7 @@ protected:
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/26.almtp",
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/28.almtp"
         };
-        mtp_param._load(filenames[4]);
+        mtp_param._load(filenames[3]);
 //mtp_param.show();
 
         e_weight = 1.0;
@@ -128,7 +128,7 @@ protected:
         umax_num_neigh_atoms = 20;
         coeffs = (double*)malloc(sizeof(double) * ntypes * ntypes * mtp_param.nmus() * chebyshev_size);
         for (int ii=0; ii<ntypes*ntypes*mtp_param.nmus()*chebyshev_size; ii++)
-            coeffs[ii] = 0.8;
+            coeffs[ii] = 0.8 + ii*0.01;
 
         // Establish neighbor list
         num_atoms = 12;
@@ -245,7 +245,7 @@ protected:
         type_bias = (double*)malloc(sizeof(double) * ntypes);
 
         for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++)
-            linear_coeffs[ii] = 0.1 + ii * 0.01;
+            linear_coeffs[ii] = 0.3 + ii * 0.01;
         type_bias[0] = -7;
         type_bias[1] = -8;
 
@@ -284,10 +284,9 @@ protected:
 
 TEST_F(LinearMtpTest, find_efv) {
     int center_idx_modify = 0;
-    int neigh_idx_modify = 17;
-    int direction1_idx_modify = 2;
+    int direction1_idx_modify = 0;
     int direction2_idx_modify = 0;
-    double delta = 1E-7;
+    double delta = 1E-8;
 
 
     ai2pot::mtpr::LinearMtp<double>::find_efv(
@@ -328,7 +327,7 @@ TEST_F(LinearMtpTest, force_accuracy) {
     int center_idx_modify = 2;
     int direction1_idx_modify = 0;
     int direction2_idx_modify = 0;
-    double delta = 1E-7;
+    double delta = 1E-8;
 
     ai2pot::mtpr::LinearMtp<double>::find_efv(
         etot,

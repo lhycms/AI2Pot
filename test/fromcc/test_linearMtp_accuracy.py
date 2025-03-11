@@ -27,7 +27,7 @@ class LinearMtpTest(unittest.TestCase):
         self.device: torch._C.device = torch.device("cpu")
         
         # 1. 
-        self.mtp_level: int = 8
+        self.mtp_level: int = 12
         self.ntypes: int = 4
         self.chebyshev_size: int = 8
         self.rmax: float = 6.0
@@ -73,7 +73,7 @@ class LinearMtpTest(unittest.TestCase):
         e_weight: float = 1.0
         f_weight: float = 0.0
         v_weight: float = 0.0
-        self.coeffs_tensor.requires_grad_(False)
+        self.coeffs_tensor.requires_grad_(True)
         self.linear_coeffs_tensor.requires_grad_(True)
         self.type_bias_tensor.requires_grad_(True)
         
@@ -109,10 +109,10 @@ class LinearMtpTest(unittest.TestCase):
                                  self.rmin),
                          eps=1e-8,
                          atol=1e-6)
-        print("*** Gradient pass check: ", test)
-        
-    
-    
-    
+        print("-------------------------------------------------")
+        print("* Gradient pass check: ", test)
+        print("-------------------------------------------------")
+
+
 if __name__ == "__main__":
     unittest.main()

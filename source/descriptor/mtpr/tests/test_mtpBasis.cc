@@ -232,7 +232,7 @@ TEST_F(MtpBasisTest, find_val_der4rcs)
     int center_idx_modify = 2;
     int neigh_idx_modify = 17;
     int direction_idx_modify = 2;
-    double delta = 1e-5;
+    double delta = 1e-8;
     //for (int ii=0; ii<1000; ii++)
 
     ai2pot::mtpr::MtpBasis<double>::find_val_der(
@@ -304,13 +304,13 @@ printf("\n");
 printf("1. Check the derivatives of MTP basis wrt. relative coordinates:\n");
 printf("1.1. The derivatives of MTP basis wrt. relative coordinates calculated by custom code:\n\t[");
 for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++)
-    printf("%10lf, ", 
+    printf("%.*lf, ", 15, 
         mtp_basis_der[center_idx_modify*mtp_param.alpha_scalar_moments()*umax_num_neigh_atoms + ii*umax_num_neigh_atoms + neigh_idx_modify][direction_idx_modify]);
 printf("]\n");
 printf("1.2. The derivatives of MTP basis wrt. relative coordinates calculated by finite different method:\n\t[");
 for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++) {
     double der_fdm = (mtp_basis_val_[center_idx_modify*mtp_param.alpha_scalar_moments() + ii] - mtp_basis_val[center_idx_modify*mtp_param.alpha_scalar_moments() + ii]) / delta;
-    printf("%10lf, ", der_fdm);
+    printf("%.*lf, ", 15, der_fdm);
 }
 printf("]\n");
 }

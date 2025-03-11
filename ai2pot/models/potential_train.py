@@ -156,11 +156,10 @@ class LitPotentialToLoss(L.LightningModule):
                                                    brcs,
                                                    btypes,
                                                    bnghost[0].item())
-        print(self.optimizers().param_groups[0]['lr'])
-        print("---------------------------------------")
         try:
-            print(self.model.coeffs_tensor[:10])
-            print(self.model.coeffs_tensor.grad[:10])
+            print(self.model.coeffs_tensor[:100])
+            print(self.model.coeffs_tensor.grad[:100])
+            print("---------------------------------------")
         except:
             pass
         #print("---------------------------------------")
