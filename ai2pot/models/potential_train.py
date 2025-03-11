@@ -166,7 +166,13 @@ class LitPotentialToLoss(L.LightningModule):
         #print(self.model.linear_coeffs_tensor)
         #print("---------------------------------------")
         #print(self.model.type_bias_tensor)
-        return bmse_tensor.mean()
+        
+        mean_bmse_tensor: torch.Tensor = bmse_tensor.mean()
+        self.log("train_loss", mean_bmse_tensor,
+                 on_epoch=True,
+                 on_step=True,
+                 prog_bar=True)
+        return mean_bmse_tensor
     
     
     def configure_optimizers(self):
