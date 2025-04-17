@@ -1,5 +1,5 @@
 # 1. Basic
-cmake_minimum_required(VERSION 3.2 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
 project(ai2pot)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -17,12 +17,13 @@ set(CUDA_ARCHITECTURES 61)
 #FetchContent_Declare(
 #        googletest
 #        GIT_REPOSITORY https://github.com/google/googletest.git
-#        GIT_TAG v1.12.0
+#        GIT_TAG v1.14.0
 #)
 #FetchContent_MakeAvailable(googletest)
 #include(GoogleTest)
 
 ## 2.1. Way 2: Build gtest
+add_compile_options(-D_GLIBCXX_USE_CXX11_ABI=0) # Compitable with torch2.x
 add_subdirectory("$ENV{AI2POT_PATH}/source/ext/googletest-main")
 include(GoogleTest)
 
@@ -51,16 +52,19 @@ string(REPLACE "\n" "/share/cmake" TORCH_CMAKE_PREFIX_PATH ${TORCH_PATH})
 list(APPEND CMAKE_PREFIX_PATH ${TORCH_CMAKE_PREFIX_PATH})
 find_package(Torch CONFIG REQUIRED)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
+message(STATUS "***+++" ${TORCH_CXX_FLAGS})
 
 ## 2.6. CUDA
-find_package(CUDA)
-if (CUDA_FOUND)
-    message(STATUS "CUDA found: ${CUDA_VERSION_STRING}")
-    enable_language(CXX CUDA)
-    set(CMAKE_CUDA_ARCHITECTURES 61)
-else()
-    message(STATUS "CUDA not found, compile only CPU version.")
-    enable_language(CXX)
+if (USE_CUDA)
+    find_package(CUDA)
+    if (CUDA_FOUND)
+        message(STATUS "CUDA found: ${CUDA_VERSION_STRING}")
+        enable_language(CXX CUDA)
+        set(CMAKE_CUDA_ARCHITECTURES 61)
+    else()
+        message(STATUS "CUDA not found, compile only CPU version.")
+        enable_language(CXX)
+    endif()
 endif()
 
 # 3. dirs

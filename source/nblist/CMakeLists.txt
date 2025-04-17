@@ -32,18 +32,17 @@ if (BUILD_TEST)
     # target_link_libraries(test_CpuNeighborList PRIVATE gtest_main gtest CpuNeighborList)
     
     add_executable(test_basicStructureInfo ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_basicStructureInfo.cc)
-    target_link_libraries(test_basicStructureInfo PRIVATE gtest_main gtest)
+    target_link_libraries(test_basicStructureInfo PRIVATE gtest gtest_main)
 
     add_executable(test_structure ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_structure.cc)
-    target_link_libraries(test_structure PRIVATE gtest_main gtest)
+    target_link_libraries(test_structure PRIVATE gtest gtest_main)
 
     add_executable(test_binLinkedList ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_binLinkedList.cc)
-    target_link_libraries(test_binLinkedList PRIVATE gtest_main gtest)
+    target_link_libraries(test_binLinkedList PRIVATE gtest gtest_main)
 
     add_executable(test_neighborList ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_neighborList.cc)
     target_link_libraries(test_neighborList PRIVATE gtest gtest_main)
 
-    # gtest_discover_tests(test_CpuNeighborList)    
     gtest_discover_tests(test_basicStructureInfo)
     gtest_discover_tests(test_structure)
     gtest_discover_tests(test_binLinkedList)
