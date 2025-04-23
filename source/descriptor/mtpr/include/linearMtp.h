@@ -998,9 +998,9 @@ void LinearMtp<CoordType>::find_loss_backward(
                                             * A * B * C;
                     
                     for (int aa=0; aa<3; aa++) {
-                        CoordType tmp_deriv = coeffs[idx] * (A_ders[aa] * B * C
-                                                             + A * B_ders[aa] * C
-                                                             + A * B * C_ders[aa]);
+                        CoordType tmp_deriv = (A_ders[aa] * B * C
+                                              + A * B_ders[aa] * C
+                                              + A * B * C_ders[aa]);
                         loss_der2coeffs[idx] += 2*f_weight/(3*inum)
                                                 * (force_ml[center_idx][aa] - force_dft[center_idx][aa])
                                                 * e_site_der2mom[i]
@@ -1322,9 +1322,9 @@ void LinearMtp<CoordType>::find_ef_loss_backward(
                                             * A * B * C;
                     
                     for (int aa=0; aa<3; aa++) {
-                        CoordType tmp_deriv = coeffs[idx] * (A_ders[aa] * B * C
-                                                             + A * B_ders[aa] * C
-                                                             + A * B * C_ders[aa]);
+                        CoordType tmp_deriv = (A_ders[aa] * B * C
+                                              + A * B_ders[aa] * C
+                                              + A * B * C_ders[aa]);
                         loss_der2coeffs[idx] += 2*f_weight/(3*inum)
                                                 * (force_ml[center_idx][aa] - force_dft[center_idx][aa])
                                                 * e_site_der2mom[i]
