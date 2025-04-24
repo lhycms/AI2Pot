@@ -71,9 +71,9 @@ class LinearMtpTest(unittest.TestCase):
     def test_linearMtpToLoss(self):
         # 1. Parameters
         e_weight: float = 1.0
-        f_weight: float = 0.0
+        f_weight: float = 1.0
         v_weight: float = 0.0
-        self.coeffs_tensor.requires_grad_(True)
+        self.coeffs_tensor.requires_grad_(False)
         self.linear_coeffs_tensor.requires_grad_(True)
         self.type_bias_tensor.requires_grad_(True)
         
