@@ -907,8 +907,8 @@ void LinearMtp<CoordType>::find_loss_backward(
             CoordType val1 = mom_vals[alpha_index_times[i][1]];
             CoordType val2 = alpha_index_times[i][2];
             mom_vals[alpha_index_times[i][3]] += val2 * val0 * val1;
-            dloss_combination[alpha_index_times[i][3]] += (dloss_combination[alpha_index_times[i][0]] * val2 * val0
-                                                          + dloss_combination[alpha_index_times[i][1]] * val2 * val1);
+            dloss_combination[alpha_index_times[i][3]] += (dloss_combination[alpha_index_times[i][0]] * val2 * val1
+                                                          + dloss_combination[alpha_index_times[i][1]] * val2 * val0);
         }
 
         // Step 4.1. Linear Energy derivative w.r.t. xyz
@@ -1231,8 +1231,8 @@ void LinearMtp<CoordType>::find_ef_loss_backward(
             CoordType val1 = mom_vals[alpha_index_times[i][1]];
             CoordType val2 = alpha_index_times[i][2];
             mom_vals[alpha_index_times[i][3]] += val2 * val0 * val1;
-            dloss_combination[alpha_index_times[i][3]] += (dloss_combination[alpha_index_times[i][0]] * val2 * val0
-                                                          + dloss_combination[alpha_index_times[i][1]] * val2 * val1);
+            dloss_combination[alpha_index_times[i][3]] += (dloss_combination[alpha_index_times[i][0]] * val2 * val1
+                                                          + dloss_combination[alpha_index_times[i][1]] * val2 * val0);
         }
 
         // Step 4.1. Linear Energy derivative w.r.t. xyz
