@@ -327,7 +327,7 @@ TEST_F(LinearMtpTest, force_accuracy) {
     int center_idx_modify = 2;
     int direction1_idx_modify = 0;
     int direction2_idx_modify = 0;
-    double delta = 1E-8;
+    double delta = 1E-5;
 
     ai2pot::mtpr::LinearMtp<double>::find_efv(
         etot,
@@ -403,8 +403,9 @@ TEST_F(LinearMtpTest, force_accuracy) {
         nghost,
         rmax,
         rmin);
-
+printf("1.1. energy = %.15lf\n", etot);
 printf("1.1. force[%d][%d] calculated by custom code = %g\n", center_idx_modify, direction1_idx_modify, force[center_idx_modify][direction1_idx_modify]);
+printf("1.2. energy = %.15lf\n", etot_);
 printf("1.2. force[%d][%d] calculated by finite difference method = %g\n", center_idx_modify, direction1_idx_modify, -(etot_ - etot) / delta);
 }
 

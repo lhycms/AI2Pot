@@ -13,27 +13,28 @@
     along with AI2Pot.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <Python.h>
 #include <numpy/arrayobject.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <iostream>
 
 #include "./nblist_bind.h"
 #include "../include/structure.h"
 #include "../include/neighborList.h"
 
 
-
 int initialize_npy(void) {
-    if (PyArray_API)
-        return 0;
-    else
+    if (!PyArray_API)
         import_array1(-1);
+    return 0;
 }
+
 
 static PyObject *py_find_info4mlff(PyObject *self, PyObject *args)
 {
-    int npy_mark = initialize_npy();
+    //int npy_mark = initialize_npy();
     PyObject *py_lattice;
     PyObject *py_types_pre;
     PyObject *py_types; //
@@ -199,5 +200,6 @@ static PyModuleDef nblist = {
 };
 
 PyMODINIT_FUNC PyInit_nblist(void) {
+    int npy_mark = initialize_npy();
     return PyModule_Create(&nblist);
 }

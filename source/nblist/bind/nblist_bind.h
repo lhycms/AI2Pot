@@ -13,6 +13,7 @@
     along with AI2Pot.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <Python.h>
 #include <numpy/arrayobject.h>
 

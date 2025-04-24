@@ -1025,7 +1025,7 @@ void LinearMtp<CoordType>::find_loss_backward(
         // Step 4.4. Loss derivative w.r.t. linear_coeffs
         for (int i=0; i<alpha_scalar_moments; i++) {
             loss_der2linear_coeffs[i] += 2*e_weight/inum 
-                                         * (etot_ml - etot_dft) 
+                                         * (etot_ml - etot_dft)
                                          * mom_vals[alpha_moment_mapping[i]];
             
             loss_der2linear_coeffs[i] += dloss_combination[alpha_moment_mapping[i]];
