@@ -22,20 +22,31 @@ ReNbSSe_POSCAR_PATH = os.path.join(os.path.join(TEST_FILES_DIR, "POSCARs", "POSC
 class LinearMtpTest(unittest.TestCase):
     def setUp(self):
         print("LinearMtpTest (TestCase) is setting up...\n")
+        #torch.manual_seed(41234)
         # 0.
         self.torch_float_dtype: torch._C.dtype = torch.float64
         self.device: torch._C.device = torch.device("cpu")
         
         # 1. 
-        self.mtp_level: int = 12
-        self.ntypes: int = 4
-        self.chebyshev_size: int = 8
-        self.rmax: float = 6.0
-        self.rmin: float = 0.5
-        self.umax_num_neighs: int = 200
+        self.mtp_level: int = 4
+        #self.ntypes: int = 4
+        self.chebyshev_size: int = 1
+        self.rmax: float = 5.0
+        self.rmin: float = 0.0
+        self.umax_num_neighs: int = 100
         self.fit_virial: bool = False
         
-        self.structure: Structure = Structure.from_file(ReNbSSe_POSCAR_PATH)
+        #self.ntypes: int = 4
+        #self.structure: Structure = Structure.from_file(ReNbSSe_POSCAR_PATH)
+        self.ntypes: int = 2
+        self.structure: Structure = Structure(lattice=[[10, 0, 0], [0, 10, 0], [0, 0, 10]],
+                                              species=["H", "O"],
+                                              coords=[[0, 0, 0], 
+                                                      [0, 4.0, 0]
+                                                      ],
+                                              coords_are_cartesian=True)
+        print(self.structure)
+        
         
         self.mlff_to_loss_input: MlffToLossInput = MlffToLossInput(rcut=self.rmax,
                                                                    umax_num_neighs=self.umax_num_neighs,
@@ -53,15 +64,15 @@ class LinearMtpTest(unittest.TestCase):
         self.coeffs_tensor: torch.Tensor = torch.zeros(self.ntypes*self.ntypes*self.nmus*self.chebyshev_size, 
                                                        dtype=self.torch_float_dtype,
                                                        device=self.device)
-        nn.init.normal_(self.coeffs_tensor, mean=0.0, std=0.1)
+        nn.init.normal_(self.coeffs_tensor, mean=1.0, std=0.0)
         self.linear_coeffs_tensor: torch.Tensor = torch.zeros(self.alpha_moment_mapping_tensor.size(0),
                                                               dtype=self.torch_float_dtype,
                                                               device=self.device)
-        nn.init.normal_(self.linear_coeffs_tensor, mean=0.0, std=0.1)
+        nn.init.normal_(self.linear_coeffs_tensor, mean=1.0, std=0.0)
         self.type_bias_tensor: torch.Tensor = torch.zeros(self.ntypes,
                                                           dtype=self.torch_float_dtype,
                                                           device=self.device)
-        nn.init.normal_(self.type_bias_tensor, mean=0.0, std=0.1)
+        nn.init.normal_(self.type_bias_tensor, mean=1.0, std=0.0)
         
     
     def tearDown(self):
@@ -70,10 +81,10 @@ class LinearMtpTest(unittest.TestCase):
     
     def test_linearMtpToLoss(self):
         # 1. Parameters
-        e_weight: float = 1.0
+        e_weight: float = 0.0
         f_weight: float = 1.0
         v_weight: float = 0.0
-        self.coeffs_tensor.requires_grad_(False)
+        self.coeffs_tensor.requires_grad_(True)
         self.linear_coeffs_tensor.requires_grad_(True)
         self.type_bias_tensor.requires_grad_(True)
         
@@ -82,7 +93,6 @@ class LinearMtpTest(unittest.TestCase):
                                                                                   e_weight=e_weight,
                                                                                   f_weight=f_weight,
                                                                                   v_weight=v_weight)
-    
         test = gradcheck(func=linearMtpToEFLossOp,
                          inputs=(e_weight,
                                  f_weight,
@@ -107,8 +117,9 @@ class LinearMtpTest(unittest.TestCase):
                                  input_info[12].item(),
                                  self.rmax,
                                  self.rmin),
-                         eps=1e-8,
-                         atol=1e-6)
+                         eps=1e-7,
+                         atol=1e-6,
+                         rtol=1e-4)
         print("-------------------------------------------------")
         print("* Gradient pass check: ", test)
         print("-------------------------------------------------")

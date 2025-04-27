@@ -24,7 +24,7 @@ class LinearMtpTest(unittest.TestCase):
         rmin: float = 0.5
         umax_num_neighs: int = 100
         fit_virial: bool = False
-        torch_float_dtype: torch._C.dtype = torch.float32
+        torch_float_dtype: torch._C.dtype = torch.float64
         lr_decay_epoch:int = 30
         
         self.linear_mtp: LinearMtp = LinearMtp(mtp_level=mtp_level,
@@ -45,16 +45,16 @@ class LinearMtpTest(unittest.TestCase):
                                                       batch_size=1,
                                                       shuffle=True)
         self.lit_potential_to_loss: LitPotentialToLoss = LitPotentialToLoss(model=self.linear_mtp,
-                                                                            lr_start=1e-3,
-                                                                            lr_end=1e-5,
+                                                                            lr_start=1e-1,
+                                                                            lr_end=1e-3,
                                                                             e_wgt_start=1.0,
                                                                             e_wgt_end=1.0,
-                                                                            f_wgt_start=0.0,
-                                                                            f_wgt_end=0.0,
+                                                                            f_wgt_start=0.1,
+                                                                            f_wgt_end=0.1,
                                                                             v_wgt_start=0.0,
                                                                             v_wgt_end=0.0,
                                                                             lr_decay_epoch=lr_decay_epoch)
-        self.trainer: L.Trainer = L.Trainer(max_epochs=50,
+        self.trainer: L.Trainer = L.Trainer(max_epochs=500,
                                             accelerator="cpu",
                                             devices=1)
     

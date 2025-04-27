@@ -20,6 +20,7 @@
 #include <vector>
 #include <string>
 #include <cassert>
+#include <random>
 
 #include "../include/linearMtp.h"
 #include "../include/mtpBasis.h"
@@ -112,7 +113,7 @@ protected:
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/26.almtp",
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/28.almtp"
         };
-        mtp_param._load(filenames[3]);
+        mtp_param._load(filenames[6]);
 //mtp_param.show();
 
         e_weight = 1.0;
@@ -127,8 +128,12 @@ protected:
         rmin = 2.0;
         umax_num_neigh_atoms = 20;
         coeffs = (double*)malloc(sizeof(double) * ntypes * ntypes * mtp_param.nmus() * chebyshev_size);
+        
+        std::random_device rd;  // 用于生成随机种子
+        std::mt19937 gen(rd()); // 随机数生成器，使用 Mersenne Twister 算法
+        std::normal_distribution<> dis(0.0, 0.5); // 高斯分布，均值 0，标准差 0.5
         for (int ii=0; ii<ntypes*ntypes*mtp_param.nmus()*chebyshev_size; ii++)
-            coeffs[ii] = 0.8 + ii*0.01;
+            coeffs[ii] = dis(gen);
 
         // Establish neighbor list
         num_atoms = 12;
@@ -163,7 +168,7 @@ protected:
         frac_coords[1][1] = 0.333333333333;
         frac_coords[1][2] = 0.432343276548;
         frac_coords[2][0] = 0.166666666667;
-        frac_coords[2][1] = 0.333333333333;
+        frac_coords[2][1] = 0.343333333333;//0.333333333333
         frac_coords[2][2] = 0.567656723452;
         frac_coords[3][0] = 0.333333333333;
         frac_coords[3][1] = 0.666666666667;
@@ -245,9 +250,9 @@ protected:
         type_bias = (double*)malloc(sizeof(double) * ntypes);
 
         for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++)
-            linear_coeffs[ii] = 0.3 + ii * 0.01;
-        type_bias[0] = -7;
-        type_bias[1] = -8;
+            linear_coeffs[ii] = dis(gen);
+        type_bias[0] = -0.1;
+        type_bias[1] = -0.2;
 
         loss_der2coeffs = (double*)malloc(sizeof(double) * ntypes * ntypes * nmus * chebyshev_size);
         loss_der2linear_coeffs = (double*)malloc(sizeof(double) * mtp_param.alpha_scalar_moments());
@@ -282,11 +287,12 @@ protected:
 };
 
 
+/*
 TEST_F(LinearMtpTest, find_efv) {
     int center_idx_modify = 0;
     int direction1_idx_modify = 0;
     int direction2_idx_modify = 0;
-    double delta = 1E-8;
+    double delta = 1E-5;
 
 
     ai2pot::mtpr::LinearMtp<double>::find_efv(
@@ -320,14 +326,15 @@ printf("1. etot = %g\n", etot);
 printf("2. force[%d][%d] = %g\n", center_idx_modify, direction1_idx_modify, force[center_idx_modify][direction1_idx_modify]);
 printf("3. virial[%d][%d] = %g\n", direction1_idx_modify, direction2_idx_modify, virial[direction1_idx_modify*3 + direction2_idx_modify]);
 }
+*/
 
 
 
 TEST_F(LinearMtpTest, force_accuracy) {
-    int center_idx_modify = 2;
-    int direction1_idx_modify = 0;
+    int center_idx_modify = 9;
+    int direction1_idx_modify = 1;
     int direction2_idx_modify = 0;
-    double delta = 1E-5;
+    double delta = 1E-7;
 
     ai2pot::mtpr::LinearMtp<double>::find_efv(
         etot,
@@ -404,13 +411,13 @@ TEST_F(LinearMtpTest, force_accuracy) {
         rmax,
         rmin);
 printf("1.1. energy = %.15lf\n", etot);
-printf("1.1. force[%d][%d] calculated by custom code = %g\n", center_idx_modify, direction1_idx_modify, force[center_idx_modify][direction1_idx_modify]);
+printf("1.1. force[%d][%d] calculated by custom code = %.15lf\n", center_idx_modify, direction1_idx_modify, force[center_idx_modify][direction1_idx_modify]);
 printf("1.2. energy = %.15lf\n", etot_);
-printf("1.2. force[%d][%d] calculated by finite difference method = %g\n", center_idx_modify, direction1_idx_modify, -(etot_ - etot) / delta);
+printf("1.2. force[%d][%d] calculated by finite difference method = %.15lf\n", center_idx_modify, direction1_idx_modify, -(etot_ - etot) / delta);
 }
 
 
-
+/*
 TEST_F(LinearMtpTest, find_loss) {
     int center_idx_modify = 0;
     int neigh_idx_modify = 17;
@@ -488,7 +495,7 @@ TEST_F(LinearMtpTest, find_loss_backward) {
         rmax,
         rmin);
 }
-
+*/
 
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);

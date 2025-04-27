@@ -297,6 +297,7 @@ void LinearMtp<CoordType>::find_efv(
     CoordType e_site = 0;
     memset(force, 0, sizeof(CoordType) * (inum+nghost) * 3);
     memset(virial, 0, sizeof(CoordType) * 9);
+
     for (int ii=0; ii<inum; ii++)
     {
         memset(mom_vals, 0, sizeof(CoordType) * alpha_moments_count);
@@ -304,7 +305,7 @@ void LinearMtp<CoordType>::find_efv(
         memset(e_site_der2mom, 0, sizeof(CoordType) * alpha_moments_count);
 
         int center_idx = ilist[ii];
-        type_central = types[ilist[ii]];
+        type_central = types[center_idx];
         MomsValDer<CoordType>::find_val_der(
             mom_vals,
             mom_ders,
@@ -376,6 +377,10 @@ void LinearMtp<CoordType>::find_efv(
             }
         }
     }
+printf("******\n");
+for (int ii=0; ii<inum; ii++)
+    printf("Atom %d : [%g, %g, %g]\n", ii, force[ii][0], force[ii][1], force[ii][2]);
+printf("******\n");
 
     // Step . Free
     free(mom_vals);
@@ -429,6 +434,7 @@ void LinearMtp<CoordType>::find_ef(
     etot = 0;
     CoordType e_site = 0;
     memset(force, 0, sizeof(CoordType) * (inum+nghost) * 3);
+
     for (int ii=0; ii<inum; ii++)
     {
         memset(mom_vals, 0, sizeof(CoordType) * alpha_moments_count);
@@ -776,7 +782,7 @@ void LinearMtp<CoordType>::find_loss_backward(
 
     // Step 2. efv
     CoordType etot_ml = 0;
-    CoordType (*force_ml)[3] = (CoordType (*)[3])malloc(sizeof(CoordType) * inum * 3);
+    CoordType (*force_ml)[3] = (CoordType (*)[3])malloc(sizeof(CoordType) * (inum+nghost) * 3);
     CoordType *virial_ml = (CoordType*)malloc(sizeof(CoordType) * 9);
     memset(force_ml, 0, sizeof(CoordType) * inum * 3);
     memset(virial_ml, 0, sizeof(CoordType) * 9);
@@ -1109,8 +1115,8 @@ void LinearMtp<CoordType>::find_ef_loss_backward(
 
     // Step 2. efv
     CoordType etot_ml = 0;
-    CoordType (*force_ml)[3] = (CoordType (*)[3])malloc(sizeof(CoordType) * inum * 3);
-    memset(force_ml, 0, sizeof(CoordType) * inum * 3);
+    CoordType (*force_ml)[3] = (CoordType (*)[3])malloc(sizeof(CoordType) * (inum+nghost) * 3);
+    memset(force_ml, 0, sizeof(CoordType) * (inum+nghost) * 3);
     find_ef(etot_ml,
             force_ml,
             chebyshev_size,
@@ -1142,12 +1148,12 @@ void LinearMtp<CoordType>::find_ef_loss_backward(
         memset(mom_vals, 0, sizeof(CoordType) * alpha_moments_count);
         memset(e_site_der2mom, 0, sizeof(CoordType) * alpha_moments_count);
         memset(dloss_combination, 0, sizeof(CoordType) * alpha_moments_count);
-        type_central = types[ilist[ii]];
         int center_idx = ilist[ii];
+        type_central = types[center_idx];
 
         for (int jj=0; jj<numneigh[ii]; jj++) {
-            type_outer = types[firstneigh[ii*umax_num_neigh_atoms + jj]];
             int neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
+            type_outer = types[neigh_idx];
             NeighbVect[0] = relative_coords[ii*umax_num_neigh_atoms + jj][0];
             NeighbVect[1] = relative_coords[ii*umax_num_neigh_atoms + jj][1];
             NeighbVect[2] = relative_coords[ii*umax_num_neigh_atoms + jj][2];
@@ -1254,13 +1260,13 @@ void LinearMtp<CoordType>::find_ef_loss_backward(
         // Step 4.3. Loss derivative w.r.t. coeffs
         for (int jj=0; jj<numneigh[ii]; jj++) {
             int neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
-            type_outer = types[firstneigh[ii*umax_num_neigh_atoms + jj]];
-            NeighbVect[0] = relative_coords[ii*umax_num_neigh_atoms+jj][0];
-            NeighbVect[1] = relative_coords[ii*umax_num_neigh_atoms+jj][1];
-            NeighbVect[2] = relative_coords[ii*umax_num_neigh_atoms+jj][2];
+            type_outer = types[neigh_idx];
+            NeighbVect[0] = relative_coords[ii*umax_num_neigh_atoms + jj][0];
+            NeighbVect[1] = relative_coords[ii*umax_num_neigh_atoms + jj][1];
+            NeighbVect[2] = relative_coords[ii*umax_num_neigh_atoms + jj][2];
             distance_ij = std::sqrt( std::pow(NeighbVect[0], 2)
-                                    + std::pow(NeighbVect[1], 2)
-                                    + std::pow(NeighbVect[2], 2) );
+                                     + std::pow(NeighbVect[1], 2)
+                                     + std::pow(NeighbVect[2], 2));
             if (distance_ij > rmax)
                 continue;
             distance_ij_inv = 1.0 / distance_ij;
@@ -1278,7 +1284,7 @@ void LinearMtp<CoordType>::find_ef_loss_backward(
             for (int i=0; i<alpha_index_basic_count; i++) {
                 int mu = alpha_index_basic[i][0];
                 int k = alpha_index_basic[i][1] + alpha_index_basic[i][2] + alpha_index_basic[i][3];
-                CoordType powk = 1 / auto_dist_powers_[k];
+                CoordType powk = 1.0 / auto_dist_powers_[k];
                 CoordType pow0 = auto_coords_powers_[alpha_index_basic[i][1]][0];
                 CoordType pow1 = auto_coords_powers_[alpha_index_basic[i][2]][1];
                 CoordType pow2 = auto_coords_powers_[alpha_index_basic[i][3]][2];
@@ -1322,17 +1328,15 @@ void LinearMtp<CoordType>::find_ef_loss_backward(
                                             * A * B * C;
                     
                     for (int aa=0; aa<3; aa++) {
-                        CoordType tmp_deriv = (A_ders[aa] * B * C
-                                              + A * B_ders[aa] * C
-                                              + A * B * C_ders[aa]);
+                        CoordType tmp_deriv = (A_ders[aa]*B*C + A*B_ders[aa]*C + A*B*C_ders[aa]);
                         loss_der2coeffs[idx] += 2*f_weight/(3*inum)
                                                 * (force_ml[center_idx][aa] - force_dft[center_idx][aa])
                                                 * e_site_der2mom[i]
                                                 * tmp_deriv;
                         loss_der2coeffs[idx] -= 2*f_weight/(3*inum)
-                                                * (force_ml[neigh_idx][aa] - force_dft[neigh_idx][aa])
-                                                * e_site_der2mom[i]
-                                                * tmp_deriv;
+                                                 * (force_ml[neigh_idx][aa] - force_dft[neigh_idx][aa])
+                                                 * e_site_der2mom[i]
+                                                 * tmp_deriv;
                     }
                 }
             }
@@ -1350,7 +1354,7 @@ void LinearMtp<CoordType>::find_ef_loss_backward(
         // Step 4.5. Loss derivative w.r.t. type_bias
         loss_der2type_bias[type_central] += 2*e_weight/inum*(etot_ml - etot_dft);
     }
-
+printf("Etot = %g\n", etot_ml);
 
     // Step . Free
     free(mom_vals);
