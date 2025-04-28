@@ -28,21 +28,22 @@ class LinearMtpTest(unittest.TestCase):
         self.device: torch._C.device = torch.device("cpu")
         
         # 1. 
-        self.mtp_level: int = 12
+        self.mtp_level: int = 10
         #self.ntypes: int = 4
         self.chebyshev_size: int = 1
-        self.rmax: float = 5.0
+        self.rmax: float = 6.0
         self.rmin: float = 0.5
         self.umax_num_neighs: int = 100
         self.fit_virial: bool = False
+        
         
         """
         self.ntypes: int = 4
         self.structure: Structure = Structure.from_file(ReNbSSe_POSCAR_PATH)
         """
-        self.ntypes: int = 2
+        self.ntypes: int = 1
         self.structure: Structure = Structure(lattice=[[10, 0, 0], [0, 10, 0], [0, 0, 10]],
-                                              species=["H", "O"],
+                                              species=["H", "H"],
                                               coords=[[0, 0, 0], 
                                                       [0, 4.0, 0]
                                                       ],
@@ -66,7 +67,7 @@ class LinearMtpTest(unittest.TestCase):
         self.coeffs_tensor: torch.Tensor = torch.zeros(self.ntypes*self.ntypes*self.nmus*self.chebyshev_size, 
                                                        dtype=self.torch_float_dtype,
                                                        device=self.device)
-        nn.init.normal_(self.coeffs_tensor, mean=0.1, std=0.5)
+        nn.init.normal_(self.coeffs_tensor, mean=0.0, std=0.5)
         self.linear_coeffs_tensor: torch.Tensor = torch.zeros(self.alpha_moment_mapping_tensor.size(0),
                                                               dtype=self.torch_float_dtype,
                                                               device=self.device)

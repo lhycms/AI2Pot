@@ -1323,17 +1323,24 @@ void LinearMtp<CoordType>::find_ef_loss_backward(
                                             * e_site_der2mom[i]
                                             * A * B * C;
                     
+                    CoordType tmp_f_loss_der2coeffs = 0;
                     for (int aa=0; aa<3; aa++) {
                         CoordType tmp_deriv = (A_ders[aa]*B*C + A*B_ders[aa]*C + A*B*C_ders[aa]);
-                        loss_der2coeffs[idx] += 2*f_weight/(3*inum)
-                                                * (force_ml[center_idx][aa] - force_dft[center_idx][aa])
-                                                * e_site_der2mom[i]
-                                                * tmp_deriv;
-                        loss_der2coeffs[idx] -= 2*f_weight/(3*inum)
-                                                 * (force_ml[neigh_idx][aa] - force_dft[neigh_idx][aa])
-                                                 * e_site_der2mom[i]
+                        tmp_f_loss_der2coeffs += (force_ml[center_idx][aa] - force_dft[center_idx][aa]
+                                                  - force_ml[neigh_idx][aa] + force_dft[neigh_idx][aa])
                                                  * tmp_deriv;
+
+                        //loss_der2coeffs[idx] += 2*f_weight/(3*inum)
+                        //                        * (force_ml[center_idx][aa] - force_dft[center_idx][aa])
+                        //                        * tmp_deriv
+                        //                        * e_site_der2mom[i];
+                        //loss_der2coeffs[idx] -= 2*f_weight/(3*inum)
+                        //                         * (force_ml[neigh_idx][aa] - force_dft[neigh_idx][aa])
+                        //                         * e_site_der2mom[i]
+                        //                         * tmp_deriv;
                     }
+                    tmp_f_loss_der2coeffs = 2*f_weight/(3*inum) * e_site_der2mom[i] * tmp_f_loss_der2coeffs;
+                    loss_der2coeffs[idx] += tmp_f_loss_der2coeffs;
                 }
             }
         }
