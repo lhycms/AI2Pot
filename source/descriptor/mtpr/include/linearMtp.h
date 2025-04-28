@@ -377,10 +377,6 @@ void LinearMtp<CoordType>::find_efv(
             }
         }
     }
-printf("******\n");
-for (int ii=0; ii<inum; ii++)
-    printf("Atom %d : [%g, %g, %g]\n", ii, force[ii][0], force[ii][1], force[ii][2]);
-printf("******\n");
 
     // Step . Free
     free(mom_vals);
@@ -1354,7 +1350,6 @@ void LinearMtp<CoordType>::find_ef_loss_backward(
         // Step 4.5. Loss derivative w.r.t. type_bias
         loss_der2type_bias[type_central] += 2*e_weight/inum*(etot_ml - etot_dft);
     }
-printf("Etot = %g\n", etot_ml);
 
     // Step . Free
     free(mom_vals);

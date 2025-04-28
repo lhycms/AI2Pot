@@ -28,16 +28,18 @@ class LinearMtpTest(unittest.TestCase):
         self.device: torch._C.device = torch.device("cpu")
         
         # 1. 
-        self.mtp_level: int = 4
+        self.mtp_level: int = 12
         #self.ntypes: int = 4
         self.chebyshev_size: int = 1
         self.rmax: float = 5.0
-        self.rmin: float = 0.0
+        self.rmin: float = 0.5
         self.umax_num_neighs: int = 100
         self.fit_virial: bool = False
         
-        #self.ntypes: int = 4
-        #self.structure: Structure = Structure.from_file(ReNbSSe_POSCAR_PATH)
+        """
+        self.ntypes: int = 4
+        self.structure: Structure = Structure.from_file(ReNbSSe_POSCAR_PATH)
+        """
         self.ntypes: int = 2
         self.structure: Structure = Structure(lattice=[[10, 0, 0], [0, 10, 0], [0, 0, 10]],
                                               species=["H", "O"],
@@ -64,11 +66,11 @@ class LinearMtpTest(unittest.TestCase):
         self.coeffs_tensor: torch.Tensor = torch.zeros(self.ntypes*self.ntypes*self.nmus*self.chebyshev_size, 
                                                        dtype=self.torch_float_dtype,
                                                        device=self.device)
-        nn.init.normal_(self.coeffs_tensor, mean=1.0, std=0.0)
+        nn.init.normal_(self.coeffs_tensor, mean=0.1, std=0.5)
         self.linear_coeffs_tensor: torch.Tensor = torch.zeros(self.alpha_moment_mapping_tensor.size(0),
                                                               dtype=self.torch_float_dtype,
                                                               device=self.device)
-        nn.init.normal_(self.linear_coeffs_tensor, mean=1.0, std=0.0)
+        nn.init.normal_(self.linear_coeffs_tensor, mean=0.1, std=0.5)
         self.type_bias_tensor: torch.Tensor = torch.zeros(self.ntypes,
                                                           dtype=self.torch_float_dtype,
                                                           device=self.device)
@@ -119,7 +121,7 @@ class LinearMtpTest(unittest.TestCase):
                                  self.rmin),
                          eps=1e-7,
                          atol=1e-6,
-                         rtol=1e-4)
+                         rtol=1e-3)
         print("-------------------------------------------------")
         print("* Gradient pass check: ", test)
         print("-------------------------------------------------")

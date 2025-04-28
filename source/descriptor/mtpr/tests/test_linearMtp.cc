@@ -113,7 +113,7 @@ protected:
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/26.almtp",
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/28.almtp"
         };
-        mtp_param._load(filenames[6]);
+        mtp_param._load(filenames[8]);
 //mtp_param.show();
 
         e_weight = 1.0;
@@ -131,7 +131,7 @@ protected:
         
         std::random_device rd;  // 用于生成随机种子
         std::mt19937 gen(rd()); // 随机数生成器，使用 Mersenne Twister 算法
-        std::normal_distribution<> dis(0.0, 0.5); // 高斯分布，均值 0，标准差 0.5
+        std::normal_distribution<> dis(0.0, 0.3); // 高斯分布，均值 0，标准差 0.3
         for (int ii=0; ii<ntypes*ntypes*mtp_param.nmus()*chebyshev_size; ii++)
             coeffs[ii] = dis(gen);
 
@@ -334,7 +334,7 @@ TEST_F(LinearMtpTest, force_accuracy) {
     int center_idx_modify = 9;
     int direction1_idx_modify = 1;
     int direction2_idx_modify = 0;
-    double delta = 1E-7;
+    double delta = 1E-8;
 
     ai2pot::mtpr::LinearMtp<double>::find_efv(
         etot,
