@@ -1339,7 +1339,7 @@ void LinearMtp<CoordType>::find_ef_loss_backward(
                         //                         * e_site_der2mom[i]
                         //                         * tmp_deriv;
                     }
-                    tmp_f_loss_der2coeffs = 2*f_weight/(3*inum) * e_site_der2mom[i] * tmp_f_loss_der2coeffs;
+                    tmp_f_loss_der2coeffs = e_site_der2mom[i] * tmp_f_loss_der2coeffs * 2*f_weight/(3*inum);
                     loss_der2coeffs[idx] += tmp_f_loss_der2coeffs;
                 }
             }

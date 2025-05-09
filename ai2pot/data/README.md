@@ -39,3 +39,23 @@
 3. `ai2pot.data.dataset.ScDataset.has_virial` = `True` -> `ai2pot.models.mtp.nn_mtp.NNMtp.has_virial` = `True`
 
 </font>
+
+
+# 2. Format of `Extxyz`
+<font color="steelblue" size="5">
+
+1. Keywords for `ase.io.read`
+   1. energy: `energy`
+   2. force: `forces`
+      1. You can use `sed -i 's/force/forces/g' trainset.extxyz > trainset_m.extxyz` to modify the file to make it compatible for `AI2Pot`
+```python
+from ase.io import read
+
+structures = read("trainset.extxyz", index=":")
+# 结构能量
+print(structures[0].get_potential_energy())
+# 原子受力
+print(structures[0].get_forces())
+```
+
+</font>

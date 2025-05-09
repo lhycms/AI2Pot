@@ -28,9 +28,9 @@ class LinearMtpTest(unittest.TestCase):
         self.device: torch._C.device = torch.device("cpu")
         
         # 1. 
-        self.mtp_level: int = 10
+        self.mtp_level: int = 12
         #self.ntypes: int = 4
-        self.chebyshev_size: int = 1
+        self.chebyshev_size: int = 2
         self.rmax: float = 6.0
         self.rmin: float = 0.5
         self.umax_num_neighs: int = 100
@@ -43,9 +43,10 @@ class LinearMtpTest(unittest.TestCase):
         """
         self.ntypes: int = 1
         self.structure: Structure = Structure(lattice=[[10, 0, 0], [0, 10, 0], [0, 0, 10]],
-                                              species=["H", "H"],
+                                              species=["H", "H", "H"],
                                               coords=[[0, 0, 0], 
-                                                      [0, 4.0, 0]
+                                                      [0, 4.0, 0],
+                                                      [3.0, 0.0, 0]
                                                       ],
                                               coords_are_cartesian=True)
         print(self.structure)
@@ -64,14 +65,15 @@ class LinearMtpTest(unittest.TestCase):
         self.nmus: int = mtp_param_info[6].item()
         
         # 3. coeffs, linear coeffs, type bias
+        torch.manual_seed(2143)
         self.coeffs_tensor: torch.Tensor = torch.zeros(self.ntypes*self.ntypes*self.nmus*self.chebyshev_size, 
                                                        dtype=self.torch_float_dtype,
                                                        device=self.device)
-        nn.init.normal_(self.coeffs_tensor, mean=0.0, std=0.5)
+        nn.init.normal_(self.coeffs_tensor, mean=0.8, std=0.5)
         self.linear_coeffs_tensor: torch.Tensor = torch.zeros(self.alpha_moment_mapping_tensor.size(0),
                                                               dtype=self.torch_float_dtype,
                                                               device=self.device)
-        nn.init.normal_(self.linear_coeffs_tensor, mean=0.1, std=0.5)
+        nn.init.normal_(self.linear_coeffs_tensor, mean=0.0, std=1.0)
         self.type_bias_tensor: torch.Tensor = torch.zeros(self.ntypes,
                                                           dtype=self.torch_float_dtype,
                                                           device=self.device)
@@ -84,8 +86,8 @@ class LinearMtpTest(unittest.TestCase):
     
     def test_linearMtpToLoss(self):
         # 1. Parameters
-        e_weight: float = 0.0
-        f_weight: float = 1.0
+        e_weight: float = 1.0
+        f_weight: float = 0.1
         v_weight: float = 0.0
         self.coeffs_tensor.requires_grad_(True)
         self.linear_coeffs_tensor.requires_grad_(True)
@@ -120,7 +122,7 @@ class LinearMtpTest(unittest.TestCase):
                                  input_info[12].item(),
                                  self.rmax,
                                  self.rmin),
-                         eps=1e-7,
+                         eps=1e-3,
                          atol=1e-6,
                          rtol=1e-3)
         print("-------------------------------------------------")

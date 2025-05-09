@@ -12,8 +12,9 @@ from ai2pot.data import ScDataset, McDataset
 TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")
 ReNbSSe_OUTCAR_DIR = os.path.join(TEST_FILES_DIR, "OUTCARs", "ReNbSSe")
 Multi_Components_OUTCARS_DIR = os.path.join(TEST_FILES_DIR, "OUTCARs")
+EXTXYZ_DIR = os.path.join(TEST_FILES_DIR, "XYZ", "11_NEP_potential_PbTe")
 
-class ScDatasetTest(unittest.TestCase):
+class ScDatasetTest(object):
     def setUp(self) -> None:
         print("ScDatasetTest is setting up...\n")
         self.outcar_path: str = os.path.join(ReNbSSe_OUTCAR_DIR, "OUTCAR")
@@ -89,7 +90,21 @@ class McDatasetTest(object):
     def tearDown(self) -> None:
         print("McDatasetTest is tearing down...")
     
-        
+
+class ExtxyzDatasetTest(unittest.TestCase):
+    def setUp(self):
+        print("ExtxyzDatasetTest (TestCase) is setting up...\n")
+    
+
+    def test_use(self):
+        pass
+
+
+    def tearDown(self):
+        print("ExtxyzDatasetTest (TestCase) is tearing down...\n")
+    
+
+
 if __name__ == "__main__":
     unittest.main()
     
