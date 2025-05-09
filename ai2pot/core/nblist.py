@@ -1,6 +1,6 @@
-from typing import List, Dict
+from typing import List
 import numpy as np
-from pymatgen.core import Structure, Element
+from pymatgen.core import Structure
 
 from ai2pot.fromcc import nblist
 

@@ -5,6 +5,9 @@ from typing import List
 import torch
 from dpdata import LabeledSystem, MultiSystems
 from torch.utils.data import DataLoader
+from ase import Atoms
+from pymatgen.core import Structure
+from ase.io import read as ase_read
 
 from ai2pot.data import ScDataset, McDataset, ExtxyzDataset
 
@@ -94,14 +97,14 @@ class McDatasetTest(object):
 class ExtxyzDatasetTest(unittest.TestCase):
     def setUp(self):
         print("ExtxyzDatasetTest (TestCase) is setting up...\n")
-        extxyz_path: str = os.path.join(EXTXYZ_DIR, "train_m.xyz")
+        self.extxyz_path: str = os.path.join(EXTXYZ_DIR, "train_m.xyz")
         rcut: float = 5.0
         umax_num_neigh_atoms: int = 100
         pbc_xyz: List[bool] = [True, True, True]
         sort: bool = False
         torch_float_dtype: torch._C.dtype = torch.float32
         has_virial: bool = False
-        self.extxyz_dataset: ExtxyzDataset = ExtxyzDataset(filename=extxyz_path,
+        self.extxyz_dataset: ExtxyzDataset = ExtxyzDataset(filename=self.extxyz_path,
                                                            rcut=rcut,
                                                            umax_num_neigh_atoms=umax_num_neigh_atoms,
                                                            pbc_xyz=pbc_xyz,
@@ -114,8 +117,28 @@ class ExtxyzDatasetTest(unittest.TestCase):
         dataloader: DataLoader = DataLoader(dataset=self.extxyz_dataset,
                                             batch_size=1,
                                             shuffle=True)
-        for _, batch_data in enumerate(dataloader):
-            print(batch_data[9])
+        #for _, batch_data in enumerate(dataloader):
+            #print(batch_data[9])
+    
+
+    def test_analyse_pymatgen(self):
+        atoms_obj: Atoms = ase_read(filename=self.extxyz_path, index=":")
+        atoms: Atoms = atoms_obj[0]
+        lattice = atoms.cell.array
+        types = atoms.get_atomic_numbers()
+        cart_coords = atoms.positions
+        structure: Structure = Structure(lattice=lattice, 
+                                         species=types,
+                                         coords=cart_coords, 
+                                         coords_are_cartesian=True)
+        nblist_info = self.extxyz_dataset.analyse_pymatgen(structure=structure)
+        print(nblist_info[5])
+
+    def test_analyse_ase(self):
+        atoms_obj: Atoms = ase_read(filename=self.extxyz_path, index=":")
+        atoms = atoms_obj[0]
+        nblist_info = self.extxyz_dataset.analyse_ase(atoms=atoms)
+        print(nblist_info[5])
 
 
     def tearDown(self):
