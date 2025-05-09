@@ -6,7 +6,7 @@ import torch
 from dpdata import LabeledSystem, MultiSystems
 from torch.utils.data import DataLoader
 
-from ai2pot.data import ScDataset, McDataset
+from ai2pot.data import ScDataset, McDataset, ExtxyzDataset
 
 
 TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")
@@ -94,16 +94,33 @@ class McDatasetTest(object):
 class ExtxyzDatasetTest(unittest.TestCase):
     def setUp(self):
         print("ExtxyzDatasetTest (TestCase) is setting up...\n")
-    
+        extxyz_path: str = os.path.join(EXTXYZ_DIR, "train_m.xyz")
+        rcut: float = 5.0
+        umax_num_neigh_atoms: int = 100
+        pbc_xyz: List[bool] = [True, True, True]
+        sort: bool = False
+        torch_float_dtype: torch._C.dtype = torch.float32
+        has_virial: bool = False
+        self.extxyz_dataset: ExtxyzDataset = ExtxyzDataset(filename=extxyz_path,
+                                                           rcut=rcut,
+                                                           umax_num_neigh_atoms=umax_num_neigh_atoms,
+                                                           pbc_xyz=pbc_xyz,
+                                                           sort=sort,
+                                                           torch_float_dtype=torch_float_dtype,
+                                                           has_virial=has_virial)
+
 
     def test_use(self):
-        pass
+        dataloader: DataLoader = DataLoader(dataset=self.extxyz_dataset,
+                                            batch_size=1,
+                                            shuffle=True)
+        for _, batch_data in enumerate(dataloader):
+            print(batch_data[9])
 
 
     def tearDown(self):
         print("ExtxyzDatasetTest (TestCase) is tearing down...\n")
     
-
 
 if __name__ == "__main__":
     unittest.main()

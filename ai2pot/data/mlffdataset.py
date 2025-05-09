@@ -222,7 +222,7 @@ class ExtxyzDataset(Dataset):
             self.npy_float_dtype = np.float64
             self.torch_float_dtype = torch.float64
         self.max_num_atoms: int = self._get_max_num_atoms()
-        self.type_map: Dict[int, int] = self._get_type_map()    # {atomic_numbers : types}
+        self.type_map: List[int] = self._get_type_map()
 
     
     def __len__(self):
@@ -231,7 +231,7 @@ class ExtxyzDataset(Dataset):
     
     def __getitem__(self, index: int):
         cell: np.ndarray = self.atoms_list[index].get_cell().array.astype(self.npy_float_dtype)
-        atom_types: List[int] = np.array( [self.type_map[symbol] for symbol in self.atoms_list[index].get_atomic_numbers()] ).astype(np.int32)
+        atom_types: List[int] = np.array( [self.type_map.index(symbol) for symbol in self.atoms_list[index].get_atomic_numbers()] ).astype(np.int32)
         coords: np.ndarray = self.atoms_list[index].get_positions().astype(self.npy_float_dtype)
 
         num_real_atoms: int = len(self.atoms_list[index])
@@ -263,6 +263,7 @@ class ExtxyzDataset(Dataset):
                 torch.tensor(firstneigh, dtype=torch.int32),
                 torch.tensor(relative_coords, dtype=self.torch_float_dtype),
                 torch.tensor(types, dtype=torch.int32),
+                torch.tensor(self.type_map, dtype=torch.int32),
                 torch.tensor(nghost, dtype=torch.int32),
                 torch.tensor(self.atoms_list[index].get_total_energy(), dtype=self.torch_float_dtype),
                 torch.tensor(forces, dtype=self.torch_float_dtype),
@@ -277,6 +278,7 @@ class ExtxyzDataset(Dataset):
                 torch.tensor(firstneigh, dtype=torch.int32),
                 torch.tensor(relative_coords, dtype=self.torch_float_dtype),
                 torch.tensor(types, dtype=torch.int32),
+                torch.tensor(self.type_map, dtype=torch.int32),
                 torch.tensor(nghost, dtype=torch.int32),
                 torch.tensor(self.atoms_list[index].get_total_energy(), dtype=self.torch_float_dtype),
                 torch.tensor(forces, dtype=self.torch_float_dtype)
@@ -288,13 +290,13 @@ class ExtxyzDataset(Dataset):
             if (len(atoms) > max_num_atoms):
                 max_num_atoms = len(atoms)
         return max_num_atoms
-
+    
     def _get_type_map(self):
         atom_symbol_list: List[int] = []
         for atoms in self.atoms_list:
             for tmp_symbol in np.unique(atoms.get_atomic_numbers()):
                 if tmp_symbol not in atom_symbol_list:
                     atom_symbol_list.append(tmp_symbol)
-        type_map: Dict[int, int] = {symbol: ii for ii, symbol in enumerate(np.sort(atom_symbol_list))}
+        type_map: List[int] = sorted(atom_symbol_list)
         return type_map
     

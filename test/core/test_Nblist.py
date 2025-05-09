@@ -27,7 +27,7 @@ class NblistTest(unittest.TestCase):
                                 sort=self.sort)
         assert(nblist.distances.shape[0] == 108)
         assert(nblist.distances.shape[1] == self.umax_num_neigh_atoms)
-        print(nblist.distances)
+        print(nblist.types)
     
     def test_find_info4mlff(self) -> None:
         cell: np.ndarray = self.structure.lattice.matrix.astype(np.float32)
@@ -43,7 +43,7 @@ class NblistTest(unittest.TestCase):
                               False,
                               [True, True, True],
                               True)
-        print(np.linalg.norm(result[4], axis=2))
+        #print(np.linalg.norm(result[4], axis=2))
     
     def tearDown(self) -> None:
         print("NblistTest is tearing down...\n")

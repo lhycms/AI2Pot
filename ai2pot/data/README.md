@@ -11,7 +11,8 @@
       4. `bfirstneigh_tensor`
       5. `brcs_tensor`
       6. `btypes_tensor`
-      7. `bnghost_tensor`
+      7. `btype_map`
+      8. `bnghost_tensor`
       8. `benergies`
       9. `bforces`
    2. `has_virial=True`, return `10` tensors:
@@ -21,10 +22,11 @@
       4. `bfirstneigh_tensor`
       5. `brcs_tensor`
       6. `btypes_tensor`
-      7. `bnghost_tensor`
-      8. `benergies`
-      9. `bforces`
-      10. `bvirials`
+      7. `btype_map`
+      8. `bnghost_tensor`
+      9. `benergies`
+      10. `bforces`
+      11. `bvirials`
 
 </font>
 
