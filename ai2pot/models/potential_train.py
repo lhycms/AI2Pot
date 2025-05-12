@@ -126,13 +126,14 @@ class LitLinearMtp(L.LightningModule):
                  v_wgt_end: float = 0.0,
                  lr_decay_epoch: int = 30):
         super(LitLinearMtp, self).__init__()
+        assert(umax_num_neighs == umax_num_neigh_atoms)
         self.model: nn.Module = LinearMtp(mtp_level=mtp_level,
                                           type_map_tensor=type_map_tensor,
                                           chebyshev_size=chebyshev_size,
                                           rmax=rmax,
                                           rmin=rmin,
                                           umax_num_neighs=umax_num_neighs,
-                                          fit_virial=fit_virial)
+                                          fit_virial=fit_virial).to(torch_float_dtype)
         
         self.trainset_path: str = trainset_path
         self.validset_path: str = validset_path

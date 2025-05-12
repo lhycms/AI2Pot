@@ -310,7 +310,7 @@ class ExtxyzDataset(Dataset):
                 if tmp_symbol not in atom_symbol_list:
                     atom_symbol_list.append(tmp_symbol)
         type_map: List[int] = sorted(atom_symbol_list)
-        return type_map
+        return torch.tensor(type_map, dtype=torch.int32)
     
     
     def analyse_pymatgen(self,
