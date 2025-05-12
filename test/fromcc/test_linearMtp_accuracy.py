@@ -7,7 +7,8 @@ import torch
 import torch.nn as nn
 from torch.autograd import gradcheck
 
-from ai2pot.utils.usepot import MlffToLossInput
+from ai2pot.utils.testpot_utils import MlffToLossInput
+from ai2pot.data.mlffdataset import ExtxyzDataset
 from ai2pot.fromcc import (
     linearMtpToEFLossOp,
     linearMtpToLossOp,
@@ -17,6 +18,7 @@ from ai2pot.fromcc import (
 
 TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")
 ReNbSSe_POSCAR_PATH = os.path.join(os.path.join(TEST_FILES_DIR, "POSCARs", "POSCAR"))
+PbTe_EXTXYZ_PATH = os.path.join(TEST_FILES_DIR, "XYZ", "11_NEP_potential_PbTe", "train_m.xyz")
 
 
 class LinearMtpTest(unittest.TestCase):
@@ -42,6 +44,7 @@ class LinearMtpTest(unittest.TestCase):
         self.structure: Structure = Structure.from_file(ReNbSSe_POSCAR_PATH)
         """
         self.ntypes: int = 1
+        self.type_map_tensor: torch.Tensor = torch.tensor(data=[1], dtype=torch.int32)
         self.structure: Structure = Structure(lattice=[[10, 0, 0], [0, 10, 0], [0, 0, 10]],
                                               species=["H", "H", "H"],
                                               coords=[[0, 0, 0], 
@@ -118,7 +121,7 @@ class LinearMtpTest(unittest.TestCase):
                                  input_info[9],
                                  input_info[10],
                                  input_info[11],
-                                 self.ntypes,
+                                 self.type_map_tensor,
                                  input_info[12].item(),
                                  self.rmax,
                                  self.rmin),

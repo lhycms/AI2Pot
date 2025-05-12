@@ -71,6 +71,7 @@ protected:
     at::Tensor bfirstneigh_tensor;
     at::Tensor brcs_tensor;
     at::Tensor btypes_tensor;
+    at::Tensor btype_map_tensor;
     int ntypes;
     int nghost;
     int umax_num_neigh_atoms;
@@ -232,6 +233,7 @@ protected:
         bfirstneigh_tensor = at::zeros({1, num_atoms, umax_num_neigh_atoms}, int_options);
         brcs_tensor = at::zeros({1, num_atoms, umax_num_neigh_atoms, 3}, float_options);
         btypes_tensor = at::zeros({1, num_atoms}, int_options);
+        btype_map_tensor = at::zeros({2}, int_options);
         
         double *coeffs = coeffs_tensor.data_ptr<double>();
         double *linear_coeffs = linear_coeffs_tensor.data_ptr<double>();
@@ -250,6 +252,10 @@ protected:
         int *firstneigh = bfirstneigh_tensor[0].data_ptr<int>();
         double *rcs = brcs_tensor[0].data_ptr<double>();
         int *types = btypes_tensor[0].data_ptr<int>();
+        int *type_map = btype_map_tensor.data_ptr<int>();
+        type_map[0] = 42;
+        type_map[1] = 16;
+        
         nblist.find_info4mlff(
             inum,
             ilist,
@@ -291,7 +297,7 @@ TEST_F(LinearMtpOpTest, apply) {
         bfirstneigh_tensor,
         brcs_tensor,
         btypes_tensor,
-        ntypes,
+        btype_map_tensor,
         nghost,
         rmax,
         rmin)[0];
@@ -324,7 +330,7 @@ TEST_F(LinearMtpOpTest, ef_apply) {
         bfirstneigh_tensor,
         brcs_tensor,
         btypes_tensor,
-        ntypes,
+        btype_map_tensor,
         nghost,
         rmax,
         rmin)[0];

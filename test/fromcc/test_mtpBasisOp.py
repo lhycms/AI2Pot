@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 from pymatgen.core import Structure
 from ai2pot.fromcc import mtpParamOp, mtpBasisOp
-from ai2pot.utils.usepot import MlffInput
+from ai2pot.utils.testpot_utils import MlffInput
 
 
 TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")

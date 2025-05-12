@@ -11,7 +11,7 @@ from ai2pot.fromcc import (mtpParamOp,
 class LinearMtp(nn.Module):
     def __init__(self,
                  mtp_level: int,
-                 ntypes: int,
+                 type_map_tensor: torch.Tensor,
                  chebyshev_size: int,
                  rmax: float,
                  rmin: float,
@@ -19,7 +19,8 @@ class LinearMtp(nn.Module):
                  fit_virial: bool = False):
         super(LinearMtp, self).__init__()
         self.mtp_level: int = mtp_level
-        self.ntypes: int = ntypes
+        self.register_buffer(name="type_map_tensor", tensor=type_map_tensor)
+        self.ntypes: int = type_map_tensor.size(0)
         self.chebyshev_size: int = chebyshev_size
         self.rmax: float = rmax
         self.rmin: float = rmin
@@ -70,7 +71,6 @@ class LinearMtp(nn.Module):
                      bfirstneigh_tensor: torch.Tensor,
                      brcs_tensor: torch.Tensor,
                      btypes_tensor: torch.Tensor,
-                     btype_map_tensor: torch.Tensor,
                      nghost: int):
         bmse_tensor: torch.Tensor = linearMtpToLossOp(e_weight,
                                                       f_weight,
@@ -93,8 +93,7 @@ class LinearMtp(nn.Module):
                                                       bfirstneigh_tensor,
                                                       brcs_tensor,
                                                       btypes_tensor,
-                                                      btype_map_tensor,
-                                                      self.ntypes,
+                                                      self.type_map_tensor,
                                                       nghost,
                                                       self.rmax,
                                                       self.rmin)[0]
@@ -112,7 +111,6 @@ class LinearMtp(nn.Module):
                         bfirstneigh_tensor: torch.Tensor,
                         brcs_tensor: torch.Tensor,
                         btypes_tensor: torch.Tensor,
-                        btype_map_tensor: torch.Tensor,
                         nghost: int):
         bmse_tensor: torch.Tensor = linearMtpToEFLossOp(e_weight,
                                                         f_weight,
@@ -133,8 +131,7 @@ class LinearMtp(nn.Module):
                                                         bfirstneigh_tensor,
                                                         brcs_tensor,
                                                         btypes_tensor,
-                                                        btype_map_tensor,
-                                                        self.ntypes,
+                                                        self.type_map_tensor,
                                                         nghost,
                                                         self.rmax,
                                                         self.rmin)[0]

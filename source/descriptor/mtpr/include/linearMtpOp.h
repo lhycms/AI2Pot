@@ -38,9 +38,9 @@ public:
         const at::Tensor& linear_coeffs_tensor,
         const at::Tensor& type_bias_tensor,
         int alpha_moments_count,
-        const at::Tensor& alpha_index_basic,
-        const at::Tensor& alpha_index_times,
-        const at::Tensor& alpha_moment_mapping,
+        const at::Tensor& alpha_index_basic_tensor,
+        const at::Tensor& alpha_index_times_tensor,
+        const at::Tensor& alpha_moment_mapping_tensor,
         int nmus,
         const at::Tensor& binum_tensor,
         const at::Tensor& bilist_tensor,
@@ -48,7 +48,7 @@ public:
         const at::Tensor& bfirstneigh_tensor,
         const at::Tensor& brcs_tensor,
         const at::Tensor& btypes_tensor,
-        int ntypes,
+        const at::Tensor& type_map_tensor,
         int nghost,
         double rmax,
         double rmin);
@@ -83,7 +83,7 @@ public:
         const at::Tensor& bfirstneigh_tensor,
         const at::Tensor& brcs_tensor,
         const at::Tensor& btypes_tensor,
-        int ntypes,
+        const at::Tensor& type_map_tensor,
         int nghost,
         double rmax,
         double rmin);
@@ -116,7 +116,7 @@ torch::autograd::variable_list LinearMtpToLossOp(
     const at::Tensor& bfirstneigh_tensor,
     const at::Tensor& brcs_tensor,
     const at::Tensor& btypes_tensor,
-    int ntypes,
+    const at::Tensor& type_map_tensor,
     int nghost,
     double rmax,
     double rmin);
@@ -142,7 +142,7 @@ torch::autograd::variable_list LinearMtpToEFLossOp(
     const at::Tensor& bfirstneigh_tensor,
     const at::Tensor& brcs_tensor,
     const at::Tensor& btypes_tensor,
-    int ntypes,
+    const at::Tensor& type_map_tensor,
     int nghost,
     double rmax,
     double rmin);

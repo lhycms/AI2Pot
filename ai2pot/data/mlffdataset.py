@@ -209,7 +209,7 @@ class ExtxyzDataset(Dataset):
                  umax_num_neigh_atoms: int,
                  pbc_xyz: List[bool] = [True, True, True],
                  sort: bool = False,
-                 torch_float_dtype: torch._C.dtype = torch.float32,
+                 torch_float_dtype: torch._C.dtype = torch.float64,
                  has_virial: bool = False):
         self.atoms_list: List[Atoms] = ase_read(filename=filename, index=":")
         self.rcut: float = rcut
@@ -265,7 +265,6 @@ class ExtxyzDataset(Dataset):
                 torch.tensor(firstneigh, dtype=torch.int32),
                 torch.tensor(relative_coords, dtype=self.torch_float_dtype),
                 torch.tensor(types, dtype=torch.int32),
-                torch.tensor(self.type_map, dtype=torch.int32),
                 torch.tensor(nghost, dtype=torch.int32),
                 torch.tensor(self.atoms_list[index].get_total_energy(), dtype=self.torch_float_dtype),
                 torch.tensor(forces, dtype=self.torch_float_dtype),
@@ -280,7 +279,6 @@ class ExtxyzDataset(Dataset):
                 torch.tensor(firstneigh, dtype=torch.int32),
                 torch.tensor(relative_coords, dtype=self.torch_float_dtype),
                 torch.tensor(types, dtype=torch.int32),
-                torch.tensor(self.type_map, dtype=torch.int32),
                 torch.tensor(nghost, dtype=torch.int32),
                 torch.tensor(self.atoms_list[index].get_total_energy(), dtype=self.torch_float_dtype),
                 torch.tensor(forces, dtype=self.torch_float_dtype)
@@ -296,6 +294,18 @@ class ExtxyzDataset(Dataset):
     def _get_type_map(self):
         atom_symbol_list: List[int] = []
         for atoms in self.atoms_list:
+            for tmp_symbol in np.unique(atoms.get_atomic_numbers()):
+                if tmp_symbol not in atom_symbol_list:
+                    atom_symbol_list.append(tmp_symbol)
+        type_map: List[int] = sorted(atom_symbol_list)
+        return type_map
+
+    
+    @staticmethod
+    def get_type_map(filename: str):
+        atoms_list: List[Atoms] = ase_read(filename=filename, index=":")
+        atom_symbol_list: List[int] = []
+        for atoms in atoms_list:
             for tmp_symbol in np.unique(atoms.get_atomic_numbers()):
                 if tmp_symbol not in atom_symbol_list:
                     atom_symbol_list.append(tmp_symbol)

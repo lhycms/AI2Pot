@@ -68,6 +68,7 @@ protected:
     double rcut;
     double bin_size_xyz[3];
     bool pbc_xyz[3];
+    int type_map[2];
 
     int umax_num_neigh_atoms;
     int inum;
@@ -148,6 +149,8 @@ protected:
         basis_vectors[2][2] = 23.1297687334;
 
         // 42: 0;  16: 1
+        type_map[0] = 42;
+        type_map[1] = 16;
         atomic_numbers[0] = 0;
         atomic_numbers[1] = 1;
         atomic_numbers[2] = 1;
@@ -168,7 +171,7 @@ protected:
         frac_coords[1][1] = 0.333333333333;
         frac_coords[1][2] = 0.432343276548;
         frac_coords[2][0] = 0.166666666667;
-        frac_coords[2][1] = 0.343333333333;//0.333333333333
+        frac_coords[2][1] = 0.343333333333; //0.333333333333
         frac_coords[2][2] = 0.567656723452;
         frac_coords[3][0] = 0.333333333333;
         frac_coords[3][1] = 0.666666666667;
@@ -359,6 +362,7 @@ TEST_F(LinearMtpTest, force_accuracy) {
         (double (*)[3])rcs,
         types,
         ntypes,
+        type_map,
         umax_num_neigh_atoms,
         nghost,
         rmax,
@@ -406,6 +410,7 @@ TEST_F(LinearMtpTest, force_accuracy) {
         (double (*)[3])rcs,
         types,
         ntypes,
+        type_map,
         umax_num_neigh_atoms,
         nghost,
         rmax,

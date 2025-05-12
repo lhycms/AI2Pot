@@ -15,7 +15,7 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
-            "cmake==3.26.4"
+            "cmake==3.26.4",
             "pymatgen==2024.7.18",
             "ase==3.23.0",
             "numpy==1.26.4",

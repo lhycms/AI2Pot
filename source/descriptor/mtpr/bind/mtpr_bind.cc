@@ -103,7 +103,7 @@ TORCH_LIBRARY(mtpr, m) {
            const at::Tensor& bfirstneigh_tensor,
            const at::Tensor& brcs_tensor,
            const at::Tensor& btypes_tensor,
-           int64_t ntypes,
+           const at::Tensor& type_map_tensor,
            int64_t nghost,
            double rmax,
            double rmin)
@@ -111,7 +111,6 @@ TORCH_LIBRARY(mtpr, m) {
             assert(chebyshev_size < INT_MAX);
             assert(alpha_moments_count < INT_MAX);
             assert(nmus < INT_MAX);
-            assert(ntypes < INT_MAX);
             assert(nghost < INT_MAX);
 
             return ai2pot::mtpr::LinearMtpToLossOp(
@@ -136,7 +135,7 @@ TORCH_LIBRARY(mtpr, m) {
                 bfirstneigh_tensor,
                 brcs_tensor,
                 btypes_tensor,
-                (int)ntypes,
+                type_map_tensor,
                 (int)nghost,
                 rmax,
                 rmin);
@@ -164,7 +163,7 @@ TORCH_LIBRARY(mtpr, m) {
            const at::Tensor& bfirstneigh_tensor,
            const at::Tensor& brcs_tensor,
            const at::Tensor& btypes_tensor,
-           int64_t ntypes,
+           const at::Tensor& type_map_tensor,
            int64_t nghost,
            double rmax,
            double rmin)
@@ -172,7 +171,6 @@ TORCH_LIBRARY(mtpr, m) {
             assert(chebyshev_size < INT_MAX);
             assert(alpha_moments_count < INT_MAX);
             assert(nmus < INT_MAX);
-            assert(ntypes < INT_MAX);
             assert(nghost < INT_MAX);
 
             return ai2pot::mtpr::LinearMtpToEFLossOp(
@@ -195,7 +193,7 @@ TORCH_LIBRARY(mtpr, m) {
                 bfirstneigh_tensor,
                 brcs_tensor,
                 btypes_tensor,
-                (int)ntypes,
+                type_map_tensor,
                 (int)nghost,
                 rmax,
                 rmin);

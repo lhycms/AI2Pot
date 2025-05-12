@@ -46,7 +46,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
     const at::Tensor& bfirstneigh_tensor,
     const at::Tensor& brcs_tensor,
     const at::Tensor& btypes_tensor,
-    int ntypes,
+    const at::Tensor& type_map_tensor,
     int nghost,
     double rmax,
     double rmin)
@@ -56,6 +56,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
     int alpha_index_times_count = (int)alpha_index_times_tensor.size(0);
     int alpha_scalar_moment = (int)alpha_moment_mapping_tensor.size(0);
     int umax_num_neighs = (int)bfirstneigh_tensor.size(2);
+    int ntypes = (int)type_map_tensor.size(0);
 
     c10::TensorOptions int_options = c10::TensorOptions()
                                         .dtype(torch::kInt32)
@@ -87,6 +88,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
             int *firstneigh = bfirstneigh_tensor[bb].data_ptr<int>();
             float (*rcs)[3] = (float (*)[3])brcs_tensor[bb].data_ptr<float>();
             int *types = btypes_tensor[bb].data_ptr<int>();
+            int *type_map = type_map_tensor.data_ptr<int>();
 
             LinearMtp<float>::find_loss(
                 (*loss),
@@ -115,6 +117,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                 rcs,
                 types,
                 ntypes,
+                type_map,
                 umax_num_neighs,
                 nghost,
                 rmax,
@@ -143,6 +146,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
             int *firstneigh = bfirstneigh_tensor[bb].data_ptr<int>();
             double (*rcs)[3] = (double (*)[3])brcs_tensor[bb].data_ptr<double>();
             int *types = btypes_tensor[bb].data_ptr<int>();
+            int *type_map = type_map_tensor.data_ptr<int>();
 
             LinearMtp<double>::find_loss(
                 (*loss),
@@ -171,6 +175,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                 rcs,
                 types,
                 ntypes,
+                type_map,
                 umax_num_neighs,
                 nghost,
                 rmax,
@@ -202,7 +207,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                             bfirstneigh_tensor,
                             brcs_tensor,
                             btypes_tensor,
-                            at::tensor(ntypes, int_options),
+                            type_map_tensor,
                             at::tensor(nghost, int_options),
                             at::tensor(rmax, float_options),
                             at::tensor(rmin, float_options)
@@ -221,7 +226,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
     at::Tensor bgrad_output_tensor = bgrad_outputs_tensor[0];
     if ( !bgrad_output_tensor.is_contiguous() )
         bgrad_output_tensor = bgrad_output_tensor.contiguous();
-    
+
     double e_weight = ctx->get_saved_variables()[0].item<double>();
     double f_weight = ctx->get_saved_variables()[1].item<double>();
     double v_weight = ctx->get_saved_variables()[2].item<double>();
@@ -243,7 +248,9 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
     at::Tensor bfirstneigh_tensor = ctx->get_saved_variables()[18];
     at::Tensor brcs_tensor = ctx->get_saved_variables()[19];
     at::Tensor btypes_tensor = ctx->get_saved_variables()[20];
-    int ntypes = ctx->get_saved_variables()[21].item<int>();
+    at::Tensor type_map_tensor = ctx->get_saved_variables()[21];
+    int ntypes = type_map_tensor.size(0);
+
     int nghost = ctx->get_saved_variables()[22].item<int>();
     double rmax = ctx->get_saved_variables()[23].item<double>();
     double rmin = ctx->get_saved_variables()[24].item<double>();
@@ -292,6 +299,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
             int *firstneigh = bfirstneigh_tensor[bb].data_ptr<int>();
             float (*rcs)[3] = (float (*)[3])brcs_tensor[bb].data_ptr<float>();
             int *types = btypes_tensor[bb].data_ptr<int>();
+            int *type_map = type_map_tensor.data_ptr<int>();
 
 
             LinearMtp<float>::find_loss_backward(
@@ -323,6 +331,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
                 rcs,
                 types,
                 ntypes,
+                type_map,
                 umax_num_neighs,
                 nghost,
                 rmax,
@@ -355,6 +364,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
             int *firstneigh = bfirstneigh_tensor[bb].data_ptr<int>();
             double (*rcs)[3] = (double (*)[3])brcs_tensor[bb].data_ptr<double>();
             int *types = btypes_tensor[bb].data_ptr<int>();
+            int *type_map = type_map_tensor.data_ptr<int>();
 
             LinearMtp<double>::find_loss_backward(
                 loss_der2coeffs,
@@ -385,6 +395,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
                 rcs,
                 types,
                 ntypes,
+                type_map,
                 umax_num_neighs,
                 nghost,
                 rmax,
@@ -406,7 +417,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
             at::Tensor(),
             torch::matmul(bgrad_output_tensor, bloss_der2coeffs_tensor),
             torch::matmul(bgrad_output_tensor, bloss_der2linear_coeffs_tensor),
-            torch::matmul(bgrad_output_tensor,bloss_der2type_bias_tensor),
+            torch::matmul(bgrad_output_tensor, bloss_der2type_bias_tensor),
             at::Tensor(),
             at::Tensor(), 
             at::Tensor(),
@@ -447,7 +458,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
     const at::Tensor& bfirstneigh_tensor,
     const at::Tensor& brcs_tensor,
     const at::Tensor& btypes_tensor,
-    int ntypes,
+    const at::Tensor& type_map_tensor,
     int nghost,
     double rmax,
     double rmin)
@@ -457,6 +468,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
     int alpha_index_times_count = (int)alpha_index_times_tensor.size(0);
     int alpha_scalar_moment = (int)alpha_moment_mapping_tensor.size(0);
     int umax_num_neighs = (int)bfirstneigh_tensor.size(2);
+    int ntypes = type_map_tensor.size(0);
 
     c10::TensorOptions int_options = c10::TensorOptions()
                                         .dtype(torch::kInt32)
@@ -487,6 +499,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
             int *firstneigh = bfirstneigh_tensor[bb].data_ptr<int>();
             float (*rcs)[3] = (float (*)[3])brcs_tensor[bb].data_ptr<float>();
             int *types = btypes_tensor[bb].data_ptr<int>();
+            int *type_map = type_map_tensor.data_ptr<int>();
 
             LinearMtp<float>::find_ef_loss(
                 (*loss),
@@ -513,6 +526,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
                 rcs,
                 types,
                 ntypes,
+                type_map,
                 umax_num_neighs,
                 nghost,
                 rmax,
@@ -540,6 +554,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
             int *firstneigh = bfirstneigh_tensor[bb].data_ptr<int>();
             double (*rcs)[3] = (double (*)[3])brcs_tensor[bb].data_ptr<double>();
             int *types = btypes_tensor[bb].data_ptr<int>();
+            int *type_map = type_map_tensor.data_ptr<int>();
 
             LinearMtp<double>::find_ef_loss(
                 (*loss),
@@ -566,6 +581,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
                 rcs,
                 types,
                 ntypes,
+                type_map,
                 umax_num_neighs,
                 nghost,
                 rmax,
@@ -595,7 +611,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
                             bfirstneigh_tensor,
                             brcs_tensor,
                             btypes_tensor,
-                            at::tensor(ntypes, int_options),
+                            type_map_tensor,
                             at::tensor(nghost, int_options),
                             at::tensor(rmax, float_options),
                             at::tensor(rmin, float_options)
@@ -634,7 +650,8 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
     at::Tensor bfirstneigh_tensor = ctx->get_saved_variables()[16];
     at::Tensor brcs_tensor = ctx->get_saved_variables()[17];
     at::Tensor btypes_tensor = ctx->get_saved_variables()[18];
-    int ntypes = ctx->get_saved_variables()[19].item<int>();
+    at::Tensor type_map_tensor = ctx->get_saved_variables()[19];
+    int ntypes = type_map_tensor.size(0);
     int nghost = ctx->get_saved_variables()[20].item<int>();
     double rmax = ctx->get_saved_variables()[21].item<double>();
     double rmin = ctx->get_saved_variables()[22].item<double>();
@@ -682,6 +699,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
             int *firstneigh = bfirstneigh_tensor[bb].data_ptr<int>();
             float (*rcs)[3] = (float (*)[3])brcs_tensor[bb].data_ptr<float>();
             int *types = btypes_tensor[bb].data_ptr<int>();
+            int *type_map = type_map_tensor.data_ptr<int>();
 
 
             LinearMtp<float>::find_ef_loss_backward(
@@ -711,6 +729,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
                 rcs,
                 types,
                 ntypes,
+                type_map,
                 umax_num_neighs,
                 nghost,
                 rmax,
@@ -742,6 +761,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
             int *firstneigh = bfirstneigh_tensor[bb].data_ptr<int>();
             double (*rcs)[3] = (double (*)[3])brcs_tensor[bb].data_ptr<double>();
             int *types = btypes_tensor[bb].data_ptr<int>();
+            int *type_map = type_map_tensor.data_ptr<int>();
 
             LinearMtp<double>::find_ef_loss_backward(
                 loss_der2coeffs,
@@ -770,6 +790,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
                 rcs,
                 types,
                 ntypes,
+                type_map,
                 umax_num_neighs,
                 nghost,
                 rmax,
@@ -802,7 +823,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
             at::Tensor(),
             at::Tensor(),
             at::Tensor(), 
-            at::Tensor(), 
+            at::Tensor(),
             at::Tensor()
             };
 }
@@ -830,7 +851,7 @@ torch::autograd::variable_list LinearMtpToLossOp(
     const at::Tensor& bfirstneigh_tensor,
     const at::Tensor& brcs_tensor,
     const at::Tensor& btypes_tensor,
-    int ntypes,
+    const at::Tensor& type_map_tensor,
     int nghost,
     double rmax,
     double rmin)
@@ -857,7 +878,7 @@ torch::autograd::variable_list LinearMtpToLossOp(
         bfirstneigh_tensor,
         brcs_tensor,
         btypes_tensor,
-        ntypes,
+        type_map_tensor,
         nghost,
         rmax,
         rmin);
@@ -884,7 +905,7 @@ torch::autograd::variable_list LinearMtpToEFLossOp(
     const at::Tensor& bfirstneigh_tensor,
     const at::Tensor& brcs_tensor,
     const at::Tensor& btypes_tensor,
-    int ntypes,
+    const at::Tensor& type_map_tensor,
     int nghost,
     double rmax,
     double rmin)
@@ -909,7 +930,7 @@ torch::autograd::variable_list LinearMtpToEFLossOp(
         bfirstneigh_tensor,
         brcs_tensor,
         btypes_tensor,
-        ntypes,
+        type_map_tensor,
         nghost,
         rmax,
         rmin);

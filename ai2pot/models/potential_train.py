@@ -1,7 +1,12 @@
+from typing import List
+from lightning.pytorch.utilities.types import TRAIN_DATALOADERS
 import torch
 import torch.nn as nn
+from torch.utils.data import DataLoader
 import lightning as L
 
+from ai2pot.data.mlffdataset import ExtxyzDataset
+from ai2pot.models.mtp.linear_mtp import LinearMtp
 from ai2pot.models.potential_loss import (ERmse,
                                           FRmse,
                                           VRmse)
@@ -92,20 +97,54 @@ class LitPotential(L.LightningModule):
     #    self.log('learning_rate', current_lr, prog_bar=True)
 
 
-class LitPotentialToLoss(L.LightningModule):
+class LitLinearMtp(L.LightningModule):
     def __init__(self,
-                 model: nn.Module,
+                 mtp_level: int,
+                 type_map_tensor: torch.Tensor,
+                 chebyshev_size: int,
+                 rmax: float,
+                 rmin: float,
+                 umax_num_neighs: int,
+                 fit_virial: bool = False,
+                 trainset_path: str = None,
+                 validset_path: str = None,
+                 testset_path: str = None,
+                 rcut: float = 5.0,
+                 umax_num_neigh_atoms: int = 200,
+                 pbc_xyz: List[bool] = [True, True, True],
+                 sort: bool = False,
+                 torch_float_dtype: torch._C.dtype = torch.float64,
+                 has_virial: bool = False,
+                 batch_size: int = 1,
                  lr_start: float = 1e-3,
                  lr_end: float = 1e-5,
                  e_wgt_start: float = 1.0,
-                 e_wgt_end: float = 10.0,
-                 f_wgt_start: float = 100.0,
-                 f_wgt_end: float = 1.0,
-                 v_wgt_start: float = 10.0,
-                 v_wgt_end: float = 1.0,
+                 e_wgt_end: float = 1.0,
+                 f_wgt_start: float = 0.1,
+                 f_wgt_end: float = 0.1,
+                 v_wgt_start: float = 0.0,
+                 v_wgt_end: float = 0.0,
                  lr_decay_epoch: int = 30):
-        super(LitPotentialToLoss, self).__init__()
-        self.model: nn.Module = model
+        super(LitLinearMtp, self).__init__()
+        self.model: nn.Module = LinearMtp(mtp_level=mtp_level,
+                                          type_map_tensor=type_map_tensor,
+                                          chebyshev_size=chebyshev_size,
+                                          rmax=rmax,
+                                          rmin=rmin,
+                                          umax_num_neighs=umax_num_neighs,
+                                          fit_virial=fit_virial)
+        
+        self.trainset_path: str = trainset_path
+        self.validset_path: str = validset_path
+        self.testset_path: str = testset_path
+        self.rcut: float = rcut
+        self.umax_num_neigh_atoms: int = umax_num_neigh_atoms
+        self.pbc_xyz: List[bool] = pbc_xyz
+        self.sort: bool = sort
+        self.torch_float_dtype: torch._C.dtype = torch_float_dtype
+        self.has_virial: bool = has_virial
+        self.batch_size: int = batch_size
+
         self.lr_start: float = lr_start
         self.lr_end: float = lr_end
         self.e_wgt_start: float = e_wgt_start
@@ -156,25 +195,97 @@ class LitPotentialToLoss(L.LightningModule):
                                                    brcs,
                                                    btypes,
                                                    bnghost[0].item())
-        try:
-            print(self.model.coeffs_tensor[:100])
-            print(self.model.coeffs_tensor.grad[:100])
-            print("---------------------------------------")
-        except:
-            pass
-        #print("---------------------------------------")
-        #print(self.model.linear_coeffs_tensor)
-        #print("---------------------------------------")
-        #print(self.model.type_bias_tensor)
         
         mean_bmse_tensor: torch.Tensor = bmse_tensor.mean()
         self.log("train_loss", mean_bmse_tensor,
                  on_epoch=True,
                  on_step=True,
-                 prog_bar=True)
+                 prog_bar=True,
+                 sync_dist=True)
         return mean_bmse_tensor
-    
-    
+
+
+    def validation_step(self, batch_data, batch_idx: int):
+        e_wgt, f_wgt, v_wgt = self.get_efv_wgts()
+        if (self.model.fit_virial):
+            binum, bilist, bnumneigh, bfirstneigh, brcs, btypes, bnghost, betot_dft_tensor, bforce_dft_tensor, bvirial_dft_tensor = batch_data
+            bmse_tensor: torch.Tensor = self.model(e_wgt,
+                                                   f_wgt,
+                                                   v_wgt,
+                                                   betot_dft_tensor,
+                                                   bforce_dft_tensor,
+                                                   bvirial_dft_tensor,
+                                                   binum,
+                                                   bilist,
+                                                   bnumneigh,
+                                                   bfirstneigh,
+                                                   brcs,
+                                                   btypes,
+                                                   bnghost[0].item())
+        else:
+            binum, bilist, bnumneigh, bfirstneigh, brcs, btypes, bnghost, betot_dft_tensor, bforce_dft_tensor = batch_data
+            bmse_tensor: torch.Tensor = self.model(e_wgt,
+                                                   f_wgt,
+                                                   betot_dft_tensor,
+                                                   bforce_dft_tensor,
+                                                   binum,
+                                                   bilist,
+                                                   bnumneigh,
+                                                   bfirstneigh,
+                                                   brcs,
+                                                   btypes,
+                                                   bnghost[0].item())
+        
+        mean_bmse_tensor: torch.Tensor = bmse_tensor.mean()
+        self.log("valid_loss", mean_bmse_tensor,
+                 on_epoch=True,
+                 on_step=True,
+                 prog_bar=True,
+                 sync_dist=True)
+        return mean_bmse_tensor
+
+
+    def test_step(self, batch_data, batch_idx: int):
+        e_wgt, f_wgt, v_wgt = self.get_efv_wgts()
+        if (self.model.fit_virial):
+            binum, bilist, bnumneigh, bfirstneigh, brcs, btypes, bnghost, betot_dft_tensor, bforce_dft_tensor, bvirial_dft_tensor = batch_data
+            bmse_tensor: torch.Tensor = self.model(e_wgt,
+                                                   f_wgt,
+                                                   v_wgt,
+                                                   betot_dft_tensor,
+                                                   bforce_dft_tensor,
+                                                   bvirial_dft_tensor,
+                                                   binum,
+                                                   bilist,
+                                                   bnumneigh,
+                                                   bfirstneigh,
+                                                   brcs,
+                                                   btypes,
+                                                   bnghost[0].item())
+        else:
+            binum, bilist, bnumneigh, bfirstneigh, brcs, btypes, bnghost, betot_dft_tensor, bforce_dft_tensor = batch_data
+            bmse_tensor: torch.Tensor = self.model(e_wgt,
+                                                   f_wgt,
+                                                   betot_dft_tensor,
+                                                   bforce_dft_tensor,
+                                                   binum,
+                                                   bilist,
+                                                   bnumneigh,
+                                                   bfirstneigh,
+                                                   brcs,
+                                                   btypes,
+                                                   bnghost[0].item())
+        
+        mean_bmse_tensor: torch.Tensor = bmse_tensor.mean()
+        self.log("train_loss", mean_bmse_tensor,
+                 on_epoch=True,
+                 on_step=True,
+                 prog_bar=True,
+                 sync_dist=True)
+        return mean_bmse_tensor
+        
+
+
     def configure_optimizers(self):
         optimizer: torch.optim.Optimizer = torch.optim.AdamW(params=self.model.parameters(),
                                                              lr=self.lr_start)
@@ -194,3 +305,44 @@ class LitPotentialToLoss(L.LightningModule):
                 }
         }
     
+
+    def train_dataloader(self):
+        extxyz_dataset: ExtxyzDataset = ExtxyzDataset(filename=self.trainset_path,
+                                                      rcut=self.rcut,
+                                                      umax_num_neigh_atoms=self.umax_num_neigh_atoms,
+                                                      pbc_xyz=self.pbc_xyz,
+                                                      sort=self.sort,
+                                                      torch_float_dtype=self.torch_float_dtype,
+                                                      has_virial=self.has_virial)
+        train_dataloader: DataLoader = DataLoader(dataset=extxyz_dataset,
+                                                  batch_size=self.batch_size,
+                                                  shuffle=True)
+        return train_dataloader
+    
+
+    def val_dataloader(self):
+        extxyz_dataset: ExtxyzDataset = ExtxyzDataset(filename=self.validset_path,
+                                                      rcut=self.rcut,
+                                                      umax_num_neigh_atoms=self.umax_num_neigh_atoms,
+                                                      pbc_xyz=self.pbc_xyz,
+                                                      sort=self.sort,
+                                                      torch_float_dtype=self.torch_float_dtype,
+                                                      has_virial=self.has_virial)
+        valid_dataloader: DataLoader = DataLoader(dataset=extxyz_dataset,
+                                                  batch_size=self.batch_size,
+                                                  shuffle=True)
+        return valid_dataloader
+
+
+    def test_dataloader(self):
+        extxyz_dataset: ExtxyzDataset = ExtxyzDataset(filename=self.testset_path,
+                                                      rcut=self.rcut,
+                                                      umax_num_neigh_atoms=self.umax_num_neigh_atoms,
+                                                      pbc_xyz=self.pbc_xyz,
+                                                      sort=self.sort,
+                                                      torch_float_dtype=self.torch_float_dtype,
+                                                      has_virial=self.has_virial)
+        test_dataloader: DataLoader = DataLoader(dataset=extxyz_dataset,
+                                                 batch_size=self.batch_size,
+                                                 shuffle=True)
+        return test_dataloader

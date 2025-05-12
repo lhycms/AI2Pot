@@ -15,7 +15,7 @@ from ai2pot.data.mlffdataset import ScDataset, ExtxyzDataset
 from ai2pot.models.mtp.nn_mtp import DescriptorMtp, NNMtp
 from ai2pot.models.potential_train import LitPotential
 from ai2pot.utils.prepot import LsShifter
-from ai2pot.utils.usepot import MlffInput
+from ai2pot.utils.testpot_utils import MlffInput
 
 
 TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")

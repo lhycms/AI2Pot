@@ -132,13 +132,33 @@ class ExtxyzDatasetTest(unittest.TestCase):
                                          coords=cart_coords, 
                                          coords_are_cartesian=True)
         nblist_info = self.extxyz_dataset.analyse_pymatgen(structure=structure)
-        print(nblist_info[5])
+        print("test_analyse_pymatgen:")
+        print("\t 1. nblist_info[0] = ", nblist_info[0].shape)
+        print("\t 2. nblist_info[1] = ", nblist_info[1].shape)
+        print("\t 3. nblist_info[2] = ", nblist_info[2].shape)
+        print("\t 4. nblist_info[3] = ", nblist_info[3].shape)
+        print("\t 5. nblist_info[4] = ", nblist_info[4].shape)
+        print("\t 6. nblist_info[5] = ", nblist_info[5].shape)
+        print("\t 7. nblist_info[6] = ", nblist_info[6].shape)
 
     def test_analyse_ase(self):
         atoms_obj: Atoms = ase_read(filename=self.extxyz_path, index=":")
         atoms = atoms_obj[0]
         nblist_info = self.extxyz_dataset.analyse_ase(atoms=atoms)
-        print(nblist_info[5])
+        print("test_analyse_ase:")
+        print("\t 1. nblist_info[0] = ", nblist_info[0].shape)
+        print("\t 2. nblist_info[1] = ", nblist_info[1].shape)
+        print("\t 3. nblist_info[2] = ", nblist_info[2].shape)
+        print("\t 4. nblist_info[3] = ", nblist_info[3].shape)
+        print("\t 5. nblist_info[4] = ", nblist_info[4].shape)
+        print("\t 6. nblist_info[5] = ", nblist_info[5].shape)
+        print("\t 7. nblist_info[6] = ", nblist_info[6].shape)
+
+
+    def test_get_type_map(self):
+        type_map: List[int] = ExtxyzDataset.get_type_map(filename=self.extxyz_path)
+        print("1. type_map : ", end="\t")
+        print(type_map)
 
 
     def tearDown(self):
