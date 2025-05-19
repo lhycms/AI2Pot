@@ -221,9 +221,9 @@ void ZBL<CoordType>::add_atomic_force(CoordType *atomic_force,
     CoordType A_ders[3] = {0., 0., 0.};
     CoordType B_ders[3] = {0., 0., 0.};
     CoordType C_ders[3] = {0., 0., 0.};
-    A_ders[0] = ;
-    A_ders[1] = ;
-    A_ders[2] = ;
+    A_ders[0] = -K_C_SP*this->_Zi*this->_Zj / (neigh_vec[0] / std::pow(distance_ij, 3));
+    A_ders[1] = -K_C_SP*this->_Zi*this->_Zj / (neigh_vec[1] / std::pow(distance_ij, 3));
+    A_ders[2] = -K_C_SP*this->_Zi*this->_Zj / (neigh_vec[0] / std::pow(distance_ij, 3));
     B_ders[0] = ;
     B_ders[1] = ;
     B_ders[2] = ;
@@ -232,7 +232,9 @@ void ZBL<CoordType>::add_atomic_force(CoordType *atomic_force,
     C_ders[2] = ;
 
     for (int ii=0; ii<3; ii++)
-        //atomic_force[ii] += ;
+        atomic_force[ii] += A_ders[ii] * B * C 
+                            + A * B_ders[ii] * C
+                            + A * B * C_ders[ii];
 }
 
 
