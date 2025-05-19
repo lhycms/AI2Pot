@@ -23,7 +23,7 @@
 #include "./mtpParam.h"
 #include "./mtpBasis.h"
 #include "./linearMtpLoss.h"
-#include "../../correction/include/zbl.h"
+//#include "../../correction/include/zbl.h"
 
 namespace ai2pot {
 namespace mtpr {

@@ -1,3 +1,6 @@
+#ifndef AI2POT_ZBL_H
+#define AI2POT_ZBL_H
+
 #include <stdio.h>
 #include <cmath>
 #include <math.h>
@@ -34,7 +37,11 @@ public:
 
     CoordType find_switch_func(CoordType distance_ij);
 
+    CoordType find_switch_func_der2rij(CoordType distance_ij);
+
     CoordType find_phi_func(CoordType distance_ij);
+
+    CoordType find_phi_func_der2rij(CoordType distance_ij);
 
     CoordType find_pair_energy(CoordType distance_ij);
 
@@ -174,16 +181,45 @@ CoordType ZBL<CoordType>::find_switch_func(CoordType distance_ij)
 
 
 template <typename CoordType>
+CoordType ZBL<CoordType>::find_switch_func_der2rij(CoordType distance_ij)
+{
+    if (distance_ij < this->_rmin)
+        return 0.0;
+    else if ((distance_ij>=this->_rmin) && (distance_ij<=this->_rmax)) {
+        CoordType uu = (distance_ij - this->_rmin) / (this->_rmax - this->_rmin);
+        return 1/(this->_rmax - this->_rmin) * (-30*std::pow(uu, 4) + 60*std::pow(uu, 3) - 30*std::pow(uu, 2));
+    }
+    else
+        return 0.0;
+}
+
+
+template <typename CoordType>
 CoordType ZBL<CoordType>::find_phi_func(CoordType distance_ij)
 {
-    CoordType phi_val = 0;
-    CoordType a = 0.46848 / (std::pow(this->_Zi, 0.23)  + std::pow(this->_Zj, 0.23));
+    CoordType phi_val = 0.0;
+    CoordType a = 0.46848 / (std::pow(this->_Zi, 0.23) + std::pow(this->_Zj, 0.23));
     CoordType x = distance_ij / a;
 
-    for (int ii=0; ii<4; ii++)
+    for (int ii=0; ii<4; ii++) {
         phi_val += this->_ck[ii] * std::exp(-this->_dk[ii] * x);
+    }
 
     return phi_val;
+}
+
+
+template <typename CoordType>
+CoordType ZBL<CoordType>::find_phi_func_der2rij(CoordType distance_ij)
+{
+    CoordType phi_der2rij = 0.0;
+    CoordType a = 0.46848 / (std::pow(this->_Zi, 0.23) + std::pow(this->_Zj, 0.23));
+
+    for (int ii=0; ii<4; ii++)
+        phi_der2rij += - this->_ck[ii] * this->_dk[ii] / a 
+                         * std::exp(-this->_dk[ii] * distance_ij / a);
+
+    return phi_der2rij;
 }
 
 
@@ -224,19 +260,23 @@ void ZBL<CoordType>::add_atomic_force(CoordType *atomic_force,
     A_ders[0] = -K_C_SP*this->_Zi*this->_Zj / (neigh_vec[0] / std::pow(distance_ij, 3));
     A_ders[1] = -K_C_SP*this->_Zi*this->_Zj / (neigh_vec[1] / std::pow(distance_ij, 3));
     A_ders[2] = -K_C_SP*this->_Zi*this->_Zj / (neigh_vec[0] / std::pow(distance_ij, 3));
-    B_ders[0] = ;
-    B_ders[1] = ;
-    B_ders[2] = ;
-    C_ders[0] = ;
-    C_ders[1] = ;
-    C_ders[2] = ;
+    CoordType phi_der2rij = this->find_phi_func_der2rij(distance_ij);
+    B_ders[0] = phi_der2rij * neigh_vec[0] / distance_ij;
+    B_ders[1] = phi_der2rij * neigh_vec[1] / distance_ij;
+    B_ders[2] = phi_der2rij * neigh_vec[2] / distance_ij;
+    CoordType switch_func_der2rij = this->find_switch_func_der2rij(distance_ij);
+    C_ders[0] = switch_func_der2rij * neigh_vec[0] / distance_ij;
+    C_ders[1] = switch_func_der2rij * neigh_vec[1] / distance_ij;
+    C_ders[2] = switch_func_der2rij * neigh_vec[2] / distance_ij;
 
-    for (int ii=0; ii<3; ii++)
-        atomic_force[ii] += A_ders[ii] * B * C 
-                            + A * B_ders[ii] * C
-                            + A * B * C_ders[ii];
+    for (int aa=0; aa<3; aa++)
+        atomic_force[aa] += A_ders[aa] * B * C 
+                            + A * B_ders[aa] * C
+                            + A * B * C_ders[aa];
 }
 
 
 };  // namespace : correction
 };  // namespace : ai2pot
+
+#endif
