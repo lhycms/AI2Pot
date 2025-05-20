@@ -239,7 +239,7 @@ template <typename CoordType>
 void ZBL<CoordType>::add_atomic_energy(CoordType &atomic_energy,
                                        CoordType distance_ij)
 {
-    CoordType half_pair_energy = this->find_pair_energy(distance_ij) / 2;
+    CoordType half_pair_energy = 0.5 * this->find_pair_energy(distance_ij);
     atomic_energy += half_pair_energy;
 }
 
@@ -254,25 +254,16 @@ void ZBL<CoordType>::add_atomic_force(CoordType *atomic_force,
     CoordType A = K_C_SP*this->_Zi*this->_Zj/distance_ij;
     CoordType B = this->find_phi_func(distance_ij);
     CoordType C = this->find_switch_func(distance_ij);
-    CoordType A_ders[3] = {0., 0., 0.};
-    CoordType B_ders[3] = {0., 0., 0.};
-    CoordType C_ders[3] = {0., 0., 0.};
-    A_ders[0] = -K_C_SP*this->_Zi*this->_Zj / (neigh_vec[0] / std::pow(distance_ij, 3));
-    A_ders[1] = -K_C_SP*this->_Zi*this->_Zj / (neigh_vec[1] / std::pow(distance_ij, 3));
-    A_ders[2] = -K_C_SP*this->_Zi*this->_Zj / (neigh_vec[0] / std::pow(distance_ij, 3));
-    CoordType phi_der2rij = this->find_phi_func_der2rij(distance_ij);
-    B_ders[0] = phi_der2rij * neigh_vec[0] / distance_ij;
-    B_ders[1] = phi_der2rij * neigh_vec[1] / distance_ij;
-    B_ders[2] = phi_der2rij * neigh_vec[2] / distance_ij;
-    CoordType switch_func_der2rij = this->find_switch_func_der2rij(distance_ij);
-    C_ders[0] = switch_func_der2rij * neigh_vec[0] / distance_ij;
-    C_ders[1] = switch_func_der2rij * neigh_vec[1] / distance_ij;
-    C_ders[2] = switch_func_der2rij * neigh_vec[2] / distance_ij;
+    
+    CoordType A_der = -K_C_SP*this->_Zi*this->_Zj/std::pow(distance_ij, 2);
+    CoordType B_der = this->find_phi_func_der2rij(distance_ij);
+    CoordType C_der = this->find_switch_func_der2rij(distance_ij);
 
-    for (int aa=0; aa<3; aa++)
-        atomic_force[aa] += A_ders[aa] * B * C 
-                            + A * B_ders[aa] * C
-                            + A * B * C_ders[aa];
+    for (int aa=0; aa<3; aa++) {
+        atomic_force[aa] += (A_der*B*C 
+                             + A*B_der*C
+                             + A*B*C_der) * neigh_vec[aa] / distance_ij;
+    }
 }
 
 

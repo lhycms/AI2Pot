@@ -13,6 +13,8 @@ protected:
     double rmin;
     double *ck;
     double *dk;
+    double neigh_vec[3];
+    double force[3];
 
     static void SetUpTestSuite() {
         std::cout << "ZBLTest (TestSuite) is setting up...\n";
@@ -38,6 +40,14 @@ protected:
         dk[1] = 0.94229;
         dk[2] = 0.4029;
         dk[3] = 0.20162;
+
+        neigh_vec[0] = 1.01;
+        neigh_vec[1] = 1.01;
+        neigh_vec[2] = 1.01;
+
+        force[0] = 0;
+        force[1] = 0;
+        force[2] = 0;
     }
 
     void TearDown() override {
@@ -83,13 +93,18 @@ printf("\t2. Gradient calculated by finite difference method = %.10f\n", (result
 
 
 TEST_F(ZBLTest, find_zbl_pair_energy) {
-    double delta = 1e-5;
-
+    double delta = 1e-6;
+    double distance_ij = std::sqrt(std::pow(neigh_vec[0], 2)
+                                   + std::pow(neigh_vec[1], 2)
+                                   + std::pow(neigh_vec[2], 2));
+    printf("distance_ij = %g\n", distance_ij);
     ai2pot::correction::ZBL<double> zbl(Zi, Zj, rmax, rmin, ck, dk);
-    double pair_energy = zbl.find_pair_energy(1.1);
-    double pair_energy_ = zbl.find_pair_energy(1.1 + delta);
+    double pair_energy = zbl.find_pair_energy(distance_ij);
+    double pair_energy_ = zbl.find_pair_energy(distance_ij + delta);
 
-//printf("\t1. Gradient calculated by custom code = %.10f\n", gradient);
+    zbl.add_atomic_force(force, neigh_vec);
+
+printf("\t1. Gradient calculated by custom code = %.10f\n", force[0] * std::sqrt(3));
 printf("\t2. Gradient calculated by finite difference method = %.10f\n", (pair_energy_ - pair_energy) / delta);
 }
 
