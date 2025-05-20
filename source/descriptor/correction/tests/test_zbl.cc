@@ -102,7 +102,7 @@ TEST_F(ZBLTest, find_zbl_pair_energy) {
     double pair_energy = zbl.find_pair_energy(distance_ij);
     double pair_energy_ = zbl.find_pair_energy(distance_ij + delta);
 
-    zbl.add_atomic_force(force, neigh_vec);
+    zbl.add_atomic_force_one(force, neigh_vec);
 
 printf("\t1. Gradient calculated by custom code = %.10f\n", force[0] * std::sqrt(3));
 printf("\t2. Gradient calculated by finite difference method = %.10f\n", (pair_energy_ - pair_energy) / delta);

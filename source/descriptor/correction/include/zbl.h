@@ -45,14 +45,14 @@ public:
 
     CoordType find_pair_energy(CoordType distance_ij);
 
-    void add_atomic_energy(CoordType &atomic_energy,
-                           CoordType distance_ij);
+    void add_atomic_energy_one(CoordType &atomic_energy,
+                               CoordType distance_ij);
     
-    void add_atomic_force(CoordType *force,
-                          CoordType *neigh_vec);
+    void add_atomic_force_one(CoordType *force,
+                              CoordType *neigh_vec);
 
-    void add_virial(CoordType *virial,
-                    CoordType *neigh_vec);
+    void add_virial_one(CoordType *virial,
+                        CoordType *neigh_vec);
 
 private:
     int _Zi = 0;
@@ -236,8 +236,8 @@ CoordType ZBL<CoordType>::find_pair_energy(CoordType distance_ij)
 
 
 template <typename CoordType>
-void ZBL<CoordType>::add_atomic_energy(CoordType &atomic_energy,
-                                       CoordType distance_ij)
+void ZBL<CoordType>::add_atomic_energy_one(CoordType &atomic_energy,
+                                           CoordType distance_ij)
 {
     CoordType half_pair_energy = 0.5 * this->find_pair_energy(distance_ij);
     atomic_energy += half_pair_energy;
@@ -245,8 +245,8 @@ void ZBL<CoordType>::add_atomic_energy(CoordType &atomic_energy,
 
 
 template <typename CoordType>
-void ZBL<CoordType>::add_atomic_force(CoordType *atomic_force,
-                                      CoordType *neigh_vec)
+void ZBL<CoordType>::add_atomic_force_one(CoordType *atomic_force,
+                                          CoordType *neigh_vec)
 {
     CoordType distance_ij = std::sqrt( std::pow(neigh_vec[0], 2) 
                                        + std::pow(neigh_vec[1], 2)
@@ -266,6 +266,31 @@ void ZBL<CoordType>::add_atomic_force(CoordType *atomic_force,
     }
 }
 
+
+template <typename CoordType>
+void ZBL<CoordType>::add_virial_one(CoordType *virial,
+                                    CoordType *neigh_vec)
+{
+    CoordType distance_ij = std::sqrt( std::pow(neigh_vec[0], 2) 
+                                       + std::pow(neigh_vec[1], 2)
+                                       + std::pow(neigh_vec[2], 2) );
+    CoordType A = K_C_SP*this->_Zi*this->_Zj/distance_ij;
+    CoordType B = this->find_phi_func(distance_ij);
+    CoordType C = this->find_switch_func(distance_ij);
+    
+    CoordType A_der = -K_C_SP*this->_Zi*this->_Zj/std::pow(distance_ij, 2);
+    CoordType B_der = this->find_phi_func_der2rij(distance_ij);
+    CoordType C_der = this->find_switch_func_der2rij(distance_ij);
+
+    for (int aa=0; aa<3; aa++) {
+        for (int bb=0; bb<3; bb++) {
+            CoordType Fijb = (A_der*B*C 
+                             + A*B_der*C
+                             + A*B*C_der) * neigh_vec[aa] / distance_ij;
+            virial[aa*3 + bb] += -0.5 * neigh_vec[aa] * Fijb;
+        }
+    }
+}
 
 };  // namespace : correction
 };  // namespace : ai2pot
