@@ -14,26 +14,26 @@ namespace correction {
 double K_C_SP = 14.399645; // 1/(4*PI*epsilon_0*e^2)
 
 template <typename CoordType>
-class ZBL {
+class PairZBL {
 public:
-    ZBL();
+    PairZBL();
 
-    ZBL(int Zi,
+    PairZBL(int Zi,
         int Zj,
         CoordType rmax,
         CoordType rmin,
         CoordType *ck,
         CoordType *dk);
 
-    ZBL(const ZBL &rhs);
+    PairZBL(const PairZBL &rhs);
 
-    ZBL(ZBL &&rhs);
+    PairZBL(PairZBL &&rhs);
 
-    ZBL& operator=(const ZBL &rhs);
+    PairZBL& operator=(const PairZBL &rhs);
 
-    ZBL& operator=(ZBL &&rhs);
+    PairZBL& operator=(PairZBL &&rhs);
 
-    ~ZBL();
+    ~PairZBL();
 
     CoordType find_switch_func(CoordType distance_ij);
 
@@ -61,12 +61,21 @@ private:
     CoordType _rmin = 0;
     CoordType *_ck; // c1=0.18175, c2=0.50986, c3=0.28022, c4=0.02817
     CoordType *_dk; // d1=3.1998,  d2=0.94229, d3=0.4029,  d4=0.20162
-};  // class : ZBL
-
+};  // class : PairZBL
 
 
 template <typename CoordType>
-ZBL<CoordType>::ZBL(int Zi,
+class GroupZBL {
+public:
+
+
+private: 
+
+};  // class : GroupZBL
+
+
+template <typename CoordType>
+PairZBL<CoordType>::PairZBL(int Zi,
                     int Zj,
                     CoordType rmax,
                     CoordType rmin,
@@ -87,7 +96,7 @@ ZBL<CoordType>::ZBL(int Zi,
 
 
 template <typename CoordType>
-ZBL<CoordType>::ZBL(const ZBL &rhs)
+PairZBL<CoordType>::PairZBL(const PairZBL &rhs)
 {
     this->_Zi = rhs._Zi;
     this->_Zj = rhs._Zj;
@@ -103,7 +112,7 @@ ZBL<CoordType>::ZBL(const ZBL &rhs)
 
 
 template <typename CoordType>
-ZBL<CoordType>::ZBL(ZBL &&rhs) {
+PairZBL<CoordType>::PairZBL(PairZBL &&rhs) {
     this->_Zi = rhs._Zi;
     rhs._Zi = 0;
     this->_Zj = rhs._Zj;
@@ -121,7 +130,7 @@ ZBL<CoordType>::ZBL(ZBL &&rhs) {
 
 
 template <typename CoordType>
-ZBL<CoordType>& ZBL<CoordType>::operator=(const ZBL &rhs) {
+PairZBL<CoordType>& PairZBL<CoordType>::operator=(const PairZBL &rhs) {
     this->_Zi = rhs._Zi;
     this->_Zj = rhs._Zj;
     this->_rmax = rhs._rmax;
@@ -136,7 +145,7 @@ ZBL<CoordType>& ZBL<CoordType>::operator=(const ZBL &rhs) {
 
 
 template <typename CoordType>
-ZBL<CoordType>& ZBL<CoordType>::operator=(ZBL &&rhs) {
+PairZBL<CoordType>& PairZBL<CoordType>::operator=(PairZBL &&rhs) {
     this->_Zi = rhs._Zi;
     rhs._Zi = 0;
     this->_Zj = rhs._Zj;
@@ -156,7 +165,7 @@ ZBL<CoordType>& ZBL<CoordType>::operator=(ZBL &&rhs) {
 
 
 template <typename CoordType>
-ZBL<CoordType>::~ZBL() {
+PairZBL<CoordType>::~PairZBL() {
     this->_Zi = 0;
     this->_Zj = 0;
     this->_rmax = 0;
@@ -167,7 +176,7 @@ ZBL<CoordType>::~ZBL() {
 
 
 template <typename CoordType>
-CoordType ZBL<CoordType>::find_switch_func(CoordType distance_ij)
+CoordType PairZBL<CoordType>::find_switch_func(CoordType distance_ij)
 {
     if (distance_ij < this->_rmin)
         return 1.0;
@@ -181,7 +190,7 @@ CoordType ZBL<CoordType>::find_switch_func(CoordType distance_ij)
 
 
 template <typename CoordType>
-CoordType ZBL<CoordType>::find_switch_func_der2rij(CoordType distance_ij)
+CoordType PairZBL<CoordType>::find_switch_func_der2rij(CoordType distance_ij)
 {
     if (distance_ij < this->_rmin)
         return 0.0;
@@ -195,7 +204,7 @@ CoordType ZBL<CoordType>::find_switch_func_der2rij(CoordType distance_ij)
 
 
 template <typename CoordType>
-CoordType ZBL<CoordType>::find_phi_func(CoordType distance_ij)
+CoordType PairZBL<CoordType>::find_phi_func(CoordType distance_ij)
 {
     CoordType phi_val = 0.0;
     CoordType a = 0.46848 / (std::pow(this->_Zi, 0.23) + std::pow(this->_Zj, 0.23));
@@ -210,7 +219,7 @@ CoordType ZBL<CoordType>::find_phi_func(CoordType distance_ij)
 
 
 template <typename CoordType>
-CoordType ZBL<CoordType>::find_phi_func_der2rij(CoordType distance_ij)
+CoordType PairZBL<CoordType>::find_phi_func_der2rij(CoordType distance_ij)
 {
     CoordType phi_der2rij = 0.0;
     CoordType a = 0.46848 / (std::pow(this->_Zi, 0.23) + std::pow(this->_Zj, 0.23));
@@ -224,7 +233,7 @@ CoordType ZBL<CoordType>::find_phi_func_der2rij(CoordType distance_ij)
 
 
 template <typename CoordType>
-CoordType ZBL<CoordType>::find_pair_energy(CoordType distance_ij)
+CoordType PairZBL<CoordType>::find_pair_energy(CoordType distance_ij)
 {
     CoordType phi_val = this->find_phi_func(distance_ij);
     CoordType switch_val = this->find_switch_func(distance_ij);
@@ -236,7 +245,7 @@ CoordType ZBL<CoordType>::find_pair_energy(CoordType distance_ij)
 
 
 template <typename CoordType>
-void ZBL<CoordType>::add_atomic_energy_one(CoordType &atomic_energy,
+void PairZBL<CoordType>::add_atomic_energy_one(CoordType &atomic_energy,
                                            CoordType distance_ij)
 {
     CoordType half_pair_energy = 0.5 * this->find_pair_energy(distance_ij);
@@ -245,7 +254,7 @@ void ZBL<CoordType>::add_atomic_energy_one(CoordType &atomic_energy,
 
 
 template <typename CoordType>
-void ZBL<CoordType>::add_atomic_force_one(CoordType *atomic_force,
+void PairZBL<CoordType>::add_atomic_force_one(CoordType *atomic_force,
                                           CoordType *neigh_vec)
 {
     CoordType distance_ij = std::sqrt( std::pow(neigh_vec[0], 2) 
@@ -268,7 +277,7 @@ void ZBL<CoordType>::add_atomic_force_one(CoordType *atomic_force,
 
 
 template <typename CoordType>
-void ZBL<CoordType>::add_virial_one(CoordType *virial,
+void PairZBL<CoordType>::add_virial_one(CoordType *virial,
                                     CoordType *neigh_vec)
 {
     CoordType distance_ij = std::sqrt( std::pow(neigh_vec[0], 2) 
@@ -286,7 +295,7 @@ void ZBL<CoordType>::add_virial_one(CoordType *virial,
         for (int bb=0; bb<3; bb++) {
             CoordType Fijb = (A_der*B*C 
                              + A*B_der*C
-                             + A*B*C_der) * neigh_vec[aa] / distance_ij;
+                             + A*B*C_der) * neigh_vec[bb] / distance_ij;
             virial[aa*3 + bb] += -0.5 * neigh_vec[aa] * Fijb;
         }
     }
