@@ -5,6 +5,7 @@
 #include <cmath>
 #include <math.h>
 #include <stdlib.h>
+#include <vector>
 
 
 namespace ai2pot {
@@ -59,19 +60,48 @@ private:
     int _Zj = 0;
     CoordType _rmax = 0;
     CoordType _rmin = 0;
-    CoordType *_ck; // c1=0.18175, c2=0.50986, c3=0.28022, c4=0.02817
-    CoordType *_dk; // d1=3.1998,  d2=0.94229, d3=0.4029,  d4=0.20162
+    CoordType *_ck = nullptr; // c1=0.18175, c2=0.50986, c3=0.28022, c4=0.02817
+    CoordType *_dk = nullptr; // d1=3.1998,  d2=0.94229, d3=0.4029,  d4=0.20162
 };  // class : PairZBL
 
 
 template <typename CoordType>
 class GroupZBL {
 public:
+    GroupZBL();
+
+    GroupZBL(int ntypes,
+             int *Zis,
+             int *Zjs,
+             CoordType rmax,
+             CoordType rmin,
+             CoordType *cks,
+             CoordType *dks);
+
+    GroupZBL(const GroupZBL& rhs);
+
+    GroupZBL(GroupZBL&& rhs);
+
+    GroupZBL& operator=(const GroupZBL& rhs);
+
+    GroupZBL& operator=(GroupZBL&& rhs);
+
+    ~GroupZBL();
+
+    void correct_atomic_forces();
+
+    void correct_virials();
 
 
-private: 
-
+private:
+    int _ntypes = 0;
+    CoordType _rmax = 0.0;
+    CoordType _rmin = 0.0;
+    std::vector<PairZBL<CoordType>> _pair_zbl_vector;
 };  // class : GroupZBL
+
+
+
 
 
 template <typename CoordType>
@@ -300,6 +330,45 @@ void PairZBL<CoordType>::add_virial_one(CoordType *virial,
         }
     }
 }
+
+
+template <typename CoordType>
+GroupZBL<CoordType>::GroupZBL() {}
+
+
+template <typename CoordType>
+GroupZBL<CoordType>::GroupZBL(int ntypes,
+                              int* Zis,
+                              int* Zjs,
+                              CoordType rmax,
+                              CoordType rmin,
+                              CoordType* cks,
+                              CoordType* dks)
+{
+    this->_ntypes = ntypes;
+    this->_rmax = rmax;
+    this->_rmin = rmin;
+    for (int ii=0; ii<this->_ntypes; ii++) {
+        for (int jj=0; jj<this->_ntypes; jj++) {
+            int idx = ii * this->_ntypes + jj;
+            this->_pair_zbl_vector.push_back( PairZBL<CoordType>(Zis[ii], 
+                                                                 Zjs[jj], 
+                                                                 this->_rmax, 
+                                                                 this->_rmin, 
+                                                                 &cks[idx*4], 
+                                                                 &dks[idx*4]));
+        }
+    }
+}
+
+
+template <typename CoordType>
+GroupZBL<CoordType>::~GroupZBL() {
+    this->_ntypes = 0;
+    this->_rmax = 0.0;
+    this->_rmin = 0.0;
+}
+
 
 };  // namespace : correction
 };  // namespace : ai2pot
