@@ -351,14 +351,66 @@ GroupZBL<CoordType>::GroupZBL(int ntypes,
     for (int ii=0; ii<this->_ntypes; ii++) {
         for (int jj=0; jj<this->_ntypes; jj++) {
             int idx = ii * this->_ntypes + jj;
-            this->_pair_zbl_vector.push_back( PairZBL<CoordType>(Zis[ii], 
-                                                                 Zjs[jj], 
-                                                                 this->_rmax, 
-                                                                 this->_rmin, 
-                                                                 &cks[idx*4], 
+            this->_pair_zbl_vector.push_back( PairZBL<CoordType>(Zis[ii],
+                                                                 Zjs[jj],
+                                                                 this->_rmax,
+                                                                 this->_rmin,
+                                                                 &cks[idx*4],
                                                                  &dks[idx*4]));
         }
     }
+}
+
+
+template <typename CoordType>
+GroupZBL<CoordType>::GroupZBL(const GroupZBL& rhs) {
+    this->_ntypes = rhs._ntypes;
+    this->_rmax = rhs._rmax;
+    this->_rmin = rhs._rmin;
+
+    this->_pair_zbl_vector.resize(this->_ntypes * this->_ntypes);
+    for (int ii=0; ii<this->_ntypes*this->_ntypes; ii++)
+        this->_pair_zbl_vector[ii] = rhs._pair_zbl_vector[ii];
+}
+
+
+template <typename CoordType>
+GroupZBL<CoordType>::GroupZBL(GroupZBL&& rhs) {
+    this->_ntypes = rhs._ntypes;
+    rhs._ntypes = 0;
+    this->_rmax = rhs._rmax;
+    rhs._rmax = 0.0;
+    this->_rmin = rhs._rmin;
+    rhs._rmin = 0.0;
+
+    this->_pair_zbl_vector = std::move(rhs._pair_zbl_vector);
+}
+
+
+template <typename CoordType>
+GroupZBL<CoordType>& GroupZBL<CoordType>::operator=(const GroupZBL& rhs) {
+    this->_ntypes = rhs._ntypes;
+    this->_rmax = rhs._rmax;
+    this->_rmin = rhs._rmin;
+
+    this->_pair_zbl_vector.clear();
+    this->_pair_zbl_vector.resize(this->_ntypes * this->_ntypes);
+    for (int ii=0; ii<this->_ntypes*this->_ntypes; ii++)
+        this->_pair_zbl_vector[ii] = rhs._pair_zbl_vector[ii];
+}
+
+
+template <typename CoordType>
+GroupZBL<CoordType>& GroupZBL<CoordType>::operator=(GroupZBL&& rhs) {
+    this->_ntypes = rhs._ntypes;
+    rhs._ntypes = 0;
+    this->_rmax = rhs._rmax;
+    rhs._rmax = 0.0;
+    this->_rmin = rhs._rmin;
+    rhs._rmin = 0.0;
+
+    this->_pair_zbl_vector.clear();
+    this->_pair_zbl_vector = std::move(rhs._pair_zbl_vector);
 }
 
 
