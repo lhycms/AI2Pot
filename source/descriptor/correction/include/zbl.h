@@ -88,9 +88,20 @@ public:
 
     ~GroupZBL();
 
-    void correct_atomic_forces();
+    void correct_efv(CoordType* e_sites,
+                     CoordType* atomic_forces,
+                     CoordType* virial,
+                     int inum,
+                     int* ilist,
+                     int* numneigh,
+                     int* firstneigh,
+                     CoordType (*rcs)[3],
+                     int* types,
+                     int ntypes,
+                     int* type_map,
+                     int umax_num_neigh_atoms,
+                     int nghost);
 
-    void correct_virials();
 
 
 private:
@@ -135,8 +146,8 @@ PairZBL<CoordType>::PairZBL(const PairZBL &rhs)
     this->_ck = (CoordType*)malloc(sizeof(CoordType) * 4);
     this->_dk = (CoordType*)malloc(sizeof(CoordType) * 4);
     for (int ii=0; ii<4; ii++) {
-        this->_ck = rhs._ck[ii];
-        this->_dk = rhs._dk[ii];
+        this->_ck[ii] = rhs._ck[ii];
+        this->_dk[ii] = rhs._dk[ii];
     }
 }
 
@@ -397,6 +408,8 @@ GroupZBL<CoordType>& GroupZBL<CoordType>::operator=(const GroupZBL& rhs) {
     this->_pair_zbl_vector.resize(this->_ntypes * this->_ntypes);
     for (int ii=0; ii<this->_ntypes*this->_ntypes; ii++)
         this->_pair_zbl_vector[ii] = rhs._pair_zbl_vector[ii];
+
+    return *this;
 }
 
 
@@ -411,6 +424,8 @@ GroupZBL<CoordType>& GroupZBL<CoordType>::operator=(GroupZBL&& rhs) {
 
     this->_pair_zbl_vector.clear();
     this->_pair_zbl_vector = std::move(rhs._pair_zbl_vector);
+
+    return *this;
 }
 
 
@@ -420,6 +435,63 @@ GroupZBL<CoordType>::~GroupZBL() {
     this->_rmax = 0.0;
     this->_rmin = 0.0;
 }
+
+
+template <typename CoordType>
+void GroupZBL<CoordType>::correct_efv(CoordType* e_sites,
+                                      CoordType* atomic_forces,
+                                      CoordType* virial,
+                                      int inum,
+                                      int* ilist,
+                                      int* numneigh,
+                                      int* firstneigh,
+                                      CoordType (*rcs)[3],
+                                      int* types,
+                                      int ntypes,
+                                      int* type_map,
+                                      int umax_num_neigh_atoms,
+                                      int nghost)
+{
+    assert(this->_ntypes == ntypes);
+    int center_idx;
+    int neigh_idx;
+    int type_inner;
+    int type_outer;
+    int Zi;
+    int Zj;
+    CoordType neigh_vec[3];
+    CoordType distance_ij;
+    CoordType distance_ij_inv;
+
+    for (int ii=0; ii<inum; ii++) {
+        center_idx = ilist[ii];
+        type_inner = types[center_idx];
+        Zi = type_map[type_inner];
+
+        for (int jj=0; jj<numneigh[ii]; jj++) {
+            neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
+            type_outer = types[neigh_idx];
+            Zj = type_map[type_outer];
+            int zbl_idx = type_inner * this->_ntypes + type_outer;
+            PairZBL<CoordType> pair_zbl = this->_pair_zbl_vector[zbl_idx];
+            
+            for (int aa=0; aa<3; aa++)
+                neigh_vec[aa] = rcs[ii*umax_num_neigh_atoms + jj][aa];
+            
+            distance_ij = std::sqrt( std::pow(neigh_vec[0], 2)
+                                     + std::pow(neigh_vec[1], 2)
+                                     + std::pow(neigh_vec[2], 2) );
+            distance_ij_inv = 1.0 / distance_ij;
+            if ( (distance_ij>this->_rmax) || (distance_ij<this->_rmin) )
+                continue;
+
+            pair_zbl.add_atomic_energy_one(e_sites[ii], distance_ij);
+            pair_zbl.add_atomic_force_one(&atomic_forces[ii*3+0], neigh_vec);
+            pair_zbl.add_virial_one(virial, neigh_vec);
+        }
+    }
+}
+
 
 
 };  // namespace : correction

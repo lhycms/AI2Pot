@@ -14,7 +14,11 @@ file(MAKE_DIRECTORY ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY})
 
 # 5. compile
 if (BUILD_TEST)
-    add_executable(test_zbl ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_zbl.cc)
-    target_link_libraries(test_zbl PRIVATE gtest gtest_main)
-    gtest_discover_tests(test_zbl DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT})
+    add_executable(test_pair_zbl ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_pair_zbl.cc)
+    target_link_libraries(test_pair_zbl PRIVATE gtest gtest_main)
+    gtest_discover_tests(test_pair_zbl DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT})
+
+    add_executable(test_group_zbl ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_group_zbl.cc)
+    target_link_libraries(test_group_zbl PRIVATE gtest gtest_main)
+    gtest_discover_tests(test_group_zbl DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT})
 endif()

@@ -29,7 +29,7 @@ protected:
 
     void SetUp() override {
         Zi = 20;
-        Zj = 20;
+        Zj = 24;
         rmax = 2.0;
         rmin = 1.0;
         ck = (double*)malloc(sizeof(double) * 4);
@@ -116,6 +116,7 @@ TEST_F(PairZBLTest, find_force_accuracy) {
 
     pair_zbl.add_atomic_force_one(force, neigh_vec);
 
+printf("Pair Energy = %.10lf\n", pair_energy);
 printf("\t1. Gradient calculated by custom code = %.10f\n", force[0] * std::sqrt(3));
 printf("\t2. Gradient calculated by finite difference method = %.10f\n", (pair_energy_ - pair_energy) / delta);
 }
