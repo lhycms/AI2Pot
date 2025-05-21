@@ -49,7 +49,11 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
     const at::Tensor& type_map_tensor,
     int nghost,
     double rmax,
-    double rmin)
+    double rmin,
+    double zbl_rmax,
+    double zbl_rmin,
+    const at::Tensor& zbl_cks_tensor,
+    const at::Tensor& zbl_dks_tensor)
 {
     int nbatches = (int)betot_dft_tensor.size(0);
     int alpha_index_basic_count = (int)alpha_index_basic_tensor.size(0);
@@ -70,6 +74,9 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                             .dtype(torch::kFloat32)
                             .device(brcs_tensor.device());
         bloss_tensor = at::zeros({nbatches}, float_options);
+
+        float *zbl_cks = zbl_cks_tensor.data_ptr<float>();
+        float *zbl_dks = zbl_dks_tensor.data_ptr<float>();
 
         for (int bb=0; bb<nbatches; bb++) {
             float *loss = bloss_tensor[bb].data_ptr<float>();
@@ -121,13 +128,20 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                 umax_num_neighs,
                 nghost,
                 rmax,
-                rmin);
+                rmin,
+                zbl_rmax,
+                zbl_rmin,
+                zbl_cks,
+                zbl_dks);
         }
     } else {
         float_options = c10::TensorOptions()
                             .dtype(torch::kFloat64)
                             .device(brcs_tensor.device());
         bloss_tensor = at::zeros({nbatches}, float_options);
+
+        double *zbl_cks = zbl_cks_tensor.data_ptr<double>();
+        double *zbl_dks = zbl_dks_tensor.data_ptr<double>();
 
         for (int bb=0; bb<nbatches; bb++) {
             double *loss = bloss_tensor[bb].data_ptr<double>();
@@ -179,7 +193,11 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                 umax_num_neighs,
                 nghost,
                 rmax,
-                rmin);
+                rmin,
+                zbl_rmax,
+                zbl_rmin,
+                zbl_cks,
+                zbl_dks);
         }
     }
 
@@ -210,7 +228,11 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                             type_map_tensor,
                             at::tensor(nghost, int_options),
                             at::tensor(rmax, float_options),
-                            at::tensor(rmin, float_options)
+                            at::tensor(rmin, float_options),
+                            at::tensor(zbl_rmax, float_options),
+                            at::tensor(zbl_rmin, float_options),
+                            zbl_cks_tensor,
+                            zbl_dks_tensor
                             });
 
     if (brcs_tensor.requires_grad())
@@ -254,6 +276,10 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
     int nghost = ctx->get_saved_variables()[22].item<int>();
     double rmax = ctx->get_saved_variables()[23].item<double>();
     double rmin = ctx->get_saved_variables()[24].item<double>();
+    double zbl_rmax = ctx->get_saved_variables()[25].item<double>();
+    double zbl_rmin = ctx->get_saved_variables()[26].item<double>();
+    at::Tensor zbl_cks_tensor = ctx->get_saved_variables()[27];
+    at::Tensor zbl_dks_tensor = ctx->get_saved_variables()[28];
     int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
     int num_linear_coeffs = (int)linear_coeffs_tensor.size(0);
 
@@ -279,6 +305,8 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
         bloss_der2coeffs_tensor = at::zeros({nbatches, num_coeffs}, float_options);
         bloss_der2linear_coeffs_tensor = at::zeros({nbatches, num_linear_coeffs}, float_options);
         bloss_der2type_bias_tensor = at::zeros({nbatches, ntypes}, float_options);
+        float* zbl_cks = zbl_cks_tensor.data_ptr<float>();
+        float* zbl_dks = zbl_dks_tensor.data_ptr<float>();
 
         for (int bb=0; bb<nbatches; bb++) {
             float *loss_der2coeffs = bloss_der2coeffs_tensor[bb].data_ptr<float>();
@@ -335,7 +363,11 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
                 umax_num_neighs,
                 nghost,
                 rmax,
-                rmin);
+                rmin,
+                zbl_rmax,
+                zbl_rmin,
+                zbl_cks,
+                zbl_dks);
         }
     } else {
         float_options = c10::TensorOptions()
@@ -344,6 +376,8 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
         bloss_der2coeffs_tensor = at::zeros({nbatches, num_coeffs}, float_options);
         bloss_der2linear_coeffs_tensor = at::zeros({nbatches, num_linear_coeffs}, float_options);
         bloss_der2type_bias_tensor = at::zeros({nbatches, ntypes}, float_options);
+        double* zbl_cks = zbl_cks_tensor.data_ptr<double>();
+        double* zbl_dks = zbl_dks_tensor.data_ptr<double>();
 
         for (int bb=0; bb<nbatches; bb++) {
             double *loss_der2coeffs = bloss_der2coeffs_tensor[bb].data_ptr<double>();
@@ -399,7 +433,11 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
                 umax_num_neighs,
                 nghost,
                 rmax,
-                rmin);
+                rmin,
+                zbl_rmax,
+                zbl_rmin,
+                zbl_cks,
+                zbl_dks);
         }
     }
 
@@ -432,6 +470,10 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
             at::Tensor(),
             at::Tensor(), 
             at::Tensor(), 
+            at::Tensor(),
+            at::Tensor(),
+            at::Tensor(),
+            at::Tensor(),
             at::Tensor()
             };
 }
@@ -461,7 +503,11 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
     const at::Tensor& type_map_tensor,
     int nghost,
     double rmax,
-    double rmin)
+    double rmin,
+    double zbl_rmax,
+    double zbl_rmin,
+    const at::Tensor& zbl_cks_tensor,
+    const at::Tensor& zbl_dks_tensor)
 {
     int nbatches = (int)betot_dft_tensor.size(0);
     int alpha_index_basic_count = (int)alpha_index_basic_tensor.size(0);
@@ -482,6 +528,8 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
                             .dtype(torch::kFloat32)
                             .device(brcs_tensor.device());
         bloss_tensor = at::zeros({nbatches}, float_options);
+        float* zbl_cks = zbl_cks_tensor.data_ptr<float>();
+        float* zbl_dks = zbl_dks_tensor.data_ptr<float>();
 
         for (int bb=0; bb<nbatches; bb++) {
             float *loss = bloss_tensor[bb].data_ptr<float>();
@@ -530,13 +578,19 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
                 umax_num_neighs,
                 nghost,
                 rmax,
-                rmin);
+                rmin,
+                zbl_rmax,
+                zbl_rmin,
+                zbl_cks,
+                zbl_dks);
         }
     } else {
         float_options = c10::TensorOptions()
                             .dtype(torch::kFloat64)
                             .device(brcs_tensor.device());
         bloss_tensor = at::zeros({nbatches}, float_options);
+        double* zbl_cks = zbl_cks_tensor.data_ptr<double>();
+        double* zbl_dks = zbl_dks_tensor.data_ptr<double>();
 
         for (int bb=0; bb<nbatches; bb++) {
             double *loss = bloss_tensor[bb].data_ptr<double>();
@@ -585,7 +639,11 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
                 umax_num_neighs,
                 nghost,
                 rmax,
-                rmin);
+                rmin,
+                zbl_rmax,
+                zbl_rmin,
+                zbl_cks,
+                zbl_dks);
         }
     }
 
@@ -614,7 +672,11 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
                             type_map_tensor,
                             at::tensor(nghost, int_options),
                             at::tensor(rmax, float_options),
-                            at::tensor(rmin, float_options)
+                            at::tensor(rmin, float_options),
+                            at::tensor(zbl_rmax, float_options),
+                            at::tensor(zbl_rmin, float_options),
+                            zbl_cks_tensor,
+                            zbl_dks_tensor
                             });
 
     if (brcs_tensor.requires_grad())
@@ -655,6 +717,10 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
     int nghost = ctx->get_saved_variables()[20].item<int>();
     double rmax = ctx->get_saved_variables()[21].item<double>();
     double rmin = ctx->get_saved_variables()[22].item<double>();
+    double zbl_rmax = ctx->get_saved_variables()[23].item<double>();
+    double zbl_rmin = ctx->get_saved_variables()[24].item<double>();
+    at::Tensor zbl_cks_tensor = ctx->get_saved_variables()[25];
+    at::Tensor zbl_dks_tensor = ctx->get_saved_variables()[26];
     int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
     int num_linear_coeffs = (int)linear_coeffs_tensor.size(0);
 
@@ -680,6 +746,9 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
         bloss_der2coeffs_tensor = at::zeros({nbatches, num_coeffs}, float_options);
         bloss_der2linear_coeffs_tensor = at::zeros({nbatches, num_linear_coeffs}, float_options);
         bloss_der2type_bias_tensor = at::zeros({nbatches, ntypes}, float_options);
+
+        float* zbl_cks = zbl_cks_tensor.data_ptr<float>();
+        float* zbl_dks = zbl_dks_tensor.data_ptr<float>();
 
         for (int bb=0; bb<nbatches; bb++) {
             float *loss_der2coeffs = bloss_der2coeffs_tensor[bb].data_ptr<float>();
@@ -733,7 +802,11 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
                 umax_num_neighs,
                 nghost,
                 rmax,
-                rmin);
+                rmin,
+                zbl_rmax,
+                zbl_rmin,
+                zbl_cks,
+                zbl_dks);
         }
     } else {
         float_options = c10::TensorOptions()
@@ -742,6 +815,9 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
         bloss_der2coeffs_tensor = at::zeros({nbatches, num_coeffs}, float_options);
         bloss_der2linear_coeffs_tensor = at::zeros({nbatches, num_linear_coeffs}, float_options);
         bloss_der2type_bias_tensor = at::zeros({nbatches, ntypes}, float_options);
+
+        double* zbl_cks = zbl_cks_tensor.data_ptr<double>();
+        double* zbl_dks = zbl_dks_tensor.data_ptr<double>();
 
         for (int bb=0; bb<nbatches; bb++) {
             double *loss_der2coeffs = bloss_der2coeffs_tensor[bb].data_ptr<double>();
@@ -794,7 +870,11 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
                 umax_num_neighs,
                 nghost,
                 rmax,
-                rmin);
+                rmin,
+                zbl_rmax,
+                zbl_rmin,
+                zbl_cks,
+                zbl_dks);
         }
     }
 
@@ -823,6 +903,10 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
             at::Tensor(),
             at::Tensor(),
             at::Tensor(), 
+            at::Tensor(),
+            at::Tensor(),
+            at::Tensor(),
+            at::Tensor(),
             at::Tensor(),
             at::Tensor()
             };
@@ -854,7 +938,11 @@ torch::autograd::variable_list LinearMtpToLossOp(
     const at::Tensor& type_map_tensor,
     int nghost,
     double rmax,
-    double rmin)
+    double rmin,
+    double zbl_rmax,
+    double zbl_rmin,
+    const at::Tensor& zbl_cks_tensor,
+    const at::Tensor& zbl_dks_tensor)
 {
     return LinearMtpToLossFunction::apply(
         e_weight,
@@ -881,7 +969,11 @@ torch::autograd::variable_list LinearMtpToLossOp(
         type_map_tensor,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        zbl_rmax,
+        zbl_rmin,
+        zbl_cks_tensor,
+        zbl_dks_tensor);
 }
 
 
@@ -908,7 +1000,11 @@ torch::autograd::variable_list LinearMtpToEFLossOp(
     const at::Tensor& type_map_tensor,
     int nghost,
     double rmax,
-    double rmin)
+    double rmin,
+    double zbl_rmax,
+    double zbl_rmin,
+    const at::Tensor& zbl_cks_tensor,
+    const at::Tensor& zbl_dks_tensor)
 {
     return LinearMtpToEFLossFunction::apply(
         e_weight,
@@ -933,7 +1029,11 @@ torch::autograd::variable_list LinearMtpToEFLossOp(
         type_map_tensor,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        zbl_rmax,
+        zbl_rmin,
+        zbl_cks_tensor,
+        zbl_dks_tensor);
 }
 
 };  // namespace : mtpr

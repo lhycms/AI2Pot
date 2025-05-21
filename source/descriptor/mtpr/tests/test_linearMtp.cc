@@ -57,6 +57,11 @@ protected:
     double rmax;
     double rmin;
     int ntypes;
+
+    double zbl_rmax;
+    double zbl_rmin;
+    double *zbl_cks;
+    double *zbl_dks;
     
     std::vector<std::string> filenames;
     ai2pot::mtpr::MtpParam mtp_param;
@@ -260,6 +265,25 @@ protected:
         loss_der2coeffs = (double*)malloc(sizeof(double) * ntypes * ntypes * nmus * chebyshev_size);
         loss_der2linear_coeffs = (double*)malloc(sizeof(double) * mtp_param.alpha_scalar_moments());
         loss_der2type_bias = (double*)malloc(sizeof(double) * ntypes);
+
+
+        zbl_rmax = 2.0;
+        zbl_rmin = 1.0;
+        zbl_cks = (double*)malloc(sizeof(double) * ntypes * ntypes * 4);
+        zbl_dks = (double*)malloc(sizeof(double) * ntypes * ntypes * 4);
+        for (int ii=0; ii<ntypes; ii++) {
+            for (int jj=0; jj<ntypes; jj++) {
+                int zbl_idx = ii*ntypes + jj;
+                zbl_cks[zbl_idx * 4 + 0] = 0.18175;
+                zbl_cks[zbl_idx * 4 + 1] = 0.50986;
+                zbl_cks[zbl_idx * 4 + 2] = 0.28022;
+                zbl_cks[zbl_idx * 4 + 3] = 0.02817;
+                zbl_dks[zbl_idx * 4 + 0] = 3.1998;
+                zbl_dks[zbl_idx * 4 + 1] = 0.94229;
+                zbl_dks[zbl_idx * 4 + 2] = 0.4029;
+                zbl_dks[zbl_idx * 4 + 3] = 0.20162;
+            }
+        }
     }
 
     void TearDown() override {
@@ -286,6 +310,9 @@ protected:
         free(loss_der2coeffs);
         free(loss_der2linear_coeffs);
         free(loss_der2type_bias);
+
+        free(zbl_cks);
+        free(zbl_dks);
     }
 };
 
@@ -366,7 +393,11 @@ TEST_F(LinearMtpTest, force_accuracy) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        zbl_rmax,
+        zbl_rmin,
+        zbl_cks,
+        zbl_dks);
 
     // *** delta
     double cart_coords[inum][3] = {0};
@@ -414,7 +445,12 @@ TEST_F(LinearMtpTest, force_accuracy) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        zbl_rmax,
+        zbl_rmin,
+        zbl_cks,
+        zbl_dks);
+
 printf("1.1. energy = %.15lf\n", etot);
 printf("1.1. force[%d][%d] calculated by custom code = %.15lf\n", center_idx_modify, direction1_idx_modify, force[center_idx_modify][direction1_idx_modify]);
 printf("1.2. energy = %.15lf\n", etot_);

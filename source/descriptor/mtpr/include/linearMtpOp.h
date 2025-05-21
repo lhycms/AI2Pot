@@ -51,7 +51,11 @@ public:
         const at::Tensor& type_map_tensor,
         int nghost,
         double rmax,
-        double rmin);
+        double rmin,
+        double zbl_rmax,
+        double zbl_rmin,
+        const at::Tensor& cks_tensor,
+        const at::Tensor& dks_tensor);
 
     static torch::autograd::variable_list backward(
         torch::autograd::AutogradContext *ctx,
@@ -86,7 +90,11 @@ public:
         const at::Tensor& type_map_tensor,
         int nghost,
         double rmax,
-        double rmin);
+        double rmin,
+        double zbl_rmax,
+        double zbl_rmin,
+        const at::Tensor& cks_tensor,
+        const at::Tensor& dks_tensor);
 
     static torch::autograd::variable_list backward(
         torch::autograd::AutogradContext *ctx,
@@ -119,7 +127,11 @@ torch::autograd::variable_list LinearMtpToLossOp(
     const at::Tensor& type_map_tensor,
     int nghost,
     double rmax,
-    double rmin);
+    double rmin,
+    double zbl_rmax,
+    double zbl_rmin,
+    const at::Tensor& cks_tensor,
+    const at::Tensor& dks_tensor);
 
 
 torch::autograd::variable_list LinearMtpToEFLossOp(
@@ -145,7 +157,11 @@ torch::autograd::variable_list LinearMtpToEFLossOp(
     const at::Tensor& type_map_tensor,
     int nghost,
     double rmax,
-    double rmin);
+    double rmin,
+    double zbl_rmax,
+    double zbl_rmin,
+    const at::Tensor& cks_tensor,
+    const at::Tensor& dks_tensor);
 
 
 };  // namespace : mtpr 

@@ -78,6 +78,13 @@ protected:
     double rmax;
     double rmin;
 
+    double zbl_rmax;
+    double zbl_rmin;
+    at::Tensor zbl_cks_tensor;
+    at::Tensor zbl_dks_tensor;
+    double *zbl_cks;
+    double *zbl_dks;
+
     static void SetUpTestSuite() {
         std::cout << "LinearMtpOpTest (TestSuite) is setting up...\n";
     }
@@ -266,6 +273,26 @@ protected:
             nghost,
             umax_num_neigh_atoms);
 //nblist.show_in_distances();
+
+        zbl_rmax = 2.0;
+        zbl_rmin = 1.0;
+        zbl_cks_tensor = at::zeros({ntypes * ntypes * 4}, float_options);
+        zbl_dks_tensor = at::zeros({ntypes * ntypes * 4}, float_options);
+        zbl_cks = zbl_cks_tensor.data_ptr<double>();
+        zbl_dks = zbl_dks_tensor.data_ptr<double>();
+        for (int ii=0; ii<ntypes; ii++) {
+            for (int jj=0; jj<ntypes; jj++) {
+                int zbl_idx = ii*ntypes + jj;
+                zbl_cks[zbl_idx * 4 + 0] = 0.18175;
+                zbl_cks[zbl_idx * 4 + 1] = 0.50986;
+                zbl_cks[zbl_idx * 4 + 2] = 0.28022;
+                zbl_cks[zbl_idx * 4 + 3] = 0.02817;
+                zbl_dks[zbl_idx * 4 + 0] = 3.1998;
+                zbl_dks[zbl_idx * 4 + 1] = 0.94229;
+                zbl_dks[zbl_idx * 4 + 2] = 0.4029;
+                zbl_dks[zbl_idx * 4 + 3] = 0.20162;
+            }
+        }
     }
 
     void TearDown() override {
@@ -300,7 +327,11 @@ TEST_F(LinearMtpOpTest, apply) {
         btype_map_tensor,
         nghost,
         rmax,
-        rmin)[0];
+        rmin,
+        zbl_rmax,
+        zbl_rmin,
+        zbl_cks_tensor,
+        zbl_dks_tensor)[0];
 std::cout << "1.1. loss_tensor=\n" << loss_tensor << std::endl;
     loss_tensor.backward();
 std::cout << "1.2. coeffs_tensor.grad()=\n" << coeffs_tensor.grad() << std::endl;
@@ -333,7 +364,11 @@ TEST_F(LinearMtpOpTest, ef_apply) {
         btype_map_tensor,
         nghost,
         rmax,
-        rmin)[0];
+        rmin,
+        zbl_rmax,
+        zbl_rmin,
+        zbl_cks_tensor,
+        zbl_dks_tensor)[0];
 std::cout << "2.1. loss_tensor=\n" << loss_tensor << std::endl;
     loss_tensor.backward();
 std::cout << "2.2. coeffs_tensor.grad()=\n" << coeffs_tensor.grad() << std::endl;

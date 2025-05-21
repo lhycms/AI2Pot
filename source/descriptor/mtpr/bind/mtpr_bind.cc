@@ -106,7 +106,11 @@ TORCH_LIBRARY(mtpr, m) {
            const at::Tensor& type_map_tensor,
            int64_t nghost,
            double rmax,
-           double rmin)
+           double rmin,
+           double zbl_rmax,
+           double zbl_rmin,
+           const at::Tensor& zbl_cks_tensor,
+           const at::Tensor& zbl_dks_tensor)
         {   
             assert(chebyshev_size < INT_MAX);
             assert(alpha_moments_count < INT_MAX);
@@ -138,7 +142,11 @@ TORCH_LIBRARY(mtpr, m) {
                 type_map_tensor,
                 (int)nghost,
                 rmax,
-                rmin);
+                rmin,
+                zbl_rmax,
+                zbl_rmin,
+                zbl_cks_tensor,
+                zbl_dks_tensor);
         }
     );
 
@@ -166,7 +174,11 @@ TORCH_LIBRARY(mtpr, m) {
            const at::Tensor& type_map_tensor,
            int64_t nghost,
            double rmax,
-           double rmin)
+           double rmin,
+           double zbl_rmax,
+           double zbl_rmin,
+           const at::Tensor& zbl_cks_tensor,
+           const at::Tensor& zbl_dks_tensor)
         {   
             assert(chebyshev_size < INT_MAX);
             assert(alpha_moments_count < INT_MAX);
@@ -196,7 +208,11 @@ TORCH_LIBRARY(mtpr, m) {
                 type_map_tensor,
                 (int)nghost,
                 rmax,
-                rmin);
+                rmin,
+                zbl_rmax,
+                zbl_rmin,
+                zbl_cks_tensor,
+                zbl_dks_tensor);
         }
     );
 }
