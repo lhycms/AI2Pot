@@ -16,7 +16,11 @@ class LinearMtp(nn.Module):
                  rmax: float,
                  rmin: float,
                  umax_num_neighs: int,
-                 fit_virial: bool = False):
+                 fit_virial: bool = False,
+                 zbl_rmax: float = 2.0,
+                 zbl_rmin: float = 1.0,
+                 zbl_cks_tensor: torch.Tensor = torch.tensor([0.18175, 0.50986, 0.28022, 0.02817], dtype=torch.float32),
+                 zbl_dks_tensor: torch.Tensor = torch.tenosr([3.1998, 0.94229, 0.4029, 0.20162], dtype=torch.float32)):
         super(LinearMtp, self).__init__()
         self.mtp_level: int = mtp_level
         self.register_buffer(name="type_map_tensor", tensor=type_map_tensor)
@@ -26,6 +30,10 @@ class LinearMtp(nn.Module):
         self.rmin: float = rmin
         self.umax_num_neighs: int = umax_num_neighs
         self.fit_virial: bool = fit_virial
+        self.zbl_rmax: float = zbl_rmax
+        self.zbl_rmin: float = zbl_rmin
+        self.register_buffer(name="zbl_cks_tensor", tensor=zbl_cks_tensor)
+        self.register_buffer(name="zbl_dks_tensor", tensor=zbl_dks_tensor)
         
         mtp_param_info: List[torch.Tensor] = mtpParamOp(self.mtp_level)
         self.register_buffer(name="alpha_moments_count_tensor", tensor=mtp_param_info[0])
@@ -96,7 +104,11 @@ class LinearMtp(nn.Module):
                                                       self.type_map_tensor,
                                                       nghost,
                                                       self.rmax,
-                                                      self.rmin)[0]
+                                                      self.rmin,
+                                                      self.zbl_rmax,
+                                                      self.zbl_rmin,
+                                                      self.zbl_cks_tensor,
+                                                      self.zbl_dks_tensor)[0]
         return bmse_tensor
     
     
@@ -134,7 +146,11 @@ class LinearMtp(nn.Module):
                                                         self.type_map_tensor,
                                                         nghost,
                                                         self.rmax,
-                                                        self.rmin)[0]
+                                                        self.rmin,
+                                                        self.zbl_rmax,
+                                                        self.zbl_rmin,
+                                                        self.zbl_cks_tensor,
+                                                        self.zbl_dks_tensor)[0]
         return bmse_tensor
     
     
