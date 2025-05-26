@@ -166,8 +166,28 @@ void find_efv_atom(CoordType &etot,
 
 
     // Step 3. Calculate EFV for atom
-    CoordType e_site;
+    CoordType e_site = 0;
+    for (int i=0; i<alpha_scalar_moments; i++)
+        e_site += linear_coeffs[i] * mom_vals[alpha_moment_mapping[i]];
+    atomicAdd(&etot, e_site);
+
+    for (int i=0; i<alpha_scalar_moments; i++)
+        e_site_der2mom[alpha_moment_mapping[i]] = linear_coeffs[i];
     
+    for (int i=alpha_index_times_count; i>=0; i--) {
+        CoordType val0 = mom_vals[alpha_index_times[i][0]];
+        CoordType val1 = mom_vals[alpha_index_times[i][1]];
+        CoordType val2 = alpha_index_times[i][2];
+
+        e_site_der2mom[alpha_index_times[i][1]] += e_site_der2mom[alpha_index_times[i][3]]
+                                                   * val2 * val0;
+        e_site_der2mom[alpha_index_times[i][0]] += e_site_der2mom[alpha_index_times[i][3]]
+                                                   * val2 * val1;
+    }
+
+    for (int jj=0; jj<snumneigh; jj++) {
+        
+    }
 }
 
 
