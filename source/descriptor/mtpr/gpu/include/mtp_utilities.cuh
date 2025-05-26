@@ -31,7 +31,8 @@
 #define KERNEL_ARG4(grid_size, block_size, sh_mem, stream) <<<grid_size, block_size, sh_mem, stream>>>
 #endif
 
-#define CHECK(call)                                                         \
+
+#define CHECK_CUDA_API(call)                                                \
 do {                                                                        \
     cudaError_t error_code = call;                                          \
     if (error_code != cudaSuccess)                                          \
@@ -45,6 +46,14 @@ do {                                                                        \
     }                                                                       \
 } while(0);
 
+
+// *****
+#define MAX_NUM_MUS 5
+#define MAX_ALPHA_INDEX_BASIC 8
+#define MAX_NUM_MTP_BASIS 163
+#define MAX_ALPHA_MOMENTS_COUNT 718
+#define MAX_CHEBYSHEV_SIZE 20
+// *****
 
 const int MAX_CHEBYSHEV_SIZE = 20;
 const int MAX_NUM_TYPES = 10;

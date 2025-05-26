@@ -148,22 +148,22 @@ protected:
         };
         mtp_param._load(filenames[4]);
 //mtp_param.show();
-        CHECK( cudaMalloc((void**)&d_alpha_index_basic, sizeof(int) * mtp_param.alpha_index_basic_count() * 4) );
-        CHECK( cudaMalloc((void**)&d_alpha_index_times, sizeof(int) * mtp_param.alpha_index_times_count() * 4) );
-        CHECK( cudaMalloc((void**)&d_alpha_moment_mapping, sizeof(int) * mtp_param.alpha_scalar_moments()) );
-        CHECK( cudaMalloc((void**)&d_num_mus4moms, sizeof(int) * mtp_param.alpha_moments_count()) );
-        CHECK( cudaMalloc((void**)&d_mus4moms_ptr, sizeof(int) * mtp_param.alpha_moments_count() * mtp_param.max_num_mus4mom()) );
-        CHECK( cudaMemcpy(d_alpha_index_basic, 
+        CHECK_CUDA_API( cudaMalloc((void**)&d_alpha_index_basic, sizeof(int) * mtp_param.alpha_index_basic_count() * 4) );
+        CHECK_CUDA_API( cudaMalloc((void**)&d_alpha_index_times, sizeof(int) * mtp_param.alpha_index_times_count() * 4) );
+        CHECK_CUDA_API( cudaMalloc((void**)&d_alpha_moment_mapping, sizeof(int) * mtp_param.alpha_scalar_moments()) );
+        CHECK_CUDA_API( cudaMalloc((void**)&d_num_mus4moms, sizeof(int) * mtp_param.alpha_moments_count()) );
+        CHECK_CUDA_API( cudaMalloc((void**)&d_mus4moms_ptr, sizeof(int) * mtp_param.alpha_moments_count() * mtp_param.max_num_mus4mom()) );
+        CHECK_CUDA_API( cudaMemcpy(d_alpha_index_basic, 
                           (int*)mtp_param.alpha_index_basic(), 
                           sizeof(int)*mtp_param.alpha_index_basic_count()*4,
                           cudaMemcpyHostToDevice) 
         );
-        CHECK( cudaMemcpy(d_alpha_index_times,
+        CHECK_CUDA_API( cudaMemcpy(d_alpha_index_times,
                           (int*)mtp_param.alpha_index_times(),
                           sizeof(int)*mtp_param.alpha_index_times_count()*4,
                           cudaMemcpyHostToDevice) 
         );
-        CHECK( cudaMemcpy(d_alpha_moment_mapping, 
+        CHECK_CUDA_API( cudaMemcpy(d_alpha_moment_mapping, 
                           mtp_param.alpha_moment_mapping(),
                           sizeof(int)*mtp_param.alpha_scalar_moments(),
                           cudaMemcpyHostToDevice)
@@ -177,26 +177,26 @@ protected:
         rmin = 2.0;
         umax_num_neigh_atoms = 20;
         h_mtp_basis_val = (double*)malloc(sizeof(double) * inum * mtp_param.alpha_scalar_moments());
-        CHECK( cudaMalloc((void**)&d_mtp_basis_val, sizeof(double) * inum * mtp_param.alpha_scalar_moments()) );
+        CHECK_CUDA_API( cudaMalloc((void**)&d_mtp_basis_val, sizeof(double) * inum * mtp_param.alpha_scalar_moments()) );
         h_mtp_basis_der = (double*)malloc(sizeof(double) * inum * mtp_param.alpha_scalar_moments() * umax_num_neigh_atoms * 3);
-        CHECK( cudaMalloc((void**)&d_mtp_basis_der, sizeof(double) * inum * mtp_param.alpha_scalar_moments() * umax_num_neigh_atoms * 3) );
+        CHECK_CUDA_API( cudaMalloc((void**)&d_mtp_basis_der, sizeof(double) * inum * mtp_param.alpha_scalar_moments() * umax_num_neigh_atoms * 3) );
         h_mtp_basis_der2coeffs = (double*)malloc(sizeof(double) * inum * mtp_param.alpha_scalar_moments() * ntypes * ntypes * nmus * chebyshev_size);
-        CHECK( cudaMalloc((void**)&d_mtp_basis_der2coeffs, sizeof(double) * inum * mtp_param.alpha_scalar_moments() * ntypes * ntypes * nmus * chebyshev_size) );
+        CHECK_CUDA_API( cudaMalloc((void**)&d_mtp_basis_der2coeffs, sizeof(double) * inum * mtp_param.alpha_scalar_moments() * ntypes * ntypes * nmus * chebyshev_size) );
         h_mtp_basis_val_ = (double*)malloc(sizeof(double) * inum * mtp_param.alpha_scalar_moments());
-        CHECK( cudaMalloc((void**)&d_mtp_basis_val_, sizeof(double) * inum * mtp_param.alpha_scalar_moments()) );
+        CHECK_CUDA_API( cudaMalloc((void**)&d_mtp_basis_val_, sizeof(double) * inum * mtp_param.alpha_scalar_moments()) );
         h_mtp_basis_der_ = (double*)malloc(sizeof(double) * inum * mtp_param.alpha_scalar_moments() * umax_num_neigh_atoms * 3);
-        CHECK( cudaMalloc((void**)&d_mtp_basis_der_, sizeof(double) * inum * mtp_param.alpha_scalar_moments() * umax_num_neigh_atoms * 3) );
+        CHECK_CUDA_API( cudaMalloc((void**)&d_mtp_basis_der_, sizeof(double) * inum * mtp_param.alpha_scalar_moments() * umax_num_neigh_atoms * 3) );
         h_mtp_basis_der2coeffs_ = (double*)malloc(sizeof(double) * inum * mtp_param.alpha_scalar_moments() * ntypes * ntypes * nmus * chebyshev_size);
-        CHECK( cudaMalloc((void**)&d_mtp_basis_der2coeffs_, sizeof(double) * inum * mtp_param.alpha_scalar_moments() * ntypes * ntypes * nmus * chebyshev_size) );
+        CHECK_CUDA_API( cudaMalloc((void**)&d_mtp_basis_der2coeffs_, sizeof(double) * inum * mtp_param.alpha_scalar_moments() * ntypes * ntypes * nmus * chebyshev_size) );
 
         h_coeffs = (double*)malloc(sizeof(double) * ntypes * ntypes * nmus * chebyshev_size);
         cudaMalloc((void**)&d_coeffs, sizeof(double) * ntypes * ntypes * nmus * chebyshev_size);
         for (int ii=0; ii<ntypes*ntypes*nmus*chebyshev_size; ii++)
             h_coeffs[ii] = 1.0;
-        CHECK( cudaMemcpy(d_coeffs, h_coeffs, sizeof(double)*ntypes*ntypes*nmus*chebyshev_size, cudaMemcpyHostToDevice) );
-        CHECK( cudaMalloc((void**)&d_moms_vals, sizeof(double) * inum * mtp_param.alpha_moments_count()) );
-        CHECK( cudaMalloc((void**)&d_moms_ders, sizeof(double) * inum * mtp_param.alpha_moments_count() * umax_num_neigh_atoms * 3) );
-        CHECK( cudaMalloc((void**)&d_moms_ders2coeffs, sizeof(double) * inum * mtp_param.alpha_moments_count() * ntypes * ntypes * nmus * chebyshev_size) );
+        CHECK_CUDA_API( cudaMemcpy(d_coeffs, h_coeffs, sizeof(double)*ntypes*ntypes*nmus*chebyshev_size, cudaMemcpyHostToDevice) );
+        CHECK_CUDA_API( cudaMalloc((void**)&d_moms_vals, sizeof(double) * inum * mtp_param.alpha_moments_count()) );
+        CHECK_CUDA_API( cudaMalloc((void**)&d_moms_ders, sizeof(double) * inum * mtp_param.alpha_moments_count() * umax_num_neigh_atoms * 3) );
+        CHECK_CUDA_API( cudaMalloc((void**)&d_moms_ders2coeffs, sizeof(double) * inum * mtp_param.alpha_moments_count() * ntypes * ntypes * nmus * chebyshev_size) );
 
 
         // Establish neighbor list
@@ -276,15 +276,15 @@ protected:
         //umax_num_neigh_atoms = 20;
         inum = 12;
         h_ilist = (int*)malloc(sizeof(int) * inum);
-        CHECK( cudaMalloc((void**)&d_ilist, sizeof(int) * inum) );
+        CHECK_CUDA_API( cudaMalloc((void**)&d_ilist, sizeof(int) * inum) );
         h_numneigh = (int*)malloc(sizeof(int) * inum);
-        CHECK( cudaMalloc((void**)&d_numneigh, sizeof(int) * inum) );
+        CHECK_CUDA_API( cudaMalloc((void**)&d_numneigh, sizeof(int) * inum) );
         h_firstneigh = (int*)malloc(sizeof(int) * inum * umax_num_neigh_atoms);
-        CHECK( cudaMalloc((void**)&d_firstneigh, sizeof(int) * inum * umax_num_neigh_atoms) );
+        CHECK_CUDA_API( cudaMalloc((void**)&d_firstneigh, sizeof(int) * inum * umax_num_neigh_atoms) );
         h_rcs = (double*)malloc(sizeof(double) * inum * umax_num_neigh_atoms * 3);
-        CHECK( cudaMalloc((void**)&d_rcs, sizeof(double) * inum * umax_num_neigh_atoms * 3) );
+        CHECK_CUDA_API( cudaMalloc((void**)&d_rcs, sizeof(double) * inum * umax_num_neigh_atoms * 3) );
         h_types = (int*)malloc(sizeof(int) * inum);
-        CHECK( cudaMalloc((void**)&d_types, sizeof(int) * inum) );
+        CHECK_CUDA_API( cudaMalloc((void**)&d_types, sizeof(int) * inum) );
         neighbor_list.find_info4mlff(
             inum,
             h_ilist,
@@ -295,50 +295,50 @@ protected:
             nghost,
             umax_num_neigh_atoms);
 
-        CHECK( cudaMemcpy(d_ilist, h_ilist, sizeof(int)*inum, cudaMemcpyHostToDevice) );
-        CHECK( cudaMemcpy(d_numneigh, h_numneigh, sizeof(int)*inum, cudaMemcpyHostToDevice) );
-        CHECK( cudaMemcpy(d_firstneigh, h_firstneigh, sizeof(int)*inum*umax_num_neigh_atoms, cudaMemcpyHostToDevice) );
-        CHECK( cudaMemcpy(d_rcs, h_rcs, sizeof(double)*inum*umax_num_neigh_atoms*3, cudaMemcpyHostToDevice) );
-        CHECK( cudaMemcpy(d_types, h_types, sizeof(int)*inum, cudaMemcpyHostToDevice) );
+        CHECK_CUDA_API( cudaMemcpy(d_ilist, h_ilist, sizeof(int)*inum, cudaMemcpyHostToDevice) );
+        CHECK_CUDA_API( cudaMemcpy(d_numneigh, h_numneigh, sizeof(int)*inum, cudaMemcpyHostToDevice) );
+        CHECK_CUDA_API( cudaMemcpy(d_firstneigh, h_firstneigh, sizeof(int)*inum*umax_num_neigh_atoms, cudaMemcpyHostToDevice) );
+        CHECK_CUDA_API( cudaMemcpy(d_rcs, h_rcs, sizeof(double)*inum*umax_num_neigh_atoms*3, cudaMemcpyHostToDevice) );
+        CHECK_CUDA_API( cudaMemcpy(d_types, h_types, sizeof(int)*inum, cudaMemcpyHostToDevice) );
     }
 
     void TearDown() override {
-        CHECK( cudaFree(d_alpha_index_basic) );
-        CHECK( cudaFree(d_alpha_index_times) );
-        CHECK( cudaFree(d_alpha_moment_mapping) );
-        CHECK( cudaFree(d_num_mus4moms) );
-        CHECK( cudaFree(d_mus4moms_ptr) );
+        CHECK_CUDA_API( cudaFree(d_alpha_index_basic) );
+        CHECK_CUDA_API( cudaFree(d_alpha_index_times) );
+        CHECK_CUDA_API( cudaFree(d_alpha_moment_mapping) );
+        CHECK_CUDA_API( cudaFree(d_num_mus4moms) );
+        CHECK_CUDA_API( cudaFree(d_mus4moms_ptr) );
 
         free(h_mtp_basis_val);
         cudaFree(d_mtp_basis_val);
         free(h_mtp_basis_der);
         cudaFree(d_mtp_basis_der);
         free(h_mtp_basis_der2coeffs);
-        CHECK( cudaFree(d_mtp_basis_der2coeffs) );
+        CHECK_CUDA_API( cudaFree(d_mtp_basis_der2coeffs) );
         free(h_mtp_basis_val_);
-        CHECK( cudaFree(d_mtp_basis_val_) );
+        CHECK_CUDA_API( cudaFree(d_mtp_basis_val_) );
         free(h_mtp_basis_der_);
-        CHECK( cudaFree(d_mtp_basis_der_) );
+        CHECK_CUDA_API( cudaFree(d_mtp_basis_der_) );
         free(h_mtp_basis_der2coeffs_);
-        CHECK( cudaFree(d_mtp_basis_der2coeffs_) );
+        CHECK_CUDA_API( cudaFree(d_mtp_basis_der2coeffs_) );
 
-        CHECK( cudaFree(d_moms_vals) );
-        CHECK( cudaFree(d_moms_ders) );
-        CHECK( cudaFree(d_moms_ders2coeffs) );
+        CHECK_CUDA_API( cudaFree(d_moms_vals) );
+        CHECK_CUDA_API( cudaFree(d_moms_ders) );
+        CHECK_CUDA_API( cudaFree(d_moms_ders2coeffs) );
 
         free(h_coeffs);
-        CHECK( cudaFree(d_coeffs) );
+        CHECK_CUDA_API( cudaFree(d_coeffs) );
 
         free(h_ilist);
-        CHECK( cudaFree(d_ilist) );
+        CHECK_CUDA_API( cudaFree(d_ilist) );
         free(h_numneigh);
-        CHECK( cudaFree(d_numneigh) );
+        CHECK_CUDA_API( cudaFree(d_numneigh) );
         free(h_firstneigh);
-        CHECK( cudaFree(d_firstneigh) );
+        CHECK_CUDA_API( cudaFree(d_firstneigh) );
         free(h_rcs);
-        CHECK( cudaFree(d_rcs) );
+        CHECK_CUDA_API( cudaFree(d_rcs) );
         free(h_types);
-        CHECK( cudaFree(d_types) );
+        CHECK_CUDA_API( cudaFree(d_types) );
     }
 };  // class : MtpBasisTest
 
@@ -428,8 +428,8 @@ TEST_F(MtpBasisTest, find_mtp_basis_val_der) {
         (double (*)[3])d_moms_ders,
         d_moms_ders2coeffs);
 
-    CHECK( cudaDeviceSynchronize() );
-    CHECK( cudaMemcpy(h_mtp_basis_val, d_mtp_basis_val, sizeof(double)*mtp_param.alpha_scalar_moments(), cudaMemcpyDeviceToHost) );
+    CHECK_CUDA_API( cudaDeviceSynchronize() );
+    CHECK_CUDA_API( cudaMemcpy(h_mtp_basis_val, d_mtp_basis_val, sizeof(double)*mtp_param.alpha_scalar_moments(), cudaMemcpyDeviceToHost) );
 for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++)
     printf("%10lf, ", h_mtp_basis_val[0*mtp_param.alpha_scalar_moments() + ii]);
 printf("\n");
