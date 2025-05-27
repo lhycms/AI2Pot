@@ -81,7 +81,7 @@ void find_efv_kernel(CoordType &etot,
 
 template <typename CoordType>
 static __host__
-void find_efv_launcher(CoordType &etot,
+void find_efv_launcher(CoordType &h_etot,
                        CoordType (*h_force)[3],
                        CoordType *h_virial,
                        int chebyshev_size,
@@ -424,7 +424,7 @@ void find_efv_kernel(CoordType &etot,
 
 template <typename CoordType>
 __host__
-void find_efv_launcher(CoordType &etot,
+void find_efv_launcher(CoordType &h_etot,
                        CoordType (*h_force)[3],
                        CoordType *h_virial,
                        int chebyshev_size,
@@ -461,6 +461,7 @@ void find_efv_launcher(CoordType &etot,
     dim3 grid_size(grid_size_x);
     dim3 block_size(block_size_x);
 
+    CoordType *d_etot_ptr;
     CoordType (*d_force)[3];
     CoordType *d_virial;
     CoordType *d_coeffs;
@@ -480,6 +481,7 @@ void find_efv_launcher(CoordType &etot,
 
     int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
 
+    CHECK_CUDA_API( cudaMalloc((void**)&d_etot_ptr, sizeof(CoordType)) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_force, sizeof(CoordType) * (inum + nghost) * 3) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_virial, sizeof(CoordType) * 9) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_coeffs, sizeof(CoordType) * num_coeffs) );
@@ -497,9 +499,27 @@ void find_efv_launcher(CoordType &etot,
     CHECK_CUDA_API( cudaMalloc((void**)&d_zbl_cks, sizeof(CoordType) * ntypes * ntypes * 4) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_zbl_dks, sizeof(CoordType) * ntypes * ntypes * 4) );
 
+    CHECK_CUDA_API( cudaMemcpy(d_etot_ptr, &h_etot, sizeof(CoordType), cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_force, h_force, sizeof(CoordType)*(inum+nghost)*3, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_virial, h_virial, sizeof(CoordType)*9, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_coeffs, h_coeffs, sizeof(CoordType)*ntypes*ntypes*nmus*chebyshev_size, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_linear_coeffs, h_linear_coeffs, sizeof(CoordType)*alpha_scalar_moments, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_type_bias, h_type_bias, sizeof(CoordType)*ntypes, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_alpha_index_basic, h_alpha_index_basic, sizeof(int)*alpha_index_basic_count*4, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_alpha_index_times, h_alpha_index_times, sizeof(int)*alpha_index_times_count*4, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_alpha_moment_mapping, h_alpha_moment_mapping, sizeof(int)*alpha_scalar_moments, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_ilist, h_ilist, sizeof(int)*inum, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_numneigh, h_numneigh, sizeof(int)*inum, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_firstneigh, h_firstneigh, sizeof(int)*inum*umax_num_neigh_atoms, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_rcs, h_rcs, sizeof(CoordType)*inum*umax_num_neigh_atoms*3, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_types, h_types, sizeof(int)*(inum+nghost), cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_type_map, h_type_map, sizeof(int)*ntypes, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_zbl_cks, h_zbl_cks, sizeof(double)*ntypes*ntypes*4, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_zbl_dks, h_zbl_dks, sizeof(double)*ntypes*ntypes*4, cudaMemcpyHostToDevice) );
+
     // Call global function
     find_efv_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (
-        etot,
+        *d_etot_ptr,
         d_force,
         d_virial,
         chebyshev_size,
@@ -530,9 +550,11 @@ void find_efv_launcher(CoordType &etot,
         zbl_rmin,
         d_zbl_cks,
         d_zbl_dks);
+        
     CHECK_CUDA_API( cudaDeviceSynchronize() );
     CHECK_CUDA_API( cudaGetLastError() );
 
+    CHECK_CUDA_API( cudaFree(d_etot_ptr) );
     CHECK_CUDA_API( cudaFree(d_force) );
     CHECK_CUDA_API( cudaFree(d_virial) );
     CHECK_CUDA_API( cudaFree(d_coeffs) );
