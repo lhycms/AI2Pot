@@ -20,12 +20,44 @@ class LinearMtpTest : public ::testing::Test
 protected:
     std::vector<std::string> filenames;
     ai2pot::mtpr::MtpParam mtp_param;
+    int chebyshev_size;
     int ntypes;
     double zbl_rmax;
     double zbl_rmin;
     double *zbl_cks;
     double *zbl_dks;
 
+    double *coeffs;
+    double *linear_coeffs;
+    double *type_bias;
+    double rmax;
+    double rmin;
+
+    int num_atoms;
+    double basis_vectors[3][3];
+    int atomic_numbers[12];
+    double frac_coords[12][3];
+    double rcut;
+    double bin_size_xyz[3];
+    bool pbc_xyz[3];
+    int type_map[2];
+
+    int umax_num_neigh_atoms;
+    int inum;
+    int *ilist;
+    int *numneigh;
+    int *firstneigh;
+    double *rcs;
+    int *types;
+    int nghost;
+
+    ai2pot::Structure<double> structure;
+    ai2pot::NeighborList<double> neighbor_list;
+
+
+    double etot;
+    double (*force)[3];
+    double *virial;
 
 
     static void SetUpTestSuite() {
@@ -54,6 +86,7 @@ protected:
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/28.almtp"
         };
         mtp_param._load(filenames[4]);
+        chebyshev_size = 8;
 
         ntypes = 2;
         zbl_rmin = 1.0;
@@ -72,17 +105,170 @@ protected:
                 zbl_dks[(ii*ntypes + jj)*4 + 3] = 0.20162;
             }
         }
+
+        coeffs = (double*)malloc(sizeof(double) * ntypes * ntypes * mtp_param.nmus() * chebyshev_size);
+        linear_coeffs = (double*)malloc(sizeof(double) * mtp_param.alpha_scalar_moments());
+        type_bias = (double*)malloc(sizeof(double) * ntypes);
+        for (int ii=0; ii<ntypes*ntypes*mtp_param.nmus()*chebyshev_size; ii++)
+            coeffs[ii] = 1.0 + 0.01 * ii;
+        for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++)
+            linear_coeffs[ii] = 1.0 + 0.02 * ii;
+        type_bias[0] = -7;
+        type_bias[1] = -8;
+        rmax = 5.0;
+        rmin = 2.0;
+
+        // Establish neighbor list
+        num_atoms = 12;
+        basis_vectors[0][0] = 3.1903157348;
+        basis_vectors[0][1] = 5.5257885468;
+        basis_vectors[0][2] = 0.0000000000;
+        basis_vectors[1][0] = -6.3806307800;
+        basis_vectors[1][1] = 0.0000000000;
+        basis_vectors[1][2] = 0.0000000000;
+        basis_vectors[2][0] = 0.0000000000;
+        basis_vectors[2][1] = 0.0000000000;
+        basis_vectors[2][2] = 23.1297687334;
+
+        // 42: 0;  16: 1
+        atomic_numbers[0] = 0;
+        atomic_numbers[1] = 1;
+        atomic_numbers[2] = 1;
+        atomic_numbers[3] = 0;
+        atomic_numbers[4] = 1;
+        atomic_numbers[5] = 1;
+        atomic_numbers[6] = 0;
+        atomic_numbers[7] = 1;
+        atomic_numbers[8] = 1;
+        atomic_numbers[9] = 0; 
+        atomic_numbers[10] = 1;
+        atomic_numbers[11] = 1;
+
+        frac_coords[0][0] = 0.333333333333;
+        frac_coords[0][1] = 0.166666666667;
+        frac_coords[0][2] = 0.500000000000;
+        frac_coords[1][0] = 0.166666666667;
+        frac_coords[1][1] = 0.333333333333;
+        frac_coords[1][2] = 0.432343276548;
+        frac_coords[2][0] = 0.166666666667;
+        frac_coords[2][1] = 0.333333333333;
+        frac_coords[2][2] = 0.567656723452;
+        frac_coords[3][0] = 0.333333333333;
+        frac_coords[3][1] = 0.666666666667;
+        frac_coords[3][2] = 0.500000000000;
+        frac_coords[4][0] = 0.166666666667;
+        frac_coords[4][1] = 0.833333333333;
+        frac_coords[4][2] = 0.432343276548;
+        frac_coords[5][0] = 0.166666666667;
+        frac_coords[5][1] = 0.833333333333;
+        frac_coords[5][2] = 0.567656723452;
+        frac_coords[6][0] = 0.833333333333;
+        frac_coords[6][1] = 0.166666666667;
+        frac_coords[6][2] = 0.500000000000;
+        frac_coords[7][0] = 0.666666666667;
+        frac_coords[7][1] = 0.333333333333;
+        frac_coords[7][2] = 0.432343276548;
+        frac_coords[8][0] = 0.666666666667;
+        frac_coords[8][1] = 0.333333333333;
+        frac_coords[8][2] = 0.567656723452;
+        frac_coords[9][0] = 0.833333333333;
+        frac_coords[9][1] = 0.666666666667;
+        frac_coords[9][2] = 0.500000000000;
+        frac_coords[10][0] = 0.666666666667;
+        frac_coords[10][1] = 0.833333333333;
+        frac_coords[10][2] = 0.432343276548;
+        frac_coords[11][0] = 0.666666666667;
+        frac_coords[11][1] = 0.833333333333;
+        frac_coords[11][2] = 0.567656723452;
+
+        rcut = 5.0;
+        bin_size_xyz[0] = 2.5;
+        bin_size_xyz[1] = 2.5;
+        bin_size_xyz[2] = 2.5;
+        pbc_xyz[0] = true;
+        pbc_xyz[1] = true;
+        pbc_xyz[2] = true;
+        
+        type_map[0] = 42;
+        type_map[1] = 16;
+
+        structure = ai2pot::Structure<double>(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+        neighbor_list = ai2pot::NeighborList<double>(structure, rcut, bin_size_xyz, pbc_xyz, true);
+        umax_num_neigh_atoms = 19;
+        inum = 12;
+        ilist = (int*)malloc(sizeof(int) * inum);
+        numneigh = (int*)malloc(sizeof(int) * inum);
+        firstneigh = (int*)malloc(sizeof(int) * inum * umax_num_neigh_atoms);
+        rcs = (double*)malloc(sizeof(double) * inum * umax_num_neigh_atoms * 3);
+        types = (int*)malloc(sizeof(int) * inum);
+        neighbor_list.find_info4mlff(
+            inum,
+            ilist,
+            numneigh,
+            firstneigh,
+            rcs,
+            types,
+            nghost,
+            umax_num_neigh_atoms);
+        
+
+        force = (double (*)[3])malloc(sizeof(double) * inum * 3);
+        virial = (double*)malloc(sizeof(double) * 9);
     }
 
     void TearDown() override {
+        free(zbl_cks);
+        free(zbl_dks);
+        free(ilist);
+        free(numneigh);
+        free(firstneigh);
+        free(rcs);
+        free(types);
 
+        free(coeffs);
+        free(linear_coeffs);
+        free(type_bias);
+
+        free(force);
+        free(virial);
     }
 };  // class : LinearMtpTest
 
 
 TEST_F(LinearMtpTest, find_efv_launcher)
 {
-    
+    ai2pot::mtpr::find_efv_launcher<double>(
+        etot,
+        force,
+        virial,
+        chebyshev_size,
+        coeffs,
+        linear_coeffs,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        mtp_param.nmus(),
+        inum,
+        ilist,
+        numneigh,
+        firstneigh,
+        (double (*)[3])rcs,
+        types,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin,
+        zbl_rmax,
+        zbl_rmin,
+        zbl_cks,
+        zbl_dks);
 }
 
 

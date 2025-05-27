@@ -65,7 +65,7 @@ void find_efv_kernel(CoordType &etot,
                     int *ilist,
                     int *numneigh,
                     int *firstneigh,
-                    int (*rcs)[3],
+                    CoordType (*rcs)[3],
                     int *types,
                     int ntypes,
                     int *type_map,
@@ -100,7 +100,7 @@ void find_efv_launcher(CoordType &etot,
                        int *h_ilist,
                        int *h_numneigh,
                        int *h_firstneigh,
-                       int (*h_rcs)[3],
+                       CoordType (*h_rcs)[3],
                        int *h_types,
                        int ntypes,
                        int *h_type_map,
@@ -162,7 +162,7 @@ void find_efv_atom(CoordType &etot,
     int neigh_idx;
     int type_outer;
     int Zj;
-    int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
+    //int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
     CoordType NeighbVect[3];
     CoordType distance_ij;
     CoordType distance_ij_inv;
@@ -199,7 +199,7 @@ void find_efv_atom(CoordType &etot,
 
         auto_dist_powers_[0] = 1.0;
         for (int aa=0; aa<3; aa++)
-            auto_dist_powers_[0][aa] = 1.0;
+            auto_coords_powers_[0][aa] = 1.0;
         for (int k=1; k<MAX_ALPHA_INDEX_BASIC; k++) {
             auto_dist_powers_[k] = auto_dist_powers_[k-1] * distance_ij;
             for (int aa=0; aa<3; aa++)
@@ -225,7 +225,7 @@ void find_efv_atom(CoordType &etot,
             }
         }
     }
-    
+
     // Step 2.2.
     for (int i=0; i<alpha_index_times_count; i++)
     {
@@ -234,7 +234,6 @@ void find_efv_atom(CoordType &etot,
         CoordType val2 = alpha_index_times[i][2];
         mom_vals[alpha_index_times[i][3]] += val2 * val0 * val1;
     }
-
 
     // Step 3. Calculate EFV for atom
     // Step 3.1. Energy
@@ -245,7 +244,7 @@ void find_efv_atom(CoordType &etot,
 
     for (int i=0; i<alpha_scalar_moments; i++)
         e_site_der2mom[alpha_moment_mapping[i]] = linear_coeffs[i];
-    
+
     for (int i=alpha_index_times_count; i>=0; i--) {
         CoordType val0 = mom_vals[alpha_index_times[i][0]];
         CoordType val1 = mom_vals[alpha_index_times[i][1]];
@@ -368,7 +367,7 @@ void find_efv_kernel(CoordType &etot,
                     int *ilist,
                     int *numneigh,
                     int *firstneigh,
-                    int (*rcs)[3],
+                    CoordType (*rcs)[3],
                     int *types,
                     int ntypes,
                     int *type_map,
@@ -444,7 +443,7 @@ void find_efv_launcher(CoordType &etot,
                        int *h_ilist,
                        int *h_numneigh,
                        int *h_firstneigh,
-                       int (*h_rcs)[3],
+                       CoordType (*h_rcs)[3],
                        int *h_types,
                        int ntypes,
                        int *h_type_map,
@@ -499,7 +498,40 @@ void find_efv_launcher(CoordType &etot,
     CHECK_CUDA_API( cudaMalloc((void**)&d_zbl_dks, sizeof(CoordType) * ntypes * ntypes * 4) );
 
     // Call global function
-
+    find_efv_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (
+        etot,
+        d_force,
+        d_virial,
+        chebyshev_size,
+        d_coeffs,
+        d_linear_coeffs,
+        d_type_bias,
+        alpha_moments_count,
+        alpha_index_basic_count,
+        d_alpha_index_basic,
+        alpha_index_times_count,
+        d_alpha_index_times,
+        alpha_scalar_moments,
+        d_alpha_moment_mapping,
+        nmus,
+        inum,
+        d_ilist,
+        d_numneigh,
+        d_firstneigh,
+        d_rcs,
+        d_types,
+        ntypes,
+        d_type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin,
+        zbl_rmax,
+        zbl_rmin,
+        d_zbl_cks,
+        d_zbl_dks);
+    CHECK_CUDA_API( cudaDeviceSynchronize() );
+    CHECK_CUDA_API( cudaGetLastError() );
 
     CHECK_CUDA_API( cudaFree(d_force) );
     CHECK_CUDA_API( cudaFree(d_virial) );
