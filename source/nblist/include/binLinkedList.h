@@ -84,13 +84,13 @@ public:
 
     const int* get_scaling_matrix() const;
 
-    const int get_prim_num_atoms() const;
+    int get_prim_num_atoms() const;
 
     const int* get_prim_cell_idx_xyz() const;
 
-    const int get_prim_cell_idx() const;
+    int get_prim_cell_idx() const;
 
-    const int get_num_atoms() const;
+    int get_num_atoms() const;
 
     const int* get_owned_atom_idxs() const;
 
@@ -549,20 +549,20 @@ const int* Supercell<CoordType>::get_prim_cell_idx_xyz() const {
 
 
 template <typename CoordType>
-const int Supercell<CoordType>::get_prim_cell_idx() const {
-    return (const int)this->prim_cell_idx;
+int Supercell<CoordType>::get_prim_cell_idx() const {
+    return this->prim_cell_idx;
 }
 
 
 template <typename CoordType>
-const int Supercell<CoordType>::get_prim_num_atoms() const {
-    return (const int)(this->prim_structure_info.num_atoms);
+int Supercell<CoordType>::get_prim_num_atoms() const {
+    return (this->prim_structure_info.num_atoms);
 }
 
 
 template <typename CoordType>
-const int Supercell<CoordType>::get_num_atoms() const {
-    return (const int)(this->structure.num_atoms);
+int Supercell<CoordType>::get_num_atoms() const {
+    return this->structure.num_atoms;
 }
 
 

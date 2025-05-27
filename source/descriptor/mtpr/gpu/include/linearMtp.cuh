@@ -79,6 +79,41 @@ void find_efv_kernel(CoordType &etot,
                     CoordType *zbl_dks);
 
 
+template <typename CoordType>
+static __host__
+void find_efv_launcher(CoordType &etot,
+                       CoordType (*h_force)[3],
+                       CoordType *h_virial,
+                       int chebyshev_size,
+                       CoordType *h_coeffs,
+                       CoordType *h_linear_coeffs,
+                       CoordType *h_type_bias,
+                       const int alpha_moments_count,
+                       const int alpha_index_basic_count,
+                       const int (*h_alpha_index_basic)[4],
+                       const int alpha_index_times_count,
+                       const int (*h_alpha_index_times)[4],
+                       const int alpha_scalar_moments,
+                       const int *h_alpha_moment_mapping,
+                       int nmus,
+                       int inum,
+                       int *h_ilist,
+                       int *h_numneigh,
+                       int *h_firstneigh,
+                       int (*h_rcs)[3],
+                       int *h_types,
+                       int ntypes,
+                       int *h_type_map,
+                       int umax_num_neigh_atoms,
+                       int nghost,
+                       CoordType rmax,
+                       CoordType rmin,
+                       CoordType zbl_rmax,
+                       CoordType zbl_rmin,
+                       CoordType *h_zbl_cks,
+                       CoordType *h_zbl_dks);
+
+
 
 
 template <typename CoordType>
@@ -304,7 +339,7 @@ void find_efv_atom(CoordType &etot,
                     atomicAdd(&force[neigh_idx][aa], -e_site_ders_ija);
 
                     for (int bb=0; bb<3; bb++)
-                        atomicAdd(&virial[aa*3 + bb], -NeighbVect[aa] * e_site_ders_ija)
+                        atomicAdd(&virial[aa*3 + bb], -NeighbVect[aa] * e_site_ders_ija);
                  }
             }
         }
@@ -385,6 +420,103 @@ void find_efv_kernel(CoordType &etot,
                                  zbl_cks,
                                  zbl_dks);
     }
+}
+
+
+template <typename CoordType>
+__host__
+void find_efv_launcher(CoordType &etot,
+                       CoordType (*h_force)[3],
+                       CoordType *h_virial,
+                       int chebyshev_size,
+                       CoordType *h_coeffs,
+                       CoordType *h_linear_coeffs,
+                       CoordType *h_type_bias,
+                       const int alpha_moments_count,
+                       const int alpha_index_basic_count,
+                       const int (*h_alpha_index_basic)[4],
+                       const int alpha_index_times_count,
+                       const int (*h_alpha_index_times)[4],
+                       const int alpha_scalar_moments,
+                       const int *h_alpha_moment_mapping,
+                       int nmus,
+                       int inum,
+                       int *h_ilist,
+                       int *h_numneigh,
+                       int *h_firstneigh,
+                       int (*h_rcs)[3],
+                       int *h_types,
+                       int ntypes,
+                       int *h_type_map,
+                       int umax_num_neigh_atoms,
+                       int nghost,
+                       CoordType rmax,
+                       CoordType rmin,
+                       CoordType zbl_rmax,
+                       CoordType zbl_rmin,
+                       CoordType *h_zbl_cks,
+                       CoordType *h_zbl_dks)
+{
+    int block_size_x = 128;
+    int grid_size_x = (inum - 1) / block_size_x + 1;
+    dim3 grid_size(grid_size_x);
+    dim3 block_size(block_size_x);
+
+    CoordType (*d_force)[3];
+    CoordType *d_virial;
+    CoordType *d_coeffs;
+    CoordType *d_linear_coeffs;
+    CoordType *d_type_bias;
+    int (*d_alpha_index_basic)[4];
+    int (*d_alpha_index_times)[4];
+    int *d_alpha_moment_mapping;
+    int *d_ilist;
+    int *d_numneigh;
+    int *d_firstneigh;
+    CoordType (*d_rcs)[3];
+    int *d_types;
+    int *d_type_map;
+    CoordType *d_zbl_cks;
+    CoordType *d_zbl_dks;
+
+    int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
+
+    CHECK_CUDA_API( cudaMalloc((void**)&d_force, sizeof(CoordType) * (inum + nghost) * 3) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_virial, sizeof(CoordType) * 9) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_coeffs, sizeof(CoordType) * num_coeffs) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_linear_coeffs, sizeof(CoordType) * alpha_scalar_moments) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_type_bias, sizeof(CoordType) * ntypes) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_alpha_index_basic, sizeof(int) * alpha_index_basic_count * 4) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_alpha_index_times, sizeof(int) * alpha_index_times_count * 4) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_alpha_moment_mapping, sizeof(int) * alpha_scalar_moments) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_ilist, sizeof(int) * inum) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_numneigh, sizeof(int) * inum) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_firstneigh, sizeof(int) * inum * umax_num_neigh_atoms) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_rcs, sizeof(CoordType) * inum * umax_num_neigh_atoms * 3) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_types, sizeof(int) * (inum + nghost)) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_type_map, sizeof(int) * ntypes) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_zbl_cks, sizeof(CoordType) * ntypes * ntypes * 4) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_zbl_dks, sizeof(CoordType) * ntypes * ntypes * 4) );
+
+    // Call global function
+
+
+    CHECK_CUDA_API( cudaFree(d_force) );
+    CHECK_CUDA_API( cudaFree(d_virial) );
+    CHECK_CUDA_API( cudaFree(d_coeffs) );
+    CHECK_CUDA_API( cudaFree(d_linear_coeffs) );
+    CHECK_CUDA_API( cudaFree(d_type_bias) );
+    CHECK_CUDA_API( cudaFree(d_alpha_index_basic) );
+    CHECK_CUDA_API( cudaFree(d_alpha_index_times) );
+    CHECK_CUDA_API( cudaFree(d_alpha_moment_mapping) );
+    CHECK_CUDA_API( cudaFree(d_ilist) );
+    CHECK_CUDA_API( cudaFree(d_numneigh) );
+    CHECK_CUDA_API( cudaFree(d_firstneigh) );
+    CHECK_CUDA_API( cudaFree(d_rcs) );
+    CHECK_CUDA_API( cudaFree(d_types) );
+    CHECK_CUDA_API( cudaFree(d_type_map) );
+    CHECK_CUDA_API( cudaFree(d_zbl_cks) );
+    CHECK_CUDA_API( cudaFree(d_zbl_dks) );
 }
 
 

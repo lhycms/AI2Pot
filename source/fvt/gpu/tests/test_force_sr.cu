@@ -246,7 +246,7 @@ for (int ii=0; ii<(inum+nghost); ii++) {
     printf("%6lf, ", h_force_sr_der[(ii*3+direction_modify)*inum*umax_num_neighs + center_idx_modify*umax_num_neighs + neigh_idx_modify]);
 }
 std::cout << "\n";
-printf("2.2. Derivatives w.r.t. dei_drij[%d][%d][%d] calculated by finite difference method:\n\t");
+printf("2.2. Derivatives w.r.t. dei_drij[%d][%d][%d] calculated by finite difference method:\n\t", center_idx_modify, neigh_idx_modify, direction_modify);
 for (int ii=0; ii<(inum+nghost)*3; ii++)
     printf("%6lf, ", (h_force_sr_val_[ii] - h_force_sr_val[ii]) / 0.001);
 printf("\n");

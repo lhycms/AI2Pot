@@ -12,7 +12,7 @@
     You should have received a copy of the GNU General Public License
     along with AI2Pot.  If not, see <http://www.gnu.org/licenses/>.
 */
-
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <Python.h>
 #include <numpy/arrayobject.h>
 #include <stdio.h>
@@ -23,10 +23,9 @@
 
 
 int initialize_npy(void) {
-    if (PyArray_API)
-        return 0;
-    else
+    if (!PyArray_API)
         import_array1(-1);
+    return 0;
 }
 
 static PyObject* py_find_long_short_bonds(PyObject* self, PyObject* args) {

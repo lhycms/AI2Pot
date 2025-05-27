@@ -47,13 +47,14 @@ do {                                                                        \
 } while(0);
 
 
-// *****
+#ifdef __INTELLISENSE__
 #define MAX_NUM_MUS 5
 #define MAX_ALPHA_INDEX_BASIC 8
 #define MAX_NUM_MTP_BASIS 163
 #define MAX_ALPHA_MOMENTS_COUNT 718
 #define MAX_CHEBYSHEV_SIZE 20
-// *****
+#endif
+
 
 const int MAX_CHEBYSHEV_SIZE = 20;
 const int MAX_NUM_TYPES = 10;

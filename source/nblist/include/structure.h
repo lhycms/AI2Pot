@@ -64,7 +64,7 @@ public:
 
     void show() const;
 
-    const int get_num_atoms() const;
+    int get_num_atoms() const;
 
     const CoordType** get_basis_vectors() const; // Returns a pointer to a pointer to a constant double value.
 
@@ -724,8 +724,8 @@ void Structure<CoordType>::show() const {
 
 
 template <typename CoordType>
-const int Structure<CoordType>::get_num_atoms() const {
-    return (const int)this->num_atoms;
+int Structure<CoordType>::get_num_atoms() const {
+    return this->num_atoms;
 }
 
 

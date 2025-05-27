@@ -478,12 +478,12 @@ void MtpParam::show() const
     printf("\n");
 }
 
-const int MtpParam::alpha_moments_count() const
+int MtpParam::alpha_moments_count() const
 {
     return this->_alpha_moments_count;
 }
 
-const int MtpParam::alpha_index_basic_count() const
+int MtpParam::alpha_index_basic_count() const
 {
     return this->_alpha_index_basic_count;
 }
@@ -493,7 +493,7 @@ const int (*MtpParam::alpha_index_basic() const)[4]
     return this->_alpha_index_basic;
 }
 
-const int MtpParam::alpha_index_times_count() const
+int MtpParam::alpha_index_times_count() const
 {
     return this->_alpha_index_times_count;
 }
@@ -503,7 +503,7 @@ const int (*MtpParam::alpha_index_times() const)[4]
     return this->_alpha_index_times;
 }
 
-const int MtpParam::alpha_scalar_moments() const 
+int MtpParam::alpha_scalar_moments() const 
 {
     return this->_alpha_scalar_moments;
 }
@@ -513,7 +513,7 @@ const int *MtpParam::alpha_moment_mapping() const
     return this->_alpha_moment_mapping;
 }
 
-const int MtpParam::max_num_mus4mom() const
+int MtpParam::max_num_mus4mom() const
 {
     return this->_max_num_mus4mom;
 }
@@ -529,7 +529,7 @@ const int *MtpParam::mus4moms_ptr() const
 }
 
 
-const int MtpParam::nmus() const {
+int MtpParam::nmus() const {
     int max_mu = 0;
     for (int ii=0; ii<this->_alpha_index_basic_count; ii++) {
         if (this->_alpha_index_basic[ii][0] > max_mu)
@@ -631,7 +631,7 @@ void AlphaIndexTimes::show() const
             this->_alpha_index_times[ii][3]);
 }
 
-const int AlphaIndexTimes::alpha_index_times_count() const
+int AlphaIndexTimes::alpha_index_times_count() const
 {
     return this->_alpha_index_times_count;
 }

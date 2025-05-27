@@ -94,9 +94,9 @@ public:
 
     const std::vector<int>* get_neighbor_lists() const;
 
-    const int get_num_center_atoms() const;
+    int get_num_center_atoms() const;
 
-    const CoordType get_rcut() const;
+    CoordType get_rcut() const;
 
     void show_in_index() const;         // 展示 supercell 中的 atom_index
 
@@ -108,9 +108,9 @@ public:
 
     const BinLinkedList<CoordType>& get_binLinkedList() const;
 
-    const int get_max_num_neigh_atoms_ssss(int center_atomic_number, int neigh_atomic_number) const; // `ssss`: specified center/neigh specie
+    int get_max_num_neigh_atoms_ssss(int center_atomic_number, int neigh_atomic_number) const; // `ssss`: specified center/neigh specie
 
-    const int get_max_num_neigh_atoms();
+    int get_max_num_neigh_atoms();
 
     void find_info4mlff(
         int& inum,
@@ -345,13 +345,13 @@ const std::vector<int>* NeighborList<CoordType>::get_neighbor_lists() const {
 
 
 template <typename CoordType>
-const int NeighborList<CoordType>::get_num_center_atoms() const {
+int NeighborList<CoordType>::get_num_center_atoms() const {
     return this->num_atoms;
 }
 
 
 template <typename CoordType>
-const CoordType NeighborList<CoordType>::get_rcut() const {
+CoordType NeighborList<CoordType>::get_rcut() const {
     return this->rcut;
 }
 
@@ -465,7 +465,7 @@ const BinLinkedList<CoordType>& NeighborList<CoordType>::get_binLinkedList() con
  * @return const int 
  */
 template <typename CoordType>
-const int NeighborList<CoordType>::get_max_num_neigh_atoms_ssss(int center_atomic_number, int neigh_atomic_number) const {
+int NeighborList<CoordType>::get_max_num_neigh_atoms_ssss(int center_atomic_number, int neigh_atomic_number) const {
     // Step 1. Initialize the value 
     // Step 1.1.
     int max_num_neigh_atoms_ssss = 0;
@@ -500,7 +500,7 @@ const int NeighborList<CoordType>::get_max_num_neigh_atoms_ssss(int center_atomi
 
 
 template <typename CoordType>
-const int NeighborList<CoordType>::get_max_num_neigh_atoms() {
+int NeighborList<CoordType>::get_max_num_neigh_atoms() {
     int max_num_neigh_atoms = 0;
     for (int ii=0; ii<this->num_atoms; ii++) {
         if (this->neighbor_lists[ii].size() > max_num_neigh_atoms)

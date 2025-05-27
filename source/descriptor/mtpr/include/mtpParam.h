@@ -64,27 +64,27 @@ public:
 
     void show() const;
 
-    const int alpha_moments_count() const;
+    int alpha_moments_count() const;
 
-    const int alpha_index_basic_count() const;
+    int alpha_index_basic_count() const;
 
     const int (*alpha_index_basic() const)[4];
 
-    const int alpha_index_times_count() const;
+    int alpha_index_times_count() const;
 
     const int (*alpha_index_times() const)[4];
 
-    const int alpha_scalar_moments() const;
+    int alpha_scalar_moments() const;
 
     const int *alpha_moment_mapping() const;
 
-    const int max_num_mus4mom() const;
+    int max_num_mus4mom() const;
 
     const int *num_mus4moms() const;
 
     const int *mus4moms_ptr() const;
 
-    const int nmus() const;
+    int nmus() const;
 
 private:
     int _alpha_moments_count = 0;
@@ -121,7 +121,7 @@ public:
 
     void show() const;
 
-    const int alpha_index_times_count() const;
+    int alpha_index_times_count() const;
 
     const int (*alpha_index_times() const)[4];
 
