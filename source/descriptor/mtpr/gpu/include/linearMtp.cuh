@@ -245,7 +245,8 @@ void find_efv_atom(CoordType &etot,
     for (int i=0; i<alpha_scalar_moments; i++)
         e_site_der2mom[alpha_moment_mapping[i]] = linear_coeffs[i];
 
-    for (int i=alpha_index_times_count; i>=0; i--) {
+
+    for (int i=alpha_index_times_count-1; i>=0; i--) {
         CoordType val0 = mom_vals[alpha_index_times[i][0]];
         CoordType val1 = mom_vals[alpha_index_times[i][1]];
         CoordType val2 = alpha_index_times[i][2];
@@ -550,7 +551,7 @@ void find_efv_launcher(CoordType &h_etot,
         zbl_rmin,
         d_zbl_cks,
         d_zbl_dks);
-        
+
     CHECK_CUDA_API( cudaDeviceSynchronize() );
     CHECK_CUDA_API( cudaGetLastError() );
 
