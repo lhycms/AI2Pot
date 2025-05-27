@@ -119,7 +119,7 @@ protected:
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/26.almtp",
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/28.almtp"
         };
-        mtp_param._load(filenames[8]);
+        mtp_param._load(filenames[4]);
 //mtp_param.show();
 
         e_weight = 1.0;
@@ -138,8 +138,10 @@ protected:
         std::random_device rd;  // 用于生成随机种子
         std::mt19937 gen(rd()); // 随机数生成器，使用 Mersenne Twister 算法
         std::normal_distribution<> dis(0.0, 0.3); // 高斯分布，均值 0，标准差 0.3
+        //for (int ii=0; ii<ntypes*ntypes*mtp_param.nmus()*chebyshev_size; ii++)
+        //    coeffs[ii] = dis(gen);
         for (int ii=0; ii<ntypes*ntypes*mtp_param.nmus()*chebyshev_size; ii++)
-            coeffs[ii] = dis(gen);
+            coeffs[ii] = 0.1 + 0.01 * ii;
 
         // Establish neighbor list
         num_atoms = 12;
@@ -176,7 +178,7 @@ protected:
         frac_coords[1][1] = 0.333333333333;
         frac_coords[1][2] = 0.432343276548;
         frac_coords[2][0] = 0.166666666667;
-        frac_coords[2][1] = 0.343333333333; //0.333333333333
+        frac_coords[2][1] = 0.333333333333;
         frac_coords[2][2] = 0.567656723452;
         frac_coords[3][0] = 0.333333333333;
         frac_coords[3][1] = 0.666666666667;
@@ -217,7 +219,6 @@ protected:
         structure = ai2pot::Structure<double>(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
         neighbor_list = ai2pot::NeighborList<double>(structure, rcut, bin_size_xyz, pbc_xyz, true);
 
-        umax_num_neigh_atoms = 19;
         inum = 12;
         ilist = (int*)malloc(sizeof(int) * inum);
         numneigh = (int*)malloc(sizeof(int) * inum);
@@ -257,8 +258,10 @@ protected:
         linear_coeffs = (double*)malloc(sizeof(double) * mtp_param.alpha_scalar_moments());
         type_bias = (double*)malloc(sizeof(double) * ntypes);
 
+        //for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++)
+        //    linear_coeffs[ii] = dis(gen);
         for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++)
-            linear_coeffs[ii] = dis(gen);
+            linear_coeffs[ii] = 0.1 + 0.01 * ii;
         type_bias[0] = -0.1;
         type_bias[1] = -0.2;
 

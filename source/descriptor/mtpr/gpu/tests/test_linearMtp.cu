@@ -110,11 +110,11 @@ protected:
         linear_coeffs = (double*)malloc(sizeof(double) * mtp_param.alpha_scalar_moments());
         type_bias = (double*)malloc(sizeof(double) * ntypes);
         for (int ii=0; ii<ntypes*ntypes*mtp_param.nmus()*chebyshev_size; ii++)
-            coeffs[ii] = 1.0 + 0.01 * ii;
+            coeffs[ii] = 0.1 + 0.01 * ii;
         for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++)
-            linear_coeffs[ii] = 1.0 + 0.02 * ii;
-        type_bias[0] = -7;
-        type_bias[1] = -8;
+            linear_coeffs[ii] = 0.1 + 0.01 * ii;
+        type_bias[0] = -0.1;
+        type_bias[1] = -0.2;
         rmax = 5.0;
         rmin = 2.0;
 
@@ -194,7 +194,7 @@ protected:
 
         structure = ai2pot::Structure<double>(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
         neighbor_list = ai2pot::NeighborList<double>(structure, rcut, bin_size_xyz, pbc_xyz, true);
-        umax_num_neigh_atoms = 19;
+        umax_num_neigh_atoms = 20;
         inum = 12;
         ilist = (int*)malloc(sizeof(int) * inum);
         numneigh = (int*)malloc(sizeof(int) * inum);
@@ -212,8 +212,11 @@ protected:
             umax_num_neigh_atoms);
         
 
-        force = (double (*)[3])malloc(sizeof(double) * inum * 3);
+        etot = 0.0;
+        force = (double (*)[3])malloc(sizeof(double) * (inum+nghost) * 3);
+        memset(force, 0.0, sizeof(double)*(inum+nghost)*3);
         virial = (double*)malloc(sizeof(double) * 9);
+        memset(virial, 0.0, sizeof(double)*9);
     }
 
     void TearDown() override {
@@ -269,6 +272,12 @@ TEST_F(LinearMtpTest, find_efv_launcher)
         zbl_rmin,
         zbl_cks,
         zbl_dks);
+printf("find_efv_launcher:\n");
+printf("\t1. Energy = %.15f\n", etot);
+printf("\t2. Force =\n");
+for (int ii=0; ii<inum; ii++)
+    printf("\t\t%3d: [%.15f, %.15f, %.15f]\n", ii, force[ii][0], force[ii][1], force[ii][2]);
+
 }
 
 

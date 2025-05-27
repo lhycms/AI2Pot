@@ -1,6 +1,7 @@
 #ifndef AI2POT_LINEAR_MTP_CUH
 #define AI2POT_LINEAR_MTP_CUH
 #include <math.h>
+#include <chrono>
 
 #include "./mtp_utilities.cuh"
 #include "./mtpBasis.cuh"
@@ -237,7 +238,7 @@ void find_efv_atom(CoordType &etot,
 
     // Step 3. Calculate EFV for atom
     // Step 3.1. Energy
-    CoordType e_site = 0;
+    CoordType e_site = type_bias[type_central];
     for (int i=0; i<alpha_scalar_moments; i++)
         e_site += linear_coeffs[i] * mom_vals[alpha_moment_mapping[i]];
     atomicAdd(&etot, e_site);
@@ -519,6 +520,7 @@ void find_efv_launcher(CoordType &h_etot,
     CHECK_CUDA_API( cudaMemcpy(d_zbl_dks, h_zbl_dks, sizeof(double)*ntypes*ntypes*4, cudaMemcpyHostToDevice) );
 
     // Call global function
+    auto t1 = std::chrono::high_resolution_clock::now();
     find_efv_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (
         *d_etot_ptr,
         d_force,
@@ -551,9 +553,15 @@ void find_efv_launcher(CoordType &h_etot,
         zbl_rmin,
         d_zbl_cks,
         d_zbl_dks);
-
+    auto t2 = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
+    std::cout << "find_efv_kernel() cost time: " << duration.count() << " us.\n";
     CHECK_CUDA_API( cudaDeviceSynchronize() );
     CHECK_CUDA_API( cudaGetLastError() );
+
+    CHECK_CUDA_API( cudaMemcpy(&h_etot, d_etot_ptr, sizeof(CoordType), cudaMemcpyDeviceToHost) );
+    CHECK_CUDA_API( cudaMemcpy(h_force, d_force, sizeof(CoordType)*(inum+nghost)*3, cudaMemcpyDeviceToHost) );
+    CHECK_CUDA_API( cudaMemcpy(h_virial, d_virial, sizeof(CoordType)*9, cudaMemcpyDeviceToHost) );
 
     CHECK_CUDA_API( cudaFree(d_etot_ptr) );
     CHECK_CUDA_API( cudaFree(d_force) );
