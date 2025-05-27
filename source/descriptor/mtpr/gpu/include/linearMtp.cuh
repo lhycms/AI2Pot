@@ -246,7 +246,6 @@ void find_efv_atom(CoordType &etot,
     for (int i=0; i<alpha_scalar_moments; i++)
         e_site_der2mom[alpha_moment_mapping[i]] = linear_coeffs[i];
 
-
     for (int i=alpha_index_times_count-1; i>=0; i--) {
         CoordType val0 = mom_vals[alpha_index_times[i][0]];
         CoordType val1 = mom_vals[alpha_index_times[i][1]];
@@ -284,7 +283,7 @@ void find_efv_atom(CoordType &etot,
             auto_coords_powers_[0][aa] = 1.0;
         for (int k=1; k<MAX_ALPHA_INDEX_BASIC; k++) {
             auto_dist_powers_[k] = auto_dist_powers_[k-1] * distance_ij;
-            for (int aa=0; aa<3; aa++) 
+            for (int aa=0; aa<3; aa++)
                 auto_coords_powers_[k][aa] = auto_coords_powers_[k-1][aa] * NeighbVect[aa];
         }
 
@@ -332,9 +331,8 @@ void find_efv_atom(CoordType &etot,
                 C_ders[2] = -k * powk * distance_ij_inv * distance_ij_inv * NeighbVect[2];
 
                 for (int aa=0; aa<3; aa++) {
-                    int mom_der2xyz = coeffs[idx] * (A_ders[aa] * B * C
-                                                     + A * B_ders[aa] * C
-                                                     + A * B * C_ders[aa]);
+                    CoordType mom_der2xyz = coeffs[idx] 
+                                            * (A_ders[aa]*B*C + A*B_ders[aa]*C + A*B*C_ders[aa]);
                     CoordType e_site_ders_ija = e_site_der2mom[i] * mom_der2xyz;
                     atomicAdd(&force[center_idx][aa], e_site_ders_ija);
                     atomicAdd(&force[neigh_idx][aa], -e_site_ders_ija);
