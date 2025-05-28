@@ -1,3 +1,18 @@
+/*
+    Copyright 2025 Hanyu Liu
+    This file is part of AI2Pot.
+    AI2Pot is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+    AI2Pot is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+    You should have received a copy of the GNU General Public License
+    along with AI2Pot.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #ifndef AI2POT_LINEAR_MTP_CUH
 #define AI2POT_LINEAR_MTP_CUH
 #include <math.h>
@@ -146,6 +161,74 @@ void find_ef_atom(CoordType &etot,
                   CoordType zbl_rmin,
                   CoordType *zbl_cks,
                   CoordType *zbl_dks);
+
+
+template <typename CoordType>
+static __global__ 
+void find_ef_kernel(CoordType &etot,
+                    CoordType (*force)[3],
+                    int chebyshev_size,
+                    CoordType *coeffs,
+                    CoordType *linear_coeffs,
+                    CoordType *type_bias,
+                    const int alpha_moments_count,
+                    const int alpha_index_basic_count,
+                    const int (*alpha_index_basic)[4],
+                    const int alpha_index_times_count,
+                    const int (*alpha_index_times)[4],
+                    const int alpha_scalar_moments,
+                    const int *alpha_moment_mapping,
+                    int nmus,
+                    int inum,
+                    int *ilist,
+                    int *numneigh,
+                    int *firstneigh,
+                    CoordType (*rcs)[3],
+                    int *types,
+                    int ntypes,
+                    int *type_map,
+                    int umax_num_neigh_atoms,
+                    int nghost,
+                    CoordType rmax,
+                    CoordType rmin,
+                    CoordType zbl_rmax,
+                    CoordType zbl_rmin,
+                    CoordType *zbl_cks,
+                    CoordType *zbl_dks);
+
+
+template <typename CoordType>
+static __host__
+void find_ef_launcher(CoordType &h_etot,
+                      CoordType (*h_force)[3],
+                      int chebyshev_size,
+                      CoordType *h_coeffs,
+                      CoordType *h_linear_coeffs,
+                      CoordType *h_type_bias,
+                      const int alpha_moments_count,
+                      const int alpha_index_basic_count,
+                      const int (*h_alpha_index_basic)[4],
+                      const int alpha_index_times_count,
+                      const int (*h_alpha_index_times)[4],
+                      const int alpha_scalar_moments,
+                      const int *h_alpha_moment_mapping,
+                      int nmus,
+                      int inum,
+                      int *h_ilist,
+                      int *h_numneigh,
+                      int *h_firstneigh,
+                      CoordType (*h_rcs)[3],
+                      int *h_types,
+                      int ntypes,
+                      int *h_type_map,
+                      int umax_num_neigh_atoms,
+                      int nghost,
+                      CoordType rmax,
+                      CoordType rmin,
+                      CoordType zbl_rmax,
+                      CoordType zbl_rmin,
+                      CoordType *h_zbl_cks,
+                      CoordType *h_zbl_dks);
 
 
 
@@ -518,6 +601,10 @@ void find_efv_launcher(CoordType &h_etot,
     CHECK_CUDA_API( cudaMalloc((void**)&d_etot_ptr, sizeof(CoordType)) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_force, sizeof(CoordType) * (inum + nghost) * 3) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_virial, sizeof(CoordType) * 9) );
+    CHECK_CUDA_API( cudaMemset(d_etot_ptr, 0.0, sizeof(CoordType)) );
+    CHECK_CUDA_API( cudaMemset(d_force, 0.0, sizeof(CoordType) * (inum + nghost) * 3) );
+    CHECK_CUDA_API( cudaMemset(d_virial, 0.0, sizeof(CoordType) * 9) );
+
     CHECK_CUDA_API( cudaMalloc((void**)&d_coeffs, sizeof(CoordType) * num_coeffs) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_linear_coeffs, sizeof(CoordType) * alpha_scalar_moments) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_type_bias, sizeof(CoordType) * ntypes) );
@@ -533,9 +620,9 @@ void find_efv_launcher(CoordType &h_etot,
     CHECK_CUDA_API( cudaMalloc((void**)&d_zbl_cks, sizeof(CoordType) * ntypes * ntypes * 4) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_zbl_dks, sizeof(CoordType) * ntypes * ntypes * 4) );
 
-    CHECK_CUDA_API( cudaMemcpy(d_etot_ptr, &h_etot, sizeof(CoordType), cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_force, h_force, sizeof(CoordType)*(inum+nghost)*3, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_virial, h_virial, sizeof(CoordType)*9, cudaMemcpyHostToDevice) );
+    //CHECK_CUDA_API( cudaMemcpy(d_etot_ptr, &h_etot, sizeof(CoordType), cudaMemcpyHostToDevice) );
+    //CHECK_CUDA_API( cudaMemcpy(d_force, h_force, sizeof(CoordType)*(inum+nghost)*3, cudaMemcpyHostToDevice) );
+    //CHECK_CUDA_API( cudaMemcpy(d_virial, h_virial, sizeof(CoordType)*9, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_coeffs, h_coeffs, sizeof(CoordType)*ntypes*ntypes*nmus*chebyshev_size, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_linear_coeffs, h_linear_coeffs, sizeof(CoordType)*alpha_scalar_moments, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_type_bias, h_type_bias, sizeof(CoordType)*ntypes, cudaMemcpyHostToDevice) );
@@ -833,6 +920,200 @@ void find_ef_atom(CoordType &etot,
             }
         }
     }
+}
+
+
+template <typename CoordType>
+__global__
+void find_ef_kernel(CoordType &etot,
+                    CoordType (*force)[3],
+                    int chebyshev_size,
+                    CoordType *coeffs,
+                    CoordType *linear_coeffs,
+                    CoordType *type_bias,
+                    const int alpha_moments_count,
+                    const int alpha_index_basic_count,
+                    const int (*alpha_index_basic)[4],
+                    const int alpha_index_times_count,
+                    const int (*alpha_index_times)[4],
+                    const int alpha_scalar_moments,
+                    const int *alpha_moment_mapping,
+                    int nmus,
+                    int inum,
+                    int *ilist,
+                    int *numneigh,
+                    int *firstneigh,
+                    CoordType (*rcs)[3],
+                    int *types,
+                    int ntypes,
+                    int *type_map,
+                    int umax_num_neigh_atoms,
+                    int nghost,
+                    CoordType rmax,
+                    CoordType rmin,
+                    CoordType zbl_rmax,
+                    CoordType zbl_rmin,
+                    CoordType *zbl_cks,
+                    CoordType *zbl_dks)
+{
+    int nx = blockIdx.x * blockDim.x + threadIdx.x;
+    int ii = nx;
+
+    if (ii<inum) {
+        int silist = ilist[ii];
+        int snumneigh = numneigh[ii];
+        int *sfirstneigh = &firstneigh[ii*umax_num_neigh_atoms];
+        CoordType (*srcs)[3] = (CoordType (*)[3])(&rcs[ii*umax_num_neigh_atoms][0]);
+        find_ef_atom<CoordType>(etot,
+                                force,
+                                chebyshev_size,
+                                coeffs,
+                                linear_coeffs,
+                                type_bias,
+                                alpha_moments_count,
+                                alpha_index_basic_count,
+                                alpha_index_basic,
+                                alpha_index_times_count,
+                                alpha_index_times,
+                                alpha_scalar_moments,
+                                alpha_moment_mapping,
+                                nmus,
+                                silist,
+                                snumneigh,
+                                sfirstneigh,
+                                srcs,
+                                types,
+                                ntypes,
+                                type_map,
+                                umax_num_neigh_atoms,
+                                nghost,
+                                rmax,
+                                rmin,
+                                zbl_rmax,
+                                zbl_rmin,
+                                zbl_cks,
+                                zbl_dks);
+    }
+}
+
+
+template <typename CoordType>
+__host__
+void find_ef_launcher(CoordType &h_etot,
+                      CoordType (*h_force)[3],
+                      int chebyshev_size,
+                      CoordType *h_coeffs,
+                      CoordType *h_linear_coeffs,
+                      CoordType *h_type_bias,
+                      const int alpha_moments_count,
+                      const int alpha_index_basic_count,
+                      const int (*h_alpha_index_basic)[4],
+                      const int alpha_index_times_count,
+                      const int (*h_alpha_index_times)[4],
+                      const int alpha_scalar_moments,
+                      const int *h_alpha_moment_mapping,
+                      int nmus,
+                      int inum,
+                      int *h_ilist,
+                      int *h_numneigh,
+                      int *h_firstneigh,
+                      CoordType (*h_rcs)[3],
+                      int *h_types,
+                      int ntypes,
+                      int *h_type_map,
+                      int umax_num_neigh_atoms,
+                      int nghost,
+                      CoordType rmax,
+                      CoordType rmin,
+                      CoordType zbl_rmax,
+                      CoordType zbl_rmin,
+                      CoordType *h_zbl_cks,
+                      CoordType *h_zbl_dks)
+{
+    int block_size_x = 128;
+    int grid_size_x = (inum - 1) / block_size_x + 1;
+    dim3 grid_size(grid_size_x);
+    dim3 block_size(block_size_x);
+
+    CoordType *d_etot_ptr;
+    CoordType (*d_force)[3];
+    CoordType *d_coeffs;
+    CoordType *d_linear_coeffs;
+    CoordType *d_type_bias;
+    int (*d_alpha_index_basic)[4];
+    int (*d_alpha_index_times)[4];
+    int *d_alpha_moment_mapping;
+    int *d_ilist;
+    int *d_numneigh;
+    int *d_firstneigh;
+    CoordType (*d_rcs)[3];
+    int *d_types;
+    int *d_type_map;
+    CoordType *d_zbl_cks;
+    CoordType *d_zbl_dks;
+
+    int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
+
+    CHECK_CUDA_API( cudaMalloc((void**)&d_etot_ptr, sizeof(CoordType)) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_force, sizeof(CoordType) * (inum+nghost) * 3) );
+    CHECK_CUDA_API( cudaMemset(d_etot_ptr, 0.0, sizeof(CoordType)) );
+    CHECK_CUDA_API( cudaMemset(d_force, 0.0, sizeof(CoordType) * (inum+nghost) * 3) );
+    
+    CHECK_CUDA_API( cudaMalloc((void**)&d_coeffs, sizeof(CoordType) * num_coeffs) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_linear_coeffs, sizeof(CoordType) * alpha_scalar_moments) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_type_bias, sizeof(CoordType) * ntypes) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_alpha_index_basic, sizeof(int) * alpha_index_basic_count * 4) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_alpha_index_times, sizeof(int) * alpha_index_times_count * 4) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_alpha_moment_mapping, sizeof(int) * alpha_scalar_moments) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_ilist, sizeof(int) * inum) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_numneigh, sizeof(int) * inum) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_firstneigh, sizeof(int) * inum * umax_num_neigh_atoms) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_rcs, sizeof(CoordType) * inum * umax_num_neigh_atoms * 3) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_types, sizeof(int) * (inum+nghost)) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_type_map, sizeof(int) * ntypes) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_zbl_cks, sizeof(CoordType) * ntypes * ntypes * 4) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_zbl_dks, sizeof(CoordType) * ntypes * ntypes * 4) );
+
+    CHECK_CUDA_API( cudaMemcpy(d_coeffs, h_coeffs, sizeof(CoordType) * num_coeffs, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_linear_coeffs, h_linear_coeffs, sizeof(CoordType) * alpha_scalar_moments, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_type_bias, h_type_bias, sizeof(CoordType) * ntypes, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_alpha_index_basic, h_alpha_index_basic, sizeof(int) * alpha_index_basic_count * 4, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_alpha_index_times, h_alpha_index_times, sizeof(int) * alpha_index_times_count * 4, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_alpha_moment_mapping, h_alpha_moment_mapping, sizeof(int) * alpha_scalar_moments, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_ilist, h_ilist, sizeof(int) * inum, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_numneigh, h_numneigh, sizeof(int) * inum, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_firstneigh, h_firstneigh, sizeof(int) * inum * umax_num_neigh_atoms, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_rcs, h_rcs, sizeof(CoordType) * inum * umax_num_neigh_atoms * 3, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_types, h_types, sizeof(int) * (inum+nghost), cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_type_map, h_type_map, sizeof(int) * ntypes, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_zbl_cks, h_zbl_cks, sizeof(CoordType)*ntypes*ntypes*4, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_zbl_dks, h_zbl_dks, sizeof(CoordType)*ntypes*ntypes*4, cudaMemcpyHostToDevice) );
+
+
+    // Launch kernel function
+    
+
+
+
+    CHECK_CUDA_API( cudaMemcpy(&h_etot, d_etot_ptr, sizeof(CoordType), cudaMemcpyDeviceToHost) );
+    CHECK_CUDA_API( cudaMemcpy(h_force, d_force, sizeof(CoordType) * (inum+nghost) * 3, cudaMemcpyDeviceToHost) );
+
+    CHECK_CUDA_API( cudaFree(d_etot_ptr) );
+    CHECK_CUDA_API( cudaFree(d_force) );
+    CHECK_CUDA_API( cudaFree(d_coeffs) );
+    CHECK_CUDA_API( cudaFree(d_linear_coeffs) );
+    CHECK_CUDA_API( cudaFree(d_type_bias) );
+    CHECK_CUDA_API( cudaFree(d_alpha_index_basic) );
+    CHECK_CUDA_API( cudaFree(d_alpha_index_times) );
+    CHECK_CUDA_API( cudaFree(d_alpha_moment_mapping) );
+    CHECK_CUDA_API( cudaFree(d_ilist) );
+    CHECK_CUDA_API( cudaFree(d_numneigh) );
+    CHECK_CUDA_API( cudaFree(d_firstneigh) );
+    CHECK_CUDA_API( cudaFree(d_rcs) );
+    CHECK_CUDA_API( cudaFree(d_types) );
+    CHECK_CUDA_API( cudaFree(d_type_map) );
+    CHECK_CUDA_API( cudaFree(d_zbl_cks) );
+    CHECK_CUDA_API( cudaFree(d_zbl_dks) );
 }
 
 
