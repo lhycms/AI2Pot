@@ -364,8 +364,8 @@ printf("3. virial[%d][%d] = %g\n", direction1_idx_modify, direction2_idx_modify,
 
 
 TEST_F(LinearMtpTest, force_accuracy) {
-    int center_idx_modify = 9;
-    int direction1_idx_modify = 1;
+    int center_idx_modify = 0;
+    int direction1_idx_modify = 0;
     int direction2_idx_modify = 0;
     double delta = 1E-8;
 
@@ -458,6 +458,11 @@ printf("1.1. energy = %.15lf\n", etot);
 printf("1.1. force[%d][%d] calculated by custom code = %.15lf\n", center_idx_modify, direction1_idx_modify, force[center_idx_modify][direction1_idx_modify]);
 printf("1.2. energy = %.15lf\n", etot_);
 printf("1.2. force[%d][%d] calculated by finite difference method = %.15lf\n", center_idx_modify, direction1_idx_modify, -(etot_ - etot) / delta);
+
+printf("2.1. energy = %.15lf\n", etot);
+printf("2.2. force=\n");
+for (int ii=0; ii<inum; ii++)
+    printf("\t\t%3d: [%.15f, %.15f, %.15f]\n", ii, force[ii][0], force[ii][1], force[ii][2]);
 }
 
 

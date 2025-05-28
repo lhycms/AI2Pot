@@ -56,8 +56,11 @@ protected:
 
 
     double etot;
+    double etot_;
     double (*force)[3];
+    double (*force_)[3];
     double *virial;
+    double *virial_;
 
 
     static void SetUpTestSuite() {
@@ -217,6 +220,12 @@ protected:
         memset(force, 0.0, sizeof(double)*(inum+nghost)*3);
         virial = (double*)malloc(sizeof(double) * 9);
         memset(virial, 0.0, sizeof(double)*9);
+
+        etot_ = 0.0;
+        force_ = (double (*)[3])malloc(sizeof(double) * (inum+nghost) * 3);
+        memset(force_, 0.0, sizeof(double)*(inum+nghost)*3);
+        virial_ = (double*)malloc(sizeof(double) * 9);
+        memset(virial_, 0.0, sizeof(double) * 9);
     }
 
     void TearDown() override {
@@ -234,12 +243,18 @@ protected:
 
         free(force);
         free(virial);
+        free(force_);
+        free(virial_);
     }
 };  // class : LinearMtpTest
 
 
 TEST_F(LinearMtpTest, find_efv_launcher)
 {
+    double delta = 1e-8;
+    int center_idx_modify = 3;
+    int direction_idx_modify = 1;
+
     ai2pot::mtpr::find_efv_launcher<double>(
         etot,
         force,
@@ -272,9 +287,65 @@ TEST_F(LinearMtpTest, find_efv_launcher)
         zbl_rmin,
         zbl_cks,
         zbl_dks);
-printf("find_efv_launcher:\n");
-printf("\t1. Energy = %.15f\n", etot);
-printf("\t2. Force =\n");
+
+    // *** delta
+    double cart_coords[inum][3] = {0.};
+    for (int ii=0; ii<inum; ii++)
+        for (int aa=0; aa<3; aa++)
+            cart_coords[ii][aa] = structure.get_cart_coords()[ii][aa];
+    cart_coords[center_idx_modify][direction_idx_modify] += delta;
+    structure = ai2pot::Structure<double>(num_atoms, basis_vectors, atomic_numbers, cart_coords, true);
+    neighbor_list = ai2pot::NeighborList<double>(structure, rcut, bin_size_xyz, pbc_xyz, true);
+    neighbor_list.find_info4mlff(
+        inum,
+        ilist,
+        numneigh,
+        firstneigh,
+        rcs,
+        types,
+        nghost,
+        umax_num_neigh_atoms);
+    
+    ai2pot::mtpr::find_efv_launcher<double>(
+        etot_,
+        force_,
+        virial_,
+        chebyshev_size,
+        coeffs,
+        linear_coeffs,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        mtp_param.nmus(),
+        inum,
+        ilist,
+        numneigh,
+        firstneigh,
+        (double (*)[3])rcs,
+        types,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin,
+        zbl_rmax,
+        zbl_rmin,
+        zbl_cks,
+        zbl_dks);
+
+printf("1.1. energy = %.15lf\n", etot);
+printf("1.1. force[%d][%d] calculated by custom code = %.15lf\n", center_idx_modify, direction_idx_modify, force[center_idx_modify][direction_idx_modify]);
+printf("1.2. energy = %.15lf\n", etot_);
+printf("1.2. force[%d][%d] calculated by finite difference method = %.15lf\n", center_idx_modify, direction_idx_modify, -(etot_ - etot) / delta);
+printf("\n\nfind_efv_launcher:\n");
+printf("\t2.1. Energy = %.15f\n", etot);
+printf("\t2.2. Force =\n");
 for (int ii=0; ii<inum; ii++)
     printf("\t\t%3d: [%.15f, %.15f, %.15f]\n", ii, force[ii][0], force[ii][1], force[ii][2]);
 
