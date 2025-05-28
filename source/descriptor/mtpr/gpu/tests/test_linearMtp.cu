@@ -249,6 +249,7 @@ protected:
 };  // class : LinearMtpTest
 
 
+
 TEST_F(LinearMtpTest, find_efv_launcher)
 {
     double delta = 1e-8;
@@ -448,7 +449,7 @@ printf("1.1. force[%d][%d] calculated by custom code = %.15lf\n", center_idx_mod
 printf("1.2. energy = %.15lf\n", etot_);
 printf("1.2. force[%d][%d] calculated by finite difference method = %.15lf\n", center_idx_modify, direction_idx_modify, -(etot_ - etot) / delta);
 
-printf("\n\nfind_ef_launcher:\n");
+printf("\n\nfind_ef_launcher():\n");
 printf("\t2.1. Energy = %.15f\n", etot);
 printf("\t2.2. Force =\n");
 for (int ii=0; ii<inum; ii++)

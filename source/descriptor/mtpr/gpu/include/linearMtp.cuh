@@ -672,11 +672,11 @@ void find_efv_launcher(CoordType &h_etot,
         zbl_rmin,
         d_zbl_cks,
         d_zbl_dks);
+    CHECK_CUDA_API( cudaDeviceSynchronize() );
+    CHECK_CUDA_API( cudaGetLastError() );
     auto t2 = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
     std::cout << "find_efv_kernel() cost time: " << duration.count() << " us.\n";
-    CHECK_CUDA_API( cudaDeviceSynchronize() );
-    CHECK_CUDA_API( cudaGetLastError() );
 
     CHECK_CUDA_API( cudaMemcpy(&h_etot, d_etot_ptr, sizeof(CoordType), cudaMemcpyDeviceToHost) );
     CHECK_CUDA_API( cudaMemcpy(h_force, d_force, sizeof(CoordType)*(inum+nghost)*3, cudaMemcpyDeviceToHost) );
@@ -1091,37 +1091,43 @@ void find_ef_launcher(CoordType &h_etot,
 
 
     // Launch kernel function
-    find_ef_kernel KERNEL_ARG2(grid_size, block_size) (*d_etot_ptr,
-                                                       d_force,
-                                                       chebyshev_size,
-                                                       d_coeffs,
-                                                       d_linear_coeffs,
-                                                       d_type_bias,
-                                                       alpha_moments_count,
-                                                       alpha_index_basic_count,
-                                                       d_alpha_index_basic,
-                                                       alpha_index_times_count,
-                                                       d_alpha_index_times,
-                                                       alpha_scalar_moments,
-                                                       d_alpha_moment_mapping,
-                                                       nmus,
-                                                       inum,
-                                                       d_ilist,
-                                                       d_numneigh,
-                                                       d_firstneigh,
-                                                       d_rcs,
-                                                       d_types,
-                                                       ntypes,
-                                                       d_type_map,
-                                                       umax_num_neigh_atoms,
-                                                       nghost,
-                                                       rmax,
-                                                       rmin,
-                                                       zbl_rmax,
-                                                       zbl_rmin,
-                                                       d_zbl_cks,
-                                                       d_zbl_dks);
-
+    auto t1 = std::chrono::high_resolution_clock::now();
+    find_ef_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (
+        *d_etot_ptr,
+        d_force,
+        chebyshev_size,
+        d_coeffs,
+        d_linear_coeffs,
+        d_type_bias,
+        alpha_moments_count,
+        alpha_index_basic_count,
+        d_alpha_index_basic,
+        alpha_index_times_count,
+        d_alpha_index_times,
+        alpha_scalar_moments,
+        d_alpha_moment_mapping,
+        nmus,
+        inum,
+        d_ilist,
+        d_numneigh,
+        d_firstneigh,
+        d_rcs,
+        d_types,
+        ntypes,
+        d_type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin,
+        zbl_rmax,
+        zbl_rmin,
+        d_zbl_cks,
+        d_zbl_dks);
+    CHECK_CUDA_API( cudaDeviceSynchronize() );
+    CHECK_CUDA_API( cudaGetLastError() );
+    auto t2 = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
+    std::cout << "find_ef_launcher() cost time: " << duration.count() << " us.\n";
 
     CHECK_CUDA_API( cudaMemcpy(&h_etot, d_etot_ptr, sizeof(CoordType), cudaMemcpyDeviceToHost) );
     CHECK_CUDA_API( cudaMemcpy(h_force, d_force, sizeof(CoordType) * (inum+nghost) * 3, cudaMemcpyDeviceToHost) );
