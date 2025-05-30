@@ -58,6 +58,9 @@ if (BUILD_TEST)
     target_link_libraries(test_linearMtp PRIVATE mtpParam gtest gtest_main)
     #target_compile_options(test_linearMtp PRIVATE -g)
 
+    add_executable(test_linearMtpLoss ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_linearMtpLoss.cc)
+    target_link_libraries(test_linearMtpLoss PRIVATE gtest gtest_main)
+
     if (TORCH_OP)
         add_executable(test_mtpParamOp ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mtpParamOp.cc)
         target_link_libraries(test_mtpParamOp PRIVATE ${TORCH_LIBRARIES} mtpParamOp mtpParam gtest gtest_main)
