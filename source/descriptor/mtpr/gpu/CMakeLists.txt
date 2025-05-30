@@ -31,7 +31,12 @@ if (BUILD_TEST)
     add_executable(test_linear_mtp ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_linearMtp.cu)
     target_compile_definitions(test_linear_mtp PRIVATE MAX_MTP_LEVEL=${MAX_MTP_LEVEL})
     target_link_libraries(test_linear_mtp PRIVATE mtpParam gtest gtest_main)
+
+    add_executable(test_linear_mtp_loss ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_linearMtpLoss.cu)
+    target_compile_definitions(test_linear_mtp PRIVATE MAX_MTP_LEVEL=${MAX_MTP_LEVEL})
+    target_link_libraries(test_linear_mtp_loss PRIVATE gtest gtest_main)
     
     gtest_discover_tests(test_mtp_utilities DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT})
     gtest_discover_tests(test_mtp_basis DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT})
+    gtest_discover_tests(test_linear_mtp DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT})
 endif()

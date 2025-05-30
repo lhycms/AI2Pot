@@ -400,7 +400,7 @@ TEST_F(LinearMtpTest, find_ef_launcher)
         for (int aa=0; aa<3; aa++)
             cart_coords[ii][aa] = structure.get_cart_coords()[ii][aa];
     cart_coords[center_idx_modify][direction_idx_modify] += delta;
-    structure = ai2pot::Structure<double>(num_atoms, basis_vectors, atomic_numbers, cart_coords, true);
+    structure = ai2pot::Structure<double>(num_atoms, basis_vectors, atomic_numbers, cart_coords, true);   
     neighbor_list = ai2pot::NeighborList<double>(structure, rcut, bin_size_xyz, pbc_xyz, true);
     neighbor_list.find_info4mlff(
         inum,

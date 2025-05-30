@@ -128,7 +128,7 @@ void find_efv_launcher(CoordType &h_etot,
                        CoordType zbl_rmin,
                        CoordType *h_zbl_cks,
                        CoordType *h_zbl_dks);
-
+    
 
 template <typename CoordType>
 static __host__ __device__
