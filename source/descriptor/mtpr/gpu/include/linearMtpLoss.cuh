@@ -213,14 +213,14 @@ void find_ef_loss_kernel(CoordType &loss,
     if (ii < inum) {
         int center_idx = ilist[ii];
         for (int aa=0; aa<3; aa++)
-            f_loss += std::pow(force_ml[center_idx][aa] - force_dft[center_idx][aa]);
+            f_loss += std::pow(force_ml[center_idx][aa] - force_dft[center_idx][aa], 2);
         f_loss = f_weight / (3*inum) * f_loss;
         atomicAdd(&loss, f_loss);
     }
 
     if (nx == 0) {
         CoordType e_loss = 0;
-        e_loss = e_weight / inum * std::pow(etot_ml - etot_dft , 2);
+        e_loss = e_weight / inum * std::pow(etot_ml - etot_dft, 2);
         atomicAdd(&loss, e_loss);
     }
 }
@@ -237,7 +237,46 @@ void find_ef_loss_launcher(CoordType &h_loss,
                            CoordType (*h_force_ml)[3],
                            CoordType (*h_force_dft)[3])
 {
+    int block_size_x = 128;
+    int grid_size_x = (inum - 1) / block_size_x + 1;
+    dim3 grid_size(grid_size_x);
+    dim3 block_size(block_size_x);
 
+    CoordType *d_loss_ptr;
+    int *d_ilist;
+    CoordType (*d_force_ml)[3];
+    CoordType (*d_force_dft)[3];
+
+    CHECK_CUDA_API( cudaMalloc((void**)&d_loss_ptr, sizeof(CoordType)) );
+    CHECK_CUDA_API( cudaMemset(d_loss_ptr, 0.0, sizeof(CoordType)) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_ilist, sizeof(int) * inum) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_force_ml, sizeof(CoordType) * inum * 3) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_force_dft, sizeof(CoordType) * inum * 3) );
+
+    CHECK_CUDA_API( cudaMemcpy(d_ilist, h_ilist, sizeof(int)*inum, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_force_ml, h_force_ml, sizeof(CoordType) * inum * 3, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_force_dft, h_force_dft, sizeof(CoordType) * inum * 3, cudaMemcpyHostToDevice) );
+
+    // Launch kernel
+    find_ef_loss_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (*d_loss_ptr,
+                                                                       inum,
+                                                                       d_ilist,
+                                                                       e_weight,
+                                                                       f_weight,
+                                                                       etot_ml,
+                                                                       etot_dft,
+                                                                       d_force_ml,
+                                                                       d_force_dft);
+
+    CHECK_CUDA_API( cudaDeviceSynchronize() );
+    CHECK_CUDA_API( cudaGetLastError());
+
+    CHECK_CUDA_API( cudaMemcpy(&h_loss, d_loss_ptr, sizeof(CoordType), cudaMemcpyDeviceToHost) );
+
+    CHECK_CUDA_API( cudaFree(d_loss_ptr) );
+    CHECK_CUDA_API( cudaFree(d_ilist) );
+    CHECK_CUDA_API( cudaFree(d_force_ml) );
+    CHECK_CUDA_API( cudaFree(d_force_dft) );
 }
 
 

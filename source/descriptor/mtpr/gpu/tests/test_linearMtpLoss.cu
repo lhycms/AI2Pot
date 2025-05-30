@@ -90,7 +90,16 @@ printf("1. Loss = %.15f\n", loss);
 
 
 TEST_F(LinearMtpLossTest, find_ef_loss) {
-
+    ai2pot::mtpr::find_ef_loss_launcher<double>(loss,
+                                                inum,
+                                                ilist,
+                                                e_weight,
+                                                f_weight,
+                                                etot_ml,
+                                                etot_dft,
+                                                force_ml,
+                                                force_dft);
+printf("1. Loss = %.15f\n", loss);
 }
 
 
