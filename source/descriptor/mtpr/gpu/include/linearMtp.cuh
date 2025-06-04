@@ -18,7 +18,6 @@
 #include <math.h>
 #include <chrono>
 
-#include "./mtp_utilities.cuh"
 #include "./mtpBasis.cuh"
 
 

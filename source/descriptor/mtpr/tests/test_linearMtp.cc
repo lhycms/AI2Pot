@@ -509,9 +509,13 @@ TEST_F(LinearMtpTest, find_loss) {
         rmin);
 printf("1. loss = %g\n", loss);
 }
+*/
 
 
 TEST_F(LinearMtpTest, find_loss_backward) {
+    e_weight = 1.0;
+    f_weight = 0.0;
+    v_weight = 0.0;
     ai2pot::mtpr::LinearMtp<real>::find_loss_backward(
         loss_der2coeffs,
         loss_der2linear_coeffs,
@@ -541,12 +545,22 @@ TEST_F(LinearMtpTest, find_loss_backward) {
         (real (*)[3])rcs,
         types,
         ntypes,
+        type_map,
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        zbl_rmax,
+        zbl_rmin,
+        zbl_cks,
+        zbl_dks);
+
+printf("1. loss_der2coeffs:\n");
+for (int ii=0; ii<ntypes*ntypes*nmus*chebyshev_size; ii++)
+    printf("%.15f, ", loss_der2coeffs[ii]);
+printf("\n");
 }
-*/
+
 
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);

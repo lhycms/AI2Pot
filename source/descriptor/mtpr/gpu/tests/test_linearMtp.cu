@@ -10,6 +10,7 @@
 
 #include "../include/mtp_utilities.cuh"
 #include "../include/linearMtp.cuh"
+#include "../include/linearMtpLoss.cuh"
 #include "../../include/mtpParam.h"
 #include "../../../../nblist/include/structure.h"
 #include "../../../../nblist/include/neighborList.h"
@@ -63,6 +64,15 @@ protected:
     real (*force_)[3];
     real *virial;
     real *virial_;
+
+
+    real *loss_der2coeffs;
+    real *loss_der2linear_coeffs;
+    real *loss_der2type_bias;
+
+    real etot_dft;
+    real (*force_dft)[3];
+    real *virial_dft;
 
 
     static void SetUpTestSuite() {
@@ -228,6 +238,19 @@ protected:
         memset(force_, 0.0, sizeof(real)*(inum+nghost)*3);
         virial_ = (real*)malloc(sizeof(real) * 9);
         memset(virial_, 0.0, sizeof(real) * 9);
+
+        loss_der2coeffs = (real*)malloc(sizeof(real) * ntypes * ntypes * mtp_param.nmus() * chebyshev_size);
+        memset(loss_der2coeffs, 0, sizeof(real) * ntypes * ntypes * mtp_param.nmus() * chebyshev_size);
+        loss_der2linear_coeffs = (real*)malloc(sizeof(real) * mtp_param.alpha_scalar_moments());
+        memset(loss_der2linear_coeffs, 0, sizeof(real) * mtp_param.alpha_scalar_moments());
+        loss_der2type_bias = (real*)malloc(sizeof(real) * ntypes);
+        memset(loss_der2type_bias, 0, sizeof(real) * ntypes);
+
+        etot_dft = 0.0;
+        force_dft = (real (*)[3])malloc(sizeof(real) * inum * 3);
+        memset(force_dft, 0, sizeof(real)*inum*3);
+        virial_dft = (real*)malloc(sizeof(real) * 9);
+        memset(virial_dft, 0, sizeof(real)*9);
     }
 
     void TearDown() override {
@@ -247,6 +270,12 @@ protected:
         free(virial);
         free(force_);
         free(virial_);
+
+        free(loss_der2coeffs);
+        free(loss_der2linear_coeffs);
+        free(loss_der2type_bias);
+        free(force_dft);
+        free(virial_dft);
     }
 };  // class : LinearMtpTest
 
@@ -457,6 +486,93 @@ printf("\t2.2. Force =\n");
 for (int ii=0; ii<inum; ii++)
     printf("\t\t%3d: [%.15f, %.15f, %.15f]\n", ii, force[ii][0], force[ii][1], force[ii][2]);
 
+}
+
+
+TEST_F(LinearMtpTest, find_loss_backward_launcer)
+{
+    real e_weight = 1.0;
+    real f_weight = 0.0;
+    real v_weight = 0.0;
+    
+    ai2pot::mtpr::find_ef_launcher<real>(
+        etot,
+        force,
+        chebyshev_size,
+        coeffs,
+        linear_coeffs,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        mtp_param.nmus(),
+        inum,
+        ilist,
+        numneigh,
+        firstneigh,
+        (real (*)[3])rcs,
+        types,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin,
+        zbl_rmax,
+        zbl_rmin,
+        zbl_cks,
+        zbl_dks);
+
+    ai2pot::mtpr::find_loss_backward_launcher<real>(
+        loss_der2coeffs,
+        loss_der2linear_coeffs,
+        loss_der2type_bias,
+        e_weight,
+        f_weight,
+        v_weight,
+        etot,
+        etot_dft,
+        force,
+        force_dft,
+        virial,
+        virial_dft,
+        chebyshev_size,
+        coeffs,
+        linear_coeffs,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        mtp_param.nmus(),
+        inum,
+        ilist,
+        numneigh,
+        firstneigh,
+        (real (*)[3])rcs,
+        types,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin,
+        zbl_rmax,
+        zbl_rmin,
+        zbl_cks,
+        zbl_dks);
+
+printf("1. loss_der2coeffs:\n");
+for (int ii=0; ii<ntypes*ntypes*mtp_param.nmus()*chebyshev_size; ii++)
+    printf("%.15f, ", loss_der2coeffs[ii]);
+printf("\n");
 }
 
 

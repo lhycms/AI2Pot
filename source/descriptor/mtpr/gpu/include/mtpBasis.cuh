@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
+
 #include "./mtp_utilities.cuh"
 
 
@@ -262,8 +263,8 @@ void find_mtp_basis_val_der_cuda_kernel(
         int type_outer;
         CoordType NeighVect[3];
         CoordType distance_ij;
-        CoordType auto_dist_powers_[MAX_ALPHA_INDEX_BASIC];
-        CoordType auto_coords_powers_[MAX_ALPHA_INDEX_BASIC][3];
+        CoordType auto_dist_powers_[MAX_ALPHA_INDEX_BASIC] = {0.0};
+        CoordType auto_coords_powers_[MAX_ALPHA_INDEX_BASIC][3] = {{0.0}};
         int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
 
         // Step 2.

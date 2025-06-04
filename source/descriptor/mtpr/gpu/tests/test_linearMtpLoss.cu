@@ -3,6 +3,7 @@
 #include <iostream>
 #include <stdlib.h>
 
+#include "../include/mtp_utilities.cuh"
 #include "../include/linearMtpLoss.cuh"
 
 
@@ -101,6 +102,8 @@ TEST_F(LinearMtpLossTest, find_ef_loss) {
                                                 force_dft);
 printf("1. Loss = %.15f\n", loss);
 }
+
+
 
 
 int main(int argc, char **argv) {
