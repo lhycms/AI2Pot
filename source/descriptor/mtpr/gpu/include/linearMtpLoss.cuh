@@ -129,6 +129,51 @@ void find_loss_backward_atom(CoordType *loss_der2coeffs,
                              CoordType *zbl_dks);
 
 
+template <typename CoordType>
+static __global__
+void find_loss_backward(CoordType *loss_der2coeffs,
+                        CoordType *loss_der2linear_coeffs,
+                        CoordType *loss_der2type_bias,
+                        CoordType e_weight,
+                        CoordType f_weight,
+                        CoordType v_weight,
+                        CoordType etot_ml,
+                        CoordType etot_dft,
+                        CoordType (*force_ml)[3],
+                        CoordType (*force_dft)[3],
+                        CoordType *virial_ml,
+                        CoordType *virial_dft,
+                        int chebyshev_size,
+                        CoordType *coeffs,
+                        CoordType *linear_coeffs,
+                        CoordType *type_bias,
+                        const int alpha_moments_count,
+                        const int alpha_index_basic_count,
+                        const int (*alpha_index_basic)[4],
+                        const int alpha_index_times_count,
+                        const int (*alpha_index_times)[4],
+                        const int alpha_scalar_moments,
+                        const int *alpha_moment_mapping,
+                        int nmus,
+                        int inum,
+                        int *ilist,
+                        int *numneigh,
+                        int *firstneigh,
+                        CoordType (*rcs)[3],
+                        int *types,
+                        int ntypes,
+                        int *type_map,
+                        int umax_num_neigh_atoms,
+                        int nghost,
+                        CoordType rmax,
+                        CoordType rmin,
+                        CoordType zbl_rmax,
+                        CoordType zbl_rmin,
+                        CoordType *zbl_cks,
+                        CoordType *zbl_dks);
+
+
+
 
 
 template <typename CoordType>
@@ -329,7 +374,7 @@ void find_ef_loss_launcher(CoordType &h_loss,
 
 
 template <typename CoordType>
-static __device__
+__device__
 void find_loss_backward_atom(CoordType *loss_der2coeffs,
                              CoordType *loss_der2linear_coeffs,
                              CoordType *loss_der2type_bias,
@@ -639,6 +684,101 @@ void find_loss_backward_atom(CoordType *loss_der2coeffs,
               2*e_weight/inum*(etot_ml - etot_dft));
 }
 
+
+
+template <typename CoordType>
+__global__
+void find_loss_backward(CoordType *loss_der2coeffs,
+                        CoordType *loss_der2linear_coeffs,
+                        CoordType *loss_der2type_bias,
+                        CoordType e_weight,
+                        CoordType f_weight,
+                        CoordType v_weight,
+                        CoordType etot_ml,
+                        CoordType etot_dft,
+                        CoordType (*force_ml)[3],
+                        CoordType (*force_dft)[3],
+                        CoordType *virial_ml,
+                        CoordType *virial_dft,
+                        int chebyshev_size,
+                        CoordType *coeffs,
+                        CoordType *linear_coeffs,
+                        CoordType *type_bias,
+                        const int alpha_moments_count,
+                        const int alpha_index_basic_count,
+                        const int (*alpha_index_basic)[4],
+                        const int alpha_index_times_count,
+                        const int (*alpha_index_times)[4],
+                        const int alpha_scalar_moments,
+                        const int *alpha_moment_mapping,
+                        int nmus,
+                        int inum,
+                        int *ilist,
+                        int *numneigh,
+                        int *firstneigh,
+                        CoordType (*rcs)[3],
+                        int *types,
+                        int ntypes,
+                        int *type_map,
+                        int umax_num_neigh_atoms,
+                        int nghost,
+                        CoordType rmax,
+                        CoordType rmin,
+                        CoordType zbl_rmax,
+                        CoordType zbl_rmin,
+                        CoordType *zbl_cks,
+                        CoordType *zbl_dks)
+{
+    int nx = blockIdx.x * blockDim.x + threadIdx.x;
+    int ii = nx;
+
+    if (ii < inum) {
+        int silist = ilist[ii];
+        int snumneigh = numneigh[ii];
+        int *sfirstneigh = &firstneigh[ii*umax_num_neigh_atoms];
+        CoordType (*srcs)[3] = &rcs[ii*umax_num_neigh_atoms][0];
+        find_loss_backward_atom<CoordType>(loss_der2coeffs,
+                                           loss_der2linear_coeffs,
+                                           loss_der2type_bias,
+                                           e_weight,
+                                           f_weight,
+                                           v_weight,
+                                           etot_ml,
+                                           etot_dft,
+                                           force_ml,
+                                           force_dft,
+                                           virial_ml,
+                                           virial_dft,
+                                           chebyshev_size,
+                                           coeffs,
+                                           linear_coeffs,
+                                           type_bias,
+                                           alpha_moments_count,
+                                           alpha_index_basic_count,
+                                           alpha_index_basic,
+                                           alpha_index_times_count,
+                                           alpha_index_times,
+                                           alpha_scalar_moments,
+                                           alpha_moment_mapping,
+                                           nmus,
+                                           inum,
+                                           silist,
+                                           snumneigh,
+                                           sfirstneigh,
+                                           srcs,
+                                           types,
+                                           ntypes,
+                                           type_map,
+                                           umax_num_neigh_atoms,
+                                           nghost,
+                                           rmax,
+                                           rmin,
+                                           zbl_rmax,
+                                           zbl_rmin,
+                                           zbl_cks,
+                                           zbl_dks);
+    }
+}
 
 };  // namespace: mtpr
 };  // namespace : ai2pot
