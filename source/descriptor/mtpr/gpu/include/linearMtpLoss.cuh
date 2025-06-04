@@ -21,6 +21,7 @@
 #include <math.h>
 
 #include "../include/mtp_utilities.cuh"
+#include "../include/mtpBasis.cuh"
 
 
 namespace ai2pot {
@@ -43,6 +44,7 @@ void find_loss_kernel(CoordType &loss,
 
 
 template <typename CoordType>
+static __host__
 void find_loss_launcher(CoordType &h_loss,
                         int inum,
                         int *h_ilist,
@@ -71,6 +73,7 @@ void find_ef_loss_kernel(CoordType &loss,
 
 
 template <typename CoordType>
+static __host__
 void find_ef_loss_launcher(CoordType &h_loss,
                            int inum,
                            int *h_ilist,
@@ -80,6 +83,51 @@ void find_ef_loss_launcher(CoordType &h_loss,
                            CoordType etot_dft,
                            CoordType (*h_force_ml)[3],
                            CoordType (*h_force_dft)[3]);
+
+
+template <typename CoordType>
+static __device__
+void find_loss_backward_atom(CoordType *loss_der2coeffs,
+                             CoordType *loss_der2linear_coeffs,
+                             CoordType *loss_der2type_bias,
+                             CoordType e_weight,
+                             CoordType f_weight,
+                             CoordType v_weight,
+                             CoordType etot_ml,
+                             CoordType etot_dft,
+                             CoordType (*force_ml)[3],
+                             CoordType (*force_dft)[3],
+                             CoordType *virial_ml,
+                             CoordType *virial_dft,
+                             int chebyshev_size,
+                             CoordType *coeffs,
+                             CoordType *linear_coeffs,
+                             CoordType *type_bias,
+                             const int alpha_moments_count,
+                             const int alpha_index_basic_count,
+                             const int (*alpha_index_basic)[4],
+                             const int alpha_index_times_count,
+                             const int (*alpha_index_times)[4],
+                             const int alpha_scalar_moments,
+                             const int *alpha_moment_mapping,
+                             int nmus,
+                             int inum,
+                             int silist,
+                             int snumneigh,
+                             int *sfirstneigh,
+                             CoordType (*srcs)[3],
+                             int *types,
+                             int ntypes,
+                             int *type_map,
+                             int umax_num_neigh_atoms,
+                             int nghost,
+                             CoordType rmax,
+                             CoordType rmin,
+                             CoordType zbl_rmax,
+                             CoordType zbl_rmin,
+                             CoordType *zbl_cks,
+                             CoordType *zbl_dks);
+
 
 
 
@@ -277,6 +325,318 @@ void find_ef_loss_launcher(CoordType &h_loss,
     CHECK_CUDA_API( cudaFree(d_ilist) );
     CHECK_CUDA_API( cudaFree(d_force_ml) );
     CHECK_CUDA_API( cudaFree(d_force_dft) );
+}
+
+
+template <typename CoordType>
+static __device__
+void find_loss_backward_atom(CoordType *loss_der2coeffs,
+                             CoordType *loss_der2linear_coeffs,
+                             CoordType *loss_der2type_bias,
+                             CoordType e_weight,
+                             CoordType f_weight,
+                             CoordType v_weight,
+                             CoordType etot_ml,
+                             CoordType etot_dft,
+                             CoordType (*force_ml)[3],
+                             CoordType (*force_dft)[3],
+                             CoordType *virial_ml,
+                             CoordType *virial_dft,
+                             int chebyshev_size,
+                             CoordType *coeffs,
+                             CoordType *linear_coeffs,
+                             CoordType *type_bias,
+                             const int alpha_moments_count,
+                             const int alpha_index_basic_count,
+                             const int (*alpha_index_basic)[4],
+                             const int alpha_index_times_count,
+                             const int (*alpha_index_times)[4],
+                             const int alpha_scalar_moments,
+                             const int *alpha_moment_mapping,
+                             int nmus,
+                             int inum,
+                             int silist,
+                             int snumneigh,
+                             int *sfirstneigh,
+                             CoordType (*srcs)[3],
+                             int *types,
+                             int ntypes,
+                             int *type_map,
+                             int umax_num_neigh_atoms,
+                             int nghost,
+                             CoordType rmax,
+                             CoordType rmin,
+                             CoordType zbl_rmax,
+                             CoordType zbl_rmin,
+                             CoordType *zbl_cks,
+                             CoordType *zbl_dks)
+{
+    CoordType mom_vals[MAX_ALPHA_MOMENTS_COUNT] = {0.0};
+    CoordType e_site_der2mom[MAX_ALPHA_MOMENTS_COUNT] = {0.0};
+    CoordType dloss_combination[MAX_ALPHA_MOMENTS_COUNT] = {0.0};
+
+    int center_idx;
+    int type_central;
+    int Zi;
+    int neigh_idx;
+    int type_outer;
+    int Zj;
+    CoordType NeighbVect[3];
+    CoordType distance_ij;
+    CoordType distance_ij_inv;
+    CoordType auto_dist_powers_[MAX_ALPHA_INDEX_BASIC] = {0.0};
+    CoordType auto_coords_powers_[MAX_ALPHA_INDEX_BASIC] = {{0.0}};
+
+    center_idx = silist;
+    type_central = types[center_idx];
+    Zi = type_map[type_central];
+
+    // 1. Mom_vals
+    for (int jj=0; jj<snumneigh; jj++)
+    {
+        neigh_idx = sfirstneigh[jj];
+        type_outer = types[neigh_idx];
+        Zj = type_map[type_outer];
+        for (int aa=0; aa<3; aa++)
+            NeighbVect[aa] = srcs[jj][aa];
+        distance_ij = std::sqrt( std::pow(NeighbVect[0], 2)
+                                 + std::pow(NeighbVect[1], 2)
+                                 + std::pow(NeighbVect[2], 2) );
+        if (distance_ij > rmax)
+            continue;
+        distance_ij_inv = 1.0 / distance_ij;
+
+        CoordType rq_chebyshev_vals[MAX_CHEBYSHEV_SIZE] = {0.0};
+        CoordType rq_chebyshev_der2r[MAX_CHEBYSHEV_SIZE] = {0.0};
+        find_rq_chebyshev<CoordType>(rq_chebyshev_vals,
+                                     rq_chebyshev_der2r,
+                                     chebyshev_size,
+                                     rmax,
+                                     rmin,
+                                     distance_ij);
+
+        auto_dist_powers_[0] = distance_ij;
+        for (int aa=0; aa<3; aa++)
+            auto_coords_powers_[0][aa] = NeighbVect[aa];
+        for (int k=1; k<MAX_ALPHA_INDEX_BASIC; k++) {
+            auto_dist_powers_[k] = auto_dist_powers_[k-1] * distance_ij;
+            for (int aa=0; aa<3; aa++)
+                auto_coords_powers_[k][aa] = auto_coords_powers_[k-1][aa] * NeighbVect[aa];
+        }
+
+        for (int i=0; i<alpha_index_basic_count; i++) {
+            int mu = alpha_index_basic[i][0];
+            int k = alpha_index_basic[i][1] + alpha_index_basic[i][2] + alpha_index_basic[i][3];
+            CoordType powk = 1.0 / auto_dist_powers_[k];
+            CoordType pow0 = auto_coords_powers_[alpha_index_basic[i][1]][0];
+            CoordType pow1 = auto_coords_powers_[alpha_index_basic[i][2]][1];
+            CoordType pow2 = auto_coords_powers_[alpha_index_basic[i][3]][2];
+            CoordType mult0 = pow0 * pow1 * pow2;
+
+            for (int xi=0; xi<chebyshev_size; xi++) {
+                int idx = (type_central*ntypes + type_outer)*nmus*chebyshev_size + mu*chebyshev_size + xi;
+                CoordType A = rq_chebyshev_vals[xi]; 
+                CoordType B = mult0;
+                CoordType C = powk;
+                CoordType A_ders[3] = {0.0, 0.0, 0.0};
+                CoordType B_ders[3] = {0.0, 0.0, 0.0};
+                CoordType C_ders[3] = {0.0, 0.0, 0.0};
+                A_ders[0] = rq_chebyshev_der2r[xi] * NeighbVect[0] * distance_ij_inv;
+                A_ders[1] = rq_chebyshev_der2r[xi] * NeighbVect[1] * distance_ij_inv;
+                A_ders[2] = rq_chebyshev_der2r[xi] * NeighbVect[2] * distance_ij_inv;
+                if (alpha_index_basic[i][1] != 0) {
+                    B_ders[0] = alpha_index_basic[i][1]
+                                * auto_coords_powers_[alpha_index_basic[i][1] - 1][0]
+                                * pow1
+                                * pow2;
+                }
+                if (alpha_index_basic[i][2] != 0) {
+                    B_ders[1] = alpha_index_basic[i][2]
+                                * pow0
+                                * auto_coords_powers_[alpha_index_basic[i][2] - 1][1]
+                                * pow2;
+                }
+                if (alpha_index_basic[i][3] != 0) {
+                    B_ders[2] = alpha_index_basic[i][3]
+                                * pow0
+                                * pow1
+                                * auto_coords_powers_[alpha_index_basic[i][3] - 1][2];
+                }
+                C_ders[0] = -k * powk * distance_ij_inv * distance_ij_inv * NeighbVect[0];
+                C_ders[1] = -k * powk * distance_ij_inv * distance_ij_inv * NeighbVect[1];
+                C_ders[2] = -k * powk * distance_ij_inv * distance_ij_inv * NeighbVect[2];
+
+                mom_vals[i] += coeffs[idx] * A * B * C;
+
+                for (int aa=0; aa<3; aa++) {
+                    CoordType tmp_deriv = coeffs[idx] * (A_ders[aa] * B * C
+                                                         + A * B_ders[aa] * C
+                                                         + A * B * C_ders[aa]);
+                    dloss_combination[i] += 2*f_weight/(3*inum)
+                                            * (force_ml[center_idx][aa] - force_dft[neigh_idx][aa])
+                                            * tmp_deriv;
+                    dloss_combination[i] += 2*f_weight/(3*inum)
+                                            * (force_ml[neigh_idx][aa] - force_dft[neigh_idx][aa])
+                                            * tmp_deriv;
+                    for (int bb=0; bb<3; bb++) {
+                        dloss_combination[i] -= 2*v_weight/(9*inum)
+                                                * (virial_ml[aa*3+bb] - virial_dft[aa*3+bb])
+                                                * NeighbVect[bb]
+                                                * tmp_deriv;
+                    }                    
+                }
+            }
+        }
+    }
+
+    for (int i=alpha_index_times_count-1; i>=0; i--) {
+        CoordType val0 = mom_vals[alpha_index_times[i][0]];
+        CoordType val1 = mom_vals[alpha_index_times[i][1]];
+        CoordType val2 = alpha_index_times[i][2];
+        mom_vals[alpha_index_times[i][3]] += val2 * val0 * val1;
+        dloss_combination[alpha_index_times[i][3]] += (dloss_combination[alpha_index_times[i][0]] * val2 * val1
+                                                       + dloss_combination[alpha_index_times[i][1]] * val2 * val0);
+        
+    }
+
+    // 2.1. Linear Energy derivative w.r.t. mom_vals
+    for (int i=0; i<alpha_scalar_moments; i++)
+        e_site_der2mom[alpha_moment_mapping[i]] = linear_coeffs[i];
+
+    // 2.2. Pass to basic moments
+    for (int i=alpha_index_times_count-1; i>=0; i--) {
+        CoordType val0 = mom_vals[alpha_index_times[i][0]];
+        CoordType val1 = mom_vals[alpha_index_times[i][1]];
+        CoordType val2 = alpha_index_times[i][2];
+
+        e_site_der2mom[alpha_index_times[i][0]] += e_site_der2mom[alpha_index_times[i][3]]
+                                                   * val1
+                                                   * val2;
+        e_site_der2mom[alpha_index_times[i][1]] += e_site_der2mom[alpha_index_times[i][3]]
+                                                   * val0
+                                                   * val2;
+    }
+    
+    // 2.3. loss derivative w.r.t. coeffs
+    for (int jj=0; jj<snumneigh; jj++)
+    {
+        neigh_idx = sfirstneigh[jj];
+        type_outer = types[neigh_idx];
+        Zj = type_map[type_outer];
+        for (int aa=0; aa<3; aa++)
+            NeighbVect[aa] = srcs[jj][aa];
+        distance_ij = std::sqrt( std::pow(NeighbVect[0], 2) 
+                                 + std::pow(NeighbVect[1], 2)
+                                 + std::pow(NeighbVect[2], 2) );
+        if (distance_ij > rmax)
+            continue;
+        distance_ij_inv = 1.0 / distance_ij;
+        CoordType rq_chebyshev_vals[MAX_CHEBYSHEV_SIZE] = {0.0};
+        CoordType rq_chebyshev_der2r[MAX_CHEBYSHEV_SIZE] = {0.0};
+        find_rq_chebyshev<CoordType>(rq_chebysheev_vals,
+                                     rq_chebyshev_der2r,
+                                     chebyshev_size,
+                                     rmax,
+                                     rmin);
+        auto_dist_powers_[0] = distance_ij;
+        for (int aa=0; aa<3; aa++)
+            auto_coords_powers_[0][aa] = NeighbVect[aa];
+        for (int k=1; k<MAX_ALPHA_INDEX_BASIC; k++) {
+            auto_dist_powers_[k] = auto_dist_powers_[k-1] * distance_ij;
+            for (int aa=0; aa<3; aa++)
+                auto_coords_powers_[k][aa] = auto_coords_powers_[k-1][aa] * NeighbVect[aa];
+        }
+
+        for (int i=0; i<alpha_index_basic_count; i++) {
+            int mu = alpha_index_basic[i][0];
+            int k = alpha_index_basic[i][1] + alpha_index_basic[i][2] + alpha_index_basic[i][3];
+            CoordType powk = 1 / auto_dist_powers_[k];
+            CoordType pow0 = auto_coords_powers_[alpha_index_basic[i][1]][0];
+            CoordType pow1 = auto_coords_powers_[alpha_index_basic[i][2]][1];
+            CoordType pow2 = auto_coords_powers_[alpha_index_basic[i][3]][2];
+            CoordType mult0 = pow0 * pow1 * pow2;
+
+            for (int xi=0; xi<chebyshev_size; xi++) {
+                int idx = (type_central*ntypes + type_outer)*nmus*chebyshev_size + mu*chebyshev_size + xi;
+                CoordType A = rq_chebyshev_vals[xi];
+                CoordType B = mult0;
+                CoordType C = powk;
+                CoordType A_ders[3] = {0.0, 0.0, 0.0};
+                CoordType B_ders[3] = {0.0, 0.0, 0.0};
+                CoordType C_ders[3] = {0.0, 0.0, 0.0};
+                A_ders[0] = rq_chebyshev_der2r[xi] * NeighbVect[0] * distance_ij_inv;
+                A_ders[1] = rq_chebyshev_der2r[xi] * NeighbVect[1] * distance_ij_inv;
+                A_ders[2] = rq_chebyshev_der2r[xi] * NeighbVect[2] * distance_ij_inv;
+                if (alpha_index_basic[i][1] != 0) {
+                    B_ders[0] = alpha_index_basic[i][1]
+                                * auto_coords_powers_[alpha_index_basic[i][1] - 1][0]
+                                * pow1
+                                * pow2;
+                }
+                if (alpha_index_basic[i][2] != 0) {
+                    B_ders[1] = alpha_index_basic[i][2]
+                                * pow0
+                                * auto_coords_powers_[alpha_index_basic[i][2] - 1][1]
+                                * pow2;
+                }
+                if (alpha_index_basic[i][3] != 0) {
+                    B_ders[2] = alpha_index_basic[i][3]
+                                * pow0
+                                * pow1
+                                * auto_coords_powers_[alpha_index_basic[i][3] - 1][2];
+                }
+                C_ders[0] = -k * powk * distance_ij_inv * distance_ij_inv * NeighbVect[0];
+                C_ders[1] = -k * powk * distance_ij_inv * distance_ij_inv * NeighbVect[1];
+                C_ders[2] = -k * powk * distance_ij_inv * distance_ij_inv * NeighbVect[2];
+
+                atomicAdd(&loss_der2coeffs[idx],
+                          2*e_weight*(etot_ml - etot_dft)
+                          * e_site_der2mom[i]
+                          * A * B * C);
+                
+                for (int aa=0; aa<3; aa++) {
+                    CoordType tmp_deriv = (A_ders[aa] * B * C
+                                           + A * B_ders[aa] * C
+                                           + A * B * C_ders[aa]);
+                    atomicAdd(&loss_der2coeffs[idx],
+                              2*f_weight/(3*inum)
+                              * (force_ml[center_idx][aa] - force_dft[center_idx][aa])
+                              * e_site_der2mom[i]
+                              * tmp_deriv);
+                    atomicAdd(&loss_der2coeffs[idx],
+                              -2*f_weight/(3*inum)
+                              * (force_ml[neigh_idx][aa] - force_dft[neigh_idx][aa])
+                              * e_site_der2mom[i]
+                              * tmp_deriv);
+                    
+                    for (int bb=0; bb<3; bb++) {
+                        atomicAdd(&loss_der2coeffs[idx],
+                                  -2*v_weight/(9*inum)
+                                  * (virial_ml[aa*3+bb] - virial_dft[aa*3_bb])
+                                  * NeighbVect[bb]
+                                  * e_site_der2mom[i]
+                                  * tmp_deriv);
+                    }
+                }
+            }
+        }
+    }
+
+
+    // 2.4. loss derivative w.r.t. linear_coeffs
+    for (int i=0; i<alpha_scalar_moments; i++) {
+        atomicAdd(&loss_der2linear_coeffs[i],
+                  2*e_weight/inum
+                  * (etot_ml - etot_dft)
+                  * mom_vals[alpha_moment_mapping[i]]);
+
+        atomicAdd(&loss_der2linear_coeffs[i], 
+                  dloss_combination[alpha_moment_mapping[i]]);
+    }
+
+    // 2.5. loss derivative w.r.t. type_bias
+    atomicAdd(&loss_der2type_bias[type_central],
+              2*e_weight/inum*(etot_ml - etot_dft));
 }
 
 

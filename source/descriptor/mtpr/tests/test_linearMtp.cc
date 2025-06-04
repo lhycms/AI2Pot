@@ -29,49 +29,51 @@
 #include "../../../nblist/include/neighborList.h"
 
 
+typedef double real;
+
 class LinearMtpTest : public ::testing::Test
 {
 protected:    
-    double *mom_vals;
-    double (*mom_ders)[3];
+    real *mom_vals;
+    real (*mom_ders)[3];
 
-    double loss;
-    double loss_;
-    double e_weight;
-    double f_weight;
-    double v_weight;
+    real loss;
+    real loss_;
+    real e_weight;
+    real f_weight;
+    real v_weight;
 
-    double etot;
-    double (*force)[3];
-    double *virial;
-    double etot_;
-    double (*force_)[3];
-    double *virial_;
-    double etot_dft;
-    double (*force_dft)[3];
-    double *virial_dft;
+    real etot;
+    real (*force)[3];
+    real *virial;
+    real etot_;
+    real (*force_)[3];
+    real *virial_;
+    real etot_dft;
+    real (*force_dft)[3];
+    real *virial_dft;
 
     int chebyshev_size;
-    double *coeffs;
+    real *coeffs;
     int nmus;
-    double rmax;
-    double rmin;
+    real rmax;
+    real rmin;
     int ntypes;
 
-    double zbl_rmax;
-    double zbl_rmin;
-    double *zbl_cks;
-    double *zbl_dks;
+    real zbl_rmax;
+    real zbl_rmin;
+    real *zbl_cks;
+    real *zbl_dks;
     
     std::vector<std::string> filenames;
     ai2pot::mtpr::MtpParam mtp_param;
 
     int num_atoms;
-    double basis_vectors[3][3];
+    real basis_vectors[3][3];
     int atomic_numbers[12];
-    double frac_coords[12][3];
-    double rcut;
-    double bin_size_xyz[3];
+    real frac_coords[12][3];
+    real rcut;
+    real bin_size_xyz[3];
     bool pbc_xyz[3];
     int type_map[2];
 
@@ -80,19 +82,19 @@ protected:
     int* ilist;
     int* numneigh;
     int* firstneigh;
-    double* rcs;
+    real* rcs;
     int* types;
     int nghost;
 
-    double *linear_coeffs;
-    double *type_bias;
+    real *linear_coeffs;
+    real *type_bias;
 
-    double *loss_der2coeffs;
-    double *loss_der2linear_coeffs;
-    double *loss_der2type_bias;
+    real *loss_der2coeffs;
+    real *loss_der2linear_coeffs;
+    real *loss_der2type_bias;
 
-    ai2pot::Structure<double> structure;
-    ai2pot::NeighborList<double> neighbor_list;
+    ai2pot::Structure<real> structure;
+    ai2pot::NeighborList<real> neighbor_list;
 
     static void SetUpTestSuite() {
         std::cout << "MtpBasisTest (TestSuite) is setting up...\n";
@@ -119,7 +121,7 @@ protected:
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/26.almtp",
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/28.almtp"
         };
-        mtp_param._load(filenames[4]);
+        mtp_param._load(filenames[8]);
 //mtp_param.show();
 
         e_weight = 1.0;
@@ -133,7 +135,7 @@ protected:
         rmax = 5.0;
         rmin = 2.0;
         umax_num_neigh_atoms = 20;
-        coeffs = (double*)malloc(sizeof(double) * ntypes * ntypes * mtp_param.nmus() * chebyshev_size);
+        coeffs = (real*)malloc(sizeof(real) * ntypes * ntypes * mtp_param.nmus() * chebyshev_size);
         
         std::random_device rd;  // 用于生成随机种子
         std::mt19937 gen(rd()); // 随机数生成器，使用 Mersenne Twister 算法
@@ -216,14 +218,14 @@ protected:
         pbc_xyz[1] = true;
         pbc_xyz[2] = true;
 
-        structure = ai2pot::Structure<double>(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-        neighbor_list = ai2pot::NeighborList<double>(structure, rcut, bin_size_xyz, pbc_xyz, true);
+        structure = ai2pot::Structure<real>(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+        neighbor_list = ai2pot::NeighborList<real>(structure, rcut, bin_size_xyz, pbc_xyz, true);
 
         inum = 12;
         ilist = (int*)malloc(sizeof(int) * inum);
         numneigh = (int*)malloc(sizeof(int) * inum);
         firstneigh = (int*)malloc(sizeof(int) * inum * umax_num_neigh_atoms);
-        rcs = (double*)malloc(sizeof(double) * inum * umax_num_neigh_atoms * 3);
+        rcs = (real*)malloc(sizeof(real) * inum * umax_num_neigh_atoms * 3);
         types = (int*)malloc(sizeof(int) * inum);
         neighbor_list.find_info4mlff(
             inum,
@@ -235,28 +237,28 @@ protected:
             nghost,
             umax_num_neigh_atoms);
 
-        mom_vals = (double*)malloc(sizeof(double) * mtp_param.alpha_moments_count());
-        mom_ders = (double (*)[3])malloc(sizeof(double) * mtp_param.alpha_index_basic_count() * umax_num_neigh_atoms * 3);
+        mom_vals = (real*)malloc(sizeof(real) * mtp_param.alpha_moments_count());
+        mom_ders = (real (*)[3])malloc(sizeof(real) * mtp_param.alpha_index_basic_count() * umax_num_neigh_atoms * 3);
 
         etot = 0;
-        force = (double (*)[3])malloc(sizeof(double) * (nghost+inum) * 3);
-        virial = (double*)malloc(sizeof(double) * 9);
+        force = (real (*)[3])malloc(sizeof(real) * (nghost+inum) * 3);
+        virial = (real*)malloc(sizeof(real) * 9);
         etot_ = 0;
-        force_ = (double (*)[3])malloc(sizeof(double) * (nghost+inum) * 3);
-        virial_ = (double*)malloc(sizeof(double) * 9);
+        force_ = (real (*)[3])malloc(sizeof(real) * (nghost+inum) * 3);
+        virial_ = (real*)malloc(sizeof(real) * 9);
         etot_dft = 0;
-        force_dft = (double (*)[3])malloc(sizeof(double) * (nghost+inum) * 3);
-        memset(force_dft, 0.0, sizeof(double) * (inum+nghost) * 3);
-        virial_dft = (double*)malloc(sizeof(double) * 9);
-        memset(virial_dft, 0.0, sizeof(double) * 9);
+        force_dft = (real (*)[3])malloc(sizeof(real) * (nghost+inum) * 3);
+        memset(force_dft, 0.0, sizeof(real) * (inum+nghost) * 3);
+        virial_dft = (real*)malloc(sizeof(real) * 9);
+        memset(virial_dft, 0.0, sizeof(real) * 9);
         for (int ii=0; ii<(inum+nghost); ii++)
             for (int aa=0; aa<3; aa++)
                 force[ii][aa] = 0.0;
         for (int ab=0; ab<9; ab++)
             virial_dft[ab] = 0.0;
 
-        linear_coeffs = (double*)malloc(sizeof(double) * mtp_param.alpha_scalar_moments());
-        type_bias = (double*)malloc(sizeof(double) * ntypes);
+        linear_coeffs = (real*)malloc(sizeof(real) * mtp_param.alpha_scalar_moments());
+        type_bias = (real*)malloc(sizeof(real) * ntypes);
 
         //for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++)
         //    linear_coeffs[ii] = dis(gen);
@@ -265,15 +267,15 @@ protected:
         type_bias[0] = -0.1;
         type_bias[1] = -0.2;
 
-        loss_der2coeffs = (double*)malloc(sizeof(double) * ntypes * ntypes * nmus * chebyshev_size);
-        loss_der2linear_coeffs = (double*)malloc(sizeof(double) * mtp_param.alpha_scalar_moments());
-        loss_der2type_bias = (double*)malloc(sizeof(double) * ntypes);
+        loss_der2coeffs = (real*)malloc(sizeof(real) * ntypes * ntypes * nmus * chebyshev_size);
+        loss_der2linear_coeffs = (real*)malloc(sizeof(real) * mtp_param.alpha_scalar_moments());
+        loss_der2type_bias = (real*)malloc(sizeof(real) * ntypes);
 
 
         zbl_rmax = 2.0;
         zbl_rmin = 1.0;
-        zbl_cks = (double*)malloc(sizeof(double) * ntypes * ntypes * 4);
-        zbl_dks = (double*)malloc(sizeof(double) * ntypes * ntypes * 4);
+        zbl_cks = (real*)malloc(sizeof(real) * ntypes * ntypes * 4);
+        zbl_dks = (real*)malloc(sizeof(real) * ntypes * ntypes * 4);
         for (int ii=0; ii<ntypes; ii++) {
             for (int jj=0; jj<ntypes; jj++) {
                 int zbl_idx = ii*ntypes + jj;
@@ -325,10 +327,10 @@ TEST_F(LinearMtpTest, find_efv) {
     int center_idx_modify = 0;
     int direction1_idx_modify = 0;
     int direction2_idx_modify = 0;
-    double delta = 1E-5;
+    real delta = 1E-5;
 
 
-    ai2pot::mtpr::LinearMtp<double>::find_efv(
+    ai2pot::mtpr::LinearMtp<real>::find_efv(
         etot,
         force,
         virial,
@@ -348,7 +350,7 @@ TEST_F(LinearMtpTest, find_efv) {
         ilist,
         numneigh,
         firstneigh,
-        (double (*)[3])rcs,
+        (real (*)[3])rcs,
         types,
         ntypes,
         umax_num_neigh_atoms,
@@ -364,12 +366,12 @@ printf("3. virial[%d][%d] = %g\n", direction1_idx_modify, direction2_idx_modify,
 
 
 TEST_F(LinearMtpTest, force_accuracy) {
-    int center_idx_modify = 0;
-    int direction1_idx_modify = 0;
+    int center_idx_modify = 1;
+    int direction1_idx_modify = 2;
     int direction2_idx_modify = 0;
-    double delta = 1E-8;
+    real delta = 1E-8;
 
-    ai2pot::mtpr::LinearMtp<double>::find_efv(
+    ai2pot::mtpr::LinearMtp<real>::find_efv(
         etot,
         force,
         virial,
@@ -389,7 +391,7 @@ TEST_F(LinearMtpTest, force_accuracy) {
         ilist,
         numneigh,
         firstneigh,
-        (double (*)[3])rcs,
+        (real (*)[3])rcs,
         types,
         ntypes,
         type_map,
@@ -403,13 +405,13 @@ TEST_F(LinearMtpTest, force_accuracy) {
         zbl_dks);
 
     // *** delta
-    double cart_coords[inum][3] = {0};
+    real cart_coords[inum][3] = {0};
     for (int ii=0; ii<inum; ii++)
         for (int aa=0; aa<3; aa++)
             cart_coords[ii][aa] = structure.get_cart_coords()[ii][aa];
     cart_coords[center_idx_modify][direction1_idx_modify] += delta;
-    structure = ai2pot::Structure<double>(num_atoms, basis_vectors, atomic_numbers, cart_coords, true);
-    neighbor_list = ai2pot::NeighborList<double>(structure, rcut, bin_size_xyz, pbc_xyz, true);
+    structure = ai2pot::Structure<real>(num_atoms, basis_vectors, atomic_numbers, cart_coords, true);
+    neighbor_list = ai2pot::NeighborList<real>(structure, rcut, bin_size_xyz, pbc_xyz, true);
     neighbor_list.find_info4mlff(
             inum,
             ilist,
@@ -421,7 +423,7 @@ TEST_F(LinearMtpTest, force_accuracy) {
             umax_num_neigh_atoms);
     // *** delta
 
-    ai2pot::mtpr::LinearMtp<double>::find_efv(
+    ai2pot::mtpr::LinearMtp<real>::find_efv(
         etot_,
         force_,
         virial_,
@@ -441,7 +443,7 @@ TEST_F(LinearMtpTest, force_accuracy) {
         ilist,
         numneigh,
         firstneigh,
-        (double (*)[3])rcs,
+        (real (*)[3])rcs,
         types,
         ntypes,
         type_map,
@@ -472,9 +474,9 @@ TEST_F(LinearMtpTest, find_loss) {
     int neigh_idx_modify = 17;
     int direction1_idx_modify = 2;
     int direction2_idx_modify = 0;
-    double delta = 1E-7;
+    real delta = 1E-7;
 
-    ai2pot::mtpr::LinearMtp<double>::find_loss(
+    ai2pot::mtpr::LinearMtp<real>::find_loss(
         loss,
         e_weight,
         f_weight,
@@ -498,7 +500,7 @@ TEST_F(LinearMtpTest, find_loss) {
         ilist,
         numneigh,
         firstneigh,
-        (double (*)[3])rcs,
+        (real (*)[3])rcs,
         types,
         ntypes,
         umax_num_neigh_atoms,
@@ -510,7 +512,7 @@ printf("1. loss = %g\n", loss);
 
 
 TEST_F(LinearMtpTest, find_loss_backward) {
-    ai2pot::mtpr::LinearMtp<double>::find_loss_backward(
+    ai2pot::mtpr::LinearMtp<real>::find_loss_backward(
         loss_der2coeffs,
         loss_der2linear_coeffs,
         loss_der2type_bias,
@@ -536,7 +538,7 @@ TEST_F(LinearMtpTest, find_loss_backward) {
         ilist,
         numneigh,
         firstneigh,
-        (double (*)[3])rcs,
+        (real (*)[3])rcs,
         types,
         ntypes,
         umax_num_neigh_atoms,

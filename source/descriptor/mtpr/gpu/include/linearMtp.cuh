@@ -635,8 +635,8 @@ void find_efv_launcher(CoordType &h_etot,
     CHECK_CUDA_API( cudaMemcpy(d_rcs, h_rcs, sizeof(CoordType)*inum*umax_num_neigh_atoms*3, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_types, h_types, sizeof(int)*(inum+nghost), cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_type_map, h_type_map, sizeof(int)*ntypes, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_zbl_cks, h_zbl_cks, sizeof(double)*ntypes*ntypes*4, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_zbl_dks, h_zbl_dks, sizeof(double)*ntypes*ntypes*4, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_zbl_cks, h_zbl_cks, sizeof(CoordType)*ntypes*ntypes*4, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_zbl_dks, h_zbl_dks, sizeof(CoordType)*ntypes*ntypes*4, cudaMemcpyHostToDevice) );
 
     // Call global function
     auto t1 = std::chrono::high_resolution_clock::now();
