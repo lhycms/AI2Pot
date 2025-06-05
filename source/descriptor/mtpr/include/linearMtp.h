@@ -907,7 +907,7 @@ void LinearMtp<CoordType>::find_loss_backward(
             NeighbVect[2] = relative_coords[ii*umax_num_neigh_atoms + jj][2];
             distance_ij = std::sqrt( std::pow(NeighbVect[0], 2)
                                      + std::pow(NeighbVect[1], 2)
-                                     + std::pow(NeighbVect[2], 2));
+                                     + std::pow(NeighbVect[2], 2) );
             if (distance_ij > rmax)
                 continue;
             distance_ij_inv = 1.0 / distance_ij;
@@ -936,9 +936,9 @@ void LinearMtp<CoordType>::find_loss_backward(
                     CoordType A = p_RadialBasis->vals()[xi];
                     CoordType B = mult0;
                     CoordType C = powk;
-                    CoordType A_ders[3] = {0., 0., 0.};
-                    CoordType B_ders[3] = {0., 0., 0.};
-                    CoordType C_ders[3] = {0., 0., 0.};
+                    CoordType A_ders[3] = {0.0, 0.0, 0.0};
+                    CoordType B_ders[3] = {0.0, 0.0, 0.0};
+                    CoordType C_ders[3] = {0.0, 0.0, 0.0};
                     A_ders[0] = p_RadialBasis->ders2r()[xi] * NeighbVect[0] * distance_ij_inv;
                     A_ders[1] = p_RadialBasis->ders2r()[xi] * NeighbVect[1] * distance_ij_inv;
                     A_ders[2] = p_RadialBasis->ders2r()[xi] * NeighbVect[2] * distance_ij_inv;
@@ -966,9 +966,8 @@ void LinearMtp<CoordType>::find_loss_backward(
                     mom_vals[i] += coeffs[idx] * A * B * C;
 
                     for (int aa=0; aa<3; aa++) {
-                        CoordType tmp_deriv = coeffs[idx] * (A_ders[aa] * B * C
-                                                             + A * B_ders[aa] * C
-                                                             + A * B * C_ders[aa]);
+                        CoordType tmp_deriv = coeffs[idx] 
+                                              * (A_ders[aa]*B*C + A*B_ders[aa]*C + A*B*C_ders[aa]);
                         dloss_combination[i] += 2*f_weight/(3*inum)
                                                 * (force_ml[center_idx][aa] - force_dft[center_idx][aa])
                                                 * tmp_deriv;
@@ -1012,7 +1011,8 @@ void LinearMtp<CoordType>::find_loss_backward(
         }
 
         // Step 4.3. Loss derivative w.r.t. coeffs
-        for (int jj=0; jj<numneigh[ii]; jj++) {
+        for (int jj=0; jj<numneigh[ii]; jj++) 
+        {
             int neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
             type_outer = types[firstneigh[ii*umax_num_neigh_atoms + jj]];
             NeighbVect[0] = relative_coords[ii*umax_num_neigh_atoms+jj][0];
@@ -1080,8 +1080,9 @@ void LinearMtp<CoordType>::find_loss_backward(
                     loss_der2coeffs[idx] += 2*e_weight/inum*(etot_ml - etot_dft) 
                                             * e_site_der2mom[i]
                                             * A * B * C;
-                    
-                    for (int aa=0; aa<3; aa++) {
+
+                    for (int aa=0; aa<3; aa++) 
+                    {
                         CoordType tmp_deriv = (A_ders[aa] * B * C
                                               + A * B_ders[aa] * C
                                               + A * B * C_ders[aa]);
@@ -1094,7 +1095,8 @@ void LinearMtp<CoordType>::find_loss_backward(
                                                 * e_site_der2mom[i]
                                                 * tmp_deriv;
                         
-                        for (int bb=0; bb<3; bb++) {
+                        for (int bb=0; bb<3; bb++) 
+                        {
                             loss_der2coeffs[idx] -= 2*v_weight/(9*inum)
                                                     * (virial_ml[aa*3+bb] - virial_dft[aa*3+bb])
                                                     * NeighbVect[bb]

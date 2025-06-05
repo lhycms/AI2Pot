@@ -100,7 +100,7 @@ protected:
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/26.almtp",
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/28.almtp"
         };
-        mtp_param._load(filenames[4]);
+        mtp_param._load(filenames[5]);
         chebyshev_size = 8;
 
         ntypes = 2;
@@ -125,9 +125,9 @@ protected:
         linear_coeffs = (real*)malloc(sizeof(real) * mtp_param.alpha_scalar_moments());
         type_bias = (real*)malloc(sizeof(real) * ntypes);
         for (int ii=0; ii<ntypes*ntypes*mtp_param.nmus()*chebyshev_size; ii++)
-            coeffs[ii] = 0.1 + 0.01 * ii;
+            coeffs[ii] = 0.01 + 0.001 * ii;
         for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++)
-            linear_coeffs[ii] = 0.1 + 0.01 * ii;
+            linear_coeffs[ii] = 0.01 + 0.001 * ii;
         type_bias[0] = -0.1;
         type_bias[1] = -0.2;
         rmax = 5.0;
@@ -495,9 +495,10 @@ TEST_F(LinearMtpTest, find_loss_backward_launcer)
     real f_weight = 0.0;
     real v_weight = 0.0;
     
-    ai2pot::mtpr::find_ef_launcher<real>(
+    ai2pot::mtpr::find_efv_launcher<real>(
         etot,
         force,
+        virial,
         chebyshev_size,
         coeffs,
         linear_coeffs,
@@ -572,7 +573,17 @@ TEST_F(LinearMtpTest, find_loss_backward_launcer)
 printf("1. loss_der2coeffs:\n");
 for (int ii=0; ii<ntypes*ntypes*mtp_param.nmus()*chebyshev_size; ii++)
     printf("%.15f, ", loss_der2coeffs[ii]);
-printf("\n");
+printf("\n\n");
+
+printf("2. loss_der2linear_coeffs:\n");
+for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++)
+    printf("%.15f, ", loss_der2linear_coeffs[ii]);
+printf("\n\n");
+
+printf("3. loss_der2type_bias:\n");
+for (int ii=0; ii<ntypes; ii++)
+    printf("%.15f, ", loss_der2type_bias[ii]);
+printf("\n\n");
 }
 
 

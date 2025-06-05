@@ -496,7 +496,6 @@ void find_loss_backward_atom(CoordType *loss_der2coeffs,
         if (distance_ij > rmax)
             continue;
         distance_ij_inv = 1.0 / distance_ij;
-
         CoordType rq_chebyshev_vals[MAX_CHEBYSHEV_SIZE] = {0.0};
         CoordType rq_chebyshev_der2r[MAX_CHEBYSHEV_SIZE] = {0.0};
         find_rq_chebyshev<CoordType>(rq_chebyshev_vals,
@@ -506,9 +505,9 @@ void find_loss_backward_atom(CoordType *loss_der2coeffs,
                                      rmin,
                                      distance_ij);
 
-        auto_dist_powers_[0] = distance_ij;
+        auto_dist_powers_[0] = 1.0;
         for (int aa=0; aa<3; aa++)
-            auto_coords_powers_[0][aa] = NeighbVect[aa];
+            auto_coords_powers_[0][aa] = 1.0;
         for (int k=1; k<MAX_ALPHA_INDEX_BASIC; k++) {
             auto_dist_powers_[k] = auto_dist_powers_[k-1] * distance_ij;
             for (int aa=0; aa<3; aa++)
@@ -526,7 +525,7 @@ void find_loss_backward_atom(CoordType *loss_der2coeffs,
 
             for (int xi=0; xi<chebyshev_size; xi++) {
                 int idx = (type_central*ntypes + type_outer)*nmus*chebyshev_size + mu*chebyshev_size + xi;
-                CoordType A = rq_chebyshev_vals[xi]; 
+                CoordType A = rq_chebyshev_vals[xi];
                 CoordType B = mult0;
                 CoordType C = powk;
                 CoordType A_ders[3] = {0.0, 0.0, 0.0};
@@ -556,13 +555,11 @@ void find_loss_backward_atom(CoordType *loss_der2coeffs,
                 C_ders[0] = -k * powk * distance_ij_inv * distance_ij_inv * NeighbVect[0];
                 C_ders[1] = -k * powk * distance_ij_inv * distance_ij_inv * NeighbVect[1];
                 C_ders[2] = -k * powk * distance_ij_inv * distance_ij_inv * NeighbVect[2];
-
                 mom_vals[i] += coeffs[idx] * A * B * C;
 
                 for (int aa=0; aa<3; aa++) {
-                    CoordType tmp_deriv = coeffs[idx] * (A_ders[aa] * B * C
-                                                         + A * B_ders[aa] * C
-                                                         + A * B * C_ders[aa]);
+                    CoordType tmp_deriv = coeffs[idx]
+                                          * (A_ders[aa]*B*C + A*B_ders[aa]*C + A*B*C_ders[aa]);
                     dloss_combination[i] += 2*f_weight/(3*inum)
                                             * (force_ml[center_idx][aa] - force_dft[center_idx][aa])
                                             * tmp_deriv;
@@ -580,14 +577,13 @@ void find_loss_backward_atom(CoordType *loss_der2coeffs,
         }
     }
 
-    for (int i=alpha_index_times_count-1; i>=0; i--) {
+    for (int i=0; i<alpha_index_times_count; i++) {
         CoordType val0 = mom_vals[alpha_index_times[i][0]];
         CoordType val1 = mom_vals[alpha_index_times[i][1]];
         CoordType val2 = alpha_index_times[i][2];
         mom_vals[alpha_index_times[i][3]] += val2 * val0 * val1;
         dloss_combination[alpha_index_times[i][3]] += (dloss_combination[alpha_index_times[i][0]] * val2 * val1
                                                        + dloss_combination[alpha_index_times[i][1]] * val2 * val0);
-        
     }
 
     // 2.1. Linear Energy derivative w.r.t. mom_vals
@@ -601,11 +597,9 @@ void find_loss_backward_atom(CoordType *loss_der2coeffs,
         CoordType val2 = alpha_index_times[i][2];
 
         e_site_der2mom[alpha_index_times[i][0]] += e_site_der2mom[alpha_index_times[i][3]]
-                                                   * val1
-                                                   * val2;
+                                                   * val2 * val1;
         e_site_der2mom[alpha_index_times[i][1]] += e_site_der2mom[alpha_index_times[i][3]]
-                                                   * val0
-                                                   * val2;
+                                                   * val2 * val0;
     }
     
     // 2.3. loss derivative w.r.t. coeffs
@@ -616,7 +610,7 @@ void find_loss_backward_atom(CoordType *loss_der2coeffs,
         Zj = type_map[type_outer];
         for (int aa=0; aa<3; aa++)
             NeighbVect[aa] = srcs[jj][aa];
-        distance_ij = std::sqrt( std::pow(NeighbVect[0], 2) 
+        distance_ij = std::sqrt( std::pow(NeighbVect[0], 2)
                                  + std::pow(NeighbVect[1], 2)
                                  + std::pow(NeighbVect[2], 2) );
         if (distance_ij > rmax)
@@ -630,9 +624,9 @@ void find_loss_backward_atom(CoordType *loss_der2coeffs,
                                      rmax,
                                      rmin,
                                      distance_ij);
-        auto_dist_powers_[0] = distance_ij;
+        auto_dist_powers_[0] = 1.0;
         for (int aa=0; aa<3; aa++)
-            auto_coords_powers_[0][aa] = NeighbVect[aa];
+            auto_coords_powers_[0][aa] = 1.0;
         for (int k=1; k<MAX_ALPHA_INDEX_BASIC; k++) {
             auto_dist_powers_[k] = auto_dist_powers_[k-1] * distance_ij;
             for (int aa=0; aa<3; aa++)
@@ -642,7 +636,7 @@ void find_loss_backward_atom(CoordType *loss_der2coeffs,
         for (int i=0; i<alpha_index_basic_count; i++) {
             int mu = alpha_index_basic[i][0];
             int k = alpha_index_basic[i][1] + alpha_index_basic[i][2] + alpha_index_basic[i][3];
-            CoordType powk = 1 / auto_dist_powers_[k];
+            CoordType powk = 1.0 / auto_dist_powers_[k];
             CoordType pow0 = auto_coords_powers_[alpha_index_basic[i][1]][0];
             CoordType pow1 = auto_coords_powers_[alpha_index_basic[i][2]][1];
             CoordType pow2 = auto_coords_powers_[alpha_index_basic[i][3]][2];
@@ -681,13 +675,14 @@ void find_loss_backward_atom(CoordType *loss_der2coeffs,
                 C_ders[1] = -k * powk * distance_ij_inv * distance_ij_inv * NeighbVect[1];
                 C_ders[2] = -k * powk * distance_ij_inv * distance_ij_inv * NeighbVect[2];
 
-                CoordType tmpe_loss_der2coeff = 2*e_weight*(etot_ml - etot_dft)
+                CoordType tmpe_loss_der2coeff = 2*e_weight/inum*(etot_ml - etot_dft)
                                                 * e_site_der2mom[i]
                                                 * A * B * C;
-    
+
                 CoordType tmpf_loss_der2coeff = 0;
                 CoordType tmp_prefix = 0;
-                for (int aa=0; aa<3; aa++) {
+                for (int aa=0; aa<3; aa++) 
+                {
                     CoordType tmp_deriv = (A_ders[aa] * B * C
                                            + A * B_ders[aa] * C
                                            + A * B * C_ders[aa]);
@@ -695,8 +690,9 @@ void find_loss_backward_atom(CoordType *loss_der2coeffs,
                                   * (force_ml[center_idx][aa] - force_dft[center_idx][aa]);
                     tmp_prefix -= 2*f_weight/(3*inum)
                                   * (force_ml[neigh_idx][aa] - force_dft[neigh_idx][aa]);
-                    for (int bb=0; bb<3; bb++) {
-                        tmp_prefix -= -2*v_weight/(9*inum)
+                    for (int bb=0; bb<3; bb++) 
+                    {
+                        tmp_prefix -= 2*v_weight/(9*inum)
                                       * (virial_ml[aa*3+bb] - virial_dft[aa*3+bb])
                                       * NeighbVect[bb];
                     }
@@ -862,7 +858,7 @@ void find_loss_backward_launcher(CoordType *h_loss_der2coeffs,
                                  CoordType *h_zbl_cks,
                                  CoordType *h_zbl_dks)
 {
-    int block_size_x = 64;
+    int block_size_x = 128;
     int grid_size_x = (inum - 1) / block_size_x + 1;
     dim3 grid_size(grid_size_x);
     dim3 block_size(block_size_x);
@@ -891,8 +887,12 @@ void find_loss_backward_launcher(CoordType *h_loss_der2coeffs,
     CoordType *d_zbl_dks;
 
     CHECK_CUDA_API( cudaMalloc((void**)&d_loss_der2coeffs, sizeof(CoordType) * num_coeffs) );
+    CHECK_CUDA_API( cudaMemset(d_loss_der2coeffs, 0.0, sizeof(CoordType) * num_coeffs) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_loss_der2linear_coeffs, sizeof(CoordType) * alpha_scalar_moments) );
+    CHECK_CUDA_API( cudaMemset(d_loss_der2linear_coeffs, 0.0, sizeof(CoordType) * alpha_scalar_moments) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_loss_der2type_bias, sizeof(CoordType) * ntypes) );
+    CHECK_CUDA_API( cudaMemset(d_loss_der2type_bias, 0.0, sizeof(CoordType) * ntypes) );
+
     CHECK_CUDA_API( cudaMalloc((void**)&d_force_ml, sizeof(CoordType) * inum * 3) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_force_dft, sizeof(CoordType) * inum * 3) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_virial_ml, sizeof(CoordType) * 9) );
@@ -925,7 +925,7 @@ void find_loss_backward_launcher(CoordType *h_loss_der2coeffs,
     CHECK_CUDA_API( cudaMemcpy(d_ilist, h_ilist, sizeof(int)*inum, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_numneigh, h_numneigh, sizeof(int)*inum, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_firstneigh, h_firstneigh, sizeof(int)*inum*umax_num_neigh_atoms, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_rcs, h_rcs, sizeof(CoordType)*inum*umax_num_neigh_atoms, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_rcs, h_rcs, sizeof(CoordType)*inum*umax_num_neigh_atoms*3, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_types, h_types, sizeof(int)*inum, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_type_map, h_type_map, sizeof(int)*ntypes, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_zbl_cks, h_zbl_cks, sizeof(CoordType)*ntypes*ntypes*4, cudaMemcpyHostToDevice) );
@@ -1000,9 +1000,6 @@ void find_loss_backward_launcher(CoordType *h_loss_der2coeffs,
     CHECK_CUDA_API( cudaFree(d_type_map) );
     CHECK_CUDA_API( cudaFree(d_zbl_cks) );
     CHECK_CUDA_API( cudaFree(d_zbl_dks) );
-
-
-
 }
 
 

@@ -121,7 +121,7 @@ protected:
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/26.almtp",
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/28.almtp"
         };
-        mtp_param._load(filenames[8]);
+        mtp_param._load(filenames[5]);
 //mtp_param.show();
 
         e_weight = 1.0;
@@ -143,7 +143,7 @@ protected:
         //for (int ii=0; ii<ntypes*ntypes*mtp_param.nmus()*chebyshev_size; ii++)
         //    coeffs[ii] = dis(gen);
         for (int ii=0; ii<ntypes*ntypes*mtp_param.nmus()*chebyshev_size; ii++)
-            coeffs[ii] = 0.1 + 0.01 * ii;
+            coeffs[ii] = 0.01 + 0.001 * ii;
 
         // Establish neighbor list
         num_atoms = 12;
@@ -263,13 +263,16 @@ protected:
         //for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++)
         //    linear_coeffs[ii] = dis(gen);
         for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++)
-            linear_coeffs[ii] = 0.1 + 0.01 * ii;
+            linear_coeffs[ii] = 0.01 + 0.001 * ii;
         type_bias[0] = -0.1;
         type_bias[1] = -0.2;
 
         loss_der2coeffs = (real*)malloc(sizeof(real) * ntypes * ntypes * nmus * chebyshev_size);
+        memset(loss_der2coeffs, 0.0, sizeof(real) * ntypes * ntypes * nmus * chebyshev_size);
         loss_der2linear_coeffs = (real*)malloc(sizeof(real) * mtp_param.alpha_scalar_moments());
+        memset(loss_der2linear_coeffs, 0.0, sizeof(real) * mtp_param.alpha_scalar_moments());
         loss_der2type_bias = (real*)malloc(sizeof(real) * ntypes);
+        memset(loss_der2type_bias, 0.0, sizeof(real) * ntypes);
 
 
         zbl_rmax = 2.0;
@@ -558,7 +561,17 @@ TEST_F(LinearMtpTest, find_loss_backward) {
 printf("1. loss_der2coeffs:\n");
 for (int ii=0; ii<ntypes*ntypes*nmus*chebyshev_size; ii++)
     printf("%.15f, ", loss_der2coeffs[ii]);
-printf("\n");
+printf("\n\n");
+
+printf("2. loss_der2linear_coeffs:\n");
+for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++)
+    printf("%.15f, ", loss_der2linear_coeffs[ii]);
+printf("\n\n");
+
+printf("3. loss_der2type_bias:\n");
+for (int ii=0; ii<ntypes; ii++)
+    printf("%.15f, ", loss_der2type_bias[ii]);
+printf("\n\n");
 }
 
 
