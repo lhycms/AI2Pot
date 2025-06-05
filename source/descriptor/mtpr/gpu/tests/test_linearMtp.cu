@@ -491,9 +491,9 @@ for (int ii=0; ii<inum; ii++)
 
 TEST_F(LinearMtpTest, find_loss_backward_launcer)
 {
-    real e_weight = 1.0;
+    real e_weight = 0.0;
     real f_weight = 0.0;
-    real v_weight = 0.0;
+    real v_weight = 1.0;
     
     ai2pot::mtpr::find_efv_launcher<real>(
         etot,

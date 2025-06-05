@@ -680,9 +680,9 @@ void find_loss_backward_atom(CoordType *loss_der2coeffs,
                                                 * A * B * C;
 
                 CoordType tmpf_loss_der2coeff = 0;
-                CoordType tmp_prefix = 0;
                 for (int aa=0; aa<3; aa++) 
                 {
+                    CoordType tmp_prefix = 0;
                     CoordType tmp_deriv = (A_ders[aa] * B * C
                                            + A * B_ders[aa] * C
                                            + A * B * C_ders[aa]);
