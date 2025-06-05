@@ -72,6 +72,7 @@ protected:
 };  // class : LinearMtpLossTest
 
 
+
 TEST_F(LinearMtpLossTest, find_loss) {
     ai2pot::mtpr::find_loss_launcher<double>(loss,
                                              inum,

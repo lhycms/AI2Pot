@@ -52,11 +52,7 @@ void find_efv_atom(CoordType &etot,
                    int umax_num_neigh_atoms,
                    int nghost,
                    CoordType rmax,
-                   CoordType rmin,
-                   CoordType zbl_rmax,
-                   CoordType zbl_rmin,
-                   CoordType *zbl_cks,
-                   CoordType *zbl_dks);
+                   CoordType rmin);
 
 
 template <typename CoordType>
@@ -87,11 +83,7 @@ void find_efv_kernel(CoordType &etot,
                     int umax_num_neigh_atoms,
                     int nghost,
                     CoordType rmax,
-                    CoordType rmin,
-                    CoordType zbl_rmax,
-                    CoordType zbl_rmin,
-                    CoordType *zbl_cks,
-                    CoordType *zbl_dks);
+                    CoordType rmin);
 
 
 template <typename CoordType>
@@ -122,11 +114,7 @@ void find_efv_launcher(CoordType &h_etot,
                        int umax_num_neigh_atoms,
                        int nghost,
                        CoordType rmax,
-                       CoordType rmin,
-                       CoordType zbl_rmax,
-                       CoordType zbl_rmin,
-                       CoordType *h_zbl_cks,
-                       CoordType *h_zbl_dks);
+                       CoordType rmin);
     
 
 template <typename CoordType>
@@ -155,11 +143,7 @@ void find_ef_atom(CoordType &etot,
                   int umax_num_neigh_atoms,
                   int nghost,
                   CoordType rmax,
-                  CoordType rmin,
-                  CoordType zbl_rmax,
-                  CoordType zbl_rmin,
-                  CoordType *zbl_cks,
-                  CoordType *zbl_dks);
+                  CoordType rmin);
 
 
 template <typename CoordType>
@@ -189,11 +173,7 @@ void find_ef_kernel(CoordType &etot,
                     int umax_num_neigh_atoms,
                     int nghost,
                     CoordType rmax,
-                    CoordType rmin,
-                    CoordType zbl_rmax,
-                    CoordType zbl_rmin,
-                    CoordType *zbl_cks,
-                    CoordType *zbl_dks);
+                    CoordType rmin);
 
 
 template <typename CoordType>
@@ -223,11 +203,7 @@ void find_ef_launcher(CoordType &h_etot,
                       int umax_num_neigh_atoms,
                       int nghost,
                       CoordType rmax,
-                      CoordType rmin,
-                      CoordType zbl_rmax,
-                      CoordType zbl_rmin,
-                      CoordType *h_zbl_cks,
-                      CoordType *h_zbl_dks);
+                      CoordType rmin);
 
 
 
@@ -260,11 +236,7 @@ void find_efv_atom(CoordType &etot,
                    int umax_num_neigh_atoms,
                    int nghost,
                    CoordType rmax,
-                   CoordType rmin,
-                   CoordType zbl_rmax,
-                   CoordType zbl_rmin,
-                   CoordType *zbl_cks,
-                   CoordType *zbl_dks)
+                   CoordType rmin)
 {
     // Step 1. Init temp array
     CoordType mom_vals[MAX_ALPHA_MOMENTS_COUNT] = {0.};
@@ -490,11 +462,7 @@ void find_efv_kernel(CoordType &etot,
                     int umax_num_neigh_atoms,
                     int nghost,
                     CoordType rmax,
-                    CoordType rmin,
-                    CoordType zbl_rmax,
-                    CoordType zbl_rmin,
-                    CoordType *zbl_cks,
-                    CoordType *zbl_dks)
+                    CoordType rmin)
 {
     int nx = blockIdx.x * blockDim.x + threadIdx.x;
     int ii = nx;
@@ -529,11 +497,7 @@ void find_efv_kernel(CoordType &etot,
                                  umax_num_neigh_atoms,
                                  nghost,
                                  rmax,
-                                 rmin,
-                                 zbl_rmax,
-                                 zbl_rmin,
-                                 zbl_cks,
-                                 zbl_dks);
+                                 rmin);
     }
 }
 
@@ -566,11 +530,7 @@ void find_efv_launcher(CoordType &h_etot,
                        int umax_num_neigh_atoms,
                        int nghost,
                        CoordType rmax,
-                       CoordType rmin,
-                       CoordType zbl_rmax,
-                       CoordType zbl_rmin,
-                       CoordType *h_zbl_cks,
-                       CoordType *h_zbl_dks)
+                       CoordType rmin)
 {
     int block_size_x = 128;
     int grid_size_x = (inum - 1) / block_size_x + 1;
@@ -592,8 +552,6 @@ void find_efv_launcher(CoordType &h_etot,
     CoordType (*d_rcs)[3];
     int *d_types;
     int *d_type_map;
-    CoordType *d_zbl_cks;
-    CoordType *d_zbl_dks;
 
     int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
 
@@ -616,8 +574,6 @@ void find_efv_launcher(CoordType &h_etot,
     CHECK_CUDA_API( cudaMalloc((void**)&d_rcs, sizeof(CoordType) * inum * umax_num_neigh_atoms * 3) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_types, sizeof(int) * (inum + nghost)) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_type_map, sizeof(int) * ntypes) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_zbl_cks, sizeof(CoordType) * ntypes * ntypes * 4) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_zbl_dks, sizeof(CoordType) * ntypes * ntypes * 4) );
 
     //CHECK_CUDA_API( cudaMemcpy(d_etot_ptr, &h_etot, sizeof(CoordType), cudaMemcpyHostToDevice) );
     //CHECK_CUDA_API( cudaMemcpy(d_force, h_force, sizeof(CoordType)*(inum+nghost)*3, cudaMemcpyHostToDevice) );
@@ -634,8 +590,6 @@ void find_efv_launcher(CoordType &h_etot,
     CHECK_CUDA_API( cudaMemcpy(d_rcs, h_rcs, sizeof(CoordType)*inum*umax_num_neigh_atoms*3, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_types, h_types, sizeof(int)*(inum+nghost), cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_type_map, h_type_map, sizeof(int)*ntypes, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_zbl_cks, h_zbl_cks, sizeof(CoordType)*ntypes*ntypes*4, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_zbl_dks, h_zbl_dks, sizeof(CoordType)*ntypes*ntypes*4, cudaMemcpyHostToDevice) );
 
     // Call global function
     auto t1 = std::chrono::high_resolution_clock::now();
@@ -666,11 +620,7 @@ void find_efv_launcher(CoordType &h_etot,
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin,
-        zbl_rmax,
-        zbl_rmin,
-        d_zbl_cks,
-        d_zbl_dks);
+        rmin);
     CHECK_CUDA_API( cudaDeviceSynchronize() );
     CHECK_CUDA_API( cudaGetLastError() );
     auto t2 = std::chrono::high_resolution_clock::now();
@@ -696,8 +646,6 @@ void find_efv_launcher(CoordType &h_etot,
     CHECK_CUDA_API( cudaFree(d_rcs) );
     CHECK_CUDA_API( cudaFree(d_types) );
     CHECK_CUDA_API( cudaFree(d_type_map) );
-    CHECK_CUDA_API( cudaFree(d_zbl_cks) );
-    CHECK_CUDA_API( cudaFree(d_zbl_dks) );
 }
 
 
@@ -727,11 +675,7 @@ void find_ef_atom(CoordType &etot,
                   int umax_num_neigh_atoms,
                   int nghost,
                   CoordType rmax,
-                  CoordType rmin,
-                  CoordType zbl_rmax,
-                  CoordType zbl_rmin,
-                  CoordType *zbl_cks,
-                  CoordType *zbl_dks)
+                  CoordType rmin)
 {
     // 1. Init temp array
     CoordType mom_vals[MAX_ALPHA_MOMENTS_COUNT] = {0.0};
@@ -949,11 +893,7 @@ void find_ef_kernel(CoordType &etot,
                     int umax_num_neigh_atoms,
                     int nghost,
                     CoordType rmax,
-                    CoordType rmin,
-                    CoordType zbl_rmax,
-                    CoordType zbl_rmin,
-                    CoordType *zbl_cks,
-                    CoordType *zbl_dks)
+                    CoordType rmin)
 {
     int nx = blockIdx.x * blockDim.x + threadIdx.x;
     int ii = nx;
@@ -987,11 +927,7 @@ void find_ef_kernel(CoordType &etot,
                                 umax_num_neigh_atoms,
                                 nghost,
                                 rmax,
-                                rmin,
-                                zbl_rmax,
-                                zbl_rmin,
-                                zbl_cks,
-                                zbl_dks);
+                                rmin);
     }
 }
 
@@ -1023,11 +959,7 @@ void find_ef_launcher(CoordType &h_etot,
                       int umax_num_neigh_atoms,
                       int nghost,
                       CoordType rmax,
-                      CoordType rmin,
-                      CoordType zbl_rmax,
-                      CoordType zbl_rmin,
-                      CoordType *h_zbl_cks,
-                      CoordType *h_zbl_dks)
+                      CoordType rmin)
 {
     int block_size_x = 128;
     int grid_size_x = (inum - 1) / block_size_x + 1;
@@ -1048,8 +980,6 @@ void find_ef_launcher(CoordType &h_etot,
     CoordType (*d_rcs)[3];
     int *d_types;
     int *d_type_map;
-    CoordType *d_zbl_cks;
-    CoordType *d_zbl_dks;
 
     int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
 
@@ -1070,8 +1000,6 @@ void find_ef_launcher(CoordType &h_etot,
     CHECK_CUDA_API( cudaMalloc((void**)&d_rcs, sizeof(CoordType) * inum * umax_num_neigh_atoms * 3) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_types, sizeof(int) * (inum+nghost)) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_type_map, sizeof(int) * ntypes) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_zbl_cks, sizeof(CoordType) * ntypes * ntypes * 4) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_zbl_dks, sizeof(CoordType) * ntypes * ntypes * 4) );
 
     CHECK_CUDA_API( cudaMemcpy(d_coeffs, h_coeffs, sizeof(CoordType) * num_coeffs, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_linear_coeffs, h_linear_coeffs, sizeof(CoordType) * alpha_scalar_moments, cudaMemcpyHostToDevice) );
@@ -1085,8 +1013,6 @@ void find_ef_launcher(CoordType &h_etot,
     CHECK_CUDA_API( cudaMemcpy(d_rcs, h_rcs, sizeof(CoordType) * inum * umax_num_neigh_atoms * 3, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_types, h_types, sizeof(int) * (inum+nghost), cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_type_map, h_type_map, sizeof(int) * ntypes, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_zbl_cks, h_zbl_cks, sizeof(CoordType)*ntypes*ntypes*4, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_zbl_dks, h_zbl_dks, sizeof(CoordType)*ntypes*ntypes*4, cudaMemcpyHostToDevice) );
 
 
     // Launch kernel function
@@ -1117,11 +1043,7 @@ void find_ef_launcher(CoordType &h_etot,
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin,
-        zbl_rmax,
-        zbl_rmin,
-        d_zbl_cks,
-        d_zbl_dks);
+        rmin);
     CHECK_CUDA_API( cudaDeviceSynchronize() );
     CHECK_CUDA_API( cudaGetLastError() );
     auto t2 = std::chrono::high_resolution_clock::now();
@@ -1145,8 +1067,6 @@ void find_ef_launcher(CoordType &h_etot,
     CHECK_CUDA_API( cudaFree(d_rcs) );
     CHECK_CUDA_API( cudaFree(d_types) );
     CHECK_CUDA_API( cudaFree(d_type_map) );
-    CHECK_CUDA_API( cudaFree(d_zbl_cks) );
-    CHECK_CUDA_API( cudaFree(d_zbl_dks) );
 }
 
 

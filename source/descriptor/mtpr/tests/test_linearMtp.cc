@@ -121,7 +121,7 @@ protected:
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/26.almtp",
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/28.almtp"
         };
-        mtp_param._load(filenames[5]);
+        mtp_param._load(filenames[7]);
 //mtp_param.show();
 
         e_weight = 1.0;
@@ -516,8 +516,8 @@ printf("1. loss = %g\n", loss);
 
 
 TEST_F(LinearMtpTest, find_loss_backward) {
-    e_weight = 0.0;
-    f_weight = 0.0;
+    e_weight = 1.0;
+    f_weight = 1.0;
     v_weight = 1.0;
     ai2pot::mtpr::LinearMtp<real>::find_loss_backward(
         loss_der2coeffs,
