@@ -131,7 +131,7 @@ protected:
 };  // class : GroupZBLTest
 
 
-TEST_F(GroupZBLTest, force_accuracy) {
+TEST_F(GroupZBLTest, efv_force_accuracy) {
     rcs[0*umax_num_neigh_atoms + 0][0] = coord_1[0] - coord_0[0];
     rcs[0*umax_num_neigh_atoms + 0][1] = coord_1[1] - coord_0[1];
     rcs[0*umax_num_neigh_atoms + 0][2] = coord_1[2] - coord_0[2];
@@ -185,7 +185,7 @@ printf("2. Force[0][1] calculated by definition = %.10lf\n", -(etot_ - etot) / d
 }
 
 
-TEST_F(GroupZBLTest, virial_accuracy)
+TEST_F(GroupZBLTest, efv_virial_accuracy)
 {
     rcs[0*umax_num_neigh_atoms + 0][0] = coord_1[0] - coord_0[0];
     rcs[0*umax_num_neigh_atoms + 0][1] = coord_1[1] - coord_0[1];
@@ -231,6 +231,60 @@ for (int ii=0; ii<9; ii++)
     printf("%.10lf, ", virial_[ii]);
 printf("\n");
 }
+
+
+TEST_F(GroupZBLTest, ef_force_accuracy) {
+    rcs[0*umax_num_neigh_atoms + 0][0] = coord_1[0] - coord_0[0];
+    rcs[0*umax_num_neigh_atoms + 0][1] = coord_1[1] - coord_0[1];
+    rcs[0*umax_num_neigh_atoms + 0][2] = coord_1[2] - coord_0[2];
+    rcs[1*umax_num_neigh_atoms + 0][0] = coord_0[0] - coord_1[0];
+    rcs[1*umax_num_neigh_atoms + 0][1] = coord_0[1] - coord_1[1];
+    rcs[1*umax_num_neigh_atoms + 0][2] = coord_0[2] - coord_1[2];
+    ai2pot::correction::correct_zbl_ef_launcher<double>(etot,
+                                                        forces,
+                                                        rmax,
+                                                        rmin,
+                                                        cks,
+                                                        dks,
+                                                        inum,
+                                                        ilist,
+                                                        numneigh,
+                                                        firstneigh,
+                                                        rcs,
+                                                        types,
+                                                        ntypes,
+                                                        type_map,
+                                                        umax_num_neigh_atoms);
+
+    double delta = 1e-6;
+    coord_0[1] += delta;
+    rcs[0*umax_num_neigh_atoms + 0][0] = coord_1[0] - coord_0[0];
+    rcs[0*umax_num_neigh_atoms + 0][1] = coord_1[1] - coord_0[1];
+    rcs[0*umax_num_neigh_atoms + 0][2] = coord_1[2] - coord_0[2];
+    rcs[1*umax_num_neigh_atoms + 0][0] = coord_0[0] - coord_1[0];
+    rcs[1*umax_num_neigh_atoms + 0][1] = coord_0[1] - coord_1[1];
+    rcs[1*umax_num_neigh_atoms + 0][2] = coord_0[2] - coord_1[2];
+    ai2pot::correction::correct_zbl_ef_launcher<double>(etot_,
+                                                        forces_,
+                                                        rmax,
+                                                        rmin,
+                                                        cks,
+                                                        dks,
+                                                        inum,
+                                                        ilist,
+                                                        numneigh,
+                                                        firstneigh,
+                                                        rcs,
+                                                        types,
+                                                        ntypes,
+                                                        type_map,
+                                                        umax_num_neigh_atoms);
+printf("energy = %.10lf\n", etot);
+printf("1. Force[0][1] calculated by custom code = %.10lf\n", forces[0*3+1]);
+printf("2. Force[0][1] calculated by definition = %.10lf\n", -(etot_ - etot) / delta);
+}
+
+
 
 int main(int argc, char **argv)
 {
