@@ -206,11 +206,11 @@ TEST_F(GroupZBLTest, virial_accuracy) {
         }
     }
 
-printf("Virial calculated by custom code =\n");
+printf("1. Virial calculated by custom code =\n");
 for (int ii=0; ii<9; ii++)
     printf("%.10lf, ", virial[ii]);
 printf("\n");
-printf("Virial calculated by definition =\n");
+printf("2. Virial calculated by definition =\n");
 for (int ii=0; ii<9; ii++)
     printf("%.10lf, ", virial_[ii]);
 printf("\n");

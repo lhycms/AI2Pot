@@ -530,21 +530,21 @@ void correct_zbl_efv_launcher(CoordType &h_etot,
 
     // Launch kernel
     correct_zbl_efv_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (*d_etot_ptr,
-                                                                        d_force,
-                                                                        d_virial,
-                                                                        rmax,
-                                                                        rmin,
-                                                                        d_cks,
-                                                                        d_dks,
-                                                                        inum,
-                                                                        d_ilist,
-                                                                        d_numneigh,
-                                                                        d_firstneigh,
-                                                                        d_rcs,
-                                                                        d_types,
-                                                                        ntypes,
-                                                                        d_type_map,
-                                                                        umax_num_neigh_atoms);
+                                                                          d_force,
+                                                                          d_virial,
+                                                                          rmax,
+                                                                          rmin,
+                                                                          d_cks,
+                                                                          d_dks,
+                                                                          inum,
+                                                                          d_ilist,
+                                                                          d_numneigh,
+                                                                          d_firstneigh,
+                                                                          d_rcs,
+                                                                          d_types,
+                                                                          ntypes,
+                                                                          d_type_map,
+                                                                          umax_num_neigh_atoms);
 
     CHECK_CUDA_API( cudaDeviceSynchronize() );
     CHECK_CUDA_API( cudaGetLastError() );

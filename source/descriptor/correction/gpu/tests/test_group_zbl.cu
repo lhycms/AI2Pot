@@ -180,10 +180,57 @@ TEST_F(GroupZBLTest, force_accuracy) {
                                                  type_map,
                                                  umax_num_neigh_atoms);
 printf("energy = %.10lf\n", etot);
-printf("Force[0][1] calculated by custom code = %.10lf\n", forces[0*3+1]);
-printf("Force[0][1] calculated by definition = %.10lf\n", -(etot_ - etot) / delta);
+printf("1. Force[0][1] calculated by custom code = %.10lf\n", forces[0*3+1]);
+printf("2. Force[0][1] calculated by definition = %.10lf\n", -(etot_ - etot) / delta);
 }
 
+
+TEST_F(GroupZBLTest, virial_accuracy)
+{
+    rcs[0*umax_num_neigh_atoms + 0][0] = coord_1[0] - coord_0[0];
+    rcs[0*umax_num_neigh_atoms + 0][1] = coord_1[1] - coord_0[1];
+    rcs[0*umax_num_neigh_atoms + 0][2] = coord_1[2] - coord_0[2];
+    rcs[1*umax_num_neigh_atoms + 0][0] = coord_0[0] - coord_1[0];
+    rcs[1*umax_num_neigh_atoms + 0][1] = coord_0[1] - coord_1[1];
+    rcs[1*umax_num_neigh_atoms + 0][2] = coord_0[2] - coord_1[2];
+
+    ai2pot::correction::correct_zbl_efv_launcher<double>(etot,
+                                                         forces,
+                                                         virial,
+                                                         rmax,
+                                                         rmin,
+                                                         cks,
+                                                         dks,
+                                                         inum,
+                                                         ilist,
+                                                         numneigh,
+                                                         firstneigh,
+                                                         rcs,
+                                                         types,
+                                                         ntypes,
+                                                         type_map,
+                                                         umax_num_neigh_atoms);
+
+    for (int aa=0; aa<3; aa++) {
+        for (int bb=0; bb<3; bb++) {
+            virial_[aa*3 + bb] += coord_0[aa] * forces[0*3 + bb];
+        }
+    }
+    for (int aa=0; aa<3; aa++) {
+        for (int bb=0; bb<3; bb++) {
+            virial_[aa*3 + bb] += coord_1[aa] * forces[1*3 + bb];
+        }
+    }
+
+printf("1. Virial calculated by custom code =\n");
+for (int ii=0; ii<9; ii++)
+    printf("%.10lf, ", virial[ii]);
+printf("\n");
+printf("2. Virial calculated by definition =\n");
+for (int ii=0; ii<9; ii++)
+    printf("%.10lf, ", virial_[ii]);
+printf("\n");
+}
 
 int main(int argc, char **argv)
 {
