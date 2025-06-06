@@ -59,11 +59,6 @@ protected:
     real rmax;
     real rmin;
     int ntypes;
-
-    real zbl_rmax;
-    real zbl_rmin;
-    real *zbl_cks;
-    real *zbl_dks;
     
     std::vector<std::string> filenames;
     ai2pot::mtpr::MtpParam mtp_param;
@@ -273,25 +268,6 @@ protected:
         memset(loss_der2linear_coeffs, 0.0, sizeof(real) * mtp_param.alpha_scalar_moments());
         loss_der2type_bias = (real*)malloc(sizeof(real) * ntypes);
         memset(loss_der2type_bias, 0.0, sizeof(real) * ntypes);
-
-
-        zbl_rmax = 2.0;
-        zbl_rmin = 1.0;
-        zbl_cks = (real*)malloc(sizeof(real) * ntypes * ntypes * 4);
-        zbl_dks = (real*)malloc(sizeof(real) * ntypes * ntypes * 4);
-        for (int ii=0; ii<ntypes; ii++) {
-            for (int jj=0; jj<ntypes; jj++) {
-                int zbl_idx = ii*ntypes + jj;
-                zbl_cks[zbl_idx * 4 + 0] = 0.18175;
-                zbl_cks[zbl_idx * 4 + 1] = 0.50986;
-                zbl_cks[zbl_idx * 4 + 2] = 0.28022;
-                zbl_cks[zbl_idx * 4 + 3] = 0.02817;
-                zbl_dks[zbl_idx * 4 + 0] = 3.1998;
-                zbl_dks[zbl_idx * 4 + 1] = 0.94229;
-                zbl_dks[zbl_idx * 4 + 2] = 0.4029;
-                zbl_dks[zbl_idx * 4 + 3] = 0.20162;
-            }
-        }
     }
 
     void TearDown() override {
@@ -318,9 +294,6 @@ protected:
         free(loss_der2coeffs);
         free(loss_der2linear_coeffs);
         free(loss_der2type_bias);
-
-        free(zbl_cks);
-        free(zbl_dks);
     }
 };
 
@@ -401,11 +374,7 @@ TEST_F(LinearMtpTest, force_accuracy) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin,
-        zbl_rmax,
-        zbl_rmin,
-        zbl_cks,
-        zbl_dks);
+        rmin);
 
     // *** delta
     real cart_coords[inum][3] = {0};
@@ -453,11 +422,7 @@ TEST_F(LinearMtpTest, force_accuracy) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin,
-        zbl_rmax,
-        zbl_rmin,
-        zbl_cks,
-        zbl_dks);
+        rmin);
 
 printf("1.1. energy = %.15lf\n", etot);
 printf("1.1. force[%d][%d] calculated by custom code = %.15lf\n", center_idx_modify, direction1_idx_modify, force[center_idx_modify][direction1_idx_modify]);
@@ -552,11 +517,7 @@ TEST_F(LinearMtpTest, find_loss_backward) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin,
-        zbl_rmax,
-        zbl_rmin,
-        zbl_cks,
-        zbl_dks);
+        rmin);
 
 printf("1. loss_der2coeffs:\n");
 for (int ii=0; ii<ntypes*ntypes*nmus*chebyshev_size; ii++)

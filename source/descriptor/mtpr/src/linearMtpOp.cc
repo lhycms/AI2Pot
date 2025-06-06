@@ -128,11 +128,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                 umax_num_neighs,
                 nghost,
                 rmax,
-                rmin,
-                zbl_rmax,
-                zbl_rmin,
-                zbl_cks,
-                zbl_dks);
+                rmin);
         }
     } else {
         float_options = c10::TensorOptions()
@@ -193,11 +189,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                 umax_num_neighs,
                 nghost,
                 rmax,
-                rmin,
-                zbl_rmax,
-                zbl_rmin,
-                zbl_cks,
-                zbl_dks);
+                rmin);
         }
     }
 
@@ -363,11 +355,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
                 umax_num_neighs,
                 nghost,
                 rmax,
-                rmin,
-                zbl_rmax,
-                zbl_rmin,
-                zbl_cks,
-                zbl_dks);
+                rmin);
         }
     } else {
         float_options = c10::TensorOptions()
@@ -433,11 +421,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
                 umax_num_neighs,
                 nghost,
                 rmax,
-                rmin,
-                zbl_rmax,
-                zbl_rmin,
-                zbl_cks,
-                zbl_dks);
+                rmin);
         }
     }
 
@@ -578,11 +562,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
                 umax_num_neighs,
                 nghost,
                 rmax,
-                rmin,
-                zbl_rmax,
-                zbl_rmin,
-                zbl_cks,
-                zbl_dks);
+                rmin);
         }
     } else {
         float_options = c10::TensorOptions()
@@ -639,11 +619,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
                 umax_num_neighs,
                 nghost,
                 rmax,
-                rmin,
-                zbl_rmax,
-                zbl_rmin,
-                zbl_cks,
-                zbl_dks);
+                rmin);
         }
     }
 
@@ -802,11 +778,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
                 umax_num_neighs,
                 nghost,
                 rmax,
-                rmin,
-                zbl_rmax,
-                zbl_rmin,
-                zbl_cks,
-                zbl_dks);
+                rmin);
         }
     } else {
         float_options = c10::TensorOptions()
@@ -870,11 +842,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
                 umax_num_neighs,
                 nghost,
                 rmax,
-                rmin,
-                zbl_rmax,
-                zbl_rmin,
-                zbl_cks,
-                zbl_dks);
+                rmin);
         }
     }
 
