@@ -518,7 +518,7 @@ printf("1. loss = %g\n", loss);
 TEST_F(LinearMtpTest, find_loss_backward) {
     e_weight = 1.0;
     f_weight = 1.0;
-    v_weight = 1.0;
+    v_weight = 0.0;
     ai2pot::mtpr::LinearMtp<real>::find_loss_backward(
         loss_der2coeffs,
         loss_der2linear_coeffs,

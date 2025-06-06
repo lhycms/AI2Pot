@@ -10,15 +10,17 @@ file(MAKE_DIRECTORY ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY})
 
 
 # 4. add subdirectory
-
+if (USE_CUDA AND CUDA_FOUND)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/gpu)
+endif()
 
 # 5. compile
 if (BUILD_TEST)
-    add_executable(test_pair_zbl ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_pair_zbl.cc)
-    target_link_libraries(test_pair_zbl PRIVATE gtest gtest_main)
-    gtest_discover_tests(test_pair_zbl DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT})
+    add_executable(testPairZbl ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_pair_zbl.cc)
+    target_link_libraries(testPairZbl PRIVATE gtest gtest_main)
+    gtest_discover_tests(testPairZbl DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT})
 
-    add_executable(test_group_zbl ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_group_zbl.cc)
-    target_link_libraries(test_group_zbl PRIVATE gtest gtest_main)
-    gtest_discover_tests(test_group_zbl DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT})
+    add_executable(testGroupZbl ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_group_zbl.cc)
+    target_link_libraries(testGroupZbl PRIVATE gtest gtest_main)
+    gtest_discover_tests(testGroupZbl DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT})
 endif()
