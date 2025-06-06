@@ -103,7 +103,7 @@ public:
 
     ~GroupZBL();
 
-    void correct_efv(CoordType* e_sites,
+    void correct_efv(CoordType &etot,
                      CoordType* atomic_forces,
                      CoordType* virial,
                      int inum,
@@ -117,7 +117,7 @@ public:
                      int umax_num_neigh_atoms,
                      int nghost);
 
-    void correct_ef(CoordType* e_sites,
+    void correct_ef(CoordType &etot,
                     CoordType* atomic_forces,
                     int inum,
                     int* ilist,
@@ -278,9 +278,8 @@ CoordType PairZBL<CoordType>::find_phi_func(CoordType distance_ij)
     CoordType a = 0.46848 / (std::pow(this->_Zi, 0.23) + std::pow(this->_Zj, 0.23));
     CoordType x = distance_ij / a;
 
-    for (int ii=0; ii<4; ii++) {
+    for (int ii=0; ii<4; ii++)
         phi_val += this->_ck[ii] * std::exp(-this->_dk[ii] * x);
-    }
 
     return phi_val;
 }
@@ -465,7 +464,7 @@ GroupZBL<CoordType>::~GroupZBL() {
 
 
 template <typename CoordType>
-void GroupZBL<CoordType>::correct_efv(CoordType* e_sites,
+void GroupZBL<CoordType>::correct_efv(CoordType &etot,
                                       CoordType* atomic_forces,
                                       CoordType* virial,
                                       int inum,
@@ -509,10 +508,10 @@ void GroupZBL<CoordType>::correct_efv(CoordType* e_sites,
                                      + std::pow(neigh_vec[1], 2)
                                      + std::pow(neigh_vec[2], 2) );
             distance_ij_inv = 1.0 / distance_ij;
-            if ( (distance_ij>this->_rmax) || (distance_ij<this->_rmin) )
+            if ( distance_ij>this->_rmax )
                 continue;
 
-            pair_zbl.add_atomic_energy_one(e_sites[ii], distance_ij);
+            pair_zbl.add_atomic_energy_one(etot, distance_ij);
             pair_zbl.add_atomic_force_one(&atomic_forces[ii*3+0], neigh_vec);
             pair_zbl.add_virial_one(virial, neigh_vec);
         }
@@ -522,7 +521,7 @@ void GroupZBL<CoordType>::correct_efv(CoordType* e_sites,
 
 
 template <typename CoordType>
-void GroupZBL<CoordType>::correct_ef(CoordType* e_sites,
+void GroupZBL<CoordType>::correct_ef(CoordType &etot,
                                     CoordType* atomic_forces,
                                     int inum,
                                     int* ilist,
@@ -565,10 +564,10 @@ void GroupZBL<CoordType>::correct_ef(CoordType* e_sites,
                                      + std::pow(neigh_vec[1], 2)
                                      + std::pow(neigh_vec[2], 2) );
             distance_ij_inv = 1.0 / distance_ij;
-            if ( (distance_ij>this->_rmax) || (distance_ij<this->_rmin) )
+            if ( distance_ij>this->_rmax )
                 continue;
 
-            pair_zbl.add_atomic_energy_one(e_sites[ii], distance_ij);
+            pair_zbl.add_atomic_energy_one(etot, distance_ij);
             pair_zbl.add_atomic_force_one(&atomic_forces[ii*3+0], neigh_vec);
         }
     }

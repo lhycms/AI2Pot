@@ -117,6 +117,67 @@ printf("\t2. Gradient calculated by finite difference method = %.10f\n", (result
 }
 
 
+TEST_F(PairZBLTest, find_force_accuracy) {
+    double delta = 1e-6;
+    double distance_ij = std::sqrt(std::pow(neigh_vec[0], 2)
+                                   + std::pow(neigh_vec[1], 2)
+                                   + std::pow(neigh_vec[2], 2));
+
+    double pair_energy = ai2pot::correction::PairZBL<double>::find_pair_energy(Zi, Zj, rmax, rmin, distance_ij, ck, dk);
+    double pair_energy_ = ai2pot::correction::PairZBL<double>::find_pair_energy(Zi, Zj, rmax, rmin, distance_ij+delta, ck, dk);
+
+    ai2pot::correction::PairZBL<double>::add_atomic_force_one(force, Zi, Zj, rmax, rmin, neigh_vec, ck, dk);
+
+printf("Pair Energy = %.10lf\n", pair_energy);
+printf("\t1. Gradient calculated by custom code = %.10f\n", force[0] * std::sqrt(3));
+printf("\t2. Gradient calculated by finite difference method = %.10f\n", (pair_energy_ - pair_energy) / delta);
+}
+
+
+TEST_F(PairZBLTest, virial_accuracy) {
+    double distance_ij = std::sqrt(std::pow(neigh_vec[0], 2)
+                                   + std::pow(neigh_vec[1], 2)
+                                   + std::pow(neigh_vec[2], 2));
+    
+    double calculated_virial[9] = {0.0};
+    // Atom 1.
+    memset(force, 0, sizeof(double) * 3);
+    ai2pot::correction::PairZBL<double>::add_atomic_force_one(force, Zi, Zj, rmax, rmin, neigh_vec, ck, dk);
+    for (int aa=0; aa<3; aa++) {
+        for (int bb=0; bb<3; bb++) {
+            calculated_virial[aa*3 + bb] += coord_1[aa] * force[bb];
+        }
+    }
+    ai2pot::correction::PairZBL<double>::add_virial_one(virial, Zi, Zj, rmax, rmin, neigh_vec, ck, dk);
+    // Atom 2.
+    neigh_vec[0] = -neigh_vec[0];
+    neigh_vec[1] = -neigh_vec[1];
+    neigh_vec[2] = -neigh_vec[2];
+    memset(force, 0, sizeof(double) * 3);
+    ai2pot::correction::PairZBL<double>::add_atomic_force_one(force, Zi, Zj, rmax, rmin, neigh_vec, ck, dk);
+    for (int aa=0; aa<3; aa++) {
+        for (int bb=0; bb<3; bb++) {
+            calculated_virial[aa*3 + bb] += coord_2[aa] * force[bb];
+        }
+    }
+    ai2pot::correction::PairZBL<double>::add_virial_one(virial, Zi, Zj, rmax, rmin, neigh_vec, ck, dk);
+
+printf("\t1. Virial calculated by custom code:\n");
+for (int aa=0; aa<3; aa++) {
+    for (int bb=0; bb<3; bb++) {
+        printf("%.10f, ", calculated_virial[aa*3 + bb]);
+    }
+}
+printf("\n");
+printf("\t2. Virial calculated by definition:\n");
+for (int aa=0; aa<3; aa++) {
+    for (int bb=0; bb<3; bb++) {
+        printf("%.10f, ", virial[aa*3 + bb]);
+    }
+}
+printf("\n");
+}
+
 
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);

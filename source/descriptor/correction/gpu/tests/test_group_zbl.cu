@@ -1,11 +1,25 @@
+/*
+    Copyright 2025 Hanyu Liu
+    This file is part of AI2Pot.
+    AI2Pot is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+    AI2Pot is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+    You should have received a copy of the GNU General Public License
+    along with AI2Pot.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include <gtest/gtest.h>
+#include <stdio.h>
 #include <iostream>
+#include "../include/zbl.cuh"
 
-#include "../include/zbl.h"
 
-
-class GroupZBLTest : public ::testing::Test
-{
+class GroupZBLTest : public ::testing::Test {
 protected:
     int ntypes;
     int* types;
@@ -22,8 +36,8 @@ protected:
 
     double etot;
     double etot_;
-    double* forces;
-    double* forces_;
+    double *forces;
+    double *forces_;
     double virial[9];
     double virial_[9];
 
@@ -33,7 +47,6 @@ protected:
     int *zjs;
     double *cks;
     double *dks;
-    ai2pot::correction::GroupZBL<double> group_zbl;
 
     static void SetUpTestSuite() {
         std::cout << "GroupZBLTest (TestSuite) is setting up...\n";
@@ -101,13 +114,6 @@ protected:
                 dks[idx*4 + 3] = 0.20162;
             }
         }
-        group_zbl = ai2pot::correction::GroupZBL<double>(ntypes, 
-                                                         type_map, 
-                                                         type_map, 
-                                                         rmax,
-                                                         rmin,
-                                                         cks,
-                                                         dks);
     }
 
     void TearDown() override {
@@ -122,7 +128,7 @@ protected:
         free(forces);
         free(forces_);
     }
-};  // class : GroupTest
+};  // class : GroupZBLTest
 
 
 TEST_F(GroupZBLTest, force_accuracy) {
@@ -132,19 +138,22 @@ TEST_F(GroupZBLTest, force_accuracy) {
     rcs[1*umax_num_neigh_atoms + 0][0] = coord_0[0] - coord_1[0];
     rcs[1*umax_num_neigh_atoms + 0][1] = coord_0[1] - coord_1[1];
     rcs[1*umax_num_neigh_atoms + 0][2] = coord_0[2] - coord_1[2];
-    group_zbl.correct_efv(etot,
-                          forces,
-                          virial,
-                          inum,
-                          ilist,
-                          numneigh,
-                          firstneigh,
-                          rcs,
-                          types,
-                          ntypes,
-                          type_map,
-                          umax_num_neigh_atoms,
-                          0);
+    ai2pot::correction::correct_zbl_efv_launcher(etot,
+                                                 forces,
+                                                 virial,
+                                                 rmax,
+                                                 rmin,
+                                                 cks,
+                                                 dks,
+                                                 inum,
+                                                 ilist,
+                                                 numneigh,
+                                                 firstneigh,
+                                                 rcs,
+                                                 types,
+                                                 ntypes,
+                                                 type_map,
+                                                 umax_num_neigh_atoms);
 
     double delta = 1e-6;
     coord_0[1] += delta;
@@ -154,70 +163,30 @@ TEST_F(GroupZBLTest, force_accuracy) {
     rcs[1*umax_num_neigh_atoms + 0][0] = coord_0[0] - coord_1[0];
     rcs[1*umax_num_neigh_atoms + 0][1] = coord_0[1] - coord_1[1];
     rcs[1*umax_num_neigh_atoms + 0][2] = coord_0[2] - coord_1[2];
-    group_zbl.correct_efv(etot_,
-                          forces_,
-                          virial_,
-                          inum,
-                          ilist,
-                          numneigh,
-                          firstneigh,
-                          rcs,
-                          types,
-                          ntypes,
-                          type_map,
-                          umax_num_neigh_atoms,
-                          0);
-    
-    printf("Force[0][1] calculated by custom code = %.10lf\n", forces[0*3+1]);
-    printf("Force[0][1] calculated by definition = %.10lf\n", -(etot_ - etot) / delta);
+    ai2pot::correction::correct_zbl_efv_launcher(etot_,
+                                                 forces_,
+                                                 virial_,
+                                                 rmax,
+                                                 rmin,
+                                                 cks,
+                                                 dks,
+                                                 inum,
+                                                 ilist,
+                                                 numneigh,
+                                                 firstneigh,
+                                                 rcs,
+                                                 types,
+                                                 ntypes,
+                                                 type_map,
+                                                 umax_num_neigh_atoms);
+printf("energy = %.10lf\n", etot);
+printf("Force[0][1] calculated by custom code = %.10lf\n", forces[0*3+1]);
+printf("Force[0][1] calculated by definition = %.10lf\n", -(etot_ - etot) / delta);
 }
 
 
-TEST_F(GroupZBLTest, virial_accuracy) {
-    rcs[0*umax_num_neigh_atoms + 0][0] = coord_1[0] - coord_0[0];
-    rcs[0*umax_num_neigh_atoms + 0][1] = coord_1[1] - coord_0[1];
-    rcs[0*umax_num_neigh_atoms + 0][2] = coord_1[2] - coord_0[2];
-    rcs[1*umax_num_neigh_atoms + 0][0] = coord_0[0] - coord_1[0];
-    rcs[1*umax_num_neigh_atoms + 0][1] = coord_0[1] - coord_1[1];
-    rcs[1*umax_num_neigh_atoms + 0][2] = coord_0[2] - coord_1[2];
-    group_zbl.correct_efv(etot,
-                          forces,
-                          virial,
-                          inum,
-                          ilist,
-                          numneigh,
-                          firstneigh,
-                          rcs,
-                          types,
-                          ntypes,
-                          type_map,
-                          umax_num_neigh_atoms,
-                          0);
-    
-
-    for (int aa=0; aa<3; aa++) {
-        for (int bb=0; bb<3; bb++) {
-            virial_[aa*3 + bb] += coord_0[aa] * forces[0*3 + bb];
-        }
-    }
-    for (int aa=0; aa<3; aa++) {
-        for (int bb=0; bb<3; bb++) {
-            virial_[aa*3 + bb] += coord_1[aa] * forces[1*3 + bb];
-        }
-    }
-
-printf("Virial calculated by custom code =\n");
-for (int ii=0; ii<9; ii++)
-    printf("%.10lf, ", virial[ii]);
-printf("\n");
-printf("Virial calculated by definition =\n");
-for (int ii=0; ii<9; ii++)
-    printf("%.10lf, ", virial_[ii]);
-printf("\n");
-}
-
-
-int main(int argc, char** argv) {
+int main(int argc, char **argv)
+{
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
