@@ -341,7 +341,7 @@ printf("3. virial[%d][%d] = %g\n", direction1_idx_modify, direction2_idx_modify,
 
 
 
-TEST_F(LinearMtpTest, force_accuracy) {
+TEST_F(LinearMtpTest, efv_force_accuracy) {
     int center_idx_modify = 1;
     int direction1_idx_modify = 2;
     int direction2_idx_modify = 0;
@@ -399,6 +399,99 @@ TEST_F(LinearMtpTest, force_accuracy) {
         etot_,
         force_,
         virial_,
+        chebyshev_size,
+        coeffs,
+        linear_coeffs,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        nmus,
+        inum,
+        ilist,
+        numneigh,
+        firstneigh,
+        (real (*)[3])rcs,
+        types,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin);
+
+printf("1.1. energy = %.15lf\n", etot);
+printf("1.1. force[%d][%d] calculated by custom code = %.15lf\n", center_idx_modify, direction1_idx_modify, force[center_idx_modify][direction1_idx_modify]);
+printf("1.2. energy = %.15lf\n", etot_);
+printf("1.2. force[%d][%d] calculated by finite difference method = %.15lf\n", center_idx_modify, direction1_idx_modify, -(etot_ - etot) / delta);
+
+printf("2.1. energy = %.15lf\n", etot);
+printf("2.2. force=\n");
+for (int ii=0; ii<inum; ii++)
+    printf("\t\t%3d: [%.15f, %.15f, %.15f]\n", ii, force[ii][0], force[ii][1], force[ii][2]);
+}
+
+
+TEST_F(LinearMtpTest, ef_force_accuracy) {
+    int center_idx_modify = 1;
+    int direction1_idx_modify = 2;
+    int direction2_idx_modify = 0;
+    real delta = 1E-8;
+
+    ai2pot::mtpr::LinearMtp<real>::find_ef(
+        etot,
+        force,
+        chebyshev_size,
+        coeffs,
+        linear_coeffs,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        nmus,
+        inum,
+        ilist,
+        numneigh,
+        firstneigh,
+        (real (*)[3])rcs,
+        types,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin);
+
+    // *** delta
+    real cart_coords[inum][3] = {0};
+    for (int ii=0; ii<inum; ii++)
+        for (int aa=0; aa<3; aa++)
+            cart_coords[ii][aa] = structure.get_cart_coords()[ii][aa];
+    cart_coords[center_idx_modify][direction1_idx_modify] += delta;
+    structure = ai2pot::Structure<real>(num_atoms, basis_vectors, atomic_numbers, cart_coords, true);
+    neighbor_list = ai2pot::NeighborList<real>(structure, rcut, bin_size_xyz, pbc_xyz, true);
+    neighbor_list.find_info4mlff(
+            inum,
+            ilist,
+            numneigh,
+            firstneigh,
+            rcs,
+            types,
+            nghost,
+            umax_num_neigh_atoms);
+    // *** delta
+
+    ai2pot::mtpr::LinearMtp<real>::find_ef(
+        etot_,
+        force_,
         chebyshev_size,
         coeffs,
         linear_coeffs,
@@ -534,6 +627,61 @@ for (int ii=0; ii<ntypes; ii++)
     printf("%.15f, ", loss_der2type_bias[ii]);
 printf("\n\n");
 }
+
+
+TEST_F(LinearMtpTest, find_ef_loss_backward) {
+    e_weight = 1.0;
+    f_weight = 1.0;
+    v_weight = 0.0;
+    ai2pot::mtpr::LinearMtp<real>::find_ef_loss_backward(
+        loss_der2coeffs,
+        loss_der2linear_coeffs,
+        loss_der2type_bias,
+        e_weight,
+        f_weight,
+        etot_dft,
+        force_dft,
+        chebyshev_size,
+        coeffs,
+        linear_coeffs,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        mtp_param.nmus(),
+        inum,
+        ilist,
+        numneigh,
+        firstneigh,
+        (real (*)[3])rcs,
+        types,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin);
+
+printf("1. loss_der2coeffs:\n");
+for (int ii=0; ii<ntypes*ntypes*nmus*chebyshev_size; ii++)
+    printf("%.15f, ", loss_der2coeffs[ii]);
+printf("\n\n");
+
+printf("2. loss_der2linear_coeffs:\n");
+for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++)
+    printf("%.15f, ", loss_der2linear_coeffs[ii]);
+printf("\n\n");
+
+printf("3. loss_der2type_bias:\n");
+for (int ii=0; ii<ntypes; ii++)
+    printf("%.15f, ", loss_der2type_bias[ii]);
+printf("\n\n");
+}
+
 
 
 int main(int argc, char **argv) {

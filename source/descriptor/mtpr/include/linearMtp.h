@@ -18,6 +18,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef USE_OPENMP
+#include <omp.h>
+#endif
 
 #include "./basis.h"
 #include "./mtpParam.h"
@@ -291,29 +294,39 @@ void LinearMtp<CoordType>::find_efv(
     CoordType *mom_vals;
     CoordType (*mom_ders)[3];
     CoordType *e_site_der2mom;
-    mom_vals = (CoordType*)malloc(sizeof(CoordType) * alpha_moments_count);
-    mom_ders = (CoordType (*)[3])malloc(sizeof(CoordType) * alpha_index_basic_count * umax_num_neigh_atoms * 3);
-    e_site_der2mom = (CoordType *)malloc(sizeof(CoordType) * alpha_moments_count);
-
-    int type_central;
     int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
-    CoordType NeighbVect[3];
-    CoordType distance_ij;
 
     // Step 2.
     etot = 0;
-    CoordType e_site = 0;
     memset(force, 0, sizeof(CoordType) * (inum+nghost) * 3);
     memset(virial, 0, sizeof(CoordType) * 9);
 
+#ifdef USE_OPENMP
+#pragma omp parallel private(mom_vals, mom_ders, e_site_der2mom)
+{
+#endif
+    mom_vals = (CoordType*)malloc(sizeof(CoordType) * alpha_moments_count);
+    mom_ders = (CoordType (*)[3])malloc(sizeof(CoordType) * alpha_index_basic_count * umax_num_neigh_atoms * 3);
+    e_site_der2mom = (CoordType *)malloc(sizeof(CoordType) * alpha_moments_count);
+    
+    int center_idx;
+    int type_central;
+    int neigh_idx;
+    CoordType NeighbVect[3];
+    CoordType distance_ij;
+
+    #ifdef USE_OPENMP
+    #pragma omp for 
+    #endif
     for (int ii=0; ii<inum; ii++)
     {
+        center_idx = ilist[ii];
+        type_central = types[ilist[ii]];
+        CoordType e_site = 0;
         memset(mom_vals, 0, sizeof(CoordType) * alpha_moments_count);
         memset(mom_ders, 0, sizeof(CoordType) * alpha_index_basic_count * umax_num_neigh_atoms * 3);
         memset(e_site_der2mom, 0, sizeof(CoordType) * alpha_moments_count);
 
-        int center_idx = ilist[ii];
-        type_central = types[center_idx];
         MomsValDer<CoordType>::find_val_der(
             mom_vals,
             mom_ders,
@@ -339,6 +352,9 @@ void LinearMtp<CoordType>::find_efv(
         e_site = type_bias[type_central];
         for (int i=0; i<alpha_scalar_moments; i++)
             e_site += linear_coeffs[i] * mom_vals[alpha_moment_mapping[i]];
+        #ifdef USE_OPENMP
+        #pragma omp atomic
+        #endif
         etot += e_site;
 
         // Linear Energy derivative w.r.t. xyz
@@ -359,7 +375,7 @@ void LinearMtp<CoordType>::find_efv(
         }
         
         for (int jj=0; jj<numneigh[ii]; jj++) {
-            int neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
+            neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
             NeighbVect[0] = relative_coords[ii*umax_num_neigh_atoms+jj][0];
             NeighbVect[1] = relative_coords[ii*umax_num_neigh_atoms+jj][1];
             NeighbVect[2] = relative_coords[ii*umax_num_neigh_atoms+jj][2];
@@ -376,11 +392,20 @@ void LinearMtp<CoordType>::find_efv(
                     e_site_ders_ija += e_site_der2mom[i] * mom_ders[i*umax_num_neigh_atoms + jj][aa];
 
                 // Linear Force
+                #ifdef USE_OPENMP
+                #pragma omp atomic
+                #endif
                 force[center_idx][aa] += e_site_ders_ija;
+                #ifdef USE_OPENMP
+                #pragma omp atomic
+                #endif
                 force[neigh_idx][aa] -= e_site_ders_ija;
 
                 // Linear Virial
                 for (int bb=0; bb<3; bb++)
+                    #ifdef USE_OPENMP
+                    #pragma omp atomic
+                    #endif
                     virial[aa*3 + bb] -= e_site_ders_ija * NeighbVect[bb];
             }
         }
@@ -390,6 +415,9 @@ void LinearMtp<CoordType>::find_efv(
     free(mom_vals);
     free(mom_ders);
     free(e_site_der2mom);
+#ifdef USE_OPENMP
+}
+#endif
 }
 
 
@@ -426,28 +454,38 @@ void LinearMtp<CoordType>::find_ef(
     CoordType *mom_vals;
     CoordType (*mom_ders)[3];
     CoordType *e_site_der2mom;
+    int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
+
+    // Step 2.
+    etot = 0;
+    memset(force, 0, sizeof(CoordType) * (inum+nghost) * 3);
+
+#ifdef USE_OPENMP
+#pragma omp parallel private(mom_vals, mom_ders, e_site_der2mom)
+{
+#endif
     mom_vals = (CoordType*)malloc(sizeof(CoordType) * alpha_moments_count);
     mom_ders = (CoordType (*)[3])malloc(sizeof(CoordType) * alpha_index_basic_count * umax_num_neigh_atoms * 3);
     e_site_der2mom = (CoordType *)malloc(sizeof(CoordType) * alpha_moments_count);
 
+    int center_idx;
     int type_central;
-    int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
+    int neigh_idx;
     CoordType NeighbVect[3];
     CoordType distance_ij;
 
-    // Step 2.
-    etot = 0;
-    CoordType e_site = 0;
-    memset(force, 0, sizeof(CoordType) * (inum+nghost) * 3);
-
+    #ifdef USE_OPENMP
+    #pragma omp for
+    #endif
     for (int ii=0; ii<inum; ii++)
     {
+        center_idx = ilist[ii];
+        type_central = types[ilist[ii]];
         memset(mom_vals, 0, sizeof(CoordType) * alpha_moments_count);
         memset(mom_ders, 0, sizeof(CoordType) * alpha_index_basic_count * umax_num_neigh_atoms * 3);
         memset(e_site_der2mom, 0, sizeof(CoordType) * alpha_moments_count);
+        CoordType e_site = 0;
 
-        int center_idx = ilist[ii];
-        type_central = types[ilist[ii]];
         MomsValDer<CoordType>::find_val_der(
             mom_vals,
             mom_ders,
@@ -473,6 +511,9 @@ void LinearMtp<CoordType>::find_ef(
         e_site = type_bias[type_central];
         for (int i=0; i<alpha_scalar_moments; i++)
             e_site += linear_coeffs[i] * mom_vals[alpha_moment_mapping[i]];
+        #ifdef USE_OPENMP
+        #pragma omp atomic 
+        #endif
         etot += e_site;
 
         // Linear Energy derivative w.r.t. xyz
@@ -493,7 +534,7 @@ void LinearMtp<CoordType>::find_ef(
         }
         
         for (int jj=0; jj<numneigh[ii]; jj++) {
-            int neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
+            neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
             NeighbVect[0] = relative_coords[ii*umax_num_neigh_atoms+jj][0];
             NeighbVect[1] = relative_coords[ii*umax_num_neigh_atoms+jj][1];
             NeighbVect[2] = relative_coords[ii*umax_num_neigh_atoms+jj][2];
@@ -510,7 +551,13 @@ void LinearMtp<CoordType>::find_ef(
                     e_site_ders_ija += e_site_der2mom[i] * mom_ders[i*umax_num_neigh_atoms + jj][aa];
 
                 // Linear Force
+                #ifdef USE_OPENMP
+                #pragma omp atomic 
+                #endif
                 force[center_idx][aa] += e_site_ders_ija;
+                #ifdef USE_OPENMP
+                #pragma omp atomic 
+                #endif
                 force[neigh_idx][aa] -= e_site_ders_ija;
             }
         }
@@ -520,6 +567,10 @@ void LinearMtp<CoordType>::find_ef(
     free(mom_vals);
     free(mom_ders);
     free(e_site_der2mom);
+
+#ifdef USE_OPENMP
+}
+#endif
 }
 
 
@@ -765,9 +816,10 @@ void LinearMtp<CoordType>::find_loss_backward(
     CoordType rmin)
 {
     // Step 1.
-    CoordType *mom_vals = (CoordType*)malloc(sizeof(CoordType) * alpha_moments_count);
-    CoordType *e_site_der2mom = (CoordType*)malloc(sizeof(CoordType) * alpha_moments_count);
-    CoordType *dloss_combination = (CoordType*)malloc(sizeof(CoordType) * alpha_moments_count);
+    CoordType *mom_vals;
+    CoordType *e_site_der2mom;
+    CoordType *dloss_combination;
+    int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
 
     int max_alpha_index_basic = 0;
     for (int ii=0; ii<alpha_index_basic_count; ii++) {
@@ -779,23 +831,13 @@ void LinearMtp<CoordType>::find_loss_backward(
 
     CoordType *auto_dist_powers_;
     CoordType (*auto_coords_powers_)[3];
-    auto_dist_powers_ = (CoordType*)malloc(sizeof(CoordType) * max_alpha_index_basic);
-    auto_coords_powers_ = (CoordType (*)[3])malloc(sizeof(CoordType) * max_alpha_index_basic * 3);
-
-    CoordType NeighbVect[3];
-    CoordType distance_ij;
-    CoordType distance_ij_inv;
-    int type_central;
-    int type_outer;
-    int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
-
-    RQ_Chebyshev<CoordType> *p_RadialBasis = new RQ_Chebyshev<CoordType>(chebyshev_size, rmax, rmin);
+    RQ_Chebyshev<CoordType> *p_RadialBasis;
 
     // Step 2. efv
     CoordType etot_ml = 0;
     CoordType (*force_ml)[3] = (CoordType (*)[3])malloc(sizeof(CoordType) * (inum+nghost) * 3);
     CoordType *virial_ml = (CoordType*)malloc(sizeof(CoordType) * 9);
-    memset(force_ml, 0, sizeof(CoordType) * inum * 3);
+    memset(force_ml, 0, sizeof(CoordType) * (inum+nghost) * 3);
     memset(virial_ml, 0, sizeof(CoordType) * 9);
 
     find_efv(etot_ml,
@@ -826,17 +868,38 @@ void LinearMtp<CoordType>::find_loss_backward(
              rmax,
              rmin);
 
+#ifdef USE_OPENMP
+#pragma omp parallel private(mom_vals, e_site_der2mom, dloss_combination, auto_dist_powers_, auto_coords_powers_, p_RadialBasis)
+{
+#endif
+    mom_vals = (CoordType*)malloc(sizeof(CoordType) * alpha_moments_count);
+    e_site_der2mom = (CoordType*)malloc(sizeof(CoordType) * alpha_moments_count);
+    dloss_combination = (CoordType*)malloc(sizeof(CoordType) * alpha_moments_count);
+    auto_dist_powers_ = (CoordType*)malloc(sizeof(CoordType) * max_alpha_index_basic);
+    auto_coords_powers_ = (CoordType (*)[3])malloc(sizeof(CoordType) * max_alpha_index_basic * 3);
+    p_RadialBasis = new RQ_Chebyshev<CoordType>(chebyshev_size, rmax, rmin);
+    int center_idx;
+    int type_central;
+    int neigh_idx;
+    int type_outer;
+    CoordType NeighbVect[3];
+    CoordType distance_ij;
+    CoordType distance_ij_inv;
+
+    #ifdef USE_OPENMP
+    #pragma omp for
+    #endif
     for (int ii=0; ii<inum; ii++) {
         // Step 3. mom_vals
         memset(mom_vals, 0, sizeof(CoordType) * alpha_moments_count);
         memset(e_site_der2mom, 0, sizeof(CoordType) * alpha_moments_count);
         memset(dloss_combination, 0, sizeof(CoordType) * alpha_moments_count);
-        type_central = types[ilist[ii]];
-        int center_idx = ilist[ii];
+        center_idx = ilist[ii];
+        type_central = types[center_idx];
 
         for (int jj=0; jj<numneigh[ii]; jj++) {
-            type_outer = types[firstneigh[ii*umax_num_neigh_atoms + jj]];
-            int neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
+            neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
+            type_outer = types[neigh_idx];
             NeighbVect[0] = relative_coords[ii*umax_num_neigh_atoms + jj][0];
             NeighbVect[1] = relative_coords[ii*umax_num_neigh_atoms + jj][1];
             NeighbVect[2] = relative_coords[ii*umax_num_neigh_atoms + jj][2];
@@ -948,8 +1011,8 @@ void LinearMtp<CoordType>::find_loss_backward(
         // Step 4.3. Loss derivative w.r.t. coeffs
         for (int jj=0; jj<numneigh[ii]; jj++) 
         {
-            int neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
-            type_outer = types[firstneigh[ii*umax_num_neigh_atoms + jj]];
+            neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
+            type_outer = types[neigh_idx];
             NeighbVect[0] = relative_coords[ii*umax_num_neigh_atoms+jj][0];
             NeighbVect[1] = relative_coords[ii*umax_num_neigh_atoms+jj][1];
             NeighbVect[2] = relative_coords[ii*umax_num_neigh_atoms+jj][2];
@@ -1012,6 +1075,10 @@ void LinearMtp<CoordType>::find_loss_backward(
                     C_ders[1] = -k * powk * distance_ij_inv * distance_ij_inv * NeighbVect[1];
                     C_ders[2] = -k * powk * distance_ij_inv * distance_ij_inv * NeighbVect[2];
 
+                    #ifdef USE_OPENMP
+                    #pragma omp critical
+                    {
+                    #endif
                     loss_der2coeffs[idx] += 2*e_weight/inum*(etot_ml - etot_dft) 
                                             * e_site_der2mom[i]
                                             * A * B * C;
@@ -1039,20 +1106,31 @@ void LinearMtp<CoordType>::find_loss_backward(
                                                     * tmp_deriv;
                         }
                     }
+                    #ifdef USE_OPENMP
+                    }
+                    #endif
                 }
             }
         }
 
         // Step 4.4. Loss derivative w.r.t. linear_coeffs
         for (int i=0; i<alpha_scalar_moments; i++) {
+            #ifdef USE_OPENMP
+            #pragma omp atomic
+            #endif
             loss_der2linear_coeffs[i] += 2*e_weight/inum 
                                          * (etot_ml - etot_dft)
                                          * mom_vals[alpha_moment_mapping[i]];
-            
+            #ifdef USE_OPENMP
+            #pragma omp atomic
+            #endif
             loss_der2linear_coeffs[i] += dloss_combination[alpha_moment_mapping[i]];
         }
 
         // Step 4.5. Loss derivative w.r.t. type_bias
+        #ifdef USE_OPENMP
+        #pragma omp atomic
+        #endif
         loss_der2type_bias[type_central] += 2*e_weight/inum*(etot_ml - etot_dft);
     }
 
@@ -1062,9 +1140,14 @@ void LinearMtp<CoordType>::find_loss_backward(
     free(dloss_combination);
     free(auto_dist_powers_);
     free(auto_coords_powers_);
+    delete p_RadialBasis;
+
+#ifdef USE_OPENMP
+}
+#endif
+
     free(force_ml);
     free(virial_ml);
-    delete p_RadialBasis;
 }
 
 
@@ -1103,9 +1186,10 @@ void LinearMtp<CoordType>::find_ef_loss_backward(
     CoordType rmin)
 {
     // Step 1.
-    CoordType *mom_vals = (CoordType*)malloc(sizeof(CoordType) * alpha_moments_count);
-    CoordType *e_site_der2mom = (CoordType*)malloc(sizeof(CoordType) * alpha_moments_count);
-    CoordType *dloss_combination = (CoordType*)malloc(sizeof(CoordType) * alpha_moments_count);
+    CoordType *mom_vals;
+    CoordType *e_site_der2mom;
+    CoordType *dloss_combination;
+    int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
 
     int max_alpha_index_basic = 0;
     for (int ii=0; ii<alpha_index_basic_count; ii++) {
@@ -1117,17 +1201,7 @@ void LinearMtp<CoordType>::find_ef_loss_backward(
 
     CoordType *auto_dist_powers_;
     CoordType (*auto_coords_powers_)[3];
-    auto_dist_powers_ = (CoordType*)malloc(sizeof(CoordType) * max_alpha_index_basic);
-    auto_coords_powers_ = (CoordType (*)[3])malloc(sizeof(CoordType) * max_alpha_index_basic * 3);
-
-    CoordType NeighbVect[3];
-    CoordType distance_ij;
-    CoordType distance_ij_inv;
-    int type_central;
-    int type_outer;
-    int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
-
-    RQ_Chebyshev<CoordType> *p_RadialBasis = new RQ_Chebyshev<CoordType>(chebyshev_size, rmax, rmin);
+    RQ_Chebyshev<CoordType> *p_RadialBasis;
 
     // Step 2. efv
     CoordType etot_ml = 0;
@@ -1160,16 +1234,39 @@ void LinearMtp<CoordType>::find_ef_loss_backward(
             rmax,
             rmin);
 
+
+#ifdef USE_OPENMP
+#pragma omp parallel private(mom_vals, e_site_der2mom, dloss_combination, auto_dist_powers_, auto_coords_powers_, p_RadialBasis)
+{
+#endif
+    mom_vals = (CoordType*)malloc(sizeof(CoordType) * alpha_moments_count);
+    e_site_der2mom = (CoordType*)malloc(sizeof(CoordType) * alpha_moments_count);
+    dloss_combination = (CoordType*)malloc(sizeof(CoordType) * alpha_moments_count);
+    auto_dist_powers_ = (CoordType*)malloc(sizeof(CoordType) * max_alpha_index_basic);
+    auto_coords_powers_ = (CoordType (*)[3])malloc(sizeof(CoordType) * max_alpha_index_basic * 3);
+    p_RadialBasis = new RQ_Chebyshev<CoordType>(chebyshev_size, rmax, rmin);
+    
+    int center_idx;
+    int type_central;
+    int neigh_idx;
+    int type_outer;
+    CoordType NeighbVect[3];
+    CoordType distance_ij;
+    CoordType distance_ij_inv;
+
+    #ifdef USE_OPENMP
+    #pragma omp for
+    #endif
     for (int ii=0; ii<inum; ii++) {
         // Step 3. mom_vals
         memset(mom_vals, 0, sizeof(CoordType) * alpha_moments_count);
         memset(e_site_der2mom, 0, sizeof(CoordType) * alpha_moments_count);
         memset(dloss_combination, 0, sizeof(CoordType) * alpha_moments_count);
-        int center_idx = ilist[ii];
+        center_idx = ilist[ii];
         type_central = types[center_idx];
 
         for (int jj=0; jj<numneigh[ii]; jj++) {
-            int neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
+            neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
             type_outer = types[neigh_idx];
             NeighbVect[0] = relative_coords[ii*umax_num_neigh_atoms + jj][0];
             NeighbVect[1] = relative_coords[ii*umax_num_neigh_atoms + jj][1];
@@ -1276,7 +1373,7 @@ void LinearMtp<CoordType>::find_ef_loss_backward(
 
         // Step 4.3. Loss derivative w.r.t. coeffs
         for (int jj=0; jj<numneigh[ii]; jj++) {
-            int neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
+            neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
             type_outer = types[neigh_idx];
             NeighbVect[0] = relative_coords[ii*umax_num_neigh_atoms + jj][0];
             NeighbVect[1] = relative_coords[ii*umax_num_neigh_atoms + jj][1];
@@ -1340,6 +1437,10 @@ void LinearMtp<CoordType>::find_ef_loss_backward(
                     C_ders[1] = -k * powk * distance_ij_inv * distance_ij_inv * NeighbVect[1];
                     C_ders[2] = -k * powk * distance_ij_inv * distance_ij_inv * NeighbVect[2];
 
+                    #ifdef USE_OPENMP
+                    #pragma omp critical
+                    {
+                    #endif
                     loss_der2coeffs[idx] += 2*e_weight/inum*(etot_ml - etot_dft)
                                             * e_site_der2mom[i]
                                             * A * B * C;
@@ -1362,6 +1463,9 @@ void LinearMtp<CoordType>::find_ef_loss_backward(
                     }
                     tmp_f_loss_der2coeffs = e_site_der2mom[i] * tmp_f_loss_der2coeffs * 2*f_weight/(3*inum);
                     loss_der2coeffs[idx] += tmp_f_loss_der2coeffs;
+                    #ifdef USE_OPENMP
+                    }
+                    #endif
                 }
             }
         }
@@ -1385,8 +1489,11 @@ void LinearMtp<CoordType>::find_ef_loss_backward(
     free(dloss_combination);
     free(auto_dist_powers_);
     free(auto_coords_powers_);
-    free(force_ml);
     delete p_RadialBasis;
+#ifdef USE_OPENMP
+}
+#endif
+    free(force_ml);
 }
 
 };  // namespace : mtpr
