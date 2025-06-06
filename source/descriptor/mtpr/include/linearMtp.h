@@ -1118,7 +1118,7 @@ void LinearMtp<CoordType>::find_loss_backward(
             #ifdef USE_OPENMP
             #pragma omp atomic
             #endif
-            loss_der2linear_coeffs[i] += 2*e_weight/inum 
+            loss_der2linear_coeffs[i] += 2*e_weight/inum
                                          * (etot_ml - etot_dft)
                                          * mom_vals[alpha_moment_mapping[i]];
             #ifdef USE_OPENMP
