@@ -1075,56 +1075,50 @@ void LinearMtp<CoordType>::find_loss_backward(
                     C_ders[1] = -k * powk * distance_ij_inv * distance_ij_inv * NeighbVect[1];
                     C_ders[2] = -k * powk * distance_ij_inv * distance_ij_inv * NeighbVect[2];
 
-                    #ifdef USE_OPENMP
-                    #pragma omp critical
-                    {
-                    #endif
-                    loss_der2coeffs[idx] += 2*e_weight/inum*(etot_ml - etot_dft) 
-                                            * e_site_der2mom[i]
-                                            * A * B * C;
-
+                    CoordType tmpe_loss_der2coeff = 0.0;
+                    tmpe_loss_der2coeff = 2*e_weight/inum*(etot_ml - etot_dft) 
+                                          * e_site_der2mom[i]
+                                          * A * B * C;
+                    
+                    CoordType tmpf_loss_der2coeff = 0.0;
                     for (int aa=0; aa<3; aa++) 
                     {
+                        CoordType tmp_prefix = 0.0;
                         CoordType tmp_deriv = (A_ders[aa] * B * C
                                               + A * B_ders[aa] * C
                                               + A * B * C_ders[aa]);
-                        loss_der2coeffs[idx] += 2*f_weight/(3*inum)
-                                                * (force_ml[center_idx][aa] - force_dft[center_idx][aa])
-                                                * e_site_der2mom[i]
-                                                * tmp_deriv;
-                        loss_der2coeffs[idx] -= 2*f_weight/(3*inum)
-                                                * (force_ml[neigh_idx][aa] - force_dft[neigh_idx][aa])
-                                                * e_site_der2mom[i]
-                                                * tmp_deriv;
+
+                        tmp_prefix += 2*f_weight/(3*inum)
+                                      * (force_ml[center_idx][aa] - force_dft[center_idx][aa]);
+                        tmp_prefix -= 2*f_weight/(3*inum)
+                                      * (force_ml[neigh_idx][aa] - force_dft[neigh_idx][aa]);
                         
                         for (int bb=0; bb<3; bb++) 
                         {
-                            loss_der2coeffs[idx] -= 2*v_weight/(9*inum)
-                                                    * (virial_ml[aa*3+bb] - virial_dft[aa*3+bb])
-                                                    * NeighbVect[bb]
-                                                    * e_site_der2mom[i]
-                                                    * tmp_deriv;
+                            tmp_prefix -= 2*v_weight/(9*inum)
+                                          * (virial_ml[aa*3+bb] - virial_dft[aa*3+bb])
+                                          * NeighbVect[bb];
                         }
+                        tmpf_loss_der2coeff += tmp_prefix * tmp_deriv;
                     }
                     #ifdef USE_OPENMP
-                    }
+                    #pragma omp atomic
                     #endif
+                    loss_der2coeffs[idx] += (tmpe_loss_der2coeff + tmpf_loss_der2coeff * e_site_der2mom[i]);
                 }
             }
         }
 
         // Step 4.4. Loss derivative w.r.t. linear_coeffs
         for (int i=0; i<alpha_scalar_moments; i++) {
+            CoordType tmp_loss_der2linear_coeff = 2*e_weight/inum
+                                                  * (etot_ml - etot_dft)
+                                                  * mom_vals[alpha_moment_mapping[i]]
+                                                  + dloss_combination[alpha_moment_mapping[i]];
             #ifdef USE_OPENMP
             #pragma omp atomic
             #endif
-            loss_der2linear_coeffs[i] += 2*e_weight/inum
-                                         * (etot_ml - etot_dft)
-                                         * mom_vals[alpha_moment_mapping[i]];
-            #ifdef USE_OPENMP
-            #pragma omp atomic
-            #endif
-            loss_der2linear_coeffs[i] += dloss_combination[alpha_moment_mapping[i]];
+            loss_der2linear_coeffs[i] += tmp_loss_der2linear_coeff;
         }
 
         // Step 4.5. Loss derivative w.r.t. type_bias
@@ -1437,49 +1431,51 @@ void LinearMtp<CoordType>::find_ef_loss_backward(
                     C_ders[1] = -k * powk * distance_ij_inv * distance_ij_inv * NeighbVect[1];
                     C_ders[2] = -k * powk * distance_ij_inv * distance_ij_inv * NeighbVect[2];
 
-                    #ifdef USE_OPENMP
-                    #pragma omp critical
-                    {
-                    #endif
-                    loss_der2coeffs[idx] += 2*e_weight/inum*(etot_ml - etot_dft)
-                                            * e_site_der2mom[i]
-                                            * A * B * C;
-                    
-                    CoordType tmp_f_loss_der2coeffs = 0;
-                    for (int aa=0; aa<3; aa++) {
-                        CoordType tmp_deriv = (A_ders[aa]*B*C + A*B_ders[aa]*C + A*B*C_ders[aa]);
-                        tmp_f_loss_der2coeffs += (force_ml[center_idx][aa] - force_dft[center_idx][aa]
-                                                  - force_ml[neigh_idx][aa] + force_dft[neigh_idx][aa])
-                                                 * tmp_deriv;
 
-                        //loss_der2coeffs[idx] += 2*f_weight/(3*inum)
-                        //                        * (force_ml[center_idx][aa] - force_dft[center_idx][aa])
-                        //                        * tmp_deriv
-                        //                        * e_site_der2mom[i];
-                        //loss_der2coeffs[idx] -= 2*f_weight/(3*inum)
-                        //                         * (force_ml[neigh_idx][aa] - force_dft[neigh_idx][aa])
-                        //                         * e_site_der2mom[i]
-                        //                         * tmp_deriv;
+                    CoordType tmpe_loss_der2coeff = 0.0;
+                    tmpe_loss_der2coeff = 2*e_weight/inum*(etot_ml - etot_dft)
+                                          * e_site_der2mom[i]
+                                          * A * B * C;
+                    
+                    CoordType tmpf_loss_der2coeff = 0.0;
+                    for (int aa=0; aa<3; aa++) {
+                        CoordType tmp_prefix = 0.0;
+                        CoordType tmp_deriv = (A_ders[aa] * B * C 
+                                               + A * B_ders[aa] * C 
+                                               + A * B * C_ders[aa]);
+                        
+                        tmp_prefix += 2*f_weight/(3*inum)
+                                      * (force_ml[center_idx][aa] - force_dft[center_idx][aa]);
+                        tmp_prefix -= 2*f_weight/(3*inum)
+                                      * (force_ml[neigh_idx][aa] - force_dft[neigh_idx][aa]);
+                        tmpf_loss_der2coeff += tmp_prefix * tmp_deriv;
                     }
-                    tmp_f_loss_der2coeffs = e_site_der2mom[i] * tmp_f_loss_der2coeffs * 2*f_weight/(3*inum);
-                    loss_der2coeffs[idx] += tmp_f_loss_der2coeffs;
+
                     #ifdef USE_OPENMP
-                    }
-                    #endif
+                    #pragma omp atomic
+                    #endif 
+                    loss_der2coeffs[idx] += (tmpe_loss_der2coeff + tmpf_loss_der2coeff * e_site_der2mom[i]);
                 }
             }
         }
 
         // Step 4.4. Loss derivative w.r.t. linear_coeffs
         for (int i=0; i<alpha_scalar_moments; i++) {
-            loss_der2linear_coeffs[i] += 2*e_weight/inum 
-                                         * (etot_ml - etot_dft) 
-                                         * mom_vals[alpha_moment_mapping[i]];
+            CoordType tmp_loss_der2linear_coeff = 2*e_weight/inum 
+                                                  * (etot_ml - etot_dft) 
+                                                  * mom_vals[alpha_moment_mapping[i]]
+                                                  + dloss_combination[alpha_moment_mapping[i]];
             
-            loss_der2linear_coeffs[i] += dloss_combination[alpha_moment_mapping[i]];
+            #ifndef USE_OPENMP
+            #pragma omp atomic
+            #endif
+            loss_der2linear_coeffs[i] += tmp_loss_der2linear_coeff;
         }
 
         // Step 4.5. Loss derivative w.r.t. type_bias
+        #ifndef USE_OPENMP
+        #pragma omp atomic
+        #endif
         loss_der2type_bias[type_central] += 2*e_weight/inum*(etot_ml - etot_dft);
     }
 
