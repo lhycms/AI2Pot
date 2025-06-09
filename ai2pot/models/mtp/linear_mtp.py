@@ -12,15 +12,15 @@ class LinearMtp(nn.Module):
     def __init__(self,
                  mtp_level: int,
                  type_map_tensor: torch.Tensor,
-                 chebyshev_size: int,
-                 rmax: float,
-                 rmin: float,
-                 umax_num_neighs: int,
+                 chebyshev_size: int = 8,
+                 rmax: float = 5.0,
+                 rmin: float = 2.0,
+                 umax_num_neighs: int = 200,
                  fit_virial: bool = False,
                  zbl_rmax: float = 2.0,
                  zbl_rmin: float = 1.0,
                  zbl_cks_tensor: torch.Tensor = torch.tensor([0.18175, 0.50986, 0.28022, 0.02817], dtype=torch.float32),
-                 zbl_dks_tensor: torch.Tensor = torch.tenosr([3.1998, 0.94229, 0.4029, 0.20162], dtype=torch.float32)):
+                 zbl_dks_tensor: torch.Tensor = torch.tensor([3.1998, 0.94229, 0.4029, 0.20162], dtype=torch.float32)):
         super(LinearMtp, self).__init__()
         self.mtp_level: int = mtp_level
         self.register_buffer(name="type_map_tensor", tensor=type_map_tensor)
