@@ -8,7 +8,7 @@ from pymatgen.core import Structure
 
 from ai2pot.fromcc import forceSrOp
 from ai2pot.models.mtp import DescriptorMtp
-from ai2pot.utils.testpot_utils import MlffInput
+from ai2pot.utils.usepot import MlffInput
 
 
 TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")

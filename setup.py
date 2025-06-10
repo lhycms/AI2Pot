@@ -20,6 +20,7 @@ setup(
             "ase==3.23.0",
             "numpy==1.26.4",
             "pybind11==2.11.1",
+            "dpdata==0.2.24"
             #"torch-2.4.0+cpu"
     ],
     extras_requires={

@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 from torch.autograd import gradcheck
 
-from ai2pot.utils.testpot_utils import MlffToLossInput
+from ai2pot.utils.usepot import MlffToLossInput
 from ai2pot.data.mlffdataset import ExtxyzDataset
 from ai2pot.fromcc import (
     linearMtpToEFLossOp,
@@ -38,7 +38,6 @@ class LinearMtpTest(unittest.TestCase):
         self.umax_num_neighs: int = 100
         self.fit_virial: bool = False
         
-        
         """
         self.ntypes: int = 4
         self.structure: Structure = Structure.from_file(ReNbSSe_POSCAR_PATH)
@@ -53,7 +52,23 @@ class LinearMtpTest(unittest.TestCase):
                                                       ],
                                               coords_are_cartesian=True)
         print(self.structure)
-        
+    
+        # 2. ZBL
+        self.zbl_rmax: float = 2.0
+        self.zbl_rmin: float = 1.0
+        self.zbl_cks_tensor: torch.Tensor = torch.zeros(self.ntypes*self.ntypes*4, dtype=self.torch_float_dtype)
+        self.zbl_dks_tensor: torch.Tensor = torch.zeros(self.ntypes*self.ntypes*4, dtype=self.torch_float_dtype)
+        for ii in range(self.ntypes):
+            for jj in range(self.ntypes):
+                idx = ii*self.ntypes + jj
+                self.zbl_cks_tensor[idx*4 + 0] = 0.18175
+                self.zbl_cks_tensor[idx*4 + 1] = 0.50986
+                self.zbl_cks_tensor[idx*4 + 2] = 0.28022
+                self.zbl_cks_tensor[idx*4 + 3] = 0.02817
+                self.zbl_dks_tensor[idx*4 + 0] = 3.1998
+                self.zbl_dks_tensor[idx*4 + 1] = 0.94229
+                self.zbl_dks_tensor[idx*4 + 2] = 0.4029
+                self.zbl_dks_tensor[idx*4 + 3] = 0.20162
         
         self.mlff_to_loss_input: MlffToLossInput = MlffToLossInput(rcut=self.rmax,
                                                                    umax_num_neighs=self.umax_num_neighs,
@@ -90,7 +105,7 @@ class LinearMtpTest(unittest.TestCase):
     def test_linearMtpToLoss(self):
         # 1. Parameters
         e_weight: float = 1.0
-        f_weight: float = 0.1
+        f_weight: float = 0.0
         v_weight: float = 0.0
         self.coeffs_tensor.requires_grad_(True)
         self.linear_coeffs_tensor.requires_grad_(True)
@@ -124,7 +139,11 @@ class LinearMtpTest(unittest.TestCase):
                                  self.type_map_tensor,
                                  input_info[12].item(),
                                  self.rmax,
-                                 self.rmin),
+                                 self.rmin,
+                                 self.zbl_rmax,
+                                 self.zbl_rmin,
+                                 self.zbl_cks_tensor,
+                                 self.zbl_dks_tensor),
                          eps=1e-3,
                          atol=1e-6,
                          rtol=1e-3)

@@ -9,12 +9,14 @@ from ai2pot.core import Nblist
 
 class MlffInput(object):
     def __init__(self,
+                 type_map: List[int],
                  rcut: float,
                  umax_num_neighs: int = 200,
                  pbc_xyz: List[bool] = [True, True, True],
                  sort: bool = True,
                  dtype: torch._C.dtype = torch.float32,
                  device: torch._C.device = torch.device("cpu")):
+        self.type_map: List[int] = type_map
         self.rcut: float = rcut
         self.umax_num_neighs: int = umax_num_neighs
         self.pbc_xyz: List[bool] = pbc_xyz
@@ -31,9 +33,7 @@ class MlffInput(object):
     def analyse_pymatgen(self,
                          structure: Structure):
         cell: np.ndarray = np.array(structure.lattice.matrix).astype(self.np_float_dtype)
-        unique_species = sorted(set(structure.species), key=lambda sp: sp.Z)
-        type_map: Dict[str, int] = {element: idx for idx, element in enumerate(unique_species)}
-        types: np.ndarray = np.array([type_map[el] for el in structure.species])
+        types: np.ndarray = np.array([self.type_map.index(el.Z) for el in structure.species])
         cart_coords: np.ndarray = np.array(structure.cart_coords).astype(self.np_float_dtype)
         nblist_info = Nblist.find_info4mlff(cell=cell,
                                             species=types,
@@ -58,9 +58,7 @@ class MlffInput(object):
     def analyse_ase(self,
                     atoms: Atoms):
         cell: np.ndarray = atoms.cell.array.astype(self.np_float_dtype)
-        unique_species = sorted(set(atoms.get_atomic_numbers()), key=lambda an: an)
-        type_map: Dict[int, int] = {element: idx for idx, element in enumerate(unique_species)}
-        types: np.ndarray = np.array([type_map[el] for el in atoms.get_atomic_numbers()])
+        types: np.ndarray = np.array([self.type_map.index(el) for el in atoms.get_atomic_numbers()])
         cart_coords: np.ndarray = atoms.positions.astype(self.np_float_dtype)
         nblist_info = Nblist.find_info4mlff(cell=cell,
                                             species=types,
@@ -83,12 +81,14 @@ class MlffInput(object):
 
 class MlffToLossInput(object):
     def __init__(self,
+                 type_map: List[int],
                  rcut: float,
                  umax_num_neighs: int = 200,
                  pbc_xyz: List[bool] = [True, True, True],
                  sort: bool = True,
                  dtype: torch._C.dtype = torch.float32,
                  device: torch._C.device = torch.device("cpu")):
+        self.type_map: List[int] = type_map
         self.rcut: float = rcut
         self.umax_num_neighs: int = umax_num_neighs
         self.pbc_xyz: List[bool] = pbc_xyz
@@ -118,9 +118,7 @@ class MlffToLossInput(object):
                                                        dtype=self.torch_float_dtype, 
                                                        device=self.device)
         cell: np.ndarray = np.array(structure.lattice.matrix).astype(self.np_float_dtype)
-        unique_species = sorted(set(structure.species), key=lambda sp: sp.Z)
-        type_map: Dict[str, int] = {element: idx for idx, element in enumerate(unique_species)}
-        types: np.ndarray = np.array([type_map[el] for el in structure.species])
+        types: np.ndarray = np.array([self.type_map.index(el.Z) for el in structure.species])
         cart_coords: np.ndarray = np.array(structure.cart_coords).astype(self.np_float_dtype)
         nblist_info = Nblist.find_info4mlff(cell=cell,
                                             species=types,

@@ -20,9 +20,11 @@ class MlffInputTest(unittest.TestCase):
         self.pbc_xyz: List[int] = [True, True, True]
         self.sort: bool = True
         self.structure: Structure = Structure.from_file(ReNbSSe_POSCAR_PATH)
+        self.type_map: List[int] = [75, 41, 16, 34]
         self.atoms: Atoms = ase_read(ReNbSSe_POSCAR_PATH)
         
-        self.mlff_input: MlffInput = MlffInput(rcut=self.rcut,
+        self.mlff_input: MlffInput = MlffInput(type_map=self.type_map,
+                                               rcut=self.rcut,
                                                umax_num_neighs=self.umax_num_neighs,
                                                pbc_xyz=self.pbc_xyz,
                                                sort=self.sort)
@@ -59,6 +61,7 @@ class MlffInputTest(unittest.TestCase):
 class MlffToLossInputTest(unittest.TestCase):
     def setUp(self):
         print("MlffToLossInputTest (TestCase) is setting up...\n")
+        self.type_map: List[int] = [75, 41, 16, 34]
         self.rcut: float = 5.0
         self.umax_num_neighs: int = 200
         self.pbc_xyz: List[bool] = [True, True, True]
@@ -68,7 +71,8 @@ class MlffToLossInputTest(unittest.TestCase):
         self.f_weight: float = 1.0
         self.v_weight: float = 0.1
         
-        self.mlff_to_loss_input: MlffToLossInput = MlffToLossInput(rcut=self.rcut,
+        self.mlff_to_loss_input: MlffToLossInput = MlffToLossInput(type_map=self.type_map,
+                                                                   rcut=self.rcut,
                                                                    umax_num_neighs=self.umax_num_neighs,
                                                                    pbc_xyz=self.pbc_xyz,
                                                                    sort=self.sort)
@@ -95,6 +99,7 @@ class MlffToLossInputTest(unittest.TestCase):
         print("\t11. brcs_tensor.size() = ", input_info[10].size())
         print("\t12. btypes.size() = ", input_info[11].size())
         print("\t13. bnghost_tensor.size() = ", input_info[12].size())
+        print(input_info[11])
 
 
 if __name__ == "__main__":

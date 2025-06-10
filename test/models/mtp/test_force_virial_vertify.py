@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 from ai2pot.models.mtp import NNMtp
-from ai2pot.utils.testpot_utils import MlffInput
+from ai2pot.utils.usepot import MlffInput
 from pymatgen.core import Structure
 from ase import Atoms
 
