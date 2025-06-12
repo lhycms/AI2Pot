@@ -6,7 +6,8 @@ import torch.nn as nn
 from ai2pot.fromcc import (mtpParamOp,
                            linearMtpToLossOp,
                            linearMtpToEFLossOp,
-                           linearMtpToEFV)
+                           linearMtpToEFVOp,
+                           linearMtpToEFOp)
 
 
 class LinearMtp(nn.Module):
@@ -155,10 +156,6 @@ class LinearMtp(nn.Module):
         return bmse_tensor
     
     
-    def predict_descriptor(self):
-        pass
-    
-    
     def predict_efv(self,
                     binum_tensor: torch.Tensor,
                     bilist_tensor: torch.Tensor,
@@ -167,28 +164,65 @@ class LinearMtp(nn.Module):
                     brcs_tensor: torch.Tensor,
                     btypes_tensor: torch.Tensor,
                     bnghost_tensor: torch.Tensor):
-        betot_tensor, bforce_tensor, bvirial_tensor = linearMtpToEFV(self.chebyshev_size,
-                                                                     self.coeffs_tensor,
-                                                                     self.linear_coeffs_tensor,
-                                                                     self.type_bias_tensor,
-                                                                     self.alpha_moments_count,
-                                                                     self.alpha_index_basic_tensor,
-                                                                     self.alpha_index_times_tensor,
-                                                                     self.alpha_moment_mapping_tensor,
-                                                                     self.nmus,
-                                                                     binum_tensor,
-                                                                     bilist_tensor,
-                                                                     bnumneigh_tensor,
-                                                                     bfirstneigh_tensor,
-                                                                     brcs_tensor,
-                                                                     btypes_tensor,
-                                                                     self.type_map_tensor,
-                                                                     bnghost_tensor[0].item(),
-                                                                     self.rmax,
-                                                                     self.rmin,
-                                                                     self.zbl_rmax,
-                                                                     self.zbl_rmax,
-                                                                     self.zbl_cks_tensor,
-                                                                     self.zbl_dks_tensor)
+        betot_tensor, bforce_tensor, bvirial_tensor = linearMtpToEFVOp(self.chebyshev_size,
+                                                                       self.coeffs_tensor,
+                                                                       self.linear_coeffs_tensor,
+                                                                       self.type_bias_tensor,
+                                                                       self.alpha_moments_count,
+                                                                       self.alpha_index_basic_tensor,
+                                                                       self.alpha_index_times_tensor,
+                                                                       self.alpha_moment_mapping_tensor,
+                                                                       self.nmus,
+                                                                       binum_tensor,
+                                                                       bilist_tensor,
+                                                                       bnumneigh_tensor,
+                                                                       bfirstneigh_tensor,
+                                                                       brcs_tensor,
+                                                                       btypes_tensor,
+                                                                       self.type_map_tensor,
+                                                                       bnghost_tensor[0].item(),
+                                                                       self.rmax,
+                                                                       self.rmin,
+                                                                       self.zbl_rmax,
+                                                                       self.zbl_rmax,
+                                                                       self.zbl_cks_tensor,
+                                                                       self.zbl_dks_tensor)
         return betot_tensor, bforce_tensor, bvirial_tensor
-    
+
+
+    def predict_ef(self,
+                   binum_tensor: torch.Tensor,
+                   bilist_tensor: torch.Tensor,
+                   bnumneigh_tensor: torch.Tensor,
+                   bfirstneigh_tensor: torch.Tensor,
+                   brcs_tensor: torch.Tensor,
+                   btypes_tensor: torch.Tensor,
+                   bnghost_tensor: torch.Tensor):
+        betot_tensor, bforce_tensor = linearMtpToEFOp(self.chebyshev_size,
+                                                      self.coeffs_tensor,
+                                                      self.linear_coeffs_tensor,
+                                                      self.type_bias_tensor,
+                                                      self.alpha_moments_count,
+                                                      self.alpha_index_basic_tensor,
+                                                      self.alpha_index_times_tensor,
+                                                      self.alpha_moment_mapping_tensor,
+                                                      self.nmus,
+                                                      binum_tensor,
+                                                      bilist_tensor,
+                                                      bnumneigh_tensor,
+                                                      bfirstneigh_tensor,
+                                                      brcs_tensor,
+                                                      btypes_tensor,
+                                                      self.type_map_tensor,
+                                                      bnghost_tensor[0].item(),
+                                                      self.rmax,
+                                                      self.rmin,
+                                                      self.zbl_rmax,
+                                                      self.zbl_rmax,
+                                                      self.zbl_cks_tensor,
+                                                      self.zbl_dks_tensor)
+        return betot_tensor, bforce_tensor
+
+
+    def predict_descriptor(self):
+        pass

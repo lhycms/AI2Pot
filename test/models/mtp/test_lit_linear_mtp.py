@@ -16,9 +16,9 @@ TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")
 PbTe_EXTXYZ_PATH = os.path.join(TEST_FILES_DIR, "XYZ", "11_NEP_potential_PbTe", "train_m.xyz")
 
 
-class LinearMtpTest(unittest.TestCase):
+class LitLinearMtpTest(unittest.TestCase):
     def setUp(self):
-        print("LinearMtp (TestCase) is setting up...\n")
+        print("LitLinearMtp (TestCase) is setting up...\n")
         mtp_level: int = 12
         ntypes: int = 2
         chebyshev_size: int = 8
@@ -77,17 +77,12 @@ class LinearMtpTest(unittest.TestCase):
     
     
     def tearDown(self):
-        print("LinearMtp (TestCase) is tearing down...\n")
+        print("LitLinearMtp (TestCase) is tearing down...\n")
     
     
-    def est_train(self):
+    def test_train(self):
         self.trainer.fit(model=self.lit_potential_to_loss)
     
-
-    def test_predict_efv(self):
-        linear_mtp: LinearMtp = self.lit_potential_to_loss.model
-        e, f, v = linear_mtp(*self.mlff_input.analyse_pymatgen(self.structure))
-        print(e, f, v)
 
 
 if __name__ == "__main__":
