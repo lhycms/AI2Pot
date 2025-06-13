@@ -39,22 +39,20 @@ find_package(pybind11 CONFIG REQUIRED)
 execute_process(COMMAND python3 -c "import numpy as np;print(np.__path__[0])" OUTPUT_VARIABLE NUMPY_ROOT_PATH)
 string(REPLACE "\n" "/core/include" NUMPY_INCLUDE_PATH ${NUMPY_ROOT_PATH})
 
-## 2.4. FindOpenMP
-find_package(OpenMP)
-if(OpenMP_CXX_FOUND)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}") 
-endif()
-
-
-## 2.5. torch
+## 2.4. torch
 execute_process(COMMAND python3 -c "import torch;print(torch.__path__[0])" OUTPUT_VARIABLE TORCH_PATH)
 string(REPLACE "\n" "/share/cmake" TORCH_CMAKE_PREFIX_PATH ${TORCH_PATH})
 list(APPEND CMAKE_PREFIX_PATH ${TORCH_CMAKE_PREFIX_PATH})
 find_package(Torch CONFIG REQUIRED)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
 
+## 2.5. FindOpenMP
+find_package(OpenMP)
+if (OpenMP_CXX_FOUND)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+endif()
 
 ## 2.6. CUDA
 if (USE_CUDA)
