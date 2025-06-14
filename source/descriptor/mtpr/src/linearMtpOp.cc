@@ -19,6 +19,11 @@
 #include "../include/linearMtp.h"
 #include "../include/linearMtpOp.h"
 
+#if defined(USE_CUDA) or defined(__INTELLISENSE__)
+#include "../gpu/include/linearMtp.cuh"
+#include "../gpu/include/linearMtpLoss.cuh"
+#endif
+
 
 namespace ai2pot {
 namespace mtpr {
@@ -56,6 +61,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
     const at::Tensor& zbl_dks_tensor)
 {
     int nbatches = (int)betot_dft_tensor.size(0);
+    int num_atoms = bilist_tensor.size(1);
     int alpha_index_basic_count = (int)alpha_index_basic_tensor.size(0);
     int alpha_index_times_count = (int)alpha_index_times_tensor.size(0);
     int alpha_scalar_moment = (int)alpha_moment_mapping_tensor.size(0);
@@ -68,12 +74,18 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
     c10::TensorOptions float_options;
 
     at::Tensor bloss_tensor;
+    at::Tensor tmp_etot_ml_tensor;
+    at::Tensor tmp_force_ml_tensor;
+    at::Tensor tmp_virial_ml_tensor;
 
     if (brcs_tensor.dtype() == torch::kFloat32) {
         float_options = c10::TensorOptions()
                             .dtype(torch::kFloat32)
                             .device(brcs_tensor.device());
         bloss_tensor = at::zeros({nbatches}, float_options);
+        tmp_etot_ml_tensor = at::tensor(0, float_options);
+        tmp_force_ml_tensor = at::zeros({num_atoms + nghost, 3}, float_options);
+        tmp_virial_ml_tensor = at::zeros({9}, float_options);
 
         float *zbl_cks = zbl_cks_tensor.data_ptr<float>();
         float *zbl_dks = zbl_dks_tensor.data_ptr<float>();
@@ -97,38 +109,96 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
             int *types = btypes_tensor[bb].data_ptr<int>();
             int *type_map = type_map_tensor.data_ptr<int>();
 
-            LinearMtp<float>::find_loss(
-                (*loss),
-                e_weight,
-                f_weight,
-                v_weight,
-                etot_dft,
-                force_dft,
-                virial_dft,
-                chebyshev_size,
-                coeffs,
-                linear_coeffs,
-                type_bias,
-                alpha_moments_count,
-                alpha_index_basic_count,
-                alpha_index_basic,
-                alpha_index_times_count,
-                alpha_index_times,
-                alpha_scalar_moment,
-                alpha_moment_mapping,
-                nmus,
-                inum,
-                ilist,
-                numneigh,
-                firstneigh,
-                rcs,
-                types,
-                ntypes,
-                type_map,
-                umax_num_neighs,
-                nghost,
-                rmax,
-                rmin);
+            if (brcs_tensor.device() == c10::kCPU) {
+                LinearMtp<float>::find_loss(
+                    (*loss),
+                    e_weight,
+                    f_weight,
+                    v_weight,
+                    etot_dft,
+                    force_dft,
+                    virial_dft,
+                    chebyshev_size,
+                    coeffs,
+                    linear_coeffs,
+                    type_bias,
+                    alpha_moments_count,
+                    alpha_index_basic_count,
+                    alpha_index_basic,
+                    alpha_index_times_count,
+                    alpha_index_times,
+                    alpha_scalar_moment,
+                    alpha_moment_mapping,
+                    nmus,
+                    inum,
+                    ilist,
+                    numneigh,
+                    firstneigh,
+                    rcs,
+                    types,
+                    ntypes,
+                    type_map,
+                    umax_num_neighs,
+                    nghost,
+                    rmax,
+                    rmin);
+            } else {
+#if defined(USE_CUDA) or defined(__INTELLISENSE__)
+            int block_size_x = 64;
+            int grid_size_x = (num_atoms - 1) / block_size_x + 1;
+            dim3 grid_size(grid_size_x);
+            dim3 block_size(block_size_x);
+
+            tmp_etot_ml_tensor.zero_();
+            tmp_force_ml_tensor.zero_();
+            tmp_virial_ml_tensor.zero_();
+            float *tmp_etot_ml_ptr = tmp_etot_ml_tensor.data_ptr();
+            float *tmp_force_ml = tmp_force_ml_tensor.data_ptr();
+            float *tmp_virial_ml = tmp_virial_ml_tensor.data_ptr();
+
+            find_efv_kernel KERNEL_ARG2(grid_size, block_size)
+            (*tmp_etot_ml_ptr,
+             tmp_force_ml,
+             tmp_virial_ml,
+             chebyshev_size,
+             coeffs,
+             linear_coeffs,
+             type_bias,
+             alpha_moments_count,
+             alpha_index_basic_count,
+             alpha_index_basic,
+             alpha_index_times_count,
+             alpha_index_times,
+             alpha_scalar_moment,
+             alpha_moment_mapping,
+             nmus,
+             inum,
+             ilist,
+             numneigh,
+             firstneigh,
+             rcs,
+             types,
+             ntypes,
+             type_map,
+             umax_num_neighs,
+             nghost,
+             rmax,
+             rmin);
+
+            find_loss_kernel KERNEL_ARG2(grid_size, block_size)
+            (*loss,
+             ilist,
+             e_weight,
+             f_weight,
+             v_weight,
+             etot_ml,
+             *tmp_etot_ml_ptr,
+             tmp_force_ml,
+             force_dft,
+             tmp_virial_ml,
+             virial_dft);
+#endif
+            }
         }
     } else {
         float_options = c10::TensorOptions()
@@ -158,38 +228,44 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
             int *types = btypes_tensor[bb].data_ptr<int>();
             int *type_map = type_map_tensor.data_ptr<int>();
 
-            LinearMtp<double>::find_loss(
-                (*loss),
-                e_weight,
-                f_weight,
-                v_weight,
-                etot_dft,
-                force_dft,
-                virial_dft,
-                chebyshev_size,
-                coeffs,
-                linear_coeffs,
-                type_bias,
-                alpha_moments_count,
-                alpha_index_basic_count,
-                alpha_index_basic,
-                alpha_index_times_count,
-                alpha_index_times,
-                alpha_scalar_moment,
-                alpha_moment_mapping,
-                nmus,
-                inum,
-                ilist,
-                numneigh,
-                firstneigh,
-                rcs,
-                types,
-                ntypes,
-                type_map,
-                umax_num_neighs,
-                nghost,
-                rmax,
-                rmin);
+            if (brcs_tensor.device() == c10::kCPU) {
+                LinearMtp<double>::find_loss(
+                    (*loss),
+                    e_weight,
+                    f_weight,
+                    v_weight,
+                    etot_dft,
+                    force_dft,
+                    virial_dft,
+                    chebyshev_size,
+                    coeffs,
+                    linear_coeffs,
+                    type_bias,
+                    alpha_moments_count,
+                    alpha_index_basic_count,
+                    alpha_index_basic,
+                    alpha_index_times_count,
+                    alpha_index_times,
+                    alpha_scalar_moment,
+                    alpha_moment_mapping,
+                    nmus,
+                    inum,
+                    ilist,
+                    numneigh,
+                    firstneigh,
+                    rcs,
+                    types,
+                    ntypes,
+                    type_map,
+                    umax_num_neighs,
+                    nghost,
+                    rmax,
+                    rmin);
+            } else {
+#if defined(USE_CUDA) or defined(__INTELLISENSE__)
+    
+#endif
+            }
         }
     }
 
@@ -321,41 +397,46 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
             int *types = btypes_tensor[bb].data_ptr<int>();
             int *type_map = type_map_tensor.data_ptr<int>();
 
-
-            LinearMtp<float>::find_loss_backward(
-                loss_der2coeffs,
-                loss_der2linear_coeffs,
-                loss_der2type_bias,
-                e_weight,
-                f_weight,
-                v_weight,
-                etot_dft,
-                force_dft,
-                virial_dft,
-                chebyshev_size,
-                coeffs,
-                linear_coeffs,
-                type_bias,
-                alpha_moments_count,
-                alpha_index_basic_count,
-                alpha_index_basic,
-                alpha_index_times_count,
-                alpha_index_times,
-                alpha_scalar_moment,
-                alpha_moment_mapping,
-                nmus,
-                inum,
-                ilist,
-                numneigh,
-                firstneigh,
-                rcs,
-                types,
-                ntypes,
-                type_map,
-                umax_num_neighs,
-                nghost,
-                rmax,
-                rmin);
+            if (brcs_tensor.device() == c10::kCPU) {
+                LinearMtp<float>::find_loss_backward(
+                    loss_der2coeffs,
+                    loss_der2linear_coeffs,
+                    loss_der2type_bias,
+                    e_weight,
+                    f_weight,
+                    v_weight,
+                    etot_dft,
+                    force_dft,
+                    virial_dft,
+                    chebyshev_size,
+                    coeffs,
+                    linear_coeffs,
+                    type_bias,
+                    alpha_moments_count,
+                    alpha_index_basic_count,
+                    alpha_index_basic,
+                    alpha_index_times_count,
+                    alpha_index_times,
+                    alpha_scalar_moment,
+                    alpha_moment_mapping,
+                    nmus,
+                    inum,
+                    ilist,
+                    numneigh,
+                    firstneigh,
+                    rcs,
+                    types,
+                    ntypes,
+                    type_map,
+                    umax_num_neighs,
+                    nghost,
+                    rmax,
+                    rmin);
+            } else {
+#if defined(USE_CUDA) or defined(__INTELLISENSE__)
+    
+#endif
+            }
         }
     } else {
         float_options = c10::TensorOptions()
@@ -388,40 +469,46 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
             int *types = btypes_tensor[bb].data_ptr<int>();
             int *type_map = type_map_tensor.data_ptr<int>();
 
-            LinearMtp<double>::find_loss_backward(
-                loss_der2coeffs,
-                loss_der2linear_coeffs,
-                loss_der2type_bias,
-                e_weight,
-                f_weight,
-                v_weight,
-                etot_dft,
-                force_dft,
-                virial_dft,
-                chebyshev_size,
-                coeffs,
-                linear_coeffs,
-                type_bias,
-                alpha_moments_count,
-                alpha_index_basic_count,
-                alpha_index_basic,
-                alpha_index_times_count,
-                alpha_index_times,
-                alpha_scalar_moment,
-                alpha_moment_mapping,
-                nmus,
-                inum,
-                ilist,
-                numneigh,
-                firstneigh,
-                rcs,
-                types,
-                ntypes,
-                type_map,
-                umax_num_neighs,
-                nghost,
-                rmax,
-                rmin);
+            if (brcs_tensor.device() == c10::kCPU) {
+                LinearMtp<double>::find_loss_backward(
+                    loss_der2coeffs,
+                    loss_der2linear_coeffs,
+                    loss_der2type_bias,
+                    e_weight,
+                    f_weight,
+                    v_weight,
+                    etot_dft,
+                    force_dft,
+                    virial_dft,
+                    chebyshev_size,
+                    coeffs,
+                    linear_coeffs,
+                    type_bias,
+                    alpha_moments_count,
+                    alpha_index_basic_count,
+                    alpha_index_basic,
+                    alpha_index_times_count,
+                    alpha_index_times,
+                    alpha_scalar_moment,
+                    alpha_moment_mapping,
+                    nmus,
+                    inum,
+                    ilist,
+                    numneigh,
+                    firstneigh,
+                    rcs,
+                    types,
+                    ntypes,
+                    type_map,
+                    umax_num_neighs,
+                    nghost,
+                    rmax,
+                    rmin);
+            } else {
+#if defined(USE_CUDA) or defined(__INTELLISENSE__)
+    
+#endif
+            }
         }
     }
 
@@ -533,36 +620,42 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
             int *types = btypes_tensor[bb].data_ptr<int>();
             int *type_map = type_map_tensor.data_ptr<int>();
 
-            LinearMtp<float>::find_ef_loss(
-                (*loss),
-                e_weight,
-                f_weight,
-                etot_dft,
-                force_dft,
-                chebyshev_size,
-                coeffs,
-                linear_coeffs,
-                type_bias,
-                alpha_moments_count,
-                alpha_index_basic_count,
-                alpha_index_basic,
-                alpha_index_times_count,
-                alpha_index_times,
-                alpha_scalar_moment,
-                alpha_moment_mapping,
-                nmus,
-                inum,
-                ilist,
-                numneigh,
-                firstneigh,
-                rcs,
-                types,
-                ntypes,
-                type_map,
-                umax_num_neighs,
-                nghost,
-                rmax,
-                rmin);
+            if (brcs_tensor.device() == c10::kCPU) {
+                LinearMtp<float>::find_ef_loss(
+                    (*loss),
+                    e_weight,
+                    f_weight,
+                    etot_dft,
+                    force_dft,
+                    chebyshev_size,
+                    coeffs,
+                    linear_coeffs,
+                    type_bias,
+                    alpha_moments_count,
+                    alpha_index_basic_count,
+                    alpha_index_basic,
+                    alpha_index_times_count,
+                    alpha_index_times,
+                    alpha_scalar_moment,
+                    alpha_moment_mapping,
+                    nmus,
+                    inum,
+                    ilist,
+                    numneigh,
+                    firstneigh,
+                    rcs,
+                    types,
+                    ntypes,
+                    type_map,
+                    umax_num_neighs,
+                    nghost,
+                    rmax,
+                    rmin);
+            } else {
+#if defined(USE_CUDA) or defined(__INTELLISENSE__)
+    
+#endif
+            }
         }
     } else {
         float_options = c10::TensorOptions()
@@ -590,36 +683,42 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
             int *types = btypes_tensor[bb].data_ptr<int>();
             int *type_map = type_map_tensor.data_ptr<int>();
 
-            LinearMtp<double>::find_ef_loss(
-                (*loss),
-                e_weight,
-                f_weight,
-                etot_dft,
-                force_dft,
-                chebyshev_size,
-                coeffs,
-                linear_coeffs,
-                type_bias,
-                alpha_moments_count,
-                alpha_index_basic_count,
-                alpha_index_basic,
-                alpha_index_times_count,
-                alpha_index_times,
-                alpha_scalar_moment,
-                alpha_moment_mapping,
-                nmus,
-                inum,
-                ilist,
-                numneigh,
-                firstneigh,
-                rcs,
-                types,
-                ntypes,
-                type_map,
-                umax_num_neighs,
-                nghost,
-                rmax,
-                rmin);
+            if (brcs_tensor.device() == c10::kCPU) {
+                LinearMtp<double>::find_ef_loss(
+                    (*loss),
+                    e_weight,
+                    f_weight,
+                    etot_dft,
+                    force_dft,
+                    chebyshev_size,
+                    coeffs,
+                    linear_coeffs,
+                    type_bias,
+                    alpha_moments_count,
+                    alpha_index_basic_count,
+                    alpha_index_basic,
+                    alpha_index_times_count,
+                    alpha_index_times,
+                    alpha_scalar_moment,
+                    alpha_moment_mapping,
+                    nmus,
+                    inum,
+                    ilist,
+                    numneigh,
+                    firstneigh,
+                    rcs,
+                    types,
+                    ntypes,
+                    type_map,
+                    umax_num_neighs,
+                    nghost,
+                    rmax,
+                    rmin);
+            } else {
+#if defined(USE_CUDA) or defined(__INTELLISENSE__)
+    
+#endif
+            }
         }
     }
 
@@ -746,39 +845,44 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
             int *types = btypes_tensor[bb].data_ptr<int>();
             int *type_map = type_map_tensor.data_ptr<int>();
 
-
-            LinearMtp<float>::find_ef_loss_backward(
-                loss_der2coeffs,
-                loss_der2linear_coeffs,
-                loss_der2type_bias,
-                e_weight,
-                f_weight,
-                etot_dft,
-                force_dft,
-                chebyshev_size,
-                coeffs,
-                linear_coeffs,
-                type_bias,
-                alpha_moments_count,
-                alpha_index_basic_count,
-                alpha_index_basic,
-                alpha_index_times_count,
-                alpha_index_times,
-                alpha_scalar_moment,
-                alpha_moment_mapping,
-                nmus,
-                inum,
-                ilist,
-                numneigh,
-                firstneigh,
-                rcs,
-                types,
-                ntypes,
-                type_map,
-                umax_num_neighs,
-                nghost,
-                rmax,
-                rmin);
+            if (brcs_tensor.device() == c10::kCPU) {
+                LinearMtp<float>::find_ef_loss_backward(
+                    loss_der2coeffs,
+                    loss_der2linear_coeffs,
+                    loss_der2type_bias,
+                    e_weight,
+                    f_weight,
+                    etot_dft,
+                    force_dft,
+                    chebyshev_size,
+                    coeffs,
+                    linear_coeffs,
+                    type_bias,
+                    alpha_moments_count,
+                    alpha_index_basic_count,
+                    alpha_index_basic,
+                    alpha_index_times_count,
+                    alpha_index_times,
+                    alpha_scalar_moment,
+                    alpha_moment_mapping,
+                    nmus,
+                    inum,
+                    ilist,
+                    numneigh,
+                    firstneigh,
+                    rcs,
+                    types,
+                    ntypes,
+                    type_map,
+                    umax_num_neighs,
+                    nghost,
+                    rmax,
+                    rmin);
+            } else {
+#if defined(USE_CUDA) or defined(__INTELLISENSE__)
+    
+#endif
+            }
         }
     } else {
         float_options = c10::TensorOptions()
@@ -811,38 +915,44 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
             int *types = btypes_tensor[bb].data_ptr<int>();
             int *type_map = type_map_tensor.data_ptr<int>();
 
-            LinearMtp<double>::find_ef_loss_backward(
-                loss_der2coeffs,
-                loss_der2linear_coeffs,
-                loss_der2type_bias,
-                e_weight,
-                f_weight,
-                etot_dft,
-                force_dft,
-                chebyshev_size,
-                coeffs,
-                linear_coeffs,
-                type_bias,
-                alpha_moments_count,
-                alpha_index_basic_count,
-                alpha_index_basic,
-                alpha_index_times_count,
-                alpha_index_times,
-                alpha_scalar_moment,
-                alpha_moment_mapping,
-                nmus,
-                inum,
-                ilist,
-                numneigh,
-                firstneigh,
-                rcs,
-                types,
-                ntypes,
-                type_map,
-                umax_num_neighs,
-                nghost,
-                rmax,
-                rmin);
+            if (brcs_tensor.device() == c10::kCPU) {
+                LinearMtp<double>::find_ef_loss_backward(
+                    loss_der2coeffs,
+                    loss_der2linear_coeffs,
+                    loss_der2type_bias,
+                    e_weight,
+                    f_weight,
+                    etot_dft,
+                    force_dft,
+                    chebyshev_size,
+                    coeffs,
+                    linear_coeffs,
+                    type_bias,
+                    alpha_moments_count,
+                    alpha_index_basic_count,
+                    alpha_index_basic,
+                    alpha_index_times_count,
+                    alpha_index_times,
+                    alpha_scalar_moment,
+                    alpha_moment_mapping,
+                    nmus,
+                    inum,
+                    ilist,
+                    numneigh,
+                    firstneigh,
+                    rcs,
+                    types,
+                    ntypes,
+                    type_map,
+                    umax_num_neighs,
+                    nghost,
+                    rmax,
+                    rmin);
+            } else {
+#if defined(USE_CUDA) or defined(__INTELLISENSE__)
+    
+#endif
+            }
         }
     }
 
@@ -959,34 +1069,40 @@ torch::autograd::variable_list LinearMtpToEFVFunction::forward(
             int *types = btypes_tensor[bb].data_ptr<int>();
             int *type_map = type_map_tensor.data_ptr<int>();
             
-            LinearMtp<float>::find_efv(
-                *etot_ptr,
-                force,
-                virial,
-                chebyshev_size,
-                coeffs,
-                linear_coeffs,
-                type_bias,
-                alpha_moments_count,
-                alpha_index_basic_count,
-                alpha_index_basic,
-                alpha_index_times_count,
-                alpha_index_times,
-                alpha_scalar_moments,
-                alpha_moment_mapping,
-                nmus,
-                inum,
-                ilist,
-                numneigh,
-                firstneigh,
-                rcs,
-                types,
-                ntypes,
-                type_map,
-                umax_num_neigh_atoms,
-                nghost,
-                rmax,
-                rmin);
+            if (brcs_tensor.device() == c10::kCPU) {
+                LinearMtp<float>::find_efv(
+                    *etot_ptr,
+                    force,
+                    virial,
+                    chebyshev_size,
+                    coeffs,
+                    linear_coeffs,
+                    type_bias,
+                    alpha_moments_count,
+                    alpha_index_basic_count,
+                    alpha_index_basic,
+                    alpha_index_times_count,
+                    alpha_index_times,
+                    alpha_scalar_moments,
+                    alpha_moment_mapping,
+                    nmus,
+                    inum,
+                    ilist,
+                    numneigh,
+                    firstneigh,
+                    rcs,
+                    types,
+                    ntypes,
+                    type_map,
+                    umax_num_neigh_atoms,
+                    nghost,
+                    rmax,
+                    rmin);
+            } else {
+#if defined(USE_CUDA) or defined(__INTELLISENSE__)
+    
+#endif
+            }
         }
     } else {
         float_options = c10::TensorOptions()
@@ -1018,34 +1134,40 @@ torch::autograd::variable_list LinearMtpToEFVFunction::forward(
             int *types = btypes_tensor[bb].data_ptr<int>();
             int *type_map = type_map_tensor.data_ptr<int>();
 
-            LinearMtp<double>::find_efv(
-                *etot_ptr,
-                force,
-                virial,
-                chebyshev_size,
-                coeffs,
-                linear_coeffs,
-                type_bias,
-                alpha_moments_count,
-                alpha_index_basic_count,
-                alpha_index_basic,
-                alpha_index_times_count,
-                alpha_index_times,
-                alpha_scalar_moments,
-                alpha_moment_mapping,
-                nmus,
-                inum,
-                ilist,
-                numneigh,
-                firstneigh,
-                rcs,
-                types,
-                ntypes,
-                type_map,
-                umax_num_neigh_atoms,
-                nghost,
-                rmax,
-                rmin);
+            if (brcs_tensor.device() == c10::kCPU) {
+                LinearMtp<double>::find_efv(
+                    *etot_ptr,
+                    force,
+                    virial,
+                    chebyshev_size,
+                    coeffs,
+                    linear_coeffs,
+                    type_bias,
+                    alpha_moments_count,
+                    alpha_index_basic_count,
+                    alpha_index_basic,
+                    alpha_index_times_count,
+                    alpha_index_times,
+                    alpha_scalar_moments,
+                    alpha_moment_mapping,
+                    nmus,
+                    inum,
+                    ilist,
+                    numneigh,
+                    firstneigh,
+                    rcs,
+                    types,
+                    ntypes,
+                    type_map,
+                    umax_num_neigh_atoms,
+                    nghost,
+                    rmax,
+                    rmin);
+            } else {
+#if defined(USE_CUDA) or defined(__INTELLISENSE__)
+    
+#endif
+            }
         }
     }
 
@@ -1138,8 +1260,7 @@ torch::autograd::variable_list LinearMtpToEFFunction::forward(
     double zbl_rmax,
     double zbl_rmin,
     const at::Tensor& zbl_cks_tensor,
-    const at::Tensor& zbl_dks_tensor
-)
+    const at::Tensor& zbl_dks_tensor)
 {
     // 
     int nbatches = binum_tensor.size(0);
@@ -1189,33 +1310,39 @@ torch::autograd::variable_list LinearMtpToEFFunction::forward(
             int *types = btypes_tensor[bb].data_ptr<int>();
             int *type_map = type_map_tensor.data_ptr<int>();
             
-            LinearMtp<float>::find_ef(
-                *etot_ptr,
-                force,
-                chebyshev_size,
-                coeffs,
-                linear_coeffs,
-                type_bias,
-                alpha_moments_count,
-                alpha_index_basic_count,
-                alpha_index_basic,
-                alpha_index_times_count,
-                alpha_index_times,
-                alpha_scalar_moments,
-                alpha_moment_mapping,
-                nmus,
-                inum,
-                ilist,
-                numneigh,
-                firstneigh,
-                rcs,
-                types,
-                ntypes,
-                type_map,
-                umax_num_neigh_atoms,
-                nghost,
-                rmax,
-                rmin);
+            if (brcs_tensor.device() == c10::kCPU) {
+                LinearMtp<float>::find_ef(
+                    *etot_ptr,
+                    force,
+                    chebyshev_size,
+                    coeffs,
+                    linear_coeffs,
+                    type_bias,
+                    alpha_moments_count,
+                    alpha_index_basic_count,
+                    alpha_index_basic,
+                    alpha_index_times_count,
+                    alpha_index_times,
+                    alpha_scalar_moments,
+                    alpha_moment_mapping,
+                    nmus,
+                    inum,
+                    ilist,
+                    numneigh,
+                    firstneigh,
+                    rcs,
+                    types,
+                    ntypes,
+                    type_map,
+                    umax_num_neigh_atoms,
+                    nghost,
+                    rmax,
+                    rmin);
+            } else {
+#if defined(USE_CUDA) or defined(__INTELLISENSE__)
+    
+#endif
+            }
         }
     } else {
         float_options = c10::TensorOptions()
@@ -1245,33 +1372,39 @@ torch::autograd::variable_list LinearMtpToEFFunction::forward(
             int *types = btypes_tensor[bb].data_ptr<int>();
             int *type_map = type_map_tensor.data_ptr<int>();
 
-            LinearMtp<double>::find_ef(
-                *etot_ptr,
-                force,
-                chebyshev_size,
-                coeffs,
-                linear_coeffs,
-                type_bias,
-                alpha_moments_count,
-                alpha_index_basic_count,
-                alpha_index_basic,
-                alpha_index_times_count,
-                alpha_index_times,
-                alpha_scalar_moments,
-                alpha_moment_mapping,
-                nmus,
-                inum,
-                ilist,
-                numneigh,
-                firstneigh,
-                rcs,
-                types,
-                ntypes,
-                type_map,
-                umax_num_neigh_atoms,
-                nghost,
-                rmax,
-                rmin);
+            if (brcs_tensor.device() == c10::kCPU) {
+                LinearMtp<double>::find_ef(
+                    *etot_ptr,
+                    force,
+                    chebyshev_size,
+                    coeffs,
+                    linear_coeffs,
+                    type_bias,
+                    alpha_moments_count,
+                    alpha_index_basic_count,
+                    alpha_index_basic,
+                    alpha_index_times_count,
+                    alpha_index_times,
+                    alpha_scalar_moments,
+                    alpha_moment_mapping,
+                    nmus,
+                    inum,
+                    ilist,
+                    numneigh,
+                    firstneigh,
+                    rcs,
+                    types,
+                    ntypes,
+                    type_map,
+                    umax_num_neigh_atoms,
+                    nghost,
+                    rmax,
+                    rmin);
+            } else {
+#if defined(USE_CUDA) or defined(__INTELLISENSE__)
+    
+#endif
+            }
         }
     }
 
