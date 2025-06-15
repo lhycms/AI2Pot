@@ -24,12 +24,6 @@
 #include "./basis.h"
 #include "./mtpParam.h"
 
-
-#ifdef USE_CUDA
-extern void find_mtp_basis_val_der_cuda_launcher<float>();
-extern void find_mtp_basis_val_der_cuda_launcher<double>();
-#endif
-
 namespace ai2pot {
 namespace mtpr {
 

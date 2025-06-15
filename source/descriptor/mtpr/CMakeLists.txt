@@ -16,6 +16,14 @@ endif()
 
 
 # 5. compile
+if (NOT DEFINED MAX_MTP_LEVEL)
+    message(STATUS "MAX_MTP_LEVEL is set to 16")
+    set(MAX_MTP_LEVEL 16)
+else()
+    message(STATUS "MAX_MTP_LEVEL is set to ${MAX_MTP_LEVEL}")
+endif()
+
+
 add_library(mtpParam SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/mtpParam.cc)
 
 if (TORCH_OP)
@@ -34,7 +42,13 @@ if (TORCH_OP)
     add_library(linearMtpOp SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/linearMtpOp.cc)
     target_link_libraries(linearMtpOp PRIVATE ${TORCH_LIBRARIES})
     if (USE_OPENMP)
-        target_compile_definitions(linearMtpOp PRIVATE USE_OPENMP)
+        target_compile_definitions(linearMtpOp PRIVATE USE_OPENMP USE_CUDA)
+    endif()
+    if (USE_CUDA AND CUDA_FOUND)
+        target_compile_definitions(linearMtpOp PRIVATE USE_CUDA)
+    endif()
+    if (MAX_MTP_LEVEL)
+        target_compile_definitions(linearMtpOp PRIVATE MAX_MTP_LEVEL=${MAX_MTP_LEVEL})
     endif()
 
     add_library(mtpr_bind SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bind/mtpr_bind.cc)
@@ -42,6 +56,12 @@ if (TORCH_OP)
     target_link_libraries(mtpr_bind PRIVATE mtpParamOp mtpBasisOp linearMtpOp ${TORCH_LIBRARIES} ${PYTHON_LIBRARIES})
     if (USE_OPENMP)
         target_compile_definitions(linearMtpOp PRIVATE USE_OPENMP)
+    endif()
+    if (USE_CUDA AND CUDA_FOUND)
+        target_compile_definitions(linearMtpOp PRIVATE USE_CUDA)
+    endif()
+    if (MAX_MTP_LEVEL)
+        target_compile_definitions(linearMtpOp PRIVATE MAX_MTP_LEVEL=${MAX_MTP_LEVEL})
     endif()
 endif()
 

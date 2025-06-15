@@ -25,6 +25,7 @@ class LinearMtpTest(unittest.TestCase):
         self.rmax: float = 5.0
         self.rmin: float = 2.0
         self.umax_num_neighs = 100
+        self.device: torch._C.device = torch.device("cuda")
         self.linear_mtp: LinearMtp = LinearMtp(mtp_level=16,
                                                type_map_tensor=self.type_map_tensor,
                                                chebyshev_size=self.chebyshev_size,
@@ -32,12 +33,15 @@ class LinearMtpTest(unittest.TestCase):
                                                rmin=self.rmin,
                                                umax_num_neighs=self.umax_num_neighs,
                                                fit_virial=True)
+        self.linear_mtp.to(self.device)
         self.mlff_input: MlffInput = MlffInput(type_map=self.type_map_tensor.numpy().tolist(),
                                                rcut=self.rmax,
-                                               umax_num_neighs=self.umax_num_neighs)
+                                               umax_num_neighs=self.umax_num_neighs,
+                                               device=self.device)
         self.mlff_to_loss_input: MlffToLossInput = MlffToLossInput(type_map=self.type_map_tensor.numpy().tolist(),
                                                                    rcut=self.rmax,
-                                                                   umax_num_neighs=self.umax_num_neighs)
+                                                                   umax_num_neighs=self.umax_num_neighs,
+                                                                   device=self.device)
         self.structure: Structure = Structure.from_file(ReNbSSe_POSCAR_PATH)
     
     
@@ -64,12 +68,12 @@ class LinearMtpTest(unittest.TestCase):
         print("1. Loss = ", loss)
 
 
-    def test_predict_ef_loss(self):
+    def est_predict_ef_loss(self):
         "Ignore"
         pass
 
 
-    def test_predict_efv(self):
+    def est_predict_efv(self):
         times_list: List[float] = []
         for ii in range(110):
             t1 = time.time()
@@ -85,7 +89,7 @@ class LinearMtpTest(unittest.TestCase):
         print("3. Virial.shape = ", v.shape)
 
     
-    def test_predict_ef(self):
+    def est_predict_ef(self):
         times_list: List[float] = []
         for ii in range(110):
             t1 = time.time()

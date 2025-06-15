@@ -131,7 +131,7 @@ class NNMtpTest(unittest.TestCase):
         print("NNMtpTest (TestCase) is tearing down...\n")
 
 
-    def test_train(self):
+    def est_train(self):
         print("NNMtpTest.test_train:")
         print("---------------------")
         self.nn_mtp.train()

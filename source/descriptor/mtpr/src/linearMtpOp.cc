@@ -19,10 +19,12 @@
 #include "../include/linearMtp.h"
 #include "../include/linearMtpOp.h"
 
+/*
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
 #include "../gpu/include/linearMtp.cuh"
 #include "../gpu/include/linearMtpLoss.cuh"
 #endif
+*/
 
 
 namespace ai2pot {
@@ -74,18 +76,22 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
     c10::TensorOptions float_options;
 
     at::Tensor bloss_tensor;
+#if defined(USE_CUDA) or defined(__INTELLISENSE__)
     at::Tensor tmp_etot_ml_tensor;
     at::Tensor tmp_force_ml_tensor;
     at::Tensor tmp_virial_ml_tensor;
+#endif
 
     if (brcs_tensor.dtype() == torch::kFloat32) {
         float_options = c10::TensorOptions()
                             .dtype(torch::kFloat32)
                             .device(brcs_tensor.device());
         bloss_tensor = at::zeros({nbatches}, float_options);
+#if defined(USE_CUDA) or defined(__INTELLISENSE__)
         tmp_etot_ml_tensor = at::tensor(0, float_options);
         tmp_force_ml_tensor = at::zeros({num_atoms + nghost, 3}, float_options);
         tmp_virial_ml_tensor = at::zeros({9}, float_options);
+#endif
 
         float *zbl_cks = zbl_cks_tensor.data_ptr<float>();
         float *zbl_dks = zbl_dks_tensor.data_ptr<float>();
@@ -144,6 +150,8 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                     rmin);
             } else {
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
+/*
+printf("***+++ use cuda.\n");
             int block_size_x = 64;
             int grid_size_x = (num_atoms - 1) / block_size_x + 1;
             dim3 grid_size(grid_size_x);
@@ -197,6 +205,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
              force_dft,
              tmp_virial_ml,
              virial_dft);
+*/
 #endif
             }
         }
@@ -263,7 +272,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                     rmin);
             } else {
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
-    
+printf("***+++ use cuda.\n");
 #endif
             }
         }
