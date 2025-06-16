@@ -147,6 +147,13 @@ extern template void ai2pot::mtpr::find_ef_torch_launcher<double>(
 
 
 // 2. linearMtpLoss_torch_launcher.cu
+// 2.1. find_loss_torch_launcher()
+
+// 2.2. find_ef_loss_torch_launcher()
+
+// 2.3. find_loss_backward_torch_launcher()
+
+// 2.4. find_ef_loss_backward_torch_launcher()
 
 
 };  // namespace : mtpr
