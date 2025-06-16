@@ -1,16 +1,23 @@
 # 3. Set dirs
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/descriptor/mtpr/gpu)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/descriptor/mtpr/gpu/bin)
 file(MAKE_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/descriptor/mtpr/gpu)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/descriptor/mtpr/gpu/lib)
 file(MAKE_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/obj/descriptor/mtpr/gpu)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/obj/descriptor/mtpr/gpu/obj)
 file(MAKE_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 
 
 # 5. compile
-
+add_library(linear_mtp_torch_launcher SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/linearMtp_torch_launcher.cu)
+set_target_properties(linear_mtp_torch_launcher PROPERTIES
+    CUDA_SEPERATE_COMPILATION on
+    CUDA_STANDARD ${CUDA_STANDARD}
+    CUDA_ARCHITECTURES ${CUDA_ARCHITECTURES})
+if (USE_CUDA AND CUDA_FOUND)
+    target_compile_definitions(linear_mtp_torch_launcher PRIVATE USE_CUDA MAX_MTP_LEVEL=${MAX_MTP_LEVEL})
+endif()
 
 # 6. compile test
 if (BUILD_TEST)

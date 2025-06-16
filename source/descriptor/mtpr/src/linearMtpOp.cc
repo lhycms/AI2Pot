@@ -19,12 +19,80 @@
 #include "../include/linearMtp.h"
 #include "../include/linearMtpOp.h"
 
-/*
+
+
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
-#include "../gpu/include/linearMtp.cuh"
-#include "../gpu/include/linearMtpLoss.cuh"
+#include "../gpu/include/linearMtp_torch_launcher.h"
+
+
+namespace ai2pot {
+namespace mtpr {
+// 1. find_efv()
+extern template void find_efv_torch_launcher<float>(
+    float *d_etot_ptr,
+    float (*d_force)[3],
+    float *d_virial,
+    int chebyshev_size,
+    float *d_coeffs,
+    float *d_linear_coeffs,
+    float *d_type_bias,
+    const int alpha_moments_count,
+    const int alpha_index_basic_count,
+    const int (*d_alpha_index_basic)[4],
+    const int alpha_index_times_count,
+    const int (*d_alpha_index_times)[4],
+    const int alpha_scalar_moments,
+    const int *d_alpha_moment_mapping,
+    int nmus,
+    int inum,
+    int *d_ilist,
+    int *d_numneigh,
+    int *d_firstneigh,
+    float (*d_rcs)[3],
+    int *d_types,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    float rmax,
+    float rmin);
+
+extern template void find_efv_torch_launcher<double>(
+    double *d_etot_ptr,
+    double (*d_force)[3],
+    double *d_virial,
+    int chebyshev_size,
+    double *d_coeffs,
+    double *d_linear_coeffs,
+    double *d_type_bias,
+    const int alpha_moments_count,
+    const int alpha_index_basic_count,
+    const int (*d_alpha_index_basic)[4],
+    const int alpha_index_times_count,
+    const int (*d_alpha_index_times)[4],
+    const int alpha_scalar_moments,
+    const int *d_alpha_moment_mapping,
+    int nmus,
+    int inum,
+    int *d_ilist,
+    int *d_numneigh,
+    int *d_firstneigh,
+    double (*d_rcs)[3],
+    int *d_types,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    double rmax,
+    double rmin);
+
+
+
+};  // namespace : mtpr
+};  // namespace : ai2pot
+
 #endif
-*/
+
 
 
 namespace ai2pot {
@@ -150,62 +218,8 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                     rmin);
             } else {
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
-/*
 printf("***+++ use cuda.\n");
-            int block_size_x = 64;
-            int grid_size_x = (num_atoms - 1) / block_size_x + 1;
-            dim3 grid_size(grid_size_x);
-            dim3 block_size(block_size_x);
 
-            tmp_etot_ml_tensor.zero_();
-            tmp_force_ml_tensor.zero_();
-            tmp_virial_ml_tensor.zero_();
-            float *tmp_etot_ml_ptr = tmp_etot_ml_tensor.data_ptr();
-            float *tmp_force_ml = tmp_force_ml_tensor.data_ptr();
-            float *tmp_virial_ml = tmp_virial_ml_tensor.data_ptr();
-
-            find_efv_kernel KERNEL_ARG2(grid_size, block_size)
-            (*tmp_etot_ml_ptr,
-             tmp_force_ml,
-             tmp_virial_ml,
-             chebyshev_size,
-             coeffs,
-             linear_coeffs,
-             type_bias,
-             alpha_moments_count,
-             alpha_index_basic_count,
-             alpha_index_basic,
-             alpha_index_times_count,
-             alpha_index_times,
-             alpha_scalar_moment,
-             alpha_moment_mapping,
-             nmus,
-             inum,
-             ilist,
-             numneigh,
-             firstneigh,
-             rcs,
-             types,
-             ntypes,
-             type_map,
-             umax_num_neighs,
-             nghost,
-             rmax,
-             rmin);
-
-            find_loss_kernel KERNEL_ARG2(grid_size, block_size)
-            (*loss,
-             ilist,
-             e_weight,
-             f_weight,
-             v_weight,
-             etot_ml,
-             *tmp_etot_ml_ptr,
-             tmp_force_ml,
-             force_dft,
-             tmp_virial_ml,
-             virial_dft);
-*/
 #endif
             }
         }
@@ -273,6 +287,7 @@ printf("***+++ use cuda.\n");
             } else {
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
 printf("***+++ use cuda.\n");
+printf("%d, %d, %d\n", ilist[0], ilist[1], ilist[2]);
 #endif
             }
         }

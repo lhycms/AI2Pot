@@ -40,7 +40,7 @@ if (TORCH_OP)
     target_link_libraries(mtpBasisGradOp PRIVATE ${TORCH_LIBRARIES})
 
     add_library(linearMtpOp SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/linearMtpOp.cc)
-    target_link_libraries(linearMtpOp PRIVATE ${TORCH_LIBRARIES})
+    target_link_libraries(linearMtpOp PRIVATE ${TORCH_LIBRARIES} linear_mtp_torch_launcher)
     if (USE_OPENMP)
         target_compile_definitions(linearMtpOp PRIVATE USE_OPENMP USE_CUDA)
     endif()

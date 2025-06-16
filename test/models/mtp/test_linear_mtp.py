@@ -15,7 +15,7 @@ ReNbSSe_POSCAR_PATH = os.path.join(TEST_FILES_DIR, "POSCARs", "POSCAR")
 torch.manual_seed(16)
 torch.set_num_threads(16)
 
-print(torch.get_num_threads())
+print("Number of omp threads = ", torch.get_num_threads())
 
 class LinearMtpTest(unittest.TestCase):
     def setUp(self):

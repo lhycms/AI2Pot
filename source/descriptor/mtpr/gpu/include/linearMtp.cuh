@@ -17,6 +17,7 @@
 #define AI2POT_LINEAR_MTP_CUH
 #include <math.h>
 #include <chrono>
+#include <iostream>
 
 #include "./mtpBasis.cuh"
 
