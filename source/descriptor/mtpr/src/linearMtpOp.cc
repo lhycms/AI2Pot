@@ -24,10 +24,10 @@
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
 #include "../gpu/include/linearMtp_torch_launcher.h"
 
-
 namespace ai2pot {
 namespace mtpr {
-// 1. find_efv()
+// 1. linearMtp_torch_launcher.cu
+// 1.1. find_efv_torch_launcher()
 extern template void find_efv_torch_launcher<float>(
     float *d_etot_ptr,
     float (*d_force)[3],
@@ -87,11 +87,75 @@ extern template void find_efv_torch_launcher<double>(
     double rmin);
 
 
+// 1.2. find_ef_torch_launcher()
+extern template void ai2pot::mtpr::find_ef_torch_launcher<float>(
+    float *d_etot_ptr,
+    float (*d_force)[3],
+    int chebyshev_size,
+    float *d_coeffs,
+    float *d_linear_coeffs,
+    float *d_type_bias,
+    const int alpha_moments_count,
+    const int alpha_index_basic_count,
+    const int (*d_alpha_index_basic)[4],
+    const int alpha_index_times_count,
+    const int (*d_alpha_index_times)[4],
+    const int alpha_scalar_moments,
+    const int *d_alpha_moment_mapping,
+    int nmus,
+    int inum,
+    int *d_ilist,
+    int *d_numneigh,
+    int *d_firstneigh,
+    float (*d_rcs)[3],
+    int *d_types,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    float rmax,
+    float rmin);
+
+extern template void ai2pot::mtpr::find_ef_torch_launcher<double>(
+    double *d_etot_ptr,
+    double (*d_force)[3],
+    int chebyshev_size,
+    double *d_coeffs,
+    double *d_linear_coeffs,
+    double *d_type_bias,
+    const int alpha_moments_count,
+    const int alpha_index_basic_count,
+    const int (*d_alpha_index_basic)[4],
+    const int alpha_index_times_count,
+    const int (*d_alpha_index_times)[4],
+    const int alpha_scalar_moments,
+    const int *d_alpha_moment_mapping,
+    int nmus,
+    int inum,
+    int *d_ilist,
+    int *d_numneigh,
+    int *d_firstneigh,
+    double (*d_rcs)[3],
+    int *d_types,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    double rmax,
+    double rmin);
+
+
+
+// 2. linearMtpLoss_torch_launcher.cu
+
 
 };  // namespace : mtpr
 };  // namespace : ai2pot
 
 #endif
+
+
+
 
 
 
@@ -218,8 +282,37 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                     rmin);
             } else {
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
-printf("***+++ use cuda.\n");
-
+printf("***+++ use cuda (float).\n");
+                float *tmp_etot_ml_ptr = (float*)tmp_etot_ml_tensor.data_ptr<float>();
+                float (*tmp_force_ml)[3] = (float (*)[3])tmp_force_ml_tensor.data_ptr<float>();
+                float *tmp_virial_ml = (float*)tmp_virial_ml_tensor.data_ptr<float>();
+                find_efv_torch_launcher(tmp_etot_ml_ptr,
+                                        tmp_force_ml,
+                                        tmp_virial_ml,
+                                        chebyshev_size,
+                                        coeffs,
+                                        linear_coeffs,
+                                        type_bias,
+                                        alpha_moments_count,
+                                        alpha_index_basic_count,
+                                        alpha_index_basic,
+                                        alpha_index_times_count,
+                                        alpha_index_times,
+                                        alpha_scalar_moment,
+                                        alpha_moment_mapping,
+                                        nmus,
+                                        inum,
+                                        ilist,
+                                        numneigh,
+                                        firstneigh,
+                                        rcs,
+                                        types,
+                                        ntypes,
+                                        type_map,
+                                        umax_num_neighs,
+                                        nghost,
+                                        (float)rmax,
+                                        (float)rmin);
 #endif
             }
         }
@@ -228,6 +321,11 @@ printf("***+++ use cuda.\n");
                             .dtype(torch::kFloat64)
                             .device(brcs_tensor.device());
         bloss_tensor = at::zeros({nbatches}, float_options);
+#if defined(USE_CUDA) or defined(__INTELLISENSE__)
+        tmp_etot_ml_tensor = at::tensor(0, float_options);
+        tmp_force_ml_tensor = at::zeros({num_atoms + nghost, 3}, float_options);
+        tmp_virial_ml_tensor = at::zeros({9}, float_options);
+#endif
 
         double *zbl_cks = zbl_cks_tensor.data_ptr<double>();
         double *zbl_dks = zbl_dks_tensor.data_ptr<double>();
@@ -286,8 +384,39 @@ printf("***+++ use cuda.\n");
                     rmin);
             } else {
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
-printf("***+++ use cuda.\n");
-printf("%d, %d, %d\n", ilist[0], ilist[1], ilist[2]);
+printf("***+++ use cuda. (double)\n");
+                double *tmp_etot_ml_ptr = (double*)tmp_etot_ml_tensor.data_ptr<double>();
+                double (*tmp_force_ml)[3] = (double (*)[3])tmp_force_ml_tensor.data_ptr<double>();
+                double *tmp_virial_ml = (double*)tmp_virial_ml_tensor.data_ptr<double>();
+
+                find_efv_torch_launcher(tmp_etot_ml_ptr,
+                                        tmp_force_ml,
+                                        tmp_virial_ml,
+                                        chebyshev_size,
+                                        coeffs,
+                                        linear_coeffs,
+                                        type_bias,
+                                        alpha_moments_count,
+                                        alpha_index_basic_count,
+                                        alpha_index_basic,
+                                        alpha_index_times_count,
+                                        alpha_index_times,
+                                        alpha_scalar_moment,
+                                        alpha_moment_mapping,
+                                        nmus,
+                                        inum,
+                                        ilist,
+                                        numneigh,
+                                        firstneigh,
+                                        rcs,
+                                        types,
+                                        ntypes,
+                                        type_map,
+                                        umax_num_neighs,
+                                        nghost,
+                                        rmax,
+                                        rmin);
+                
 #endif
             }
         }
