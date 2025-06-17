@@ -418,8 +418,6 @@ void LinearMtp<CoordType>::find_efv(
 #ifdef USE_OPENMP
 }
 #endif
-
-printf("[%.10f, %.10f, %.10f]\n", virial[0], virial[3], virial[8]);
 }
 
 

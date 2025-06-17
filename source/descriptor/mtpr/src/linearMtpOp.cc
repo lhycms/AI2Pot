@@ -483,7 +483,6 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                     rmin);
             } else {
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
-printf("***+++ use cuda (float).\n");
                 tmp_etot_ml_tensor.zero_();
                 tmp_force_ml_tensor.zero_();
                 tmp_virial_ml_tensor.zero_();
@@ -603,7 +602,6 @@ printf("***+++ use cuda (float).\n");
                     rmin);
             } else {
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
-printf("***+++ use cuda. (double)\n");
                 tmp_etot_ml_tensor.zero_();
                 tmp_force_ml_tensor.zero_();
                 tmp_virial_ml_tensor.zero_();
@@ -639,8 +637,6 @@ printf("***+++ use cuda. (double)\n");
                                         nghost,
                                         rmax,
                                         rmin);
-// 
-std::cout << tmp_virial_ml_tensor << std::endl;
 
                 ai2pot::mtpr::find_loss_torch_launcher(
                     loss,
@@ -747,6 +743,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
     int alpha_index_times_count = (int)alpha_index_times_tensor.size(0);
     int alpha_scalar_moment = (int)alpha_moment_mapping_tensor.size(0);
     int umax_num_neighs = (int)bfirstneigh_tensor.size(2);
+    int num_atoms = (int)bilist_tensor.size(1);
 
     c10::TensorOptions int_options = c10::TensorOptions()
                                         .dtype(torch::kInt32)
@@ -756,6 +753,11 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
     at::Tensor bloss_der2coeffs_tensor;
     at::Tensor bloss_der2linear_coeffs_tensor;
     at::Tensor bloss_der2type_bias_tensor;
+#if defined(USE_CUDA) or defined(__INTELLISENSE__)
+    at::Tensor tmp_etot_ml_tensor;
+    at::Tensor tmp_force_ml_tensor;
+    at::Tensor tmp_virial_ml_tensor;
+#endif
     
     if (bgrad_output_tensor.dtype() == torch::kFloat32) {
         float_options = c10::TensorOptions()
@@ -764,6 +766,11 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
         bloss_der2coeffs_tensor = at::zeros({nbatches, num_coeffs}, float_options);
         bloss_der2linear_coeffs_tensor = at::zeros({nbatches, num_linear_coeffs}, float_options);
         bloss_der2type_bias_tensor = at::zeros({nbatches, ntypes}, float_options);
+#if defined(USE_CUDA) or defined(__INTELLISENSE__)
+        tmp_etot_ml_tensor = at::tensor(0, float_options);
+        tmp_force_ml_tensor = at::zeros({num_atoms + nghost, 3}, float_options);
+        tmp_virial_ml_tensor = at::zeros({9}, float_options);
+#endif
         float* zbl_cks = zbl_cks_tensor.data_ptr<float>();
         float* zbl_dks = zbl_dks_tensor.data_ptr<float>();
 
@@ -825,7 +832,80 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
                     rmin);
             } else {
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
-    
+                tmp_etot_ml_tensor.zero_();
+                tmp_force_ml_tensor.zero_();
+                tmp_virial_ml_tensor.zero_();
+
+                float *tmp_etot_ml_ptr = (float*)tmp_etot_ml_tensor.data_ptr<float>();
+                float (*tmp_force_ml)[3] = (float (*)[3])tmp_force_ml_tensor.data_ptr<float>();
+                float *tmp_virial_ml = (float*)tmp_virial_ml_tensor.data_ptr<float>();
+                
+                find_efv_torch_launcher(
+                    tmp_etot_ml_ptr,
+                    tmp_force_ml,
+                    tmp_virial_ml,
+                    chebyshev_size,
+                    coeffs,
+                    linear_coeffs,
+                    type_bias,
+                    alpha_moments_count,
+                    alpha_index_basic_count,
+                    alpha_index_basic,
+                    alpha_index_times_count,
+                    alpha_index_times,
+                    alpha_scalar_moment,
+                    alpha_moment_mapping,
+                    nmus,
+                    inum,
+                    ilist,
+                    numneigh,
+                    firstneigh,
+                    rcs,
+                    types,
+                    ntypes,
+                    type_map,
+                    umax_num_neighs,
+                    nghost,
+                    (float)rmax,
+                    (float)rmin);
+
+                find_loss_backward_torch_launcher(
+                    loss_der2coeffs,
+                    loss_der2linear_coeffs,
+                    loss_der2type_bias,
+                    (float)e_weight,
+                    (float)f_weight,
+                    (float)v_weight,
+                    tmp_etot_ml_tensor.item<float>(),
+                    etot_dft,
+                    tmp_force_ml,
+                    force_dft,
+                    tmp_virial_ml,
+                    virial_dft,
+                    chebyshev_size,
+                    coeffs,
+                    linear_coeffs,
+                    type_bias,
+                    alpha_moments_count,
+                    alpha_index_basic_count,
+                    alpha_index_basic,
+                    alpha_index_times_count,
+                    alpha_index_times,
+                    alpha_scalar_moment,
+                    alpha_moment_mapping,
+                    nmus,
+                    inum,
+                    ilist,
+                    numneigh,
+                    firstneigh,
+                    rcs,
+                    types,
+                    ntypes,
+                    type_map,
+                    umax_num_neighs,
+                    nghost,
+                    (float)rmax,
+                    (float)rmin);
 #endif
             }
         }
@@ -836,6 +916,11 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
         bloss_der2coeffs_tensor = at::zeros({nbatches, num_coeffs}, float_options);
         bloss_der2linear_coeffs_tensor = at::zeros({nbatches, num_linear_coeffs}, float_options);
         bloss_der2type_bias_tensor = at::zeros({nbatches, ntypes}, float_options);
+        
+        tmp_etot_ml_tensor = at::tensor(0, float_options);
+        tmp_force_ml_tensor = at::zeros({num_atoms + nghost, 3}, float_options);
+        tmp_virial_ml_tensor = at::zeros({9}, float_options);
+
         double* zbl_cks = zbl_cks_tensor.data_ptr<double>();
         double* zbl_dks = zbl_dks_tensor.data_ptr<double>();
 
@@ -897,7 +982,79 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
                     rmin);
             } else {
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
-    
+                tmp_etot_ml_tensor.zero_();
+                tmp_force_ml_tensor.zero_();
+                tmp_virial_ml_tensor.zero_();
+                double *tmp_etot_ml_ptr = (double*)tmp_etot_ml_tensor.data_ptr<double>();
+                double (*tmp_force_ml)[3] = (double (*)[3])tmp_force_ml_tensor.data_ptr<double>();
+                double *tmp_virial_ml = (double*)tmp_virial_ml_tensor.data_ptr<double>();
+
+                find_efv_torch_launcher(
+                    tmp_etot_ml_ptr,
+                    tmp_force_ml,
+                    tmp_virial_ml,
+                    chebyshev_size,
+                    coeffs,
+                    linear_coeffs,
+                    type_bias,
+                    alpha_moments_count,
+                    alpha_index_basic_count,
+                    alpha_index_basic,
+                    alpha_index_times_count,
+                    alpha_index_times,
+                    alpha_scalar_moment,
+                    alpha_moment_mapping,
+                    nmus,
+                    inum,
+                    ilist,
+                    numneigh,
+                    firstneigh,
+                    rcs,
+                    types,
+                    ntypes,
+                    type_map,
+                    umax_num_neighs,
+                    nghost,
+                    rmax,
+                    rmin);
+
+                find_loss_backward_torch_launcher(
+                    loss_der2coeffs,
+                    loss_der2linear_coeffs,
+                    loss_der2type_bias,
+                    e_weight,
+                    f_weight,
+                    v_weight,
+                    tmp_etot_ml_tensor.item<double>(),
+                    etot_dft,
+                    tmp_force_ml,
+                    force_dft,
+                    tmp_virial_ml,
+                    virial_dft,
+                    chebyshev_size,
+                    coeffs,
+                    linear_coeffs,
+                    type_bias,
+                    alpha_moments_count,
+                    alpha_index_basic_count,
+                    alpha_index_basic,
+                    alpha_index_times_count,
+                    alpha_index_times,
+                    alpha_scalar_moment,
+                    alpha_moment_mapping,
+                    nmus,
+                    inum,
+                    ilist,
+                    numneigh,
+                    firstneigh,
+                    rcs,
+                    types,
+                    ntypes,
+                    type_map,
+                    umax_num_neighs,
+                    nghost,
+                    rmax,
+                    rmin);
 #endif
             }
         }

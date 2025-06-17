@@ -146,7 +146,6 @@ void find_loss_backward_torch_launcher(
     dim3 grid_size(grid_size_x);
     dim3 block_size(block_size_x);
 
-    /*
     find_loss_backward_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (
         d_loss_der2coeffs,
         d_loss_der2linear_coeffs,
@@ -184,7 +183,6 @@ void find_loss_backward_torch_launcher(
         nghost,
         rmax,
         rmin);
-    */
 
     CHECK_CUDA_API( cudaDeviceSynchronize() );
     CHECK_CUDA_API( cudaGetLastError() );
@@ -234,7 +232,6 @@ void find_ef_loss_backward_torch_launcher(
     dim3 grid_size(grid_size_x);
     dim3 block_size(block_size_x);
 
-    /*
     find_ef_loss_backward_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (
         d_loss_der2coeffs,
         d_loss_der2linear_coeffs,
@@ -269,7 +266,6 @@ void find_ef_loss_backward_torch_launcher(
         nghost,
         rmax,
         rmin);
-    */
 
     CHECK_CUDA_API( cudaDeviceSynchronize() );
     CHECK_CUDA_API( cudaGetLastError() );
