@@ -427,7 +427,7 @@ void find_efv_atom(CoordType *etot_ptr,
                     atomicAdd(&force[neigh_idx][aa], -e_site_ders_ija);
 
                     for (int bb=0; bb<3; bb++)
-                        atomicAdd(&virial[aa*3 + bb], -NeighbVect[aa] * e_site_ders_ija);
+                        atomicAdd(&virial[aa*3 + bb], -e_site_ders_ija * NeighbVect[bb]);
                  }
             }
         }

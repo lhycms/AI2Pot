@@ -526,7 +526,7 @@ printf("***+++ use cuda (float).\n");
                     (float)e_weight,
                     (float)f_weight,
                     (float)v_weight,
-                    (*tmp_etot_ml_ptr),
+                    tmp_etot_ml_tensor.item<float>(),
                     etot_dft,
                     tmp_force_ml,
                     force_dft,
@@ -604,6 +604,10 @@ printf("***+++ use cuda (float).\n");
             } else {
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
 printf("***+++ use cuda. (double)\n");
+                tmp_etot_ml_tensor.zero_();
+                tmp_force_ml_tensor.zero_();
+                tmp_virial_ml_tensor.zero_();
+
                 double *tmp_etot_ml_ptr = (double*)tmp_etot_ml_tensor.data_ptr<double>();
                 double (*tmp_force_ml)[3] = (double (*)[3])tmp_force_ml_tensor.data_ptr<double>();
                 double *tmp_virial_ml = (double*)tmp_virial_ml_tensor.data_ptr<double>();
@@ -635,6 +639,8 @@ printf("***+++ use cuda. (double)\n");
                                         nghost,
                                         rmax,
                                         rmin);
+// 
+std::cout << tmp_virial_ml_tensor << std::endl;
 
                 ai2pot::mtpr::find_loss_torch_launcher(
                     loss,
