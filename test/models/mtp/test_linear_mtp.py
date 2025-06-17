@@ -26,6 +26,7 @@ class LinearMtpTest(unittest.TestCase):
         self.rmin: float = 2.0
         self.umax_num_neighs = 100
         self.device: torch._C.device = torch.device("cuda")
+        self.torch_float_dtype: torch._C.dtype = torch.float64
         self.linear_mtp: LinearMtp = LinearMtp(mtp_level=16,
                                                type_map_tensor=self.type_map_tensor,
                                                chebyshev_size=self.chebyshev_size,
@@ -34,13 +35,16 @@ class LinearMtpTest(unittest.TestCase):
                                                umax_num_neighs=self.umax_num_neighs,
                                                fit_virial=True)
         self.linear_mtp.to(self.device)
+        self.linear_mtp.to(self.torch_float_dtype)
         self.mlff_input: MlffInput = MlffInput(type_map=self.type_map_tensor.numpy().tolist(),
                                                rcut=self.rmax,
                                                umax_num_neighs=self.umax_num_neighs,
+                                               dtype=self.torch_float_dtype,
                                                device=self.device)
         self.mlff_to_loss_input: MlffToLossInput = MlffToLossInput(type_map=self.type_map_tensor.numpy().tolist(),
                                                                    rcut=self.rmax,
                                                                    umax_num_neighs=self.umax_num_neighs,
+                                                                   dtype=self.torch_float_dtype,
                                                                    device=self.device)
         self.structure: Structure = Structure.from_file(ReNbSSe_POSCAR_PATH)
     

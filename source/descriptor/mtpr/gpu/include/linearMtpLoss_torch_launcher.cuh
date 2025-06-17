@@ -13,15 +13,17 @@
     along with AI2Pot.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef AI2POT_LINEAR_MTP_LOSS_TORCH_CUH
-#define AI2POT_LINEAR_MTP_LOSS_TORCH_CUH
-
-#include "./linearMtpLoss.cuh"
+#ifndef AI2POT_LINEAR_MTP_LOSS_TORCH_LAUNCHER_CUH
+#define AI2POT_LINEAR_MTP_LOSS_TORCH_LAUNCHER_CUH
 #include "./linearMtpLoss_torch_launcher.h"
+#include "./linearMtpLoss.cuh"
 
+namespace ai2pot {
+namespace mtpr {
 
 // 1. find_loss_torch_launcher()
 template <typename CoordType>
+__host__
 void find_loss_torch_launcher(
     CoordType *d_loss_ptr,
     int inum,
@@ -39,10 +41,10 @@ void find_loss_torch_launcher(
     int block_size_x = 64;
     int grid_size_x = (inum - 1) / block_size_x + 1;
     dim3 grid_size(grid_size_x);
-    dim3 block_size(block_size);
+    dim3 block_size(block_size_x);
 
-    /*
-    find_loss_torch_launcher<CoordType> KERNEL_ARG2(grid_size, block_size) (
+    
+    find_loss_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (
         d_loss_ptr,
         inum,
         d_ilist,
@@ -55,7 +57,7 @@ void find_loss_torch_launcher(
         d_force_dft,
         d_virial_ml,
         d_virial_dft);
-    */
+    
 
     CHECK_CUDA_API( cudaDeviceSynchronize() );
     CHECK_CUDA_API( cudaGetLastError() );
@@ -64,6 +66,7 @@ void find_loss_torch_launcher(
 
 // 2. find_ef_loss_torch_launcher()
 template <typename CoordType>
+__host__
 void find_ef_loss_torch_launcher(
     CoordType *d_loss_ptr,
     int inum,
@@ -80,7 +83,16 @@ void find_ef_loss_torch_launcher(
     dim3 grid_size(grid_size_x);
     dim3 block_size(block_size_x);
 
-
+    find_ef_loss_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (
+        d_loss_ptr,
+        inum,
+        d_ilist,
+        e_weight,
+        f_weight,
+        etot_ml,
+        etot_dft,
+        d_force_ml,
+        d_force_dft);
 
     CHECK_CUDA_API( cudaDeviceSynchronize() );
     CHECK_CUDA_API( cudaGetLastError() );
@@ -90,6 +102,7 @@ void find_ef_loss_torch_launcher(
 
 // 3. find_loss_backward_torch_launcher()
 template <typename CoordType>
+__host__
 void find_loss_backward_torch_launcher(
     CoordType *d_loss_der2coeffs,
     CoordType *d_loss_der2linear_coeffs,
@@ -131,9 +144,47 @@ void find_loss_backward_torch_launcher(
     int block_size_x = 64;
     int grid_size_x = (inum - 1) / block_size_x + 1;
     dim3 grid_size(grid_size_x);
-    dim3 block_size_x(block_size_x);
+    dim3 block_size(block_size_x);
 
-
+    /*
+    find_loss_backward_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (
+        d_loss_der2coeffs,
+        d_loss_der2linear_coeffs,
+        d_loss_der2type_bias,
+        e_weight,
+        f_weight,
+        v_weight,
+        etot_ml,
+        etot_dft,
+        d_force_ml,
+        d_force_dft,
+        d_virial_ml,
+        d_virial_dft,
+        chebyshev_size,
+        d_coeffs,
+        d_linear_coeffs,
+        d_type_bias,
+        alpha_moments_count,
+        alpha_index_basic_count,
+        d_alpha_index_basic,
+        alpha_index_times_count,
+        d_alpha_index_times,
+        alpha_scalar_moments,
+        d_alpha_moment_mapping,
+        nmus,
+        inum,
+        d_ilist,
+        d_numneigh,
+        d_firstneigh,
+        d_rcs,
+        d_types,
+        ntypes,
+        d_type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin);
+    */
 
     CHECK_CUDA_API( cudaDeviceSynchronize() );
     CHECK_CUDA_API( cudaGetLastError() );
@@ -142,6 +193,7 @@ void find_loss_backward_torch_launcher(
 
 // 4. find_ef_loss_backward_torch_launcher()
 template <typename CoordType>
+__host__
 void find_ef_loss_backward_torch_launcher(
     CoordType *d_loss_der2coeffs,
     CoordType *d_loss_der2linear_coeffs,
@@ -182,10 +234,48 @@ void find_ef_loss_backward_torch_launcher(
     dim3 grid_size(grid_size_x);
     dim3 block_size(block_size_x);
 
-    
+    /*
+    find_ef_loss_backward_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (
+        d_loss_der2coeffs,
+        d_loss_der2linear_coeffs,
+        d_loss_der2type_bias,
+        e_weight,
+        f_weight,
+        etot_ml,
+        etot_dft,
+        d_force_ml,
+        d_force_dft,
+        chebyshev_size,
+        d_coeffs,
+        d_linear_coeffs,
+        d_type_bias,
+        alpha_moments_count,
+        alpha_index_basic_count,
+        d_alpha_index_basic,
+        alpha_index_times_count,
+        d_alpha_index_times,
+        alpha_scalar_moments,
+        d_alpha_moment_mapping,
+        nmus,
+        inum,
+        d_ilist,
+        d_numneigh,
+        d_firstneigh,
+        d_rcs,
+        d_types,
+        ntypes,
+        d_type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin);
+    */
 
     CHECK_CUDA_API( cudaDeviceSynchronize() );
     CHECK_CUDA_API( cudaGetLastError() );
 }
+
+};  // namespace : mtpr
+};  // namespace : ai2pot
 
 #endif

@@ -266,7 +266,7 @@ TEST_F(LinearMtpTest, find_efv_launcher)
     int direction_idx_modify = 2;
 
     ai2pot::mtpr::find_efv_launcher<real>(
-        etot,
+        &etot,
         force,
         virial,
         chebyshev_size,
@@ -313,7 +313,7 @@ TEST_F(LinearMtpTest, find_efv_launcher)
         umax_num_neigh_atoms);
     
     ai2pot::mtpr::find_efv_launcher<real>(
-        etot_,
+        &etot_,
         force_,
         virial_,
         chebyshev_size,
@@ -362,7 +362,7 @@ TEST_F(LinearMtpTest, find_ef_launcher)
     int direction_idx_modify = 1;
 
     ai2pot::mtpr::find_ef_launcher<real>(
-        etot,
+        &etot,
         force,
         chebyshev_size,
         coeffs,
@@ -410,7 +410,7 @@ TEST_F(LinearMtpTest, find_ef_launcher)
         umax_num_neigh_atoms);
     
     ai2pot::mtpr::find_ef_launcher<real>(
-        etot_,
+        &etot_,
         force_,
         chebyshev_size,
         coeffs,
@@ -458,7 +458,7 @@ TEST_F(LinearMtpTest, find_loss_backward_launcer)
     real v_weight = 0.0;
     
     ai2pot::mtpr::find_efv_launcher<real>(
-        etot,
+        &etot,
         force,
         virial,
         chebyshev_size,
@@ -547,7 +547,7 @@ TEST_F(LinearMtpTest, find_ef_loss_backward_launcer)
     real f_weight = 1.0;
     
     ai2pot::mtpr::find_ef_launcher<real>(
-        etot,
+        &etot,
         force,
         chebyshev_size,
         coeffs,

@@ -149,7 +149,7 @@ extern template void ai2pot::mtpr::find_ef_torch_launcher<double>(
 
 // 2. linearMtpLoss_torch_launcher.cu
 // 2.1. find_loss_torch_launcher()
-extern template void find_loss_torch_launcher<float>(
+extern template void ai2pot::mtpr::find_loss_torch_launcher<float>(
     float *d_loss_ptr,
     int inum,
     int *d_ilist,
@@ -163,7 +163,7 @@ extern template void find_loss_torch_launcher<float>(
     float *d_virial_ml,
     float *d_virial_dft);
 
-extern template void find_loss_torch_launcher<double>(
+extern template void ai2pot::mtpr::find_loss_torch_launcher<double>(
     double *d_loss_ptr,
     int inum,
     int *d_ilist,
@@ -178,7 +178,7 @@ extern template void find_loss_torch_launcher<double>(
     double *d_virial_dft);
 
 // 2.2. find_ef_loss_torch_launcher()
-extern template void find_ef_loss_torch_launcher<float>(
+extern template void ai2pot::mtpr::find_ef_loss_torch_launcher<float>(
     float *d_loss_ptr,
     int inum,
     int *d_ilist,
@@ -190,7 +190,7 @@ extern template void find_ef_loss_torch_launcher<float>(
     float (*d_force_dft)[3]);
 
 
-extern template void find_ef_loss_torch_launcher<double>(
+extern template void ai2pot::mtpr::find_ef_loss_torch_launcher<double>(
     double *d_loss_ptr,
     int inum,
     int *d_ilist,
@@ -202,7 +202,7 @@ extern template void find_ef_loss_torch_launcher<double>(
     double (*d_force_dft)[3]);
 
 // 2.3. find_loss_backward_torch_launcher()
-extern template void find_loss_backward_torch_launcher<float>(
+extern template void ai2pot::mtpr::find_loss_backward_torch_launcher<float>(
     float *d_loss_der2coeffs,
     float *d_loss_der2linear_coeffs,
     float *d_loss_der2type_bias,
@@ -241,7 +241,7 @@ extern template void find_loss_backward_torch_launcher<float>(
     float rmin);
 
 
-extern template void find_loss_backward_torch_launcher<double>(
+extern template void ai2pot::mtpr::find_loss_backward_torch_launcher<double>(
     double *d_loss_der2coeffs,
     double *d_loss_der2linear_coeffs,
     double *d_loss_der2type_bias,
@@ -280,7 +280,7 @@ extern template void find_loss_backward_torch_launcher<double>(
     double rmin);
 
 // 2.4. find_ef_loss_backward_torch_launcher()
-extern template void find_ef_loss_backward_torch_launcher<float>(
+extern template void ai2pot::mtpr::find_ef_loss_backward_torch_launcher<float>(
     float *d_loss_der2coeffs,
     float *d_loss_der2linear_coeffs,
     float *d_loss_der2type_bias,
@@ -315,7 +315,7 @@ extern template void find_ef_loss_backward_torch_launcher<float>(
     float rmax,
     float rmin);
 
-extern template void find_ef_loss_backward_torch_launcher<double>(
+extern template void ai2pot::mtpr::find_ef_loss_backward_torch_launcher<double>(
     double *d_loss_der2coeffs,
     double *d_loss_der2linear_coeffs,
     double *d_loss_der2type_bias,
@@ -518,6 +518,20 @@ printf("***+++ use cuda (float).\n");
                                         nghost,
                                         (float)rmax,
                                         (float)rmin);
+
+                ai2pot::mtpr::find_loss_torch_launcher(
+                    loss,
+                    inum,
+                    ilist,
+                    (float)e_weight,
+                    (float)f_weight,
+                    (float)v_weight,
+                    (*tmp_etot_ml_ptr),
+                    etot_dft,
+                    tmp_force_ml,
+                    force_dft,
+                    tmp_virial_ml,
+                    virial_dft);
 #endif
             }
         }
@@ -621,7 +635,20 @@ printf("***+++ use cuda. (double)\n");
                                         nghost,
                                         rmax,
                                         rmin);
-                
+
+                ai2pot::mtpr::find_loss_torch_launcher(
+                    loss,
+                    inum,
+                    ilist,
+                    e_weight,
+                    f_weight,
+                    v_weight,
+                    tmp_etot_ml_tensor.item<double>(),
+                    etot_dft,
+                    tmp_force_ml,
+                    force_dft,
+                    tmp_virial_ml,
+                    virial_dft);
 #endif
             }
         }
@@ -1331,21 +1358,20 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
             at::Tensor(),
             at::Tensor(),
             at::Tensor(),
-            at::Tensor(), 
-            at::Tensor(), 
-            at::Tensor(),
-            at::Tensor(), 
-            at::Tensor(), 
-            at::Tensor(),
             at::Tensor(),
             at::Tensor(), 
             at::Tensor(),
+            at::Tensor(), 
+            at::Tensor(), 
+            at::Tensor(),
+            at::Tensor(),
+            at::Tensor(), 
             at::Tensor(),
             at::Tensor(),
             at::Tensor(),
             at::Tensor(),
-            at::Tensor()
-            };
+            at::Tensor(),
+            at::Tensor()};
 }
 
 

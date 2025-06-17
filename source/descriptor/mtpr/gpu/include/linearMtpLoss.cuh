@@ -20,6 +20,7 @@
 #include <device_launch_parameters.h>
 #include <math.h>
 #include <chrono>
+#include <iostream>
 
 #include "./mtpBasis.cuh"
 
@@ -29,7 +30,7 @@ namespace mtpr {
 
 template <typename CoordType>
 static __global__
-void find_loss_kernel(CoordType &loss,
+void find_loss_kernel(CoordType *loss_ptr,
                       int inum,
                       int *ilist,
                       CoordType e_weight,
@@ -45,7 +46,7 @@ void find_loss_kernel(CoordType &loss,
 
 template <typename CoordType>
 static __host__
-void find_loss_launcher(CoordType &h_loss,
+void find_loss_launcher(CoordType *h_loss_ptr,
                         int inum,
                         int *h_ilist,
                         CoordType e_weight,
@@ -74,7 +75,7 @@ void find_ef_loss_kernel(CoordType &loss,
 
 template <typename CoordType>
 static __host__
-void find_ef_loss_launcher(CoordType &h_loss,
+void find_ef_loss_launcher(CoordType *h_loss_ptr,
                            int inum,
                            int *h_ilist,
                            CoordType e_weight,
@@ -321,7 +322,7 @@ void find_ef_loss_backward_launcher(CoordType *h_loss_der2coeffs,
 
 template <typename CoordType>
 __global__ 
-void find_loss_kernel(CoordType &loss,
+void find_loss_kernel(CoordType *loss_ptr,
                       int inum,
                       int *ilist,
                       CoordType e_weight,
@@ -343,7 +344,7 @@ void find_loss_kernel(CoordType &loss,
         for (int aa=0; aa<3; aa++)
             f_loss += std::pow(force_ml[center_idx][aa] - force_dft[center_idx][aa], 2);
         f_loss = f_weight / (3*inum) * f_loss;
-        atomicAdd(&loss, f_loss);
+        atomicAdd(loss_ptr, f_loss);
     }
 
 
@@ -353,17 +354,17 @@ void find_loss_kernel(CoordType &loss,
             for (int bb=0; bb<3; bb++)
                 v_loss += std::pow(virial_ml[aa*3+bb] - virial_dft[aa*3+bb], 2);
         v_loss = v_weight / (9*inum) * v_loss;
-        atomicAdd(&loss, v_loss);
+        atomicAdd(loss_ptr, v_loss);
 
         CoordType e_loss = 0.0;
         e_loss = e_weight / inum * std::pow(etot_ml - etot_dft, 2);
-        atomicAdd(&loss, e_loss);
+        atomicAdd(loss_ptr, e_loss);
     }
 }
 
 
 template <typename CoordType>
-void find_loss_launcher(CoordType &h_loss,
+void find_loss_launcher(CoordType *h_loss_ptr,
                         int inum,
                         int *h_ilist,
                         CoordType e_weight,
@@ -404,7 +405,7 @@ void find_loss_launcher(CoordType &h_loss,
     CHECK_CUDA_API( cudaMemcpy(d_virial_dft, h_virial_dft, sizeof(CoordType)*9, cudaMemcpyHostToDevice) );
 
     // Launch kernel function
-    find_loss_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (*d_loss_ptr,
+    find_loss_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (d_loss_ptr,
                                                                     inum,
                                                                     d_ilist,
                                                                     e_weight,
@@ -419,7 +420,7 @@ void find_loss_launcher(CoordType &h_loss,
     CHECK_CUDA_API( cudaDeviceSynchronize() );
     CHECK_CUDA_API( cudaGetLastError() );
 
-    CHECK_CUDA_API( cudaMemcpy(&h_loss, d_loss_ptr, sizeof(CoordType), cudaMemcpyDeviceToHost) );
+    CHECK_CUDA_API( cudaMemcpy(h_loss_ptr, d_loss_ptr, sizeof(CoordType), cudaMemcpyDeviceToHost) );
 
     CHECK_CUDA_API( cudaFree(d_loss_ptr) );
     CHECK_CUDA_API( cudaFree(d_ilist) );
@@ -432,7 +433,7 @@ void find_loss_launcher(CoordType &h_loss,
 
 template <typename CoordType>
 __global__
-void find_ef_loss_kernel(CoordType &loss,
+void find_ef_loss_kernel(CoordType *loss_ptr,
                          int inum,
                          int *ilist,
                          CoordType e_weight,
@@ -451,19 +452,19 @@ void find_ef_loss_kernel(CoordType &loss,
         for (int aa=0; aa<3; aa++)
             f_loss += std::pow(force_ml[center_idx][aa] - force_dft[center_idx][aa], 2);
         f_loss = f_weight / (3*inum) * f_loss;
-        atomicAdd(&loss, f_loss);
+        atomicAdd(loss_ptr, f_loss);
     }
 
     if (nx == 0) {
         CoordType e_loss = 0;
         e_loss = e_weight / inum * std::pow(etot_ml - etot_dft, 2);
-        atomicAdd(&loss, e_loss);
+        atomicAdd(loss_ptr, e_loss);
     }
 }
 
 
 template <typename CoordType>
-void find_ef_loss_launcher(CoordType &h_loss,
+void find_ef_loss_launcher(CoordType *h_loss_ptr,
                            int inum,
                            int *h_ilist,
                            CoordType e_weight,
@@ -494,7 +495,7 @@ void find_ef_loss_launcher(CoordType &h_loss,
     CHECK_CUDA_API( cudaMemcpy(d_force_dft, h_force_dft, sizeof(CoordType) * inum * 3, cudaMemcpyHostToDevice) );
 
     // Launch kernel
-    find_ef_loss_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (*d_loss_ptr,
+    find_ef_loss_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (d_loss_ptr,
                                                                        inum,
                                                                        d_ilist,
                                                                        e_weight,
@@ -507,7 +508,7 @@ void find_ef_loss_launcher(CoordType &h_loss,
     CHECK_CUDA_API( cudaDeviceSynchronize() );
     CHECK_CUDA_API( cudaGetLastError());
 
-    CHECK_CUDA_API( cudaMemcpy(&h_loss, d_loss_ptr, sizeof(CoordType), cudaMemcpyDeviceToHost) );
+    CHECK_CUDA_API( cudaMemcpy(h_loss_ptr, d_loss_ptr, sizeof(CoordType), cudaMemcpyDeviceToHost) );
     
     CHECK_CUDA_API( cudaFree(d_loss_ptr) );
     CHECK_CUDA_API( cudaFree(d_ilist) );

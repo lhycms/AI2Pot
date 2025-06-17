@@ -74,7 +74,7 @@ protected:
 
 
 TEST_F(LinearMtpLossTest, find_loss) {
-    ai2pot::mtpr::find_loss_launcher<double>(loss,
+    ai2pot::mtpr::find_loss_launcher<double>(&loss,
                                              inum,
                                              ilist,
                                              e_weight,
@@ -92,7 +92,7 @@ printf("1. Loss = %.15f\n", loss);
 
 
 TEST_F(LinearMtpLossTest, find_ef_loss) {
-    ai2pot::mtpr::find_ef_loss_launcher<double>(loss,
+    ai2pot::mtpr::find_ef_loss_launcher<double>(&loss,
                                                 inum,
                                                 ilist,
                                                 e_weight,

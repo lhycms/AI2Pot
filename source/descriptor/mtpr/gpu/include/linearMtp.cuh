@@ -28,7 +28,7 @@ namespace mtpr {
 
 template <typename CoordType>
 static __host__ __device__
-void find_efv_atom(CoordType &etot,
+void find_efv_atom(CoordType *etot_ptr,
                    CoordType (*force)[3],
                    CoordType *virial,
                    int chebyshev_size,
@@ -58,38 +58,38 @@ void find_efv_atom(CoordType &etot,
 
 template <typename CoordType>
 static __global__
-void find_efv_kernel(CoordType &etot,
-                    CoordType (*force)[3],
-                    CoordType *virial,
-                    int chebyshev_size,
-                    CoordType *coeffs,
-                    CoordType *linear_coeffs,
-                    CoordType *type_bias,
-                    const int alpha_moments_count,
-                    const int alpha_index_basic_count,
-                    const int (*alpha_index_basic)[4],
-                    const int alpha_index_times_count,
-                    const int (*alpha_index_times)[4],
-                    const int alpha_scalar_moments,
-                    const int *alpha_moment_mapping,
-                    int nmus,
-                    int inum,
-                    int *ilist,
-                    int *numneigh,
-                    int *firstneigh,
-                    CoordType (*rcs)[3],
-                    int *types,
-                    int ntypes,
-                    int *type_map,
-                    int umax_num_neigh_atoms,
-                    int nghost,
-                    CoordType rmax,
-                    CoordType rmin);
+void find_efv_kernel(CoordType *etot_ptr,
+                     CoordType (*force)[3],
+                     CoordType *virial,
+                     int chebyshev_size,
+                     CoordType *coeffs,
+                     CoordType *linear_coeffs,
+                     CoordType *type_bias,
+                     const int alpha_moments_count,
+                     const int alpha_index_basic_count,
+                     const int (*alpha_index_basic)[4],
+                     const int alpha_index_times_count,
+                     const int (*alpha_index_times)[4],
+                     const int alpha_scalar_moments,
+                     const int *alpha_moment_mapping,
+                     int nmus,
+                     int inum,
+                     int *ilist,
+                     int *numneigh,
+                     int *firstneigh,
+                     CoordType (*rcs)[3],
+                     int *types,
+                     int ntypes,
+                     int *type_map,
+                     int umax_num_neigh_atoms,
+                     int nghost,
+                     CoordType rmax,
+                     CoordType rmin);
 
 
 template <typename CoordType>
 static __host__
-void find_efv_launcher(CoordType &h_etot,
+void find_efv_launcher(CoordType *h_etot_ptr,
                        CoordType (*h_force)[3],
                        CoordType *h_virial,
                        int chebyshev_size,
@@ -120,7 +120,7 @@ void find_efv_launcher(CoordType &h_etot,
 
 template <typename CoordType>
 static __host__ __device__
-void find_ef_atom(CoordType &etot,
+void find_ef_atom(CoordType *etot_ptr,
                   CoordType (*force)[3],
                   int chebyshev_size,
                   CoordType *coeffs,
@@ -149,7 +149,7 @@ void find_ef_atom(CoordType &etot,
 
 template <typename CoordType>
 static __global__ 
-void find_ef_kernel(CoordType &etot,
+void find_ef_kernel(CoordType *etot_ptr,
                     CoordType (*force)[3],
                     int chebyshev_size,
                     CoordType *coeffs,
@@ -179,7 +179,7 @@ void find_ef_kernel(CoordType &etot,
 
 template <typename CoordType>
 static __host__
-void find_ef_launcher(CoordType &h_etot,
+void find_ef_launcher(CoordType *h_etot_ptr,
                       CoordType (*h_force)[3],
                       int chebyshev_size,
                       CoordType *h_coeffs,
@@ -212,7 +212,7 @@ void find_ef_launcher(CoordType &h_etot,
 
 template <typename CoordType>
 __host__ __device__ 
-void find_efv_atom(CoordType &etot,
+void find_efv_atom(CoordType *etot_ptr,
                    CoordType (*force)[3],
                    CoordType *virial,
                    int chebyshev_size,
@@ -330,7 +330,7 @@ void find_efv_atom(CoordType &etot,
     CoordType e_site = type_bias[type_central];
     for (int i=0; i<alpha_scalar_moments; i++)
         e_site += linear_coeffs[i] * mom_vals[alpha_moment_mapping[i]];
-    atomicAdd(&etot, e_site);
+    atomicAdd(etot_ptr, e_site);
 
     for (int i=0; i<alpha_scalar_moments; i++)
         e_site_der2mom[alpha_moment_mapping[i]] = linear_coeffs[i];
@@ -437,7 +437,7 @@ void find_efv_atom(CoordType &etot,
 
 template <typename CoordType>
 static __global__
-void find_efv_kernel(CoordType &etot,
+void find_efv_kernel(CoordType *etot_ptr,
                     CoordType (*force)[3],
                     CoordType *virial,
                     int chebyshev_size,
@@ -473,7 +473,7 @@ void find_efv_kernel(CoordType &etot,
         int snumneigh = numneigh[ii];
         int *sfirstneigh = &firstneigh[ii*umax_num_neigh_atoms];
         CoordType (*srcs)[3] = (CoordType (*)[3])(&rcs[ii*umax_num_neigh_atoms][0]);
-        find_efv_atom<CoordType>(etot,
+        find_efv_atom<CoordType>(etot_ptr,
                                  force,
                                  virial,
                                  chebyshev_size,
@@ -505,7 +505,7 @@ void find_efv_kernel(CoordType &etot,
 
 template <typename CoordType>
 __host__
-void find_efv_launcher(CoordType &h_etot,
+void find_efv_launcher(CoordType *h_etot_ptr,
                        CoordType (*h_force)[3],
                        CoordType *h_virial,
                        int chebyshev_size,
@@ -595,7 +595,7 @@ void find_efv_launcher(CoordType &h_etot,
     // Call global function
     auto t1 = std::chrono::high_resolution_clock::now();
     find_efv_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (
-        *d_etot_ptr,
+        d_etot_ptr,
         d_force,
         d_virial,
         chebyshev_size,
@@ -628,7 +628,7 @@ void find_efv_launcher(CoordType &h_etot,
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
     std::cout << "find_efv_kernel() cost time: " << duration.count() << " us.\n";
 
-    CHECK_CUDA_API( cudaMemcpy(&h_etot, d_etot_ptr, sizeof(CoordType), cudaMemcpyDeviceToHost) );
+    CHECK_CUDA_API( cudaMemcpy(h_etot_ptr, d_etot_ptr, sizeof(CoordType), cudaMemcpyDeviceToHost) );
     CHECK_CUDA_API( cudaMemcpy(h_force, d_force, sizeof(CoordType)*(inum+nghost)*3, cudaMemcpyDeviceToHost) );
     CHECK_CUDA_API( cudaMemcpy(h_virial, d_virial, sizeof(CoordType)*9, cudaMemcpyDeviceToHost) );
 
@@ -652,7 +652,7 @@ void find_efv_launcher(CoordType &h_etot,
 
 template <typename CoordType>
 __host__ __device__
-void find_ef_atom(CoordType &etot,
+void find_ef_atom(CoordType *etot_ptr,
                   CoordType (*force)[3],
                   int chebyshev_size,
                   CoordType *coeffs,
@@ -765,7 +765,7 @@ void find_ef_atom(CoordType &etot,
     CoordType e_site = type_bias[type_central];
     for (int i=0; i<alpha_scalar_moments; i++)
         e_site += linear_coeffs[i] * mom_vals[alpha_moment_mapping[i]];
-    atomicAdd(&etot, e_site);
+    atomicAdd(etot_ptr, e_site);
 
     for (int i=0; i<alpha_scalar_moments; i++)
         e_site_der2mom[alpha_moment_mapping[i]] = linear_coeffs[i];
@@ -869,7 +869,7 @@ void find_ef_atom(CoordType &etot,
 
 template <typename CoordType>
 __global__
-void find_ef_kernel(CoordType &etot,
+void find_ef_kernel(CoordType *etot_ptr,
                     CoordType (*force)[3],
                     int chebyshev_size,
                     CoordType *coeffs,
@@ -904,7 +904,7 @@ void find_ef_kernel(CoordType &etot,
         int snumneigh = numneigh[ii];
         int *sfirstneigh = &firstneigh[ii*umax_num_neigh_atoms];
         CoordType (*srcs)[3] = (CoordType (*)[3])(&rcs[ii*umax_num_neigh_atoms][0]);
-        find_ef_atom<CoordType>(etot,
+        find_ef_atom<CoordType>(etot_ptr,
                                 force,
                                 chebyshev_size,
                                 coeffs,
@@ -935,7 +935,7 @@ void find_ef_kernel(CoordType &etot,
 
 template <typename CoordType>
 __host__
-void find_ef_launcher(CoordType &h_etot,
+void find_ef_launcher(CoordType *h_etot_ptr,
                       CoordType (*h_force)[3],
                       int chebyshev_size,
                       CoordType *h_coeffs,
@@ -1019,7 +1019,7 @@ void find_ef_launcher(CoordType &h_etot,
     // Launch kernel function
     auto t1 = std::chrono::high_resolution_clock::now();
     find_ef_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (
-        *d_etot_ptr,
+        d_etot_ptr,
         d_force,
         chebyshev_size,
         d_coeffs,
@@ -1051,7 +1051,7 @@ void find_ef_launcher(CoordType &h_etot,
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
     std::cout << "find_ef_launcher() cost time: " << duration.count() << " us.\n";
 
-    CHECK_CUDA_API( cudaMemcpy(&h_etot, d_etot_ptr, sizeof(CoordType), cudaMemcpyDeviceToHost) );
+    CHECK_CUDA_API( cudaMemcpy(h_etot_ptr, d_etot_ptr, sizeof(CoordType), cudaMemcpyDeviceToHost) );
     CHECK_CUDA_API( cudaMemcpy(h_force, d_force, sizeof(CoordType) * (inum+nghost) * 3, cudaMemcpyDeviceToHost) );
 
     CHECK_CUDA_API( cudaFree(d_etot_ptr) );

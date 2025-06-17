@@ -13,11 +13,11 @@
     along with AI2Pot.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef AI2POT_LINEAR_MTP_LOSS_TORCH_CUH
-#define AI2POT_LINEAR_MTP_LOSS_TORCH_CUH
+#include "../include/linearMtpLoss.cuh"
+#include "../include/linearMtpLoss_torch_launcher.cuh"
 
 // 1. find_loss_torch_launcher()
-template void find_loss_torch_launcher<float>(
+template void ai2pot::mtpr::find_loss_torch_launcher<float>(
     float *d_loss_ptr,
     int inum,
     int *d_ilist,
@@ -31,7 +31,7 @@ template void find_loss_torch_launcher<float>(
     float *d_virial_ml,
     float *d_virial_dft);
 
-template void find_loss_torch_launcher<double>(
+template void ai2pot::mtpr::find_loss_torch_launcher<double>(
     double *d_loss_ptr,
     int inum,
     int *d_ilist,
@@ -47,7 +47,7 @@ template void find_loss_torch_launcher<double>(
 
 
 // 2. find_ef_loss_torch_launcher()
-template void find_ef_loss_torch_launcher<float>(
+template void ai2pot::mtpr::find_ef_loss_torch_launcher<float>(
     float *d_loss_ptr,
     int inum,
     int *d_ilist,
@@ -59,7 +59,7 @@ template void find_ef_loss_torch_launcher<float>(
     float (*d_force_dft)[3]);
 
 
-template void find_ef_loss_torch_launcher<double>(
+template void ai2pot::mtpr::find_ef_loss_torch_launcher<double>(
     double *d_loss_ptr,
     int inum,
     int *d_ilist,
@@ -72,7 +72,7 @@ template void find_ef_loss_torch_launcher<double>(
 
 
 // 3. find_loss_backward_torch_launcher()
-template void find_loss_backward_torch_launcher<float>(
+template void ai2pot::mtpr::find_loss_backward_torch_launcher<float>(
     float *d_loss_der2coeffs,
     float *d_loss_der2linear_coeffs,
     float *d_loss_der2type_bias,
@@ -111,7 +111,7 @@ template void find_loss_backward_torch_launcher<float>(
     float rmin);
 
 
-template void find_loss_backward_torch_launcher<double>(
+template void ai2pot::mtpr::find_loss_backward_torch_launcher<double>(
     double *d_loss_der2coeffs,
     double *d_loss_der2linear_coeffs,
     double *d_loss_der2type_bias,
@@ -151,7 +151,7 @@ template void find_loss_backward_torch_launcher<double>(
 
 
 // 4. find_ef_loss_backward_torch_launcher()
-template void find_ef_loss_backward_torch_launcher<float>(
+template void ai2pot::mtpr::find_ef_loss_backward_torch_launcher<float>(
     float *d_loss_der2coeffs,
     float *d_loss_der2linear_coeffs,
     float *d_loss_der2type_bias,
@@ -186,7 +186,7 @@ template void find_ef_loss_backward_torch_launcher<float>(
     float rmax,
     float rmin);
 
-template void find_ef_loss_backward_torch_launcher<double>(
+template void ai2pot::mtpr::find_ef_loss_backward_torch_launcher<double>(
     double *d_loss_der2coeffs,
     double *d_loss_der2linear_coeffs,
     double *d_loss_der2type_bias,
@@ -220,6 +220,3 @@ template void find_ef_loss_backward_torch_launcher<double>(
     int nghost,
     double rmax,
     double rmin);
-
-
-#endif

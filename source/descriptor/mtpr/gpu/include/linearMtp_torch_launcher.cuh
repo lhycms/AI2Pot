@@ -13,8 +13,8 @@
     along with AI2Pot.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef AI2POT_LINEAR_MTP_TORCH_CUH
-#define AI2POT_LINEAR_MTP_TORCH_CUH
+#ifndef AI2POT_LINEAR_MTP_TORCH_LAUNCHER_CUH
+#define AI2POT_LINEAR_MTP_TORCH_LAUNCHER_CUH
 #include "./linearMtp_torch_launcher.h"
 #include "./linearMtp.cuh"
 
@@ -59,7 +59,7 @@ void find_efv_torch_launcher(
     dim3 block_size(block_size_x);
 
     find_efv_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (
-        *d_etot_ptr,
+        d_etot_ptr,
         d_force,
         d_virial,
         chebyshev_size,
@@ -128,7 +128,7 @@ void find_ef_torch_launcher(
     dim3 block_size(block_size_x);
 
     find_ef_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (
-        *d_etot_ptr,
+        d_etot_ptr,
         d_force,
         chebyshev_size,
         d_coeffs,
