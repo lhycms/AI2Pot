@@ -23,6 +23,7 @@
 
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
 #include "../gpu/include/linearMtp_torch_launcher.h"
+#include "../gpu/include/linearMtpLoss_torch_launcher.h"
 
 namespace ai2pot {
 namespace mtpr {
@@ -148,13 +149,206 @@ extern template void ai2pot::mtpr::find_ef_torch_launcher<double>(
 
 // 2. linearMtpLoss_torch_launcher.cu
 // 2.1. find_loss_torch_launcher()
+extern template void find_loss_torch_launcher<float>(
+    float *d_loss_ptr,
+    int inum,
+    int *d_ilist,
+    float e_weight,
+    float f_weight,
+    float v_weight,
+    float etot_ml,
+    float etot_dft,
+    float (*d_force_ml)[3],
+    float (*d_force_dft)[3],
+    float *d_virial_ml,
+    float *d_virial_dft);
+
+extern template void find_loss_torch_launcher<double>(
+    double *d_loss_ptr,
+    int inum,
+    int *d_ilist,
+    double e_weight,
+    double f_weight,
+    double v_weight,
+    double etot_ml,
+    double etot_dft,
+    double (*d_force_ml)[3],
+    double (*d_force_dft)[3],
+    double *d_virial_ml,
+    double *d_virial_dft);
 
 // 2.2. find_ef_loss_torch_launcher()
+extern template void find_ef_loss_torch_launcher<float>(
+    float *d_loss_ptr,
+    int inum,
+    int *d_ilist,
+    float e_weight,
+    float f_weight,
+    float etot_ml,
+    float etot_dft,
+    float (*d_force_ml)[3],
+    float (*d_force_dft)[3]);
+
+
+extern template void find_ef_loss_torch_launcher<double>(
+    double *d_loss_ptr,
+    int inum,
+    int *d_ilist,
+    double e_weight,
+    double f_weight,
+    double etot_ml,
+    double etot_dft,
+    double (*d_force_ml)[3],
+    double (*d_force_dft)[3]);
 
 // 2.3. find_loss_backward_torch_launcher()
+extern template void find_loss_backward_torch_launcher<float>(
+    float *d_loss_der2coeffs,
+    float *d_loss_der2linear_coeffs,
+    float *d_loss_der2type_bias,
+    float e_weight,
+    float f_weight,
+    float v_weight,
+    float etot_ml,
+    float etot_dft,
+    float (*d_force_ml)[3],
+    float (*d_force_dft)[3],
+    float *d_virial_ml,
+    float *d_virial_dft,
+    int chebyshev_size,
+    float *d_coeffs,
+    float *d_linear_coeffs,
+    float *d_type_bias,
+    const int alpha_moments_count,
+    const int alpha_index_basic_count,
+    const int (*d_alpha_index_basic)[4],
+    const int alpha_index_times_count,
+    const int (*d_alpha_index_times)[4],
+    const int alpha_scalar_moments,
+    const int *d_alpha_moment_mapping,
+    int nmus,
+    int inum,
+    int *d_ilist,
+    int *d_numneigh,
+    int *d_firstneigh,
+    float (*d_rcs)[3],
+    int *d_types,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    float rmax,
+    float rmin);
+
+
+extern template void find_loss_backward_torch_launcher<double>(
+    double *d_loss_der2coeffs,
+    double *d_loss_der2linear_coeffs,
+    double *d_loss_der2type_bias,
+    double e_weight,
+    double f_weight,
+    double v_weight,
+    double etot_ml,
+    double etot_dft,
+    double (*d_force_ml)[3],
+    double (*d_force_dft)[3],
+    double *d_virial_ml,
+    double *d_virial_dft,
+    int chebyshev_size,
+    double *d_coeffs,
+    double *d_linear_coeffs,
+    double *d_type_bias,
+    const int alpha_moments_count,
+    const int alpha_index_basic_count,
+    const int (*d_alpha_index_basic)[4],
+    const int alpha_index_times_count,
+    const int (*d_alpha_index_times)[4],
+    const int alpha_scalar_moments,
+    const int *d_alpha_moment_mapping,
+    int nmus,
+    int inum,
+    int *d_ilist,
+    int *d_numneigh,
+    int *d_firstneigh,
+    double (*d_rcs)[3],
+    int *d_types,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    double rmax,
+    double rmin);
 
 // 2.4. find_ef_loss_backward_torch_launcher()
+extern template void find_ef_loss_backward_torch_launcher<float>(
+    float *d_loss_der2coeffs,
+    float *d_loss_der2linear_coeffs,
+    float *d_loss_der2type_bias,
+    float e_weight,
+    float f_weight,
+    float etot_ml,
+    float etot_dft,
+    float (*d_force_ml)[3],
+    float (*d_force_dft)[3],
+    int chebyshev_size,
+    float *d_coeffs,
+    float *d_linear_coeffs,
+    float *d_type_bias,
+    const int alpha_moments_count,
+    const int alpha_index_basic_count,
+    const int (*d_alpha_index_basic)[4],
+    const int alpha_index_times_count,
+    const int (*d_alpha_index_times)[4],
+    const int alpha_scalar_moments,
+    const int *d_alpha_moment_mapping,
+    int nmus,
+    int inum,
+    int *d_ilist,
+    int *d_numneigh,
+    int *d_firstneigh,
+    float (*d_rcs)[3],
+    int *d_types,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    float rmax,
+    float rmin);
 
+extern template void find_ef_loss_backward_torch_launcher<double>(
+    double *d_loss_der2coeffs,
+    double *d_loss_der2linear_coeffs,
+    double *d_loss_der2type_bias,
+    double e_weight,
+    double f_weight,
+    double etot_ml,
+    double etot_dft,
+    double (*d_force_ml)[3],
+    double (*d_force_dft)[3],
+    int chebyshev_size,
+    double *d_coeffs,
+    double *d_linear_coeffs,
+    double *d_type_bias,
+    const int alpha_moments_count,
+    const int alpha_index_basic_count,
+    const int (*d_alpha_index_basic)[4],
+    const int alpha_index_times_count,
+    const int (*d_alpha_index_times)[4],
+    const int alpha_scalar_moments,
+    const int *d_alpha_moment_mapping,
+    int nmus,
+    int inum,
+    int *d_ilist,
+    int *d_numneigh,
+    int *d_firstneigh,
+    double (*d_rcs)[3],
+    int *d_types,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    double rmax,
+    double rmin);
 
 };  // namespace : mtpr
 };  // namespace : ai2pot
@@ -290,6 +484,10 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
             } else {
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
 printf("***+++ use cuda (float).\n");
+                tmp_etot_ml_tensor.zero_();
+                tmp_force_ml_tensor.zero_();
+                tmp_virial_ml_tensor.zero_();
+
                 float *tmp_etot_ml_ptr = (float*)tmp_etot_ml_tensor.data_ptr<float>();
                 float (*tmp_force_ml)[3] = (float (*)[3])tmp_force_ml_tensor.data_ptr<float>();
                 float *tmp_virial_ml = (float*)tmp_virial_ml_tensor.data_ptr<float>();
