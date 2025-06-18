@@ -1134,6 +1134,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
     int alpha_scalar_moment = (int)alpha_moment_mapping_tensor.size(0);
     int umax_num_neighs = (int)bfirstneigh_tensor.size(2);
     int ntypes = type_map_tensor.size(0);
+    int num_atoms = (int)bilist_tensor.size(1);
 
     c10::TensorOptions int_options = c10::TensorOptions()
                                         .dtype(torch::kInt32)
@@ -1141,12 +1142,20 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
     c10::TensorOptions float_options;
 
     at::Tensor bloss_tensor;
+#if defined(USE_CUDA) or (__INTELLISENSE__)
+    at::Tensor tmp_etot_ml_tensor;
+    at::Tensor tmp_force_ml_tensor;
+#endif
 
     if (brcs_tensor.dtype() == torch::kFloat32) {
         float_options = c10::TensorOptions()
                             .dtype(torch::kFloat32)
                             .device(brcs_tensor.device());
         bloss_tensor = at::zeros({nbatches}, float_options);
+#if defined(USE_CUDA) or (__INTELLISENSE__)
+    tmp_etot_ml_tensor = at::tensor(0, float_options);
+    tmp_force_ml_tensor = at::zeros({num_atoms + nghost}, float_options);
+#endif
         float* zbl_cks = zbl_cks_tensor.data_ptr<float>();
         float* zbl_dks = zbl_dks_tensor.data_ptr<float>();
 
@@ -1201,7 +1210,50 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
                     rmin);
             } else {
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
-    
+                tmp_etot_ml_tensor.zero_();
+                tmp_force_ml_tensor.zero_();
+
+                float *tmp_etot_ml_ptr = (float*)tmp_etot_ml_tensor.data_ptr<float>();
+                float (*tmp_force_ml)[3] = (float (*)[3])tmp_force_ml_tensor.data_ptr<float>();
+
+                find_ef_torch_launcher(
+                    tmp_etot_ml_ptr,
+                    tmp_force_ml,
+                    chebyshev_size,
+                    coeffs,
+                    linear_coeffs,
+                    type_bias,
+                    alpha_moments_count,
+                    alpha_index_basic_count,
+                    alpha_index_basic,
+                    alpha_index_times_count,
+                    alpha_index_times,
+                    alpha_scalar_moment,
+                    alpha_moment_mapping,
+                    nmus,
+                    inum,
+                    ilist,
+                    numneigh,
+                    firstneigh,
+                    rcs,
+                    types,
+                    ntypes,
+                    type_map,
+                    umax_num_neighs,
+                    nghost,
+                    (float)rmax,
+                    (float)rmin);
+
+                find_ef_loss_torch_launcher(
+                    loss,
+                    inum,
+                    ilist,
+                    (float)e_weight,
+                    (float)f_weight,
+                    tmp_etot_ml_tensor.item<float>(),
+                    etot_dft,
+                    tmp_force_ml,
+                    force_dft);
 #endif
             }
         }
@@ -1210,6 +1262,10 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
                             .dtype(torch::kFloat64)
                             .device(brcs_tensor.device());
         bloss_tensor = at::zeros({nbatches}, float_options);
+#if defined(USE_CUDA) or (__INTELLISENSE__)
+        tmp_etot_ml_tensor = at::tensor(0, float_options);
+        tmp_force_ml_tensor = at::zeros({num_atoms + nghost, 3}, float_options);
+#endif
         double* zbl_cks = zbl_cks_tensor.data_ptr<double>();
         double* zbl_dks = zbl_dks_tensor.data_ptr<double>();
 
@@ -1264,7 +1320,50 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
                     rmin);
             } else {
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
-    
+                tmp_etot_ml_tensor.zero_();
+                tmp_force_ml_tensor.zero_();
+
+                double *tmp_etot_ml_ptr = tmp_etot_ml_tensor.data_ptr<double>();
+                double (*tmp_force_ml)[3] = (double (*)[3])tmp_force_ml_tensor.data_ptr<double>();
+
+                find_ef_torch_launcher(
+                    tmp_etot_ml_ptr,
+                    tmp_force_ml,
+                    chebyshev_size,
+                    coeffs,
+                    linear_coeffs,
+                    type_bias,
+                    alpha_moments_count,
+                    alpha_index_basic_count,
+                    alpha_index_basic,
+                    alpha_index_times_count,
+                    alpha_index_times,
+                    alpha_scalar_moment,
+                    alpha_moment_mapping,
+                    nmus,
+                    inum,
+                    ilist,
+                    numneigh,
+                    firstneigh,
+                    rcs,
+                    types,
+                    ntypes,
+                    type_map,
+                    umax_num_neighs,
+                    nghost,
+                    rmax,
+                    rmin);
+
+                find_ef_loss_torch_launcher(
+                    loss,
+                    inum,
+                    ilist,
+                    e_weight,
+                    f_weight,
+                    tmp_etot_ml_tensor.item<double>(),
+                    etot_dft,
+                    tmp_force_ml,
+                    force_dft);
 #endif
             }
         }
@@ -1352,6 +1451,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
     int alpha_index_times_count = (int)alpha_index_times_tensor.size(0);
     int alpha_scalar_moment = (int)alpha_moment_mapping_tensor.size(0);
     int umax_num_neighs = (int)bfirstneigh_tensor.size(2);
+    int num_atoms = (int)bilist_tensor.size(1);
 
     c10::TensorOptions int_options = c10::TensorOptions()
                                         .dtype(torch::kInt32)
@@ -1361,6 +1461,10 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
     at::Tensor bloss_der2coeffs_tensor;
     at::Tensor bloss_der2linear_coeffs_tensor;
     at::Tensor bloss_der2type_bias_tensor;
+#if defined(USE_CUDA) or defined(__INTELLISENSE__)
+    at::Tensor tmp_etot_ml_tensor;
+    at::Tensor tmp_force_ml_tensor;
+#endif
     
     if (bgrad_output_tensor.dtype() == torch::kFloat32) {
         float_options = c10::TensorOptions()
@@ -1369,6 +1473,10 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
         bloss_der2coeffs_tensor = at::zeros({nbatches, num_coeffs}, float_options);
         bloss_der2linear_coeffs_tensor = at::zeros({nbatches, num_linear_coeffs}, float_options);
         bloss_der2type_bias_tensor = at::zeros({nbatches, ntypes}, float_options);
+#if defined(USE_CUDA) or defined(__INTELLISENSE__)
+        tmp_etot_ml_tensor = at::tensor(0, float_options);
+        tmp_force_ml_tensor = at::zeros({num_atoms + nghost, 3}, float_options);
+#endif
 
         float* zbl_cks = zbl_cks_tensor.data_ptr<float>();
         float* zbl_dks = zbl_dks_tensor.data_ptr<float>();
@@ -1428,7 +1536,74 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
                     rmin);
             } else {
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
-    
+                tmp_etot_ml_tensor.zero_();
+                tmp_force_ml_tensor.zero_();
+
+                float *tmp_etot_ml_ptr = (float*)tmp_etot_ml_tensor.data_ptr<float>();
+                float (*tmp_force_ml)[3] = (float (*)[3])tmp_force_ml_tensor.data_ptr<float>();
+
+                find_ef_torch_launcher(
+                    tmp_etot_ml_ptr,
+                    tmp_force_ml,
+                    chebyshev_size,
+                    coeffs,
+                    linear_coeffs,
+                    type_bias,
+                    alpha_moments_count,
+                    alpha_index_basic_count,
+                    alpha_index_basic,
+                    alpha_index_times_count,
+                    alpha_index_times,
+                    alpha_scalar_moment,
+                    alpha_moment_mapping,
+                    nmus,
+                    inum,
+                    ilist,
+                    numneigh,
+                    firstneigh,
+                    rcs,
+                    types,
+                    ntypes,
+                    type_map,
+                    umax_num_neighs,
+                    nghost,
+                    (float)rmax,
+                    (float)rmin);
+                
+                find_ef_loss_backward_torch_launcher(
+                    loss_der2coeffs,
+                    loss_der2linear_coeffs,
+                    loss_der2type_bias,
+                    (float)e_weight,
+                    (float)f_weight,
+                    tmp_etot_ml_tensor.item<float>(),
+                    etot_dft,
+                    tmp_force_ml,
+                    force_dft,
+                    chebyshev_size,
+                    coeffs,
+                    linear_coeffs,
+                    type_bias,
+                    alpha_moments_count,
+                    alpha_index_basic_count,
+                    alpha_index_basic,
+                    alpha_index_times_count,
+                    alpha_index_times,
+                    alpha_scalar_moment,
+                    alpha_moment_mapping,
+                    nmus,
+                    inum,
+                    ilist,
+                    numneigh,
+                    firstneigh,
+                    rcs,
+                    types,
+                    ntypes,
+                    type_map,
+                    umax_num_neighs,
+                    nghost,
+                    (float)rmax,
+                    (float)rmin);
 #endif
             }
         }
@@ -1439,6 +1614,10 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
         bloss_der2coeffs_tensor = at::zeros({nbatches, num_coeffs}, float_options);
         bloss_der2linear_coeffs_tensor = at::zeros({nbatches, num_linear_coeffs}, float_options);
         bloss_der2type_bias_tensor = at::zeros({nbatches, ntypes}, float_options);
+#if defined(USE_CUDA) or defined (__INTELLISENSE__)
+        tmp_etot_ml_tensor = at::tensor(0, float_options);
+        tmp_force_ml_tensor = at::zeros({num_atoms+nghost, 3}, float_options);
+#endif
 
         double* zbl_cks = zbl_cks_tensor.data_ptr<double>();
         double* zbl_dks = zbl_dks_tensor.data_ptr<double>();
@@ -1498,7 +1677,74 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
                     rmin);
             } else {
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
-    
+                tmp_etot_ml_tensor.zero_();
+                tmp_force_ml_tensor.zero_();
+
+                double *tmp_etot_ml_ptr = (double*)tmp_etot_ml_tensor.data_ptr<double>();
+                double (*tmp_force_ml)[3] = (double (*)[3])tmp_force_ml_tensor.data_ptr<double>();
+
+                find_ef_torch_launcher(
+                    tmp_etot_ml_ptr,
+                    tmp_force_ml,
+                    chebyshev_size,
+                    coeffs,
+                    linear_coeffs,
+                    type_bias,
+                    alpha_moments_count,
+                    alpha_index_basic_count,
+                    alpha_index_basic,
+                    alpha_index_times_count,
+                    alpha_index_times,
+                    alpha_scalar_moment,
+                    alpha_moment_mapping,
+                    nmus,
+                    inum,
+                    ilist,
+                    numneigh,
+                    firstneigh,
+                    rcs,
+                    types,
+                    ntypes,
+                    type_map,
+                    umax_num_neighs,
+                    nghost,
+                    rmax,
+                    rmin);
+
+                find_ef_loss_backward_torch_launcher(
+                    loss_der2coeffs,
+                    loss_der2linear_coeffs,
+                    loss_der2type_bias,
+                    e_weight,
+                    f_weight,
+                    tmp_etot_ml_tensor.item<double>(),
+                    etot_dft,
+                    tmp_force_ml,
+                    force_dft,
+                    chebyshev_size,
+                    coeffs,
+                    linear_coeffs,
+                    type_bias,
+                    alpha_moments_count,
+                    alpha_index_basic_count,
+                    alpha_index_basic,
+                    alpha_index_times_count,
+                    alpha_index_times,
+                    alpha_scalar_moment,
+                    alpha_moment_mapping,
+                    nmus,
+                    inum,
+                    ilist,
+                    numneigh,
+                    firstneigh,
+                    rcs,
+                    types,
+                    ntypes,
+                    type_map,
+                    umax_num_neighs,
+                    nghost,
+                    rmax,
+                    rmin);
 #endif
             }
         }
@@ -1647,7 +1893,34 @@ torch::autograd::variable_list LinearMtpToEFVFunction::forward(
                     rmin);
             } else {
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
-    
+                find_efv_torch_launcher(
+                    etot_ptr,
+                    force,
+                    virial,
+                    chebyshev_size,
+                    coeffs,
+                    linear_coeffs,
+                    type_bias,
+                    alpha_moments_count,
+                    alpha_index_basic_count,
+                    alpha_index_basic,
+                    alpha_index_times_count,
+                    alpha_index_times,
+                    alpha_scalar_moments,
+                    alpha_moment_mapping,
+                    nmus,
+                    inum,
+                    ilist,
+                    numneigh,
+                    firstneigh,
+                    rcs,
+                    types,
+                    ntypes,
+                    type_map,
+                    umax_num_neigh_atoms,
+                    nghost,
+                    (float)rmax,
+                    (float)rmin);
 #endif
             }
         }
@@ -1712,7 +1985,34 @@ torch::autograd::variable_list LinearMtpToEFVFunction::forward(
                     rmin);
             } else {
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
-    
+                find_efv_torch_launcher(
+                    etot_ptr,
+                    force,
+                    virial,
+                    chebyshev_size,
+                    coeffs,
+                    linear_coeffs,
+                    type_bias,
+                    alpha_moments_count,
+                    alpha_index_basic_count,
+                    alpha_index_basic,
+                    alpha_index_times_count,
+                    alpha_index_times,
+                    alpha_scalar_moments,
+                    alpha_moment_mapping,
+                    nmus,
+                    inum,
+                    ilist,
+                    numneigh,
+                    firstneigh,
+                    rcs,
+                    types,
+                    ntypes,
+                    type_map,
+                    umax_num_neigh_atoms,
+                    nghost,
+                    rmax,
+                    rmin);
 #endif
             }
         }
@@ -1887,7 +2187,33 @@ torch::autograd::variable_list LinearMtpToEFFunction::forward(
                     rmin);
             } else {
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
-    
+                find_ef_torch_launcher(
+                    etot_ptr,
+                    force,
+                    chebyshev_size,
+                    coeffs,
+                    linear_coeffs,
+                    type_bias,
+                    alpha_moments_count,
+                    alpha_index_basic_count,
+                    alpha_index_basic,
+                    alpha_index_times_count,
+                    alpha_index_times,
+                    alpha_scalar_moments,
+                    alpha_moment_mapping,
+                    nmus,
+                    inum,
+                    ilist,
+                    numneigh,
+                    firstneigh,
+                    rcs,
+                    types,
+                    ntypes,
+                    type_map,
+                    umax_num_neigh_atoms,
+                    nghost,
+                    (float)rmax,
+                    (float)rmin);
 #endif
             }
         }
@@ -1949,7 +2275,33 @@ torch::autograd::variable_list LinearMtpToEFFunction::forward(
                     rmin);
             } else {
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
-    
+                find_ef_torch_launcher(
+                    etot_ptr,
+                    force,
+                    chebyshev_size,
+                    coeffs,
+                    linear_coeffs,
+                    type_bias,
+                    alpha_moments_count,
+                    alpha_index_basic_count,
+                    alpha_index_basic,
+                    alpha_index_times_count,
+                    alpha_index_times,
+                    alpha_scalar_moments,
+                    alpha_moment_mapping,
+                    nmus,
+                    inum,
+                    ilist,
+                    numneigh,
+                    firstneigh,
+                    rcs,
+                    types,
+                    ntypes,
+                    type_map,
+                    umax_num_neigh_atoms,
+                    nghost,
+                    rmax,
+                    rmin);
 #endif
             }
         }

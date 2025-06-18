@@ -6,7 +6,7 @@ from typing import List
 import numpy as np
 import torch
 from pymatgen.core import Structure
-from ai2pot.utils import (MlffInput, MlffToLossInput)
+from ai2pot.utils import (MlffInput, MlffToLossInput, MlffToEFLossInput)
 from ai2pot.models.mtp.linear_mtp import LinearMtp
 
 
@@ -26,7 +26,7 @@ class LinearMtpTest(unittest.TestCase):
         self.rmin: float = 2.0
         self.umax_num_neighs = 100
         self.device: torch._C.device = torch.device("cuda")
-        self.torch_float_dtype: torch._C.dtype = torch.float64
+        self.torch_float_dtype: torch._C.dtype = torch.float32
         self.linear_mtp: LinearMtp = LinearMtp(mtp_level=16,
                                                type_map_tensor=self.type_map_tensor,
                                                chebyshev_size=self.chebyshev_size,
@@ -46,6 +46,11 @@ class LinearMtpTest(unittest.TestCase):
                                                                    umax_num_neighs=self.umax_num_neighs,
                                                                    dtype=self.torch_float_dtype,
                                                                    device=self.device)
+        self.mlff_to_ef_loss_input: MlffToEFLossInput = MlffToEFLossInput(type_map=self.type_map_tensor.numpy().tolist(),
+                                                                          rcut=self.rmax,
+                                                                          umax_num_neighs=self.umax_num_neighs,
+                                                                          dtype=self.torch_float_dtype,
+                                                                          device=self.device)
         self.structure: Structure = Structure.from_file(ReNbSSe_POSCAR_PATH)
     
     
@@ -53,7 +58,7 @@ class LinearMtpTest(unittest.TestCase):
         print("LinearMtpTest (TestSuite) is tearing down...\n")
     
 
-    def test_predict_loss(self):
+    def est_predict_loss(self):
         times_list: List[float] = []
         for ii in range(110):
             t1 = time.time()
@@ -63,6 +68,8 @@ class LinearMtpTest(unittest.TestCase):
                                                                                           v_weight=1.0))
             loss.sum().backward()
             t2 = time.time()
+            if (ii == 0):
+                print(self.linear_mtp.type_bias_tensor.grad)
 
             if (ii>9):
                 times_list.append(t2-t1)
@@ -72,9 +79,25 @@ class LinearMtpTest(unittest.TestCase):
         print("1. Loss = ", loss)
 
 
+
     def est_predict_ef_loss(self):
-        "Ignore"
-        pass
+        times_list: List[float] = []
+        for ii in range(110):
+            t1 = time.time()
+            ef_loss = self.linear_mtp.predict_ef_loss(*self.mlff_to_ef_loss_input.analyse_pymatgen(self.structure,
+                                                                                                   e_weight=1.0,
+                                                                                                   f_weight=1.0))
+            ef_loss.sum().backward()
+            t2 = time.time()
+            if (ii == 0):
+                print(self.linear_mtp.type_bias_tensor.grad)
+
+            if (ii>9):
+                times_list.append(t2-t1)
+
+        print("0.1. Average time cost by linear_mtp.predict_loss() = ", np.sum(times_list) / 100)
+        print("0.2. std time cost by linear_mtp.predict_loss() = ", np.std(times_list) / 100)
+        print("1. Loss = ", ef_loss)
 
 
     def est_predict_efv(self):
@@ -89,11 +112,11 @@ class LinearMtpTest(unittest.TestCase):
         print("0.1. Average time cost by linear_mtp.predict_efv() = ", np.sum(times_list) / 100)
         print("0.2. std time cost by linear_mtp.predict_efv() = ", np.std(times_list) / 100)
         print("1. Energy = ", e)
-        print("2. Force.shape = ", f.shape)
-        print("3. Virial.shape = ", v.shape)
+        print("2. Force.shape = \n", f[0][5])
+        print("3. Virial.shape = \n", v)
 
     
-    def est_predict_ef(self):
+    def test_predict_ef(self):
         times_list: List[float] = []
         for ii in range(110):
             t1 = time.time()
@@ -105,7 +128,7 @@ class LinearMtpTest(unittest.TestCase):
         print("0.1. Average time cost by linear_mtp.predict_ef() = ", np.sum(times_list) / 100)
         print("0.2. std time cost by linear_mtp.predict_ef() = ", np.std(times_list) / 100)
         print("1. Energy = ", e)
-        print("2. Force.shape = ", f.shape)
+        print("2. Force.shape = \n", f[0][5])
 
 
 if __name__ == "__main__":

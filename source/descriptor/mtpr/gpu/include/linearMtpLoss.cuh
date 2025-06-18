@@ -456,7 +456,7 @@ void find_ef_loss_kernel(CoordType *loss_ptr,
     }
 
     if (nx == 0) {
-        CoordType e_loss = 0;
+        CoordType e_loss = 0.0;
         e_loss = e_weight / inum * std::pow(etot_ml - etot_dft, 2);
         atomicAdd(loss_ptr, e_loss);
     }
