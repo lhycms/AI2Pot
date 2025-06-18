@@ -480,7 +480,11 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                     umax_num_neighs,
                     nghost,
                     rmax,
-                    rmin);
+                    rmin,
+                    zbl_rmax,
+                    zbl_rmin,
+                    zbl_cks,
+                    zbl_dks);
             } else {
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
                 tmp_etot_ml_tensor.zero_();
@@ -599,7 +603,11 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                     umax_num_neighs,
                     nghost,
                     rmax,
-                    rmin);
+                    rmin,
+                    zbl_rmax,
+                    zbl_rmin,
+                    zbl_cks,
+                    zbl_dks);
             } else {
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
                 tmp_etot_ml_tensor.zero_();
@@ -829,7 +837,11 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
                     umax_num_neighs,
                     nghost,
                     rmax,
-                    rmin);
+                    rmin,
+                    zbl_rmax,
+                    zbl_rmin,
+                    zbl_cks,
+                    zbl_dks);
             } else {
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
                 tmp_etot_ml_tensor.zero_();
@@ -979,7 +991,11 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
                     umax_num_neighs,
                     nghost,
                     rmax,
-                    rmin);
+                    rmin,
+                    zbl_rmax,
+                    zbl_rmin,
+                    zbl_cks,
+                    zbl_dks);
             } else {
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
                 tmp_etot_ml_tensor.zero_();
@@ -1207,7 +1223,11 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
                     umax_num_neighs,
                     nghost,
                     rmax,
-                    rmin);
+                    rmin,
+                    zbl_rmax,
+                    zbl_rmin,
+                    zbl_cks,
+                    zbl_dks);
             } else {
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
                 tmp_etot_ml_tensor.zero_();
@@ -1317,7 +1337,11 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
                     umax_num_neighs,
                     nghost,
                     rmax,
-                    rmin);
+                    rmin,
+                    zbl_rmax,
+                    zbl_rmin,
+                    zbl_cks,
+                    zbl_dks);
             } else {
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
                 tmp_etot_ml_tensor.zero_();
@@ -1533,7 +1557,11 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
                     umax_num_neighs,
                     nghost,
                     rmax,
-                    rmin);
+                    rmin,
+                    zbl_rmax,
+                    zbl_rmin,
+                    zbl_cks,
+                    zbl_dks);
             } else {
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
                 tmp_etot_ml_tensor.zero_();
@@ -1674,7 +1702,11 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
                     umax_num_neighs,
                     nghost,
                     rmax,
-                    rmin);
+                    rmin,
+                    zbl_rmax,
+                    zbl_rmin,
+                    zbl_cks,
+                    zbl_dks);
             } else {
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
                 tmp_etot_ml_tensor.zero_();
@@ -1890,7 +1922,11 @@ torch::autograd::variable_list LinearMtpToEFVFunction::forward(
                     umax_num_neigh_atoms,
                     nghost,
                     rmax,
-                    rmin);
+                    rmin,
+                    zbl_rmax,
+                    zbl_rmin,
+                    zbl_cks,
+                    zbl_dks);
             } else {
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
                 find_efv_torch_launcher(
@@ -1982,7 +2018,11 @@ torch::autograd::variable_list LinearMtpToEFVFunction::forward(
                     umax_num_neigh_atoms,
                     nghost,
                     rmax,
-                    rmin);
+                    rmin,
+                    zbl_rmax,
+                    zbl_rmin,
+                    zbl_cks,
+                    zbl_dks);
             } else {
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
                 find_efv_torch_launcher(
@@ -2184,7 +2224,11 @@ torch::autograd::variable_list LinearMtpToEFFunction::forward(
                     umax_num_neigh_atoms,
                     nghost,
                     rmax,
-                    rmin);
+                    rmin,
+                    zbl_rmax,
+                    zbl_rmin,
+                    zbl_cks,
+                    zbl_dks);
             } else {
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
                 find_ef_torch_launcher(
@@ -2272,7 +2316,11 @@ torch::autograd::variable_list LinearMtpToEFFunction::forward(
                     umax_num_neigh_atoms,
                     nghost,
                     rmax,
-                    rmin);
+                    rmin,
+                    zbl_rmax,
+                    zbl_rmin,
+                    zbl_cks,
+                    zbl_dks);
             } else {
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
                 find_ef_torch_launcher(

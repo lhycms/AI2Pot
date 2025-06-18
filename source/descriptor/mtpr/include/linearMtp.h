@@ -61,7 +61,11 @@ public:
         int umax_num_neigh_atoms,
         int nghost,
         CoordType rmax,
-        CoordType rmin);
+        CoordType rmin,
+        CoordType zbl_rmax,
+        CoordType zbl_rmin,
+        CoordType *zbl_cks,
+        CoordType *zbl_dks);
 
 
     static void find_ef(
@@ -90,7 +94,11 @@ public:
         int umax_num_neigh_atoms,
         int nghost,
         CoordType rmax,
-        CoordType rmin);
+        CoordType rmin,
+        CoordType zbl_rmax,
+        CoordType zbl_rmin,
+        CoordType *zbl_cks,
+        CoordType *zbl_dks);
 
 
     static void find_e_backward(
@@ -154,7 +162,11 @@ public:
         int umax_num_neigh_atoms,
         int nghost,
         CoordType rmax,
-        CoordType rmin);
+        CoordType rmin,
+        CoordType zbl_rmax,
+        CoordType zbl_rmin,
+        CoordType *zbl_cks,
+        CoordType *zbl_dks);
 
 
     static void find_ef_loss(
@@ -186,7 +198,11 @@ public:
         int umax_num_neigh_atoms,
         int nghost,
         CoordType rmax,
-        CoordType rmin);
+        CoordType rmin,
+        CoordType zbl_rmax,
+        CoordType zbl_rmin,
+        CoordType *zbl_cks,
+        CoordType *zbl_dks);
 
 
     static void find_loss_backward(
@@ -222,7 +238,11 @@ public:
         int umax_num_neigh_atoms,
         int nghost,
         CoordType rmax,
-        CoordType rmin);
+        CoordType rmin,
+        CoordType zbl_rmax,
+        CoordType zbl_rmin,
+        CoordType *zbl_cks,
+        CoordType *zbl_dks);
 
 
     static void find_ef_loss_backward(
@@ -256,7 +276,11 @@ public:
         int umax_num_neigh_atoms,
         int nghost,
         CoordType rmax,
-        CoordType rmin);
+        CoordType rmin,
+        CoordType zbl_rmax,
+        CoordType zbl_rmin,
+        CoordType *zbl_cks,
+        CoordType *zbl_dks);
 };  // class : MtpBasisToE
 
 
@@ -288,7 +312,11 @@ void LinearMtp<CoordType>::find_efv(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin)
+    CoordType rmin,
+    CoordType zbl_rmax,
+    CoordType zbl_rmin,
+    CoordType *zbl_cks,
+    CoordType *zbl_dks)
 {
     // Step 1.
     CoordType *mom_vals;
@@ -448,7 +476,11 @@ void LinearMtp<CoordType>::find_ef(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin)
+    CoordType rmin,
+    CoordType zbl_rmax,
+    CoordType zbl_rmin,
+    CoordType *zbl_cks,
+    CoordType *zbl_dks)
 {
     // Step 1.
     CoordType *mom_vals;
@@ -640,7 +672,11 @@ void LinearMtp<CoordType>::find_loss(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin)
+    CoordType rmin,
+    CoordType zbl_rmax,
+    CoordType zbl_rmin,
+    CoordType *zbl_cks,
+    CoordType *zbl_dks)
 {
     CoordType etot;
     CoordType (*force)[3];
@@ -677,7 +713,11 @@ void LinearMtp<CoordType>::find_loss(
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        zbl_rmax,
+        zbl_rmin,
+        zbl_cks,
+        zbl_dks);
 
     MtpLoss<CoordType>::find_loss(
         loss,
@@ -728,7 +768,11 @@ void LinearMtp<CoordType>::find_ef_loss(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin)
+    CoordType rmin,
+    CoordType zbl_rmax,
+    CoordType zbl_rmin,
+    CoordType *zbl_cks,
+    CoordType *zbl_dks)
 {
     CoordType etot;
     CoordType (*force)[3];
@@ -762,7 +806,11 @@ void LinearMtp<CoordType>::find_ef_loss(
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        zbl_rmax,
+        zbl_rmin,
+        zbl_cks,
+        zbl_dks);
 
     MtpLoss<CoordType>::find_ef_loss(
         loss,
@@ -813,7 +861,11 @@ void LinearMtp<CoordType>::find_loss_backward(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin)
+    CoordType rmin,
+    CoordType zbl_rmax,
+    CoordType zbl_rmin,
+    CoordType *zbl_cks,
+    CoordType *zbl_dks)
 {
     // Step 1.
     CoordType *mom_vals;
@@ -866,7 +918,11 @@ void LinearMtp<CoordType>::find_loss_backward(
              umax_num_neigh_atoms,
              nghost,
              rmax,
-             rmin);
+             rmin,
+             zbl_rmax,
+             zbl_rmin,
+             zbl_cks,
+             zbl_dks);
 
 #ifdef USE_OPENMP
 #pragma omp parallel private(mom_vals, e_site_der2mom, dloss_combination, auto_dist_powers_, auto_coords_powers_, p_RadialBasis)
@@ -1177,7 +1233,11 @@ void LinearMtp<CoordType>::find_ef_loss_backward(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin)
+    CoordType rmin,
+    CoordType zbl_rmax,
+    CoordType zbl_rmin,
+    CoordType *zbl_cks,
+    CoordType *zbl_dks)
 {
     // Step 1.
     CoordType *mom_vals;
@@ -1226,7 +1286,11 @@ void LinearMtp<CoordType>::find_ef_loss_backward(
             umax_num_neigh_atoms,
             nghost,
             rmax,
-            rmin);
+            rmin,
+            zbl_rmax,
+            zbl_rmin,
+            zbl_cks,
+            zbl_dks);
 
 
 #ifdef USE_OPENMP
