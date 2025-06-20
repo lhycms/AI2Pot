@@ -95,12 +95,12 @@ class LinearMtpTest(unittest.TestCase):
             if (ii>9):
                 times_list.append(t2-t1)
 
-        print("0.1. Average time cost by linear_mtp.predict_loss() = ", np.sum(times_list) / 100)
-        print("0.2. std time cost by linear_mtp.predict_loss() = ", np.std(times_list) / 100)
+        print("0.1. Average time cost by linear_mtp.predict_ef_loss() = ", np.sum(times_list) / 100)
+        print("0.2. std time cost by linear_mtp.predict_ef_loss() = ", np.std(times_list) / 100)
         print("1. Loss = ", ef_loss)
 
 
-    def est_predict_efv(self):
+    def test_predict_efv(self):
         times_list: List[float] = []
         for ii in range(110):
             t1 = time.time()
@@ -108,6 +108,7 @@ class LinearMtpTest(unittest.TestCase):
             t2 = time.time()
             if (ii>9):
                 times_list.append(t2-t1)
+            print(v)
 
         print("0.1. Average time cost by linear_mtp.predict_efv() = ", np.sum(times_list) / 100)
         print("0.2. std time cost by linear_mtp.predict_efv() = ", np.std(times_list) / 100)
@@ -116,7 +117,7 @@ class LinearMtpTest(unittest.TestCase):
         print("3. Virial.shape = \n", v)
 
     
-    def test_predict_ef(self):
+    def est_predict_ef(self):
         times_list: List[float] = []
         for ii in range(110):
             t1 = time.time()

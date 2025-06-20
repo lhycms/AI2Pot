@@ -425,7 +425,6 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
         tmp_force_ml_tensor = at::zeros({num_atoms + nghost, 3}, float_options);
         tmp_virial_ml_tensor = at::zeros({9}, float_options);
 #endif
-
         float *zbl_cks = zbl_cks_tensor.data_ptr<float>();
         float *zbl_dks = zbl_dks_tensor.data_ptr<float>();
 
@@ -494,6 +493,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                 float *tmp_etot_ml_ptr = (float*)tmp_etot_ml_tensor.data_ptr<float>();
                 float (*tmp_force_ml)[3] = (float (*)[3])tmp_force_ml_tensor.data_ptr<float>();
                 float *tmp_virial_ml = (float*)tmp_virial_ml_tensor.data_ptr<float>();
+
                 find_efv_torch_launcher(tmp_etot_ml_ptr,
                                         tmp_force_ml,
                                         tmp_virial_ml,
@@ -522,7 +522,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                                         (float)rmax,
                                         (float)rmin);
 
-                ai2pot::mtpr::find_loss_torch_launcher(
+                find_loss_torch_launcher(
                     loss,
                     inum,
                     ilist,
@@ -535,6 +535,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                     force_dft,
                     tmp_virial_ml,
                     virial_dft);
+
 #endif
             }
         }
@@ -646,7 +647,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                                         rmax,
                                         rmin);
 
-                ai2pot::mtpr::find_loss_torch_launcher(
+                find_loss_torch_launcher(
                     loss,
                     inum,
                     ilist,
@@ -928,10 +929,11 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
         bloss_der2coeffs_tensor = at::zeros({nbatches, num_coeffs}, float_options);
         bloss_der2linear_coeffs_tensor = at::zeros({nbatches, num_linear_coeffs}, float_options);
         bloss_der2type_bias_tensor = at::zeros({nbatches, ntypes}, float_options);
-        
+#if defined(USE_CUDA) or defined (__INTELLISENSE__)
         tmp_etot_ml_tensor = at::tensor(0, float_options);
         tmp_force_ml_tensor = at::zeros({num_atoms + nghost, 3}, float_options);
         tmp_virial_ml_tensor = at::zeros({9}, float_options);
+#endif
 
         double* zbl_cks = zbl_cks_tensor.data_ptr<double>();
         double* zbl_dks = zbl_dks_tensor.data_ptr<double>();
@@ -1145,12 +1147,12 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
     const at::Tensor& zbl_dks_tensor)
 {
     int nbatches = (int)betot_dft_tensor.size(0);
+    int num_atoms = (int)bilist_tensor.size(1);
     int alpha_index_basic_count = (int)alpha_index_basic_tensor.size(0);
     int alpha_index_times_count = (int)alpha_index_times_tensor.size(0);
     int alpha_scalar_moment = (int)alpha_moment_mapping_tensor.size(0);
     int umax_num_neighs = (int)bfirstneigh_tensor.size(2);
-    int ntypes = type_map_tensor.size(0);
-    int num_atoms = (int)bilist_tensor.size(1);
+    int ntypes = (int)type_map_tensor.size(0);
 
     c10::TensorOptions int_options = c10::TensorOptions()
                                         .dtype(torch::kInt32)
@@ -1169,11 +1171,11 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
                             .device(brcs_tensor.device());
         bloss_tensor = at::zeros({nbatches}, float_options);
 #if defined(USE_CUDA) or (__INTELLISENSE__)
-    tmp_etot_ml_tensor = at::tensor(0, float_options);
-    tmp_force_ml_tensor = at::zeros({num_atoms + nghost}, float_options);
+        tmp_etot_ml_tensor = at::tensor(0, float_options);
+        tmp_force_ml_tensor = at::zeros({num_atoms + nghost, 3}, float_options);
 #endif
-        float* zbl_cks = zbl_cks_tensor.data_ptr<float>();
-        float* zbl_dks = zbl_dks_tensor.data_ptr<float>();
+        float *zbl_cks = zbl_cks_tensor.data_ptr<float>();
+        float *zbl_dks = zbl_dks_tensor.data_ptr<float>();
 
         for (int bb=0; bb<nbatches; bb++) {
             float *loss = bloss_tensor[bb].data_ptr<float>();
@@ -1274,6 +1276,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
                     etot_dft,
                     tmp_force_ml,
                     force_dft);
+
 #endif
             }
         }

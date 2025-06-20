@@ -203,3 +203,4 @@ class MlffToEFLossInput(object):
             torch.tensor(nblist_info[5], dtype=torch.int32, device=self.device).view(1, -1),
             torch.tensor(nblist_info[6], dtype=torch.int32, device=self.device).view(1,)
         ]
+    

@@ -53,7 +53,8 @@ void find_efv_atom(CoordType *etot_ptr,
                    int umax_num_neigh_atoms,
                    int nghost,
                    CoordType rmax,
-                   CoordType rmin);
+                   CoordType rmin,
+                   CoordType *s_local_virial);
 
 
 template <typename CoordType>
@@ -237,8 +238,9 @@ void find_efv_atom(CoordType *etot_ptr,
                    int umax_num_neigh_atoms,
                    int nghost,
                    CoordType rmax,
-                   CoordType rmin)
-{
+                   CoordType rmin,
+                   CoordType *s_local_virial)
+{   
     // Step 1. Init temp array
     CoordType mom_vals[MAX_ALPHA_MOMENTS_COUNT] = {0.};
     CoordType e_site_der2mom[MAX_ALPHA_MOMENTS_COUNT] = {0.};
@@ -427,7 +429,8 @@ void find_efv_atom(CoordType *etot_ptr,
                     atomicAdd(&force[neigh_idx][aa], -e_site_ders_ija);
 
                     for (int bb=0; bb<3; bb++)
-                        atomicAdd(&virial[aa*3 + bb], -e_site_ders_ija * NeighbVect[bb]);
+                        //atomicAdd(&virial[aa*3 + bb], -e_site_ders_ija * NeighbVect[bb]);
+                        s_local_virial[aa*3 + bb] -= e_site_ders_ija * NeighbVect[bb];
                  }
             }
         }
@@ -468,6 +471,12 @@ void find_efv_kernel(CoordType *etot_ptr,
     int nx = blockIdx.x * blockDim.x + threadIdx.x;
     int ii = nx;
 
+    __shared__ CoordType s_local_virial[64][9];
+    int tid = threadIdx.x;
+    for (int ii=0; ii<9; ii++)
+        s_local_virial[tid][ii] = 0.0;
+
+
     if (ii < inum) {
         int silist = ilist[ii];
         int snumneigh = numneigh[ii];
@@ -498,7 +507,15 @@ void find_efv_kernel(CoordType *etot_ptr,
                                  umax_num_neigh_atoms,
                                  nghost,
                                  rmax,
-                                 rmin);
+                                 rmin,
+                                 s_local_virial[tid]);
+    }
+    __syncthreads();
+
+    if (tid == 0) {
+        for (int t=0; t<blockDim.x; t++)
+            for (int i=0; i<9; i++)
+                atomicAdd(&virial[i], s_local_virial[t][i]);
     }
 }
 

@@ -27,7 +27,7 @@ class LinearMtpTest(unittest.TestCase):
         #torch.manual_seed(41234)
         # 0.
         self.torch_float_dtype: torch._C.dtype = torch.float64
-        self.device: torch._C.device = torch.device("cpu")
+        self.device: torch._C.device = torch.device("cuda")
         
         # 1. 
         self.mtp_level: int = 12
@@ -70,9 +70,11 @@ class LinearMtpTest(unittest.TestCase):
                 self.zbl_dks_tensor[idx*4 + 2] = 0.4029
                 self.zbl_dks_tensor[idx*4 + 3] = 0.20162
         
-        self.mlff_to_loss_input: MlffToLossInput = MlffToLossInput(rcut=self.rmax,
+        self.mlff_to_loss_input: MlffToLossInput = MlffToLossInput(type_map=[1],
+                                                                   rcut=self.rmax,
                                                                    umax_num_neighs=self.umax_num_neighs,
-                                                                   dtype=self.torch_float_dtype)
+                                                                   dtype=self.torch_float_dtype,
+                                                                   device=self.device)
         
         # 2. mtpParamOp
         mtp_param_info = mtpParamOp(self.mtp_level)

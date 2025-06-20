@@ -86,7 +86,7 @@ void find_efv_torch_launcher(
         nghost,
         rmax,
         rmin);
-    
+
     CHECK_CUDA_API( cudaDeviceSynchronize() );
     CHECK_CUDA_API( cudaGetLastError() );
 }
