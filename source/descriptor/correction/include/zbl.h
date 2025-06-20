@@ -22,6 +22,10 @@
 #include <stdlib.h>
 #include <vector>
 
+#if defined(USE_OPENMP) or defined(__INTELLISENSE__)
+#include <omp.h>
+#endif
+
 
 namespace ai2pot {
 namespace correction {
@@ -316,6 +320,9 @@ void PairZBL<CoordType>::add_atomic_energy_one(CoordType &atomic_energy,
                                            CoordType distance_ij)
 {
     CoordType half_pair_energy = 0.5 * this->find_pair_energy(distance_ij);
+#if defined(USE_OPENMP) or defined(__INTELLISENSE__)
+#pragma omp atomic
+#endif
     atomic_energy += half_pair_energy;
 }
 
@@ -336,6 +343,9 @@ void PairZBL<CoordType>::add_atomic_force_one(CoordType *atomic_force,
     CoordType C_der = this->find_switch_func_der2rij(distance_ij);
 
     for (int aa=0; aa<3; aa++) {
+#if defined(USE_OPENMP) or defined(__INTELLISENSE__)
+#pragma omp atomic
+#endif
         atomic_force[aa] += (A_der*B*C 
                              + A*B_der*C
                              + A*B*C_der) * neigh_vec[aa] / distance_ij;
@@ -363,7 +373,11 @@ void PairZBL<CoordType>::add_virial_one(CoordType *virial,
             CoordType Fijb = (A_der*B*C
                              + A*B_der*C
                              + A*B*C_der) * neigh_vec[bb] / distance_ij;
+#if defined(USE_OPENMP) or defined(__INTELLISENSE__)
+#pragma omp atomic
+#endif
             virial[aa*3 + bb] += -0.5 * neigh_vec[aa] * Fijb;
+
         }
     }
 }
@@ -489,6 +503,9 @@ void GroupZBL<CoordType>::correct_efv(CoordType &etot,
     CoordType distance_ij;
     CoordType distance_ij_inv;
 
+#if defined(USE_OPENMP) or defined(__INTELLISENSE__)
+#pragma omp parallel for
+#endif
     for (int ii=0; ii<inum; ii++) {
         center_idx = ilist[ii];
         type_inner = types[center_idx];
@@ -545,6 +562,9 @@ void GroupZBL<CoordType>::correct_ef(CoordType &etot,
     CoordType distance_ij;
     CoordType distance_ij_inv;
 
+#if defined(USE_OPENMP) or defined(__INTELLISENSE__)
+#pragma omp parallel for
+#endif
     for (int ii=0; ii<inum; ii++) {
         center_idx = ilist[ii];
         type_inner = types[center_idx];

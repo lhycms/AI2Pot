@@ -96,7 +96,8 @@ public:
                         CoordType rmin,
                         CoordType *neigh_vec,
                         CoordType *ck,
-                        CoordType *dk);
+                        CoordType *dk,
+                        CoordType *s_local_virial);
 };
 
 
@@ -116,7 +117,8 @@ void correct_zbl_efv_atom(CoordType &etot,
                           int *types,
                           int ntypes,
                           int *type_map,
-                          int umax_num_neigh_atoms);
+                          int umax_num_neigh_atoms,
+                          CoordType *s_local_virial);
 
 
 template <typename CoordType>
@@ -370,7 +372,8 @@ void PairZBL<CoordType>::add_virial_one(CoordType *virial,
                                         CoordType rmin,
                                         CoordType *neigh_vec,
                                         CoordType *ck,
-                                        CoordType *dk)
+                                        CoordType *dk,
+                                        CoordType *s_local_virial)
 {
     CoordType distance_ij = std::sqrt( std::pow(neigh_vec[0], 2)
                                        + std::pow(neigh_vec[1], 2)
@@ -389,8 +392,8 @@ void PairZBL<CoordType>::add_virial_one(CoordType *virial,
                              + A*B_der*C
                              + A*B*C_der) * neigh_vec[bb] / distance_ij;
             
-            //virial[aa*3 + bb] += -0.5 * neigh_vec[aa] * Fijb;
-            atomicAdd(&virial[aa*3 + bb], -0.5 * neigh_vec[aa] * Fijb);
+            //atomicAdd(&virial[aa*3 + bb], -0.5 * neigh_vec[aa] * Fijb);
+            s_local_virial[aa*3 + bb] -= 0.5 * neigh_vec[aa] * Fijb;
         }
     }
 }
@@ -412,7 +415,8 @@ void correct_zbl_efv_atom(CoordType &etot,
                           int *types,
                           int ntypes,
                           int *type_map,
-                          int umax_num_neigh_atoms)
+                          int umax_num_neigh_atoms,
+                          CoordType *s_local_virial)
 {
     int center_idx = silist;
     int type_central = types[center_idx];
@@ -468,7 +472,8 @@ void correct_zbl_efv_atom(CoordType &etot,
                                            rmin,
                                            neigh_vec,
                                            ck,
-                                           dk);
+                                           dk,
+                                           s_local_virial);
     }
 }
 
@@ -495,6 +500,11 @@ void correct_zbl_efv_kernel(CoordType &etot,
     int nx = blockIdx.x * blockDim.x + threadIdx.x;
     int ii = nx;
 
+    __shared__ CoordType s_local_virial[64][9];
+    int tid = threadIdx.x;
+    for (int ii=0; ii<9; ii++)
+        s_local_virial[tid][ii] = 0.0;
+
     if (ii < inum) {
         int silist = ilist[ii];
         int snumneigh = numneigh[ii];
@@ -515,7 +525,15 @@ void correct_zbl_efv_kernel(CoordType &etot,
                                         types,
                                         ntypes,
                                         type_map,
-                                        umax_num_neigh_atoms);
+                                        umax_num_neigh_atoms,
+                                        s_local_virial[tid]);
+    }
+    __syncthreads();
+
+    if (tid == 0) {
+        for (int t=0; t<blockDim.x; t++)
+            for (int i=0; i<9; i++)
+                atomicAdd(&virial[i], s_local_virial[t][i]);
     }
 }
 
@@ -539,7 +557,7 @@ void correct_zbl_efv_launcher(CoordType &h_etot,
                               int *h_type_map,
                               int umax_num_neigh_atoms)
 {
-    int block_size_x = 128;
+    int block_size_x = 64;
     int grid_size_x = (inum - 1) / block_size_x + 1;
     dim3 grid_size(grid_size_x);
     dim3 block_size(block_size_x);
@@ -757,7 +775,7 @@ void correct_zbl_ef_launcher(CoordType &h_etot,
                              int *h_type_map,
                              int umax_num_neigh_atoms)
 {
-    int block_size_x = 128;
+    int block_size_x = 64;
     int grid_size_x = (inum - 1) / block_size_x + 1;
     dim3 grid_size(grid_size_x);
     dim3 block_size(block_size_x);
@@ -836,7 +854,6 @@ void correct_zbl_ef_launcher(CoordType &h_etot,
     CHECK_CUDA_API( cudaFree(d_types) );
     CHECK_CUDA_API( cudaFree(d_type_map) );
 }
-
 
 
 };  // namespace : correction

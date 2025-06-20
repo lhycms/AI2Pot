@@ -476,7 +476,6 @@ void find_efv_kernel(CoordType *etot_ptr,
     for (int ii=0; ii<9; ii++)
         s_local_virial[tid][ii] = 0.0;
 
-
     if (ii < inum) {
         int silist = ilist[ii];
         int snumneigh = numneigh[ii];
