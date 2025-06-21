@@ -46,7 +46,9 @@ if (TORCH_OP)
     endif()
     if (USE_CUDA AND CUDA_FOUND)
         target_compile_definitions(linearMtpOp PRIVATE USE_CUDA)
-        target_link_libraries(linearMtpOp PRIVATE linear_mtp_torch_launcher linear_mtp_loss_torch_launcher)
+        target_link_libraries(linearMtpOp PRIVATE linear_mtp_torch_launcher 
+                                                  linear_mtp_loss_torch_launcher
+                                                  zbl_torch_launcher)
     endif()
     if (MAX_MTP_LEVEL)
         target_compile_definitions(linearMtpOp PRIVATE MAX_MTP_LEVEL=${MAX_MTP_LEVEL})

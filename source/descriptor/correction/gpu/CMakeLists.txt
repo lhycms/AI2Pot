@@ -10,6 +10,13 @@ file(MAKE_DIRECTORY ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY})
 
 
 # 5. Compile
+add_library(zbl_torch_launcher SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/zbl_torch_launcher.cu)
+set_target_properties(zbl_torch_launcher PROPERTIES
+    CUDA_STANDARD ${CUDA_STANDARD}
+    CUDA_SEPERATE_COMPILATION on
+    CUDA_ARCHITECTURES ${CUDA_ARCHITECTURES})
+
+# 6. Compile test
 if (BUILD_TEST)
     #add_executable(test_pair_zbl ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_pair_zbl.cu)
     #set_target_properties(test_pair_zbl PROPERTIES

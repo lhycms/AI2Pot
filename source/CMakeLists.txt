@@ -84,11 +84,11 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/core)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/nblist)
 
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/descriptor/correction)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/descriptor/deepmd)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/descriptor/mtp)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/descriptor/mtpr)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/descriptor/ace)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/descriptor/correction)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/fvt)
 

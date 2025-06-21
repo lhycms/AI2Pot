@@ -18,6 +18,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "../../correction/include/zbl.h"
 #ifdef USE_OPENMP
 #include <omp.h>
 #endif
@@ -446,6 +447,29 @@ void LinearMtp<CoordType>::find_efv(
 #ifdef USE_OPENMP
 }
 #endif
+
+    if (zbl_rmax > 0.0) {
+        ai2pot::correction::GroupZBL<CoordType> gzbl(ntypes, 
+                                                    type_map, 
+                                                    type_map,
+                                                    zbl_rmax,
+                                                    zbl_rmin,
+                                                    zbl_cks,
+                                                    zbl_dks);
+        gzbl.correct_efv(etot,
+                        (CoordType*)force,
+                        virial,
+                        inum,
+                        ilist,
+                        numneigh,
+                        firstneigh,
+                        relative_coords,
+                        types,
+                        ntypes,
+                        type_map,
+                        umax_num_neigh_atoms,
+                        nghost);
+    }
 }
 
 
@@ -603,6 +627,28 @@ void LinearMtp<CoordType>::find_ef(
 #ifdef USE_OPENMP
 }
 #endif
+
+    if (zbl_rmax > 0.0) {
+        ai2pot::correction::GroupZBL<CoordType> gzbl(ntypes, 
+                                                    type_map, 
+                                                    type_map,
+                                                    zbl_rmax,
+                                                    zbl_rmin,
+                                                    zbl_cks,
+                                                    zbl_dks);
+        gzbl.correct_ef(etot,
+                        (CoordType*)force,
+                        inum,
+                        ilist,
+                        numneigh,
+                        firstneigh,
+                        relative_coords,
+                        types,
+                        ntypes,
+                        type_map,
+                        umax_num_neigh_atoms,
+                        nghost);
+    }
 }
 
 

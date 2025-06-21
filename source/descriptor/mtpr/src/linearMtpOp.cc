@@ -24,6 +24,7 @@
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
 #include "../gpu/include/linearMtp_torch_launcher.h"
 #include "../gpu/include/linearMtpLoss_torch_launcher.h"
+#include "../../correction/gpu/include/zbl_torch_launcher.h"
 
 namespace ai2pot {
 namespace mtpr {
@@ -351,6 +352,88 @@ extern template void ai2pot::mtpr::find_ef_loss_backward_torch_launcher<double>(
     double rmin);
 
 };  // namespace : mtpr
+};  // namespace : ai2pot
+
+
+
+namespace ai2pot {
+namespace correction {
+
+extern template void ai2pot::correction::correct_zbl_efv_torch_launcher<float>(
+    float *d_etot_ptr,
+    float *d_force,
+    float *d_virial,
+    float rmax,
+    float rmin,
+    float *d_cks,
+    float *d_dks,
+    int inum,
+    int *d_ilist,
+    int *d_numneigh,
+    int *d_firstneigh,
+    float (*d_rcs)[3],
+    int *d_types,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms);
+
+extern template void ai2pot::correction::correct_zbl_efv_torch_launcher<double>(
+    double *d_etot_ptr,
+    double *d_force,
+    double *d_virial,
+    double rmax,
+    double rmin,
+    double *d_cks,
+    double *d_dks,
+    int inum,
+    int *d_ilist,
+    int *d_numneigh,
+    int *d_firstneigh,
+    double (*d_rcs)[3],
+    int *d_types,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms);
+
+
+extern template void ai2pot::correction::correct_zbl_ef_torch_launcher<float>(
+    float *d_etot_ptr,
+    float *d_force,
+    float rmax,
+    float rmin,
+    float *d_cks,
+    float *d_dks,
+    int inum,
+    int *d_ilist,
+    int *d_numneigh,
+    int *d_firstneigh,
+    float (*d_rcs)[3],
+    int *d_types,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms
+);
+
+
+extern template void ai2pot::correction::correct_zbl_ef_torch_launcher<double>(
+    double *d_etot_ptr,
+    double *d_force,
+    double rmax,
+    double rmin,
+    double *d_cks,
+    double *d_dks,
+    int inum,
+    int *d_ilist,
+    int *d_numneigh,
+    int *d_firstneigh,
+    double (*d_rcs)[3],
+    int *d_types,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms
+);
+
+};  // namespace : correction
 };  // namespace : ai2pot
 
 #endif

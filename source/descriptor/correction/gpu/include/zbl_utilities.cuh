@@ -19,6 +19,7 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
+#include <stdio.h>
 
 #ifdef __INTELLISENSE__
 #define KERNEL_ARG2(grid_size, block_size)

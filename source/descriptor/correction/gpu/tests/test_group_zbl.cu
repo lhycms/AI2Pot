@@ -138,7 +138,7 @@ TEST_F(GroupZBLTest, efv_force_accuracy) {
     rcs[1*umax_num_neigh_atoms + 0][0] = coord_0[0] - coord_1[0];
     rcs[1*umax_num_neigh_atoms + 0][1] = coord_0[1] - coord_1[1];
     rcs[1*umax_num_neigh_atoms + 0][2] = coord_0[2] - coord_1[2];
-    ai2pot::correction::correct_zbl_efv_launcher(etot,
+    ai2pot::correction::correct_zbl_efv_launcher(&etot,
                                                  forces,
                                                  virial,
                                                  rmax,
@@ -163,7 +163,7 @@ TEST_F(GroupZBLTest, efv_force_accuracy) {
     rcs[1*umax_num_neigh_atoms + 0][0] = coord_0[0] - coord_1[0];
     rcs[1*umax_num_neigh_atoms + 0][1] = coord_0[1] - coord_1[1];
     rcs[1*umax_num_neigh_atoms + 0][2] = coord_0[2] - coord_1[2];
-    ai2pot::correction::correct_zbl_efv_launcher(etot_,
+    ai2pot::correction::correct_zbl_efv_launcher(&etot_,
                                                  forces_,
                                                  virial_,
                                                  rmax,
@@ -194,7 +194,7 @@ TEST_F(GroupZBLTest, efv_virial_accuracy)
     rcs[1*umax_num_neigh_atoms + 0][1] = coord_0[1] - coord_1[1];
     rcs[1*umax_num_neigh_atoms + 0][2] = coord_0[2] - coord_1[2];
 
-    ai2pot::correction::correct_zbl_efv_launcher<double>(etot,
+    ai2pot::correction::correct_zbl_efv_launcher<double>(&etot,
                                                          forces,
                                                          virial,
                                                          rmax,
@@ -240,7 +240,7 @@ TEST_F(GroupZBLTest, ef_force_accuracy) {
     rcs[1*umax_num_neigh_atoms + 0][0] = coord_0[0] - coord_1[0];
     rcs[1*umax_num_neigh_atoms + 0][1] = coord_0[1] - coord_1[1];
     rcs[1*umax_num_neigh_atoms + 0][2] = coord_0[2] - coord_1[2];
-    ai2pot::correction::correct_zbl_ef_launcher<double>(etot,
+    ai2pot::correction::correct_zbl_ef_launcher<double>(&etot,
                                                         forces,
                                                         rmax,
                                                         rmin,
@@ -264,7 +264,7 @@ TEST_F(GroupZBLTest, ef_force_accuracy) {
     rcs[1*umax_num_neigh_atoms + 0][0] = coord_0[0] - coord_1[0];
     rcs[1*umax_num_neigh_atoms + 0][1] = coord_0[1] - coord_1[1];
     rcs[1*umax_num_neigh_atoms + 0][2] = coord_0[2] - coord_1[2];
-    ai2pot::correction::correct_zbl_ef_launcher<double>(etot_,
+    ai2pot::correction::correct_zbl_ef_launcher<double>(&etot_,
                                                         forces_,
                                                         rmax,
                                                         rmin,

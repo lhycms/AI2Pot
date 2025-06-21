@@ -18,6 +18,7 @@
 
 #include <math.h>
 #include <chrono>
+#include <iostream>
 #include "./zbl_utilities.cuh"
 
 
@@ -69,7 +70,7 @@ public:
                                CoordType *dk);
     
     static __host__ __device__
-    void add_atomic_energy_one(CoordType &atomic_energy,
+    void add_atomic_energy_one(CoordType *atomic_energy_ptr,
                                int Zi,
                                int Zj,
                                CoordType rmax,
@@ -103,7 +104,7 @@ public:
 
 template <typename CoordType>
 static __device__
-void correct_zbl_efv_atom(CoordType &etot,
+void correct_zbl_efv_atom(CoordType *etot_ptr,
                           CoordType *force,
                           CoordType *virial,
                           CoordType rmax,
@@ -123,7 +124,7 @@ void correct_zbl_efv_atom(CoordType &etot,
 
 template <typename CoordType>
 static __global__
-void correct_zbl_efv_kernel(CoordType &etot,
+void correct_zbl_efv_kernel(CoordType *etot_ptr,
                             CoordType *force,
                             CoordType *virial,
                             CoordType rmax,
@@ -143,7 +144,7 @@ void correct_zbl_efv_kernel(CoordType &etot,
 
 template <typename CoordType>
 static __host__
-void correct_zbl_efv_launcher(CoordType &h_etot,
+void correct_zbl_efv_launcher(CoordType *h_etot_ptr,
                               CoordType *h_force,
                               CoordType *h_virial,
                               CoordType rmax,
@@ -162,7 +163,7 @@ void correct_zbl_efv_launcher(CoordType &h_etot,
 
 template <typename CoordType>
 static __device__
-void correct_zbl_ef_atom(CoordType &etot,
+void correct_zbl_ef_atom(CoordType *etot_ptr,
                          CoordType *force,
                          CoordType rmax,
                          CoordType rmin,
@@ -179,7 +180,7 @@ void correct_zbl_ef_atom(CoordType &etot,
 
 template <typename CoordType>
 static __global__
-void correct_zbl_ef_kernel(CoordType &etot,
+void correct_zbl_ef_kernel(CoordType *etot_ptr,
                            CoordType *force,
                            CoordType rmax,
                            CoordType rmin,
@@ -197,7 +198,7 @@ void correct_zbl_ef_kernel(CoordType &etot,
 
 template <typename CoordType>
 static __host__
-void correct_zbl_ef_launcher(CoordType &h_etot,
+void correct_zbl_ef_launcher(CoordType *h_etot_ptr,
                              CoordType *h_force,
                              CoordType rmax,
                              CoordType rmin,
@@ -314,7 +315,7 @@ CoordType PairZBL<CoordType>::find_pair_energy(int Zi,
 
 template <typename CoordType>
 __host__ __device__
-void PairZBL<CoordType>::add_atomic_energy_one(CoordType &atomic_energy,
+void PairZBL<CoordType>::add_atomic_energy_one(CoordType *atomic_energy_ptr,
                                                int Zi,
                                                int Zj,
                                                CoordType rmax,
@@ -325,7 +326,7 @@ void PairZBL<CoordType>::add_atomic_energy_one(CoordType &atomic_energy,
 {
     CoordType half_pair_energy = 0.5 * find_pair_energy(Zi, Zj, rmax, rmin, distance_ij, ck, dk);
     //atomic_energy += half_pair_energy;
-    atomicAdd(&atomic_energy, half_pair_energy);
+    atomicAdd(atomic_energy_ptr, half_pair_energy);
 }
 
 
@@ -401,7 +402,7 @@ void PairZBL<CoordType>::add_virial_one(CoordType *virial,
 
 template <typename CoordType>
 __device__
-void correct_zbl_efv_atom(CoordType &etot,
+void correct_zbl_efv_atom(CoordType *etot_ptr,
                           CoordType *force,
                           CoordType *virial,
                           CoordType rmax,
@@ -449,7 +450,7 @@ void correct_zbl_efv_atom(CoordType &etot,
         dk = &dks[zbl_idx*4];
         atomic_force = &force[center_idx*3 + 0];
 
-        PairZBL<CoordType>::add_atomic_energy_one(etot,
+        PairZBL<CoordType>::add_atomic_energy_one(etot_ptr,
                                                   Zi,
                                                   Zj,
                                                   rmax,
@@ -480,7 +481,7 @@ void correct_zbl_efv_atom(CoordType &etot,
 
 template <typename CoordType>
 __global__
-void correct_zbl_efv_kernel(CoordType &etot,
+void correct_zbl_efv_kernel(CoordType *etot_ptr,
                             CoordType *force,
                             CoordType *virial,
                             CoordType rmax,
@@ -511,7 +512,7 @@ void correct_zbl_efv_kernel(CoordType &etot,
         int *sfirstneigh = &firstneigh[ii*umax_num_neigh_atoms];
         CoordType (*srcs)[3] = (CoordType (*)[3])&rcs[ii*umax_num_neigh_atoms][0];
 
-        correct_zbl_efv_atom<CoordType>(etot,
+        correct_zbl_efv_atom<CoordType>(etot_ptr,
                                         force,
                                         virial,
                                         rmax,
@@ -540,7 +541,7 @@ void correct_zbl_efv_kernel(CoordType &etot,
 
 template <typename CoordType>
 static __host__
-void correct_zbl_efv_launcher(CoordType &h_etot,
+void correct_zbl_efv_launcher(CoordType *h_etot_ptr,
                               CoordType *h_force,
                               CoordType *h_virial,
                               CoordType rmax,
@@ -602,7 +603,7 @@ void correct_zbl_efv_launcher(CoordType &h_etot,
     auto t1 = std::chrono::high_resolution_clock::now();
 
     // Launch kernel
-    correct_zbl_efv_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (*d_etot_ptr,
+    correct_zbl_efv_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (d_etot_ptr,
                                                                           d_force,
                                                                           d_virial,
                                                                           rmax,
@@ -626,7 +627,7 @@ void correct_zbl_efv_launcher(CoordType &h_etot,
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
     std::cout << "cost time: " << duration.count() << " ms.\n";
 
-    CHECK_CUDA_API( cudaMemcpy(&h_etot, d_etot_ptr, sizeof(CoordType), cudaMemcpyDeviceToHost) );
+    CHECK_CUDA_API( cudaMemcpy(h_etot_ptr, d_etot_ptr, sizeof(CoordType), cudaMemcpyDeviceToHost) );
     CHECK_CUDA_API( cudaMemcpy(h_force, d_force, sizeof(CoordType)*inum*3, cudaMemcpyDeviceToHost) );
     CHECK_CUDA_API( cudaMemcpy(h_virial, d_virial, sizeof(CoordType)*9, cudaMemcpyDeviceToHost) );
 
@@ -646,7 +647,7 @@ void correct_zbl_efv_launcher(CoordType &h_etot,
 
 template <typename CoordType>
 __device__
-void correct_zbl_ef_atom(CoordType &etot,
+void correct_zbl_ef_atom(CoordType *etot_ptr,
                          CoordType *force,
                          CoordType rmax,
                          CoordType rmin,
@@ -692,7 +693,7 @@ void correct_zbl_ef_atom(CoordType &etot,
         dk = &dks[zbl_idx*4];
         atomic_force = &force[center_idx*3 + 0];
 
-        PairZBL<CoordType>::add_atomic_energy_one(etot,
+        PairZBL<CoordType>::add_atomic_energy_one(etot_ptr,
                                                   Zi,
                                                   Zj,
                                                   rmax,
@@ -714,7 +715,7 @@ void correct_zbl_ef_atom(CoordType &etot,
 
 template <typename CoordType>
 __global__
-void correct_zbl_ef_kernel(CoordType &etot,
+void correct_zbl_ef_kernel(CoordType *etot_ptr,
                            CoordType *force,
                            CoordType rmax,
                            CoordType rmin,
@@ -739,7 +740,7 @@ void correct_zbl_ef_kernel(CoordType &etot,
         int *sfirstneigh = &firstneigh[ii*umax_num_neigh_atoms];
         CoordType (*srcs)[3] = (CoordType (*)[3])&rcs[ii*umax_num_neigh_atoms][0];
 
-        correct_zbl_ef_atom<CoordType>(etot,
+        correct_zbl_ef_atom<CoordType>(etot_ptr,
                                        force,
                                        rmax,
                                        rmin,
@@ -759,7 +760,7 @@ void correct_zbl_ef_kernel(CoordType &etot,
 
 template <typename CoordType>
 static __host__
-void correct_zbl_ef_launcher(CoordType &h_etot,
+void correct_zbl_ef_launcher(CoordType *h_etot_ptr,
                              CoordType *h_force,
                              CoordType rmax,
                              CoordType rmin,
@@ -817,7 +818,7 @@ void correct_zbl_ef_launcher(CoordType &h_etot,
     auto t1 = std::chrono::high_resolution_clock::now();
 
     // Launch kernel
-    correct_zbl_ef_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (*d_etot_ptr,
+    correct_zbl_ef_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (d_etot_ptr,
                                                                           d_force,
                                                                           rmax,
                                                                           rmin,
@@ -840,7 +841,7 @@ void correct_zbl_ef_launcher(CoordType &h_etot,
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
     std::cout << "cost time: " << duration.count() << " ms.\n";
 
-    CHECK_CUDA_API( cudaMemcpy(&h_etot, d_etot_ptr, sizeof(CoordType), cudaMemcpyDeviceToHost) );
+    CHECK_CUDA_API( cudaMemcpy(h_etot_ptr, d_etot_ptr, sizeof(CoordType), cudaMemcpyDeviceToHost) );
     CHECK_CUDA_API( cudaMemcpy(h_force, d_force, sizeof(CoordType)*inum*3, cudaMemcpyDeviceToHost) );
 
     CHECK_CUDA_API( cudaFree(d_etot_ptr) );
