@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Union
 
 import torch
 import torch.nn as nn
@@ -21,8 +21,8 @@ class LinearMtp(nn.Module):
                  fit_virial: bool = False,
                  zbl_rmax: float = 2.0,
                  zbl_rmin: float = 1.0,
-                 zbl_cks_tensor: torch.Tensor = torch.tensor([0.18175, 0.50986, 0.28022, 0.02817], dtype=torch.float32),
-                 zbl_dks_tensor: torch.Tensor = torch.tensor([3.1998, 0.94229, 0.4029, 0.20162], dtype=torch.float32)):
+                 zbl_cks_tensor: Union[None, torch.Tensor] = None,
+                 zbl_dks_tensor: Union[None, torch.Tensor] = None):
         super(LinearMtp, self).__init__()
         self.mtp_level: int = mtp_level
         self.register_buffer(name="type_map_tensor", tensor=type_map_tensor)
@@ -34,8 +34,7 @@ class LinearMtp(nn.Module):
         self.fit_virial: bool = fit_virial
         self.zbl_rmax: float = zbl_rmax
         self.zbl_rmin: float = zbl_rmin
-        self.register_buffer(name="zbl_cks_tensor", tensor=zbl_cks_tensor)
-        self.register_buffer(name="zbl_dks_tensor", tensor=zbl_dks_tensor)
+        self._init_zbl_params(zbl_cks_tensor=zbl_cks_tensor, zbl_dks_tensor=zbl_dks_tensor)
         
         mtp_param_info: List[torch.Tensor] = mtpParamOp(self.mtp_level)
         self.register_buffer(name="alpha_moments_count_tensor", tensor=mtp_param_info[0])
@@ -58,7 +57,24 @@ class LinearMtp(nn.Module):
         type_bias_tensor: torch.Tensor = torch.Tensor(self.ntypes)
         nn.init.normal_(type_bias_tensor, mean=0.0, std=1.0)
         self.register_parameter(name="type_bias_tensor", param=nn.Parameter(data=type_bias_tensor))
-    
+
+
+    def _init_zbl_params(self, 
+                         zbl_cks_tensor: Union[torch.Tensor, None],
+                         zbl_dks_tensor: Union[torch.Tensor, None]):
+        if (zbl_cks_tensor is None) or (zbl_dks_tensor is None):
+            single_zbl_ck_tensor: torch.Tensor = torch.tensor([0.18175, 0.50986, 0.28022, 0.02817])
+            single_zbl_dk_tensor: torch.Tensor = torch.tensor([3.1998, 0.94229, 0.4029, 0.20162])
+            zbl_cks_tensor: torch.Tensor = single_zbl_ck_tensor.repeat(self.ntypes * self.ntypes)
+            zbl_dks_tensor: torch.Tensor = single_zbl_dk_tensor.repeat(self.ntypes * self.ntypes)
+            self.register_buffer("zbl_cks_tensor", tensor=zbl_cks_tensor)
+            self.register_buffer("zbl_dks_tensor", tensor=zbl_dks_tensor)
+        else:
+            assert(zbl_cks_tensor.size() == self.ntypes*self.ntypes*4)
+            assert(zbl_dks_tensor.size() == self.ntypes*self.ntypes*4)
+            self.register_buffer("zbl_cks_tensor", tensor=zbl_cks_tensor)
+            self.register_buffer("zbl_dks_tensor", tensor=zbl_dks_tensor)
+
     
     def forward(self, *args, **kwargs):
         if self.fit_virial:
