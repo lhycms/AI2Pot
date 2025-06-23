@@ -184,7 +184,6 @@ class LitLinearMtp(L.LightningModule):
                                                    brcs,
                                                    btypes,
                                                    bnghost[0].item())
-        
         mean_bmse_tensor: torch.Tensor = bmse_tensor.mean()
         self.log("train_mse", mean_bmse_tensor,
                  on_epoch=True,

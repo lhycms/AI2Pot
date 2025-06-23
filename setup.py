@@ -21,7 +21,8 @@ setup(
             "numpy==1.26.4",
             "pybind11==2.11.1",
             "dpdata==0.2.24",
-            "lightning==2.5.1"
+            "lightning==2.5.1",
+            "tensorboard==2.19.0"
             #"torch-2.4.0+cpu"
     ],
     extras_requires={

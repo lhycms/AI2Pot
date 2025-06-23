@@ -1,5 +1,6 @@
 from typing import List, Union, Optional
 import torch
+from torch.utils.data import DataLoader
 from lightning import LightningDataModule
 
 from ai2pot.data.mlffdataset import ExtxyzDataset
@@ -11,6 +12,7 @@ class ExtxyzDataModule(LightningDataModule):
                  validset_path: Union[str, None] = None,
                  testset_path: Union[str, None] = None,
                  predict_path: Union[str, None] = None,
+                 batch_size: int = 1,
                  rcut: float = 6.0,
                  umax_num_neigh_atoms: int = 200,
                  pbc_xyz: List[bool] = [True, True, True],
@@ -24,6 +26,7 @@ class ExtxyzDataModule(LightningDataModule):
         self.validset_path: str = validset_path
         self.testset_path: str = testset_path
         self.predict_path: str = predict_path
+        self.batch_size: int = batch_size
         self.rcut: float = rcut
         self.umax_num_neigh_atoms: int = umax_num_neigh_atoms
         self.pbc_xyz: List[bool] = pbc_xyz
@@ -68,6 +71,7 @@ class ExtxyzDataModule(LightningDataModule):
 
     def train_dataloader(self):
         # trainer.fit(model, datamodule=dm)
+        print(self.trainset_path)
         trainset_dataset: ExtxyzDataset = ExtxyzDataset(filename=self.trainset_path,
                                                         rcut=self.rcut,
                                                         umax_num_neigh_atoms=self.umax_num_neigh_atoms,
@@ -75,7 +79,9 @@ class ExtxyzDataModule(LightningDataModule):
                                                         sort=self.sort,
                                                         torch_float_dtype=self.torch_float_dtype,
                                                         has_virial=self.has_virial)
-        return trainset_dataset
+        return DataLoader(dataset=trainset_dataset,
+                          batch_size=self.batch_size,
+                          shuffle=True)
     
 
     def val_dataloader(self):
@@ -87,7 +93,9 @@ class ExtxyzDataModule(LightningDataModule):
                                                         sort=self.sort,
                                                         torch_float_dtype=self.torch_float_dtype,
                                                         has_virial=self.has_virial)
-        return validset_dataset
+        return DataLoader(dataset=validset_dataset,
+                          batch_size=self.batch_size,
+                          shuffle=True)
     
 
     def test_dataloader(self):
@@ -99,7 +107,9 @@ class ExtxyzDataModule(LightningDataModule):
                                                        sort=self.sort,
                                                        torch_float_dtype=self.torch_float_dtype,
                                                        has_virial=self.has_virial)
-        return testset_dataset
+        return DataLoader(dataset=testset_dataset,
+                          batch_size=self.batch_size,
+                          shuffle=True)
 
     
     def predict_dataloader(self):
@@ -111,5 +121,7 @@ class ExtxyzDataModule(LightningDataModule):
                                                           sort=self.sort,
                                                           torch_float_dtype=self.torch_float_dtype,
                                                           has_virial=self.has_virial)
-        return predictset_dataset
+        return DataLoader(dataset=predictset_dataset,
+                          batch_size=self.batch_size,
+                          shuffle=True)
     
