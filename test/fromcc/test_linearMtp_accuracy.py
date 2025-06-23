@@ -20,6 +20,9 @@ TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")
 ReNbSSe_POSCAR_PATH = os.path.join(os.path.join(TEST_FILES_DIR, "POSCARs", "POSCAR"))
 PbTe_EXTXYZ_PATH = os.path.join(TEST_FILES_DIR, "XYZ", "11_NEP_potential_PbTe", "train_m.xyz")
 
+#torch.use_deterministic_algorithms(True)
+torch.set_num_threads(32)
+
 
 class LinearMtpTest(unittest.TestCase):
     def setUp(self):
@@ -27,10 +30,10 @@ class LinearMtpTest(unittest.TestCase):
         #torch.manual_seed(41234)
         # 0.
         self.torch_float_dtype: torch._C.dtype = torch.float64
-        self.device: torch._C.device = torch.device("cuda")
+        self.device: torch._C.device = torch.device("cpu")
         
         # 1. 
-        self.mtp_level: int = 12
+        self.mtp_level: int = 16
         #self.ntypes: int = 4
         self.chebyshev_size: int = 2
         self.rmax: float = 6.0
@@ -54,10 +57,14 @@ class LinearMtpTest(unittest.TestCase):
         print(self.structure)
     
         # 2. ZBL
-        self.zbl_rmax: float = 2.0
-        self.zbl_rmin: float = 1.0
-        self.zbl_cks_tensor: torch.Tensor = torch.zeros(self.ntypes*self.ntypes*4, dtype=self.torch_float_dtype)
-        self.zbl_dks_tensor: torch.Tensor = torch.zeros(self.ntypes*self.ntypes*4, dtype=self.torch_float_dtype)
+        self.zbl_rmax: float = 0.0
+        self.zbl_rmin: float = 0.0
+        self.zbl_cks_tensor: torch.Tensor = torch.zeros(self.ntypes*self.ntypes*4, 
+                                                        dtype=self.torch_float_dtype,
+                                                        device=self.device)
+        self.zbl_dks_tensor: torch.Tensor = torch.zeros(self.ntypes*self.ntypes*4, 
+                                                        dtype=self.torch_float_dtype,
+                                                        device=self.device)
         for ii in range(self.ntypes):
             for jj in range(self.ntypes):
                 idx = ii*self.ntypes + jj
@@ -79,9 +86,9 @@ class LinearMtpTest(unittest.TestCase):
         # 2. mtpParamOp
         mtp_param_info = mtpParamOp(self.mtp_level)
         self.alpha_moments_count: int = mtp_param_info[0].item()
-        self.alpha_index_basic_tensor: torch.Tensor = mtp_param_info[1]
-        self.alpha_index_times_tensor: torch.Tensor = mtp_param_info[2]
-        self.alpha_moment_mapping_tensor: torch.Tensor = mtp_param_info[3]
+        self.alpha_index_basic_tensor: torch.Tensor = mtp_param_info[1].to(self.device)
+        self.alpha_index_times_tensor: torch.Tensor = mtp_param_info[2].to(self.device)
+        self.alpha_moment_mapping_tensor: torch.Tensor = mtp_param_info[3].to(self.device)
         self.nmus: int = mtp_param_info[6].item()
         
         # 3. coeffs, linear coeffs, type bias
@@ -107,8 +114,8 @@ class LinearMtpTest(unittest.TestCase):
     def test_linearMtpToLoss(self):
         # 1. Parameters
         e_weight: float = 1.0
-        f_weight: float = 0.0
-        v_weight: float = 0.0
+        f_weight: float = 0.1
+        v_weight: float = 1.0
         self.coeffs_tensor.requires_grad_(True)
         self.linear_coeffs_tensor.requires_grad_(True)
         self.type_bias_tensor.requires_grad_(True)
@@ -118,6 +125,7 @@ class LinearMtpTest(unittest.TestCase):
                                                                                   e_weight=e_weight,
                                                                                   f_weight=f_weight,
                                                                                   v_weight=v_weight)
+
         test = gradcheck(func=linearMtpToEFLossOp,
                          inputs=(e_weight,
                                  f_weight,
@@ -148,7 +156,8 @@ class LinearMtpTest(unittest.TestCase):
                                  self.zbl_dks_tensor),
                          eps=1e-3,
                          atol=1e-6,
-                         rtol=1e-3)
+                         rtol=1e-3,
+                         nondet_tol=1e-5)
         print("-------------------------------------------------")
         print("* Gradient pass check: ", test)
         print("-------------------------------------------------")
