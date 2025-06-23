@@ -13,7 +13,7 @@ from ai2pot.fromcc import (mtpParamOp,
 class LinearMtp(nn.Module):
     def __init__(self,
                  mtp_level: int,
-                 type_map_tensor: torch.Tensor,
+                 type_map: List[int],
                  chebyshev_size: int = 8,
                  rmax: float = 6.0,
                  rmin: float = 2.0,
@@ -21,12 +21,12 @@ class LinearMtp(nn.Module):
                  fit_virial: bool = False,
                  zbl_rmax: float = 2.0,
                  zbl_rmin: float = 1.0,
-                 zbl_cks_tensor: Optional[torch.Tensor] = None,
-                 zbl_dks_tensor: Optional[torch.Tensor] = None):
+                 zbl_cks_list: Optional[List[float]] = None,
+                 zbl_dks_list: Optional[List[float]] = None):
         super(LinearMtp, self).__init__()
         self.mtp_level: int = mtp_level
-        self.register_buffer(name="type_map_tensor", tensor=type_map_tensor)
-        self.ntypes: int = type_map_tensor.size(0)
+        self.register_buffer(name="type_map_tensor", tensor=torch.tensor(type_map, dtype=torch.int32))
+        self.ntypes: int = len(type_map)
         self.chebyshev_size: int = chebyshev_size
         self.rmax: float = rmax
         self.rmin: float = rmin
@@ -34,7 +34,8 @@ class LinearMtp(nn.Module):
         self.fit_virial: bool = fit_virial
         self.zbl_rmax: float = zbl_rmax
         self.zbl_rmin: float = zbl_rmin
-        self._init_zbl_params(zbl_cks_tensor=zbl_cks_tensor, zbl_dks_tensor=zbl_dks_tensor)
+        self._init_zbl_params(zbl_cks_list=zbl_cks_list,
+                              zbl_dks_list=zbl_dks_list)
         
         mtp_param_info: List[torch.Tensor] = mtpParamOp(self.mtp_level)
         self.register_buffer(name="alpha_moments_count_tensor", tensor=mtp_param_info[0])
@@ -60,9 +61,9 @@ class LinearMtp(nn.Module):
 
 
     def _init_zbl_params(self, 
-                         zbl_cks_tensor: Optional[torch.Tensor],
-                         zbl_dks_tensor: Optional[torch.Tensor]):
-        if (zbl_cks_tensor is None) or (zbl_dks_tensor is None):
+                         zbl_cks_list: Optional[List[float]],
+                         zbl_dks_list: Optional[List[float]]):
+        if (zbl_cks_list is None) or (zbl_dks_list is None):
             single_zbl_ck_tensor: torch.Tensor = torch.tensor([0.18175, 0.50986, 0.28022, 0.02817])
             single_zbl_dk_tensor: torch.Tensor = torch.tensor([3.1998, 0.94229, 0.4029, 0.20162])
             zbl_cks_tensor: torch.Tensor = single_zbl_ck_tensor.repeat(self.ntypes * self.ntypes)
@@ -70,6 +71,8 @@ class LinearMtp(nn.Module):
             self.register_buffer("zbl_cks_tensor", tensor=zbl_cks_tensor)
             self.register_buffer("zbl_dks_tensor", tensor=zbl_dks_tensor)
         else:
+            zbl_cks_tensor: torch.Tensor = torch.tensor(zbl_cks_list, dtype=torch.float32)
+            zbl_dks_tensor: torch.Tensor = torch.tensor(zbl_dks_list, dtype=torch.float32)
             assert(zbl_cks_tensor.size() == self.ntypes*self.ntypes*4)
             assert(zbl_dks_tensor.size() == self.ntypes*self.ntypes*4)
             self.register_buffer("zbl_cks_tensor", tensor=zbl_cks_tensor)

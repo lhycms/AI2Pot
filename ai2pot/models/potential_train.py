@@ -97,7 +97,7 @@ class LitPotential(L.LightningModule):
 class LitLinearMtp(L.LightningModule):
     def __init__(self,
                  mtp_level: int,
-                 type_map_tensor: torch.Tensor,
+                 type_map: List[int],
                  chebyshev_size: int,
                  rmax: float = 6.0,
                  rmin: float = 2.0,
@@ -105,8 +105,8 @@ class LitLinearMtp(L.LightningModule):
                  fit_virial: bool = False,
                  zbl_rmax: float = 2.0,
                  zbl_rmin: float = 1.0,
-                 zbl_cks_tensor: Optional[torch.Tensor] = None,
-                 zbl_dks_tensor: Optional[torch.Tensor] = None,
+                 zbl_cks_list: Optional[List[float]] = None,
+                 zbl_dks_list: Optional[List[float]] = None,
                  torch_float_dtype: torch._C.dtype = torch.float32,
                  lr_start: float = 1e-3,
                  lr_end: float = 1e-3,
@@ -118,10 +118,10 @@ class LitLinearMtp(L.LightningModule):
                  v_wgt_end: float = 0.0,
                  lr_decay_epoch: int = 30):
         super(LitLinearMtp, self).__init__()
-        self.save_hyperparameters(ignore=[zbl_cks_tensor, zbl_dks_tensor])
-
+        self.save_hyperparameters()
+        
         self.model: nn.Module = LinearMtp(mtp_level=mtp_level,
-                                          type_map_tensor=type_map_tensor,
+                                          type_map=type_map,
                                           chebyshev_size=chebyshev_size,
                                           rmax=rmax,
                                           rmin=rmin,
@@ -129,8 +129,8 @@ class LitLinearMtp(L.LightningModule):
                                           fit_virial=fit_virial,
                                           zbl_rmax=zbl_rmax,
                                           zbl_rmin=zbl_rmin,
-                                          zbl_cks_tensor=zbl_cks_tensor,
-                                          zbl_dks_tensor=zbl_dks_tensor).to(torch_float_dtype)
+                                          zbl_cks_list=zbl_cks_list,
+                                          zbl_dks_list=zbl_dks_list).to(torch_float_dtype)
         
         self.torch_float_dtype: torch._C.dtype = torch_float_dtype
 
