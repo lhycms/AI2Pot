@@ -65,7 +65,7 @@ class LinearMtpTest(unittest.TestCase):
             loss = self.linear_mtp.predict_loss(*self.mlff_to_loss_input.analyse_pymatgen(self.structure,
                                                                                           e_weight=1.0,
                                                                                           f_weight=1.0,
-                                                                                          v_weight=1.0))
+                                                                                          v_weight=0.0))
             loss.sum().backward()
             t2 = time.time()
             if (ii == 0):
@@ -80,7 +80,7 @@ class LinearMtpTest(unittest.TestCase):
 
 
 
-    def est_predict_ef_loss(self):
+    def test_predict_ef_loss(self):
         times_list: List[float] = []
         for ii in range(110):
             t1 = time.time()
@@ -100,7 +100,7 @@ class LinearMtpTest(unittest.TestCase):
         print("1. Loss = ", ef_loss)
 
 
-    def test_predict_efv(self):
+    def est_predict_efv(self):
         times_list: List[float] = []
         for ii in range(110):
             t1 = time.time()

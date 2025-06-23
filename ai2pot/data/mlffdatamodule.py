@@ -12,12 +12,14 @@ class ExtxyzDataModule(LightningDataModule):
                  testset_path: Union[str, None] = None,
                  predict_path: Union[str, None] = None,
                  rcut: float = 6.0,
-                 umax_num_neigh_atoms: int = 100,
+                 umax_num_neigh_atoms: int = 200,
                  pbc_xyz: List[bool] = [True, True, True],
                  sort: bool = True,
                  torch_float_dtype: torch._C.dtype = torch.float32,
                  has_virial: bool = False):
-        super().__init__()
+        super(ExtxyzDataModule, self).__init__()
+        self.save_hyperparameters()
+        
         self.trainset_path: str = trainset_path
         self.validset_path: str = validset_path
         self.testset_path: str = testset_path

@@ -15,8 +15,8 @@ from ai2pot.core import Nblist
 class ScDataset(Dataset):
     def __init__(self,
                  labeled_system: LabeledSystem,
-                 rcut: float,
-                 umax_num_neigh_atoms: int,
+                 rcut: float = 6.0,
+                 umax_num_neigh_atoms: int = 200,
                  pbc_xyz: List[bool] = [True, True, True],
                  sort: bool = False,
                  torch_float_dtype: torch._C.dtype = torch.float64,

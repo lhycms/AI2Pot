@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Optional
 
 import torch
 import torch.nn as nn
@@ -15,14 +15,14 @@ class LinearMtp(nn.Module):
                  mtp_level: int,
                  type_map_tensor: torch.Tensor,
                  chebyshev_size: int = 8,
-                 rmax: float = 5.0,
+                 rmax: float = 6.0,
                  rmin: float = 2.0,
                  umax_num_neighs: int = 200,
                  fit_virial: bool = False,
                  zbl_rmax: float = 2.0,
                  zbl_rmin: float = 1.0,
-                 zbl_cks_tensor: Union[None, torch.Tensor] = None,
-                 zbl_dks_tensor: Union[None, torch.Tensor] = None):
+                 zbl_cks_tensor: Optional[torch.Tensor] = None,
+                 zbl_dks_tensor: Optional[torch.Tensor] = None):
         super(LinearMtp, self).__init__()
         self.mtp_level: int = mtp_level
         self.register_buffer(name="type_map_tensor", tensor=type_map_tensor)
@@ -60,8 +60,8 @@ class LinearMtp(nn.Module):
 
 
     def _init_zbl_params(self, 
-                         zbl_cks_tensor: Union[torch.Tensor, None],
-                         zbl_dks_tensor: Union[torch.Tensor, None]):
+                         zbl_cks_tensor: Optional[torch.Tensor],
+                         zbl_dks_tensor: Optional[torch.Tensor]):
         if (zbl_cks_tensor is None) or (zbl_dks_tensor is None):
             single_zbl_ck_tensor: torch.Tensor = torch.tensor([0.18175, 0.50986, 0.28022, 0.02817])
             single_zbl_dk_tensor: torch.Tensor = torch.tensor([3.1998, 0.94229, 0.4029, 0.20162])
@@ -240,5 +240,5 @@ class LinearMtp(nn.Module):
         return betot_tensor, bforce_tensor
 
 
-    def predict_descriptor(self):
+    def predict_descriptors(self):
         pass

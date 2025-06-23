@@ -1,11 +1,8 @@
-from typing import List
-from lightning.pytorch.utilities.types import TRAIN_DATALOADERS
+from typing import List, Optional
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader
 import lightning as L
 
-from ai2pot.data.mlffdataset import ExtxyzDataset
 from ai2pot.models.mtp.linear_mtp import LinearMtp
 from ai2pot.models.potential_loss import (ERmse,
                                           FRmse,
@@ -15,7 +12,7 @@ from ai2pot.models.potential_loss import (ERmse,
 class LitPotential(L.LightningModule):
     def __init__(self,
                  model: nn.Module,
-                 lr_start: float = 1e-4,
+                 lr_start: float = 1e-3,
                  e_wgt_start: float = 0.02,
                  e_wgt_end: float = 1.0,
                  f_wgt_start: float = 1000.0,
@@ -102,22 +99,17 @@ class LitLinearMtp(L.LightningModule):
                  mtp_level: int,
                  type_map_tensor: torch.Tensor,
                  chebyshev_size: int,
-                 rmax: float,
-                 rmin: float,
-                 umax_num_neighs: int,
+                 rmax: float = 6.0,
+                 rmin: float = 2.0,
+                 umax_num_neighs: int = 200,
                  fit_virial: bool = False,
-                 trainset_path: str = None,
-                 validset_path: str = None,
-                 testset_path: str = None,
-                 rcut: float = 5.0,
-                 umax_num_neigh_atoms: int = 200,
-                 pbc_xyz: List[bool] = [True, True, True],
-                 sort: bool = False,
-                 torch_float_dtype: torch._C.dtype = torch.float64,
-                 has_virial: bool = False,
-                 batch_size: int = 1,
+                 zbl_rmax: float = 2.0,
+                 zbl_rmin: float = 1.0,
+                 zbl_cks_tensor: Optional[torch.Tensor] = None,
+                 zbl_dks_tensor: Optional[torch.Tensor] = None,
+                 torch_float_dtype: torch._C.dtype = torch.float32,
                  lr_start: float = 1e-3,
-                 lr_end: float = 1e-5,
+                 lr_end: float = 1e-3,
                  e_wgt_start: float = 1.0,
                  e_wgt_end: float = 1.0,
                  f_wgt_start: float = 0.1,
@@ -126,25 +118,21 @@ class LitLinearMtp(L.LightningModule):
                  v_wgt_end: float = 0.0,
                  lr_decay_epoch: int = 30):
         super(LitLinearMtp, self).__init__()
-        assert(umax_num_neighs == umax_num_neigh_atoms)
+        self.save_hyperparameters(ignore=[zbl_cks_tensor, zbl_dks_tensor])
+
         self.model: nn.Module = LinearMtp(mtp_level=mtp_level,
                                           type_map_tensor=type_map_tensor,
                                           chebyshev_size=chebyshev_size,
                                           rmax=rmax,
                                           rmin=rmin,
                                           umax_num_neighs=umax_num_neighs,
-                                          fit_virial=fit_virial).to(torch_float_dtype)
+                                          fit_virial=fit_virial,
+                                          zbl_rmax=zbl_rmax,
+                                          zbl_rmin=zbl_rmin,
+                                          zbl_cks_tensor=zbl_cks_tensor,
+                                          zbl_dks_tensor=zbl_dks_tensor).to(torch_float_dtype)
         
-        self.trainset_path: str = trainset_path
-        self.validset_path: str = validset_path
-        self.testset_path: str = testset_path
-        self.rcut: float = rcut
-        self.umax_num_neigh_atoms: int = umax_num_neigh_atoms
-        self.pbc_xyz: List[bool] = pbc_xyz
-        self.sort: bool = sort
         self.torch_float_dtype: torch._C.dtype = torch_float_dtype
-        self.has_virial: bool = has_virial
-        self.batch_size: int = batch_size
 
         self.lr_start: float = lr_start
         self.lr_end: float = lr_end
@@ -198,7 +186,7 @@ class LitLinearMtp(L.LightningModule):
                                                    bnghost[0].item())
         
         mean_bmse_tensor: torch.Tensor = bmse_tensor.mean()
-        self.log("train_loss", mean_bmse_tensor,
+        self.log("train_mse", mean_bmse_tensor,
                  on_epoch=True,
                  on_step=True,
                  prog_bar=True,
@@ -238,7 +226,7 @@ class LitLinearMtp(L.LightningModule):
                                                    bnghost[0].item())
         
         mean_bmse_tensor: torch.Tensor = bmse_tensor.mean()
-        self.log("valid_loss", mean_bmse_tensor,
+        self.log("valid_mse", mean_bmse_tensor,
                  on_epoch=True,
                  on_step=True,
                  prog_bar=True,
@@ -278,7 +266,7 @@ class LitLinearMtp(L.LightningModule):
                                                    bnghost[0].item())
         
         mean_bmse_tensor: torch.Tensor = bmse_tensor.mean()
-        self.log("train_loss", mean_bmse_tensor,
+        self.log("test_mse", mean_bmse_tensor,
                  on_epoch=True,
                  on_step=True,
                  prog_bar=True,
@@ -306,44 +294,3 @@ class LitLinearMtp(L.LightningModule):
                 }
         }
     
-
-    def train_dataloader(self):
-        extxyz_dataset: ExtxyzDataset = ExtxyzDataset(filename=self.trainset_path,
-                                                      rcut=self.rcut,
-                                                      umax_num_neigh_atoms=self.umax_num_neigh_atoms,
-                                                      pbc_xyz=self.pbc_xyz,
-                                                      sort=self.sort,
-                                                      torch_float_dtype=self.torch_float_dtype,
-                                                      has_virial=self.has_virial)
-        train_dataloader: DataLoader = DataLoader(dataset=extxyz_dataset,
-                                                  batch_size=self.batch_size,
-                                                  shuffle=True)
-        return train_dataloader
-    
-
-    def val_dataloader(self):
-        extxyz_dataset: ExtxyzDataset = ExtxyzDataset(filename=self.validset_path,
-                                                      rcut=self.rcut,
-                                                      umax_num_neigh_atoms=self.umax_num_neigh_atoms,
-                                                      pbc_xyz=self.pbc_xyz,
-                                                      sort=self.sort,
-                                                      torch_float_dtype=self.torch_float_dtype,
-                                                      has_virial=self.has_virial)
-        valid_dataloader: DataLoader = DataLoader(dataset=extxyz_dataset,
-                                                  batch_size=self.batch_size,
-                                                  shuffle=True)
-        return valid_dataloader
-
-
-    def test_dataloader(self):
-        extxyz_dataset: ExtxyzDataset = ExtxyzDataset(filename=self.testset_path,
-                                                      rcut=self.rcut,
-                                                      umax_num_neigh_atoms=self.umax_num_neigh_atoms,
-                                                      pbc_xyz=self.pbc_xyz,
-                                                      sort=self.sort,
-                                                      torch_float_dtype=self.torch_float_dtype,
-                                                      has_virial=self.has_virial)
-        test_dataloader: DataLoader = DataLoader(dataset=extxyz_dataset,
-                                                 batch_size=self.batch_size,
-                                                 shuffle=True)
-        return test_dataloader
