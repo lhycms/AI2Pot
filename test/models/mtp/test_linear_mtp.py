@@ -23,8 +23,8 @@ class LinearMtpTest(unittest.TestCase):
         self.type_map_tensor: torch.Tensor = torch.tensor([75, 41, 16, 34], dtype=torch.int32)
         self.chebyshev_size: int = 8
         self.rmax: float = 5.0
-        self.rmin: float = 2.0
-        self.umax_num_neighs = 100
+        self.rmin: float = 0.0
+        self.umax_num_neighs = 200
         self.device: torch._C.device = torch.device("cuda")
         self.torch_float_dtype: torch._C.dtype = torch.float32
         self.linear_mtp: LinearMtp = LinearMtp(mtp_level=16,

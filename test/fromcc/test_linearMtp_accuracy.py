@@ -21,13 +21,13 @@ ReNbSSe_POSCAR_PATH = os.path.join(os.path.join(TEST_FILES_DIR, "POSCARs", "POSC
 PbTe_EXTXYZ_PATH = os.path.join(TEST_FILES_DIR, "XYZ", "11_NEP_potential_PbTe", "train_m.xyz")
 
 #torch.use_deterministic_algorithms(True)
-torch.set_num_threads(32)
+torch.set_num_threads(16)
+torch.manual_seed(2143)
 
 
 class LinearMtpTest(unittest.TestCase):
     def setUp(self):
         print("LinearMtpTest (TestCase) is setting up...\n")
-        #torch.manual_seed(41234)
         # 0.
         self.torch_float_dtype: torch._C.dtype = torch.float64
         self.device: torch._C.device = torch.device("cpu")
@@ -35,10 +35,10 @@ class LinearMtpTest(unittest.TestCase):
         # 1. 
         self.mtp_level: int = 16
         #self.ntypes: int = 4
-        self.chebyshev_size: int = 2
-        self.rmax: float = 6.0
-        self.rmin: float = 0.5
-        self.umax_num_neighs: int = 100
+        self.chebyshev_size: int = 8
+        self.rmax: float = 5.0
+        self.rmin: float = 0.0
+        self.umax_num_neighs: int = 200
         self.fit_virial: bool = False
         
         """
@@ -92,19 +92,18 @@ class LinearMtpTest(unittest.TestCase):
         self.nmus: int = mtp_param_info[6].item()
         
         # 3. coeffs, linear coeffs, type bias
-        torch.manual_seed(2143)
         self.coeffs_tensor: torch.Tensor = torch.zeros(self.ntypes*self.ntypes*self.nmus*self.chebyshev_size, 
                                                        dtype=self.torch_float_dtype,
                                                        device=self.device)
-        nn.init.normal_(self.coeffs_tensor, mean=0.8, std=0.5)
+        nn.init.normal_(self.coeffs_tensor, mean=0.0, std=0.1)
         self.linear_coeffs_tensor: torch.Tensor = torch.zeros(self.alpha_moment_mapping_tensor.size(0),
                                                               dtype=self.torch_float_dtype,
                                                               device=self.device)
-        nn.init.normal_(self.linear_coeffs_tensor, mean=0.0, std=1.0)
+        nn.init.normal_(self.linear_coeffs_tensor, mean=0.0, std=0.1)
         self.type_bias_tensor: torch.Tensor = torch.zeros(self.ntypes,
                                                           dtype=self.torch_float_dtype,
                                                           device=self.device)
-        nn.init.normal_(self.type_bias_tensor, mean=1.0, std=0.0)
+        nn.init.normal_(self.type_bias_tensor, mean=0.0, std=1.0)
         
     
     def tearDown(self):

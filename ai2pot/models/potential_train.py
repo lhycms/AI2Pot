@@ -99,8 +99,8 @@ class LitLinearMtp(L.LightningModule):
                  mtp_level: int,
                  type_map: List[int],
                  chebyshev_size: int,
-                 rmax: float = 6.0,
-                 rmin: float = 2.0,
+                 rmax: float = 5.0,
+                 rmin: float = 0.0,
                  umax_num_neighs: int = 200,
                  fit_virial: bool = False,
                  zbl_rmax: float = 2.0,
@@ -108,7 +108,7 @@ class LitLinearMtp(L.LightningModule):
                  zbl_cks_list: Optional[List[float]] = None,
                  zbl_dks_list: Optional[List[float]] = None,
                  torch_float_dtype: torch._C.dtype = torch.float32,
-                 lr_start: float = 1e-3,
+                 lr_start: float = 1e-1,
                  lr_end: float = 1e-3,
                  e_wgt_start: float = 1.0,
                  e_wgt_end: float = 1.0,
@@ -116,7 +116,7 @@ class LitLinearMtp(L.LightningModule):
                  f_wgt_end: float = 0.1,
                  v_wgt_start: float = 0.0,
                  v_wgt_end: float = 0.0,
-                 lr_decay_epoch: int = 30):
+                 lr_decay_epoch: int = 50):
         super(LitLinearMtp, self).__init__()
         self.save_hyperparameters()
         
