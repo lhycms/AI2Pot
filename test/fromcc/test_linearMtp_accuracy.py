@@ -21,7 +21,7 @@ ReNbSSe_POSCAR_PATH = os.path.join(os.path.join(TEST_FILES_DIR, "POSCARs", "POSC
 PbTe_EXTXYZ_PATH = os.path.join(TEST_FILES_DIR, "XYZ", "11_NEP_potential_PbTe", "train_m.xyz")
 
 #torch.use_deterministic_algorithms(True)
-torch.set_num_threads(16)
+torch.set_num_threads(32)
 torch.manual_seed(2143)
 
 
@@ -33,7 +33,7 @@ class LinearMtpTest(unittest.TestCase):
         self.device: torch._C.device = torch.device("cpu")
         
         # 1. 
-        self.mtp_level: int = 16
+        self.mtp_level: int = 18
         #self.ntypes: int = 4
         self.chebyshev_size: int = 8
         self.rmax: float = 5.0
@@ -153,7 +153,7 @@ class LinearMtpTest(unittest.TestCase):
                                  self.zbl_rmin,
                                  self.zbl_cks_tensor,
                                  self.zbl_dks_tensor),
-                         eps=1e-3,
+                         eps=1e-5,
                          atol=1e-6,
                          rtol=1e-3,
                          nondet_tol=1e-5)

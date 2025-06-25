@@ -345,7 +345,7 @@ void LinearMtp<CoordType>::find_efv(
     CoordType distance_ij;
 
     #ifdef USE_OPENMP
-    #pragma omp for 
+    #pragma omp for schedule(static)
     #endif
     for (int ii=0; ii<inum; ii++)
     {
@@ -531,7 +531,7 @@ void LinearMtp<CoordType>::find_ef(
     CoordType distance_ij;
 
     #ifdef USE_OPENMP
-    #pragma omp for
+    #pragma omp for schedule(static)
     #endif
     for (int ii=0; ii<inum; ii++)
     {
@@ -989,7 +989,7 @@ void LinearMtp<CoordType>::find_loss_backward(
     CoordType distance_ij_inv;
 
     #ifdef USE_OPENMP
-    #pragma omp for
+    #pragma omp for schedule(static)
     #endif
     for (int ii=0; ii<inum; ii++) {
         // Step 3. mom_vals
@@ -1359,7 +1359,7 @@ void LinearMtp<CoordType>::find_ef_loss_backward(
     CoordType distance_ij_inv;
 
     #ifdef USE_OPENMP
-    #pragma omp for
+    #pragma omp for schedule(static)
     #endif
     for (int ii=0; ii<inum; ii++) {
         // Step 3. mom_vals

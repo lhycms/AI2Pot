@@ -10,20 +10,19 @@ file(MAKE_DIRECTORY ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY})
 
 
 # 4. Add subdirectory
+if (NOT DEFINED MAX_MTP_LEVEL)
+    message(STATUS "MAX_MTP_LEVEL is set to 18")
+    set(MAX_MTP_LEVEL 18)
+else()
+    message(STATUS "MAX_MTP_LEVEL is set to ${MAX_MTP_LEVEL}")
+endif()
+
 if (CUDA_FOUND AND USE_CUDA)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/gpu)
 endif()
 
 
 # 5. compile
-if (NOT DEFINED MAX_MTP_LEVEL)
-    message(STATUS "MAX_MTP_LEVEL is set to 16")
-    set(MAX_MTP_LEVEL 16)
-else()
-    message(STATUS "MAX_MTP_LEVEL is set to ${MAX_MTP_LEVEL}")
-endif()
-
-
 add_library(mtpParam SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/mtpParam.cc)
 
 if (TORCH_OP)
