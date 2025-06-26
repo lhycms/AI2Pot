@@ -78,6 +78,14 @@ class LinearMtp(nn.Module):
             self.register_buffer("zbl_cks_tensor", tensor=zbl_cks_tensor)
             self.register_buffer("zbl_dks_tensor", tensor=zbl_dks_tensor)
 
+
+    def get_num_descriptors(self):
+        return self.alpha_moment_mapping_tensor.size()[0]
+    
+
+    def get_num_temp_moments(self):
+        return self.alpha_moments_count
+
     
     def forward(self, *args, **kwargs):
         if self.fit_virial:
