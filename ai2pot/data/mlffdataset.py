@@ -206,7 +206,7 @@ class ExtxyzDataset(Dataset):
     def __init__(self,
                  filename: str,
                  rcut: float,
-                 umax_num_neigh_atoms: int,
+                 umax_num_neigh_atoms: int = 200,
                  pbc_xyz: List[bool] = [True, True, True],
                  sort: bool = False,
                  torch_float_dtype: torch._C.dtype = torch.float64,

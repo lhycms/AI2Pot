@@ -1,6 +1,10 @@
 from typing import List
 import numpy as np
 from dpdata import LabeledSystem, MultiSystems
+from ase import Atoms
+from ase.io import read as ase_read
+
+from ai2pot.data.mlffdataset import ExtxyzDataset
 
 
 def svd_solve(A, b):
@@ -55,7 +59,7 @@ class LsShifter(object):
         types_energy_shifts: np.ndarray = svd_solve(coeff_mtx, energy_mtx)
         systems_shifted_energy: np.ndarray = (energy_mtx - np.matmul(coeff_mtx, types_energy_shifts)).flatten()
         return types_energy_shifts.flatten(), systems_shifted_energy
-        
+
 
 class MsShifter(object):
     def __init__(self, ms: MultiSystems):
@@ -111,9 +115,116 @@ class MsShifter(object):
         systems_shifted_energy: np.ndarray = (energy_mtx - np.matmul(coeff_mtx, types_energy_shifts)).flatten()
         return types_energy_shifts.flatten(), systems_shifted_energy
         
+
+class ExtxyzShifter(object):
+    def __init__(self, extxyz_path: str):
+        self.extxyz_path: str = extxyz_path
+        self.atoms_list: List[Atoms] = ase_read(self.extxyz_path, index=":")
+        self.nframes: int = len(self.atoms_list)
+        self.type_map: List[int] = self._get_type_map()
+        self.ntypes: int = len(self.type_map)
+        self.unique_types: List[int] = [*range(len(self.type_map))]
+        self.types_energy_shifts, self.shifted_energies = self.get_energy_shifts()
+
+    def __str__(self):
+        return self.__repr__()
+    
+    def __repr__(self):
+        print("LsShifter Summary:")
+        print("------------------")
+        print("1. nframes = ", self.nframes)
+        print("2. type_map = ", self.type_map)
+        print("3. types energy shifts:\n", self.types_energy_shifts)
+        print("4. systems shifted energy:\n", self.shifted_energies)
+        return ''
+    
+    def _get_type_map(self):
+        type_map: List[int] = []
+        for tmp_atoms in self.atoms_list:
+            an_list: List[int] = np.unique(tmp_atoms.get_atomic_numbers())
+            for tmp_an in an_list:
+                if tmp_an not in type_map:
+                    type_map.append(tmp_an)
+        return np.sort(type_map).tolist()
+
+    
+    def get_energy_shifts(self):
+        coeff_mtx: np.ndarray = np.zeros((self.nframes, self.ntypes))
+        energy_mtx: np.ndarray = np.zeros((self.nframes, 1))
+
+        for tmp_frame_idx in range(self.nframes):
+            types: np.ndarray = np.array([self.type_map.index(tmp_an) for tmp_an in self.atoms_list[tmp_frame_idx].get_atomic_numbers()])
+            energy = self.atoms_list[tmp_frame_idx].get_potential_energy()
+            for tmp_type_idx in range(self.ntypes):
+                coeff_mtx[tmp_frame_idx][tmp_type_idx] = np.count_nonzero(types == tmp_type_idx)
+            energy_mtx[tmp_frame_idx][0] = energy
+            
+        if (np.linalg.matrix_rank(coeff_mtx) < self.ntypes):
+            import itertools
+            for type_pair in itertools.combinations(self.unique_types, 2):
+                add_mtx: np.ndarray = np.zeros(self.ntypes)
+                add_mtx[type_pair[0]] = 1
+                add_mtx[type_pair[1]] = -1
+                add_energy: np.ndarray = np.zeros(1)
+                coeff_mtx = np.r_[coeff_mtx, [add_mtx]]
+                energy_mtx = np.r_[energy_mtx, [add_energy]]
         
+        types_energy_shifts: np.ndarray = svd_solve(coeff_mtx, energy_mtx)
+        systems_shifted_energy: np.ndarray = (energy_mtx - np.matmul(coeff_mtx, types_energy_shifts)).flatten()
 
-class PCA(object):
-    pass
+        return types_energy_shifts.flatten(), systems_shifted_energy
+    
 
+
+class MlffDatasetShifter(object):
+    def __init__(self,
+                 extxyz_dataset: ExtxyzDataset):
+        self.extxyz_dataset: ExtxyzDataset = extxyz_dataset
+        self.nframes: int = len(self.extxyz_dataset)
+        self.ntypes: int = len(self.extxyz_dataset.type_map)
+        self.type_map: List[int] = self.extxyz_dataset.type_map
+        self.unique_types: List[int] = [*range(len(self.type_map))]
+        self.types_energy_shifts, self.shifted_energies = self.get_energy_shifts()
+
+
+    def __str__(self):
+        return self.__repr__()
+    
+
+    def __repr__(self):
+        print("LsShifter Summary:")
+        print("------------------")
+        print("1. nframes = ", self.nframes)
+        print("2. type_map = ", self.type_map)
+        print("3. types energy shifts:\n", self.types_energy_shifts)
+        print("4. systems shifted energy:\n", self.shifted_energies)
+        return ''
+    
+
+    def get_energy_shifts(self):
+        coeff_mtx: np.ndarray = np.zeros((self.nframes, self.ntypes))
+        energy_mtx: np.ndarray = np.zeros((self.nframes, 1))
+
+        for tmp_frame_idx in range(self.nframes):
+            batch = self.extxyz_dataset
+            types: np.ndarray = batch[tmp_frame_idx][5].numpy()
+            energy = batch[tmp_frame_idx][7].item()
+            for tmp_type_idx in range(self.ntypes):
+                coeff_mtx[tmp_frame_idx][tmp_type_idx] = np.count_nonzero(types == tmp_type_idx)
+            energy_mtx[tmp_frame_idx][0] = energy
+        
+        if (np.linalg.matrix_rank(coeff_mtx) < self.ntypes):
+            import itertools
+            for type_pair in itertools.combinations(self.unique_types, 2):
+                add_mtx: np.ndarray = np.zeros(self.ntypes)
+                add_mtx[type_pair[0]] = 1
+                add_mtx[type_pair[1]] = -1
+                add_energy: np.ndarray = np.zeros(1)
+                coeff_mtx = np.r_[coeff_mtx, [add_mtx]]
+                energy_mtx = np.r_[energy_mtx, [add_energy]]
+        
+        types_energy_shifts: np.ndarray = svd_solve(coeff_mtx, energy_mtx)
+        systems_shifted_energy: np.ndarray = (energy_mtx - np.matmul(coeff_mtx, types_energy_shifts)).flatten()
+
+        return types_energy_shifts.flatten(), systems_shifted_energy
 

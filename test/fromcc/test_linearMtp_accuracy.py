@@ -21,7 +21,7 @@ ReNbSSe_POSCAR_PATH = os.path.join(os.path.join(TEST_FILES_DIR, "POSCARs", "POSC
 PbTe_EXTXYZ_PATH = os.path.join(TEST_FILES_DIR, "XYZ", "11_NEP_potential_PbTe", "train_m.xyz")
 
 #torch.use_deterministic_algorithms(True)
-torch.set_num_threads(32)
+torch.set_num_threads(16)
 torch.manual_seed(2143)
 
 

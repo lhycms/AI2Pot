@@ -71,7 +71,6 @@ class ExtxyzDataModule(LightningDataModule):
 
     def train_dataloader(self):
         # trainer.fit(model, datamodule=dm)
-        print(self.trainset_path)
         trainset_dataset: ExtxyzDataset = ExtxyzDataset(filename=self.trainset_path,
                                                         rcut=self.rcut,
                                                         umax_num_neigh_atoms=self.umax_num_neigh_atoms,
