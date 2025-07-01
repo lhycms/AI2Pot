@@ -14,6 +14,7 @@ class LinearMtp(nn.Module):
     def __init__(self,
                  mtp_level: int,
                  type_map: List[int],
+                 energy_shifts: Optional[List[float]] = None,
                  chebyshev_size: int = 8,
                  rmax: float = 5.0,
                  rmin: float = 0.0,
@@ -55,9 +56,14 @@ class LinearMtp(nn.Module):
         nn.init.normal_(linear_coeffs_tensor, mean=0.0, std=0.1)
         self.register_parameter(name="linear_coeffs_tensor", param=nn.Parameter(data=linear_coeffs_tensor))
         
-        type_bias_tensor: torch.Tensor = torch.Tensor(self.ntypes)
-        nn.init.normal_(type_bias_tensor, mean=0.0, std=1.0)
-        self.register_parameter(name="type_bias_tensor", param=nn.Parameter(data=type_bias_tensor))
+        if energy_shifts is not None:
+            assert(len(energy_shifts) == self.ntypes)
+            type_bias_tensor = torch.tensor(energy_shifts)
+            self.register_parameter(name="type_bias_tensor", param=nn.Parameter(data=type_bias_tensor))
+        else:
+            type_bias_tensor: torch.Tensor = torch.Tensor(self.ntypes)
+            nn.init.normal_(type_bias_tensor, mean=0.0, std=1.0)
+            self.register_parameter(name="type_bias_tensor", param=nn.Parameter(data=type_bias_tensor))
 
 
     def _init_zbl_params(self, 

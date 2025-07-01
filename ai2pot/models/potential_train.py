@@ -98,7 +98,8 @@ class LitLinearMtp(L.LightningModule):
     def __init__(self,
                  mtp_level: int,
                  type_map: List[int],
-                 chebyshev_size: int,
+                 energy_shifts: Optional[List[float]] = None,
+                 chebyshev_size: int = 8,
                  rmax: float = 5.0,
                  rmin: float = 0.0,
                  umax_num_neighs: int = 200,
@@ -122,6 +123,7 @@ class LitLinearMtp(L.LightningModule):
         
         self.model: nn.Module = LinearMtp(mtp_level=mtp_level,
                                           type_map=type_map,
+                                          energy_shifts=energy_shifts,
                                           chebyshev_size=chebyshev_size,
                                           rmax=rmax,
                                           rmin=rmin,
