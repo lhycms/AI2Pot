@@ -115,7 +115,7 @@ class LinearMtp4Extxyz(object):
                  color="lightsalmon",
                  zorder=0)
         ax2.scatter(f_dft_array, f_ml_array,
-                    color="brown",
+                    color="darkseagreen",
                     alpha=0.6)
         ax2.set_xlim(f_min, f_max)
         ax2.set_ylim(f_min, f_max)
@@ -166,7 +166,9 @@ class LinearMtp4Extxyz(object):
                  fontweight="bold")
 
         if (save):
-            plt.savefig("./ef_diagonal.png")
+            plt.savefig("./ef_diagonal.png",
+                        dpi=500, 
+                        bbox_inches="tight")
         else:
             plt.show()
 

@@ -23,6 +23,7 @@ setup(
             "dpdata==0.2.24",
             "lightning==2.5.1",
             "tensorboard==2.19.0"
+            "matplotlib==3.10.3"
             #"torch-2.4.0+cpu"
     ],
     extras_requires={

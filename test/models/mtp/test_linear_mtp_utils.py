@@ -27,7 +27,7 @@ class LinearMtp4ExtxyzTest(unittest.TestCase):
                                               "test_data",
                                               "XYZ",
                                               "11_NEP_potential_PbTe",
-                                              "test_m.xyz")
+                                              "train_m.xyz")
         self.has_virial: bool = False
         self.map_location: str = "cpu"        
         self.torch_float_dtype: torch._C.dtype = torch.float32
