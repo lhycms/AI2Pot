@@ -16,6 +16,7 @@ CHECK_POINT_PATH: str = os.path.join(TEST_FILES_DIR,
                                      "checkpoints",
                                      "epoch=146-step=3675.ckpt")
 
+torch.set_num_threads(16)
 
 class LinearMtp4ExtxyzTest(unittest.TestCase):
     def setUp(self):
@@ -26,7 +27,7 @@ class LinearMtp4ExtxyzTest(unittest.TestCase):
                                               "test_data",
                                               "XYZ",
                                               "11_NEP_potential_PbTe",
-                                              "train_m.xyz")
+                                              "test_m.xyz")
         self.has_virial: bool = False
         self.map_location: str = "cpu"        
         self.torch_float_dtype: torch._C.dtype = torch.float32
@@ -44,7 +45,10 @@ class LinearMtp4ExtxyzTest(unittest.TestCase):
 
 
     def test_calculate_ef_rmse(self):
-        print(self.linear_mtp_extxyz.calculate_ef_rmse())
+        e_rmse, f_rmse = self.linear_mtp_extxyz.calculate_ef_rmse()
+        print("RMSE summary:")
+        print("\t1. RMSE of energy = {0:.3f} meV".format(e_rmse * 1000))
+        print("\t2. RMSE of force = {0:.3f} meV/A".format(f_rmse * 1000))
 
 
 

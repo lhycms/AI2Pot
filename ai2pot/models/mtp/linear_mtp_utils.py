@@ -152,6 +152,19 @@ class LinearMtp4Extxyz(object):
         ax2.spines['right'].set_linewidth(1.5);###设置右边坐标轴的粗细
         ax2.spines['top'].set_linewidth(1.5);###设置右边坐标轴的粗细
 
+        # 5. Output RMSE
+        e_rmse, f_rmse = self.calculate_ef_rmse()
+        ax1.text(0.6, 0.8,
+                 s="RMSE={0:.3f} meV".format(e_rmse * 1E3),
+                 transform=ax1.transAxes, ha='right', va='top',
+                 fontsize=13,
+                 fontweight="bold")
+        ax2.text(1.83, 0.8,
+                 s="RMSE={0:.3f} meV/Å".format(f_rmse * 1E3),
+                 transform=ax1.transAxes, ha='right', va='top',
+                 fontsize=13,
+                 fontweight="bold")
+
         if (save):
             plt.savefig("./ef_diagonal.png")
         else:
@@ -192,4 +205,4 @@ class LinearMtp4Extxyz(object):
         f_mse = torch.mean(torch.sum(torch.pow(f_ml_tensor-f_dft_tensor, 2), dim=(-2, -1)) / (3*binum_tensor))
         f_rmse = torch.sqrt(f_mse)
 
-        return e_rmse, f_rmse
+        return e_rmse.item(), f_rmse.item()
