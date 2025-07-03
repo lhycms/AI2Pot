@@ -43,8 +43,8 @@ class LinearMtp4ExtxyzTest(unittest.TestCase):
         self.linear_mtp_extxyz.plot_ef_diagonal(save=True)
 
 
-    #def test_calculate_efv_rmse(self):
-    #    self.linear_mtp_extxyz.calculate_efv_rmse()
+    def test_calculate_ef_rmse(self):
+        print(self.linear_mtp_extxyz.calculate_ef_rmse())
 
 
 

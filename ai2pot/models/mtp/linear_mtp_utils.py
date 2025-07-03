@@ -186,8 +186,10 @@ class LinearMtp4Extxyz(object):
         e_ml_tensor = torch.cat(e_ml_list, dim=0)
         f_ml_tensor = torch.cat(f_ml_list, dim=0)
 
-        # mse
+        # rmse
         e_mse = torch.mean(torch.pow(e_ml_tensor/binum_tensor-e_dft_tensor/binum_tensor, 2))
         e_rmse = torch.sqrt(e_mse)
+        f_mse = torch.mean(torch.sum(torch.pow(f_ml_tensor-f_dft_tensor, 2), dim=(-2, -1)) / (3*binum_tensor))
+        f_rmse = torch.sqrt(f_mse)
 
-        return e_rmse
+        return e_rmse, f_rmse
