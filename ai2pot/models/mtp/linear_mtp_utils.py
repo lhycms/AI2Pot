@@ -154,14 +154,14 @@ class LinearMtp4Extxyz(object):
 
         # 5. Output RMSE
         e_rmse, f_rmse = self.calculate_ef_rmse()
-        ax1.text(0.6, 0.8,
-                 s="RMSE={0:.3f} meV".format(e_rmse * 1E3),
-                 transform=ax1.transAxes, ha='right', va='top',
+        ax1.text(0.05, 0.9,
+                 s="RMSE={0:.3f} meV/atom".format(e_rmse * 1E3),
+                 transform=ax1.transAxes, ha='left', va='top',
                  fontsize=13,
                  fontweight="bold")
-        ax2.text(1.83, 0.8,
+        ax2.text(1.25, 0.9,
                  s="RMSE={0:.3f} meV/Å".format(f_rmse * 1E3),
-                 transform=ax1.transAxes, ha='right', va='top',
+                 transform=ax1.transAxes, ha='left', va='top',
                  fontsize=13,
                  fontweight="bold")
 
