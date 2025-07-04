@@ -125,6 +125,35 @@ protected:
 };  // class : GroupTest
 
 
+TEST_F(GroupZBLTest, correct_e_sites) {
+    double *e_sites = (double*)malloc(sizeof(double) * inum);
+    rcs[0*umax_num_neigh_atoms + 0][0] = coord_1[0] - coord_0[0];
+    rcs[0*umax_num_neigh_atoms + 0][1] = coord_1[1] - coord_0[1];
+    rcs[0*umax_num_neigh_atoms + 0][2] = coord_1[2] - coord_0[2];
+    rcs[1*umax_num_neigh_atoms + 0][0] = coord_0[0] - coord_1[0];
+    rcs[1*umax_num_neigh_atoms + 0][1] = coord_0[1] - coord_1[1];
+    rcs[1*umax_num_neigh_atoms + 0][2] = coord_0[2] - coord_1[2];
+    group_zbl.correct_e_sites(e_sites,
+                            inum,
+                            ilist,
+                            numneigh,
+                            firstneigh,
+                            rcs,
+                            types,
+                            ntypes,
+                            type_map,
+                            umax_num_neigh_atoms,
+                            0);
+    
+    double etot = 0.0;
+    for (int ii=0; ii<inum; ii++)
+        etot += e_sites[ii];
+    printf("0. Energy = %.10lf\n", etot);
+
+    free(e_sites);
+}
+
+
 TEST_F(GroupZBLTest, force_accuracy) {
     rcs[0*umax_num_neigh_atoms + 0][0] = coord_1[0] - coord_0[0];
     rcs[0*umax_num_neigh_atoms + 0][1] = coord_1[1] - coord_0[1];
@@ -168,8 +197,9 @@ TEST_F(GroupZBLTest, force_accuracy) {
                           umax_num_neigh_atoms,
                           0);
     
-    printf("Force[0][1] calculated by custom code = %.10lf\n", forces[0*3+1]);
-    printf("Force[0][1] calculated by definition = %.10lf\n", -(etot_ - etot) / delta);
+    printf("0. Energy = %.10lf\n", etot);
+    printf("1. Force[0][1] calculated by custom code = %.10lf\n", forces[0*3+1]);
+    printf("2. Force[0][1] calculated by definition = %.10lf\n", -(etot_ - etot) / delta);
 }
 
 

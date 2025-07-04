@@ -44,6 +44,7 @@ protected:
     real v_weight;
 
     real etot;
+    real *e_sites;
     real (*force)[3];
     real *virial;
     real etot_;
@@ -241,6 +242,7 @@ protected:
         mom_ders = (real (*)[3])malloc(sizeof(real) * mtp_param.alpha_index_basic_count() * umax_num_neigh_atoms * 3);
 
         etot = 0;
+        e_sites = (real*)malloc(sizeof(real) * inum);
         force = (real (*)[3])malloc(sizeof(real) * (nghost+inum) * 3);
         virial = (real*)malloc(sizeof(real) * 9);
         etot_ = 0;
@@ -306,6 +308,7 @@ protected:
         free(virial);
         free(virial_);
         free(virial_dft);
+        free(e_sites);
 
         free(ilist);
         free(numneigh);
@@ -368,6 +371,45 @@ printf("3. virial[%d][%d] = %g\n", direction1_idx_modify, direction2_idx_modify,
 }
 */
 
+
+
+TEST_F(LinearMtpTest, find_e) {
+    ai2pot::mtpr::LinearMtp<real>::find_e(
+        e_sites,
+        chebyshev_size,
+        coeffs,
+        linear_coeffs,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        nmus,
+        inum,
+        ilist,
+        numneigh,
+        firstneigh,
+        (real (*)[3])rcs,
+        types,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin,
+        zbl_rmax,
+        zbl_rmin,
+        zbl_cks,
+        zbl_dks);
+
+    real etot = 0;
+    for (int ii=0; ii<inum; ii++)
+        etot += e_sites[ii];
+    printf("1. Etot = %.15lf\n", etot);
+}
 
 
 TEST_F(LinearMtpTest, efv_force_accuracy) {
