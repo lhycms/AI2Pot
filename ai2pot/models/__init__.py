@@ -8,7 +8,8 @@ from ai2pot.models.mtp.linear_mtp import (
 )
 
 from ai2pot.models.mtp.linear_mtp_utils import (
-    LinearMtp4Extxyz
+    LinearMtp4Extxyz,
+    LinearMtpCalculator
 )
 
 from ai2pot.models.potential_submodules import (

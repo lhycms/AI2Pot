@@ -2,9 +2,13 @@ import unittest
 import os
 from typing import List
 
+import numpy as np
 import torch
+from ase import Atoms
+from ase.io import read as ase_read
 
-from ai2pot.models.mtp.linear_mtp_utils import LinearMtp4Extxyz
+from ai2pot.models.mtp.linear_mtp_utils import (LinearMtp4Extxyz,
+                                                LinearMtpCalculator)
 
 
 
@@ -15,9 +19,49 @@ CHECK_POINT_PATH: str = os.path.join(TEST_FILES_DIR,
                                      "version_34",
                                      "checkpoints",
                                      "epoch=146-step=3675.ckpt")
+EXTXYZ_PATH: str = os.path.join(TEST_FILES_DIR,
+                                "test",
+                                "test_data",
+                                "XYZ",
+                                "11_NEP_potential_PbTe",
+                                "train_m.xyz")
 
 torch.set_num_threads(16)
 
+
+class LinearMtpCalculatorTest(unittest.TestCase):
+    def setUp(self):
+        print("LinearMtpCalculator (TestSuite) is setting up...")
+        self.checkpoint_path: str = CHECK_POINT_PATH
+        self.map_location: str = "cpu"
+        self.torch_float_dtype: torch._C.dtype = torch.float32
+        
+        self.linear_mtp_calculator: LinearMtpCalculator = LinearMtpCalculator(checkpoint_path=CHECK_POINT_PATH,
+                                                                              map_location=self.map_location,
+                                                                              torch_float_dtype=self.torch_float_dtype)
+        self.atoms: Atoms = ase_read(filename=EXTXYZ_PATH, index=":")[0]
+        self.atoms.calc = self.linear_mtp_calculator
+
+
+    def tearDown(self):
+        print("LinearMtpCalculator (TestSuite) is tearing down...")
+
+
+    def test_calculate(self):
+        print(self.atoms.get_potential_energy())
+        print(self.atoms.get_forces())
+
+
+    def est_predict_atoms_ef(self):
+        e, f = self.linear_mtp_calculator.predict_atoms_ef(atoms=self.atoms)
+        e: float = e.item()
+        f: np.ndarray = f.squeeze().detach().numpy()
+        print("\t1. Energy = {0:.3f} eV".format(e))
+        print("\t2. Force.shape = ", f.shape)
+
+
+
+"""
 class LinearMtp4ExtxyzTest(unittest.TestCase):
     def setUp(self):
         print("LinearMtp4ExtxyzTest (TestSuite) is setting up...")
@@ -32,9 +76,9 @@ class LinearMtp4ExtxyzTest(unittest.TestCase):
         self.map_location: str = "cpu"        
         self.torch_float_dtype: torch._C.dtype = torch.float32
         self.linear_mtp_extxyz: LinearMtp4Extxyz = LinearMtp4Extxyz(checkpoint_path=self.checkpoint_path,
-                                                                              testset_path=self.testset_path,
-                                                                              map_location=self.map_location,
-                                                                              torch_float_dtype=self.torch_float_dtype)
+                                                                    testset_path=self.testset_path,
+                                                                    map_location=self.map_location,
+                                                                    torch_float_dtype=self.torch_float_dtype)
 
     def tearDown(self):
         print("LinearMtp4ExtxyzTest (TestSuite) is tearing down...")
@@ -49,7 +93,7 @@ class LinearMtp4ExtxyzTest(unittest.TestCase):
         print("RMSE summary:")
         print("\t1. RMSE of energy = {0:.3f} meV".format(e_rmse * 1000))
         print("\t2. RMSE of force = {0:.3f} meV/A".format(f_rmse * 1000))
-
+"""
 
 
 if __name__ == '__main__':

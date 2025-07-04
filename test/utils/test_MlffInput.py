@@ -20,6 +20,7 @@ class MlffInputTest(unittest.TestCase):
         self.pbc_xyz: List[int] = [True, True, True]
         self.sort: bool = True
         self.structure: Structure = Structure.from_file(ReNbSSe_POSCAR_PATH)
+        self.atoms: Atoms = ase_read(ReNbSSe_POSCAR_PATH)
         self.type_map: List[int] = [75, 41, 16, 34]
         self.atoms: Atoms = ase_read(ReNbSSe_POSCAR_PATH)
         
@@ -35,7 +36,7 @@ class MlffInputTest(unittest.TestCase):
     def test_analyse_pymatgen(self):
         nblist_info4mlff = self.mlff_input.analyse_pymatgen(structure=self.structure)
         
-        print("Information of structure for Potential:")
+        print("Information of structure (Structure) for Potential:")
         print("\t1. binum_tensor.size() = ", nblist_info4mlff[0].size())
         print("\t2. bilist_tensor.size() = ", nblist_info4mlff[1].size())
         print("\t3. bnumneigh_tensor.size() = ", nblist_info4mlff[2].size())
@@ -46,8 +47,7 @@ class MlffInputTest(unittest.TestCase):
         
     def test_analyse_ase(self):
         nblist_info4mlff = self.mlff_input.analyse_ase(atoms=self.atoms)
-        
-        print("Information of structure for Potential:")
+        print("Information of structure (Atoms) for Potential:")
         print("\t1. binum_tensor.size() = ", nblist_info4mlff[0].size())
         print("\t2. bilist_tensor.size() = ", nblist_info4mlff[1].size())
         print("\t3. bnumneigh_tensor.size() = ", nblist_info4mlff[2].size())
