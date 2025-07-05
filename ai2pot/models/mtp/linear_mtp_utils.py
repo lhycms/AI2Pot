@@ -172,23 +172,23 @@ class LinearMtpActiveDR(object):
         plt.rcParams['xtick.direction'] = 'in'
         plt.rcParams['ytick.direction'] = 'in'
 
-        plt.figure(figsize=(10, 10))
+        plt.figure(figsize=(5, 5))
         plt.scatter(array_2d[:, 0], array_2d[:, 1],
                     color="skyblue",
                     alpha=0.6)
 
 
-        plt.xlabel("Component 1", fontsize=35, 
+        plt.xlabel("Component 1", fontsize=16, 
                         fontweight="bold"
                         )
-        plt.ylabel("Component 2", fontsize=35, 
+        plt.ylabel("Component 2", fontsize=16, 
                 fontweight="bold"
                 )
         # 2.2. Retouch the ticks of x-axis/y-axis
-        plt.xticks(fontsize=30, 
+        plt.xticks(fontsize=12, 
                 fontweight="bold"
                 )
-        plt.yticks(fontsize=30, 
+        plt.yticks(fontsize=12, 
                 fontweight="bold"
                 )
         # 2.4. 刻度线的粗细
