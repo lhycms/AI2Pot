@@ -8,6 +8,7 @@ from ase import Atoms
 from ase.io import read as ase_read
 
 from ai2pot.models.mtp.linear_mtp_utils import (LinearMtp4Extxyz,
+                                                LinearMtpActiveDR,
                                                 LinearMtpCalculator)
 
 
@@ -48,8 +49,11 @@ class LinearMtpCalculatorTest(unittest.TestCase):
 
 
     def test_calculate(self):
-        print(self.atoms.get_potential_energy())
-        print(self.atoms.get_forces())
+        print("Calculator Summary:")
+        print("-------------------")
+        print("\t1. Energy = ", self.atoms.get_potential_energy())
+        print("\t2. forces.shape = ", self.atoms.get_forces().shape)
+        print("\t3. descriptors.shape = ",self.linear_mtp_calculator.get_property("descriptors", self.atoms).shape)
 
 
     def est_predict_atoms_ef(self):
@@ -61,7 +65,44 @@ class LinearMtpCalculatorTest(unittest.TestCase):
 
 
 
-"""
+class LinearMtpActiveDRTest(unittest.TestCase):
+    def setUp(self):
+        print("LinearMtpActiveDRTest (TestCase) is setting up...")
+        self.checkpoint_path: str = CHECK_POINT_PATH
+        self.trainset_path: str = os.path.join(TEST_FILES_DIR,
+                                              "test",
+                                              "test_data",
+                                              "XYZ",
+                                              "11_NEP_potential_PbTe",
+                                              "train_m.xyz")
+        self.map_location: str = "cpu"        
+        self.torch_float_dtype: torch._C.dtype = torch.float32
+        
+        self.linear_mtp_active_dr: LinearMtpActiveDR = LinearMtpActiveDR(checkpoint_path=self.checkpoint_path,
+                                                                         extxyz_path=self.trainset_path,
+                                                                         map_location=self.map_location,
+                                                                         torch_float_dtype=self.torch_float_dtype)
+
+    def tearDown(self):
+        print("LinearMtpActiveDRTest (TestCase) is tearing down...")
+
+
+    def test_get_batch_descriptors(self):
+        descriptors_tensor: torch.Tensor = self.linear_mtp_active_dr._get_batch_descriptors()
+        print("\t1. descriptors_tensor.shape = ", descriptors_tensor.shape)
+
+
+    def test_get_pca_2d(self):
+        pca_2d = self.linear_mtp_active_dr.get_pca_2d()
+        print("\t1. Shape of PCA descriptors = ", pca_2d.shape)
+        #self.linear_mtp_active_dr.plot_pca_2d()
+
+    def test_get_pca_2d(self):
+        tnse_2d = self.linear_mtp_active_dr.get_tsne_2d()
+        print("\t1. Shape of T-SNE descriptors = ", tnse_2d.shape)
+        self.linear_mtp_active_dr.plot_tsne_2d()
+
+
 class LinearMtp4ExtxyzTest(unittest.TestCase):
     def setUp(self):
         print("LinearMtp4ExtxyzTest (TestSuite) is setting up...")
@@ -72,7 +113,6 @@ class LinearMtp4ExtxyzTest(unittest.TestCase):
                                               "XYZ",
                                               "11_NEP_potential_PbTe",
                                               "train_m.xyz")
-        self.has_virial: bool = False
         self.map_location: str = "cpu"        
         self.torch_float_dtype: torch._C.dtype = torch.float32
         self.linear_mtp_extxyz: LinearMtp4Extxyz = LinearMtp4Extxyz(checkpoint_path=self.checkpoint_path,
@@ -93,7 +133,7 @@ class LinearMtp4ExtxyzTest(unittest.TestCase):
         print("RMSE summary:")
         print("\t1. RMSE of energy = {0:.3f} meV".format(e_rmse * 1000))
         print("\t2. RMSE of force = {0:.3f} meV/A".format(f_rmse * 1000))
-"""
+
 
 
 if __name__ == '__main__':

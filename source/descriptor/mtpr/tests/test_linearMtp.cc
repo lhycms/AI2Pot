@@ -97,6 +97,8 @@ protected:
     ai2pot::Structure<real> structure;
     ai2pot::NeighborList<real> neighbor_list;
 
+    real *all_descriptors;
+
     static void SetUpTestSuite() {
         std::cout << "MtpBasisTest (TestSuite) is setting up...\n";
     }
@@ -296,6 +298,8 @@ protected:
                 zbl_dks[zbl_idx*4 + 3] = 0.20162;
             }
         }
+
+        all_descriptors = (real*)malloc(sizeof(real) * inum * mtp_param.alpha_scalar_moments());
     }
 
     void TearDown() override {
@@ -326,6 +330,8 @@ protected:
 
         free(zbl_cks);
         free(zbl_dks);
+
+        free(all_descriptors);
     }
 };
 
@@ -371,6 +377,36 @@ printf("3. virial[%d][%d] = %g\n", direction1_idx_modify, direction2_idx_modify,
 }
 */
 
+
+TEST_F(LinearMtpTest, find_descriptors)
+{
+    ai2pot::mtpr::LinearMtp<real>::find_descriptors(
+        all_descriptors,
+        chebyshev_size,
+        coeffs,
+        linear_coeffs,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        nmus,
+        inum,
+        ilist,
+        numneigh,
+        firstneigh,
+        (real (*)[3])rcs,
+        types,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin);
+}
 
 
 TEST_F(LinearMtpTest, find_e) {

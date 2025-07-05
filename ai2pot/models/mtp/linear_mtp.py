@@ -7,7 +7,8 @@ from ai2pot.fromcc import (mtpParamOp,
                            linearMtpToLossOp,
                            linearMtpToEFLossOp,
                            linearMtpToEFVOp,
-                           linearMtpToEFOp)
+                           linearMtpToEFOp,
+                           linearMtpToDescriptorsOp)
 
 
 class LinearMtp(nn.Module):
@@ -257,5 +258,31 @@ class LinearMtp(nn.Module):
         return betot_tensor, bforce_tensor
 
 
-    def predict_descriptors(self):
-        pass
+    def predict_descriptors(self,
+                            binum_tensor: torch.Tensor,
+                            bilist_tensor: torch.Tensor,
+                            bnumneigh_tensor: torch.Tensor,
+                            bfirstneigh_tensor: torch.Tensor,
+                            brcs_tensor: torch.Tensor,
+                            btypes_tensor: torch.Tensor,
+                            bnghost_tensor: torch.Tensor):
+        bdescriptors_tensor: torch.Tensor = linearMtpToDescriptorsOp(self.chebyshev_size,
+                                                      self.coeffs_tensor,
+                                                      self.linear_coeffs_tensor,
+                                                      self.type_bias_tensor,
+                                                      self.alpha_moments_count,
+                                                      self.alpha_index_basic_tensor,
+                                                      self.alpha_index_times_tensor,
+                                                      self.alpha_moment_mapping_tensor,
+                                                      self.nmus,
+                                                      binum_tensor,
+                                                      bilist_tensor,
+                                                      bnumneigh_tensor,
+                                                      bfirstneigh_tensor,
+                                                      brcs_tensor,
+                                                      btypes_tensor,
+                                                      self.type_map_tensor,
+                                                      bnghost_tensor[0].item(),
+                                                      self.rmax,
+                                                      self.rmin)[0]
+        return bdescriptors_tensor

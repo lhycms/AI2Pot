@@ -29,6 +29,7 @@ linearMtpToLossOp = torch.ops.mtpr.linearMtpToLossOp
 linearMtpToEFLossOp = torch.ops.mtpr.linearMtpToEFLossOp
 linearMtpToEFVOp = torch.ops.mtpr.linearMtpToEFVOp
 linearMtpToEFOp = torch.ops.mtpr.linearMtpToEFOp
+linearMtpToDescriptorsOp = torch.ops.mtpr.linearMtpToDescriptorsOp
 
 ### Part 3. fvt
 fvt_sr_lib_dir: str = os.path.join(ai2pot_source_build_lib_dir, "fvt")
