@@ -2447,7 +2447,7 @@ torch::autograd::variable_list LinearMtpToEFFunction::forward(
         float* type_bias = type_bias_tensor.data_ptr<float>();
         int (*alpha_index_basic)[4] = (int (*)[4])alpha_index_basic_tensor.data_ptr<int>();
         int (*alpha_index_times)[4] = (int (*)[4])alpha_index_times_tensor.data_ptr<int>();
-        int *alpha_moment_mapping = alpha_moment_mapping_tensor.data_ptr<int>();
+        int *alpha_moment_mapping = (int*)alpha_moment_mapping_tensor.data_ptr<int>();
         float* zbl_cks = zbl_cks_tensor.data_ptr<float>();
         float* zbl_dks = zbl_dks_tensor.data_ptr<float>();
 
@@ -2717,6 +2717,388 @@ torch::autograd::variable_list LinearMtpToEFFunction::backward(
             at::Tensor(),
             at::Tensor(),
             at::Tensor()};
+}
+
+
+torch::autograd::variable_list LinearMtpToEsitesFunction::forward(
+    torch::autograd::AutogradContext *ctx,
+    int chebyshev_size,
+    const at::Tensor& coeffs_tensor,
+    const at::Tensor& linear_coeffs_tensor,
+    const at::Tensor& type_bias_tensor,
+    int alpha_moments_count,
+    const at::Tensor& alpha_index_basic_tensor,
+    const at::Tensor& alpha_index_times_tensor,
+    const at::Tensor& alpha_moment_mapping_tensor,
+    int nmus,
+    const at::Tensor& binum_tensor,
+    const at::Tensor& bilist_tensor,
+    const at::Tensor& bnumneigh_tensor,
+    const at::Tensor& bfirstneigh_tensor,
+    const at::Tensor& brcs_tensor,
+    const at::Tensor& btypes_tensor,
+    const at::Tensor& type_map_tensor,
+    int nghost,
+    double rmax,
+    double rmin,
+    double zbl_rmax,
+    double zbl_rmin,
+    const at::Tensor& zbl_cks_tensor,
+    const at::Tensor& zbl_dks_tensor)
+{
+    // 1. 
+    int nbatches = binum_tensor.size(0);
+    int num_atoms = bfirstneigh_tensor.size(1);
+    int umax_num_neigh_atoms = bfirstneigh_tensor.size(2);
+    int alpha_index_basic_count = alpha_index_basic_tensor.size(0);
+    int alpha_index_times_count = alpha_index_times_tensor.size(0);
+    int alpha_scalar_moments = alpha_moment_mapping_tensor.size(0);
+    int ntypes = type_map_tensor.size(0);
+    int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
+
+    // 2.
+    c10::TensorOptions int_options = c10::TensorOptions()
+                                     .dtype(torch::kInt32)
+                                     .device(brcs_tensor.device());
+    c10::TensorOptions float_options;
+
+    // 3.
+    at::Tensor be_sites_tensor;
+
+    // 4. 
+    if (brcs_tensor.scalar_type() == torch::kFloat32) {
+        float_options = c10::TensorOptions()
+                        .dtype(torch::kFloat32)
+                        .device(brcs_tensor.device());
+        be_sites_tensor = at::zeros({nbatches, num_atoms}, float_options);
+        float *coeffs = coeffs_tensor.data_ptr<float>();
+        float *linear_coeffs = linear_coeffs_tensor.data_ptr<float>();
+        float *type_bias = type_bias_tensor.data_ptr<float>();
+        int (*alpha_index_basic)[4] = (int (*)[4])alpha_index_basic_tensor.data_ptr<int>();
+        int (*alpha_index_times)[4] = (int (*)[4])alpha_index_times_tensor.data_ptr<int>();
+        int *alpha_moment_mapping = (int*)alpha_moment_mapping_tensor.data_ptr<int>();
+        float *zbl_cks = zbl_cks_tensor.data_ptr<float>();
+        float *zbl_dks = zbl_dks_tensor.data_ptr<float>();
+
+        for (int bb=0; bb<nbatches; bb++) {
+            float *e_sites = (float*)be_sites_tensor[bb].data_ptr<float>();
+            int inum = binum_tensor[bb].item<int>();
+            int *ilist = (int*)bilist_tensor[bb].data_ptr<int>();
+            int *numneigh = (int*)bnumneigh_tensor[bb].data_ptr<int>();
+            int *firstneigh = (int*)bfirstneigh_tensor[bb].data_ptr<int>();
+            float (*rcs)[3] = (float (*)[3])brcs_tensor[bb].data_ptr<float>();
+            int *types = (int*)btypes_tensor[bb].data_ptr<int>();
+            int *type_map = (int*)type_map_tensor.data_ptr<int>();
+
+            LinearMtp<float>::find_e(
+                e_sites,
+                chebyshev_size,
+                coeffs,
+                linear_coeffs,
+                type_bias,
+                alpha_moments_count,
+                alpha_index_basic_count,
+                alpha_index_basic,
+                alpha_index_times_count,
+                alpha_index_times,
+                alpha_scalar_moments,
+                alpha_moment_mapping,
+                nmus,
+                inum,
+                ilist,
+                numneigh,
+                firstneigh,
+                rcs,
+                types,
+                ntypes,
+                type_map,
+                umax_num_neigh_atoms,
+                nghost,
+                rmax,
+                rmin,
+                zbl_rmax,
+                zbl_rmin,
+                zbl_cks,
+                zbl_dks);
+        }
+    } else {
+        float_options = c10::TensorOptions()
+                        .dtype(torch::kFloat64)
+                        .device(brcs_tensor.device());
+        be_sites_tensor = at::zeros({nbatches, num_atoms}, float_options);
+        double *coeffs = coeffs_tensor.data_ptr<double>();
+        double *linear_coeffs = linear_coeffs_tensor.data_ptr<double>();
+        double *type_bias = type_bias_tensor.data_ptr<double>();
+        int (*alpha_index_basic)[4] = (int (*)[4])alpha_index_basic_tensor.data_ptr<int>();
+        int (*alpha_index_times)[4] = (int (*)[4])alpha_index_times_tensor.data_ptr<int>();
+        int *alpha_moment_mapping = (int*)alpha_moment_mapping_tensor.data_ptr<int>();
+        double *zbl_cks = zbl_cks_tensor.data_ptr<double>();
+        double *zbl_dks = zbl_dks_tensor.data_ptr<double>();
+
+        for (int bb=0; bb<nbatches; bb++) {
+            double *e_sites = (double*)be_sites_tensor[bb].data_ptr<double>();
+            int inum = binum_tensor[bb].item<int>();
+            int *ilist = (int*)bilist_tensor[bb].data_ptr<int>();
+            int *numneigh = (int*)bnumneigh_tensor[bb].data_ptr<int>();
+            int *firstneigh = (int*)bfirstneigh_tensor[bb].data_ptr<int>();
+            double (*rcs)[3] = (double (*)[3])brcs_tensor[bb].data_ptr<double>();
+            int *types = (int*)btypes_tensor[bb].data_ptr<int>();
+            int *type_map = (int*)type_map_tensor.data_ptr<int>();
+
+            LinearMtp<double>::find_e(
+                e_sites,
+                chebyshev_size,
+                coeffs,
+                linear_coeffs,
+                type_bias,
+                alpha_moments_count,
+                alpha_index_basic_count,
+                alpha_index_basic,
+                alpha_index_times_count,
+                alpha_index_times,
+                alpha_scalar_moments,
+                alpha_moment_mapping,
+                nmus,
+                inum,
+                ilist,
+                numneigh,
+                firstneigh,
+                rcs,
+                types,
+                ntypes,
+                type_map,
+                umax_num_neigh_atoms,
+                nghost,
+                rmax,
+                rmin,
+                zbl_rmax,
+                zbl_rmin,
+                zbl_cks,
+                zbl_dks);
+        }
+    }
+
+    float_options = c10::TensorOptions()
+                    .dtype(torch::kFloat64)
+                    .device(brcs_tensor.device());
+    ctx->save_for_backward({
+        torch::tensor(chebyshev_size, int_options),
+        coeffs_tensor,
+        linear_coeffs_tensor,
+        type_bias_tensor,
+        torch::tensor(alpha_moments_count, int_options),
+        alpha_index_basic_tensor,
+        alpha_index_times_tensor,
+        alpha_moment_mapping_tensor,
+        torch::tensor(nmus, int_options),
+        binum_tensor,
+        bilist_tensor,
+        bnumneigh_tensor,
+        bfirstneigh_tensor,
+        brcs_tensor,
+        btypes_tensor,
+        type_map_tensor,
+        torch::tensor(nghost, int_options),
+        torch::tensor(rmax, float_options),
+        torch::tensor(rmin, float_options),
+        torch::tensor(zbl_rmax, float_options),
+        torch::tensor(zbl_rmin, float_options),
+        zbl_cks_tensor,
+        zbl_dks_tensor});
+
+    return {be_sites_tensor};
+}
+
+
+torch::autograd::variable_list LinearMtpToEsitesFunction::backward(
+    torch::autograd::AutogradContext *ctx,
+    torch::autograd::variable_list bgrad_outputs_tensor)
+{
+    // 1. 
+    at::Tensor bgrad_output_tensor = bgrad_outputs_tensor[0];
+    if ( !bgrad_output_tensor.is_contiguous() )
+        bgrad_output_tensor = bgrad_output_tensor.contiguous();
+
+    int chebyshev_size = ctx->get_saved_variables()[0].item<int>();
+    at::Tensor coeffs_tensor = ctx->get_saved_variables()[1];
+    at::Tensor linear_coeffs_tensor = ctx->get_saved_variables()[2];
+    at::Tensor type_bias_tensor = ctx->get_saved_variables()[3];
+    int alpha_moments_count = ctx->get_saved_variables()[4].item<int>();
+    at::Tensor alpha_index_basic_tensor = ctx->get_saved_variables()[5];
+    at::Tensor alpha_index_times_tensor = ctx->get_saved_variables()[6];
+    at::Tensor alpha_moment_mapping_tensor = ctx->get_saved_variables()[7];
+    int nmus = ctx->get_saved_variables()[8].item<int>();
+    at::Tensor binum_tensor = ctx->get_saved_variables()[9];
+    at::Tensor bilist_tensor = ctx->get_saved_variables()[10];
+    at::Tensor bnumneigh_tensor = ctx->get_saved_variables()[11];
+    at::Tensor bfirstneigh_tensor = ctx->get_saved_variables()[12];
+    at::Tensor brcs_tensor = ctx->get_saved_variables()[13];
+    at::Tensor btypes_tensor = ctx->get_saved_variables()[14];
+    at::Tensor type_map_tensor = ctx->get_saved_variables()[15];
+    int nghost = ctx->get_saved_variables()[16].item<int>();
+    double rmax = ctx->get_saved_variables()[17].item<double>();
+    double rmin = ctx->get_saved_variables()[18].item<double>();
+    double zbl_rmax = ctx->get_saved_variables()[19].item<double>();
+    double zbl_rmin = ctx->get_saved_variables()[20].item<double>();
+    at::Tensor zbl_cks_tensor = ctx->get_saved_variables()[21];
+    at::Tensor zbl_dks_tensor = ctx->get_saved_variables()[22];
+    
+    // 2. 
+    int nbatches = binum_tensor.size(0);
+    int num_atoms = bfirstneigh_tensor.size(1);
+    int umax_num_neigh_atoms = bfirstneigh_tensor.size(2);
+    int alpha_index_basic_count = alpha_index_basic_tensor.size(0);
+    int alpha_index_times_count = alpha_index_times_tensor.size(0);
+    int alpha_scalar_moments = alpha_moment_mapping_tensor.size(0);
+    int ntypes = type_map_tensor.size(0);
+    int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
+    
+    // 3. 
+    c10::TensorOptions int_options = c10::TensorOptions()
+                                     .dtype(torch::kInt32)
+                                     .device(brcs_tensor.device());
+    c10::TensorOptions float_options;
+
+    // 4. 
+    at::Tensor be_sites_der2coeffs_tensor;
+    at::Tensor be_sites_der2linear_coeffs_tensor;
+    at::Tensor be_sites_der2type_bias_tensor;
+
+    // 5.
+    int (*alpha_index_basic)[4] = (int (*)[4])alpha_index_basic_tensor.data_ptr<int>();
+    int (*alpha_index_times)[4] = (int (*)[4])alpha_index_times_tensor.data_ptr<int>();
+    int *alpha_moment_mapping = (int*)alpha_moment_mapping_tensor.data_ptr<int>();
+    int *type_map = (int*)type_map_tensor.data_ptr<int>();
+
+    if (brcs_tensor.scalar_type() == torch::kFloat32) {
+        float_options = c10::TensorOptions()
+                        .dtype(torch::kFloat32)
+                        .device(brcs_tensor.device());
+        be_sites_der2coeffs_tensor = at::zeros({nbatches, num_atoms, num_coeffs}, float_options);
+        be_sites_der2linear_coeffs_tensor = at::zeros({nbatches, num_atoms, alpha_scalar_moments}, float_options);
+        be_sites_der2type_bias_tensor = at::zeros({nbatches, num_atoms, ntypes}, float_options);
+        float *coeffs = (float*)coeffs_tensor.data_ptr<float>();
+        float *linear_coeffs = (float*)linear_coeffs_tensor.data_ptr<float>();
+        float *type_bias = (float*)type_bias_tensor.data_ptr<float>();
+
+        for (int bb=0; bb<nbatches; bb++) {
+            float *e_sites_der2coeffs = (float*)be_sites_der2coeffs_tensor[bb].data_ptr<float>();
+            float *e_sites_der2linear_coeffs = (float*)be_sites_der2linear_coeffs_tensor[bb].data_ptr<float>();
+            float *e_sites_der2type_bias = (float*)be_sites_der2type_bias_tensor[bb].data_ptr<float>();
+            int inum = binum_tensor[bb].item<int>();
+            int *ilist = bilist_tensor[bb].data_ptr<int>();
+            int *numneigh = bnumneigh_tensor[bb].data_ptr<int>();
+            int *firstneigh = bfirstneigh_tensor[bb].data_ptr<int>();
+            float (*rcs)[3] = (float (*)[3])brcs_tensor[bb].data_ptr<float>();
+            int *types = btypes_tensor[bb].data_ptr<int>();
+
+
+            LinearMtp<float>::find_e_backward(
+                e_sites_der2coeffs,
+                e_sites_der2linear_coeffs,
+                e_sites_der2type_bias,
+                chebyshev_size,
+                coeffs,
+                linear_coeffs,
+                type_bias,
+                alpha_moments_count,
+                alpha_index_basic_count,
+                alpha_index_basic,
+                alpha_index_times_count,
+                alpha_index_times,
+                alpha_scalar_moments,
+                alpha_moment_mapping,
+                nmus,
+                inum,
+                ilist,
+                numneigh,
+                firstneigh,
+                rcs,
+                types,
+                ntypes,
+                type_map,
+                umax_num_neigh_atoms,
+                nghost,
+                rmax,
+                rmin);
+        }
+    } else {
+        float_options = c10::TensorOptions()
+                        .dtype(torch::kFloat64)
+                        .device(brcs_tensor.device());
+        be_sites_der2coeffs_tensor = at::zeros({nbatches, num_atoms, num_coeffs}, float_options);
+        be_sites_der2linear_coeffs_tensor = at::zeros({nbatches, num_atoms, alpha_scalar_moments}, float_options);
+        be_sites_der2type_bias_tensor = at::zeros({nbatches, num_atoms, ntypes}, float_options);
+        double *coeffs = (double*)coeffs_tensor.data_ptr<double>();
+        double *linear_coeffs = (double*)linear_coeffs_tensor.data_ptr<double>();
+        double *type_bias = (double*)type_bias_tensor.data_ptr<double>();
+        
+        for (int bb=0; bb<nbatches; bb++) {
+            double *e_sites_der2coeffs = (double*)be_sites_der2coeffs_tensor[bb].data_ptr<double>();
+            double *e_sites_der2linear_coeffs = (double*)be_sites_der2linear_coeffs_tensor[bb].data_ptr<double>();
+            double *e_sites_der2type_bias = (double*)be_sites_der2type_bias_tensor[bb].data_ptr<double>();
+            int inum = binum_tensor[bb].item<int>();
+            int *ilist = bilist_tensor[bb].data_ptr<int>();
+            int *numneigh = bnumneigh_tensor[bb].data_ptr<int>();
+            int *firstneigh = bfirstneigh_tensor[bb].data_ptr<int>();
+            double (*rcs)[3] = (double (*)[3])brcs_tensor[bb].data_ptr<double>();
+            int *types = btypes_tensor[bb].data_ptr<int>();
+
+            LinearMtp<double>::find_e_backward(
+                e_sites_der2coeffs,
+                e_sites_der2linear_coeffs,
+                e_sites_der2type_bias,
+                chebyshev_size,
+                coeffs,
+                linear_coeffs,
+                type_bias,
+                alpha_moments_count,
+                alpha_index_basic_count,
+                alpha_index_basic,
+                alpha_index_times_count,
+                alpha_index_times,
+                alpha_scalar_moments,
+                alpha_moment_mapping,
+                nmus,
+                inum,
+                ilist,
+                numneigh,
+                firstneigh,
+                rcs,
+                types,
+                ntypes,
+                type_map,
+                umax_num_neigh_atoms,
+                nghost,
+                rmax,
+                rmin);
+        }
+    }
+
+    return {
+        at::Tensor(),
+        torch::matmul(bgrad_output_tensor, be_sites_der2coeffs_tensor),
+        torch::matmul(bgrad_output_tensor, be_sites_der2linear_coeffs_tensor),
+        torch::matmul(bgrad_output_tensor, be_sites_der2type_bias_tensor),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor()};
 }
 
 
@@ -3121,6 +3503,58 @@ torch::autograd::variable_list LinearMtpToEFOp(
     const at::Tensor& zbl_dks_tensor)
 {
     return LinearMtpToEFFunction::apply(
+        chebyshev_size,
+        coeffs_tensor,
+        linear_coeffs_tensor,
+        type_bias_tensor,
+        alpha_moments_count,
+        alpha_index_basic_tensor,
+        alpha_index_times_tensor,
+        alpha_moment_mapping_tensor,
+        nmus,
+        binum_tensor,
+        bilist_tensor,
+        bnumneigh_tensor,
+        bfirstneigh_tensor,
+        brcs_tensor,
+        btypes_tensor,
+        type_map_tensor,
+        nghost,
+        rmax,
+        rmin,
+        zbl_rmax,
+        zbl_rmin,
+        zbl_cks_tensor,
+        zbl_dks_tensor);
+}
+
+
+torch::autograd::variable_list LinearMtpToEsitesOp(
+    int chebyshev_size,
+    const at::Tensor& coeffs_tensor,
+    const at::Tensor& linear_coeffs_tensor,
+    const at::Tensor& type_bias_tensor,
+    int alpha_moments_count,
+    const at::Tensor& alpha_index_basic_tensor,
+    const at::Tensor& alpha_index_times_tensor,
+    const at::Tensor& alpha_moment_mapping_tensor,
+    int nmus,
+    const at::Tensor& binum_tensor,
+    const at::Tensor& bilist_tensor,
+    const at::Tensor& bnumneigh_tensor,
+    const at::Tensor& bfirstneigh_tensor,
+    const at::Tensor& brcs_tensor,
+    const at::Tensor& btypes_tensor,
+    const at::Tensor& type_map_tensor,
+    int nghost,
+    double rmax,
+    double rmin,
+    double zbl_rmax,
+    double zbl_rmin,
+    const at::Tensor& zbl_cks_tensor,
+    const at::Tensor& zbl_dks_tensor)
+{
+    return LinearMtpToEsitesFunction::apply(
         chebyshev_size,
         coeffs_tensor,
         linear_coeffs_tensor,

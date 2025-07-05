@@ -20,15 +20,15 @@ print("Number of omp threads = ", torch.get_num_threads())
 class LinearMtpTest(unittest.TestCase):
     def setUp(self):
         print("LinearMtpTest (TestSuite) is setting up...\n")
-        self.type_map_tensor: torch.Tensor = torch.tensor([75, 41, 16, 34], dtype=torch.int32)
+        self.type_map: List[int] = [75, 41, 16, 34]
         self.chebyshev_size: int = 8
         self.rmax: float = 5.0
         self.rmin: float = 0.0
         self.umax_num_neighs = 200
-        self.device: torch._C.device = torch.device("cuda")
+        self.device: torch._C.device = torch.device("cpu")
         self.torch_float_dtype: torch._C.dtype = torch.float32
-        self.linear_mtp: LinearMtp = LinearMtp(mtp_level=16,
-                                               type_map_tensor=self.type_map_tensor,
+        self.linear_mtp: LinearMtp = LinearMtp(mtp_level=4,
+                                               type_map=self.type_map,
                                                chebyshev_size=self.chebyshev_size,
                                                rmax=self.rmax,
                                                rmin=self.rmin,
@@ -36,17 +36,17 @@ class LinearMtpTest(unittest.TestCase):
                                                fit_virial=True)
         self.linear_mtp.to(self.device)
         self.linear_mtp.to(self.torch_float_dtype)
-        self.mlff_input: MlffInput = MlffInput(type_map=self.type_map_tensor.numpy().tolist(),
+        self.mlff_input: MlffInput = MlffInput(type_map=self.type_map,
                                                rcut=self.rmax,
                                                umax_num_neighs=self.umax_num_neighs,
                                                dtype=self.torch_float_dtype,
                                                device=self.device)
-        self.mlff_to_loss_input: MlffToLossInput = MlffToLossInput(type_map=self.type_map_tensor.numpy().tolist(),
+        self.mlff_to_loss_input: MlffToLossInput = MlffToLossInput(type_map=self.type_map,
                                                                    rcut=self.rmax,
                                                                    umax_num_neighs=self.umax_num_neighs,
                                                                    dtype=self.torch_float_dtype,
                                                                    device=self.device)
-        self.mlff_to_ef_loss_input: MlffToEFLossInput = MlffToEFLossInput(type_map=self.type_map_tensor.numpy().tolist(),
+        self.mlff_to_ef_loss_input: MlffToEFLossInput = MlffToEFLossInput(type_map=self.type_map,
                                                                           rcut=self.rmax,
                                                                           umax_num_neighs=self.umax_num_neighs,
                                                                           dtype=self.torch_float_dtype,
@@ -130,6 +130,22 @@ class LinearMtpTest(unittest.TestCase):
         print("0.2. std time cost by linear_mtp.predict_ef() = ", np.std(times_list) / 100)
         print("1. Energy = ", e)
         print("2. Force.shape = \n", f[0][5])
+
+
+    def test_predict_e_sites(self):
+        times_list: List[float] = []
+        e_sites = None
+        for ii in range(1):
+            t1 = time.time()
+            e_sites = self.linear_mtp.predict_e_sites(*self.mlff_input.analyse_pymatgen(structure=self.structure))
+            t2 = time.time()
+            if (ii>9):
+                times_list.append(t2-t1)
+
+        print("0.1. Average time cost by linear_mtp.predict_e_sites() = ", np.sum(times_list) / 100)
+        print("0.2. std time cost by linear_mtp.predict_ef_sites() = ", np.std(times_list) / 100)
+        print("\t1. Esites.shape = ", e_sites.shape)
+
 
 
 if __name__ == "__main__":

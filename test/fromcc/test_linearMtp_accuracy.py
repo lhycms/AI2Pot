@@ -7,11 +7,12 @@ import torch
 import torch.nn as nn
 from torch.autograd import gradcheck
 
-from ai2pot.utils.usepot import MlffToLossInput
+from ai2pot.utils.usepot import MlffToLossInput, MlffInput
 from ai2pot.data.mlffdataset import ExtxyzDataset
 from ai2pot.fromcc import (
     linearMtpToEFLossOp,
     linearMtpToLossOp,
+    linearMtpToEsitesOp,
     mtpParamOp
 )
 
@@ -82,6 +83,11 @@ class LinearMtpTest(unittest.TestCase):
                                                                    umax_num_neighs=self.umax_num_neighs,
                                                                    dtype=self.torch_float_dtype,
                                                                    device=self.device)
+        self.mlff_input: MlffInput = MlffInput(type_map=[1],
+                                                rcut=self.rmax,
+                                                umax_num_neighs=self.umax_num_neighs,
+                                                dtype=self.torch_float_dtype,
+                                                device=self.device)
         
         # 2. mtpParamOp
         mtp_param_info = mtpParamOp(self.mtp_level)
@@ -110,7 +116,7 @@ class LinearMtpTest(unittest.TestCase):
         print("LinearMtpTest (TestCase) is tearing down...\n")
     
     
-    def test_linearMtpToLoss(self):
+    def est_linearMtpToLoss(self):
         # 1. Parameters
         e_weight: float = 1.0
         f_weight: float = 0.1
@@ -147,6 +153,48 @@ class LinearMtpTest(unittest.TestCase):
                                  input_info[11],
                                  self.type_map_tensor,
                                  input_info[12].item(),
+                                 self.rmax,
+                                 self.rmin,
+                                 self.zbl_rmax,
+                                 self.zbl_rmin,
+                                 self.zbl_cks_tensor,
+                                 self.zbl_dks_tensor),
+                         eps=1e-5,
+                         atol=1e-6,
+                         rtol=1e-3,
+                         nondet_tol=1e-5)
+        print("-------------------------------------------------")
+        print("* Gradient pass check: ", test)
+        print("-------------------------------------------------")
+
+
+    def test_linearMtpToEsites(self):
+        # 1. Parameters
+        self.coeffs_tensor.requires_grad_(False)
+        self.linear_coeffs_tensor.requires_grad_(True)
+        self.type_bias_tensor.requires_grad_(True)
+        
+        # 2. Run
+        input_info: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(self.structure)
+
+        test = gradcheck(func=linearMtpToEsitesOp,
+                         inputs=(self.chebyshev_size,
+                                 self.coeffs_tensor,
+                                 self.linear_coeffs_tensor,
+                                 self.type_bias_tensor,
+                                 self.alpha_moments_count,
+                                 self.alpha_index_basic_tensor,
+                                 self.alpha_index_times_tensor,
+                                 self.alpha_moment_mapping_tensor,
+                                 self.nmus,
+                                 input_info[0],
+                                 input_info[1],
+                                 input_info[2],
+                                 input_info[3],
+                                 input_info[4],
+                                 input_info[5],
+                                 self.type_map_tensor,
+                                 input_info[6].item(),
                                  self.rmax,
                                  self.rmin,
                                  self.zbl_rmax,

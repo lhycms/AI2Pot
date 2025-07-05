@@ -98,6 +98,9 @@ protected:
     ai2pot::NeighborList<real> neighbor_list;
 
     real *all_descriptors;
+    real *e_sites_der2coeffs;
+    real *e_sites_der2linear_coeffs;
+    real *e_sites_der2type_bias;
 
     static void SetUpTestSuite() {
         std::cout << "MtpBasisTest (TestSuite) is setting up...\n";
@@ -300,6 +303,12 @@ protected:
         }
 
         all_descriptors = (real*)malloc(sizeof(real) * inum * mtp_param.alpha_scalar_moments());
+        e_sites_der2coeffs = (real*)malloc(sizeof(real) * inum * ntypes * ntypes * nmus * chebyshev_size);
+        memset(e_sites_der2coeffs, 0.0, sizeof(real) * inum * ntypes * ntypes * nmus * chebyshev_size);
+        e_sites_der2linear_coeffs = (real*)malloc(sizeof(real) * inum * mtp_param.alpha_scalar_moments());
+        memset(e_sites_der2linear_coeffs, 0.0, sizeof(real) * inum * mtp_param.alpha_scalar_moments());
+        e_sites_der2type_bias = (real*)malloc(sizeof(real) * inum * ntypes);
+        memset(e_sites_der2type_bias, 0.0, sizeof(real) * inum * ntypes);
     }
 
     void TearDown() override {
@@ -332,6 +341,9 @@ protected:
         free(zbl_dks);
 
         free(all_descriptors);
+        free(e_sites_der2coeffs);
+        free(e_sites_der2linear_coeffs);
+        free(e_sites_der2type_bias);
     }
 };
 
@@ -445,6 +457,38 @@ TEST_F(LinearMtpTest, find_e) {
     for (int ii=0; ii<inum; ii++)
         etot += e_sites[ii];
     printf("1. Etot = %.15lf\n", etot);
+}
+
+
+TEST_F(LinearMtpTest, find_e_backward) {
+    ai2pot::mtpr::LinearMtp<real>::find_e_backward(
+        e_sites_der2coeffs,
+        e_sites_der2linear_coeffs,
+        e_sites_der2type_bias,
+        chebyshev_size,
+        coeffs,
+        linear_coeffs,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        nmus,
+        inum,
+        ilist,
+        numneigh,
+        firstneigh,
+        (real (*)[3])rcs,
+        types,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin);
 }
 
 

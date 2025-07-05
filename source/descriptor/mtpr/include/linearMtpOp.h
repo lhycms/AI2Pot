@@ -173,7 +173,8 @@ public:
 };  // class : LinearMtpToEFFunction
 
 
-class LinearMtpToEsiteFunction : public torch::autograd::Function<LinearMtpToEsiteFunction>
+
+class LinearMtpToEsitesFunction : public torch::autograd::Function<LinearMtpToEsitesFunction>
 {
 public:
     static torch::autograd::variable_list forward(
@@ -354,7 +355,7 @@ torch::autograd::variable_list LinearMtpToEFOp(
     const at::Tensor& zbl_dks_tensor);
 
 
-torch::autograd::variable_list LinearMtpToEsiteOp(
+torch::autograd::variable_list LinearMtpToEsitesOp(
     int chebyshev_size,
     const at::Tensor& coeffs_tensor,
     const at::Tensor& linear_coeffs_tensor,

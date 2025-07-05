@@ -29,6 +29,7 @@ linearMtpToLossOp = torch.ops.mtpr.linearMtpToLossOp
 linearMtpToEFLossOp = torch.ops.mtpr.linearMtpToEFLossOp
 linearMtpToEFVOp = torch.ops.mtpr.linearMtpToEFVOp
 linearMtpToEFOp = torch.ops.mtpr.linearMtpToEFOp
+linearMtpToEsitesOp = torch.ops.mtpr.linearMtpToEsitesOp
 linearMtpToDescriptorsOp = torch.ops.mtpr.linearMtpToDescriptorsOp
 
 ### Part 3. fvt
