@@ -1907,13 +1907,13 @@ void LinearMtp<CoordType>::find_ef_loss_backward(
                                       * (force_ml[center_idx][aa] - force_dft[center_idx][aa]);
                         tmp_prefix -= 2*f_weight/(3*inum)
                                       * (force_ml[neigh_idx][aa] - force_dft[neigh_idx][aa]);
-                        tmpf_loss_der2coeff += tmp_prefix * tmp_deriv;
+                        tmpf_loss_der2coeff += tmp_prefix * e_site_der2mom[i] * tmp_deriv;
                     }
 
                     #ifdef USE_OPENMP
                     #pragma omp atomic
                     #endif 
-                    loss_der2coeffs[idx] += (tmpe_loss_der2coeff + tmpf_loss_der2coeff * e_site_der2mom[i]);
+                    loss_der2coeffs[idx] += (tmpe_loss_der2coeff + tmpf_loss_der2coeff);
                 }
             }
         }
