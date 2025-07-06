@@ -19,8 +19,10 @@ from ai2pot.utils.usepot import MlffInput
 
 class LinearMtpCalculator(Calculator):
     implemented_properties = ['energy', 
+                              'energies',
                               'forces',
-                              "descriptors"]
+                              "descriptors",
+                              "coeffs_gradients"]
 
     def __init__(self,
                  checkpoint_path: str,
@@ -57,9 +59,12 @@ class LinearMtpCalculator(Calculator):
                 self.results["forces"] = f
             else:
                 pass
+        
+        if ("energies" in properties):
+            self.results["energies"] = self.predict_atoms_e_sites(atoms=atoms)
 
         if ("descriptors" in properties):
-            self.results["descriptors"] = self.get_descriptors(atoms=atoms)
+            self.results["descriptors"] = self.predict_atoms_descriptors(atoms=atoms)
 
     
     def predict_atoms_ef(self, atoms: Atoms):
@@ -69,13 +74,27 @@ class LinearMtpCalculator(Calculator):
         return e, f
     
 
-    def get_descriptors(self, atoms: Atoms):
+    def predict_atoms_e_sites(self, atoms: Atoms):
+        e_sites_tensor: torch.Tensor = self.linear_mtp.predict_e_sites(*self.mlff_input.analyse_ase(atoms=atoms))
+        return e_sites_tensor.squeeze(dim=0).detach().numpy()
+
+
+    def predict_atoms_descriptors(self, atoms: Atoms):
         descriptors: np.ndarray = self.linear_mtp.predict_descriptors(*self.mlff_input.analyse_ase(atoms=atoms)).squeeze(dim=0).detach().numpy()
         return descriptors
+    
+
+    #def predict_atoms_coeffs_gradients(self, atoms: Atoms):
+    #    e_sites: torch.Tensor = self.linear_mtp.predict_e_sites(*self.mlff_input.analyse_ase(atoms=atoms))    
+    #    e_sites.sum().backward()
+    #    print(self.linear_mtp.coeffs_tensor.grad)
+    #    print(self.linear_mtp.linear_coeffs_tensor.grad)
+    #    print(self.linear_mtp.type_bias_tensor.grad)
 
     
 
 class LinearMtpActiveDR(object):
+    "Dimension Reduction"
     def __init__(self,
                  checkpoint_path: str,
                  extxyz_path: str,
@@ -212,6 +231,41 @@ class LinearMtpActiveDR(object):
                         bbox_inches="tight")
         else:
             plt.show()
+
+
+class LinearMtpActiveEP(object):
+    '''ExtraPolation'''
+    def __init__(self,
+                 checkpoint_path: str,
+                 extxyz_path: str,
+                 map_location: str = "cpu",
+                 torch_float_dtype: torch._C.dtype = torch.float32):
+        self.checkpoint_path: str = checkpoint_path
+        self.extxyz_path: str = extxyz_path
+        self.map_location: str = map_location
+        self.device: torch._C.device = torch.device(self.map_location)
+        self.torch_float_dtype: torch.float32 = torch_float_dtype
+        self.lit_linear_mtp: LitLinearMtp = LitLinearMtp.load_from_checkpoint(checkpoint_path=self.checkpoint_path,
+                                                                              map_location=self.map_location)
+
+        # model and data
+        self.linear_mtp: LinearMtp = self.lit_linear_mtp.model
+        self.has_virial: bool = self.linear_mtp.fit_virial
+        self.data_loader: DataLoader = ExtxyzDataModule(trainset_path=extxyz_path,
+                                                        validset_path=None,
+                                                        testset_path=None,
+                                                        predict_path=None,
+                                                        batch_size=1,
+                                                        rcut=self.linear_mtp.rmax,
+                                                        umax_num_neigh_atoms=self.linear_mtp.umax_num_neighs,
+                                                        pbc_xyz=[True, True, True],
+                                                        sort=False,
+                                                        torch_float_dtype=self.torch_float_dtype,
+                                                        has_virial=self.has_virial)
+
+
+    #def get_num_coeffs(self):
+        #return self.linear_mtp.coeffs_tensor.sizes()[0] + self.linear_mtp.linear_coeffs_tensor.sizes()[0] + self.linear_mtp.type_bias_tensor.sizes()[0]
 
 
 
