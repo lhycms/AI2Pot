@@ -2790,7 +2790,7 @@ torch::autograd::variable_list LinearMtpToEsitesFunction::forward(
             int *types = (int*)btypes_tensor[bb].data_ptr<int>();
             int *type_map = (int*)type_map_tensor.data_ptr<int>();
 
-            LinearMtp<float>::find_e(
+            LinearMtp<float>::find_e_sites(
                 e_sites,
                 chebyshev_size,
                 coeffs,
@@ -2845,7 +2845,7 @@ torch::autograd::variable_list LinearMtpToEsitesFunction::forward(
             int *types = (int*)btypes_tensor[bb].data_ptr<int>();
             int *type_map = (int*)type_map_tensor.data_ptr<int>();
 
-            LinearMtp<double>::find_e(
+            LinearMtp<double>::find_e_sites(
                 e_sites,
                 chebyshev_size,
                 coeffs,
@@ -2993,7 +2993,7 @@ torch::autograd::variable_list LinearMtpToEsitesFunction::backward(
             int *types = btypes_tensor[bb].data_ptr<int>();
 
 
-            LinearMtp<float>::find_e_backward(
+            LinearMtp<float>::find_e_sites_backward(
                 e_sites_der2coeffs,
                 e_sites_der2linear_coeffs,
                 e_sites_der2type_bias,
@@ -3044,7 +3044,7 @@ torch::autograd::variable_list LinearMtpToEsitesFunction::backward(
             double (*rcs)[3] = (double (*)[3])brcs_tensor[bb].data_ptr<double>();
             int *types = btypes_tensor[bb].data_ptr<int>();
 
-            LinearMtp<double>::find_e_backward(
+            LinearMtp<double>::find_e_sites_backward(
                 e_sites_der2coeffs,
                 e_sites_der2linear_coeffs,
                 e_sites_der2type_bias,
@@ -3074,12 +3074,11 @@ torch::autograd::variable_list LinearMtpToEsitesFunction::backward(
                 rmin);
         }
     }
-
     return {
         at::Tensor(),
-        torch::matmul(bgrad_output_tensor, be_sites_der2coeffs_tensor),
-        torch::matmul(bgrad_output_tensor, be_sites_der2linear_coeffs_tensor),
-        torch::matmul(bgrad_output_tensor, be_sites_der2type_bias_tensor),
+        (bgrad_output_tensor.unsqueeze(-1) * be_sites_der2coeffs_tensor).sum(1).squeeze(0),
+        (bgrad_output_tensor.unsqueeze(-1) * be_sites_der2linear_coeffs_tensor).sum(1).squeeze(0),
+        (bgrad_output_tensor.unsqueeze(-1) * be_sites_der2type_bias_tensor).sum(1).squeeze(0),
         at::Tensor(),
         at::Tensor(),
         at::Tensor(),

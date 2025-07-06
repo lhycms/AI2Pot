@@ -101,7 +101,7 @@ public:
         CoordType *zbl_cks,
         CoordType *zbl_dks);
 
-    static void find_e(
+    static void find_e_sites(
         CoordType *e_sites,
         int chebyshev_size,
         CoordType *coeffs,
@@ -133,7 +133,7 @@ public:
         CoordType *zbl_dks);
 
 
-    static void find_e_backward(
+    static void find_e_sites_backward(
         CoordType *e_sites_der2coeffs,
         CoordType *e_sites_der2linear_coeffs,
         CoordType *e_sites_der2type_bias,
@@ -711,7 +711,7 @@ void LinearMtp<CoordType>::find_ef(
 
 
 template <typename CoordType>
-void LinearMtp<CoordType>::find_e(
+void LinearMtp<CoordType>::find_e_sites(
     CoordType *e_sites,
     int chebyshev_size,
     CoordType *coeffs,
@@ -834,7 +834,7 @@ void LinearMtp<CoordType>::find_e(
 
 
 template <typename CoordType>
-void LinearMtp<CoordType>::find_e_backward(
+void LinearMtp<CoordType>::find_e_sites_backward(
     CoordType *e_sites_der2coeffs,
     CoordType *e_sites_der2linear_coeffs,
     CoordType *e_sites_der2type_bias,
@@ -960,7 +960,7 @@ void LinearMtp<CoordType>::find_e_backward(
         for (int i=0; i<alpha_scalar_moments; i++)
             e_site_der2mom[alpha_moment_mapping[i]] = linear_coeffs[i];
         
-        for (int i=alpha_index_times_count-1; i>0; i--) {
+        for (int i=alpha_index_times_count-1; i>=0; i--) {
             CoordType val0 = mom_vals[alpha_index_times[i][0]];
             CoordType val1 = mom_vals[alpha_index_times[i][1]];
             CoordType val2 = alpha_index_times[i][2];

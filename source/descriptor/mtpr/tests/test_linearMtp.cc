@@ -422,7 +422,7 @@ TEST_F(LinearMtpTest, find_descriptors)
 
 
 TEST_F(LinearMtpTest, find_e) {
-    ai2pot::mtpr::LinearMtp<real>::find_e(
+    ai2pot::mtpr::LinearMtp<real>::find_e_sites(
         e_sites,
         chebyshev_size,
         coeffs,
@@ -461,7 +461,7 @@ TEST_F(LinearMtpTest, find_e) {
 
 
 TEST_F(LinearMtpTest, find_e_backward) {
-    ai2pot::mtpr::LinearMtp<real>::find_e_backward(
+    ai2pot::mtpr::LinearMtp<real>::find_e_sites_backward(
         e_sites_der2coeffs,
         e_sites_der2linear_coeffs,
         e_sites_der2type_bias,

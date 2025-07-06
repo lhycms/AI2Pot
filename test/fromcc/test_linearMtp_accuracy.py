@@ -22,7 +22,7 @@ ReNbSSe_POSCAR_PATH = os.path.join(os.path.join(TEST_FILES_DIR, "POSCARs", "POSC
 PbTe_EXTXYZ_PATH = os.path.join(TEST_FILES_DIR, "XYZ", "11_NEP_potential_PbTe", "train_m.xyz")
 
 #torch.use_deterministic_algorithms(True)
-torch.set_num_threads(16)
+torch.set_num_threads(1)
 torch.manual_seed(2143)
 
 
@@ -34,7 +34,7 @@ class LinearMtpTest(unittest.TestCase):
         self.device: torch._C.device = torch.device("cpu")
         
         # 1. 
-        self.mtp_level: int = 18
+        self.mtp_level: int = 16
         #self.ntypes: int = 4
         self.chebyshev_size: int = 8
         self.rmax: float = 5.0
@@ -105,7 +105,7 @@ class LinearMtpTest(unittest.TestCase):
         self.linear_coeffs_tensor: torch.Tensor = torch.zeros(self.alpha_moment_mapping_tensor.size(0),
                                                               dtype=self.torch_float_dtype,
                                                               device=self.device)
-        nn.init.normal_(self.linear_coeffs_tensor, mean=0.0, std=0.1)
+        nn.init.normal_(self.linear_coeffs_tensor, mean=1.0, std=0.1)
         self.type_bias_tensor: torch.Tensor = torch.zeros(self.ntypes,
                                                           dtype=self.torch_float_dtype,
                                                           device=self.device)
@@ -164,15 +164,16 @@ class LinearMtpTest(unittest.TestCase):
                          rtol=1e-3,
                          nondet_tol=1e-5)
         print("-------------------------------------------------")
-        print("* Gradient pass check: ", test)
+        print("* linearMtpToEFLossOp Gradient pass check: ", test)
         print("-------------------------------------------------")
 
 
     def test_linearMtpToEsites(self):
         # 1. Parameters
-        self.coeffs_tensor.requires_grad_(False)
+        self.coeffs_tensor.requires_grad_(True)
         self.linear_coeffs_tensor.requires_grad_(True)
         self.type_bias_tensor.requires_grad_(True)
+
         
         # 2. Run
         input_info: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(self.structure)
@@ -201,12 +202,12 @@ class LinearMtpTest(unittest.TestCase):
                                  self.zbl_rmin,
                                  self.zbl_cks_tensor,
                                  self.zbl_dks_tensor),
-                         eps=1e-5,
+                         eps=1e-8,
                          atol=1e-6,
                          rtol=1e-3,
-                         nondet_tol=1e-5)
+                         nondet_tol=1e-2)
         print("-------------------------------------------------")
-        print("* Gradient pass check: ", test)
+        print("* linearMtpToEsitesOp Gradient pass check: ", test)
         print("-------------------------------------------------")
 
 

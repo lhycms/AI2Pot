@@ -301,7 +301,7 @@ protected:
 };
 
 
-TEST_F(LinearMtpOpTest, apply) {
+TEST_F(LinearMtpOpTest, LinearMtpToLoss_apply) {
     at::Tensor loss_tensor = ai2pot::mtpr::LinearMtpToLossOp(
         e_weight,
         f_weight,
