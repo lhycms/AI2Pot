@@ -66,6 +66,9 @@ class LinearMtpCalculator(Calculator):
         if ("descriptors" in properties):
             self.results["descriptors"] = self.predict_atoms_descriptors(atoms=atoms)
 
+        if ("coeffs_gradients" in properties):
+            self.results["coeffs_gradients"] = self.predict_atoms_coeffs_gradients(atoms=atoms)
+
     
     def predict_atoms_ef(self, atoms: Atoms):
         e, f = self.linear_mtp.predict_ef(*self.mlff_input.analyse_ase(atoms=atoms))
@@ -84,12 +87,13 @@ class LinearMtpCalculator(Calculator):
         return descriptors
     
 
-    #def predict_atoms_coeffs_gradients(self, atoms: Atoms):
-    #    e_sites: torch.Tensor = self.linear_mtp.predict_e_sites(*self.mlff_input.analyse_ase(atoms=atoms))    
-    #    e_sites.sum().backward()
-    #    print(self.linear_mtp.coeffs_tensor.grad)
-    #    print(self.linear_mtp.linear_coeffs_tensor.grad)
-    #    print(self.linear_mtp.type_bias_tensor.grad)
+    def predict_atoms_coeffs_gradients(self, atoms: Atoms):
+        e_sites: torch.Tensor = self.linear_mtp.predict_e_sites(*self.mlff_input.analyse_ase(atoms=atoms))    
+        e_sites.sum().backward()
+        coeffs_grad: np.ndarray = self.linear_mtp.coeffs_tensor.grad.detach().numpy()
+        linear_coeffs_grad: np.ndarray = self.linear_mtp.linear_coeffs_tensor.grad.detach().numpy()
+        type_bias_grad: np.ndarray = self.linear_mtp.type_bias_tensor.grad.detach().numpy()
+        return np.concatenate([coeffs_grad, linear_coeffs_grad, type_bias_grad])
 
     
 

@@ -30,7 +30,7 @@ EXTXYZ_PATH: str = os.path.join(TEST_FILES_DIR,
 torch.set_num_threads(16)
 
 
-"""
+
 class LinearMtpCalculatorTest(unittest.TestCase):
     def setUp(self):
         print("LinearMtpCalculator (TestSuite) is setting up...")
@@ -55,6 +55,7 @@ class LinearMtpCalculatorTest(unittest.TestCase):
         print("\t1. Energy = ", self.atoms.get_potential_energy())
         print("\t2. forces.shape = ", self.atoms.get_forces().shape)
         print("\t3. descriptors.shape = ",self.linear_mtp_calculator.get_property("descriptors", self.atoms).shape)
+        print("\t4. coeffs_gradients.shape = ", self.linear_mtp_calculator.get_property("coeffs_gradients", self.atoms).shape)
 
 
     def test_predict_atoms_ef(self):
@@ -71,11 +72,10 @@ class LinearMtpCalculatorTest(unittest.TestCase):
 
     
     def test_predict_atoms_coeffs_gradients(self):
-        print("***")
-        #self.linear_mtp_calculator.predict_atoms_coeffs_gradients(atoms=self.atoms)
-        print("***")
+        coeffs_gradients: np.ndarray = self.linear_mtp_calculator.predict_atoms_coeffs_gradients(atoms=self.atoms)
+        print("\t1. coeffs_gradients.shape = ", coeffs_gradients.shape)
 
-
+"""
 class LinearMtpActiveDRTest(unittest.TestCase):
     def setUp(self):
         print("LinearMtpActiveDRTest (TestCase) is setting up...")
@@ -112,7 +112,7 @@ class LinearMtpActiveDRTest(unittest.TestCase):
         tnse_2d = self.linear_mtp_active_dr.get_tsne_2d()
         print("\t1. Shape of T-SNE descriptors = ", tnse_2d.shape)
         self.linear_mtp_active_dr.plot_tsne_2d()
-
+"""
 
 
 class LinearMtp4ExtxyzTest(unittest.TestCase):
@@ -145,7 +145,7 @@ class LinearMtp4ExtxyzTest(unittest.TestCase):
         print("RMSE summary:")
         print("\t1. RMSE of energy = {0:.3f} meV".format(e_rmse * 1000))
         print("\t2. RMSE of force = {0:.3f} meV/A".format(f_rmse * 1000))
-"""
+
 
 
 if __name__ == '__main__':
