@@ -10,6 +10,7 @@ from ai2pot.data.mlffdataset import ExtxyzDataset
 
 TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")
 CU_EXTXYZ_PATH = os.path.join(TEST_FILES_DIR, "XYZ", "Cu", "Cu.extxyz")
+SbTe_EXTXYZ_PATH = os.path.join(TEST_FILES_DIR, "XYZ", "SbTe", "SbTe.extxyz")
 
 
 class AseScDatasetTest(unittest.TestCase):
@@ -21,19 +22,19 @@ class AseScDatasetTest(unittest.TestCase):
         self.sort: bool = False
         self.torch_float_dtype: torch._C.dtype = torch.float32
         self.np_float_dtype: np.dtype = np.float32
-        self.has_virials: bool = False
+        self.has_virial: bool = False
     
     def tearDown(self):
         print("AseScDatasetTest (TestCase) is tearding down...")
     
-    def test_extxyz(self):
+    def test_extxyz1(self):
         extxyz_dataset = ExtxyzDataset(filename=CU_EXTXYZ_PATH,
                                        rcut=self.rcut,
                                        umax_num_neigh_atoms=self.umax_num_neigh_atoms,
                                        pbc_xyz=self.pbc_xyz,
                                        sort=self.sort,
                                        torch_float_dtype=self.torch_float_dtype,
-                                       has_virials=self.has_virials)
+                                       has_virial=self.has_virial)
         extxyz_dataloader = DataLoader(dataset=extxyz_dataset,
                                        batch_size=32,
                                        shuffle=True)
@@ -48,6 +49,33 @@ class AseScDatasetTest(unittest.TestCase):
             print("\tnghost.size() = ", batch[6].size())
             print("\tenergies.size() = ", batch[7].size())
             print("\tforces.size() = ", batch[8].size())
+            print("---------------------")
+
+
+    def test_extxyz2(self):
+        self.has_virial = True
+        extxyz_dataset = ExtxyzDataset(filename=SbTe_EXTXYZ_PATH,
+                                       rcut=self.rcut,
+                                       umax_num_neigh_atoms=self.umax_num_neigh_atoms,
+                                       pbc_xyz=self.pbc_xyz,
+                                       sort=self.sort,
+                                       torch_float_dtype=self.torch_float_dtype,
+                                       has_virial=self.has_virial)
+        extxyz_dataloader = DataLoader(dataset=extxyz_dataset,
+                                       batch_size=32,
+                                       shuffle=True)
+        for idx, batch in enumerate(extxyz_dataloader):
+            print("---- Iteration {0} ----".format(idx))
+            print("\tinum.size() = ", batch[0].size())
+            print("\tilist.size() = ", batch[1].size())
+            print("\tnumneigh.size() = ", batch[2].size())
+            print("\tfirstneigh.size() = ", batch[3].size())
+            print("\trcs.size() = ", batch[4].size())
+            print("\ttypes.size() = ", batch[5].size())
+            print("\tnghost.size() = ", batch[6].size())
+            print("\tenergies.size() = ", batch[7].size())
+            print("\tforces.size() = ", batch[8].size())
+            print("\tvirial.size() = ", batch[9].size())
             print("---------------------")
     
     
