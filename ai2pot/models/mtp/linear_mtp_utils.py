@@ -37,7 +37,7 @@ from ai2pot.utils.usepot import MlffInput
 
 class LinearMtpCalculator(Calculator):
     implemented_properties = ['energy', 
-                              'energies',
+                              'e_sites',
                               'forces',
                               "descriptors",
                               "coeffs_gradients"]
@@ -78,8 +78,8 @@ class LinearMtpCalculator(Calculator):
             else:
                 pass
         
-        if ("energies" in properties):
-            self.results["energies"] = self.predict_atoms_e_sites(atoms=atoms)
+        if ("e_sites" in properties):
+            self.results["e_sites"] = self.predict_atoms_e_sites(atoms=atoms)
 
         if ("descriptors" in properties):
             self.results["descriptors"] = self.predict_atoms_descriptors(atoms=atoms)
