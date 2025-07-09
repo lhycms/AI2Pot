@@ -322,6 +322,7 @@ class LinearMtp4Extxyz(object):
         f_ml_list: List[torch.Tensor] = []
         for batch_idx, batch_data in enumerate(self.test_dataloader):
             # 1. dft
+            binum = batch_data[0]
             e_dft = batch_data[7]
             f_dft = batch_data[8]
 
@@ -330,9 +331,9 @@ class LinearMtp4Extxyz(object):
             e_ml, f_ml = self.linear_mtp.predict_ef(*input_data)
             
             # 3. append
-            e_dft_list.append(e_dft)
+            e_dft_list.append(e_dft / binum)
             f_dft_list.append(f_dft)
-            e_ml_list.append(e_ml)
+            e_ml_list.append(e_ml / binum)
             f_ml_list.append(f_ml)
 
         e_ml_tensor = torch.cat(e_ml_list, dim=0)
@@ -377,10 +378,10 @@ class LinearMtp4Extxyz(object):
                     alpha=0.6)
         ax1.set_xlim(e_min, e_max)
         ax1.set_ylim(e_min, e_max)
-        ax1.set_xlabel("DFT energy (eV)",
+        ax1.set_xlabel("DFT energy (eV/atom)",
                        fontsize=16,
                        fontweight="bold")
-        ax1.set_ylabel("LinearMtp energy (eV)",
+        ax1.set_ylabel("LinearMtp energy (eV/atom)",
                        fontsize=16,
                        fontweight="bold")
         
