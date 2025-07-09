@@ -385,4 +385,4 @@ class ExtxyzDataset(Dataset):
             torch.tensor(nblist_info[5], dtype=torch.int32, device=device).view(1, -1),
             torch.tensor(nblist_info[6], dtype=torch.int32, device=device).view(1,)
         ]
-    
+
