@@ -202,7 +202,7 @@ BasicStructureInfo<CoordType>::BasicStructureInfo(Structure<CoordType> structure
         this->interplanar_distances[1] = 0;
         this->interplanar_distances[2] = 0;
     } else {
-        CoordType* projected_lengths = (CoordType*)structure.get_projected_lengths();
+        CoordType* projected_lengths = (CoordType*)structure.get_atoms_projected_lengths();
         CoordType* interplanar_distances_nonconst = (CoordType*)structure.get_interplanar_distances();
         
         this->projected_lengths[0] = projected_lengths[0];
@@ -604,6 +604,7 @@ BinLinkedList<CoordType>::BinLinkedList() {
 template <typename CoordType>
 BinLinkedList<CoordType>::BinLinkedList(Structure<CoordType> structure, CoordType rcut, CoordType* bin_size_xyz, bool* pbc_xyz) {
     assert(structure.get_num_atoms() > 0);
+    CoordType *projected_lengths = (CoordType*)malloc(sizeof(CoordType) * 3);
 
     // Step 1. 计算 `scaling_matrix` -- 根据 `rcut` 和 `interplanar_distances`
     this->rcut = rcut;
@@ -627,16 +628,12 @@ BinLinkedList<CoordType>::BinLinkedList(Structure<CoordType> structure, CoordTyp
     // Step 2. 初始化 supercell
     Supercell<CoordType> supercell(structure, scaling_matrix);
     this->supercell = supercell;
-    CoordType* projected_lengths = (CoordType*)supercell.structure.get_projected_lengths();
+
+    // Step 3. 计算 `projected`, `min_limit_xyz`  --  Note!!!!
+    supercell.structure.find_pl_info4nblist(this->min_limit_xyz, projected_lengths);
     for (int ii=0; ii<3; ii++) {
         this->num_bin_xyz[ii] = std::ceil( projected_lengths[ii] / this->bin_size_xyz[ii] );
     }
-
-    // Step 3. 计算 `min_limit_xyz`  --  Note!!!!
-    CoordType** limit_xyz = this->supercell.get_structure().get_limit_xyz();
-    this->min_limit_xyz[0] = limit_xyz[0][0];
-    this->min_limit_xyz[1] = limit_xyz[1][0];
-    this->min_limit_xyz[2] = limit_xyz[2][0];
 
     // Step 4. 构建 BinLinkedList -- 将 atoms 分配到不同的 bins 中
     this->_build();
@@ -646,10 +643,6 @@ BinLinkedList<CoordType>::BinLinkedList(Structure<CoordType> structure, CoordTyp
     free(scaling_matrix);
     free(projected_lengths);
     free(extending_matrix);
-    for (int ii=0; ii<3; ii++) {
-        free(limit_xyz[ii]);
-    }
-    free(limit_xyz);
 }
 
 
@@ -664,6 +657,7 @@ BinLinkedList<CoordType>::BinLinkedList(Structure<CoordType> structure, CoordTyp
 template <typename CoordType>
 BinLinkedList<CoordType>::BinLinkedList(Structure<CoordType> structure, CoordType rcut, bool* pbc_xyz) {
     assert(structure.get_num_atoms() > 0);
+    CoordType *projected_lengths = (CoordType*)malloc(sizeof(CoordType) * 3);
 
     // Step 1. 计算 `scaling_matrix` -- 根据 `rcut` 和 `interplanar_distances`
     this->rcut = rcut;
@@ -677,23 +671,19 @@ BinLinkedList<CoordType>::BinLinkedList(Structure<CoordType> structure, CoordTyp
     for (int ii=0; ii<3; ii++) {
         extending_matrix[ii] = std::ceil( this->rcut / prim_interplanar_distances[ii] );
         scaling_matrix[ii] = extending_matrix[ii] * 2 + 1;
-        if (this->pbc_xyz[ii] == false) 
+        if (this->pbc_xyz[ii] == false)
             scaling_matrix[ii] = 1;
     }
     
     // Step 2. 初始化 Supercell 
     Supercell<CoordType> supercell(structure, scaling_matrix);
     this->supercell = supercell;
-    CoordType* projected_lengths = (CoordType*)supercell.structure.get_projected_lengths();
+
+    // Step 3. 计算 `projected`, `min_limit_xyz` -- Note!!!
+    this->supercell.structure.find_pl_info4nblist(this->min_limit_xyz, projected_lengths);
     for (int ii=0; ii<3; ii++) {
         this->num_bin_xyz[ii] = std::ceil( projected_lengths[ii] / this->bin_size_xyz[ii] );
     }
-
-    // Step 3. 计算 `min_limit_xyz` -- Note!!!
-    CoordType** limit_xyz = this->supercell.get_structure().get_limit_xyz();
-    this->min_limit_xyz[0] = limit_xyz[0][0];
-    this->min_limit_xyz[1] = limit_xyz[1][0];
-    this->min_limit_xyz[2] = limit_xyz[2][0];
 
     // Step 4. 构建 BinLinkedList -- 将 atoms 分配到不同的 bins 中
     this->_build();
@@ -703,10 +693,6 @@ BinLinkedList<CoordType>::BinLinkedList(Structure<CoordType> structure, CoordTyp
     free(scaling_matrix);
     free(extending_matrix);
     free(projected_lengths);
-    for (int ii=0; ii<3; ii++) {
-        free(limit_xyz[ii]);
-    }
-    free(limit_xyz);
 }
 
 
@@ -843,6 +829,7 @@ void BinLinkedList<CoordType>::_build() {
             tmp_bin_idx_xyz[1] * this->num_bin_xyz[0] + 
             tmp_bin_idx_xyz[2] * this->num_bin_xyz[0] * this->num_bin_xyz[1]
         );
+
         this->nexts_lst[ii] = this->heads_lst[tmp_bin_idx];
         this->heads_lst[tmp_bin_idx] = ii;
     }
@@ -915,18 +902,13 @@ int* BinLinkedList<CoordType>::get_neigh_bins(int prim_atom_idx) const {
     // Step 1.1.
     assert(prim_atom_idx < this->supercell.get_prim_num_atoms());
     int atom_idx = prim_atom_idx + this->supercell.get_prim_cell_idx() * this->supercell.get_prim_num_atoms();
-    // Step 1.2. 得到 `atom_cart_coord`, `min_limit_xyz`
+    // Step 1.2. 得到 `atom_cart_coord`
     const CoordType* atom_cart_coord = this->supercell.get_structure().get_cart_coords()[atom_idx];
-    CoordType** limit_xyz = this->supercell.get_structure().get_limit_xyz();
-    CoordType min_limit_xyz[3];
-    min_limit_xyz[0] = limit_xyz[0][0];
-    min_limit_xyz[1] = limit_xyz[1][0];
-    min_limit_xyz[2] = limit_xyz[2][0];
 
     // Step 1.3. 计算 atom_idx 的 bin_idx_xyz[3]
     int bin_idx_xyz[3];
     for (int ii=0; ii<3; ii++)
-        bin_idx_xyz[ii] = std::floor( (atom_cart_coord[ii] - min_limit_xyz[ii]) / this->bin_size_xyz[ii] );
+        bin_idx_xyz[ii] = std::floor( (atom_cart_coord[ii] - this->min_limit_xyz[ii]) / this->bin_size_xyz[ii] );
 
     // Step 2. 由 `atom_idx` 的 `bin_idx_xyz[3]` 计算 `neigh_bin_idxs_xyz[num_neigh_bins][3]`
     int num_extened_neigh_bins[3];  // 沿 x,y,z 的正方向有多少个 neigh_bins
@@ -986,11 +968,6 @@ int* BinLinkedList<CoordType>::get_neigh_bins(int prim_atom_idx) const {
     }
 
     // Step . Free memory
-    for (int ii=0; ii<3; ii++) {
-        free(limit_xyz[ii]);
-    }
-    free(limit_xyz);
-
     return neigh_bin_idxs;
 }
 

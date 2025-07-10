@@ -255,6 +255,7 @@ class ExtxyzDataset(Dataset):
         coords: np.ndarray = self.atoms_list[index].get_positions().astype(self.npy_float_dtype)
 
         num_real_atoms: int = len(self.atoms_list[index])
+        print(num_real_atoms)
         ilist: np.ndarray = np.zeros(shape=(self.max_num_atoms), dtype=np.int32)
         numneigh: np.ndarray = np.zeros(shape=(self.max_num_atoms), dtype=np.int32)
         firstneigh: np.ndarray = np.zeros(shape=(self.max_num_atoms, self.umax_num_neigh_atoms), dtype=np.int32)

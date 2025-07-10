@@ -559,7 +559,7 @@ void NeighborList<CoordType>::find_info4mlff(
     for (int ii=0; ii<inum; ii++) 
         for (int jj=0; jj<numneigh[ii]; jj++)
             firstneigh[ii*umax_num_neigh_atoms + jj] = this->neighbor_lists[ii][jj] % inum;
-    
+
     std::fill(relative_coords, relative_coords + inum * umax_num_neigh_atoms * 3, 0.0);
     for (int ii=0; ii<inum; ii++) {
         tmp_center_idx = ii + prim_cell_idx * prim_num_atoms;

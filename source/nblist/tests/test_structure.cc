@@ -253,11 +253,11 @@ TEST_F(StructureArrayTest, get_cart_coords) {
 }
 
 
-TEST_F(StructureArrayTest, get_projected_lengths) {
+TEST_F(StructureArrayTest, get_cell_projected_lengths) {
     ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
     
     // Step 1. 得到 `projected_lengths`
-    double* projected_lengths = structure.get_projected_lengths();
+    double* projected_lengths = structure.get_cell_projected_lengths();
     const double** basis_vectors = structure.get_basis_vectors();
     //printf("basis_vectors:\n");
     //for (int ii=0; ii<3; ii++)
@@ -269,7 +269,7 @@ TEST_F(StructureArrayTest, get_projected_lengths) {
 
     // Step 2. 得到 `standard_projected_lengths`
     double* standard_projected_lengths = (double*)malloc(sizeof(double) * 3);
-    double** limit_xyz = structure.get_limit_xyz();
+    double** limit_xyz = structure.get_cell_limit_xyz();
     standard_projected_lengths[0] = limit_xyz[0][1] - limit_xyz[0][0];
     standard_projected_lengths[1] = limit_xyz[1][1] - limit_xyz[1][0];
     standard_projected_lengths[2] = limit_xyz[2][1] - limit_xyz[2][0];
@@ -301,19 +301,19 @@ TEST_F(StructureArrayTest, get_projected_lengths) {
     free(limit_xyz);
 
     ai2pot::Structure<double> structure_2;
-    EXPECT_EQ(structure_2.get_projected_lengths(), nullptr);
+    EXPECT_EQ(structure_2.get_cell_projected_lengths(), nullptr);
 }
 
 
-TEST_F(StructureArrayTest, get_projected_lengths4supercell) {
+TEST_F(StructureArrayTest, get_cell_projected_lengths4supercell) {
     ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
     int scaling_matrix[3] = {3, 3, 1};
     structure.make_supercell(scaling_matrix);
-    double* projected_lengths = structure.get_projected_lengths();
+    double* projected_lengths = structure.get_cell_projected_lengths();
 
     // Step 1. 使用 `limit_xyz` 计算 `standard_projected_lengths`
     double* standard_projected_lengths = (double*)malloc(sizeof(double) * 3);
-    double** limit_xyz = structure.get_limit_xyz();
+    double** limit_xyz = structure.get_cell_limit_xyz();
     for (int ii=0; ii<3; ii++) {
         standard_projected_lengths[ii] = limit_xyz[ii][1] - limit_xyz[ii][0];
     }
@@ -425,10 +425,10 @@ TEST_F(StructureArrayTest, get_pseudo_origin4supercell) {
 }
 
 
-TEST_F(StructureArrayTest, get_vertexes) {
+TEST_F(StructureArrayTest, get_cell_vertexes) {
     // Step 1.
     ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-    double** vertexes = structure.get_vertexes();
+    double** vertexes = structure.get_cell_vertexes();
     
     printf("scaling_matrix[3] = {1, 1, 1}. Primitive cell's Vertexes:\n");
     for (int ii=0; ii<8; ii++)
@@ -442,12 +442,12 @@ TEST_F(StructureArrayTest, get_vertexes) {
 }
 
 
-TEST_F(StructureArrayTest, get_vertexes4supercell) {
+TEST_F(StructureArrayTest, get_cell_vertexes4supercell) {
     ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
     int scaling_matix[3] = {3, 3, 1};
     structure.make_supercell(scaling_matix);
     
-    double** vertexes = structure.get_vertexes();
+    double** vertexes = structure.get_cell_vertexes();
     printf("scaling_matrix[3] = {3, 3, 1}. Supercell's Vertexes:\n");
     for (int ii=0; ii<8; ii++) {
         printf("\t[%f, %f, %f]\n", vertexes[ii][0], vertexes[ii][1], vertexes[ii][2]);
@@ -461,9 +461,9 @@ TEST_F(StructureArrayTest, get_vertexes4supercell) {
 }
 
 
-TEST_F(StructureArrayTest, get_limit_xyz) {
+TEST_F(StructureArrayTest, get_cell_limit_xyz) {
     ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-    double** limit_xyz = structure.get_limit_xyz();
+    double** limit_xyz = structure.get_cell_limit_xyz();
 
     printf("scaling_matrix[3] = {1, 1, 1}. Primitive cell's limit_xyz:\n");
     printf("\t[%f, %f]\n", limit_xyz[0][0], limit_xyz[0][1]);
@@ -477,13 +477,13 @@ TEST_F(StructureArrayTest, get_limit_xyz) {
 }
 
 
-TEST_F(StructureArrayTest, get_limit_xyz4supercell) {
+TEST_F(StructureArrayTest, get_cell_limit_xyz4supercell) {
     ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
     int scaling_matrix[3] = {3, 3, 1};
     structure.make_supercell(scaling_matrix);
-    double** limit_xyz = structure.get_limit_xyz();
+    double** limit_xyz = structure.get_cell_limit_xyz();
 
-    printf("scaling_matrix[3] = {3, 3, 1}. Primitive cell's limit_xyz:\n");
+    printf("scaling_matrix[3] = {3, 3, 1}. Supercell's limit_xyz:\n");
     printf("\t[%f, %f]\n", limit_xyz[0][0], limit_xyz[0][1]);
     printf("\t[%f, %f]\n", limit_xyz[1][0], limit_xyz[1][1]);
     printf("\t[%f, %f]\n", limit_xyz[2][0], limit_xyz[2][1]);
@@ -493,6 +493,57 @@ TEST_F(StructureArrayTest, get_limit_xyz4supercell) {
     }
     free(limit_xyz);
 }
+
+
+TEST_F(StructureArrayTest, get_atoms_limit_xyz) {
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    double** limit_xyz = structure.get_atoms_limit_xyz();
+
+printf("scaling_matrix[3] = {1, 1, 1}. Primitive cell's limit_xyz:\n");
+printf("\t[%f, %f]\n", limit_xyz[0][0], limit_xyz[0][1]);
+printf("\t[%f, %f]\n", limit_xyz[1][0], limit_xyz[1][1]);
+printf("\t[%f, %f]\n", limit_xyz[2][0], limit_xyz[2][1]);
+
+    for (int ii=0; ii<3; ii++) {
+        free(limit_xyz[ii]);
+    }
+    free(limit_xyz);
+}
+
+
+TEST_F(StructureArrayTest, get_atoms_projected_lengths) {
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    double *projected_lengths = structure.get_atoms_projected_lengths();
+
+printf("projected lengths (according to atoms) = \n");
+printf("\t [%f, %f, %f]\n", projected_lengths[0], 
+                            projected_lengths[1], 
+                            projected_lengths[2]);
+
+    free(projected_lengths);
+}
+
+
+TEST_F(StructureArrayTest, find_pl_info4nblist) {
+    ai2pot::Structure<double> structure(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
+    double *min_limit_xyz = (double*)malloc(sizeof(double) * 3);
+    double *projected_lengths = (double*)malloc(sizeof(double) * 3);
+
+    structure.find_pl_info4nblist(min_limit_xyz, projected_lengths);
+
+printf("scaling_matrix[3] = {1, 1, 1}. Primitive cell's min_limit_xyz:\n");
+printf("\t[%f, %f, %f]\n", min_limit_xyz[0], min_limit_xyz[1], min_limit_xyz[2]);
+printf("projected lengths (according to atoms) = \n");
+printf("\t [%f, %f, %f]\n", projected_lengths[0], 
+                            projected_lengths[1], 
+                            projected_lengths[2]);
+
+    free(min_limit_xyz);
+    free(projected_lengths);
+}
+
+
+
 
 
 // Part II.

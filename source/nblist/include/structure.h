@@ -18,10 +18,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include "../../core/include/vec3Operation.h"
 
 
 namespace ai2pot {
+
+const double NBLIST_MARGIN = 0.5;
 
 // Forward declaration of class B for `friend class`
 template <typename CoordType>
@@ -72,15 +75,22 @@ public:
 
     const CoordType** get_cart_coords() const;  // Returns a pointer to a pointer to a constant double value.
 
-    CoordType* get_projected_lengths() const; //
+    CoordType* get_cell_projected_lengths() const; //
 
     CoordType* get_interplanar_distances() const;
 
     const CoordType* get_pseudo_origin() const;
 
-    CoordType** get_vertexes() const;
+    CoordType** get_cell_vertexes() const;
 
-    CoordType** get_limit_xyz() const;      // [3][2]
+    CoordType** get_cell_limit_xyz() const;      // [3][2]
+
+    CoordType** get_atoms_limit_xyz() const;            // do
+
+    CoordType* get_atoms_projected_lengths() const;     // do
+
+    void find_pl_info4nblist(CoordType *min_limit_xyz,
+                          CoordType *projected_lengths);// do
 
     friend class Supercell<CoordType>;
 
@@ -773,7 +783,7 @@ const CoordType** Structure<CoordType>::get_cart_coords() const {
  * @return const CoordType* 
  */
 template <typename CoordType>
-CoordType* Structure<CoordType>::get_projected_lengths() const {
+CoordType* Structure<CoordType>::get_cell_projected_lengths() const {
     if (this->num_atoms == 0) 
         return nullptr;
 
@@ -845,7 +855,7 @@ const CoordType* Structure<CoordType>::get_pseudo_origin() const {
  * @return CoordType** 
  */
 template <typename CoordType>
-CoordType** Structure<CoordType>::get_vertexes() const {
+CoordType** Structure<CoordType>::get_cell_vertexes() const {
     CoordType** vertexes = (CoordType**)malloc(sizeof(CoordType*) * 8);
     for (int ii=0; ii<8; ii++) {
         vertexes[ii] = (CoordType*)malloc(sizeof(CoordType) * 3);
@@ -886,13 +896,13 @@ CoordType** Structure<CoordType>::get_vertexes() const {
 
 
 template <typename CoordType>
-CoordType** Structure<CoordType>::get_limit_xyz() const {
+CoordType** Structure<CoordType>::get_cell_limit_xyz() const {
     CoordType** limit_xyz = (CoordType**)malloc(sizeof(CoordType*) * 3);
     for (int ii=0; ii<3; ii++) {
         limit_xyz[ii] = (CoordType*)malloc(sizeof(CoordType) * 2);
     }
 
-    CoordType** vertexes = this->get_vertexes();
+    CoordType** vertexes = this->get_cell_vertexes();
 
     // Step 1. 用 `vertexes[0]` 初始化 `limit_xyz` 
     limit_xyz[0][0] = vertexes[0][0];
@@ -930,6 +940,124 @@ CoordType** Structure<CoordType>::get_limit_xyz() const {
     free(vertexes);
 
     return limit_xyz;
+}
+
+
+template <typename CoordType>
+CoordType** Structure<CoordType>::get_atoms_limit_xyz() const
+{
+    CoordType **limit_xyz = (CoordType**)malloc(sizeof(CoordType*) * 3);
+    for (int ii=0; ii<3; ii++)
+        limit_xyz[ii] = (CoordType*)malloc(sizeof(CoordType) * 2);
+    for (int ii=0; ii<3; ii++) {
+        limit_xyz[ii][0] = INT_MAX;
+        limit_xyz[ii][1] = INT_MIN;
+    }
+
+    CoordType cart_coord[3];
+    for (int ii=0; ii<this->num_atoms; ii++) 
+    {
+        for (int aa=0; aa<3; aa++)
+            cart_coord[aa] = this->cart_coords[ii][aa];
+        
+        if (cart_coord[0] < limit_xyz[0][0])
+            limit_xyz[0][0] = cart_coord[0];
+
+        if (cart_coord[0] > limit_xyz[0][1])
+            limit_xyz[0][1] = cart_coord[0];
+
+        if (cart_coord[1] < limit_xyz[1][0])
+            limit_xyz[1][0] = cart_coord[1];
+
+        if (cart_coord[1] > limit_xyz[1][1])
+            limit_xyz[1][1] = cart_coord[1];
+
+        if (cart_coord[2] < limit_xyz[2][0])
+            limit_xyz[2][0] = cart_coord[2];
+
+        if (cart_coord[2] > limit_xyz[2][1])
+            limit_xyz[2][1] = cart_coord[2];
+    }
+
+    limit_xyz[0][0] -= (CoordType)NBLIST_MARGIN;
+    limit_xyz[1][0] -= (CoordType)NBLIST_MARGIN;
+    limit_xyz[2][0] -= (CoordType)NBLIST_MARGIN;
+    limit_xyz[0][1] += (CoordType)NBLIST_MARGIN;
+    limit_xyz[1][1] += (CoordType)NBLIST_MARGIN;
+    limit_xyz[2][1] += (CoordType)NBLIST_MARGIN;
+
+    return limit_xyz;
+}
+
+
+template <typename CoordType>
+CoordType* Structure<CoordType>::get_atoms_projected_lengths() const
+{
+    CoordType *projected_lengths = (CoordType*)malloc(sizeof(CoordType) * 3);
+    
+    CoordType **limit_xyz = this->get_atoms_limit_xyz();
+    projected_lengths[0] = limit_xyz[0][1] - limit_xyz[0][0];
+    projected_lengths[1] = limit_xyz[1][1] - limit_xyz[1][0];
+    projected_lengths[2] = limit_xyz[2][1] - limit_xyz[2][0];
+
+    // Step . Free
+    for (int ii=0; ii<3; ii++)
+        free(limit_xyz[ii]);
+    free(limit_xyz);
+
+    return projected_lengths;
+}
+
+
+template <typename CoordType>
+void Structure<CoordType>::find_pl_info4nblist(
+    CoordType *min_limit_xyz,
+    CoordType *projected_lengths)
+{
+    CoordType limit_xyz[3][2];
+    for (int ii=0; ii<3; ii++) {
+        limit_xyz[ii][0] = INT_MAX;
+        limit_xyz[ii][1] = INT_MIN;
+    }
+
+    CoordType neigh_vec[3];
+    for (int ii=0; ii<this->num_atoms; ii++) {
+        for (int aa=0; aa<3; aa++)
+            neigh_vec[aa] = this->cart_coords[ii][aa];
+        
+        if (neigh_vec[0] < limit_xyz[0][0])
+            limit_xyz[0][0] = neigh_vec[0];
+
+        if (neigh_vec[0] > limit_xyz[0][1])
+            limit_xyz[0][1] = neigh_vec[0];
+
+        if (neigh_vec[1] < limit_xyz[1][0])
+            limit_xyz[1][0] = neigh_vec[1];
+
+        if (neigh_vec[1] > limit_xyz[1][1])
+            limit_xyz[1][1] = neigh_vec[1];
+
+        if (neigh_vec[2] < limit_xyz[2][0])
+            limit_xyz[2][0] = neigh_vec[2];
+
+        if (neigh_vec[2] > limit_xyz[2][1])
+            limit_xyz[2][1] = neigh_vec[2];
+    }
+
+    limit_xyz[0][0] -= (CoordType)NBLIST_MARGIN;
+    limit_xyz[1][0] -= (CoordType)NBLIST_MARGIN;
+    limit_xyz[2][0] -= (CoordType)NBLIST_MARGIN;
+    limit_xyz[0][1] += (CoordType)NBLIST_MARGIN;
+    limit_xyz[1][1] += (CoordType)NBLIST_MARGIN;
+    limit_xyz[2][1] += (CoordType)NBLIST_MARGIN;
+    
+    // 
+    min_limit_xyz[0] = limit_xyz[0][0];
+    min_limit_xyz[1] = limit_xyz[1][0];
+    min_limit_xyz[2] = limit_xyz[2][0];
+    projected_lengths[0] = limit_xyz[0][1] - limit_xyz[0][0];
+    projected_lengths[1] = limit_xyz[1][1] - limit_xyz[1][0];
+    projected_lengths[2] = limit_xyz[2][1] - limit_xyz[2][0];
 }
 
 

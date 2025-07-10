@@ -83,6 +83,7 @@ static PyObject *py_find_info4mlff(PyObject *self, PyObject *args)
         py_types = py_types_pre;
         Py_INCREF(py_types);
     }
+
     if ( npy_float_type == NPY_FLOAT32 ) {
         // 1.C1. Lattice
         float *lattice_data = (float*)PyArray_DATA((PyArrayObject*)py_lattice);
@@ -128,8 +129,9 @@ static PyObject *py_find_info4mlff(PyObject *self, PyObject *args)
         sort = true;
     else
         sort = false;
-    if ( npy_float_type == NPY_FLOAT32 )
+    if ( npy_float_type == NPY_FLOAT32 ) {
         nblist_ptr = (void*)(new ai2pot::NeighborList<float>(*((ai2pot::Structure<float>*)structure_ptr), (float)rcut, pbc_xyz, sort));
+    }
     else
         nblist_ptr = (void*)(new ai2pot::NeighborList<double>(*((ai2pot::Structure<double>*)structure_ptr), rcut, pbc_xyz, sort));
 
