@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 df = pd.read_csv("/data/home/liuhanyu/mycode/AI2Pot/lightning_logs/version_1/metrics.csv")
 
-ys_lst = df.loc[:, "train_loss_epoch"].dropna(axis=0).to_numpy()
+ys_lst = df.loc[:, "train_mse_epoch"].dropna(axis=0).to_numpy()
 ys_lst = np.sqrt(ys_lst)
 xs_lst = [*range(len(ys_lst))]
 plt.plot(xs_lst, ys_lst)

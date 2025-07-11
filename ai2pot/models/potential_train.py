@@ -129,10 +129,10 @@ class LitLinearMtp(L.LightningModule):
                  torch_float_dtype: torch._C.dtype = torch.float32,
                  lr_start: float = 1e-1,
                  lr_end: float = 1e-4,
-                 e_wgt_start: float = 0.1,
+                 e_wgt_start: float = 0.02,
                  e_wgt_end: float = 1.0,
                  f_wgt_start: float = 1000.0,
-                 f_wgt_end: float = 0.1,
+                 f_wgt_end: float = 1.0,
                  v_wgt_start: float = 0.0,
                  v_wgt_end: float = 0.0,
                  lr_decay_epoch: int = 200):

@@ -19,27 +19,27 @@
 from typing import List
 import numpy as np
 from pymatgen.core import Structure
+from ase import Atoms
 
 from ai2pot.fromcc import nblist
 
 
 class Nblist(object):
     def __init__(self, 
-                 structure: Structure,
+                 cell: np.ndarray,
+                 types: np.ndarray,
+                 coords: np.ndarray,
                  rcut: float,
                  umax_num_neigh_atoms: int = 100,
                  pbc_xyz: List[bool] = [True, True, True],
-                 sort: bool = False):
-        self.structure: Structure = structure
-        cell: np.ndarray = self.structure.lattice.matrix
-        types: np.ndarray = np.array([el.Z for el in self.structure.species])
-        coords: np.ndarray = self.structure.frac_coords
+                 sort: bool = False,
+                 is_cart_coords: bool = False):
         nblist_info = nblist.find_info4mlff(cell,
                                             types,
                                             coords,
                                             rcut,
                                             umax_num_neigh_atoms,
-                                            False,
+                                            is_cart_coords,
                                             pbc_xyz,
                                             sort)
         setattr(self, "_rcut", rcut)
@@ -54,6 +54,48 @@ class Nblist(object):
         setattr(self, "_nghost", nblist_info[6])
         
         setattr(self, "_distances", np.linalg.norm(self._rcs, axis=-1))
+
+    
+    @staticmethod
+    def from_pymatgen(structure: Structure,
+                      rcut: float,
+                      umax_num_neigh_atoms: int = 100,
+                      pbc_xyz: List[bool] = [True, True, True],
+                      sort: bool = False):
+        cell: np.ndarray = structure.lattice.matrix
+        types: np.ndarray = np.array([el.Z for el in structure.species])
+        frac_coords: np.ndarray = structure.frac_coords
+        nblist: Nblist = Nblist(cell=cell,
+                                types=types,
+                                coords=frac_coords,
+                                rcut=rcut,
+                                umax_num_neigh_atoms=umax_num_neigh_atoms,
+                                pbc_xyz=pbc_xyz,
+                                sort=sort,
+                                is_cart_coords=False)
+        return nblist
+    
+
+
+    @staticmethod
+    def from_ase(atoms: Atoms,
+                 rcut: float,
+                 umax_num_neigh_atoms: int = 100,
+                 pbc_xyz: List[bool] = [True, True, True],
+                 sort: bool = False):
+        cell: np.ndarray = atoms.cell.array
+        types: np.ndarray = atoms.get_atomic_numbers()
+        coords: np.ndarray = atoms.get_positions()
+        nblist: Nblist = Nblist(cell=cell,
+                                types=types,
+                                coords=coords,
+                                rcut=rcut,
+                                umax_num_neigh_atoms=umax_num_neigh_atoms,
+                                pbc_xyz=pbc_xyz,
+                                sort=sort,
+                                is_cart_coords=True)
+        return nblist
+
         
     @staticmethod
     def find_info4mlff(cell: np.ndarray,

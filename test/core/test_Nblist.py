@@ -3,6 +3,8 @@ import unittest
 from typing import List, Dict
 import numpy as np
 from pymatgen.core import Structure
+from ase.io import read as ase_read
+from ase import Atoms
 
 from ai2pot.core import Nblist
 
@@ -14,21 +16,36 @@ class NblistTest(unittest.TestCase):
     def setUp(self) -> None:
         print("NblistTest is setting up...\n")
         self.structure: Structure = Structure.from_file(os.path.join(TEST_FILES_DIR, "POSCARs", "POSCAR"))
+        self.atoms: Atoms = ase_read(os.path.join(TEST_FILES_DIR, "POSCARs", "POSCAR"))
+
         self.rcut: float = 3.2
         self.umax_num_neigh_atoms: int = 6
         self.pbc_xyz: List[bool] = [True, True, True]
         self.sort: bool = True
     
-    def test_init(self) -> None:
-        nblist: Nblist = Nblist(structure=self.structure,
-                                rcut=self.rcut,
-                                umax_num_neigh_atoms=self.umax_num_neigh_atoms,
-                                pbc_xyz=self.pbc_xyz,
-                                sort=self.sort)
+
+    def test_from_pymatgen(self) -> None:
+        nblist: Nblist = Nblist.from_pymatgen(structure=self.structure,
+                                              rcut=self.rcut,
+                                              umax_num_neigh_atoms=self.umax_num_neigh_atoms,
+                                              pbc_xyz=self.pbc_xyz,
+                                              sort=self.sort)
         assert(nblist.distances.shape[0] == 108)
         assert(nblist.distances.shape[1] == self.umax_num_neigh_atoms)
-        print(nblist.types)
-    
+        print(nblist.distances)
+
+
+    def test_from_ase(self):
+        nblist: Nblist = Nblist.from_ase(atoms=self.atoms,
+                                         rcut=self.rcut,
+                                         umax_num_neigh_atoms=self.umax_num_neigh_atoms,
+                                         pbc_xyz=self.pbc_xyz,
+                                         sort=self.sort)
+        assert(nblist.distances.shape[0] == 108)
+        assert(nblist.distances.shape[1] == self.umax_num_neigh_atoms)
+        print(nblist.distances)
+
+
     def test_find_info4mlff(self) -> None:
         cell: np.ndarray = self.structure.lattice.matrix.astype(np.float32)
         unique_species = sorted(set(self.structure.species), key=lambda sp: sp.Z)
@@ -45,6 +62,7 @@ class NblistTest(unittest.TestCase):
                               True)
         #print(np.linalg.norm(result[4], axis=2))
     
+
     def tearDown(self) -> None:
         print("NblistTest is tearing down...\n")
         

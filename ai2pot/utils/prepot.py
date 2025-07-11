@@ -22,6 +22,7 @@ from dpdata import LabeledSystem, MultiSystems
 from ase import Atoms
 from ase.io import read as ase_read
 
+from ai2pot.core.nblist import Nblist
 from ai2pot.data.mlffdataset import ExtxyzDataset
 
 
@@ -246,3 +247,64 @@ class MlffDatasetShifter(object):
 
         return types_energy_shifts.flatten(), systems_shifted_energy
 
+
+
+class ExtxyzAnalyser(object):
+    def __init__(self,
+                 extxyz_path: str,
+                 rcut: float,
+                 umax_num_neigh_atoms: int = 300,
+                 pbc_xyz: List[bool] = [True, True, True],
+                 sort: bool = False):
+        self.extxyz_path: str = extxyz_path
+        self.atoms_list: List[Atoms] = ase_read(extxyz_path, index=":")
+        self.rcut: float = rcut
+        self.umax_num_neigh_atoms: int = umax_num_neigh_atoms
+        self.pbc_xyz: List[bool] = pbc_xyz
+        self.sort: bool = sort
+    
+
+    def get_max_num_neigh_atoms(self):
+        pass
+    
+
+    def get_forces(self):
+        forces_list: List[np.ndarray] = []
+        for tmp_atoms in self.atoms_list:
+            forces_list.append(tmp_atoms.get_forces())
+        forces_array: np.ndarray = np.array(forces_list)
+        return forces_array
+
+
+    def get_forces_subtract_zbl(self):
+        pass
+
+
+    def get_min_distances(self):
+        min_distance: float = 100.0
+        for tmp_atoms in self.atoms_list:
+            nblist: Nblist = Nblist.from_ase(atoms=tmp_atoms,
+                                             rcut=self.rcut,
+                                             umax_num_neigh_atoms=self.umax_num_neigh_atoms,
+                                             pbc_xyz=self.pbc_xyz,
+                                             sort=self.sort)
+            tmp_min_distance = np.min(nblist.distances[nblist.distances != 0])
+            if (tmp_min_distance < min_distance):
+                min_distance = tmp_min_distance
+        return min_distance
+    
+
+    def get_distances(self):
+        distances_list: List[float] = []
+        for tmp_atoms in self.atoms_list:
+            nblist: Nblist = Nblist.from_ase(atoms=tmp_atoms,
+                                             rcut=self.rcut,
+                                             umax_num_neigh_atoms=self.umax_num_neigh_atoms,
+                                             pbc_xyz=self.pbc_xyz,
+                                             sort=self.sort)
+            distances_list.append(nblist.distances)
+        distances_array: np.ndarray = np.array(distances_list)
+        distances_array = distances_array[distances_array != 0]
+        return distances_array
+
+    
