@@ -266,9 +266,9 @@ class ExtxyzAnalyser(object):
 
     def get_max_num_neigh_atoms(self):
         pass
-    
 
-    def get_forces(self):
+    
+    def get_all_forces(self):
         forces_list: List[np.ndarray] = []
         for tmp_atoms in self.atoms_list:
             forces_list.append(tmp_atoms.get_forces())
@@ -276,11 +276,13 @@ class ExtxyzAnalyser(object):
         return forces_array
 
 
-    def get_forces_subtract_zbl(self):
+    def get_forces_subtract_zbl(self,
+                                zbl_rmax: float,
+                                zbl_rmin: float):
         pass
 
 
-    def get_min_distances(self):
+    def get_min_distance(self):
         min_distance: float = 100.0
         for tmp_atoms in self.atoms_list:
             nblist: Nblist = Nblist.from_ase(atoms=tmp_atoms,
@@ -294,7 +296,7 @@ class ExtxyzAnalyser(object):
         return min_distance
     
 
-    def get_distances(self):
+    def get_all_distances(self):
         distances_list: List[float] = []
         for tmp_atoms in self.atoms_list:
             nblist: Nblist = Nblist.from_ase(atoms=tmp_atoms,

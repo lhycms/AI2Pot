@@ -135,7 +135,7 @@ class LitLinearMtp(L.LightningModule):
                  f_wgt_end: float = 1.0,
                  v_wgt_start: float = 0.0,
                  v_wgt_end: float = 0.0,
-                 lr_decay_epoch: int = 200):
+                 lr_decay_step: int = 5000):
         super(LitLinearMtp, self).__init__()
         self.save_hyperparameters()
         
@@ -162,7 +162,7 @@ class LitLinearMtp(L.LightningModule):
         self.f_wgt_end: float = f_wgt_end
         self.v_wgt_start: float = v_wgt_start
         self.v_wgt_end: float = v_wgt_end
-        self.lr_decay_epoch: int = lr_decay_epoch
+        self.lr_decay_step: int = lr_decay_step
     
     
     def get_efv_wgts(self):
@@ -208,6 +208,13 @@ class LitLinearMtp(L.LightningModule):
         self.log("train_mse", mean_bmse_tensor,
                  on_epoch=True,
                  on_step=True,
+                 prog_bar=True,
+                 sync_dist=True)
+        current_lr: float = self.optimizers().param_groups[0]["lr"]
+        self.log("lr", 
+                 current_lr,
+                 on_step=True,
+                 on_epoch=False,
                  prog_bar=True,
                  sync_dist=True)
         return mean_bmse_tensor
@@ -298,8 +305,8 @@ class LitLinearMtp(L.LightningModule):
         optimizer: torch.optim.Optimizer = torch.optim.AdamW(params=self.model.parameters(),
                                                              lr=self.lr_start)
         
-        def lr_lambda(epoch: int):
-            lr_currrent: float = self.lr_start * (self.lr_end / self.lr_start) ** (epoch / self.lr_decay_epoch)
+        def lr_lambda(step: int):
+            lr_currrent: float = self.lr_start * (self.lr_end / self.lr_start) ** (step / self.lr_decay_step)
             return max(lr_currrent, self.lr_end) / self.lr_start
 
         scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
@@ -308,7 +315,7 @@ class LitLinearMtp(L.LightningModule):
                 'optimizer': optimizer,
                 'lr_scheduler': {
                     'scheduler': scheduler,
-                    'interval': 'epoch',
+                    'interval': 'step',
                     'frequency': 1
                 },
                 # gradient clip

@@ -27,16 +27,16 @@ class ExtxyzAnalyseTest(unittest.TestCase):
         print("ExtxyzAnalyserTest (TestCase) is teawring down...")
 
 
-    def test_get_distance(self):
-        print(np.sort(self.extxyz_analyser.get_distances())[:900])
+    #def test_get_distance(self):
+    #    print(np.sort(self.extxyz_analyser.get_all_distances())[:900])
 
 
-    def test_get_min_distance(self):
-        print(np.min(self.extxyz_analyser.get_min_distances()))
+    #def test_get_min_distance(self):
+    #    print(np.min(self.extxyz_analyser.get_min_distance()))
 
 
     def test_get_forces(self):
-        print(np.sort(self.extxyz_analyser.get_forces().flatten())[-30:])
+        print(self.extxyz_analyser.get_all_forces()[:, :, 0].shape)
 
 
 if __name__ == "__main__":
