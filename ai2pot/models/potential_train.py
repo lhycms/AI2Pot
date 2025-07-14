@@ -210,13 +210,33 @@ class LitLinearMtp(L.LightningModule):
                  on_step=True,
                  prog_bar=True,
                  sync_dist=True)
+        
+        # log : lr, e_weight, f_weight, v_weight
         current_lr: float = self.optimizers().param_groups[0]["lr"]
         self.log("lr", 
                  current_lr,
                  on_step=True,
-                 on_epoch=False,
-                 prog_bar=True,
+                 on_epoch=True,
+                 prog_bar=False,
                  sync_dist=True)
+        self.log("e_wgt",
+                 e_wgt,
+                 on_step=True,
+                 on_epoch=True,
+                 prog_bar=False,
+                 sync_dist=True)
+        self.log("f_wgt",
+                 f_wgt,
+                 on_step=True,
+                 on_epoch=True,
+                 prog_bar=False,
+                 sync_dist=True) 
+        self.log("v_wgt",
+                 v_wgt,
+                 on_step=True,
+                 on_epoch=True,
+                 prog_bar=False,
+                 sync_dist=True) 
         return mean_bmse_tensor
 
 
@@ -305,12 +325,19 @@ class LitLinearMtp(L.LightningModule):
         optimizer: torch.optim.Optimizer = torch.optim.AdamW(params=self.model.parameters(),
                                                              lr=self.lr_start)
         
+        '''
+        work like DeepMD
         def lr_lambda(step: int):
             lr_currrent: float = self.lr_start * (self.lr_end / self.lr_start) ** (step / self.lr_decay_step)
             return max(lr_currrent, self.lr_end) / self.lr_start
 
         scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
-        
+        '''
+
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer,
+                                                               T_max=self.lr_decay_step,
+                                                               eta_min=self.lr_end)
+
         return {
                 'optimizer': optimizer,
                 'lr_scheduler': {
