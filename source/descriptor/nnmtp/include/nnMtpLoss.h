@@ -13,15 +13,15 @@
     along with AI2Pot.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef AI2POT_MTP_LOSS_H
-#define AI2POT_MTP_LOSS_H
+#ifndef AI2POT_NNMTP_MTP_LOSS_H
+#define AI2POT_NNMTP_MTP_LOSS_H
 #include <stdlib.h>
 #include <cstring>
 #include <cmath>
 
 
 namespace ai2pot {
-namespace mtpr {
+namespace nnmtp {
 
 template <typename CoordType>
 class MtpLoss {
@@ -127,7 +127,7 @@ void MtpLoss<CoordType>::find_ef_loss(
 }
 
 
-};  // namespace : mtpr
+};  // namespace : nnmtp
 };  // namespace : ai2pot
 
 #endif

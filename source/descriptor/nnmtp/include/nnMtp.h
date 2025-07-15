@@ -110,7 +110,7 @@ void NNMtp<CoordType>::find_ef(
 {
 #endif
     mom_vals = (CoordType*)malloc(sizeof(CoordType) * alpha_moments_count);
-    mom_ders = (CoordType (*)[3])malloc(sizeof(CoordType) * alpha_index_basic_count * 3);
+    mom_ders = (CoordType (*)[3])malloc(sizeof(CoordType) * alpha_index_basic_count * umax_num_neigh_atoms * 3);
     e_site_der2mom = (CoordType*)malloc(sizeof(CoordType) * alpha_moments_count);
 
     int center_idx;
@@ -128,10 +128,10 @@ void NNMtp<CoordType>::find_ef(
     {
         center_idx = ilist[ii];
         type_central = types[center_idx];
-        type_central_w0 = &w0[type_central*num_neurons*alpha_moments_count];
+        type_central_w0 = &w0[type_central*num_neurons*alpha_scalar_moments];
         type_central_w1 = &w1[type_central*num_neurons];
         memset(mom_vals, 0, sizeof(CoordType) * alpha_moments_count);
-        memset(mom_ders, 0, sizeof(CoordType) * alpha_index_basic_count * 3);
+        memset(mom_ders, 0, sizeof(CoordType) * alpha_index_basic_count * umax_num_neigh_atoms * 3);
         memset(e_site_der2mom, 0, sizeof(CoordType) * alpha_moments_count);
         CoordType e_site = 0;
 
@@ -162,8 +162,10 @@ void NNMtp<CoordType>::find_ef(
         {
             CoordType hidden_val = 0;
             CoordType activated_hidden_val = 0;
-            for (int k=0; k<alpha_scalar_moments; k++)
+            for (int k=0; k<alpha_scalar_moments; k++) {
+                //printf("** %.15lf, %.15lf\n", type_central_w0[p*alpha_scalar_moments + k], mom_vals[alpha_moment_mapping[k]]);
                 hidden_val += type_central_w0[p*alpha_scalar_moments + k] * mom_vals[alpha_moment_mapping[k]];
+            }
             TanhActivationFunc<CoordType>::find_val(activated_hidden_val, hidden_val);
             e_site += type_central_w1[p] * activated_hidden_val;
         }
@@ -172,6 +174,7 @@ void NNMtp<CoordType>::find_ef(
         #endif
         etot += e_site;
 
+        
         // NNMtp Energy derivatives w.r.t. xyz
         for (int p=0; p<num_neurons; p++)
         {
@@ -181,7 +184,7 @@ void NNMtp<CoordType>::find_ef(
                 hidden_val += type_central_w0[p*alpha_scalar_moments + k] * mom_vals[alpha_moment_mapping[k]];
             TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
             for (int k=0; k<alpha_scalar_moments; k++)
-                e_site_der2mom[alpha_moment_mapping[k]] += type_central_w1[p];
+                e_site_der2mom[alpha_moment_mapping[k]] += type_central_w1[p]
                                                            * activated_hidden_der
                                                            * type_central_w0[p*alpha_scalar_moments + k];
         }
