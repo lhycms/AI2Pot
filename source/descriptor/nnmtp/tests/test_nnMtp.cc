@@ -1,3 +1,18 @@
+/*
+    Copyright 2025 Hanyu Liu
+    This file is part of AI2Pot.
+    AI2Pot is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+    AI2Pot is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+    You should have received a copy of the GNU General Public License
+    along with AI2Pot.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include <gtest/gtest.h>
 #include <stdio.h>
 #include <iostream>
@@ -9,6 +24,7 @@
 #include "../../../nblist/include/neighborList.h"
 #include "../include/mtpParam.h"
 #include "../include/nnMtp.h"
+
 
 
 class NNMtpTest : public ::testing::Test {
@@ -53,6 +69,13 @@ protected:
     double zbl_rmin;
     double *zbl_cks;
     double *zbl_dks;
+
+
+    // Loss
+    double e_weight;
+    double f_weight;
+    double etot_dft;
+    double (*forces_dft)[3];
 
     static void SetUpTestSuite() {
         printf("NNMtpTest (TestSuite) is setting up...\n");
@@ -197,6 +220,14 @@ protected:
         zbl_rmin = 0.0;
         zbl_cks = nullptr;
         zbl_dks = nullptr;
+
+
+        // Loss
+        e_weight = 1.0;
+        f_weight = 1.0;
+        etot_dft = 0.0;
+        forces_dft = (double (*)[3])malloc(sizeof(double) * inum * 3);
+        memset(forces_dft, 0.0, sizeof(double) * inum * 3);
     }
 
 
@@ -212,6 +243,9 @@ protected:
         free(w0);
         free(w1);
         free(type_bias);
+
+        // Loss
+        free(forces_dft);
     }
 };  // class : NNMtpTEst
 
@@ -317,6 +351,50 @@ printf("2.2. force=\n");
 for (int ii=0; ii<inum; ii++)
     printf("\t\t%3d: [%.15f, %.15f, %.15f]\n", ii, forces[ii][0], forces[ii][1], forces[ii][2]);
 }
+
+
+TEST_F(NNMtpTest, find_ef_loss)
+{
+    double loss = 0.0;
+    ai2pot::nnmtp::NNMtp<double>::find_ef_loss(
+        loss,
+        e_weight,
+        f_weight,
+        etot_dft,
+        forces_dft,
+        chebyshev_size,
+        num_neurons,
+        coeffs,
+        w0,
+        w1,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        mtp_param.nmus(),
+        inum,
+        ilist,
+        numneigh,
+        firstneigh,
+        (double (*)[3])rcs,
+        types,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin,
+        zbl_rmax,
+        zbl_rmin,
+        zbl_cks,
+        zbl_dks);
+printf("\t1. ef_loss = %.15lf\n", loss);
+}
+
 
 
 int main(int argc, char **argv){

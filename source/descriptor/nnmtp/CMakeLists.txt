@@ -25,15 +25,18 @@ target_include_directories(mtp_param PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
 
 # 6. compile test
 if (BUILD_TEST)
-    add_executable(test_nn_mtp_utils ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nnMtpUtils.cc)
-    target_link_libraries(test_nn_mtp_utils PRIVATE gtest gtest_main)
+    add_executable(test_nnMtpUtils ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nnMtpUtils.cc)
+    target_link_libraries(test_nnMtpUtils PRIVATE gtest gtest_main)
 
-    add_executable(test_nn_mtp ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nnMtp.cc)
-    target_link_libraries(test_nn_mtp PRIVATE mtp_param gtest gtest_main)
+    add_executable(test_nnMtp ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nnMtp.cc)
+    target_link_libraries(test_nnMtp PRIVATE mtp_param gtest gtest_main)
     if (USE_OPENMP)
-        target_compile_definitions(test_nn_mtp PRIVATE USE_OPENMP)
+        target_compile_definitions(test_nnMtp PRIVATE USE_OPENMP)
     endif()
 
-    gtest_discover_tests(test_nn_mtp_utils)
-    gtest_discover_tests(test_nn_mtp)
+    add_executable(test_nnMtpLoss ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nnMtpLoss.cc)
+    target_link_libraries(test_nnMtpLoss PRIVATE gtest gtest_main)
+
+    gtest_discover_tests(test_nnMtpUtils)
+    gtest_discover_tests(test_nnMtp)
 endif()

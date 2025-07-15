@@ -1,3 +1,18 @@
+/*
+    Copyright 2025 Hanyu Liu
+    This file is part of AI2Pot.
+    AI2Pot is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+    AI2Pot is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+    You should have received a copy of the GNU General Public License
+    along with AI2Pot.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #ifndef AI2POT_NNMTP_NNMTP_H
 #define AI2POT_NNMTP_NNMTP_H
 
@@ -9,6 +24,7 @@
 
 #include "./mtpBasis.h"
 #include "./nnMtpUtils.h"
+#include "./nnMtpLoss.h"
 
 
 namespace ai2pot {
@@ -52,9 +68,82 @@ public:
         CoordType *zbl_cks,
         CoordType *zbl_dks);
 
-    static void find_ef_loss();
+    static void find_ef_loss(
+        CoordType &loss,
+        CoordType e_weight,
+        CoordType f_weight,
+        CoordType etot_dft,
+        CoordType (*force_dft)[3],
+        int chebyshev_size,
+        int num_neurons,
+        CoordType *coeffs,
+        CoordType *w0,
+        CoordType *w1,
+        CoordType *type_bias,
+        const int alpha_moments_count,
+        const int alpha_index_basic_count,
+        const int (*alpha_index_basic)[4],
+        const int alpha_index_times_count,
+        const int (*alpha_index_times)[4],
+        const int alpha_scalar_moments,
+        const int *alpha_moment_mapping,
+        int nmus,
+        int inum,
+        int *ilist,
+        int *numneigh,
+        int *firstneigh,
+        CoordType (*rcs)[3],
+        int *types,
+        int ntypes,
+        int *type_map,
+        int umax_num_neigh_atoms,
+        int nghost,
+        CoordType rmax,
+        CoordType rmin,
+        CoordType zbl_rmax,
+        CoordType zbl_rmin,
+        CoordType *zbl_cks,
+        CoordType *zbl_dks);
 
-    static void find_ef_loss_backward();
+    static void find_ef_loss_backward(
+        CoordType *loss_der2coeffs,
+        CoordType *loss_der2w0,
+        CoordType *loss_der2w1,
+        CoordType *loss_der2type_bias,
+        CoordType e_weight,
+        CoordType f_weight,
+        CoordType etot_dft,
+        CoordType (*force_dft)[3],
+        int chebyshev_size,
+        int num_neurons,
+        CoordType *coeffs,
+        CoordType *w0,
+        CoordType *w1,
+        CoordType *type_bias,
+        const int alpha_moments_count,
+        const int alpha_index_basic_count,
+        const int (*alpha_index_basic)[4],
+        const int alpha_index_times_count,
+        const int (*alpha_index_times)[4],
+        const int alpha_scalar_moments,
+        const int *alpha_moment_mapping,
+        int nmus,
+        int inum,
+        int *ilist,
+        int *numneigh,
+        int *firstneigh,
+        CoordType (*rcs)[3],
+        int *types,
+        int ntypes,
+        int *type_map,
+        int umax_num_neigh_atoms,
+        int nghost,
+        CoordType rmax,
+        CoordType rmin,
+        CoordType zbl_rmax,
+        CoordType zbl_rmin,
+        CoordType zbl_cks,
+        CoordType zbl_dks);
 
 };  // class : NNMtp
 
@@ -239,7 +328,100 @@ void NNMtp<CoordType>::find_ef(
 #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
 }
 #endif
+}
 
+
+template <typename CoordType>
+void NNMtp<CoordType>::find_ef_loss(
+    CoordType &loss,
+    CoordType e_weight,
+    CoordType f_weight,
+    CoordType etot_dft,
+    CoordType (*force_dft)[3],
+    int chebyshev_size,
+    int num_neurons,
+    CoordType *coeffs,
+    CoordType *w0,
+    CoordType *w1,
+    CoordType *type_bias,
+    const int alpha_moments_count,
+    const int alpha_index_basic_count,
+    const int (*alpha_index_basic)[4],
+    const int alpha_index_times_count,
+    const int (*alpha_index_times)[4],
+    const int alpha_scalar_moments,
+    const int *alpha_moment_mapping,
+    int nmus,
+    int inum,
+    int *ilist,
+    int *numneigh,
+    int *firstneigh,
+    CoordType (*rcs)[3],
+    int *types,
+    int ntypes,
+    int *type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    CoordType rmax,
+    CoordType rmin,
+    CoordType zbl_rmax,
+    CoordType zbl_rmin,
+    CoordType *zbl_cks,
+    CoordType *zbl_dks)
+{
+    loss = 0.0;
+    CoordType etot;
+    CoordType (*force)[3];
+
+    assert(nghost == 0);
+    force = (CoordType (*)[3])malloc(sizeof(CoordType) * (inum+nghost) * 3);
+
+    find_ef(
+        etot,
+        force,
+        chebyshev_size,
+        num_neurons,
+        coeffs,
+        w0,
+        w1,
+        type_bias,
+        alpha_moments_count,
+        alpha_index_basic_count,
+        alpha_index_basic,
+        alpha_index_times_count,
+        alpha_index_times,
+        alpha_scalar_moments,
+        alpha_moment_mapping,
+        nmus,
+        inum,
+        ilist,
+        numneigh,
+        firstneigh,
+        rcs,
+        types,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin,
+        zbl_rmax,
+        zbl_rmin,
+        zbl_cks,
+        zbl_dks);
+
+    MtpLoss<CoordType>::find_ef_loss(
+        loss,
+        inum,
+        ilist,
+        e_weight,
+        f_weight,
+        etot,
+        etot_dft,
+        force,
+        force_dft);
+    
+    free(force);
 }
 
 
