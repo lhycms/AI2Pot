@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 import lightning as L
 
 from ai2pot.data.mlffdataset import ScDataset, ExtxyzDataset
-from ai2pot.models.mtp.nn_mtp import DescriptorMtp, NNMtp
+from ai2pot.models.mtp.nn_mtp_rubbish import DescriptorMtp, NNMtp
 from ai2pot.models.potential_train import LitPotential
 from ai2pot.utils.prepot import LsShifter
 from ai2pot.utils.usepot import MlffInput

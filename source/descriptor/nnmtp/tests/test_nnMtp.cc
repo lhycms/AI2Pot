@@ -77,6 +77,12 @@ protected:
     double etot_dft;
     double (*forces_dft)[3];
 
+    // Loss derivatives
+    double *loss_der2coeffs;
+    double *loss_der2w0;
+    double *loss_der2w1;
+    double *loss_der2type_bias;
+
     static void SetUpTestSuite() {
         printf("NNMtpTest (TestSuite) is setting up...\n");
     }
@@ -228,6 +234,16 @@ protected:
         etot_dft = 0.0;
         forces_dft = (double (*)[3])malloc(sizeof(double) * inum * 3);
         memset(forces_dft, 0.0, sizeof(double) * inum * 3);
+
+        // Loss derivative
+        loss_der2coeffs = (double*)malloc(sizeof(double) * ntypes * ntypes * mtp_param.nmus() * chebyshev_size);
+        memset(loss_der2coeffs, 0, sizeof(double) * ntypes * ntypes * mtp_param.nmus() * chebyshev_size);
+        loss_der2w0 = (double*)malloc(sizeof(double) * ntypes * num_neurons * mtp_param.alpha_scalar_moments());
+        memset(loss_der2w0, 0, sizeof(double) * ntypes * num_neurons * mtp_param.alpha_scalar_moments());
+        loss_der2w1 = (double*)malloc(sizeof(double) * ntypes * num_neurons);
+        memset(loss_der2w1, 0, sizeof(double) * ntypes * num_neurons);
+        loss_der2type_bias = (double*)malloc(sizeof(double) * ntypes);
+        memset(loss_der2type_bias, 0, sizeof(double) * ntypes);
     }
 
 
@@ -246,6 +262,12 @@ protected:
 
         // Loss
         free(forces_dft);
+
+        // Loss derivatives
+        free(loss_der2coeffs);
+        free(loss_der2w0);
+        free(loss_der2w1);
+        free(loss_der2type_bias);
     }
 };  // class : NNMtpTEst
 
@@ -397,7 +419,45 @@ printf("\t1. ef_loss = %.15lf\n", loss);
 
 
 TEST_F(NNMtpTest, find_ef_loss_backward) {
-    
+    ai2pot::nnmtp::NNMtp<double>::find_ef_loss_backward(
+        loss_der2coeffs,
+        loss_der2w0,
+        loss_der2w1,
+        loss_der2type_bias,
+        e_weight,
+        f_weight,
+        etot_dft,
+        forces_dft,
+        chebyshev_size,
+        num_neurons,
+        coeffs,
+        w0,
+        w1,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        mtp_param.nmus(),
+        inum,
+        ilist,
+        numneigh,
+        firstneigh,
+        (double (*)[3])rcs,
+        types,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin,
+        zbl_rmax,
+        zbl_rmin,
+        zbl_cks,
+        zbl_dks);
 }
 
 

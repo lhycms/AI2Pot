@@ -72,9 +72,11 @@ void TanhActivationFunc<CoordType>::find_der(
 template <typename CoordType>
 void TanhActivationFunc<CoordType>::find_der2der(
     CoordType &der2der,
-    CoordType hidden)
+    CoordType hidden_val)
 {
-
+    CoordType val = (std::exp(hidden_val) - std::exp(-hidden_val))
+                    / (std::exp(hidden_val) + std::exp(-hidden_val));
+    der2der = -2*val + 2*std::pow(val, 3);
 }
 
 

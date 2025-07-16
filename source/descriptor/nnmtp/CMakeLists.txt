@@ -22,6 +22,17 @@ endif()
 add_library(mtp_param SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/mtpParam.cc)
 target_include_directories(mtp_param PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+if (TORCH_OP)
+    add_library(nn_mtp SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/nnMtpOp.cc)
+    target_include_directories(mtp_param PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(nn_mtp PRIVATE ${TORCH_LIBRARIES})
+    if (USE_OPENMP)
+        target_compile_definitions(nn_mtp PRIVATE USE_OPENMP)
+    endif()
+    if (USE_CUDA AND CUDA_FOUND)
+        target_compile_definitions(nn_mtp PRIVATE USE_CUDA)
+    endif()
+endif()
 
 # 6. compile test
 if (BUILD_TEST)
@@ -36,6 +47,9 @@ if (BUILD_TEST)
 
     add_executable(test_nnMtpLoss ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nnMtpLoss.cc)
     target_link_libraries(test_nnMtpLoss PRIVATE gtest gtest_main)
+    if (USE_OPENMP)
+        target_compile_definitions(test_nnMtp PRIVATE USE_OPENMP)
+    endif()
 
     gtest_discover_tests(test_nnMtpUtils)
     gtest_discover_tests(test_nnMtp)

@@ -30,6 +30,8 @@ protected:
     real activated_hidden_val;
     real activated_hidden_val_;
     real activated_hidden_der;
+    real activated_hidden_der_;
+    real activated_hidden_der2der;
     
     static void SetUpTestSuite() {
         printf("NNMtpUtilsTest (TestSuite) is setting up...\n");
@@ -43,6 +45,8 @@ protected:
         activated_hidden_val = 0;
         activated_hidden_val_ = 0;
         activated_hidden_der = 0;
+        activated_hidden_der_ = 0;
+        activated_hidden_der2der = 0;
         hidden_val = 0.1;
     }
 
@@ -61,8 +65,19 @@ TEST_F(NNMtpUtilsTest, der_accuracy) {
     printf("Tanh der accuracy:\n");
     printf("\t1. Derivative calculated by custom code = %.10lf\n", (activated_hidden_val_ - activated_hidden_val)/delta);
     printf("\t2. Derivative calculated by fdm = %.10lf\n", activated_hidden_der);
+}
 
-}   
+
+TEST_F(NNMtpUtilsTest, der2der_accuracy) {
+    real delta = 1e-5;
+    ai2pot::nnmtp::TanhActivationFunc<real>::find_der(activated_hidden_der, hidden_val);
+    ai2pot::nnmtp::TanhActivationFunc<real>::find_der2der(activated_hidden_der2der, hidden_val);
+    ai2pot::nnmtp::TanhActivationFunc<real>::find_der(activated_hidden_der_, hidden_val+delta);
+
+    printf("Tanh der2der accuracy:\n");
+    printf("\t1. Derivative^2 calculated by custom code = %.10lf\n", (activated_hidden_der_ - activated_hidden_der)/delta);
+    printf("\t2. Derivative^2 calculated by fdm = %.10lf\n", activated_hidden_der2der);
+}
 
 
 
