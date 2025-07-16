@@ -1652,7 +1652,7 @@ void LinearMtp<CoordType>::find_ef_loss_backward(
     CoordType (*auto_coords_powers_)[3];
     RQ_Chebyshev<CoordType> *p_RadialBasis;
 
-    // Step 2. efv
+    // Step 2. ef
     CoordType etot_ml = 0;
     CoordType (*force_ml)[3] = (CoordType (*)[3])malloc(sizeof(CoordType) * (inum+nghost) * 3);
     memset(force_ml, 0, sizeof(CoordType) * (inum+nghost) * 3);

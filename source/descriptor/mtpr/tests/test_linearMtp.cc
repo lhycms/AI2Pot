@@ -460,7 +460,7 @@ TEST_F(LinearMtpTest, find_e) {
 }
 
 
-TEST_F(LinearMtpTest, find_e_backward) {
+TEST_F(LinearMtpTest, find_e_sites_backward) {
     ai2pot::mtpr::LinearMtp<real>::find_e_sites_backward(
         e_sites_der2coeffs,
         e_sites_der2linear_coeffs,

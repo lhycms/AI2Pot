@@ -396,6 +396,11 @@ printf("\t1. ef_loss = %.15lf\n", loss);
 }
 
 
+TEST_F(NNMtpTest, find_ef_loss_backward) {
+    
+}
+
+
 
 int main(int argc, char **argv){
     ::testing::InitGoogleTest(&argc, argv);
