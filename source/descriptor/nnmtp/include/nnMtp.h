@@ -141,6 +141,47 @@ public:
         CoordType *zbl_cks,
         CoordType *zbl_dks);
 
+
+    static void find_loss(
+        CoordType &loss,
+        CoordType e_weight,
+        CoordType f_weight,
+        CoordType v_weight,
+        CoordType etot_dft,
+        CoordType (*force_dft)[3],
+        CoordType *virial_dft,
+        int chebyshev_size,
+        int num_neurons,
+        CoordType *coeffs,
+        CoordType *w0,
+        CoordType *w1,
+        CoordType *type_bias,
+        const int alpha_moments_count,
+        const int alpha_index_basic_count,
+        const int (*alpha_index_basic)[4],
+        const int alpha_index_times_count,
+        const int (*alpha_index_times)[4],
+        const int alpha_scalar_moments,
+        const int *alpha_moment_mapping,
+        int nmus,
+        int inum,
+        int *ilist,
+        int *numneigh,
+        int *firstneigh,
+        CoordType (*rcs)[3],
+        int *types,
+        int ntypes,
+        int *type_map,
+        int umax_num_neigh_atoms,
+        int nghost,
+        CoordType rmax,
+        CoordType rmin,
+        CoordType zbl_rmax,
+        CoordType zbl_rmin,
+        CoordType *zbl_cks,
+        CoordType *zbl_dks);
+
+
     static void find_ef_loss_backward(
         CoordType *loss_der2coeffs,
         CoordType *loss_der2w0,
@@ -181,6 +222,48 @@ public:
         CoordType *zbl_cks,
         CoordType *zbl_dks);
 
+
+    static void find_loss_backward(
+        CoordType *loss_der2coeffs,
+        CoordType *loss_der2w0,
+        CoordType *loss_der2w1,
+        CoordType *loss_der2type_bias,
+        CoordType e_weight,
+        CoordType f_weight,
+        CoordType v_weight,
+        CoordType etot_dft,
+        CoordType (*force_dft)[3],
+        CoordType *virial_dft,
+        int chebyshev_size,
+        int num_neurons,
+        CoordType *coeffs,
+        CoordType *w0,
+        CoordType *w1,
+        CoordType *type_bias,
+        const int alpha_moments_count,
+        const int alpha_index_basic_count,
+        const int (*alpha_index_basic)[4],
+        const int alpha_index_times_count,
+        const int (*alpha_index_times)[4],
+        const int alpha_scalar_moments,
+        const int *alpha_moment_mapping,
+        int nmus,
+        int inum,
+        int *ilist,
+        int *numneigh,
+        int *firstneigh,
+        CoordType (*rcs)[3],
+        int *types,
+        int ntypes,
+        int *type_map,
+        int umax_num_neigh_atoms,
+        int nghost,
+        CoordType rmax,
+        CoordType rmin,
+        CoordType zbl_rmax,
+        CoordType zbl_rmin,
+        CoordType *zbl_cks,
+        CoordType *zbl_dks);
 };  // class : NNMtp
 
 
@@ -649,6 +732,111 @@ void NNMtp<CoordType>::find_ef_loss(
         force_dft);
     
     free(force);
+}
+
+
+template <typename CoordType>
+void NNMtp<CoordType>::find_loss(
+    CoordType &loss,
+    CoordType e_weight,
+    CoordType f_weight,
+    CoordType v_weight,
+    CoordType etot_dft,
+    CoordType (*force_dft)[3],
+    CoordType *virial_dft,
+    int chebyshev_size,
+    int num_neurons,
+    CoordType *coeffs,
+    CoordType *w0,
+    CoordType *w1,
+    CoordType *type_bias,
+    const int alpha_moments_count,
+    const int alpha_index_basic_count,
+    const int (*alpha_index_basic)[4],
+    const int alpha_index_times_count,
+    const int (*alpha_index_times)[4],
+    const int alpha_scalar_moments,
+    const int *alpha_moment_mapping,
+    int nmus,
+    int inum,
+    int *ilist,
+    int *numneigh,
+    int *firstneigh,
+    CoordType (*rcs)[3],
+    int *types,
+    int ntypes,
+    int *type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    CoordType rmax,
+    CoordType rmin,
+    CoordType zbl_rmax,
+    CoordType zbl_rmin,
+    CoordType *zbl_cks,
+    CoordType *zbl_dks)
+{
+    loss = 0.0;
+    CoordType etot;
+    CoordType (*force)[3];
+    CoordType *virial;
+
+    assert(nghost == 0);
+    force = (CoordType (*)[3])malloc(sizeof(CoordType) * (inum+nghost) * 3);
+    memset(force, 0, sizeof(CoordType) * (inum+nghost) * 3);
+    virial = (CoordType*)malloc(sizeof(CoordType) * 9);
+    memset(virial, 0, sizeof(CoordType) * 9);
+
+    find_efv(
+        etot,
+        force,
+        virial,
+        chebyshev_size,
+        num_neurons,
+        coeffs,
+        w0,
+        w1,
+        type_bias,
+        alpha_moments_count,
+        alpha_index_basic_count,
+        alpha_index_basic,
+        alpha_index_times_count,
+        alpha_index_times,
+        alpha_scalar_moments,
+        alpha_moment_mapping,
+        nmus,
+        inum,
+        ilist,
+        numneigh,
+        firstneigh,
+        rcs,
+        types,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin,
+        zbl_rmax,
+        zbl_rmin,
+        zbl_cks,
+        zbl_dks);
+
+    MtpLoss<CoordType>::find_loss(
+        loss,
+        inum,
+        ilist,
+        e_weight,
+        f_weight,
+        v_weight,
+        etot,
+        etot_dft,
+        force,
+        force_dft,
+        virial,
+        virial_dft);
+    
+    free(force);
+    free(virial);
 }
 
 
