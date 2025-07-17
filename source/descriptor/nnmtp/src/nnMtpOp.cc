@@ -60,7 +60,7 @@ torch::autograd::variable_list NNMtpToEFLossFunction::forward(
     int umax_num_neigh_atoms = (int)bfirstneigh_tensor.size(2);
     int ntypes = (int)type_map_tensor.size(0);
     int *type_map = type_map_tensor.data_ptr<int>();
-    int num_neurons = (int)w1_tensor.size(0);
+    int num_neurons = (int)(w1_tensor.size(0) / ntypes);
     int alpha_index_basic_count = alpha_index_basic_tensor.size(0);
     int (*alpha_index_basic)[4] = (int (*)[4])alpha_index_basic_tensor.data_ptr<int>();
     int alpha_index_times_count = alpha_index_times_tensor.size(0);
@@ -92,7 +92,7 @@ torch::autograd::variable_list NNMtpToEFLossFunction::forward(
 
         for (int bb=0; bb<batch_size; bb++) 
         {
-            float loss = bloss_tensor[bb].item<float>();
+            float *loss = (float*)bloss_tensor[bb].data_ptr<float>();
             float etot_dft = betot_dft_tensor[bb].item<float>();
             float (*force_dft)[3] = (float (*)[3])bforce_dft_tensor[bb].data_ptr<float>();
             int inum = binum_tensor[bb].item<int>();
@@ -103,7 +103,7 @@ torch::autograd::variable_list NNMtpToEFLossFunction::forward(
             int *types = (int*)btypes_tensor[bb].data_ptr<int>();
 
             NNMtp<float>::find_ef_loss(
-                loss,
+                (*loss),
                 e_weight,
                 f_weight,
                 etot_dft,
@@ -153,7 +153,7 @@ torch::autograd::variable_list NNMtpToEFLossFunction::forward(
 
         for (int bb=0; bb<batch_size; bb++) 
         {
-            double loss = bloss_tensor[bb].item<double>();
+            double *loss = (double*)bloss_tensor[bb].data_ptr<double>();
             double etot_dft = betot_dft_tensor[bb].item<double>();
             double (*force_dft)[3] = (double (*)[3])bforce_dft_tensor[bb].data_ptr<double>();
             int inum = binum_tensor[bb].item<int>();
@@ -164,7 +164,7 @@ torch::autograd::variable_list NNMtpToEFLossFunction::forward(
             int *types = (int*)btypes_tensor[bb].data_ptr<int>();
 
             NNMtp<double>::find_ef_loss(
-                loss,
+                (*loss),
                 e_weight,
                 f_weight,
                 etot_dft,
@@ -282,13 +282,13 @@ torch::autograd::variable_list NNMtpToEFLossFunction::backward(
     int umax_num_neigh_atoms = (int)bfirstneigh_tensor.size(2);
     int ntypes = type_map_tensor.size(0);
     int *type_map = (int*)type_map_tensor.data_ptr<int>();
-    int num_neurons = (int)w1_tensor.size(0);
+    int num_neurons = (int)(w1_tensor.size(0) / ntypes);
     int alpha_index_basic_count = (int)alpha_index_basic_tensor.size(0);
     int alpha_index_times_count = (int)alpha_index_times_tensor.size(0);
     int alpha_scalar_moments = (int)alpha_moment_mapping_tensor.size(0);
     int (*alpha_index_basic)[4] = (int (*)[4])alpha_index_basic_tensor.data_ptr<int>();
     int (*alpha_index_times)[4] = (int (*)[4])alpha_index_times_tensor.data_ptr<int>();
-    int *alpha_moment_mapping = (int*)alpha_moment_mapping_tensor.size(0);
+    int *alpha_moment_mapping = (int*)alpha_moment_mapping_tensor.data_ptr<int>();
     int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
 
     // 2. 
