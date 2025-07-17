@@ -56,6 +56,8 @@ protected:
     double etot_;
     double (*forces)[3];
     double (*forces_)[3];
+    double *virial;
+    double *virial_;
     double rmax;
     double rmin;
     int chebyshev_size;
@@ -204,6 +206,10 @@ protected:
         memset(forces, 0, sizeof(double) * inum * 3);
         forces_ = (double (*)[3])malloc(sizeof(double) * inum * 3);
         memset(forces_, 0, sizeof(double) * inum * 3);
+        virial = (double*)malloc(sizeof(double) * 9);
+        memset(virial, 0, sizeof(double) * 9);
+        virial_ = (double*)malloc(sizeof(double) * 9);
+        memset(virial_, 0, sizeof(double) * 9);
 
         chebyshev_size = 8;
         num_neurons = 30;
@@ -255,6 +261,8 @@ protected:
         free(types);
         free(forces);
         free(forces_);
+        free(virial);
+        free(virial_);
         free(coeffs);
         free(w0);
         free(w1);
@@ -373,6 +381,112 @@ printf("2.2. force=\n");
 for (int ii=0; ii<inum; ii++)
     printf("\t\t%3d: [%.15f, %.15f, %.15f]\n", ii, forces[ii][0], forces[ii][1], forces[ii][2]);
 }
+
+
+TEST_F(NNMtpTest, find_efv_accuracy) {
+    int center_idx_modify = 1;
+    int direction1_idx_modify = 2;
+    double delta = 1e-8;
+
+    ai2pot::nnmtp::NNMtp<double>::find_efv(
+        etot,
+        forces,
+        virial,
+        chebyshev_size,
+        num_neurons,
+        coeffs,
+        w0,
+        w1,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        mtp_param.nmus(),
+        inum,
+        ilist,
+        numneigh,
+        firstneigh,
+        (double (*)[3])rcs,
+        types,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin,
+        zbl_rmax,
+        zbl_rmin,
+        zbl_cks,
+        zbl_dks);
+
+    // *** delta
+    double cart_coords[12][3] = {0};
+    for (int ii=0; ii<inum; ii++)
+        for (int aa=0; aa<3; aa++)
+            cart_coords[ii][aa] = structure.get_cart_coords()[ii][aa];
+    cart_coords[center_idx_modify][direction1_idx_modify] += delta;
+    structure = ai2pot::Structure<double>(num_atoms, basis_vectors, atomic_numbers, cart_coords, true);
+    nblist = ai2pot::NeighborList<double>(structure, rcut, pbc_xyz, true);
+    nblist.find_info4mlff(
+            inum,
+            ilist,
+            numneigh,
+            firstneigh,
+            rcs,
+            types,
+            nghost,
+            umax_num_neigh_atoms);
+    // *** delta
+
+    ai2pot::nnmtp::NNMtp<double>::find_efv(
+        etot_,
+        forces_,
+        virial_,
+        chebyshev_size,
+        num_neurons,
+        coeffs,
+        w0,
+        w1,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        mtp_param.nmus(),
+        inum,
+        ilist,
+        numneigh,
+        firstneigh,
+        (double (*)[3])rcs,
+        types,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin,
+        zbl_rmax,
+        zbl_rmin,
+        zbl_cks,
+        zbl_dks);
+
+printf("1.1. energy = %.15lf\n", etot);
+printf("1.1. force[%d][%d] calculated by custom code = %.15lf\n", center_idx_modify, direction1_idx_modify, forces[center_idx_modify][direction1_idx_modify]);
+printf("1.2. energy = %.15lf\n", etot_);
+printf("1.2. force[%d][%d] calculated by finite difference method = %.15lf\n", center_idx_modify, direction1_idx_modify, -(etot_ - etot) / delta);
+printf("2.1. energy = %.15lf\n", etot);
+printf("2.2. force=\n");
+for (int ii=0; ii<inum; ii++)
+    printf("\t\t%3d: [%.15f, %.15f, %.15f]\n", ii, forces[ii][0], forces[ii][1], forces[ii][2]);
+}
+
 
 
 TEST_F(NNMtpTest, find_ef_loss)
