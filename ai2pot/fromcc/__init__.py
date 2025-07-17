@@ -50,6 +50,16 @@ linearMtpToEFOp = torch.ops.mtpr.linearMtpToEFOp
 linearMtpToEsitesOp = torch.ops.mtpr.linearMtpToEsitesOp
 linearMtpToDescriptorsOp = torch.ops.mtpr.linearMtpToDescriptorsOp
 
+
+### Part 2.3. nnmtp
+nnmtp_lib_dir:str = os.path.join(ai2pot_source_build_lib_dir, "descriptor", "nnmtp")
+nnmtp_bind_so_path: str = os.path.join(nnmtp_lib_dir, "libnnmtp_bind.so")
+torch.ops.load_library(nnmtp_bind_so_path)
+# name
+mtpParamOp = torch.ops.nnmtp.mtpParamOp
+nnMtpToEFLossOp = torch.ops.nnmtp.nnMtpToEFLossOp
+
+
 ### Part 3. fvt
 fvt_sr_lib_dir: str = os.path.join(ai2pot_source_build_lib_dir, "fvt")
 fvt_sr_bind_so_path: str = os.path.join(fvt_sr_lib_dir, "libfvt_sr_op_bind.so")
