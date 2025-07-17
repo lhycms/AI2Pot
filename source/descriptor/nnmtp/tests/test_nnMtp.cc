@@ -627,6 +627,51 @@ TEST_F(NNMtpTest, find_ef_loss_backward) {
 }
 
 
+TEST_F(NNMtpTest, find_loss_backward) {
+    ai2pot::nnmtp::NNMtp<double>::find_loss_backward(
+        loss_der2coeffs,
+        loss_der2w0,
+        loss_der2w1,
+        loss_der2type_bias,
+        e_weight,
+        f_weight,
+        v_weight,
+        etot_dft,
+        forces_dft,
+        virial_dft,
+        chebyshev_size,
+        num_neurons,
+        coeffs,
+        w0,
+        w1,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        mtp_param.nmus(),
+        inum,
+        ilist,
+        numneigh,
+        firstneigh,
+        (double (*)[3])rcs,
+        types,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin,
+        zbl_rmax,
+        zbl_rmin,
+        zbl_cks,
+        zbl_dks);
+}
+
+
 
 int main(int argc, char **argv){
     ::testing::InitGoogleTest(&argc, argv);

@@ -63,6 +63,48 @@ public:
 };  // class : NNMtpToEFLossFunction
 
 
+class NNMtpToLossFunction : public torch::autograd::Function<NNMtpToLossFunction>
+{
+public:
+    static torch::autograd::variable_list forward(
+        torch::autograd::AutogradContext *ctx,
+        double e_weight,
+        double f_weight,
+        double v_weight,
+        const at::Tensor& betot_dft_tensor,
+        const at::Tensor& bforce_dft_tensor,
+        const at::Tensor& bvirial_dft_tensor,
+        int chebyshev_size,
+        const at::Tensor& coeffs_tensor,
+        const at::Tensor& w0_tensor,
+        const at::Tensor& w1_tensor,
+        const at::Tensor& type_bias_tensor,
+        int alpha_moments_count,
+        const at::Tensor& alpha_index_basic_tensor,
+        const at::Tensor& alpha_index_times_tensor,
+        const at::Tensor& alpha_moment_mapping_tensor,
+        int nmus,
+        const at::Tensor& binum_tensor,
+        const at::Tensor& bilist_tensor,
+        const at::Tensor& bnumneigh_tensor,
+        const at::Tensor& bfirstneigh_tensor,
+        const at::Tensor& brcs_tensor,
+        const at::Tensor& btypes_tensor,
+        const at::Tensor& type_map_tensor,
+        int nghost,
+        double rmax,
+        double rmin,
+        double zbl_rmax,
+        double zbl_rmin,
+        const at::Tensor& zbl_cks_tensor,
+        const at::Tensor& zbl_dks_tensor);
+
+    static torch::autograd::variable_list backward(
+        torch::autograd::AutogradContext *ctx,
+        torch::autograd::variable_list bgrad_outputs_tensor);
+};  // class : NNMtpToLossFunction
+
+
 torch::autograd::variable_list NNMtpToEFLossOp(
         double e_weight,
         double f_weight,
@@ -92,6 +134,39 @@ torch::autograd::variable_list NNMtpToEFLossOp(
         double zbl_rmin,
         const at::Tensor& zbl_cks_tensor,
         const at::Tensor& zbl_dks_tensor);
+
+torch::autograd::variable_list NNMtpToLossOp(
+        double e_weight,
+        double f_weight,
+        double v_weight,
+        const at::Tensor& betot_dft_tensor,
+        const at::Tensor& bforce_dft_tensor,
+        const at::Tensor& bvirial_dft_tensor,
+        int chebyshev_size,
+        const at::Tensor& coeffs_tensor,
+        const at::Tensor& w0_tensor,
+        const at::Tensor& w1_tensor,
+        const at::Tensor& type_bias_tensor,
+        int alpha_moments_count,
+        const at::Tensor& alpha_index_basic_tensor,
+        const at::Tensor& alpha_index_times_tensor,
+        const at::Tensor& alpha_moment_mapping_tensor,
+        int nmus,
+        const at::Tensor& binum_tensor,
+        const at::Tensor& bilist_tensor,
+        const at::Tensor& bnumneigh_tensor,
+        const at::Tensor& bfirstneigh_tensor,
+        const at::Tensor& brcs_tensor,
+        const at::Tensor& btypes_tensor,
+        const at::Tensor& type_map_tensor,
+        int nghost,
+        double rmax,
+        double rmin,
+        double zbl_rmax,
+        double zbl_rmin,
+        const at::Tensor& zbl_cks_tensor,
+        const at::Tensor& zbl_dks_tensor);
+    
 
 };  // namespace : nnmtp
 };  // namespace : ai2pot

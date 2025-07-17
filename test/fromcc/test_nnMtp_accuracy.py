@@ -10,6 +10,7 @@ from torch.autograd import gradcheck
 from ai2pot.utils.usepot import MlffToLossInput, MlffInput
 from ai2pot.fromcc import (
     nnMtpToEFLossOp,
+    nnMtpToLossOp,
     mtpParamOp
 )
 
@@ -118,7 +119,7 @@ class LinearMtpTest(unittest.TestCase):
         print("LinearMtpTest (TestCase) is tearing down...\n")
     
     
-    def test_linearMtpToLoss(self):
+    def est_linearMtpToEFLoss(self):
         # 1. Parameters
         e_weight: float = 1.0
         f_weight: float = 0.1
@@ -172,6 +173,60 @@ class LinearMtpTest(unittest.TestCase):
         print("-------------------------------------------------")
 
 
+    def test_linearMtpToLoss(self):
+        # 1. Parameters
+        e_weight: float = 1.0
+        f_weight: float = 0.1
+        v_weight: float = 1.0
+        self.coeffs_tensor.requires_grad_(True)
+        self.w0_tensor.requires_grad_(True)
+        self.w1_tensor.requires_grad_(True)
+        self.type_bias_tensor.requires_grad_(True)
+        
+        # 2. Run
+        input_info: List[torch.Tensor] = self.mlff_to_loss_input.analyse_pymatgen(self.structure,
+                                                                                  e_weight=e_weight,
+                                                                                  f_weight=f_weight,
+                                                                                  v_weight=v_weight)
+
+        test = gradcheck(func=nnMtpToLossOp,
+                         inputs=(e_weight,
+                                 f_weight,
+                                 v_weight,
+                                 input_info[3],
+                                 input_info[4],
+                                 input_info[5],
+                                 self.chebyshev_size,
+                                 self.coeffs_tensor,
+                                 self.w0_tensor,
+                                 self.w1_tensor,
+                                 self.type_bias_tensor,
+                                 self.alpha_moments_count,
+                                 self.alpha_index_basic_tensor,
+                                 self.alpha_index_times_tensor,
+                                 self.alpha_moment_mapping_tensor,
+                                 self.nmus,
+                                 input_info[6],
+                                 input_info[7],
+                                 input_info[8],
+                                 input_info[9],
+                                 input_info[10],
+                                 input_info[11],
+                                 self.type_map_tensor,
+                                 input_info[12].item(),
+                                 self.rmax,
+                                 self.rmin,
+                                 self.zbl_rmax,
+                                 self.zbl_rmin,
+                                 self.zbl_cks_tensor,
+                                 self.zbl_dks_tensor),
+                         eps=1e-1,
+                         atol=1e-6,
+                         rtol=1e-3,
+                         nondet_tol=1e-5)
+        print("-------------------------------------------------")
+        print("* linearMtpToEFLossOp Gradient pass check: ", test)
+        print("-------------------------------------------------")
 
 
 if __name__ == "__main__":

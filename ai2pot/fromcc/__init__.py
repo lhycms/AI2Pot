@@ -58,7 +58,7 @@ torch.ops.load_library(nnmtp_bind_so_path)
 # name
 mtpParamOp = torch.ops.nnmtp.mtpParamOp
 nnMtpToEFLossOp = torch.ops.nnmtp.nnMtpToEFLossOp
-
+nnMtpToLossOp = torch.ops.nnmtp.nnMtpToLossOp
 
 ### Part 3. fvt
 fvt_sr_lib_dir: str = os.path.join(ai2pot_source_build_lib_dir, "fvt")
