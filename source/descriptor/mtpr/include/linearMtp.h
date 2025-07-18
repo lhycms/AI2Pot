@@ -875,6 +875,11 @@ void LinearMtp<CoordType>::find_e_sites_backward(
     }
     max_alpha_index_basic++;
 
+
+#if defined(USE_OPENMP) or defined(__INTELLISENSE__)
+#pragma omp parallel private(mom_vals, e_site_der2mom)
+{
+#endif
     // Step 2.
     int center_idx;
     int type_central;
@@ -888,10 +893,6 @@ void LinearMtp<CoordType>::find_e_sites_backward(
     RQ_Chebyshev<CoordType> *p_RadialBasis;
 
     // Step 3.
-#if defined(USE_OPENMP) or defined(__INTELLISENSE__)
-#pragma omp parallel private(mom_vals, e_site_der2mom, auto_dist_powers_, auto_coords_powers_, p_RadialBasis)
-{
-#endif
     mom_vals = (CoordType*)malloc(sizeof(CoordType) * alpha_moments_count);
     e_site_der2mom = (CoordType*)malloc(sizeof(CoordType) * alpha_moments_count);
     auto_dist_powers_ = (CoordType*)malloc(sizeof(CoordType) * max_alpha_index_basic);
