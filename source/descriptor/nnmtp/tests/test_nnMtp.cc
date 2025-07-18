@@ -87,6 +87,9 @@ protected:
     double *loss_der2w1;
     double *loss_der2type_bias;
 
+    // Utils
+    double *descriptors;
+
     static void SetUpTestSuite() {
         printf("NNMtpTest (TestSuite) is setting up...\n");
     }
@@ -255,6 +258,10 @@ protected:
         memset(loss_der2w1, 0, sizeof(double) * ntypes * num_neurons);
         loss_der2type_bias = (double*)malloc(sizeof(double) * ntypes);
         memset(loss_der2type_bias, 0, sizeof(double) * ntypes);
+
+        // Utils
+        descriptors = (double*)malloc(sizeof(double) * inum * mtp_param.alpha_scalar_moments());
+        memset(descriptors, 0.0, sizeof(double) * inum * mtp_param.alpha_scalar_moments());
     }
 
 
@@ -282,6 +289,9 @@ protected:
         free(loss_der2w0);
         free(loss_der2w1);
         free(loss_der2type_bias);
+
+        // Utils
+        free(descriptors);
     }
 };  // class : NNMtpTEst
 
@@ -669,6 +679,38 @@ TEST_F(NNMtpTest, find_loss_backward) {
         zbl_rmin,
         zbl_cks,
         zbl_dks);
+}
+
+
+TEST_F(NNMtpTest, find_descriptors) {
+    ai2pot::nnmtp::NNMtp<double>::find_descriptors(
+        descriptors,
+        chebyshev_size,
+        num_neurons,
+        coeffs,
+        w0,
+        w1,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        mtp_param.nmus(),
+        inum,
+        ilist,
+        numneigh,
+        firstneigh,
+        (double (*)[3])rcs,
+        types,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin);
 }
 
 

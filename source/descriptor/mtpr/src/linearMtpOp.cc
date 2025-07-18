@@ -3134,7 +3134,7 @@ torch::autograd::variable_list LinearMtpToDescriptorsFunction::forward(
 
     // 2. 
     c10::TensorOptions int_options = c10::TensorOptions()
-                                     .dtype(torch::kFloat32)
+                                     .dtype(torch::kInt32)
                                      .device(brcs_tensor.device());
     c10::TensorOptions float_options;
 

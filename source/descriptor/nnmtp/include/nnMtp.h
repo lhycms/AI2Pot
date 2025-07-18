@@ -264,6 +264,35 @@ public:
         CoordType zbl_rmin,
         CoordType *zbl_cks,
         CoordType *zbl_dks);
+
+    static void find_descriptors(
+        CoordType *all_descriptors,
+        int chebyshev_size,
+        int num_neurons,
+        CoordType *coeffs,
+        CoordType *w0,
+        CoordType *w1,
+        CoordType *type_bias,
+        const int alpha_moments_count,
+        const int alpha_index_basic_count,
+        const int (*alpha_index_basic)[4],
+        const int alpha_index_times_count,
+        const int (*alpha_index_times)[4],
+        const int alpha_scalar_moments,
+        const int *alpha_moment_mapping,
+        int nmus,
+        int inum,
+        int *ilist,
+        int *numneigh,
+        int *firstneigh,
+        CoordType (*relative_coords)[3],
+        int *types,
+        int ntypes,
+        int *type_map,
+        int umax_num_neigh_atoms,
+        int nghost,
+        CoordType rmax,
+        CoordType rmin);
 };  // class : NNMtp
 
 
@@ -1685,6 +1714,88 @@ void NNMtp<CoordType>::find_loss_backward(
 #endif
     free(force_ml);
     free(virial_ml);
+}
+
+
+template <typename CoordType>
+void NNMtp<CoordType>::find_descriptors(
+    CoordType *all_descriptors,
+    int chebyshev_size,
+    int num_neurons,
+    CoordType *coeffs,
+    CoordType *w0,
+    CoordType *w1,
+    CoordType *type_bias,
+    const int alpha_moments_count,
+    const int alpha_index_basic_count,
+    const int (*alpha_index_basic)[4],
+    const int alpha_index_times_count,
+    const int (*alpha_index_times)[4],
+    const int alpha_scalar_moments,
+    const int *alpha_moment_mapping,
+    int nmus,
+    int inum,
+    int *ilist,
+    int *numneigh,
+    int *firstneigh,
+    CoordType (*relative_coords)[3],
+    int *types,
+    int ntypes,
+    int *type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    CoordType rmax,
+    CoordType rmin)
+{
+    // Step 1.
+    CoordType *mom_vals;
+    CoordType (*mom_ders)[3];
+    int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
+    memset(all_descriptors, 0, sizeof(CoordType) * inum * alpha_scalar_moments);
+
+    // Step 2.
+#if defined(USE_OPENMP) or defined(__INTELLISENSE__)
+#pragma omp parallel private(mom_vals, mom_ders)
+{
+#endif
+    mom_vals = (CoordType*)malloc(sizeof(CoordType) * alpha_moments_count);
+    mom_ders = (CoordType (*)[3])malloc(sizeof(CoordType) * alpha_index_basic_count * umax_num_neigh_atoms * 3);
+    
+    #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
+    #pragma omp for schedule(static)
+    #endif
+    for (int ii=0; ii<inum; ii++)
+    {
+        MomsValDer<CoordType>::find_val_der(
+            mom_vals,
+            mom_ders,
+            chebyshev_size,
+            coeffs,
+            alpha_moments_count,
+            alpha_index_basic_count,
+            alpha_index_basic,
+            alpha_index_times_count,
+            alpha_index_times,
+            nmus,
+            ilist[ii],
+            numneigh[ii],
+            &firstneigh[ii*umax_num_neigh_atoms],
+            &relative_coords[ii*umax_num_neigh_atoms],
+            types,
+            ntypes,
+            umax_num_neigh_atoms,
+            rmax,
+            rmin);
+
+        for (int i=0; i<alpha_scalar_moments; i++)
+            all_descriptors[ii*alpha_scalar_moments + i] = mom_vals[alpha_moment_mapping[i]];
+    }
+
+    free(mom_vals);
+    free(mom_ders);
+#if defined(USE_OPENMP) or defined(__INTELLISENSE__)
+}
+#endif
 }
 
 
