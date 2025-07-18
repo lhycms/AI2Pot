@@ -26,7 +26,7 @@
 #include "./mtpBasis.h"
 #include "./nnMtpUtils.h"
 #include "./nnMtpLoss.h"
-
+#include "../../correction/include/zbl.h"
 
 namespace ai2pot {
 namespace nnmtp {
@@ -293,6 +293,75 @@ public:
         int nghost,
         CoordType rmax,
         CoordType rmin);
+
+    static void find_e_sites(
+        CoordType *e_sites,
+        int chebyshev_size,
+        int num_neurons,
+        CoordType *coeffs,
+        CoordType *w0,
+        CoordType *w1,
+        CoordType *type_bias,
+        const int alpha_moments_count,
+        const int alpha_index_basic_count,
+        const int (*alpha_index_basic)[4],
+        const int alpha_index_times_count,
+        const int (*alpha_index_times)[4],
+        const int alpha_scalar_moments,
+        const int *alpha_moment_mapping,
+        int nmus,
+        int inum,
+        int *ilist,
+        int *numneigh,
+        int *firstneigh,
+        CoordType (*rcs)[3],
+        int *types,
+        int ntypes,
+        int *type_map,
+        int umax_num_neigh_atoms,
+        int nghost,
+        CoordType rmax,
+        CoordType rmin,
+        CoordType zbl_rmax,
+        CoordType zbl_rmin,
+        CoordType *zbl_cks,
+        CoordType *zbl_dks);
+    
+    static void find_e_sites_backward(
+        CoordType *e_sites_der2coeffs,
+        CoordType *e_sites_der2w0,
+        CoordType *e_sites_der2w1,
+        CoordType *e_sites_der2type_bias,
+        int chebyshev_size,
+        int num_neurons,
+        CoordType *coeffs,
+        CoordType *w0,
+        CoordType *w1,
+        CoordType *type_bias,
+        const int alpha_moments_count,
+        const int alpha_index_basic_count,
+        const int (*alpha_index_basic)[4],
+        const int alpha_index_times_count,
+        const int (*alpha_index_times)[4],
+        const int alpha_scalar_moments,
+        const int *alpha_moment_mapping,
+        int nmus,
+        int inum,
+        int *ilist,
+        int *numneigh,
+        int *firstneigh,
+        CoordType (*rcs)[3],
+        int *types,
+        int ntypes,
+        int *type_map,
+        int umax_num_neigh_atoms,
+        int nghost,
+        CoordType rmax,
+        CoordType rmin,
+        CoordType zbl_rmax,
+        CoordType zbl_rmin,
+        CoordType *zbl_cks,
+        CoordType *zbl_dks);
 };  // class : NNMtp
 
 
@@ -1796,6 +1865,138 @@ void NNMtp<CoordType>::find_descriptors(
 #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
 }
 #endif
+}
+
+
+template <typename CoordType>
+void NNMtp<CoordType>::find_e_sites(
+    CoordType *e_sites,
+    int chebyshev_size,
+    int num_neurons,
+    CoordType *coeffs,
+    CoordType *w0,
+    CoordType *w1,
+    CoordType *type_bias,
+    const int alpha_moments_count,
+    const int alpha_index_basic_count,
+    const int (*alpha_index_basic)[4],
+    const int alpha_index_times_count,
+    const int (*alpha_index_times)[4],
+    const int alpha_scalar_moments,
+    const int *alpha_moment_mapping,
+    int nmus,
+    int inum,
+    int *ilist,
+    int *numneigh,
+    int *firstneigh,
+    CoordType (*rcs)[3],
+    int *types,
+    int ntypes,
+    int *type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    CoordType rmax,
+    CoordType rmin,
+    CoordType zbl_rmax,
+    CoordType zbl_rmin,
+    CoordType *zbl_cks,
+    CoordType *zbl_dks)
+{
+    // Step 1.
+    CoordType *mom_vals;
+    CoordType (*mom_ders)[3];
+    int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
+    memset(e_sites, 0.0, sizeof(CoordType) * inum);
+
+    // Step 2.
+#if defined(USE_OPENMP) or defined(__INTELLISENSE__)
+#pragma omp parallel private(mom_vals, mom_ders)
+{
+#endif
+    mom_vals = (CoordType*)malloc(sizeof(CoordType) * alpha_moments_count);
+    mom_ders = (CoordType (*)[3])malloc(sizeof(CoordType) * alpha_index_basic_count * umax_num_neigh_atoms * 3);
+
+    int center_idx;
+    int type_central;
+    int neigh_idx;
+    int type_outer;
+    CoordType neigh_vec[3];
+    CoordType distance_ij;
+    CoordType distance_ij_inv;
+
+    #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
+    #pragma omp for schedule(static)
+    #endif
+    for (int ii=0; ii<inum; ii++)
+    {
+        center_idx = ilist[ii];
+        type_central = types[center_idx];
+        memset(mom_vals, 0, sizeof(CoordType) * alpha_moments_count);
+        memset(mom_ders, 0, sizeof(CoordType) * alpha_index_basic_count * umax_num_neigh_atoms * 3);
+        CoordType *type_central_w0 = &w0[type_central * num_neurons * alpha_scalar_moments];
+        CoordType *type_central_w1 = &w1[type_central * num_neurons];
+
+        MomsValDer<CoordType>::find_val_der(
+            mom_vals,
+            mom_ders,
+            chebyshev_size,
+            coeffs,
+            alpha_moments_count,
+            alpha_index_basic_count,
+            alpha_index_basic,
+            alpha_index_times_count,
+            alpha_index_times,
+            nmus,
+            ilist[ii],
+            numneigh[ii],
+            &firstneigh[ii*umax_num_neigh_atoms],
+            &rcs[ii*umax_num_neigh_atoms],
+            types,
+            ntypes,
+            umax_num_neigh_atoms,
+            rmax,
+            rmin);
+
+        // NN Energy
+        e_sites[ii] = type_bias[type_central];
+        for (int p=0; p<num_neurons; p++) {
+            CoordType hidden_val = 0;
+            CoordType activated_hidden_val = 0;
+            for (int k=0; k<alpha_scalar_moments; k++)
+                hidden_val += type_central_w0[p*alpha_scalar_moments + k] * mom_vals[alpha_moment_mapping[k]];
+            TanhActivationFunc<CoordType>::find_val(activated_hidden_val, hidden_val);
+            e_sites[ii] += type_central_w1[p] * activated_hidden_val;
+        }
+    }
+
+    // Step . Free
+    free(mom_vals);
+    free(mom_ders);
+#if defined(USE_OPENMP) or defined(__INTELLISENSE__)
+}
+#endif
+
+    if (zbl_rmax > 0.0) {
+        ai2pot::correction::GroupZBL<CoordType> gzbl(ntypes,
+                                                    type_map,
+                                                    type_map,
+                                                    zbl_rmax,
+                                                    zbl_rmin,
+                                                    zbl_cks,
+                                                    zbl_dks);
+        
+        gzbl.correct_e_sites(e_sites,
+                            inum,
+                            ilist,
+                            numneigh,
+                            firstneigh,
+                            rcs,
+                            types,
+                            ntypes,
+                            type_map,
+                            umax_num_neigh_atoms,
+                            nghost);
+    }
 }
 
 

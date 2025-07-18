@@ -89,6 +89,7 @@ protected:
 
     // Utils
     double *descriptors;
+    double *e_sites;
 
     static void SetUpTestSuite() {
         printf("NNMtpTest (TestSuite) is setting up...\n");
@@ -262,6 +263,8 @@ protected:
         // Utils
         descriptors = (double*)malloc(sizeof(double) * inum * mtp_param.alpha_scalar_moments());
         memset(descriptors, 0.0, sizeof(double) * inum * mtp_param.alpha_scalar_moments());
+        e_sites = (double*)malloc(sizeof(double) * inum);
+        memset(e_sites, 0.0, sizeof(double) * inum);
     }
 
 
@@ -292,6 +295,7 @@ protected:
 
         // Utils
         free(descriptors);
+        free(e_sites);
     }
 };  // class : NNMtpTEst
 
@@ -713,6 +717,46 @@ TEST_F(NNMtpTest, find_descriptors) {
         rmin);
 }
 
+
+TEST_F(NNMtpTest, find_e_sites) {
+    ai2pot::nnmtp::NNMtp<double>::find_e_sites(
+        e_sites,
+        chebyshev_size,
+        num_neurons,
+        coeffs,
+        w0,
+        w1,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        mtp_param.nmus(),
+        inum,
+        ilist,
+        numneigh,
+        firstneigh,
+        (double (*)[3])rcs,
+        types,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin,
+        zbl_rmax,
+        zbl_rmin,
+        zbl_cks,
+        zbl_dks);
+
+double result = 0;
+for (int ii=0; ii<inum; ii++)
+    result += e_sites[ii];
+printf("1. Sum of e_sites = %.15lf\n", result);
+}
 
 
 int main(int argc, char **argv){
