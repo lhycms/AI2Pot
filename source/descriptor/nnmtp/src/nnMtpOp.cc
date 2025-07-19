@@ -1644,6 +1644,80 @@ torch::autograd::variable_list NNMtpToDescriptorsFunction::backward(
 }
 
 
+torch::autograd::variable_list NNMtpToEsitesFunction::forward(
+    torch::autograd::AutogradContext *ctx,
+    int chebyshev_size,
+    const at::Tensor& coeffs_tensor,
+    const at::Tensor& w0_tensor,
+    const at::Tensor& w1_tensor,
+    const at::Tensor& type_bias_tensor,
+    int alpha_moments_count,
+    const at::Tensor& alpha_index_basic_tensor,
+    const at::Tensor& alpha_index_times_tensor,
+    const at::Tensor& alpha_moment_mapping_tensor,
+    int nmus,
+    const at::Tensor& binum_tensor,
+    const at::Tensor& bilist_tensor,
+    const at::Tensor& bnumneigh_tensor,
+    const at::Tensor& bfirstneigh_tensor,
+    const at::Tensor& brcs_tensor,
+    const at::Tensor& btypes_tensor,
+    const at::Tensor& type_map_tensor,
+    int nghost,
+    double rmax,
+    double rmin,
+    double zbl_rmax,
+    double zbl_rmin,
+    const at::Tensor& zbl_cks_tensor,
+    const at::Tensor& zbl_dks_tensor)
+{
+    // 1. 
+    int batch_size = (int)bfirstneigh_tensor.size(0);
+    int num_atoms = (int)bfirstneigh_tensor.size(1);
+    int umax_num_neigh_atoms = (int)bfirstneigh_tensor.size(2);
+    int alpha_index_basic_count = (int)alpha_index_basic_tensor.size(0);
+    int (*alpha_index_basic)[4] = (int (*)[4])alpha_index_basic_tensor.data_ptr<int>();
+    int alpha_index_times_count = (int)alpha_index_basic_tensor.size(0);
+    int (*alpha_index_times)[4] = (int (*)[4])alpha_index_times_tensor.data_ptr<int>();
+    int alpha_scalar_moments = (int)alpha_moment_mapping_tensor.size(0);
+    int *alpha_moment_mapping = (int*)alpha_moment_mapping_tensor.data_ptr<int>();
+    int *type_map = (int*)type_map_tensor.data_ptr<int>();
+    int ntypes = (int)type_map_tensor.size(0);
+    int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
+
+    // 2. 
+    c10::TensorOptions int_options = c10::TensorOptions()
+                                     .dtype(torch::kInt32)
+                                     .device(brcs_tensor.device());
+    c10::TensorOptions float_options;
+
+    // 3. 
+    at::Tensor be_sites_tensor;
+
+    // 4. 
+    if (brcs_tensor.scalar_type() == torch::kFloat32) {
+        float_options = c10::TensorOptions()
+                        .dtype(torch::kFloat32)
+                        .device(brcs_tensor.device());
+        
+
+    } else {
+        float_options = c10::TensorOptions()
+                        .dtype(torch::kFloat64)
+                        .device(brcs_tensor.device());
+
+        
+    }
+
+
+    // 5. 
+
+
+    return {be_sites_tensor};
+}
+
+
+
 
 
 

@@ -22,7 +22,7 @@ ReNbSSe_POSCAR_PATH = os.path.join(os.path.join(TEST_FILES_DIR, "POSCARs", "POSC
 PbTe_EXTXYZ_PATH = os.path.join(TEST_FILES_DIR, "XYZ", "11_NEP_potential_PbTe", "train_m.xyz")
 
 #torch.use_deterministic_algorithms(True)
-torch.set_num_threads(1)
+torch.set_num_threads(16)
 torch.manual_seed(2143)
 
 
@@ -168,7 +168,7 @@ class LinearMtpTest(unittest.TestCase):
         print("-------------------------------------------------")
 
 
-    def est_linearMtpToEsites(self):
+    def test_linearMtpToEsites(self):
         # 1. Parameters
         self.coeffs_tensor.requires_grad_(True)
         self.linear_coeffs_tensor.requires_grad_(True)

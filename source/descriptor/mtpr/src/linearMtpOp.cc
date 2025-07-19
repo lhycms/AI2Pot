@@ -3076,9 +3076,9 @@ torch::autograd::variable_list LinearMtpToEsitesFunction::backward(
     }
     return {
         at::Tensor(),
-        (bgrad_output_tensor.unsqueeze(-1) * be_sites_der2coeffs_tensor).sum(1).squeeze(0),
-        (bgrad_output_tensor.unsqueeze(-1) * be_sites_der2linear_coeffs_tensor).sum(1).squeeze(0),
-        (bgrad_output_tensor.unsqueeze(-1) * be_sites_der2type_bias_tensor).sum(1).squeeze(0),
+        (bgrad_output_tensor.unsqueeze(-1) * be_sites_der2coeffs_tensor).sum(torch::IntArrayRef({0, 1})),
+        (bgrad_output_tensor.unsqueeze(-1) * be_sites_der2linear_coeffs_tensor).sum(torch::IntArrayRef({0, 1})),
+        (bgrad_output_tensor.unsqueeze(-1) * be_sites_der2type_bias_tensor).sum(torch::IntArrayRef({0, 1})),
         at::Tensor(),
         at::Tensor(),
         at::Tensor(),

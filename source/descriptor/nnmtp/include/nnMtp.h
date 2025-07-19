@@ -2080,6 +2080,8 @@ void NNMtp<CoordType>::find_e_sites_backward(
         memset(e_site_der2mom, 0, sizeof(CoordType) * alpha_moments_count);
         center_idx = ilist[ii];
         type_central = types[center_idx];
+        CoordType *type_central_w0 = &w0[type_central*num_neurons*alpha_scalar_moments];
+        CoordType *type_central_w1 = &w1[type_central*num_neurons];
 
         for (int jj=0; jj<numneigh[ii]; jj++) {
             neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
@@ -2110,7 +2112,7 @@ void NNMtp<CoordType>::find_e_sites_backward(
                 CoordType powk = 1.0 / auto_dist_powers_[k];
                 CoordType pow0 = auto_coords_powers_[alpha_index_basic[i][1]][0];
                 CoordType pow1 = auto_coords_powers_[alpha_index_basic[i][2]][1];
-                CoordType pow2 = auto_coord_spowers_[alpha_index_basic[i][3]][2];
+                CoordType pow2 = auto_coords_powers_[alpha_index_basic[i][3]][2];
                 CoordType mult0 = pow0 * pow1 * pow2;
 
                 for (int xi=0; xi<chebyshev_size; xi++) {
@@ -2131,7 +2133,93 @@ void NNMtp<CoordType>::find_e_sites_backward(
         }
 
         // Step 4. Backward
-        
+        for (int p=0; p<num_neurons; p++) {
+            CoordType hidden_val = 0.0;
+            CoordType activated_hidden_der = 0.0;
+            for (int k=0; k<alpha_scalar_moments; k++)
+                hidden_val += type_central_w0[p*alpha_scalar_moments+k] * mom_vals[alpha_moment_mapping[k]];
+            TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
+            
+            for (int k=0; k<alpha_scalar_moments; k++)
+                e_site_der2mom[alpha_moment_mapping[k]] += type_central_w1[p]
+                                                           * activated_hidden_der
+                                                           * type_central_w0[p*alpha_scalar_moments + k];
+        }
+
+        for (int i=alpha_index_times_count-1; i>=alpha_index_times_count; i--) {
+            CoordType val0 = mom_vals[alpha_index_times[i][0]];
+            CoordType val1 = mom_vals[alpha_index_times[i][1]];
+            CoordType val2 = alpha_index_times[i][2];
+
+            e_site_der2mom[alpha_index_times[i][0]] += e_site_der2mom[alpha_index_times[i][3]]
+                                                       * val2 * val1;
+            e_site_der2mom[alpha_index_times[i][1]] += e_site_der2mom[alpha_index_times[i][3]]
+                                                       * val2 * val0;
+        }
+
+        // Step 5.
+        for (int jj=0; jj<numneigh[ii]; jj++)
+        {
+            neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
+            type_outer = types[neigh_idx];
+            neigh_vec[0] = rcs[ii*umax_num_neigh_atoms + jj][0];
+            neigh_vec[1] = rcs[ii*umax_num_neigh_atoms + jj][1];
+            neigh_vec[2] = rcs[ii*umax_num_neigh_atoms + jj][2];
+            distance_ij = std::sqrt( std::pow(neigh_vec[0], 2)
+                                     + std::pow(neigh_vec[1], 2)
+                                     + std::pow(neigh_vec[2], 2) );
+            if (distance_ij > rmax)
+                continue;
+            distance_ij_inv = 1.0 / distance_ij;
+            p_RadialBasis->build(distance_ij);
+
+            auto_dist_powers_[0] = 1.0;
+            for (int aa=0; aa<3; aa++)
+                auto_coords_powers_[0][aa] = 1.0;
+            for (int k=1; k<max_alpha_index_basic; k++) {
+                auto_dist_powers_[k] = auto_dist_powers_[k-1] * distance_ij;
+                for (int aa=0; aa<3; aa++)
+                    auto_coords_powers_[k][aa] = auto_coords_powers_[k-1][aa] * neigh_vec[aa];
+            }
+
+            for (int i=0; i<alpha_index_basic_count; i++) {
+                int mu = alpha_index_basic[i][0];
+                int k = alpha_index_basic[i][1] + alpha_index_basic[i][2] + alpha_index_basic[i][3];
+                CoordType powk = 1.0 / auto_dist_powers_[k];
+                CoordType pow0 = auto_coords_powers_[alpha_index_basic[i][1]][0];
+                CoordType pow1 = auto_coords_powers_[alpha_index_basic[i][2]][1];
+                CoordType pow2 = auto_coords_powers_[alpha_index_basic[i][3]][2];
+                CoordType mult0 = pow0 * pow1 * pow2;
+
+                for (int xi=0; xi<chebyshev_size; xi++) {
+                    int idx = (type_central*ntypes+type_outer)*nmus*chebyshev_size + mu*chebyshev_size + xi;
+                    CoordType A = p_RadialBasis->vals()[xi];
+                    CoordType B = mult0;
+                    CoordType C = powk;
+
+                    e_sites_der2coeffs[ii*num_coeffs + idx] += e_site_der2mom[i] * A * B * C;
+                }
+            }
+        }
+
+        for (int p=0; p<num_neurons; p++) {
+            CoordType hidden_val = 0.0;
+            CoordType activated_hidden_val = 0.0;
+            CoordType activated_hidden_der = 0.0;
+            for (int k=0; k<alpha_scalar_moments; k++)
+                hidden_val += type_central_w0[p*alpha_scalar_moments + k] * mom_vals[alpha_moment_mapping[k]];
+            TanhActivationFunc<CoordType>::find_val(activated_hidden_val, hidden_val);
+            TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
+            
+            e_sites_der2w1[ii*num_neurons + p] = activated_hidden_val;
+
+            for (int k=0; k<alpha_scalar_moments; k++)
+                e_sites_der2w0[ii*num_neurons*alpha_scalar_moments + p*alpha_scalar_moments + k] += type_central_w1[p]
+                                                                                                    * activated_hidden_der
+                                                                                                    * mom_vals[alpha_moment_mapping[k]];
+        }
+
+        e_sites_der2type_bias[ii*ntypes + type_central] += 1.0;
     }
 
 

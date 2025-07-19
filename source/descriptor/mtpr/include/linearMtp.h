@@ -1011,14 +1011,15 @@ void LinearMtp<CoordType>::find_e_sites_backward(
                     CoordType A = p_RadialBasis->vals()[xi];
                     CoordType B = mult0;
                     CoordType C = powk;
-
+                    
                     e_sites_der2coeffs[ii*num_coeffs + idx] += e_site_der2mom[i] * A * B * C;
                 }
             }
         }
 
-        for (int i=0; i<alpha_scalar_moments; i++)
+        for (int i=0; i<alpha_scalar_moments; i++) {
             e_sites_der2linear_coeffs[ii*alpha_scalar_moments + i] = mom_vals[alpha_moment_mapping[i]];
+        }
         
         e_sites_der2type_bias[ii*ntypes + type_central] += 1;
     }
