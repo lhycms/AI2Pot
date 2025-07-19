@@ -11,7 +11,8 @@ from ai2pot.utils.usepot import MlffToLossInput, MlffInput
 from ai2pot.fromcc import (
     nnMtpToEFLossOp,
     nnMtpToLossOp,
-    mtpParamOp
+    mtpParamOp,
+    nnMtpToEsitesOp
 )
 
 
@@ -24,9 +25,9 @@ torch.set_num_threads(1)
 torch.manual_seed(2143)
 
 
-class LinearMtpTest(unittest.TestCase):
+class NNMtpTest(unittest.TestCase):
     def setUp(self):
-        print("LinearMtpTest (TestCase) is setting up...\n")
+        print("NNMtpTest (TestCase) is setting up...\n")
         # 0.
         self.torch_float_dtype: torch._C.dtype = torch.float64
         self.device: torch._C.device = torch.device("cpu")
@@ -116,10 +117,10 @@ class LinearMtpTest(unittest.TestCase):
         
     
     def tearDown(self):
-        print("LinearMtpTest (TestCase) is tearing down...\n")
+        print("NNMtpTest (TestCase) is tearing down...\n")
     
     
-    def est_linearMtpToEFLoss(self):
+    def est_nnMtpToEFLoss(self):
         # 1. Parameters
         e_weight: float = 1.0
         f_weight: float = 0.1
@@ -169,11 +170,11 @@ class LinearMtpTest(unittest.TestCase):
                          rtol=1e-3,
                          nondet_tol=1e-5)
         print("-------------------------------------------------")
-        print("* linearMtpToEFLossOp Gradient pass check: ", test)
+        print("* nnMtpToEFLossOp Gradient pass check: ", test)
         print("-------------------------------------------------")
 
 
-    def test_linearMtpToLoss(self):
+    def est_nnMtpToLoss(self):
         # 1. Parameters
         e_weight: float = 1.0
         f_weight: float = 0.1
@@ -225,8 +226,54 @@ class LinearMtpTest(unittest.TestCase):
                          rtol=1e-3,
                          nondet_tol=1e-5)
         print("-------------------------------------------------")
-        print("* linearMtpToEFLossOp Gradient pass check: ", test)
+        print("* nnMtpToLossOp Gradient pass check: ", test)
         print("-------------------------------------------------")
+
+
+    def test_linearMtpToEsites(self):
+        # 1. Parameters
+        self.coeffs_tensor.requires_grad_(True)
+        self.w0_tensor.requires_grad_(True)
+        self.w1_tensor.requires_grad_(True)
+        self.type_bias_tensor.requires_grad_(True)
+
+        
+        # 2. Run
+        input_info: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(self.structure)
+
+        test = gradcheck(func=nnMtpToEsitesOp,
+                         inputs=(self.chebyshev_size,
+                                 self.coeffs_tensor,
+                                 self.w0_tensor,
+                                 self.w1_tensor,
+                                 self.type_bias_tensor,
+                                 self.alpha_moments_count,
+                                 self.alpha_index_basic_tensor,
+                                 self.alpha_index_times_tensor,
+                                 self.alpha_moment_mapping_tensor,
+                                 self.nmus,
+                                 input_info[0],
+                                 input_info[1],
+                                 input_info[2],
+                                 input_info[3],
+                                 input_info[4],
+                                 input_info[5],
+                                 self.type_map_tensor,
+                                 input_info[6].item(),
+                                 self.rmax,
+                                 self.rmin,
+                                 self.zbl_rmax,
+                                 self.zbl_rmin,
+                                 self.zbl_cks_tensor,
+                                 self.zbl_dks_tensor),
+                         eps=1e-8,
+                         atol=1e-6,
+                         rtol=1e-3,
+                         nondet_tol=1e-2)
+        print("-------------------------------------------------")
+        print("* nnMtpToEsitesOp Gradient pass check: ", test)
+        print("-------------------------------------------------")
+
 
 
 if __name__ == "__main__":

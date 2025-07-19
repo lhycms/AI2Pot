@@ -348,4 +348,65 @@ TORCH_LIBRARY(nnmtp, m) {
                 rmin);
         }
     );
+
+
+    m.def(
+        "nnMtpToEsitesOp",
+        [](int64_t chebyshev_size,
+           const at::Tensor& coeffs_tensor,
+           const at::Tensor& w0_tensor,
+           const at::Tensor& w1_tensor,
+           const at::Tensor& type_bias_tensor,
+           int64_t alpha_moments_count,
+           const at::Tensor& alpha_index_basic_tensor,
+           const at::Tensor& alpha_index_times_tensor,
+           const at::Tensor& alpha_moment_mapping_tensor,
+           int64_t nmus,
+           const at::Tensor& binum_tensor,
+           const at::Tensor& bilist_tensor,
+           const at::Tensor& bnumneigh_tensor,
+           const at::Tensor& bfirstneigh_tensor,
+           const at::Tensor& brcs_tensor,
+           const at::Tensor& btypes_tensor,
+           const at::Tensor& type_map_tensor,
+           int64_t nghost,
+           double rmax,
+           double rmin,
+           double zbl_rmax,
+           double zbl_rmin,
+           const at::Tensor& zbl_cks_tensor,
+           const at::Tensor& zbl_dks_tensor)
+        {
+            assert(chebyshev_size < INT_MAX);
+            assert(alpha_moments_count < INT_MAX);
+            assert(nmus < INT_MAX);
+            assert(nghost < INT_MAX);
+
+            return ai2pot::nnmtp::NNMtpToEsitesOp(
+                (int)chebyshev_size,
+                coeffs_tensor,
+                w0_tensor,
+                w1_tensor,
+                type_bias_tensor,
+                (int)alpha_moments_count,
+                alpha_index_basic_tensor,
+                alpha_index_times_tensor,
+                alpha_moment_mapping_tensor,
+                (int)nmus,
+                binum_tensor,
+                bilist_tensor,
+                bnumneigh_tensor,
+                bfirstneigh_tensor,
+                brcs_tensor,
+                btypes_tensor,
+                type_map_tensor,
+                (int)nghost,
+                rmax,
+                rmin,
+                zbl_rmax,
+                zbl_rmin,
+                zbl_cks_tensor,
+                zbl_dks_tensor);
+        }
+    );
 };

@@ -2146,7 +2146,7 @@ void NNMtp<CoordType>::find_e_sites_backward(
                                                            * type_central_w0[p*alpha_scalar_moments + k];
         }
 
-        for (int i=alpha_index_times_count-1; i>=alpha_index_times_count; i--) {
+        for (int i=alpha_index_times_count-1; i>=0; i--) {
             CoordType val0 = mom_vals[alpha_index_times[i][0]];
             CoordType val1 = mom_vals[alpha_index_times[i][1]];
             CoordType val2 = alpha_index_times[i][2];
