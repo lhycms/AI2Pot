@@ -237,13 +237,19 @@ TEST_F(GroupZBLTest, virial_accuracy) {
     }
 
 printf("1. Virial calculated by custom code =\n");
-for (int ii=0; ii<9; ii++)
-    printf("%.10lf, ", virial[ii]);
-printf("\n");
+for (int aa=0; aa<3; aa++) {
+    for (int bb=0; bb<3; bb++) {
+        printf("%.10lf, ", virial[aa*3 + bb]);
+    }
+    printf("\n");
+}
 printf("2. Virial calculated by definition =\n");
-for (int ii=0; ii<9; ii++)
-    printf("%.10lf, ", virial_[ii]);
-printf("\n");
+for (int aa=0; aa<3; aa++) {
+    for (int bb=0; bb<3; bb++) {
+        printf("%.10lf, ", virial_[aa*3 + bb]);
+    }
+    printf("\n");
+}
 }
 
 

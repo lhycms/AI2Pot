@@ -17,6 +17,10 @@ else()
     message(STATUS "MAX_MTP_LEVEL is set to ${MAX_MTP_LEVEL}")
 endif()
 
+if (USE_CUDA AND CUDA_FOUND)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/gpu)
+endif()
+
 
 # 5. compile
 add_library(mtpParam_nnMtp SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/mtpParam.cc)

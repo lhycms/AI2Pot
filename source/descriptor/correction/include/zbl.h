@@ -389,7 +389,6 @@ void PairZBL<CoordType>::add_virial_one(CoordType *virial,
 #pragma omp atomic
 #endif
             virial[aa*3 + bb] += -0.5 * neigh_vec[aa] * Fijb;
-
         }
     }
 }

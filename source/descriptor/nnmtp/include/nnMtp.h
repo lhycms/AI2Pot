@@ -545,6 +545,27 @@ void NNMtp<CoordType>::find_ef(
 #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
 }
 #endif
+    if (zbl_rmax > 0.0) {
+        ai2pot::correction::GroupZBL<CoordType> gzbl(ntypes, 
+                                                    type_map, 
+                                                    type_map,
+                                                    zbl_rmax,
+                                                    zbl_rmin,
+                                                    zbl_cks,
+                                                    zbl_dks);
+        gzbl.correct_ef(etot,
+                        (CoordType*)force,
+                        inum,
+                        ilist,
+                        numneigh,
+                        firstneigh,
+                        rcs,
+                        types,
+                        ntypes,
+                        type_map,
+                        umax_num_neigh_atoms,
+                        nghost);
+    }
 }
 
 
@@ -736,6 +757,29 @@ void NNMtp<CoordType>::find_efv(
 #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
 }
 #endif
+
+    if (zbl_rmax > 0.0) {
+        ai2pot::correction::GroupZBL<CoordType> gzbl(ntypes, 
+                                                    type_map, 
+                                                    type_map,
+                                                    zbl_rmax,
+                                                    zbl_rmin,
+                                                    zbl_cks,
+                                                    zbl_dks);
+        gzbl.correct_efv(etot,
+                        (CoordType*)force,
+                        virial,
+                        inum,
+                        ilist,
+                        numneigh,
+                        firstneigh,
+                        rcs,
+                        types,
+                        ntypes,
+                        type_map,
+                        umax_num_neigh_atoms,
+                        nghost);
+    }
 }
 
 

@@ -471,10 +471,11 @@ void find_efv_kernel(CoordType *etot_ptr,
     int nx = blockIdx.x * blockDim.x + threadIdx.x;
     int ii = nx;
 
-    __shared__ CoordType s_local_virial[64][9];
+    __shared__ CoordType s_local_virial[128][9];
     int tid = threadIdx.x;
     for (int ii=0; ii<9; ii++)
         s_local_virial[tid][ii] = 0.0;
+    //__syncthreads();
 
     if (ii < inum) {
         int silist = ilist[ii];
