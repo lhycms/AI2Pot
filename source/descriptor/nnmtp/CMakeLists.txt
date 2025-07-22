@@ -40,6 +40,9 @@ if (TORCH_OP)
     endif()
     if (USE_CUDA AND CUDA_FOUND)
         target_compile_definitions(nnMtpOp PRIVATE USE_CUDA)
+        target_link_libraries(nnMtpOp PRIVATE nnmtp_torch_launcher 
+                                              nnmtp_loss_torch_launcher
+                                              zbl_torch_launcher)
     endif()
     if (MAX_MTP_LEVEL)
         target_compile_definitions(nnMtpOp PRIVATE MAX_MTP_LEVEL=${MAX_MTP_LEVEL})

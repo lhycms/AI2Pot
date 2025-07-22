@@ -411,8 +411,7 @@ extern template void ai2pot::correction::correct_zbl_ef_torch_launcher<float>(
     int *d_types,
     int ntypes,
     int *d_type_map,
-    int umax_num_neigh_atoms
-);
+    int umax_num_neigh_atoms);
 
 
 extern template void ai2pot::correction::correct_zbl_ef_torch_launcher<double>(

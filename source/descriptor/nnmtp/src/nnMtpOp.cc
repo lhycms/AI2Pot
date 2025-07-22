@@ -20,6 +20,441 @@
 #include "../include/nnMtpOp.h"
 
 
+#if defined(USE_CUDA) or defined(__INTELLISENSE__)
+#include "../gpu/include/nnMtp_torch_launcher.h"
+#include "../gpu/include/nnMtpLoss_torch_launcher.h"
+#include "../../correction/gpu/include/zbl_torch_launcher.h"
+
+namespace ai2pot {
+namespace nnmtp {
+
+// 1. nnMtp_torch_launcher.cu
+// 1.1. find_efv_torch_launcher()
+extern template void ai2pot::nnmtp::find_efv_torch_launcher<float>(
+    float *d_etot_ptr,
+    float (*d_force)[3],
+    float *d_virial,
+    int chebyshev_size,
+    int num_neurons,
+    float *d_coeffs,
+    float *d_w0,
+    float *d_w1,
+    float *d_type_bias,
+    const int alpha_moments_count,
+    const int alpha_index_basic_count,
+    const int (*d_alpha_index_basic)[4],
+    const int alpha_index_times_count,
+    const int (*d_alpha_index_times)[4],
+    const int alpha_scalar_moments,
+    const int *d_alpha_moment_mapping,
+    int nmus,
+    int inum,
+    int *d_ilist,
+    int *d_numneigh,
+    int *d_firstneigh,
+    float (*d_rcs)[3],
+    int *d_types,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    float rmax,
+    float rmin);
+
+extern template void ai2pot::nnmtp::find_efv_torch_launcher<double>(
+    double *d_etot_ptr,
+    double (*d_force)[3],
+    double *d_virial,
+    int chebyshev_size,
+    int num_neurons,
+    double *d_coeffs,
+    double *d_w0,
+    double *d_w1,
+    double *d_type_bias,
+    const int alpha_moments_count,
+    const int alpha_index_basic_count,
+    const int (*d_alpha_index_basic)[4],
+    const int alpha_index_times_count,
+    const int (*d_alpha_index_times)[4],
+    const int alpha_scalar_moments,
+    const int *d_alpha_moment_mapping,
+    int nmus,
+    int inum,
+    int *d_ilist,
+    int *d_numneigh,
+    int *d_firstneigh,
+    double (*d_rcs)[3],
+    int *d_types,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    double rmax,
+    double rmin);
+
+// 1.2. find_ef_torch_launcher()
+extern template void ai2pot::nnmtp::find_ef_torch_launcher<float>(
+    float *d_etot_ptr,
+    float (*d_force)[3],
+    int chebyshev_size,
+    int num_neurons,
+    float *d_coeffs,
+    float *d_w0,
+    float *d_w1,
+    float *d_type_bias,
+    const int alpha_moments_count,
+    const int alpha_index_basic_count,
+    const int (*d_alpha_index_basic)[4],
+    const int alpha_index_times_count,
+    const int (*d_alpha_index_times)[4],
+    const int alpha_scalar_moments,
+    const int *d_alpha_moment_mapping,
+    int nmus,
+    int inum,
+    int *d_ilist,
+    int *d_numneigh,
+    int *d_firstneigh,
+    float (*d_rcs)[3],
+    int *d_types,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    float rmax,
+    float rmin);
+
+extern template void ai2pot::nnmtp::find_ef_torch_launcher<double>(
+    double *d_etot_ptr,
+    double (*d_force)[3],
+    int chebyshev_size,
+    int num_neurons,
+    double *d_coeffs,
+    double *d_w0,
+    double *d_w1,
+    double *d_type_bias,
+    const int alpha_moments_count,
+    const int alpha_index_basic_count,
+    const int (*d_alpha_index_basic)[4],
+    const int alpha_index_times_count,
+    const int (*d_alpha_index_times)[4],
+    const int alpha_scalar_moments,
+    const int *d_alpha_moment_mapping,
+    int nmus,
+    int inum,
+    int *d_ilist,
+    int *d_numneigh,
+    int *d_firstneigh,
+    double (*d_rcs)[3],
+    int *d_types,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    double rmax,
+    double rmin);
+
+
+// 2. nnMtpLoss_torch_launcher.cu
+// 2.1. find_loss_torch_launcher()
+extern template void ai2pot::nnmtp::find_loss_torch_launcher<float>(
+    float *d_loss_ptr,
+    int inum,
+    int *d_ilist,
+    float e_weight,
+    float f_weight,
+    float v_weight,
+    float etot_ml,
+    float etot_dft,
+    float (*d_force_ml)[3],
+    float (*d_force_dft)[3],
+    float *d_virial_ml,
+    float *d_virial_dft);
+
+extern template void ai2pot::nnmtp::find_loss_torch_launcher<double>(
+    double *d_loss_ptr,
+    int inum,
+    int *d_ilist,
+    double e_weight,
+    double f_weight,
+    double v_weight,
+    double etot_ml,
+    double etot_dft,
+    double (*d_force_ml)[3],
+    double (*d_force_dft)[3],
+    double *d_virial_ml,
+    double *d_virial_dft);
+
+// 2.2. find_ef_loss_torch_launcher()
+extern template void ai2pot::nnmtp::find_ef_loss_torch_launcher<float>(
+    float *d_loss_ptr,
+    int inum,
+    int *d_ilist,
+    float e_weight,
+    float f_weight,
+    float etot_ml,
+    float etot_dft,
+    float (*d_force_ml)[3],
+    float (*d_force_dft)[3]);
+
+extern template void ai2pot::nnmtp::find_ef_loss_torch_launcher<double>(
+    double *d_loss_ptr,
+    int inum,
+    int *d_ilist,
+    double e_weight,
+    double f_weight,
+    double etot_ml,
+    double etot_dft,
+    double (*d_force_ml)[3],
+    double (*d_force_dft)[3]);
+
+// 2.3. find_loss_backward_torch_launcher()
+extern template void ai2pot::nnmtp::find_loss_backward_torch_launcher<float>(
+    float *d_loss_der2coeffs,
+    float *d_loss_der2w0,
+    float *d_loss_der2w1,
+    float *d_loss_der2type_bias,
+    float e_weight,
+    float f_weight,
+    float v_weight,
+    float etot_ml,
+    float etot_dft,
+    float (*d_force_ml)[3],
+    float (*d_force_dft)[3],
+    float *d_virial_ml,
+    float *d_virial_dft,
+    int chebyshev_size,
+    int num_neurons,
+    float *d_coeffs,
+    float *d_w0,
+    float *d_w1,
+    float *d_type_bias,
+    const int alpha_moments_count,
+    const int alpha_index_basic_count,
+    const int (*d_alpha_index_basic)[4],
+    const int alpha_index_times_count,
+    const int (*d_alpha_index_times)[4],
+    const int alpha_scalar_moments,
+    const int *d_alpha_moment_mapping,
+    int nmus,
+    int inum,
+    int *d_ilist,
+    int *d_numneigh,
+    int *d_firstneigh,
+    float (*d_rcs)[3],
+    int *d_types,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    float rmax,
+    float rmin);
+
+extern template void ai2pot::nnmtp::find_loss_backward_torch_launcher<double>(
+    double *d_loss_der2coeffs,
+    double *d_loss_der2w0,
+    double *d_loss_der2w1,
+    double *d_loss_der2type_bias,
+    double e_weight,
+    double f_weight,
+    double v_weight,
+    double etot_ml,
+    double etot_dft,
+    double (*d_force_ml)[3],
+    double (*d_force_dft)[3],
+    double *d_virial_ml,
+    double *d_virial_dft,
+    int chebyshev_size,
+    int num_neurons,
+    double *d_coeffs,
+    double *d_w0,
+    double *d_w1,
+    double *d_type_bias,
+    const int alpha_moments_count,
+    const int alpha_index_basic_count,
+    const int (*d_alpha_index_basic)[4],
+    const int alpha_index_times_count,
+    const int (*d_alpha_index_times)[4],
+    const int alpha_scalar_moments,
+    const int *d_alpha_moment_mapping,
+    int nmus,
+    int inum,
+    int *d_ilist,
+    int *d_numneigh,
+    int *d_firstneigh,
+    double (*d_rcs)[3],
+    int *d_types,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    double rmax,
+    double rmin);
+
+
+// 2.4. find_ef_loss_backward_torch_launcher()
+extern template void ai2pot::nnmtp::find_ef_loss_backward_torch_launcher<float>(
+    float *d_loss_der2coeffs,
+    float *d_loss_der2w0,
+    float *d_loss_der2w1,
+    float *d_loss_der2type_bias,
+    float e_weight,
+    float f_weight,
+    float etot_ml,
+    float etot_dft,
+    float (*d_force_ml)[3],
+    float (*d_force_dft)[3],
+    int chebyshev_size,
+    int num_neurons,
+    float *d_coeffs,
+    float *d_w0,
+    float *d_w1,
+    float *d_type_bias,
+    const int alpha_moments_count,
+    const int alpha_index_basic_count,
+    const int (*d_alpha_index_basic)[4],
+    const int alpha_index_times_count,
+    const int (*d_alpha_index_times)[4],
+    const int alpha_scalar_moments,
+    const int *d_alpha_moment_mapping,
+    int nmus,
+    int inum,
+    int *d_ilist,
+    int *d_numneigh,
+    int *d_firstneigh,
+    float (*d_rcs)[3],
+    int *d_types,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    float rmax,
+    float rmin);
+
+
+extern template void ai2pot::nnmtp::find_ef_loss_backward_torch_launcher<double>(
+    double *d_loss_der2coeffs,
+    double *d_loss_der2w0,
+    double *d_loss_der2w1,
+    double *d_loss_der2type_bias,
+    double e_weight,
+    double f_weight,
+    double etot_ml,
+    double etot_dft,
+    double (*d_force_ml)[3],
+    double (*d_force_dft)[3],
+    int chebyshev_size,
+    int num_neurons,
+    double *d_coeffs,
+    double *d_w0,
+    double *d_w1,
+    double *d_type_bias,
+    const int alpha_moments_count,
+    const int alpha_index_basic_count,
+    const int (*d_alpha_index_basic)[4],
+    const int alpha_index_times_count,
+    const int (*d_alpha_index_times)[4],
+    const int alpha_scalar_moments,
+    const int *d_alpha_moment_mapping,
+    int nmus,
+    int inum,
+    int *d_ilist,
+    int *d_numneigh,
+    int *d_firstneigh,
+    double (*d_rcs)[3],
+    int *d_types,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    double rmax,
+    double rmin);
+
+};  // namespace : nnmtp
+};  // namespace : ai2pot
+
+
+namespace ai2pot {
+namespace correction {
+
+extern template void ai2pot::correction::correct_zbl_efv_torch_launcher<float>(
+    float *d_etot_ptr,
+    float *d_force,
+    float *d_virial,
+    float rmax,
+    float rmin,
+    float *d_cks,
+    float *d_dks,
+    int inum,
+    int *d_ilist,
+    int *d_numneigh,
+    int *d_firstneigh,
+    float (*d_rcs)[3],
+    int *d_types,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms);
+
+extern template void ai2pot::correction::correct_zbl_efv_torch_launcher<double>(
+    double *d_etot_ptr,
+    double *d_force,
+    double *d_virial,
+    double rmax,
+    double rmin,
+    double *d_cks,
+    double *d_dks,
+    int inum,
+    int *d_ilist,
+    int *d_numneigh,
+    int *d_firstneigh,
+    double (*d_rcs)[3],
+    int *d_types,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms);
+
+
+extern template void ai2pot::correction::correct_zbl_ef_torch_launcher<float>(
+    float *d_etot_ptr,
+    float *d_force,
+    float rmax,
+    float rmin,
+    float *d_cks,
+    float *d_dks,
+    int inum,
+    int *d_ilist,
+    int *d_numneigh,
+    int *d_firstneigh,
+    float (*d_rcs)[3],
+    int *d_types,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms);
+
+
+extern template void ai2pot::correction::correct_zbl_ef_torch_launcher<double>(
+    double *d_etot_ptr,
+    double *d_force,
+    double rmax,
+    double rmin,
+    double *d_cks,
+    double *d_dks,
+    int inum,
+    int *d_ilist,
+    int *d_numneigh,
+    int *d_firstneigh,
+    double (*d_rcs)[3],
+    int *d_types,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms
+);
+
+};  // namespace : correction
+};  // namespace : ai2pot
+
+#endif
+
+
 namespace ai2pot {
 namespace nnmtp {
 
