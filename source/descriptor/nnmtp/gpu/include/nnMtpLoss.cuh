@@ -21,6 +21,8 @@
 #include <device_launch_parameters.h>
 #include <stdio.h>
 #include <math.h>
+#include <chrono>
+#include <iostream>
 
 #include "./mtpUtilities.cuh"
 #include "./mtpBasis.cuh"

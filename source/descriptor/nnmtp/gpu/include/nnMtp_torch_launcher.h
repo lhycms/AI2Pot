@@ -17,7 +17,7 @@
 #define AI2POT_NNMTP_NNMTP_TORCH_LAUNCHER_H
 
 namespace ai2pot {
-namespace nnmmtp {
+namespace nnmtp {
 
 
 template <typename CoordType>

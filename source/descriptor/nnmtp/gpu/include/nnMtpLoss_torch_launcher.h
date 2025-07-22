@@ -17,5 +17,123 @@
 #define AI2POT_NNMTP_NNMTP_LOSS_TORCH_LAUNCHER_H
 
 
+namespace ai2pot {
+namespace nnmtp {
+
+template <typename CoordType>
+void find_loss_torch_launcher(
+    CoordType *d_loss_ptr,
+    int inum,
+    int *d_ilist,
+    CoordType e_weight,
+    CoordType f_weight,
+    CoordType v_weight,
+    CoordType etot_ml,
+    CoordType etot_dft,
+    CoordType (*d_force_ml)[3],
+    CoordType (*d_force_dft)[3],
+    CoordType *d_virial_ml,
+    CoordType *d_virial_dft);
+
+
+template <typename CoordType>
+void find_ef_loss_torch_launcher(
+    CoordType *d_loss_ptr,
+    int inum,
+    int *d_ilist,
+    CoordType e_weight,
+    CoordType f_weight,
+    CoordType etot_ml,
+    CoordType etot_dft,
+    CoordType (*d_force_ml)[3],
+    CoordType (*d_force_dft)[3]);
+
+
+template <typename CoordType>
+void find_loss_backward_torch_launcher(
+    CoordType *d_loss_der2coeffs,
+    CoordType *d_loss_der2w0,
+    CoordType *d_loss_der2w1,
+    CoordType *d_loss_der2type_bias,
+    CoordType e_weight,
+    CoordType f_weight,
+    CoordType v_weight,
+    CoordType etot_ml,
+    CoordType etot_dft,
+    CoordType (*d_force_ml)[3],
+    CoordType (*d_force_dft)[3],
+    CoordType *d_virial_ml,
+    CoordType *d_virial_dft,
+    int chebyshev_size,
+    int num_neurons,
+    CoordType *d_coeffs,
+    CoordType *d_w0,
+    CoordType *d_w1,
+    CoordType *d_type_bias,
+    const int alpha_moments_count,
+    const int alpha_index_basic_count,
+    const int (*d_alpha_index_basic)[4],
+    const int alpha_index_times_count,
+    const int (*d_alpha_index_times)[4],
+    const int alpha_scalar_moments,
+    const int *d_alpha_moment_mapping,
+    int nmus,
+    int inum,
+    int *d_ilist,
+    int *d_numneigh,
+    int *d_firstneigh,
+    CoordType (*d_rcs)[3],
+    int *d_types,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    CoordType rmax,
+    CoordType rmin);
+
+
+template <typename CoordType>
+void find_ef_loss_backward_torch_launcher(
+    CoordType *d_loss_der2coeffs,
+    CoordType *d_loss_der2w0,
+    CoordType *d_loss_der2w1,
+    CoordType *d_loss_der2type_bias,
+    CoordType e_weight,
+    CoordType f_weight,
+    CoordType etot_ml,
+    CoordType etot_dft,
+    CoordType (*d_force_ml)[3],
+    CoordType (*d_force_dft)[3],
+    int chebyshev_size,
+    int num_neurons,
+    CoordType *d_coeffs,
+    CoordType *d_w0,
+    CoordType *d_w1,
+    CoordType *d_type_bias,
+    const int alpha_moments_count,
+    const int alpha_index_basic_count,
+    const int (*d_alpha_index_basic)[4],
+    const int alpha_index_times_count,
+    const int (*d_alpha_index_times)[4],
+    const int alpha_scalar_moments,
+    const int *d_alpha_moment_mapping,
+    int nmus,
+    int inum,
+    int *d_ilist,
+    int *d_numneigh,
+    int *d_firstneigh,
+    CoordType (*d_rcs)[3],
+    int *d_types,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    CoordType rmax,
+    CoordType rmin);
+
+
+};  // namespace : nnmtp
+};  // namespace : a2pot
+
 
 #endif

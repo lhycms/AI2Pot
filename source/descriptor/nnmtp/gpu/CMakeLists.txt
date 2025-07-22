@@ -19,6 +19,15 @@ if (USE_CUDA AND CUDA_FOUND)
     target_compile_definitions(nnmtp_torch_launcher PRIVATE USE_CUDA MAX_MTP_LEVEL=${MAX_MTP_LEVEL})
 endif()
 
+add_library(nnmtp_loss_torch_launcher SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/nnMtpLoss_torch_launcher.cu)
+set_target_properties(nnmtp_loss_torch_launcher PROPERTIES
+    CUDA_SEPERATE_COMPILATION on
+    CUDA_STANDARD ${CUDA_STANDARD}
+    CUDA_ARCHITECTURES ${CUDA_ARCHITECTURES})
+    if (USE_CUDA AND CUDA_FOUND)
+    target_compile_definitions(nnmtp_loss_torch_launcher PRIVATE USE_CUDA MAX_MTP_LEVEL=${MAX_MTP_LEVEL})
+endif()
+
 
 # 6. compule test
 if (BUILD_TEST)
