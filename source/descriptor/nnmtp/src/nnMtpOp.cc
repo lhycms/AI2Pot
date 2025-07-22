@@ -309,8 +309,8 @@ torch::autograd::variable_list NNMtpToEFLossFunction::backward(
                         .dtype(torch::kFloat32)
                         .device(brcs_tensor.device());
         bloss_der2coeffs_tensor = at::zeros({batch_size, num_coeffs}, float_options);
-        bloss_der2w0_tensor = at::zeros({batch_size, num_neurons*alpha_scalar_moments}, float_options);
-        bloss_der2w1_tensor = at::zeros({batch_size, num_neurons}, float_options);
+        bloss_der2w0_tensor = at::zeros({batch_size, ntypes*num_neurons*alpha_scalar_moments}, float_options);
+        bloss_der2w1_tensor = at::zeros({batch_size, ntypes*num_neurons}, float_options);
         bloss_der2type_bias_tensor = at::zeros({batch_size, ntypes}, float_options);
         float *coeffs = (float*)coeffs_tensor.data_ptr<float>();
         float *w0 = (float*)w0_tensor.data_ptr<float>();
@@ -379,8 +379,8 @@ torch::autograd::variable_list NNMtpToEFLossFunction::backward(
                         .dtype(torch::kFloat64)
                         .device(brcs_tensor.device());
         bloss_der2coeffs_tensor = at::zeros({batch_size, num_coeffs}, float_options);
-        bloss_der2w0_tensor = at::zeros({batch_size, num_neurons*alpha_scalar_moments}, float_options);
-        bloss_der2w1_tensor = at::zeros({batch_size, num_neurons}, float_options);
+        bloss_der2w0_tensor = at::zeros({batch_size, ntypes*num_neurons*alpha_scalar_moments}, float_options);
+        bloss_der2w1_tensor = at::zeros({batch_size, ntypes*num_neurons}, float_options);
         bloss_der2type_bias_tensor = at::zeros({batch_size, ntypes}, float_options);
         double *coeffs = (double*)coeffs_tensor.data_ptr<double>();
         double *w0 = (double*)w0_tensor.data_ptr<double>();
@@ -777,8 +777,8 @@ torch::autograd::variable_list NNMtpToLossFunction::backward(
                         .dtype(torch::kFloat32)
                         .device(brcs_tensor.device());
         bloss_der2coeffs_tensor = at::zeros({batch_size, num_coeffs}, float_options);
-        bloss_der2w0_tensor = at::zeros({batch_size, num_neurons*alpha_scalar_moments}, float_options);
-        bloss_der2w1_tensor = at::zeros({batch_size, num_neurons}, float_options);
+        bloss_der2w0_tensor = at::zeros({batch_size, ntypes*num_neurons*alpha_scalar_moments}, float_options);
+        bloss_der2w1_tensor = at::zeros({batch_size, ntypes*num_neurons}, float_options);
         bloss_der2type_bias_tensor = at::zeros({batch_size, ntypes}, float_options);
         float *coeffs = (float*)coeffs_tensor.data_ptr<float>();
         float *w0 = (float*)w0_tensor.data_ptr<float>();
@@ -850,8 +850,8 @@ torch::autograd::variable_list NNMtpToLossFunction::backward(
                         .dtype(torch::kFloat64)
                         .device(brcs_tensor.device());
         bloss_der2coeffs_tensor = at::zeros({batch_size, num_coeffs}, float_options);
-        bloss_der2w0_tensor = at::zeros({batch_size, num_neurons*alpha_scalar_moments}, float_options);
-        bloss_der2w1_tensor = at::zeros({batch_size, num_neurons}, float_options);
+        bloss_der2w0_tensor = at::zeros({batch_size, ntypes*num_neurons*alpha_scalar_moments}, float_options);
+        bloss_der2w1_tensor = at::zeros({batch_size, ntypes*num_neurons}, float_options);
         bloss_der2type_bias_tensor = at::zeros({batch_size, ntypes}, float_options);
         double *coeffs = (double*)coeffs_tensor.data_ptr<double>();
         double *w0 = (double*)w0_tensor.data_ptr<double>();

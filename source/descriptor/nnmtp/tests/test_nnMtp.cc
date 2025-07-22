@@ -203,7 +203,7 @@ protected:
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/26.almtp",
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/28.almtp"
         };
-        mtp_param._load(filenames[7]);
+        mtp_param._load(filenames[4]);
 
 
         etot = 0.0;
@@ -683,6 +683,26 @@ TEST_F(NNMtpTest, find_loss_backward) {
         zbl_rmin,
         zbl_cks,
         zbl_dks);
+
+printf("1. loss_der2coeffs:\n");
+for (int ii=0; ii<ntypes*ntypes*mtp_param.nmus()*chebyshev_size; ii++)
+    printf("%.15f, ", loss_der2coeffs[ii]);
+printf("\n\n");
+
+printf("2. loss_der2w0:\n");
+for (int ii=0; ii<ntypes*num_neurons*mtp_param.alpha_scalar_moments(); ii++)
+    printf("%.15f, ", loss_der2w0[ii]);
+printf("\n\n");
+
+printf("3. loss_der2w1:\n");
+for (int ii=0; ii<ntypes*num_neurons; ii++)
+    printf("%.15f, ", loss_der2w1[ii]);
+printf("\n\n");
+
+printf("4. loss_der2type_bias:\n");
+for (int ii=0; ii<ntypes; ii++)
+    printf("%.15f, ", loss_der2type_bias[ii]);
+printf("\n\n");
 }
 
 

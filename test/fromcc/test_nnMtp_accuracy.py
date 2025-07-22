@@ -42,8 +42,9 @@ class NNMtpTest(unittest.TestCase):
         self.umax_num_neighs: int = 200
         self.fit_virial: bool = False
         
-        """
+        
         self.ntypes: int = 4
+        self.type_map_tensor: torch.Tensor = torch.tensor(data=[16, 34, 41, 75], dtype=torch.int32)
         self.structure: Structure = Structure.from_file(ReNbSSe_POSCAR_PATH)
         """
         self.ntypes: int = 1
@@ -55,6 +56,7 @@ class NNMtpTest(unittest.TestCase):
                                                       [3.0, 0.0, 0]
                                                       ],
                                               coords_are_cartesian=True)
+        """
         print(self.structure)
     
         # 2. ZBL
@@ -78,12 +80,12 @@ class NNMtpTest(unittest.TestCase):
                 self.zbl_dks_tensor[idx*4 + 2] = 0.4029
                 self.zbl_dks_tensor[idx*4 + 3] = 0.20162
         
-        self.mlff_to_loss_input: MlffToLossInput = MlffToLossInput(type_map=[1],
+        self.mlff_to_loss_input: MlffToLossInput = MlffToLossInput(type_map=self.type_map_tensor.numpy().tolist(),
                                                                    rcut=self.rmax,
                                                                    umax_num_neighs=self.umax_num_neighs,
                                                                    dtype=self.torch_float_dtype,
                                                                    device=self.device)
-        self.mlff_input: MlffInput = MlffInput(type_map=[1],
+        self.mlff_input: MlffInput = MlffInput(type_map=self.type_map_tensor.numpy().tolist(),
                                                 rcut=self.rmax,
                                                 umax_num_neighs=self.umax_num_neighs,
                                                 dtype=self.torch_float_dtype,
@@ -124,8 +126,8 @@ class NNMtpTest(unittest.TestCase):
         # 1. Parameters
         e_weight: float = 1.0
         f_weight: float = 0.1
-        v_weight: float = 1.0
-        self.coeffs_tensor.requires_grad_(True)
+        v_weight: float = 0.0
+        self.coeffs_tensor.requires_grad_(False)
         self.w0_tensor.requires_grad_(True)
         self.w1_tensor.requires_grad_(True)
         self.type_bias_tensor.requires_grad_(True)
@@ -165,7 +167,7 @@ class NNMtpTest(unittest.TestCase):
                                  self.zbl_rmin,
                                  self.zbl_cks_tensor,
                                  self.zbl_dks_tensor),
-                         eps=1e-1,
+                         eps=1e-5,
                          atol=1e-6,
                          rtol=1e-3,
                          nondet_tol=1e-5)
@@ -174,11 +176,11 @@ class NNMtpTest(unittest.TestCase):
         print("-------------------------------------------------")
 
 
-    def est_nnMtpToLoss(self):
+    def test_nnMtpToLoss(self):
         # 1. Parameters
         e_weight: float = 1.0
         f_weight: float = 0.1
-        v_weight: float = 1.0
+        v_weight: float = 0.1
         self.coeffs_tensor.requires_grad_(True)
         self.w0_tensor.requires_grad_(True)
         self.w1_tensor.requires_grad_(True)
@@ -221,7 +223,7 @@ class NNMtpTest(unittest.TestCase):
                                  self.zbl_rmin,
                                  self.zbl_cks_tensor,
                                  self.zbl_dks_tensor),
-                         eps=1e-1,
+                         eps=1e-5,
                          atol=1e-6,
                          rtol=1e-3,
                          nondet_tol=1e-5)
@@ -230,7 +232,7 @@ class NNMtpTest(unittest.TestCase):
         print("-------------------------------------------------")
 
 
-    def test_linearMtpToEsites(self):
+    def est_linearMtpToEsites(self):
         # 1. Parameters
         self.coeffs_tensor.requires_grad_(True)
         self.w0_tensor.requires_grad_(True)

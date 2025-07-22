@@ -19,6 +19,7 @@
 
 #include "../../include/mtpParam.h"
 #include "../include/nnMtp.cuh"
+#include "../include/nnMtpLoss.cuh"
 #include "../../../../nblist/include/structure.h"
 #include "../../../../nblist/include/neighborList.h"
 
@@ -72,7 +73,8 @@ protected:
 
 
     real *loss_der2coeffs;
-    real *loss_der2linear_coeffs;
+    real *loss_der2w0;
+    real *loss_der2w1;
     real *loss_der2type_bias;
 
     real etot_dft;
@@ -105,7 +107,7 @@ protected:
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/26.almtp",
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/28.almtp"
         };
-        mtp_param._load(filenames[7]);
+        mtp_param._load(filenames[4]);
         chebyshev_size = 8;
         num_neurons = 30;
 
@@ -234,8 +236,10 @@ protected:
 
         loss_der2coeffs = (real*)malloc(sizeof(real) * ntypes * ntypes * mtp_param.nmus() * chebyshev_size);
         memset(loss_der2coeffs, 0, sizeof(real) * ntypes * ntypes * mtp_param.nmus() * chebyshev_size);
-        loss_der2linear_coeffs = (real*)malloc(sizeof(real) * mtp_param.alpha_scalar_moments());
-        memset(loss_der2linear_coeffs, 0, sizeof(real) * mtp_param.alpha_scalar_moments());
+        loss_der2w0 = (real*)malloc(sizeof(real) * ntypes * num_neurons * mtp_param.alpha_scalar_moments());
+        memset(loss_der2w0, 0, sizeof(real) * ntypes * num_neurons * mtp_param.alpha_scalar_moments());
+        loss_der2w1 = (real*)malloc(sizeof(real) * ntypes * num_neurons);
+        memset(loss_der2w1, 0, sizeof(real) * ntypes * num_neurons);
         loss_der2type_bias = (real*)malloc(sizeof(real) * ntypes);
         memset(loss_der2type_bias, 0, sizeof(real) * ntypes);
 
@@ -264,7 +268,8 @@ protected:
         free(virial_);
 
         free(loss_der2coeffs);
-        free(loss_der2linear_coeffs);
+        free(loss_der2w0);
+        free(loss_der2w1);
         free(loss_der2type_bias);
         free(force_dft);
         free(virial_dft);
@@ -369,6 +374,8 @@ for (int ii=0; ii<inum; ii++)
     printf("\t\t%3d: [%.15f, %.15f, %.15f]\n", ii, force[ii][0], force[ii][1], force[ii][2]);
 }
 
+
+
 TEST_F(NNMtpTest, find_ef_accuracy) {
     real delta = 1e-6;
     int center_idx_modify = 1;
@@ -462,6 +469,106 @@ printf("\t2.1. Energy = %.15f\n", etot);
 printf("\t2.2. Force =\n");
 for (int ii=0; ii<inum; ii++)
     printf("\t\t%3d: [%.15f, %.15f, %.15f]\n", ii, force[ii][0], force[ii][1], force[ii][2]);
+}
+
+
+TEST_F(NNMtpTest, find_loss_backward_launcer)
+{
+    real e_weight = 1.0;
+    real f_weight = 1.0;
+    real v_weight = 1.0;
+    
+    ai2pot::nnmtp::find_efv_launcher<real>(
+        &etot,
+        force,
+        virial,
+        chebyshev_size,
+        num_neurons,
+        coeffs,
+        w0,
+        w1,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        mtp_param.nmus(),
+        inum,
+        ilist,
+        numneigh,
+        firstneigh,
+        (real (*)[3])rcs,
+        types,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin);
+
+    ai2pot::nnmtp::find_loss_backward_launcher<real>(
+        loss_der2coeffs,
+        loss_der2w0,
+        loss_der2w1,
+        loss_der2type_bias,
+        e_weight,
+        f_weight,
+        v_weight,
+        etot,
+        etot_dft,
+        force,
+        force_dft,
+        virial,
+        virial_dft,
+        chebyshev_size,
+        num_neurons,
+        coeffs,
+        w0,
+        w1,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        mtp_param.nmus(),
+        inum,
+        ilist,
+        numneigh,
+        firstneigh,
+        (real (*)[3])rcs,
+        types,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin);
+
+printf("1. loss_der2coeffs:\n");
+for (int ii=0; ii<ntypes*ntypes*mtp_param.nmus()*chebyshev_size; ii++)
+    printf("%.15f, ", loss_der2coeffs[ii]);
+printf("\n\n");
+
+printf("2. loss_der2w0:\n");
+for (int ii=0; ii<ntypes*num_neurons*mtp_param.alpha_scalar_moments(); ii++)
+    printf("%.15f, ", loss_der2w0[ii]);
+printf("\n\n");
+
+printf("3. loss_der2w1:\n");
+for (int ii=0; ii<ntypes*num_neurons; ii++)
+    printf("%.15f, ", loss_der2w1[ii]);
+printf("\n\n");
+
+printf("4. loss_der2type_bias:\n");
+for (int ii=0; ii<ntypes; ii++)
+    printf("%.15f, ", loss_der2type_bias[ii]);
+printf("\n\n");
 }
 
 

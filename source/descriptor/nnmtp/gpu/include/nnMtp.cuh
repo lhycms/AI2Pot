@@ -509,7 +509,7 @@ void find_efv_kernel(
     int nx = blockIdx.x * blockDim.x + threadIdx.x;
     int ii = nx;
 
-    __shared__ CoordType s_local_virial[128][9];
+    __shared__ CoordType s_local_virial[64][9];
     int tid = threadIdx.x;
     for (int ii=0; ii<9; ii++)
         s_local_virial[tid][ii] = 0.0;
@@ -594,7 +594,7 @@ void find_efv_launcher(
     CoordType rmax,
     CoordType rmin)
 {
-    int block_size_x = 128;
+    int block_size_x = 64;
     int grid_size_x = (inum - 1) / block_size_x + 1;
     dim3 grid_size(grid_size_x);
     dim3 block_size(block_size_x);
@@ -627,7 +627,7 @@ void find_efv_launcher(
 
     CHECK_CUDA_API( cudaMalloc((void**)&d_coeffs, sizeof(CoordType) * num_coeffs) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_w0, sizeof(CoordType) * ntypes * num_neurons * alpha_scalar_moments) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_w1, sizeof(CoordType) * ntypes * alpha_scalar_moments) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_w1, sizeof(CoordType) * ntypes * num_neurons) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_type_bias, sizeof(CoordType) * ntypes) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_alpha_index_basic, sizeof(int) * alpha_index_basic_count * 4) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_alpha_index_times, sizeof(int) * alpha_index_times_count * 4) );
@@ -1061,7 +1061,7 @@ void find_ef_launcher(
     CoordType rmax,
     CoordType rmin)
 {
-    int block_size_x = 128;
+    int block_size_x = 64;
     int grid_size_x = (inum - 1) / block_size_x + 1;
     dim3 grid_size(grid_size_x);
     dim3 block_size(block_size_x);
@@ -1091,7 +1091,7 @@ void find_ef_launcher(
 
     CHECK_CUDA_API( cudaMalloc((void**)&d_coeffs, sizeof(CoordType) * num_coeffs) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_w0, sizeof(CoordType) * ntypes * num_neurons * alpha_scalar_moments) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_w1, sizeof(CoordType) * ntypes * alpha_scalar_moments) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_w1, sizeof(CoordType) * ntypes * num_neurons) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_type_bias, sizeof(CoordType) * ntypes) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_alpha_index_basic, sizeof(int) * alpha_index_basic_count * 4) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_alpha_index_times, sizeof(int) * alpha_index_times_count * 4) );

@@ -1270,8 +1270,8 @@ void NNMtp<CoordType>::find_ef_loss_backward(
                     CoordType B_ders[3] = {0., 0., 0.};
                     CoordType C_ders[3] = {0., 0., 0.};
                     A_ders[0] = p_RadialBasis->ders2r()[xi] * neigh_vec[0] * distance_ij_inv;
-                    B_ders[1] = p_RadialBasis->ders2r()[xi] * neigh_vec[1] * distance_ij_inv;
-                    C_ders[2] = p_RadialBasis->ders2r()[xi] * neigh_vec[2] * distance_ij_inv;
+                    A_ders[1] = p_RadialBasis->ders2r()[xi] * neigh_vec[1] * distance_ij_inv;
+                    A_ders[2] = p_RadialBasis->ders2r()[xi] * neigh_vec[2] * distance_ij_inv;
                     if (alpha_index_basic[i][1] != 0) {
                         B_ders[0] = alpha_index_basic[i][1]
                                     * auto_coords_powers_[alpha_index_basic[i][1] - 1][0]
@@ -1697,8 +1697,8 @@ void NNMtp<CoordType>::find_loss_backward(
                     CoordType B_ders[3] = {0., 0., 0.};
                     CoordType C_ders[3] = {0., 0., 0.};
                     A_ders[0] = p_RadialBasis->ders2r()[xi] * neigh_vec[0] * distance_ij_inv;
-                    B_ders[1] = p_RadialBasis->ders2r()[xi] * neigh_vec[1] * distance_ij_inv;
-                    C_ders[2] = p_RadialBasis->ders2r()[xi] * neigh_vec[2] * distance_ij_inv;
+                    A_ders[1] = p_RadialBasis->ders2r()[xi] * neigh_vec[1] * distance_ij_inv;
+                    A_ders[2] = p_RadialBasis->ders2r()[xi] * neigh_vec[2] * distance_ij_inv;
                     if (alpha_index_basic[i][1] != 0) {
                         B_ders[0] = alpha_index_basic[i][1]
                                     * auto_coords_powers_[alpha_index_basic[i][1] - 1][0]

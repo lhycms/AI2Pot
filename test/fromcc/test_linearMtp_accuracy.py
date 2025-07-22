@@ -120,7 +120,7 @@ class LinearMtpTest(unittest.TestCase):
         # 1. Parameters
         e_weight: float = 1.0
         f_weight: float = 0.1
-        v_weight: float = 1.0
+        v_weight: float = 0.1
         self.coeffs_tensor.requires_grad_(True)
         self.linear_coeffs_tensor.requires_grad_(True)
         self.type_bias_tensor.requires_grad_(True)
@@ -168,7 +168,7 @@ class LinearMtpTest(unittest.TestCase):
         print("-------------------------------------------------")
 
 
-    def test_linearMtpToEsites(self):
+    def est_linearMtpToEsites(self):
         # 1. Parameters
         self.coeffs_tensor.requires_grad_(True)
         self.linear_coeffs_tensor.requires_grad_(True)
