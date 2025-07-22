@@ -29,7 +29,7 @@ namespace ai2pot {
 namespace nnmtp {
 
 template <typename CoordType>
-static __host__ __device__ 
+static __host__ __device__
 void find_switch_func(CoordType &val,
                       CoordType &der2r,
                       CoordType rmax,
