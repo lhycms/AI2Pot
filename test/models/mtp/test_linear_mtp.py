@@ -100,7 +100,7 @@ class LinearMtpTest(unittest.TestCase):
         print("1. Loss = ", ef_loss)
 
 
-    def est_predict_efv(self):
+    def test_predict_efv(self):
         times_list: List[float] = []
         for ii in range(110):
             t1 = time.time()
@@ -108,7 +108,6 @@ class LinearMtpTest(unittest.TestCase):
             t2 = time.time()
             if (ii>9):
                 times_list.append(t2-t1)
-            print(v)
 
         print("0.1. Average time cost by linear_mtp.predict_efv() = ", np.sum(times_list) / 100)
         print("0.2. std time cost by linear_mtp.predict_efv() = ", np.std(times_list) / 100)
@@ -132,7 +131,7 @@ class LinearMtpTest(unittest.TestCase):
         print("2. Force.shape = \n", f[0][5])
 
 
-    def test_predict_e_sites(self):
+    def est_predict_e_sites(self):
         times_list: List[float] = []
         for ii in range(110):
             t1 = time.time()

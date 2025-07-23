@@ -838,11 +838,10 @@ void find_loss_backward_atom(
                                       * (virial_ml[aa*3+bb] - virial_dft[aa*3+bb])
                                       * NeighbVect[bb];
                     }
-                    tmpf_loss_der2coeff += tmp_prefix * tmp_deriv;
+                    tmpf_loss_der2coeff += tmp_prefix * e_site_der2mom[i] * tmp_deriv;
                 }
-                atomicAdd(&loss_der2coeffs[idx],
-                          tmpe_loss_der2coeff
-                          + tmpf_loss_der2coeff * e_site_der2mom[i]);
+                atomicAdd(&loss_der2coeffs[idx], 
+                          tmpe_loss_der2coeff + tmpf_loss_der2coeff);
             }
         }
     }

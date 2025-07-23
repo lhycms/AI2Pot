@@ -12,6 +12,10 @@ from ai2pot.models.mtp.linear_mtp_utils import (
     LinearMtpCalculator
 )
 
+from ai2pot.models.mtp.nn_mtp import (
+    NNMtp
+)
+
 from ai2pot.models.potential_submodules import (
     FittingNet,
     ForceVirialSrModule,

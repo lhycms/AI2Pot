@@ -22,7 +22,7 @@ PbTe_EXTXYZ_PATH = os.path.join(TEST_FILES_DIR, "XYZ", "11_NEP_potential_PbTe", 
 
 #torch.use_deterministic_algorithms(True)
 torch.set_num_threads(1)
-torch.manual_seed(2143)
+torch.manual_seed(21433)
 
 
 class NNMtpTest(unittest.TestCase):
@@ -30,10 +30,10 @@ class NNMtpTest(unittest.TestCase):
         print("NNMtpTest (TestCase) is setting up...\n")
         # 0.
         self.torch_float_dtype: torch._C.dtype = torch.float64
-        self.device: torch._C.device = torch.device("cpu")
+        self.device: torch._C.device = torch.device("cuda")
         
         # 1. 
-        self.mtp_level: int = 4
+        self.mtp_level: int = 6
         #self.ntypes: int = 4
         self.chebyshev_size: int = 8
         self.num_neurons: int = 30
@@ -127,7 +127,7 @@ class NNMtpTest(unittest.TestCase):
         e_weight: float = 1.0
         f_weight: float = 0.1
         v_weight: float = 0.0
-        self.coeffs_tensor.requires_grad_(False)
+        self.coeffs_tensor.requires_grad_(True)
         self.w0_tensor.requires_grad_(True)
         self.w1_tensor.requires_grad_(True)
         self.type_bias_tensor.requires_grad_(True)
