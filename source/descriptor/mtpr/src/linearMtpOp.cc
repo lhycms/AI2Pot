@@ -1314,7 +1314,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
     c10::TensorOptions float_options;
 
     at::Tensor bloss_tensor;
-#if defined(USE_CUDA) or (__INTELLISENSE__)
+#if defined(USE_CUDA) or defined(__INTELLISENSE__)
     at::Tensor tmp_etot_ml_tensor;
     at::Tensor tmp_force_ml_tensor;
 #endif
