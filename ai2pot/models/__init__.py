@@ -28,4 +28,8 @@ from ai2pot.models.potential_loss import (
     VRmse
 )
 
-from ai2pot.models.potential_train import LitPotential
+from ai2pot.models.potential_train import (
+    LitPotential,
+    LitLinearMtp,
+    LitNNMtp
+)

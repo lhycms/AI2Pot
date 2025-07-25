@@ -29,14 +29,14 @@ class MlffInput(object):
     def __init__(self,
                  type_map: List[int],
                  rcut: float,
-                 umax_num_neighs: int = 200,
+                 umax_num_neigh_atoms: int = 200,
                  pbc_xyz: List[bool] = [True, True, True],
                  sort: bool = True,
                  dtype: torch._C.dtype = torch.float32,
                  device: torch._C.device = torch.device("cpu")):
         self.type_map: List[int] = type_map
         self.rcut: float = rcut
-        self.umax_num_neighs: int = umax_num_neighs
+        self.umax_num_neigh_atoms: int = umax_num_neigh_atoms
         self.pbc_xyz: List[bool] = pbc_xyz
         self.sort: bool = sort
         if (dtype == torch.float32):
@@ -57,7 +57,7 @@ class MlffInput(object):
                                             species=types,
                                             coords=cart_coords,
                                             rcut=self.rcut,
-                                            umax_num_neigh_atoms=self.umax_num_neighs,
+                                            umax_num_neigh_atoms=self.umax_num_neigh_atoms,
                                             is_cart_coord=True,
                                             pbc_xyz=self.pbc_xyz,
                                             sort=self.sort)
@@ -66,8 +66,8 @@ class MlffInput(object):
             torch.tensor(nblist_info[0], dtype=torch.int32, device=self.device).view(1,),
             torch.tensor(nblist_info[1], dtype=torch.int32, device=self.device).view(1, -1),
             torch.tensor(nblist_info[2], dtype=torch.int32, device=self.device).view(1, -1),
-            torch.tensor(nblist_info[3], dtype=torch.int32, device=self.device).view(1, -1, self.umax_num_neighs),
-            torch.tensor(nblist_info[4], dtype=self.torch_float_dtype, device=self.device).view(1, -1, self.umax_num_neighs, 3),
+            torch.tensor(nblist_info[3], dtype=torch.int32, device=self.device).view(1, -1, self.umax_num_neigh_atoms),
+            torch.tensor(nblist_info[4], dtype=self.torch_float_dtype, device=self.device).view(1, -1, self.umax_num_neigh_atoms, 3),
             torch.tensor(nblist_info[5], dtype=torch.int32, device=self.device).view(1, -1),
             torch.tensor(nblist_info[6], dtype=torch.int32, device=self.device).view(1,)
         ]
@@ -82,7 +82,7 @@ class MlffInput(object):
                                             species=types,
                                             coords=cart_coords,
                                             rcut=self.rcut,
-                                            umax_num_neigh_atoms=self.umax_num_neighs,
+                                            umax_num_neigh_atoms=self.umax_num_neigh_atoms,
                                             is_cart_coord=True,
                                             pbc_xyz=self.pbc_xyz,
                                             sort=self.sort)
@@ -90,8 +90,8 @@ class MlffInput(object):
             torch.tensor(nblist_info[0], dtype=torch.int32, device=self.device).view(1,),
             torch.tensor(nblist_info[1], dtype=torch.int32, device=self.device).view(1, -1),
             torch.tensor(nblist_info[2], dtype=torch.int32, device=self.device).view(1, -1),
-            torch.tensor(nblist_info[3], dtype=torch.int32, device=self.device).view(1, -1, self.umax_num_neighs),
-            torch.tensor(nblist_info[4], dtype=self.torch_float_dtype, device=self.device).view(1, -1, self.umax_num_neighs, 3),
+            torch.tensor(nblist_info[3], dtype=torch.int32, device=self.device).view(1, -1, self.umax_num_neigh_atoms),
+            torch.tensor(nblist_info[4], dtype=self.torch_float_dtype, device=self.device).view(1, -1, self.umax_num_neigh_atoms, 3),
             torch.tensor(nblist_info[5], dtype=torch.int32, device=self.device).view(1, -1),
             torch.tensor(nblist_info[6], dtype=torch.int32, device=self.device).view(1,)
         ]
@@ -101,14 +101,14 @@ class MlffToLossInput(object):
     def __init__(self,
                  type_map: List[int],
                  rcut: float,
-                 umax_num_neighs: int = 200,
+                 umax_num_neigh_atoms: int = 200,
                  pbc_xyz: List[bool] = [True, True, True],
                  sort: bool = True,
                  dtype: torch._C.dtype = torch.float32,
                  device: torch._C.device = torch.device("cpu")):
         self.type_map: List[int] = type_map
         self.rcut: float = rcut
-        self.umax_num_neighs: int = umax_num_neighs
+        self.umax_num_neigh_atoms: int = umax_num_neigh_atoms
         self.pbc_xyz: List[bool] = pbc_xyz
         self.sort: bool = sort
         if (dtype == torch.float32):
@@ -142,7 +142,7 @@ class MlffToLossInput(object):
                                             species=types,
                                             coords=cart_coords,
                                             rcut=self.rcut,
-                                            umax_num_neigh_atoms=self.umax_num_neighs,
+                                            umax_num_neigh_atoms=self.umax_num_neigh_atoms,
                                             is_cart_coord=True,
                                             pbc_xyz=self.pbc_xyz,
                                             sort=self.sort)
@@ -156,8 +156,8 @@ class MlffToLossInput(object):
             torch.tensor(nblist_info[0], dtype=torch.int32, device=self.device).view(1,),
             torch.tensor(nblist_info[1], dtype=torch.int32, device=self.device).view(1, -1),
             torch.tensor(nblist_info[2], dtype=torch.int32, device=self.device).view(1, -1),
-            torch.tensor(nblist_info[3], dtype=torch.int32, device=self.device).view(1, -1, self.umax_num_neighs),
-            torch.tensor(nblist_info[4], dtype=self.torch_float_dtype, device=self.device).view(1, -1, self.umax_num_neighs, 3),
+            torch.tensor(nblist_info[3], dtype=torch.int32, device=self.device).view(1, -1, self.umax_num_neigh_atoms),
+            torch.tensor(nblist_info[4], dtype=self.torch_float_dtype, device=self.device).view(1, -1, self.umax_num_neigh_atoms, 3),
             torch.tensor(nblist_info[5], dtype=torch.int32, device=self.device).view(1, -1),
             torch.tensor(nblist_info[6], dtype=torch.int32, device=self.device).view(1,)
         ]
@@ -167,14 +167,14 @@ class MlffToEFLossInput(object):
     def __init__(self,
                  type_map: List[int],
                  rcut: float,
-                 umax_num_neighs: int = 200,
+                 umax_num_neigh_atoms: int = 200,
                  pbc_xyz: List[bool] = [True, True, True],
                  sort: bool = True,
                  dtype: torch._C.dtype = torch.float32,
                  device: torch._C.device = torch.device("cpu")):
         self.type_map: List[int] = type_map
         self.rcut: float = rcut
-        self.umax_num_neighs: int = umax_num_neighs
+        self.umax_num_neigh_atoms: int = umax_num_neigh_atoms
         self.pbc_xyz: List[bool] = pbc_xyz
         self.sort: bool = sort
         if (dtype == torch.float32):
@@ -204,7 +204,7 @@ class MlffToEFLossInput(object):
                                             species=types,
                                             coords=cart_coords,
                                             rcut=self.rcut,
-                                            umax_num_neigh_atoms=self.umax_num_neighs,
+                                            umax_num_neigh_atoms=self.umax_num_neigh_atoms,
                                             is_cart_coord=True,
                                             pbc_xyz=self.pbc_xyz,
                                             sort=self.sort)
@@ -216,8 +216,8 @@ class MlffToEFLossInput(object):
             torch.tensor(nblist_info[0], dtype=torch.int32, device=self.device).view(1,),
             torch.tensor(nblist_info[1], dtype=torch.int32, device=self.device).view(1, -1),
             torch.tensor(nblist_info[2], dtype=torch.int32, device=self.device).view(1, -1),
-            torch.tensor(nblist_info[3], dtype=torch.int32, device=self.device).view(1, -1, self.umax_num_neighs),
-            torch.tensor(nblist_info[4], dtype=self.torch_float_dtype, device=self.device).view(1, -1, self.umax_num_neighs, 3),
+            torch.tensor(nblist_info[3], dtype=torch.int32, device=self.device).view(1, -1, self.umax_num_neigh_atoms),
+            torch.tensor(nblist_info[4], dtype=self.torch_float_dtype, device=self.device).view(1, -1, self.umax_num_neigh_atoms, 3),
             torch.tensor(nblist_info[5], dtype=torch.int32, device=self.device).view(1, -1),
             torch.tensor(nblist_info[6], dtype=torch.int32, device=self.device).view(1,)
         ]

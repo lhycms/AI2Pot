@@ -38,7 +38,7 @@ class LinearMtp(nn.Module):
                  chebyshev_size: int = 8,
                  rmax: float = 5.0,
                  rmin: float = 0.0,
-                 umax_num_neighs: int = 200,
+                 umax_num_neigh_atoms: int = 200,
                  fit_virial: bool = False,
                  zbl_rmax: float = 2.0,
                  zbl_rmin: float = 1.0,
@@ -51,7 +51,7 @@ class LinearMtp(nn.Module):
         self.chebyshev_size: int = chebyshev_size
         self.rmax: float = rmax
         self.rmin: float = rmin
-        self.umax_num_neighs: int = umax_num_neighs
+        self.umax_num_neigh_atoms: int = umax_num_neigh_atoms
         self.fit_virial: bool = fit_virial
         self.zbl_rmax: float = zbl_rmax
         self.zbl_rmin: float = zbl_rmin
@@ -67,6 +67,7 @@ class LinearMtp(nn.Module):
         self.register_buffer(name="nmus_tensor", tensor=mtp_param_info[6])
         self.nmus: int = mtp_param_info[6].item()
         self.num_descriptors: int = self.alpha_moment_mapping_tensor.size()[0]
+        self.num_coeffs: int = self.ntypes * self.ntypes * self.nmus * self.chebyshev_size
         
         coeffs_tensor: torch.Tensor = torch.Tensor(self.ntypes*self.ntypes*self.nmus*self.chebyshev_size)
         nn.init.normal_(coeffs_tensor, mean=0.0, std=0.1)

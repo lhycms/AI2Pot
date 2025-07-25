@@ -123,10 +123,10 @@ class NNMtp(nn.Module):
 
     def forward(self, *args, **kwargs):
         if self.fit_virial:
-            pass
+            bmse_tensor = self.predict_loss(*args, **kwargs)
         else:
-            pass
-        return None
+            bmse_tensor = self.predict_ef_loss(*args, **kwargs)
+        return bmse_tensor
     
 
     def predict_loss(self,
