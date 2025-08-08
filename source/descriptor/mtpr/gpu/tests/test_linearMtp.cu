@@ -367,16 +367,16 @@ for (int ii=0; ii<natoms_pad; ii++)
     printf("\t\t%3d: [%.15f, %.15f, %.15f]\n", ii, bforce[0*natoms_pad +ii][0], bforce[0*natoms_pad +ii][1], bforce[0*natoms_pad +ii][2]);
 }
 
-/*
+
 TEST_F(LinearMtpTest, find_ef_launcher)
 {
     real delta = 1e-8;
-    int center_idx_modify = 3;
-    int direction_idx_modify = 1;
+    int center_idx_modify = 1;
+    int direction_idx_modify = 2;
 
     ai2pot::mtpr::find_ef_launcher<real>(
-        &etot,
-        force,
+        betot,
+        bforce,
         chebyshev_size,
         coeffs,
         linear_coeffs,
@@ -389,12 +389,14 @@ TEST_F(LinearMtpTest, find_ef_launcher)
         mtp_param.alpha_scalar_moments(),
         mtp_param.alpha_moment_mapping(),
         mtp_param.nmus(),
-        inum,
-        ilist,
-        numneigh,
-        firstneigh,
-        (real (*)[3])rcs,
-        types,
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        bnumneigh,
+        bfirstneigh,
+        (real (*)[3])brcs,
+        btypes,
         ntypes,
         type_map,
         umax_num_neigh_atoms,
@@ -405,26 +407,27 @@ TEST_F(LinearMtpTest, find_ef_launcher)
 
 
     // *** delta
-    real cart_coords[inum][3] = {0.};
-    for (int ii=0; ii<inum; ii++)
+    real cart_coords[natoms_pad][3] = {0.};
+    for (int ii=0; ii<natoms_pad; ii++)
         for (int aa=0; aa<3; aa++)
             cart_coords[ii][aa] = structure.get_cart_coords()[ii][aa];
     cart_coords[center_idx_modify][direction_idx_modify] += delta;
     structure = ai2pot::Structure<real>(num_atoms, basis_vectors, atomic_numbers, cart_coords, true);   
     neighbor_list = ai2pot::NeighborList<real>(structure, rcut, bin_size_xyz, pbc_xyz, true);
-    neighbor_list.find_info4mlff(
-        inum,
-        ilist,
-        numneigh,
-        firstneigh,
-        rcs,
-        types,
-        nghost,
-        umax_num_neigh_atoms);
+    for (int bb=0; bb<batch_size; bb++)
+        neighbor_list.find_info4mlff(
+            binum[bb],
+            &bilist[bb*natoms_pad],
+            &bnumneigh[bb*natoms_pad],
+            &bfirstneigh[bb*natoms_pad*umax_num_neigh_atoms],
+            &brcs[bb*natoms_pad*umax_num_neigh_atoms],
+            &btypes[bb*(natoms_pad + nghost)],
+            nghost,
+            umax_num_neigh_atoms);
     
     ai2pot::mtpr::find_ef_launcher<real>(
-        &etot_,
-        force_,
+        betot_,
+        bforce_,
         chebyshev_size,
         coeffs,
         linear_coeffs,
@@ -437,12 +440,14 @@ TEST_F(LinearMtpTest, find_ef_launcher)
         mtp_param.alpha_scalar_moments(),
         mtp_param.alpha_moment_mapping(),
         mtp_param.nmus(),
-        inum,
-        ilist,
-        numneigh,
-        firstneigh,
-        (real (*)[3])rcs,
-        types,
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        bnumneigh,
+        bfirstneigh,
+        (real (*)[3])brcs,
+        btypes,
         ntypes,
         type_map,
         umax_num_neigh_atoms,
@@ -450,20 +455,20 @@ TEST_F(LinearMtpTest, find_ef_launcher)
         rmax,
         rmin);
 
-printf("1.1. energy = %.15lf\n", etot);
-printf("1.1. force[%d][%d] calculated by custom code = %.15lf\n", center_idx_modify, direction_idx_modify, force[center_idx_modify][direction_idx_modify]);
-printf("1.2. energy = %.15lf\n", etot_);
-printf("1.2. force[%d][%d] calculated by finite difference method = %.15lf\n", center_idx_modify, direction_idx_modify, -(etot_ - etot) / delta);
+printf("1.1. energy = %.15lf\n", betot[0]);
+printf("1.1. force[%d][%d] calculated by custom code = %.15lf\n", center_idx_modify, direction_idx_modify, bforce[0*natoms_pad + center_idx_modify][direction_idx_modify]);
+printf("1.2. energy = %.15lf\n", betot_[0]);
+printf("1.2. force[%d][%d] calculated by finite difference method = %.15lf\n", center_idx_modify, direction_idx_modify, -(betot_[0] - betot[0]) / delta);
 
 printf("\n\nfind_ef_launcher():\n");
-printf("\t2.1. Energy = %.15f\n", etot);
+printf("\t2.1. Energy = %.15f\n", betot[0]);
 printf("\t2.2. Force =\n");
-for (int ii=0; ii<inum; ii++)
-    printf("\t\t%3d: [%.15f, %.15f, %.15f]\n", ii, force[ii][0], force[ii][1], force[ii][2]);
-
+for (int ii=0; ii<natoms_pad; ii++)
+    printf("\t\t%3d: [%.15f, %.15f, %.15f]\n", ii, bforce[0*natoms_pad + ii][0], bforce[0*natoms_pad + ii][1], bforce[0*natoms_pad + ii][2]);
 }
 
 
+/*
 TEST_F(LinearMtpTest, find_loss_backward_launcer)
 {
     real e_weight = 1.0;

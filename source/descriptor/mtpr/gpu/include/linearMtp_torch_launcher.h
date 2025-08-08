@@ -55,8 +55,8 @@ void find_efv_torch_launcher(
 
 template <typename CoordType>
 void find_ef_torch_launcher(
-    CoordType *d_etot_ptr,
-    CoordType (*d_force)[3],
+    CoordType *d_betot_ptr,
+    CoordType (*d_bforce)[3],
     int chebyshev_size,
     CoordType *d_coeffs,
     CoordType *d_linear_coeffs,
@@ -69,7 +69,9 @@ void find_ef_torch_launcher(
     const int alpha_scalar_moments,
     const int *d_alpha_moment_mapping,
     int nmus,
-    int inum,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
     int *d_ilist,
     int *d_numneigh,
     int *d_firstneigh,

@@ -113,7 +113,9 @@ void find_ef_torch_launcher(
     const int alpha_scalar_moments,
     const int *d_alpha_moment_mapping,
     int nmus,
-    int inum,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
     int *d_ilist,
     int *d_numneigh,
     int *d_firstneigh,
@@ -127,7 +129,7 @@ void find_ef_torch_launcher(
     CoordType rmin)
 {
     int block_size_x = 64;
-    int grid_size_x = (inum - 1) / block_size_x + 1;
+    int grid_size_x = (batch_size*natoms_pad - 1) / block_size_x + 1;
     dim3 grid_size(grid_size_x);
     dim3 block_size(block_size_x);
 
@@ -146,7 +148,9 @@ void find_ef_torch_launcher(
         alpha_scalar_moments,
         d_alpha_moment_mapping,
         nmus,
-        inum,
+        batch_size,
+        natoms_pad,
+        d_binum,
         d_ilist,
         d_numneigh,
         d_firstneigh,
