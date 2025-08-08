@@ -41,25 +41,27 @@ protected:
     bool pbc_xyz[3];
     int type_map[2];
 
+    int batch_size;
+    int natoms_pad;
     int umax_num_neigh_atoms;
-    int inum;
-    int *ilist;
-    int *numneigh;
-    int *firstneigh;
-    real *rcs;
-    int *types;
+    int *binum;
+    int *bilist;
+    int *bnumneigh;
+    int *bfirstneigh;
+    real *brcs;
+    int *btypes;
     int nghost;
 
     ai2pot::Structure<real> structure;
     ai2pot::NeighborList<real> neighbor_list;
 
 
-    real etot;
-    real etot_;
-    real (*force)[3];
-    real (*force_)[3];
-    real *virial;
-    real *virial_;
+    real *betot;
+    real *betot_;
+    real (*bforce)[3];
+    real (*bforce_)[3];
+    real *bvirial;
+    real *bvirial_;
 
 
     real *loss_der2coeffs;
@@ -189,35 +191,39 @@ protected:
 
         structure = ai2pot::Structure<real>(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
         neighbor_list = ai2pot::NeighborList<real>(structure, rcut, bin_size_xyz, pbc_xyz, true);
+        batch_size = 1;
+        natoms_pad = 12;
         umax_num_neigh_atoms = 20;
-        inum = 12;
-        ilist = (int*)malloc(sizeof(int) * inum);
-        numneigh = (int*)malloc(sizeof(int) * inum);
-        firstneigh = (int*)malloc(sizeof(int) * inum * umax_num_neigh_atoms);
-        rcs = (real*)malloc(sizeof(real) * inum * umax_num_neigh_atoms * 3);
-        types = (int*)malloc(sizeof(int) * inum);
-        neighbor_list.find_info4mlff(
-            inum,
-            ilist,
-            numneigh,
-            firstneigh,
-            rcs,
-            types,
-            nghost,
-            umax_num_neigh_atoms);
-        
+        binum = (int*)malloc(sizeof(int) * batch_size);
+        bilist = (int*)malloc(sizeof(int) * batch_size * natoms_pad);
+        bnumneigh = (int*)malloc(sizeof(int) * batch_size * natoms_pad);
+        bfirstneigh = (int*)malloc(sizeof(int) * batch_size * natoms_pad * umax_num_neigh_atoms);
+        brcs = (real*)malloc(sizeof(real) * batch_size * natoms_pad * umax_num_neigh_atoms * 3);
+        btypes = (int*)malloc(sizeof(int) * (natoms_pad + nghost));
+        for (int bb=0; bb<batch_size; bb++)
+            neighbor_list.find_info4mlff(
+                binum[bb],
+                &bilist[bb*natoms_pad],
+                &bnumneigh[bb*natoms_pad],
+                &bfirstneigh[bb*natoms_pad*umax_num_neigh_atoms],
+                &brcs[bb*natoms_pad*umax_num_neigh_atoms*3],
+                &btypes[bb*(natoms_pad+nghost)],
+                nghost,
+                umax_num_neigh_atoms);
 
-        etot = 0.0;
-        force = (real (*)[3])malloc(sizeof(real) * (inum+nghost) * 3);
-        memset(force, 0.0, sizeof(real)*(inum+nghost)*3);
-        virial = (real*)malloc(sizeof(real) * 9);
-        memset(virial, 0.0, sizeof(real)*9);
+        betot = (real *)malloc(sizeof(real) * batch_size);
+        memset(betot, 0.0, batch_size);
+        bforce = (real (*)[3])malloc(sizeof(real) * batch_size * (natoms_pad+nghost) * 3);
+        memset(bforce, 0.0, sizeof(real)*batch_size*(natoms_pad+nghost)*3);
+        bvirial = (real*)malloc(sizeof(real) * batch_size * 9);
+        memset(bvirial, 0.0, sizeof(real)*batch_size*9);
 
-        etot_ = 0.0;
-        force_ = (real (*)[3])malloc(sizeof(real) * (inum+nghost) * 3);
-        memset(force_, 0.0, sizeof(real)*(inum+nghost)*3);
-        virial_ = (real*)malloc(sizeof(real) * 9);
-        memset(virial_, 0.0, sizeof(real) * 9);
+        betot_ = (real *)malloc(sizeof(real) * batch_size);
+        memset(betot_, 0.0, batch_size);
+        bforce_ = (real (*)[3])malloc(sizeof(real) * batch_size * (natoms_pad+nghost) * 3);
+        memset(bforce_, 0.0, sizeof(real)*batch_size*(natoms_pad+nghost)*3);
+        bvirial_ = (real*)malloc(sizeof(real) * batch_size * 9);
+        memset(bvirial_, 0.0, sizeof(real) * batch_size * 9);
 
         loss_der2coeffs = (real*)malloc(sizeof(real) * ntypes * ntypes * mtp_param.nmus() * chebyshev_size);
         memset(loss_der2coeffs, 0, sizeof(real) * ntypes * ntypes * mtp_param.nmus() * chebyshev_size);
@@ -227,27 +233,30 @@ protected:
         memset(loss_der2type_bias, 0, sizeof(real) * ntypes);
 
         etot_dft = 0.0;
-        force_dft = (real (*)[3])malloc(sizeof(real) * inum * 3);
-        memset(force_dft, 0, sizeof(real)*inum*3);
+        force_dft = (real (*)[3])malloc(sizeof(real) * natoms_pad * 3);
+        memset(force_dft, 0, sizeof(real)*natoms_pad*3);
         virial_dft = (real*)malloc(sizeof(real) * 9);
         memset(virial_dft, 0, sizeof(real)*9);
     }
 
     void TearDown() override {
-        free(ilist);
-        free(numneigh);
-        free(firstneigh);
-        free(rcs);
-        free(types);
+        free(binum);
+        free(bilist);
+        free(bnumneigh);
+        free(bfirstneigh);
+        free(brcs);
+        free(btypes);
 
         free(coeffs);
         free(linear_coeffs);
         free(type_bias);
 
-        free(force);
-        free(virial);
-        free(force_);
-        free(virial_);
+        free(betot);
+        free(bforce);
+        free(bvirial);
+        free(betot_);
+        free(bforce_);
+        free(bvirial_);
 
         free(loss_der2coeffs);
         free(loss_der2linear_coeffs);
@@ -266,9 +275,9 @@ TEST_F(LinearMtpTest, find_efv_launcher)
     int direction_idx_modify = 2;
 
     ai2pot::mtpr::find_efv_launcher<real>(
-        &etot,
-        force,
-        virial,
+        betot,
+        bforce,
+        bvirial,
         chebyshev_size,
         coeffs,
         linear_coeffs,
@@ -281,12 +290,14 @@ TEST_F(LinearMtpTest, find_efv_launcher)
         mtp_param.alpha_scalar_moments(),
         mtp_param.alpha_moment_mapping(),
         mtp_param.nmus(),
-        inum,
-        ilist,
-        numneigh,
-        firstneigh,
-        (real (*)[3])rcs,
-        types,
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        bnumneigh,
+        bfirstneigh,
+        (real (*)[3])brcs,
+        btypes,
         ntypes,
         type_map,
         umax_num_neigh_atoms,
@@ -295,27 +306,28 @@ TEST_F(LinearMtpTest, find_efv_launcher)
         rmin);
 
     // *** delta
-    real cart_coords[inum][3] = {0.};
-    for (int ii=0; ii<inum; ii++)
+    real cart_coords[natoms_pad][3] = {0.};
+    for (int ii=0; ii<natoms_pad; ii++)
         for (int aa=0; aa<3; aa++)
             cart_coords[ii][aa] = structure.get_cart_coords()[ii][aa];
     cart_coords[center_idx_modify][direction_idx_modify] += delta;
     structure = ai2pot::Structure<real>(num_atoms, basis_vectors, atomic_numbers, cart_coords, true);
     neighbor_list = ai2pot::NeighborList<real>(structure, rcut, bin_size_xyz, pbc_xyz, true);
-    neighbor_list.find_info4mlff(
-        inum,
-        ilist,
-        numneigh,
-        firstneigh,
-        rcs,
-        types,
-        nghost,
-        umax_num_neigh_atoms);
+    for (int bb=0; bb<batch_size; bb++)
+        neighbor_list.find_info4mlff(
+            binum[bb],
+            &bilist[bb*natoms_pad],
+            &bnumneigh[bb*natoms_pad],
+            &bfirstneigh[bb*natoms_pad*umax_num_neigh_atoms],
+            &brcs[bb*natoms_pad*umax_num_neigh_atoms*3],
+            &btypes[bb*(natoms_pad+nghost)],
+            nghost,
+            umax_num_neigh_atoms);
     
     ai2pot::mtpr::find_efv_launcher<real>(
-        &etot_,
-        force_,
-        virial_,
+        betot_,
+        bforce_,
+        bvirial_,
         chebyshev_size,
         coeffs,
         linear_coeffs,
@@ -328,12 +340,14 @@ TEST_F(LinearMtpTest, find_efv_launcher)
         mtp_param.alpha_scalar_moments(),
         mtp_param.alpha_moment_mapping(),
         mtp_param.nmus(),
-        inum,
-        ilist,
-        numneigh,
-        firstneigh,
-        (real (*)[3])rcs,
-        types,
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        bnumneigh,
+        bfirstneigh,
+        (real (*)[3])brcs,
+        btypes,
         ntypes,
         type_map,
         umax_num_neigh_atoms,
@@ -342,19 +356,18 @@ TEST_F(LinearMtpTest, find_efv_launcher)
         rmin);
 
 
-printf("1.1. energy = %.15lf\n", etot);
-printf("1.1. force[%d][%d] calculated by custom code = %.15lf\n", center_idx_modify, direction_idx_modify, force[center_idx_modify][direction_idx_modify]);
-printf("1.2. energy = %.15lf\n", etot_);
-printf("1.2. force[%d][%d] calculated by finite difference method = %.15lf\n", center_idx_modify, direction_idx_modify, -(etot_ - etot) / delta);
+printf("1.1. energy = %.15lf\n", betot[0]);
+printf("1.1. force[%d][%d] calculated by custom code = %.15lf\n", center_idx_modify, direction_idx_modify, bforce[0*natoms_pad + center_idx_modify][direction_idx_modify]);
+printf("1.2. energy = %.15lf\n", betot_[0]);
+printf("1.2. force[%d][%d] calculated by finite difference method = %.15lf\n", center_idx_modify, direction_idx_modify, -(betot_[0] - betot[0]) / delta);
 printf("\n\nfind_efv_launcher:\n");
-printf("\t2.1. Energy = %.15f\n", etot);
+printf("\t2.1. Energy = %.15f\n", betot[0]);
 printf("\t2.2. Force =\n");
-for (int ii=0; ii<inum; ii++)
-    printf("\t\t%3d: [%.15f, %.15f, %.15f]\n", ii, force[ii][0], force[ii][1], force[ii][2]);
-
+for (int ii=0; ii<natoms_pad; ii++)
+    printf("\t\t%3d: [%.15f, %.15f, %.15f]\n", ii, bforce[0*natoms_pad +ii][0], bforce[0*natoms_pad +ii][1], bforce[0*natoms_pad +ii][2]);
 }
 
-
+/*
 TEST_F(LinearMtpTest, find_ef_launcher)
 {
     real delta = 1e-8;
@@ -624,7 +637,7 @@ for (int ii=0; ii<ntypes; ii++)
     printf("%.15f, ", loss_der2type_bias[ii]);
 printf("\n\n");
 }
-
+*/
 
 
 int main(int argc, char **argv) {

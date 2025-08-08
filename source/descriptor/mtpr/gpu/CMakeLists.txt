@@ -19,6 +19,7 @@ if (USE_CUDA AND CUDA_FOUND)
     target_compile_definitions(linear_mtp_torch_launcher PRIVATE USE_CUDA MAX_MTP_LEVEL=${MAX_MTP_LEVEL})
 endif()
 
+
 add_library(linear_mtp_loss_torch_launcher SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/linearMtpLoss_torch_launcher.cu)
 set_target_properties(linear_mtp_loss_torch_launcher PROPERTIES
     CUDA_SEPERATE_COMPILATION on

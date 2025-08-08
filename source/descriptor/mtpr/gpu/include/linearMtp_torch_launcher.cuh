@@ -25,9 +25,9 @@ namespace mtpr {
 template <typename CoordType>
 __host__
 void find_efv_torch_launcher(
-    CoordType *d_etot_ptr,
-    CoordType (*d_force)[3],
-    CoordType *d_virial,
+    CoordType *d_betot_ptr,
+    CoordType (*d_bforce)[3],
+    CoordType *d_bvirial,
     int chebyshev_size,
     CoordType *d_coeffs,
     CoordType *d_linear_coeffs,
@@ -40,12 +40,14 @@ void find_efv_torch_launcher(
     const int alpha_scalar_moments,
     const int *d_alpha_moment_mapping,
     int nmus,
-    int inum,
-    int *d_ilist,
-    int *d_numneigh,
-    int *d_firstneigh,
-    CoordType (*d_rcs)[3],
-    int *d_types,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    int *d_bnumneigh,
+    int *d_bfirstneigh,
+    CoordType (*d_brcs)[3],
+    int *d_btypes,
     int ntypes,
     int *d_type_map,
     int umax_num_neigh_atoms,
@@ -54,14 +56,14 @@ void find_efv_torch_launcher(
     CoordType rmin)
 {
     int block_size_x = 64;
-    int grid_size_x = (inum - 1) / block_size_x + 1;
+    int grid_size_x = (batch_size*natoms_pad - 1) / block_size_x + 1;
     dim3 grid_size(grid_size_x);
     dim3 block_size(block_size_x);
 
     find_efv_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (
-        d_etot_ptr,
-        d_force,
-        d_virial,
+        d_betot_ptr,
+        d_bforce,
+        d_bvirial,
         chebyshev_size,
         d_coeffs,
         d_linear_coeffs,
@@ -74,12 +76,14 @@ void find_efv_torch_launcher(
         alpha_scalar_moments,
         d_alpha_moment_mapping,
         nmus,
-        inum,
-        d_ilist,
-        d_numneigh,
-        d_firstneigh,
-        d_rcs,
-        d_types,
+        batch_size,
+        natoms_pad,
+        d_binum,
+        d_bilist,
+        d_bnumneigh,
+        d_bfirstneigh,
+        d_brcs,
+        d_btypes,
         ntypes,
         d_type_map,
         umax_num_neigh_atoms,
