@@ -491,7 +491,7 @@ torch::autograd::variable_list NNMtpToEFLossFunction::forward(
 {
     // 1.
     int batch_size = (int)bfirstneigh_tensor.size(0);
-    int num_atoms = (int)bfirstneigh_tensor.size(1);
+    int natoms_pad = (int)bfirstneigh_tensor.size(1);
     int umax_num_neigh_atoms = (int)bfirstneigh_tensor.size(2);
     int ntypes = (int)type_map_tensor.size(0);
     int *type_map = type_map_tensor.data_ptr<int>();
@@ -524,7 +524,7 @@ torch::autograd::variable_list NNMtpToEFLossFunction::forward(
         bloss_tensor = at::zeros({batch_size}, float_options);
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
         tmp_etot_ml_tensor = at::tensor(0, float_options);
-        tmp_force_ml_tensor = at::zeros({num_atoms + nghost, 3}, float_options);
+        tmp_force_ml_tensor = at::zeros({natoms_pad + nghost, 3}, float_options);
 #endif
         float *coeffs = coeffs_tensor.data_ptr<float>();
         float *w0 = w0_tensor.data_ptr<float>();
@@ -657,7 +657,7 @@ torch::autograd::variable_list NNMtpToEFLossFunction::forward(
         bloss_tensor = at::zeros({batch_size}, float_options);
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
         tmp_etot_ml_tensor = at::tensor(0, float_options);
-        tmp_force_ml_tensor = at::zeros({num_atoms + nghost, 3}, float_options);
+        tmp_force_ml_tensor = at::zeros({natoms_pad + nghost, 3}, float_options);
 #endif
         double *coeffs = coeffs_tensor.data_ptr<double>();
         double *w0 = w0_tensor.data_ptr<double>();
@@ -860,7 +860,7 @@ torch::autograd::variable_list NNMtpToEFLossFunction::backward(
     
     // 1. 
     int batch_size = (int)bfirstneigh_tensor.size(0);
-    int num_atoms = (int)bfirstneigh_tensor.size(1);
+    int natoms_pad = (int)bfirstneigh_tensor.size(1);
     int umax_num_neigh_atoms = (int)bfirstneigh_tensor.size(2);
     int ntypes = type_map_tensor.size(0);
     int *type_map = (int*)type_map_tensor.data_ptr<int>();
@@ -900,7 +900,7 @@ torch::autograd::variable_list NNMtpToEFLossFunction::backward(
         bloss_der2type_bias_tensor = at::zeros({batch_size, ntypes}, float_options);
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
         tmp_etot_ml_tensor = at::tensor(0, float_options);
-        tmp_force_ml_tensor = at::zeros({num_atoms + nghost, 3}, float_options);
+        tmp_force_ml_tensor = at::zeros({natoms_pad + nghost, 3}, float_options);
 #endif
         float *coeffs = (float*)coeffs_tensor.data_ptr<float>();
         float *w0 = (float*)w0_tensor.data_ptr<float>();
@@ -1068,7 +1068,7 @@ torch::autograd::variable_list NNMtpToEFLossFunction::backward(
         bloss_der2type_bias_tensor = at::zeros({batch_size, ntypes}, float_options);
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
         tmp_etot_ml_tensor = at::tensor(0, float_options);
-        tmp_force_ml_tensor = at::zeros({num_atoms + nghost, 3}, float_options);
+        tmp_force_ml_tensor = at::zeros({natoms_pad + nghost, 3}, float_options);
 #endif
         double *coeffs = (double*)coeffs_tensor.data_ptr<double>();
         double *w0 = (double*)w0_tensor.data_ptr<double>();
@@ -1295,7 +1295,7 @@ torch::autograd::variable_list NNMtpToLossFunction::forward(
 {
     // 1.
     int batch_size = (int)bfirstneigh_tensor.size(0);
-    int num_atoms = (int)bfirstneigh_tensor.size(1);
+    int natoms_pad = (int)bfirstneigh_tensor.size(1);
     int umax_num_neigh_atoms = (int)bfirstneigh_tensor.size(2);
     int ntypes = (int)type_map_tensor.size(0);
     int *type_map = type_map_tensor.data_ptr<int>();
@@ -1329,7 +1329,7 @@ torch::autograd::variable_list NNMtpToLossFunction::forward(
         bloss_tensor = at::zeros({batch_size}, float_options);
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
         tmp_etot_ml_tensor = at::tensor(0, float_options);
-        tmp_force_ml_tensor = at::zeros({num_atoms + nghost, 3}, float_options);
+        tmp_force_ml_tensor = at::zeros({natoms_pad + nghost, 3}, float_options);
         tmp_virial_ml_tensor = at::zeros({9}, float_options);
 #endif
         float *coeffs = coeffs_tensor.data_ptr<float>();
@@ -1472,7 +1472,7 @@ torch::autograd::variable_list NNMtpToLossFunction::forward(
         bloss_tensor = at::zeros({batch_size}, float_options);
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
         tmp_etot_ml_tensor = at::tensor(0, float_options);
-        tmp_force_ml_tensor = at::zeros({num_atoms + nghost, 3}, float_options);
+        tmp_force_ml_tensor = at::zeros({natoms_pad + nghost, 3}, float_options);
         tmp_virial_ml_tensor = at::zeros({9}, float_options);
 #endif
         double *coeffs = coeffs_tensor.data_ptr<double>();
@@ -1691,7 +1691,7 @@ torch::autograd::variable_list NNMtpToLossFunction::backward(
 
     // 1. 
     int batch_size = (int)bfirstneigh_tensor.size(0);
-    int num_atoms = (int)bfirstneigh_tensor.size(1);
+    int natoms_pad = (int)bfirstneigh_tensor.size(1);
     int umax_num_neigh_atoms = (int)bfirstneigh_tensor.size(2);
     int ntypes = type_map_tensor.size(0);
     int *type_map = (int*)type_map_tensor.data_ptr<int>();
@@ -1732,7 +1732,7 @@ torch::autograd::variable_list NNMtpToLossFunction::backward(
         bloss_der2type_bias_tensor = at::zeros({batch_size, ntypes}, float_options);
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
         tmp_etot_ml_tensor = at::tensor(0, float_options);
-        tmp_force_ml_tensor = at::zeros({num_atoms + nghost, 3}, float_options);
+        tmp_force_ml_tensor = at::zeros({natoms_pad + nghost, 3}, float_options);
         tmp_virial_ml_tensor = at::zeros({9}, float_options);
 #endif
         float *coeffs = (float*)coeffs_tensor.data_ptr<float>();
@@ -1912,7 +1912,7 @@ torch::autograd::variable_list NNMtpToLossFunction::backward(
         bloss_der2type_bias_tensor = at::zeros({batch_size, ntypes}, float_options);
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
         tmp_etot_ml_tensor = at::tensor(0, float_options);
-        tmp_force_ml_tensor = at::zeros({num_atoms + nghost, 3}, float_options);
+        tmp_force_ml_tensor = at::zeros({natoms_pad + nghost, 3}, float_options);
         tmp_virial_ml_tensor = at::zeros({9}, float_options);
 #endif
         double *coeffs = (double*)coeffs_tensor.data_ptr<double>();
@@ -2148,7 +2148,7 @@ torch::autograd::variable_list NNMtpToEFVFunction::forward(
 {
     // 1.
     int batch_size = (int)bfirstneigh_tensor.size(0);
-    int num_atoms = (int)bfirstneigh_tensor.size(1);
+    int natoms_pad = (int)bfirstneigh_tensor.size(1);
     int umax_num_neigh_atoms = (int)bfirstneigh_tensor.size(2);
     int ntypes = (int)type_map_tensor.size(0);
     int *type_map = type_map_tensor.data_ptr<int>();
@@ -2177,7 +2177,7 @@ torch::autograd::variable_list NNMtpToEFVFunction::forward(
                         .dtype(torch::kFloat32)
                         .device(brcs_tensor.device());
         betot_ml_tensor = at::zeros({batch_size}, float_options);
-        bforce_ml_tensor = at::zeros({batch_size, num_atoms+nghost, 3}, float_options);
+        bforce_ml_tensor = at::zeros({batch_size, natoms_pad+nghost, 3}, float_options);
         bvirial_ml_tensor = at::zeros({batch_size, 9}, float_options);
         float *coeffs = coeffs_tensor.data_ptr<float>();
         float *w0 = w0_tensor.data_ptr<float>();
@@ -2291,7 +2291,7 @@ torch::autograd::variable_list NNMtpToEFVFunction::forward(
                         .dtype(torch::kFloat64)
                         .device(brcs_tensor.device());
         betot_ml_tensor = at::zeros({batch_size}, float_options);
-        bforce_ml_tensor = at::zeros({batch_size, num_atoms+nghost, 3}, float_options);
+        bforce_ml_tensor = at::zeros({batch_size, natoms_pad+nghost, 3}, float_options);
         bvirial_ml_tensor = at::zeros({batch_size, 9}, float_options);
         double *coeffs = coeffs_tensor.data_ptr<double>();
         double *w0 = w0_tensor.data_ptr<double>();
@@ -2499,7 +2499,7 @@ torch::autograd::variable_list NNMtpToEFFunction::forward(
 {
     // 1.
     int batch_size = (int)bfirstneigh_tensor.size(0);
-    int num_atoms = (int)bfirstneigh_tensor.size(1);
+    int natoms_pad = (int)bfirstneigh_tensor.size(1);
     int umax_num_neigh_atoms = (int)bfirstneigh_tensor.size(2);
     int ntypes = (int)type_map_tensor.size(0);
     int *type_map = type_map_tensor.data_ptr<int>();
@@ -2527,7 +2527,7 @@ torch::autograd::variable_list NNMtpToEFFunction::forward(
                         .dtype(torch::kFloat32)
                         .device(brcs_tensor.device());
         betot_ml_tensor = at::zeros({batch_size}, float_options);
-        bforce_ml_tensor = at::zeros({batch_size, num_atoms+nghost, 3}, float_options);
+        bforce_ml_tensor = at::zeros({batch_size, natoms_pad+nghost, 3}, float_options);
         float *coeffs = coeffs_tensor.data_ptr<float>();
         float *w0 = w0_tensor.data_ptr<float>();
         float *w1 = w1_tensor.data_ptr<float>();
@@ -2636,7 +2636,7 @@ torch::autograd::variable_list NNMtpToEFFunction::forward(
                         .dtype(torch::kFloat64)
                         .device(brcs_tensor.device());
         betot_ml_tensor = at::zeros({batch_size}, float_options);
-        bforce_ml_tensor = at::zeros({batch_size, num_atoms+nghost, 3}, float_options);
+        bforce_ml_tensor = at::zeros({batch_size, natoms_pad+nghost, 3}, float_options);
         double *coeffs = coeffs_tensor.data_ptr<double>();
         double *w0 = w0_tensor.data_ptr<double>();
         double *w1 = w1_tensor.data_ptr<double>();
@@ -2833,7 +2833,7 @@ torch::autograd::variable_list NNMtpToDescriptorsFunction::forward(
 {
     // 1. 
     int nbatches = binum_tensor.size(0);
-    int num_atoms = bfirstneigh_tensor.size(1);
+    int natoms_pad = bfirstneigh_tensor.size(1);
     int alpha_index_basic_count = alpha_index_basic_tensor.size(0);
     int alpha_index_times_count = alpha_index_times_tensor.size(0);
     int alpha_scalar_moments = alpha_moment_mapping_tensor.size(0);
@@ -2855,7 +2855,7 @@ torch::autograd::variable_list NNMtpToDescriptorsFunction::forward(
         float_options = c10::TensorOptions()
                         .dtype(torch::kFloat32)
                         .device(brcs_tensor.device());
-        bdescriptors_tensor = at::zeros({nbatches, num_atoms, alpha_scalar_moments}, float_options);
+        bdescriptors_tensor = at::zeros({nbatches, natoms_pad, alpha_scalar_moments}, float_options);
         const int (*alpha_index_basic)[4] = (int (*)[4])alpha_index_basic_tensor.data_ptr<int>();
         const int (*alpha_index_times)[4] = (int (*)[4])alpha_index_times_tensor.data_ptr<int>();
         const int *alpha_moment_mapping = (int*)alpha_moment_mapping_tensor.data_ptr<int>();
@@ -2908,7 +2908,7 @@ torch::autograd::variable_list NNMtpToDescriptorsFunction::forward(
         float_options = c10::TensorOptions()
                         .dtype(torch::kFloat64)
                         .device(brcs_tensor.device());
-        bdescriptors_tensor = at::zeros({nbatches, num_atoms, alpha_scalar_moments}, float_options);
+        bdescriptors_tensor = at::zeros({nbatches, natoms_pad, alpha_scalar_moments}, float_options);
         const int (*alpha_index_basic)[4] = (int (*)[4])alpha_index_basic_tensor.data_ptr<int>();
         const int (*alpha_index_times)[4] = (int (*)[4])alpha_index_times_tensor.data_ptr<int>();
         const int *alpha_moment_mapping = (int*)alpha_moment_mapping_tensor.data_ptr<int>();
@@ -3045,7 +3045,7 @@ torch::autograd::variable_list NNMtpToEsitesFunction::forward(
 {
     // 1. 
     int batch_size = (int)bfirstneigh_tensor.size(0);
-    int num_atoms = (int)bfirstneigh_tensor.size(1);
+    int natoms_pad = (int)bfirstneigh_tensor.size(1);
     int umax_num_neigh_atoms = (int)bfirstneigh_tensor.size(2);
     int alpha_index_basic_count = (int)alpha_index_basic_tensor.size(0);
     int (*alpha_index_basic)[4] = (int (*)[4])alpha_index_basic_tensor.data_ptr<int>();
@@ -3072,7 +3072,7 @@ torch::autograd::variable_list NNMtpToEsitesFunction::forward(
         float_options = c10::TensorOptions()
                         .dtype(torch::kFloat32)
                         .device(brcs_tensor.device());
-        be_sites_tensor = at::zeros({batch_size, num_atoms}, float_options);
+        be_sites_tensor = at::zeros({batch_size, natoms_pad}, float_options);
         float *coeffs = (float*)coeffs_tensor.data_ptr<float>();
         float *w0 = (float*)w0_tensor.data_ptr<float>();
         float *w1 = (float*)w1_tensor.data_ptr<float>();
@@ -3127,7 +3127,7 @@ torch::autograd::variable_list NNMtpToEsitesFunction::forward(
         float_options = c10::TensorOptions()
                         .dtype(torch::kFloat64)
                         .device(brcs_tensor.device());
-        be_sites_tensor = at::zeros({batch_size, num_atoms}, float_options);
+        be_sites_tensor = at::zeros({batch_size, natoms_pad}, float_options);
         double *coeffs = (double*)coeffs_tensor.data_ptr<double>();
         double *w0 = (double*)w0_tensor.data_ptr<double>();
         double *w1 = (double*)w1_tensor.data_ptr<double>();
@@ -3249,7 +3249,7 @@ torch::autograd::variable_list NNMtpToEsitesFunction::backward(
     
     // 1. 
     int batch_size = bfirstneigh_tensor.size(0);
-    int num_atoms = bfirstneigh_tensor.size(1);
+    int natoms_pad = bfirstneigh_tensor.size(1);
     int umax_num_neigh_atoms = bfirstneigh_tensor.size(2);
     int ntypes = (int)type_map_tensor.size(0);
     int *type_map = (int*)type_map_tensor.data_ptr<int>();
@@ -3279,10 +3279,10 @@ torch::autograd::variable_list NNMtpToEsitesFunction::backward(
         float_options = c10::TensorOptions()
                         .dtype(torch::kFloat32)
                         .device(brcs_tensor.device());
-        be_sites_der2coeffs_tensor = at::zeros({batch_size, num_atoms, num_coeffs}, float_options);
-        be_sites_der2w0_tensor = at::zeros({batch_size, num_atoms, ntypes * num_neurons * alpha_scalar_moments}, float_options);
-        be_sites_der2w1_tensor = at::zeros({batch_size, num_atoms, ntypes * num_neurons}, float_options);
-        be_sites_der2type_bias_tensor = at::zeros({batch_size, num_atoms, ntypes}, float_options);
+        be_sites_der2coeffs_tensor = at::zeros({batch_size, natoms_pad, num_coeffs}, float_options);
+        be_sites_der2w0_tensor = at::zeros({batch_size, natoms_pad, ntypes * num_neurons * alpha_scalar_moments}, float_options);
+        be_sites_der2w1_tensor = at::zeros({batch_size, natoms_pad, ntypes * num_neurons}, float_options);
+        be_sites_der2type_bias_tensor = at::zeros({batch_size, natoms_pad, ntypes}, float_options);
         float *coeffs = (float*)coeffs_tensor.data_ptr<float>();
         float *w0 = (float*)w0_tensor.data_ptr<float>();
         float *w1 = (float*)w1_tensor.data_ptr<float>();
@@ -3342,10 +3342,10 @@ torch::autograd::variable_list NNMtpToEsitesFunction::backward(
         float_options = c10::TensorOptions()
                         .dtype(torch::kFloat64)
                         .device(brcs_tensor.device());
-        be_sites_der2coeffs_tensor = at::zeros({batch_size, num_atoms, num_coeffs}, float_options);
-        be_sites_der2w0_tensor = at::zeros({batch_size, num_atoms, ntypes * num_neurons * alpha_scalar_moments}, float_options);
-        be_sites_der2w1_tensor = at::zeros({batch_size, num_atoms, ntypes * num_neurons}, float_options);
-        be_sites_der2type_bias_tensor = at::zeros({batch_size, num_atoms, ntypes}, float_options);
+        be_sites_der2coeffs_tensor = at::zeros({batch_size, natoms_pad, num_coeffs}, float_options);
+        be_sites_der2w0_tensor = at::zeros({batch_size, natoms_pad, ntypes * num_neurons * alpha_scalar_moments}, float_options);
+        be_sites_der2w1_tensor = at::zeros({batch_size, natoms_pad, ntypes * num_neurons}, float_options);
+        be_sites_der2type_bias_tensor = at::zeros({batch_size, natoms_pad, ntypes}, float_options);
         double *coeffs = (double*)coeffs_tensor.data_ptr<double>();
         double *w0 = (double*)w0_tensor.data_ptr<double>();
         double *w1 = (double*)w1_tensor.data_ptr<double>();
