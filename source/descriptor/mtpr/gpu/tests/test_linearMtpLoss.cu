@@ -10,18 +10,20 @@
 class LinearMtpLossTest : public ::testing::Test
 {
 protected:
-    double loss;
-    int inum;
-    int *ilist;
+    double *bloss;
+    int batch_size;
+    int natoms_pad;
+    int *binum;
+    int *bilist;
     double e_weight;
     double f_weight;
     double v_weight;
-    double etot_ml;
-    double etot_dft;
-    double (*force_ml)[3];
-    double (*force_dft)[3];
-    double *virial_ml;
-    double *virial_dft;
+    double *betot_ml;
+    double *betot_dft;
+    double (*bforce_ml)[3];
+    double (*bforce_dft)[3];
+    double *bvirial_ml;
+    double *bvirial_dft;
 
     static void SetUpTestSuite() {
         std::cout << "LinearMtpLossTest (TestSuite) is setting up...\n";
@@ -32,77 +34,100 @@ protected:
     }
 
     void SetUp() override {
-        loss = 0.0;
-        inum = 12;
-        ilist = (int*)malloc(sizeof(int) * inum);
-        for (int ii=0; ii<inum; ii++)
-            ilist[ii] = ii;
+        bloss = (double*)malloc(sizeof(double) * batch_size);
+        batch_size = 1;
+        natoms_pad = 12;
+        binum = (int*)malloc(sizeof(int) * batch_size);
+        for (int bb=0; bb<batch_size; bb++)
+            binum[bb] = 12;
+        bilist = (int*)malloc(sizeof(int) * batch_size * natoms_pad);
+        for (int bb=0; bb<batch_size; bb++)
+            for (int ii=0; ii<natoms_pad; ii++)
+                bilist[ii] = ii;
         e_weight = 1.0;
         f_weight = 1.0;
         v_weight = 1.0;
-        etot_ml = 100;
-        etot_dft = 102;
+        betot_ml = (double*)malloc(sizeof(double) * batch_size);
+        betot_ml[0] = 100;
+        betot_dft = (double*)malloc(sizeof(double) * batch_size);
+        betot_dft[0] = 102;
 
-        force_ml = (double (*)[3])malloc(sizeof(double) * inum * 3);
-        force_dft = (double (*)[3])malloc(sizeof(double) * inum * 3);
-        for (int ii=0; ii<inum; ii++) {
-            for (int aa=0; aa<3; aa++) {
-                force_ml[ii][aa] = 1.00;
-                force_dft[ii][aa] = 1.02 + ii*0.01;
+        bforce_ml = (double (*)[3])malloc(sizeof(double) * batch_size * natoms_pad * 3);
+        bforce_dft = (double (*)[3])malloc(sizeof(double) * batch_size * natoms_pad * 3);
+        for (int bb=0; bb<batch_size; bb++) {
+            for (int ii=0; ii<natoms_pad; ii++) {
+                for (int aa=0; aa<3; aa++) {
+                    bforce_ml[bb*natoms_pad + ii][aa] = 1.00;
+                    bforce_dft[bb*natoms_pad + ii][aa] = 1.02 + ii*0.01;
+                }
             }
         }
 
-        virial_ml = (double*)malloc(sizeof(double) * 9);
-        virial_dft = (double*)malloc(sizeof(double) * 9);
-        for (int aa=0; aa<3; aa++) {
-            for (int bb=0; bb<3; bb++) {
-                virial_ml[aa*3 + bb] = 1.00;
-                virial_dft[aa*3 + bb] = 1.00 + (aa+bb)*0.01;
+        bvirial_ml = (double*)malloc(sizeof(double) * batch_size * 9);
+        bvirial_dft = (double*)malloc(sizeof(double) * batch_size * 9);
+        for (int b=0; b<batch_size; b++) {
+            for (int aa=0; aa<3; aa++) {
+                for (int bb=0; bb<3; bb++) {
+                    bvirial_ml[b*9 + aa*3 + bb] = 1.00;
+                    bvirial_dft[b*9 + aa*3 + bb] = 1.00 + (aa+bb)*0.01;
+                }
             }
         }
     }
 
     void TearDown() override {
-        free(ilist);
-        free(force_ml);
-        free(force_dft);
-        free(virial_ml);
-        free(virial_dft);
+        free(bloss);
+        free(binum);
+        free(bilist);
+        free(betot_ml);
+        free(betot_dft);
+        free(bforce_ml);
+        free(bforce_dft);
+        free(bvirial_ml);
+        free(bvirial_dft);
     }
 };  // class : LinearMtpLossTest
 
 
 
 TEST_F(LinearMtpLossTest, find_loss) {
-    ai2pot::mtpr::find_loss_launcher<double>(&loss,
-                                             inum,
-                                             ilist,
-                                             e_weight,
-                                             f_weight,
-                                             v_weight,
-                                             etot_ml,
-                                             etot_dft,
-                                             force_ml,
-                                             force_dft,
-                                             virial_ml,
-                                             virial_dft);
+    ai2pot::mtpr::find_loss_launcher<double>(
+        bloss,
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        e_weight,
+        f_weight,
+        v_weight,
+        betot_ml,
+        betot_dft,
+        bforce_ml,
+        bforce_dft,
+        bvirial_ml,
+        bvirial_dft);
 
-printf("1. Loss = %.15f\n", loss);
+printf("1. Loss = %.15f\n", bloss[0]);
 }
+
 
 
 TEST_F(LinearMtpLossTest, find_ef_loss) {
-    ai2pot::mtpr::find_ef_loss_launcher<double>(&loss,
-                                                inum,
-                                                ilist,
-                                                e_weight,
-                                                f_weight,
-                                                etot_ml,
-                                                etot_dft,
-                                                force_ml,
-                                                force_dft);
-printf("1. Loss = %.15f\n", loss);
+    ai2pot::mtpr::find_ef_loss_launcher<double>(
+        bloss,
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        e_weight,
+        f_weight,
+        betot_ml,
+        betot_dft,
+        bforce_ml,
+        bforce_dft);
+printf("1. Loss = %.15f\n", bloss[0]);
 }
+
 
 
 

@@ -18,57 +18,65 @@
 
 // 1. find_loss_torch_launcher()
 template void ai2pot::mtpr::find_loss_torch_launcher<float>(
-    float *d_loss_ptr,
-    int inum,
-    int *d_ilist,
+    float *d_bloss_ptr,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
     float e_weight,
     float f_weight,
     float v_weight,
-    float etot_ml,
-    float etot_dft,
-    float (*d_force_ml)[3],
-    float (*d_force_dft)[3],
-    float *d_virial_ml,
-    float *d_virial_dft);
+    float *d_betot_ml,
+    float *d_betot_dft,
+    float (*d_bforce_ml)[3],
+    float (*d_bforce_dft)[3],
+    float *d_bvirial_ml,
+    float *d_bvirial_dft);
 
 template void ai2pot::mtpr::find_loss_torch_launcher<double>(
-    double *d_loss_ptr,
-    int inum,
-    int *d_ilist,
+    double *d_bloss_ptr,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
     double e_weight,
     double f_weight,
     double v_weight,
-    double etot_ml,
-    double etot_dft,
-    double (*d_force_ml)[3],
-    double (*d_force_dft)[3],
-    double *d_virial_ml,
-    double *d_virial_dft);
+    double *d_betot_ml,
+    double *d_betot_dft,
+    double (*d_bforce_ml)[3],
+    double (*d_bforce_dft)[3],
+    double *d_bvirial_ml,
+    double *d_bvirial_dft);
 
 
 // 2. find_ef_loss_torch_launcher()
 template void ai2pot::mtpr::find_ef_loss_torch_launcher<float>(
-    float *d_loss_ptr,
-    int inum,
-    int *d_ilist,
+    float *d_bloss_ptr,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
     float e_weight,
     float f_weight,
-    float etot_ml,
-    float etot_dft,
-    float (*d_force_ml)[3],
-    float (*d_force_dft)[3]);
+    float *d_betot_ml,
+    float *d_betot_dft,
+    float (*d_bforce_ml)[3],
+    float (*d_bforce_dft)[3]);
 
 
 template void ai2pot::mtpr::find_ef_loss_torch_launcher<double>(
-    double *d_loss_ptr,
-    int inum,
-    int *d_ilist,
+    double *d_bloss_ptr,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
     double e_weight,
     double f_weight,
-    double etot_ml,
-    double etot_dft,
-    double (*d_force_ml)[3],
-    double (*d_force_dft)[3]);
+    double *d_betot_ml,
+    double *d_betot_dft,
+    double (*d_bforce_ml)[3],
+    double (*d_bforce_dft)[3]);
 
 
 // 3. find_loss_backward_torch_launcher()

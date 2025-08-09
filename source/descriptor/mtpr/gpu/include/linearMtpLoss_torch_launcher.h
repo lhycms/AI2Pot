@@ -22,31 +22,35 @@ namespace mtpr {
 
 template <typename CoordType>
 void find_loss_torch_launcher(
-    CoordType *d_loss_ptr,
-    int inum,
-    int *d_ilist,
+    CoordType *d_bloss_ptr,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
     CoordType e_weight,
     CoordType f_weight,
     CoordType v_weight,
-    CoordType etot_ml,
-    CoordType etot_dft,
-    CoordType (*d_force_ml)[3],
-    CoordType (*d_force_dft)[3],
-    CoordType *d_virial_ml,
-    CoordType *d_virial_dft);
+    CoordType *d_betot_ml,
+    CoordType *d_betot_dft,
+    CoordType (*d_bforce_ml)[3],
+    CoordType (*d_bforce_dft)[3],
+    CoordType *d_bvirial_ml,
+    CoordType *d_bvirial_dft);
 
 
 template <typename CoordType>
 void find_ef_loss_torch_launcher(
     CoordType *d_loss_ptr,
-    int inum,
-    int *d_ilist,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
     CoordType e_weight,
     CoordType f_weight,
-    CoordType etot_ml,
-    CoordType etot_dft,
-    CoordType (*d_force_ml)[3],
-    CoordType (*d_force_dft)[3]);
+    CoordType *d_betot_ml,
+    CoordType *d_betot_dft,
+    CoordType (*d_bforce_ml)[3],
+    CoordType (*d_bforce_dft)[3]);
 
 
 template <typename CoordType>
