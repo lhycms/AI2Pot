@@ -194,12 +194,13 @@ protected:
         batch_size = 1;
         natoms_pad = 12;
         umax_num_neigh_atoms = 20;
+        nghost = 0;
         binum = (int*)malloc(sizeof(int) * batch_size);
         bilist = (int*)malloc(sizeof(int) * batch_size * natoms_pad);
         bnumneigh = (int*)malloc(sizeof(int) * batch_size * natoms_pad);
         bfirstneigh = (int*)malloc(sizeof(int) * batch_size * natoms_pad * umax_num_neigh_atoms);
         brcs = (real*)malloc(sizeof(real) * batch_size * natoms_pad * umax_num_neigh_atoms * 3);
-        btypes = (int*)malloc(sizeof(int) * (natoms_pad + nghost));
+        btypes = (int*)malloc(sizeof(int) * batch_size * (natoms_pad + nghost));
         for (int bb=0; bb<batch_size; bb++)
             neighbor_list.find_info4mlff(
                 binum[bb],
@@ -370,6 +371,7 @@ for (int ii=0; ii<natoms_pad; ii++)
 }
 
 
+
 TEST_F(LinearMtpTest, find_ef_launcher)
 {
     real delta = 1e-8;
@@ -471,12 +473,12 @@ for (int ii=0; ii<natoms_pad; ii++)
 
 
 
-TEST_F(LinearMtpTest, find_loss_backward_launcer)
+TEST_F(LinearMtpTest, find_loss_backward_launcher)
 {
     real e_weight = 1.0;
     real f_weight = 1.0;
     real v_weight = 0.0;
-    
+
     ai2pot::mtpr::find_efv_launcher<real>(
         betot,
         bforce,
@@ -565,15 +567,15 @@ printf("\n\n");
 }
 
 
-/*
+
 TEST_F(LinearMtpTest, find_ef_loss_backward_launcer)
 {
     real e_weight = 1.0;
     real f_weight = 1.0;
     
     ai2pot::mtpr::find_ef_launcher<real>(
-        &etot,
-        force,
+        betot,
+        bforce,
         chebyshev_size,
         coeffs,
         linear_coeffs,
@@ -586,12 +588,14 @@ TEST_F(LinearMtpTest, find_ef_loss_backward_launcer)
         mtp_param.alpha_scalar_moments(),
         mtp_param.alpha_moment_mapping(),
         mtp_param.nmus(),
-        inum,
-        ilist,
-        numneigh,
-        firstneigh,
-        (real (*)[3])rcs,
-        types,
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        bnumneigh,
+        bfirstneigh,
+        (real (*)[3])brcs,
+        btypes,
         ntypes,
         type_map,
         umax_num_neigh_atoms,
@@ -600,15 +604,15 @@ TEST_F(LinearMtpTest, find_ef_loss_backward_launcer)
         rmin);
 
     ai2pot::mtpr::find_ef_loss_backward_launcher<real>(
-        loss_der2coeffs,
-        loss_der2linear_coeffs,
-        loss_der2type_bias,
+        bloss_der2coeffs,
+        bloss_der2linear_coeffs,
+        bloss_der2type_bias,
         e_weight,
         f_weight,
-        etot,
-        etot_dft,
-        force,
-        force_dft,
+        betot,
+        betot_dft,
+        bforce,
+        bforce_dft,
         chebyshev_size,
         coeffs,
         linear_coeffs,
@@ -621,12 +625,14 @@ TEST_F(LinearMtpTest, find_ef_loss_backward_launcer)
         mtp_param.alpha_scalar_moments(),
         mtp_param.alpha_moment_mapping(),
         mtp_param.nmus(),
-        inum,
-        ilist,
-        numneigh,
-        firstneigh,
-        (real (*)[3])rcs,
-        types,
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        bnumneigh,
+        bfirstneigh,
+        (real (*)[3])brcs,
+        btypes,
         ntypes,
         type_map,
         umax_num_neigh_atoms,
@@ -636,20 +642,20 @@ TEST_F(LinearMtpTest, find_ef_loss_backward_launcer)
 
 printf("1. loss_der2coeffs:\n");
 for (int ii=0; ii<ntypes*ntypes*mtp_param.nmus()*chebyshev_size; ii++)
-    printf("%.15f, ", loss_der2coeffs[ii]);
+    printf("%.15f, ", bloss_der2coeffs[0*ntypes*ntypes*mtp_param.nmus()*chebyshev_size + ii]);
 printf("\n\n");
 
 printf("2. loss_der2linear_coeffs:\n");
 for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++)
-    printf("%.15f, ", loss_der2linear_coeffs[ii]);
+    printf("%.15f, ", bloss_der2linear_coeffs[0*mtp_param.alpha_scalar_moments() + ii]);
 printf("\n\n");
 
 printf("3. loss_der2type_bias:\n");
 for (int ii=0; ii<ntypes; ii++)
-    printf("%.15f, ", loss_der2type_bias[ii]);
+    printf("%.15f, ", bloss_der2type_bias[0*ntypes + ii]);
 printf("\n\n");
 }
-*/
+
 
 
 int main(int argc, char **argv) {
