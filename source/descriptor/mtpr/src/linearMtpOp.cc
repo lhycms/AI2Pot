@@ -613,6 +613,28 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
             float (*brcs)[3] = (float (*)[3])brcs_tensor.data_ptr<float>();
             int *btypes = btypes_tensor.data_ptr<int>();
             
+            if (zbl_rmax > 0.0)
+                ai2pot::correction::correct_zbl_efv_torch_launcher(
+                    betot,
+                    (float*)bforce,
+                    bvirial,
+                    (float)rmax,
+                    (float)rmin,
+                    zbl_cks,
+                    zbl_dks,
+                    batch_size,
+                    natoms_pad,
+                    binum,
+                    bilist,
+                    bnumneigh,
+                    bfirstneigh,
+                    brcs,
+                    btypes,
+                    ntypes,
+                    type_map,
+                    umax_num_neigh_atoms,
+                    nghost);
+
             find_efv_torch_launcher(
                 betot,
                 bforce,
@@ -741,7 +763,29 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
             int *bfirstneigh = bfirstneigh_tensor.data_ptr<int>();
             double (*brcs)[3] = (double (*)[3])brcs_tensor.data_ptr<double>();
             int *btypes = btypes_tensor.data_ptr<int>();
-            
+
+            if (zbl_rmax > 0.0)
+                ai2pot::correction::correct_zbl_efv_torch_launcher(
+                    betot,
+                    (double*)bforce,
+                    bvirial,
+                    rmax,
+                    rmin,
+                    zbl_cks,
+                    zbl_dks,
+                    batch_size,
+                    natoms_pad,
+                    binum,
+                    bilist,
+                    bnumneigh,
+                    bfirstneigh,
+                    brcs,
+                    btypes,
+                    ntypes,
+                    type_map,
+                    umax_num_neigh_atoms,
+                    nghost);
+
             find_efv_torch_launcher(
                 betot,
                 bforce,
@@ -983,6 +1027,28 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
             float (*brcs)[3] = (float (*)[3])brcs_tensor.data_ptr<float>();
             int *btypes = btypes_tensor.data_ptr<int>();
 
+            if (zbl_rmax > 0.0)
+                ai2pot::correction::correct_zbl_efv_torch_launcher(
+                    betot,
+                    (float*)bforce,
+                    bvirial,
+                    (float)rmax,
+                    (float)rmin,
+                    zbl_cks,
+                    zbl_dks,
+                    batch_size,
+                    natoms_pad,
+                    binum,
+                    bilist,
+                    bnumneigh,
+                    bfirstneigh,
+                    brcs,
+                    btypes,
+                    ntypes,
+                    type_map,
+                    umax_num_neigh_atoms,
+                    nghost);
+
             find_efv_torch_launcher(
                 betot,
                 bforce,
@@ -1143,6 +1209,28 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
             int *bfirstneigh = bfirstneigh_tensor.data_ptr<int>();
             double (*brcs)[3] = (double (*)[3])brcs_tensor.data_ptr<double>();
             int *btypes = btypes_tensor.data_ptr<int>();
+
+            if (zbl_rmax > 0.0)
+                ai2pot::correction::correct_zbl_efv_torch_launcher(
+                    betot,
+                    (double*)bforce,
+                    bvirial,
+                    rmax,
+                    rmin,
+                    zbl_cks,
+                    zbl_dks,
+                    batch_size,
+                    natoms_pad,
+                    binum,
+                    bilist,
+                    bnumneigh,
+                    bfirstneigh,
+                    brcs,
+                    btypes,
+                    ntypes,
+                    type_map,
+                    umax_num_neigh_atoms,
+                    nghost);
 
             find_efv_torch_launcher(
                 betot,
@@ -1379,7 +1467,28 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
             int *bfirstneigh = bfirstneigh_tensor.data_ptr<int>();
             float (*brcs)[3] = (float (*)[3])brcs_tensor.data_ptr<float>();
             int *btypes = btypes_tensor.data_ptr<int>();
-            
+
+            if (zbl_rmax > 0.0)
+                ai2pot::correction::correct_zbl_ef_torch_launcher(
+                    betot,
+                    (float*)bforce,
+                    (float)rmax,
+                    (float)rmin,
+                    zbl_cks,
+                    zbl_dks,
+                    batch_size,
+                    natoms_pad,
+                    binum,
+                    bilist,
+                    bnumneigh,
+                    bfirstneigh,
+                    brcs,
+                    btypes,
+                    ntypes,
+                    type_map,
+                    umax_num_neigh_atoms,
+                    nghost);
+
             find_ef_torch_launcher(
                 betot,
                 bforce,
@@ -1498,6 +1607,27 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
             int *bfirstneigh = bfirstneigh_tensor.data_ptr<int>();
             double (*brcs)[3] = (double (*)[3])brcs_tensor.data_ptr<double>();
             int *btypes = btypes_tensor.data_ptr<int>();
+
+            if (zbl_rmax > 0.0)
+                ai2pot::correction::correct_zbl_ef_torch_launcher(
+                    betot,
+                    (double*)bforce,
+                    rmax,
+                    rmin,
+                    zbl_cks,
+                    zbl_dks,
+                    batch_size,
+                    natoms_pad,
+                    binum,
+                    bilist,
+                    bnumneigh,
+                    bfirstneigh,
+                    brcs,
+                    btypes,
+                    ntypes,
+                    type_map,
+                    umax_num_neigh_atoms,
+                    nghost);
 
             find_ef_torch_launcher(
                 betot,
@@ -1725,6 +1855,27 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
             float (*brcs)[3] = (float (*)[3])brcs_tensor.data_ptr<float>();
             int *btypes = btypes_tensor.data_ptr<int>();
 
+            if (zbl_rmax > 0.0)
+                ai2pot::correction::correct_zbl_ef_torch_launcher(
+                    betot,
+                    (float*)bforce,
+                    (float)rmax,
+                    (float)rmin,
+                    zbl_cks,
+                    zbl_dks,
+                    batch_size,
+                    natoms_pad,
+                    binum,
+                    bilist,
+                    bnumneigh,
+                    bfirstneigh,
+                    brcs,
+                    btypes,
+                    ntypes,
+                    type_map,
+                    umax_num_neigh_atoms,
+                    nghost);
+
             find_ef_torch_launcher(
                 betot,
                 bforce,
@@ -1875,6 +2026,27 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
             int *bfirstneigh = bfirstneigh_tensor.data_ptr<int>();
             double (*brcs)[3] = (double (*)[3])brcs_tensor.data_ptr<double>();
             int *btypes = btypes_tensor.data_ptr<int>();
+
+            if (zbl_rmax > 0.0)
+                ai2pot::correction::correct_zbl_ef_torch_launcher(
+                    betot,
+                    (double*)bforce,
+                    rmax,
+                    rmin,
+                    zbl_cks,
+                    zbl_dks,
+                    batch_size,
+                    natoms_pad,
+                    binum,
+                    bilist,
+                    bnumneigh,
+                    bfirstneigh,
+                    brcs,
+                    btypes,
+                    ntypes,
+                    type_map,
+                    umax_num_neigh_atoms,
+                    nghost);
 
             find_ef_torch_launcher(
                 betot,
@@ -2104,6 +2276,28 @@ torch::autograd::variable_list LinearMtpToEFVFunction::forward(
             float (*brcs)[3] = (float (*)[3])brcs_tensor.data_ptr<float>();
             int *btypes = btypes_tensor.data_ptr<int>();
 
+            if (zbl_rmax > 0.0)
+                ai2pot::correction::correct_zbl_efv_torch_launcher(
+                    betot,
+                    (float*)bforce,
+                    bvirial,
+                    (float)rmax,
+                    (float)rmin,
+                    zbl_cks,
+                    zbl_dks,
+                    batch_size,
+                    natoms_pad,
+                    binum,
+                    bilist,
+                    bnumneigh,
+                    bfirstneigh,
+                    brcs,
+                    btypes,
+                    ntypes,
+                    type_map,
+                    umax_num_neigh_atoms,
+                    nghost);
+
             find_efv_torch_launcher(
                 betot,
                 bforce,
@@ -2209,6 +2403,28 @@ torch::autograd::variable_list LinearMtpToEFVFunction::forward(
             int *bfirstneigh = bfirstneigh_tensor.data_ptr<int>();
             double (*brcs)[3] = (double (*)[3])brcs_tensor.data_ptr<double>();
             int *btypes = btypes_tensor.data_ptr<int>();
+
+            if (zbl_rmax > 0.0)
+                ai2pot::correction::correct_zbl_efv_torch_launcher(
+                    betot,
+                    (double*)bforce,
+                    bvirial,
+                    rmax,
+                    rmin,
+                    zbl_cks,
+                    zbl_dks,
+                    batch_size,
+                    natoms_pad,
+                    binum,
+                    bilist,
+                    bnumneigh,
+                    bfirstneigh,
+                    brcs,
+                    btypes,
+                    ntypes,
+                    type_map,
+                    umax_num_neigh_atoms,
+                    nghost);
 
             find_efv_torch_launcher(
                 betot,
@@ -2427,6 +2643,27 @@ torch::autograd::variable_list LinearMtpToEFFunction::forward(
             float (*brcs)[3] = (float (*)[3])brcs_tensor.data_ptr<float>();
             int *btypes = btypes_tensor.data_ptr<int>();
 
+            if (zbl_rmax > 0.0)
+                ai2pot::correction::correct_zbl_ef_torch_launcher(
+                    betot,
+                    (float*)bforce,
+                    (float)rmax,
+                    (float)rmin,
+                    zbl_cks,
+                    zbl_dks,
+                    batch_size,
+                    natoms_pad,
+                    binum,
+                    bilist,
+                    bnumneigh,
+                    bfirstneigh,
+                    brcs,
+                    btypes,
+                    ntypes,
+                    type_map,
+                    umax_num_neigh_atoms,
+                    nghost);
+
             find_ef_torch_launcher(
                 betot,
                 bforce,
@@ -2528,6 +2765,27 @@ torch::autograd::variable_list LinearMtpToEFFunction::forward(
             int *bfirstneigh = bfirstneigh_tensor.data_ptr<int>();
             double (*brcs)[3] = (double (*)[3])brcs_tensor.data_ptr<double>();
             int *btypes = btypes_tensor.data_ptr<int>();
+
+            if (zbl_rmax > 0.0)
+                ai2pot::correction::correct_zbl_ef_torch_launcher(
+                    betot,
+                    (double*)bforce,
+                    rmax,
+                    rmin,
+                    zbl_cks,
+                    zbl_dks,
+                    batch_size,
+                    natoms_pad,
+                    binum,
+                    bilist,
+                    bnumneigh,
+                    bfirstneigh,
+                    brcs,
+                    btypes,
+                    ntypes,
+                    type_map,
+                    umax_num_neigh_atoms,
+                    nghost);
 
             find_ef_torch_launcher(
                 betot,

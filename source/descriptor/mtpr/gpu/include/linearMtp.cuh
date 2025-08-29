@@ -485,7 +485,7 @@ void find_efv_kernel(
     CoordType rmax,
     CoordType rmin)
 {
-    __shared__ CoordType s_local_virial[128][9];
+    __shared__ CoordType s_local_virial[64][9];
     int nx = blockIdx.x * blockDim.x + threadIdx.x;
     int istruct = nx / natoms_pad;
     int ii = nx % natoms_pad;
@@ -503,7 +503,7 @@ void find_efv_kernel(
     int inum = binum[istruct];
     int *types = &btypes[istruct*(natoms_pad+nghost)];
 
-    if ((istruct<batch_size) && (ii < inum)) {
+    if (ii < inum) {
         int silist = bilist[istruct*natoms_pad + ii];
         int snumneigh = bnumneigh[istruct*natoms_pad + ii];
         int *sfirstneigh = &bfirstneigh[istruct*natoms_pad*umax_num_neigh_atoms + ii*umax_num_neigh_atoms];
@@ -580,8 +580,8 @@ void find_efv_launcher(
     CoordType rmax,
     CoordType rmin)
 {
-    int block_size_x = 128;
-    int grid_size_x = (batch_size*natoms_pad- 1) / block_size_x + 1;
+    int block_size_x = 64;
+    int grid_size_x = (batch_size * natoms_pad- 1) / block_size_x + 1;
     dim3 grid_size(grid_size_x);
     dim3 block_size(block_size_x);
 
@@ -963,7 +963,7 @@ void find_ef_kernel(
     int inum = binum[istruct];
     int *types = &btypes[istruct*(natoms_pad+nghost)];
 
-    if ((istruct<batch_size) && (ii<inum)) {
+    if (ii<inum) {
         int silist = bilist[istruct*natoms_pad + ii];
         int snumneigh = bnumneigh[istruct*natoms_pad + ii];
         int *sfirstneigh = &bfirstneigh[istruct*natoms_pad*umax_num_neigh_atoms + ii*umax_num_neigh_atoms];
@@ -1030,8 +1030,8 @@ void find_ef_launcher(
     CoordType rmax,
     CoordType rmin)
 {
-    int block_size_x = 128;
-    int grid_size_x = (batch_size*natoms_pad - 1) / block_size_x + 1;
+    int block_size_x = 64;
+    int grid_size_x = (batch_size * natoms_pad - 1) / block_size_x + 1;
     dim3 grid_size(grid_size_x);
     dim3 block_size(block_size_x);
 
@@ -1122,7 +1122,7 @@ void find_ef_launcher(
     CHECK_CUDA_API( cudaGetLastError() );
     auto t2 = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
-    std::cout << "find_ef_launcher() cost time: " << duration.count() << " us.\n";
+    std::cout << "find_ef_kernel() cost time: " << duration.count() << " us.\n";
 
     CHECK_CUDA_API( cudaMemcpy(h_betot_ptr, d_betot_ptr, sizeof(CoordType) * batch_size, cudaMemcpyDeviceToHost) );
     CHECK_CUDA_API( cudaMemcpy(h_bforce, d_bforce, sizeof(CoordType) * batch_size * (natoms_pad+nghost) * 3, cudaMemcpyDeviceToHost) );

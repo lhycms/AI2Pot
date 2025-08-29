@@ -381,7 +381,7 @@ void find_loss_kernel(
     int *ilist = &bilist[istruct*natoms_pad];
 
     CoordType f_loss = 0.0;
-    if ((istruct < batch_size) && (ii < inum)) {
+    if (ii < inum) {
         int center_idx = ilist[ii];
         for (int aa=0; aa<3; aa++)
             f_loss += std::pow(force_ml[center_idx][aa] - force_dft[center_idx][aa], 2);
@@ -421,8 +421,8 @@ void find_loss_launcher(
     CoordType *h_bvirial_ml,
     CoordType *h_bvirial_dft)
 {
-    int block_size_x = 128;
-    int grid_size_x = (batch_size*natoms_pad - 1) / block_size_x + 1;
+    int block_size_x = 64;
+    int grid_size_x = (batch_size * natoms_pad - 1) / block_size_x + 1;
     dim3 grid_size(grid_size_x);
     dim3 block_size(block_size_x);
 
@@ -550,8 +550,8 @@ void find_ef_loss_launcher(
     CoordType (*h_bforce_ml)[3],
     CoordType (*h_bforce_dft)[3])
 {
-    int block_size_x = 128;
-    int grid_size_x = (batch_size*natoms_pad - 1) / block_size_x + 1;
+    int block_size_x = 64;
+    int grid_size_x = (batch_size * natoms_pad - 1) / block_size_x + 1;
     dim3 grid_size(grid_size_x);
     dim3 block_size(block_size_x);
 
@@ -1056,7 +1056,7 @@ void find_loss_backward_launcher(
     CoordType rmax,
     CoordType rmin)
 {
-    int block_size_x = 128;
+    int block_size_x = 64;
     int grid_size_x = (batch_size*natoms_pad - 1) / block_size_x + 1;
     dim3 grid_size(grid_size_x);
     dim3 block_size(block_size_x);
@@ -1629,8 +1629,8 @@ void find_ef_loss_backward_launcher(
     CoordType rmax,
     CoordType rmin)
 {
-    int block_size_x = 128;
-    int grid_size_x = (batch_size*natoms_pad - 1) / block_size_x + 1;
+    int block_size_x = 64;
+    int grid_size_x = (batch_size * natoms_pad - 1) / block_size_x + 1;
     dim3 grid_size(grid_size_x);
     dim3 block_size(block_size_x);
 
