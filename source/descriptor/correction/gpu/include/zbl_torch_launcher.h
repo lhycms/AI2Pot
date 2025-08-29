@@ -21,41 +21,47 @@ namespace correction {
 
 template <typename CoordType>
 void correct_zbl_efv_torch_launcher(
-    CoordType *d_etot_ptr,
-    CoordType *d_force,
-    CoordType *d_virial,
+    CoordType *d_betot_ptr,
+    CoordType *d_bforce,
+    CoordType *d_bvirial,
     CoordType rmax,
     CoordType rmin,
     CoordType *d_cks,
     CoordType *d_dks,
-    int inum,
-    int *d_ilist,
-    int *d_numneigh,
-    int *d_firstneigh,
-    CoordType (*d_rcs)[3],
-    int *d_types,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    int *d_bnumneigh,
+    int *d_bfirstneigh,
+    CoordType (*d_brcs)[3],
+    int *d_btypes,
     int ntypes,
     int *d_type_map,
-    int umax_num_neigh_atoms);
+    int umax_num_neigh_atoms,
+    int nghost);
 
 
 template <typename CoordType>
 void correct_zbl_ef_torch_launcher(
-    CoordType *d_etot_ptr,
-    CoordType *d_force,
+    CoordType *d_betot_ptr,
+    CoordType *d_bforce,
     CoordType rmax,
     CoordType rmin,
     CoordType *d_cks,
     CoordType *d_dks,
-    int inum,
-    int *d_ilist,
-    int *d_numneigh,
-    int *d_firstneigh,
-    CoordType (*d_rcs)[3],
-    int *d_types,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    int *d_bnumneigh,
+    int *d_bfirstneigh,
+    CoordType (*d_brcs)[3],
+    int *d_btypes,
     int ntypes,
     int *d_type_map,
-    int umax_num_neigh_atoms);
+    int umax_num_neigh_atoms,
+    int nghost);
 
 };  // namespace : correction
 };  // namespace : ai2pot

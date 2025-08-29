@@ -21,30 +21,33 @@
 
 class GroupZBLTest : public ::testing::Test {
 protected:
+    int batch_size;
+    int natoms_pad;
+    int nghost;
     int ntypes;
-    int* types;
-    int inum;
+    int* btypes;
+    int* binum;
     int umax_num_neigh_atoms;
-    int* ilist;
-    int* numneigh;
-    int* firstneigh;
-    double (*rcs)[3];
+    int* bilist;
+    int* bnumneigh;
+    int* bfirstneigh;
+    double (*brcs)[3];
     int* type_map;
 
     double coord_0[3];
     double coord_1[3];
 
-    double etot;
-    double etot_;
-    double *forces;
-    double *forces_;
-    double virial[9];
-    double virial_[9];
+    double *betot_ptr;
+    double *betot_ptr_;
+    double *bforces;
+    double *bforces_;
+    double *bvirial;
+    double *bvirial_;
 
     double rmax;
     double rmin;
     int *Zis;
-    int *zjs;
+    int *Zjs;
     double *cks;
     double *dks;
 
@@ -57,26 +60,32 @@ protected:
     }
 
     void SetUp() override {
+        batch_size = 1;
+        natoms_pad = 2;
+        nghost = 0;
+
         ntypes = 2;
         umax_num_neigh_atoms = 5;
         type_map = (int*)malloc(sizeof(int) * ntypes);
         type_map[0] = 20;
         type_map[1] = 24;
 
-        inum = 2;
-        types = (int*)malloc(sizeof(int) * inum);
-        types[0] = 0;
-        types[1] = 1;
+        binum = (int*)malloc(sizeof(int) * batch_size);
+        binum[0] = 2;
 
-        ilist = (int*)malloc(sizeof(int) * inum);
-        ilist[0] = 0;
-        ilist[1] = 1;
-        numneigh = (int*)malloc(sizeof(int) * inum);
-        numneigh[0] = 1;
-        numneigh[1] = 1;
-        firstneigh = (int*)malloc(sizeof(int) * inum * umax_num_neigh_atoms);
-        firstneigh[0] = 1;
-        firstneigh[1*umax_num_neigh_atoms + 0] = 0;
+        btypes = (int*)malloc(sizeof(int) * batch_size * (natoms_pad+nghost));
+        btypes[0*(natoms_pad + nghost) + 0] = 0;
+        btypes[0*(natoms_pad + nghost) + 1] = 1;
+
+        bilist = (int*)malloc(sizeof(int) * batch_size * natoms_pad);
+        bilist[0*natoms_pad + 0] = 0;
+        bilist[0*natoms_pad + 1] = 1;
+        bnumneigh = (int*)malloc(sizeof(int) * batch_size * natoms_pad);
+        bnumneigh[0*natoms_pad + 0] = 1;
+        bnumneigh[0*natoms_pad + 1] = 1;
+        bfirstneigh = (int*)malloc(sizeof(int) * batch_size * natoms_pad * umax_num_neigh_atoms);
+        bfirstneigh[0*natoms_pad*umax_num_neigh_atoms + 0*umax_num_neigh_atoms + 0] = 1;
+        bfirstneigh[0*natoms_pad*umax_num_neigh_atoms + 1*umax_num_neigh_atoms + 0] = 0;
 
         coord_0[0] = 1.0;
         coord_0[1] = 1.0;
@@ -84,18 +93,22 @@ protected:
         coord_1[0] = 2.01;
         coord_1[1] = 2.02;
         coord_1[2] = 2.03;
-        rcs = (double (*)[3])malloc(sizeof(double) * inum * umax_num_neigh_atoms * 3);
-        memset(rcs, 0.0, sizeof(double) * inum * umax_num_neigh_atoms * 3);
+        brcs = (double (*)[3])malloc(sizeof(double) * batch_size * natoms_pad * umax_num_neigh_atoms * 3);
+        memset(brcs, 0.0, sizeof(double) * batch_size * natoms_pad * umax_num_neigh_atoms * 3);
 
-        etot = 0;
-        etot_ = 0;
-        forces = (double*)malloc(sizeof(double) * inum * 3);
-        forces_ = (double*)malloc(sizeof(double) * inum * 3);
+        betot_ptr = (double*)malloc(sizeof(double) * batch_size);
+        betot_ptr_ = (double*)malloc(sizeof(double) * batch_size);
+        bforces = (double*)malloc(sizeof(double) * batch_size * natoms_pad * 3);
+        bforces_ = (double*)malloc(sizeof(double) * batch_size * natoms_pad * 3);
+        bvirial = (double*)malloc(sizeof(double) * batch_size * 9);
+        bvirial_ = (double*)malloc(sizeof(double) * batch_size * 9);
 
-        memset(forces, 0.0, sizeof(double) * inum * 3);
-        memset(forces_, 0.0, sizeof(double) * inum * 3);
-        memset(virial, 0.0, sizeof(double) * 9);
-        memset(virial_, 0.0, sizeof(double) * 9);
+        memset(betot_ptr, 0.0, sizeof(double) * batch_size);
+        memset(betot_ptr_, 0.0, sizeof(double) * batch_size);
+        memset(bforces, 0.0, sizeof(double) * batch_size * natoms_pad * 3);
+        memset(bforces_, 0.0, sizeof(double) * batch_size * natoms_pad * 3);
+        memset(bvirial, 0.0, sizeof(double) * batch_size * 9);
+        memset(bvirial_, 0.0, sizeof(double) * batch_size * 9);
 
         rmax = 2.0;
         rmin = 1.0;
@@ -118,170 +131,197 @@ protected:
 
     void TearDown() override {
         free(type_map);
-        free(types);
-        free(ilist);
-        free(numneigh);
-        free(firstneigh);
-        free(rcs);
+        free(btypes);
+        free(binum);
+        free(bilist);
+        free(bnumneigh);
+        free(bfirstneigh);
+        free(brcs);
         free(cks);
         free(dks);
-        free(forces);
-        free(forces_);
+        free(betot_ptr);
+        free(betot_ptr_);
+        free(bforces);
+        free(bforces_);
+        free(bvirial);
+        free(bvirial_);
     }
 };  // class : GroupZBLTest
 
 
 TEST_F(GroupZBLTest, efv_force_accuracy) {
-    rcs[0*umax_num_neigh_atoms + 0][0] = coord_1[0] - coord_0[0];
-    rcs[0*umax_num_neigh_atoms + 0][1] = coord_1[1] - coord_0[1];
-    rcs[0*umax_num_neigh_atoms + 0][2] = coord_1[2] - coord_0[2];
-    rcs[1*umax_num_neigh_atoms + 0][0] = coord_0[0] - coord_1[0];
-    rcs[1*umax_num_neigh_atoms + 0][1] = coord_0[1] - coord_1[1];
-    rcs[1*umax_num_neigh_atoms + 0][2] = coord_0[2] - coord_1[2];
-    ai2pot::correction::correct_zbl_efv_launcher(&etot,
-                                                 forces,
-                                                 virial,
-                                                 rmax,
-                                                 rmin,
-                                                 cks,
-                                                 dks,
-                                                 inum,
-                                                 ilist,
-                                                 numneigh,
-                                                 firstneigh,
-                                                 rcs,
-                                                 types,
-                                                 ntypes,
-                                                 type_map,
-                                                 umax_num_neigh_atoms);
+    brcs[0*umax_num_neigh_atoms + 0][0] = coord_1[0] - coord_0[0];
+    brcs[0*umax_num_neigh_atoms + 0][1] = coord_1[1] - coord_0[1];
+    brcs[0*umax_num_neigh_atoms + 0][2] = coord_1[2] - coord_0[2];
+    brcs[1*umax_num_neigh_atoms + 0][0] = coord_0[0] - coord_1[0];
+    brcs[1*umax_num_neigh_atoms + 0][1] = coord_0[1] - coord_1[1];
+    brcs[1*umax_num_neigh_atoms + 0][2] = coord_0[2] - coord_1[2];
+    ai2pot::correction::correct_zbl_efv_launcher(
+        betot_ptr,
+        bforces,
+        bvirial,
+        rmax,
+        rmin,
+        cks,
+        dks,
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        bnumneigh,
+        bfirstneigh,
+        brcs,
+        btypes,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost);
 
     double delta = 1e-6;
     coord_0[1] += delta;
-    rcs[0*umax_num_neigh_atoms + 0][0] = coord_1[0] - coord_0[0];
-    rcs[0*umax_num_neigh_atoms + 0][1] = coord_1[1] - coord_0[1];
-    rcs[0*umax_num_neigh_atoms + 0][2] = coord_1[2] - coord_0[2];
-    rcs[1*umax_num_neigh_atoms + 0][0] = coord_0[0] - coord_1[0];
-    rcs[1*umax_num_neigh_atoms + 0][1] = coord_0[1] - coord_1[1];
-    rcs[1*umax_num_neigh_atoms + 0][2] = coord_0[2] - coord_1[2];
-    ai2pot::correction::correct_zbl_efv_launcher(&etot_,
-                                                 forces_,
-                                                 virial_,
-                                                 rmax,
-                                                 rmin,
-                                                 cks,
-                                                 dks,
-                                                 inum,
-                                                 ilist,
-                                                 numneigh,
-                                                 firstneigh,
-                                                 rcs,
-                                                 types,
-                                                 ntypes,
-                                                 type_map,
-                                                 umax_num_neigh_atoms);
-printf("energy = %.10lf\n", etot);
-printf("1. Force[0][1] calculated by custom code = %.10lf\n", forces[0*3+1]);
-printf("2. Force[0][1] calculated by definition = %.10lf\n", -(etot_ - etot) / delta);
+    brcs[0*umax_num_neigh_atoms + 0][0] = coord_1[0] - coord_0[0];
+    brcs[0*umax_num_neigh_atoms + 0][1] = coord_1[1] - coord_0[1];
+    brcs[0*umax_num_neigh_atoms + 0][2] = coord_1[2] - coord_0[2];
+    brcs[1*umax_num_neigh_atoms + 0][0] = coord_0[0] - coord_1[0];
+    brcs[1*umax_num_neigh_atoms + 0][1] = coord_0[1] - coord_1[1];
+    brcs[1*umax_num_neigh_atoms + 0][2] = coord_0[2] - coord_1[2];
+    ai2pot::correction::correct_zbl_efv_launcher(
+        betot_ptr_,
+        bforces_,
+        bvirial_,
+        rmax,
+        rmin,
+        cks,
+        dks,
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        bnumneigh,
+        bfirstneigh,
+        brcs,
+        btypes,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost);
+printf("energy = %.10lf\n", betot_ptr[0]);
+printf("1. Force[0][1] calculated by custom code = %.10lf\n", bforces[0*3+1]);
+printf("2. Force[0][1] calculated by definition = %.10lf\n", -(betot_ptr_[0] - betot_ptr[0]) / delta);
 }
+
 
 
 TEST_F(GroupZBLTest, efv_virial_accuracy)
 {
-    rcs[0*umax_num_neigh_atoms + 0][0] = coord_1[0] - coord_0[0];
-    rcs[0*umax_num_neigh_atoms + 0][1] = coord_1[1] - coord_0[1];
-    rcs[0*umax_num_neigh_atoms + 0][2] = coord_1[2] - coord_0[2];
-    rcs[1*umax_num_neigh_atoms + 0][0] = coord_0[0] - coord_1[0];
-    rcs[1*umax_num_neigh_atoms + 0][1] = coord_0[1] - coord_1[1];
-    rcs[1*umax_num_neigh_atoms + 0][2] = coord_0[2] - coord_1[2];
+    brcs[0*umax_num_neigh_atoms + 0][0] = coord_1[0] - coord_0[0];
+    brcs[0*umax_num_neigh_atoms + 0][1] = coord_1[1] - coord_0[1];
+    brcs[0*umax_num_neigh_atoms + 0][2] = coord_1[2] - coord_0[2];
+    brcs[1*umax_num_neigh_atoms + 0][0] = coord_0[0] - coord_1[0];
+    brcs[1*umax_num_neigh_atoms + 0][1] = coord_0[1] - coord_1[1];
+    brcs[1*umax_num_neigh_atoms + 0][2] = coord_0[2] - coord_1[2];
 
-    ai2pot::correction::correct_zbl_efv_launcher<double>(&etot,
-                                                         forces,
-                                                         virial,
-                                                         rmax,
-                                                         rmin,
-                                                         cks,
-                                                         dks,
-                                                         inum,
-                                                         ilist,
-                                                         numneigh,
-                                                         firstneigh,
-                                                         rcs,
-                                                         types,
-                                                         ntypes,
-                                                         type_map,
-                                                         umax_num_neigh_atoms);
+    ai2pot::correction::correct_zbl_efv_launcher(
+        betot_ptr,
+        bforces,
+        bvirial,
+        rmax,
+        rmin,
+        cks,
+        dks,
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        bnumneigh,
+        bfirstneigh,
+        brcs,
+        btypes,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost);
 
     for (int aa=0; aa<3; aa++) {
         for (int bb=0; bb<3; bb++) {
-            virial_[aa*3 + bb] += coord_0[aa] * forces[0*3 + bb];
+            bvirial_[aa*3 + bb] += coord_0[aa] * bforces[0*3 + bb];
         }
     }
     for (int aa=0; aa<3; aa++) {
         for (int bb=0; bb<3; bb++) {
-            virial_[aa*3 + bb] += coord_1[aa] * forces[1*3 + bb];
+            bvirial_[aa*3 + bb] += coord_1[aa] * bforces[1*3 + bb];
         }
     }
 
 printf("1. Virial calculated by custom code =\n");
 for (int ii=0; ii<9; ii++)
-    printf("%.10lf, ", virial[ii]);
+    printf("%.10lf, ", bvirial[ii]);
 printf("\n");
 printf("2. Virial calculated by definition =\n");
 for (int ii=0; ii<9; ii++)
-    printf("%.10lf, ", virial_[ii]);
+    printf("%.10lf, ", bvirial_[ii]);
 printf("\n");
 }
 
 
+
 TEST_F(GroupZBLTest, ef_force_accuracy) {
-    rcs[0*umax_num_neigh_atoms + 0][0] = coord_1[0] - coord_0[0];
-    rcs[0*umax_num_neigh_atoms + 0][1] = coord_1[1] - coord_0[1];
-    rcs[0*umax_num_neigh_atoms + 0][2] = coord_1[2] - coord_0[2];
-    rcs[1*umax_num_neigh_atoms + 0][0] = coord_0[0] - coord_1[0];
-    rcs[1*umax_num_neigh_atoms + 0][1] = coord_0[1] - coord_1[1];
-    rcs[1*umax_num_neigh_atoms + 0][2] = coord_0[2] - coord_1[2];
-    ai2pot::correction::correct_zbl_ef_launcher<double>(&etot,
-                                                        forces,
-                                                        rmax,
-                                                        rmin,
-                                                        cks,
-                                                        dks,
-                                                        inum,
-                                                        ilist,
-                                                        numneigh,
-                                                        firstneigh,
-                                                        rcs,
-                                                        types,
-                                                        ntypes,
-                                                        type_map,
-                                                        umax_num_neigh_atoms);
+    brcs[0*umax_num_neigh_atoms + 0][0] = coord_1[0] - coord_0[0];
+    brcs[0*umax_num_neigh_atoms + 0][1] = coord_1[1] - coord_0[1];
+    brcs[0*umax_num_neigh_atoms + 0][2] = coord_1[2] - coord_0[2];
+    brcs[1*umax_num_neigh_atoms + 0][0] = coord_0[0] - coord_1[0];
+    brcs[1*umax_num_neigh_atoms + 0][1] = coord_0[1] - coord_1[1];
+    brcs[1*umax_num_neigh_atoms + 0][2] = coord_0[2] - coord_1[2];
+    ai2pot::correction::correct_zbl_ef_launcher<double>(
+        betot_ptr,
+        bforces,
+        rmax,
+        rmin,
+        cks,
+        dks,
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        bnumneigh,
+        bfirstneigh,
+        brcs,
+        btypes,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost);
 
     double delta = 1e-6;
     coord_0[1] += delta;
-    rcs[0*umax_num_neigh_atoms + 0][0] = coord_1[0] - coord_0[0];
-    rcs[0*umax_num_neigh_atoms + 0][1] = coord_1[1] - coord_0[1];
-    rcs[0*umax_num_neigh_atoms + 0][2] = coord_1[2] - coord_0[2];
-    rcs[1*umax_num_neigh_atoms + 0][0] = coord_0[0] - coord_1[0];
-    rcs[1*umax_num_neigh_atoms + 0][1] = coord_0[1] - coord_1[1];
-    rcs[1*umax_num_neigh_atoms + 0][2] = coord_0[2] - coord_1[2];
-    ai2pot::correction::correct_zbl_ef_launcher<double>(&etot_,
-                                                        forces_,
-                                                        rmax,
-                                                        rmin,
-                                                        cks,
-                                                        dks,
-                                                        inum,
-                                                        ilist,
-                                                        numneigh,
-                                                        firstneigh,
-                                                        rcs,
-                                                        types,
-                                                        ntypes,
-                                                        type_map,
-                                                        umax_num_neigh_atoms);
-printf("energy = %.10lf\n", etot);
-printf("1. Force[0][1] calculated by custom code = %.10lf\n", forces[0*3+1]);
-printf("2. Force[0][1] calculated by definition = %.10lf\n", -(etot_ - etot) / delta);
+    brcs[0*umax_num_neigh_atoms + 0][0] = coord_1[0] - coord_0[0];
+    brcs[0*umax_num_neigh_atoms + 0][1] = coord_1[1] - coord_0[1];
+    brcs[0*umax_num_neigh_atoms + 0][2] = coord_1[2] - coord_0[2];
+    brcs[1*umax_num_neigh_atoms + 0][0] = coord_0[0] - coord_1[0];
+    brcs[1*umax_num_neigh_atoms + 0][1] = coord_0[1] - coord_1[1];
+    brcs[1*umax_num_neigh_atoms + 0][2] = coord_0[2] - coord_1[2];
+    ai2pot::correction::correct_zbl_ef_launcher<double>(
+        betot_ptr_,
+        bforces_,
+        rmax,
+        rmin,
+        cks,
+        dks,
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        bnumneigh,
+        bfirstneigh,
+        brcs,
+        btypes,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost);
+printf("energy = %.10lf\n", betot_ptr[0]);
+printf("1. Force[0][1] calculated by custom code = %.10lf\n", bforces[0*3+1]);
+printf("2. Force[0][1] calculated by definition = %.10lf\n", -(betot_ptr_[0] - betot_ptr[0]) / delta);
 }
 
 

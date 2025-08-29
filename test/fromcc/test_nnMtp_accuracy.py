@@ -39,7 +39,7 @@ class NNMtpTest(unittest.TestCase):
         self.num_neurons: int = 30
         self.rmax: float = 5.0
         self.rmin: float = 0.0
-        self.umax_num_neighs: int = 200
+        self.umax_num_neigh_atoms: int = 200
         self.fit_virial: bool = False
         
         
@@ -82,12 +82,12 @@ class NNMtpTest(unittest.TestCase):
         
         self.mlff_to_loss_input: MlffToLossInput = MlffToLossInput(type_map=self.type_map_tensor.numpy().tolist(),
                                                                    rcut=self.rmax,
-                                                                   umax_num_neighs=self.umax_num_neighs,
+                                                                   umax_num_neigh_atoms=self.umax_num_neigh_atoms,
                                                                    dtype=self.torch_float_dtype,
                                                                    device=self.device)
         self.mlff_input: MlffInput = MlffInput(type_map=self.type_map_tensor.numpy().tolist(),
                                                 rcut=self.rmax,
-                                                umax_num_neighs=self.umax_num_neighs,
+                                                umax_num_neigh_atoms=self.umax_num_neigh_atoms,
                                                 dtype=self.torch_float_dtype,
                                                 device=self.device)
         
@@ -122,7 +122,7 @@ class NNMtpTest(unittest.TestCase):
         print("NNMtpTest (TestCase) is tearing down...\n")
     
     
-    def est_nnMtpToEFLoss(self):
+    def test_nnMtpToEFLoss(self):
         # 1. Parameters
         e_weight: float = 1.0
         f_weight: float = 0.1
@@ -176,7 +176,7 @@ class NNMtpTest(unittest.TestCase):
         print("-------------------------------------------------")
 
 
-    def test_nnMtpToLoss(self):
+    def est_nnMtpToLoss(self):
         # 1. Parameters
         e_weight: float = 1.0
         f_weight: float = 0.1

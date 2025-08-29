@@ -25,7 +25,7 @@ class LinearMtpTest(unittest.TestCase):
         self.rmax: float = 5.0
         self.rmin: float = 0.0
         self.umax_num_neighs = 200
-        self.device: torch._C.device = torch.device("cpu")
+        self.device: torch._C.device = torch.device("cuda")
         self.torch_float_dtype: torch._C.dtype = torch.float32
         self.linear_mtp: LinearMtp = LinearMtp(mtp_level=4,
                                                type_map=self.type_map,
@@ -80,7 +80,7 @@ class LinearMtpTest(unittest.TestCase):
 
 
 
-    def est_predict_ef_loss(self):
+    def test_predict_ef_loss(self):
         times_list: List[float] = []
         for ii in range(110):
             t1 = time.time()
@@ -100,7 +100,7 @@ class LinearMtpTest(unittest.TestCase):
         print("1. Loss = ", ef_loss)
 
 
-    def test_predict_efv(self):
+    def est_predict_efv(self):
         times_list: List[float] = []
         for ii in range(110):
             t1 = time.time()
@@ -116,7 +116,7 @@ class LinearMtpTest(unittest.TestCase):
         print("3. Virial.shape = \n", v)
 
     
-    def test_predict_ef(self):
+    def est_predict_ef(self):
         times_list: List[float] = []
         for ii in range(110):
             t1 = time.time()

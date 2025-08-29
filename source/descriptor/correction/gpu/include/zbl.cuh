@@ -104,62 +104,71 @@ public:
 
 template <typename CoordType>
 static __device__
-void correct_zbl_efv_atom(CoordType *etot_ptr,
-                          CoordType *force,
-                          CoordType *virial,
-                          CoordType rmax,
-                          CoordType rmin,
-                          CoordType *cks,
-                          CoordType *dks,
-                          int silist,
-                          int snumneigh,
-                          int *sfirstneigh,
-                          CoordType (*srcs)[3],
-                          int *types,
-                          int ntypes,
-                          int *type_map,
-                          int umax_num_neigh_atoms,
-                          CoordType *s_local_virial);
+void correct_zbl_efv_atom(
+    CoordType *etot_ptr,
+    CoordType *force,
+    CoordType *virial,
+    CoordType rmax,
+    CoordType rmin,
+    CoordType *cks,
+    CoordType *dks,
+    int silist,
+    int snumneigh,
+    int *sfirstneigh,
+    CoordType (*srcs)[3],
+    int *types,
+    int ntypes,
+    int *type_map,
+    int umax_num_neigh_atoms,
+    CoordType *s_local_virial);
 
 
 template <typename CoordType>
 static __global__
-void correct_zbl_efv_kernel(CoordType *etot_ptr,
-                            CoordType *force,
-                            CoordType *virial,
-                            CoordType rmax,
-                            CoordType rmin,
-                            CoordType *cks,
-                            CoordType *dks,
-                            int inum,
-                            int *ilist,
-                            int *numneigh,
-                            int *firstneigh,
-                            CoordType (*rcs)[3],
-                            int *types,
-                            int ntypes,
-                            int *type_map,
-                            int umax_num_neigh_atoms);
+void correct_zbl_efv_kernel(
+    CoordType *betot_ptr,
+    CoordType *bforce,
+    CoordType *bvirial,
+    CoordType rmax,
+    CoordType rmin,
+    CoordType *cks,
+    CoordType *dks,
+    int batch_size, 
+    int natoms_pad,
+    int *binum,
+    int *bilist,
+    int *bnumneigh,
+    int *bfirstneigh,
+    CoordType (*brcs)[3],
+    int *btypes,
+    int ntypes,
+    int *type_map,
+    int umax_num_neigh_atoms,
+    int nghost);
 
 
 template <typename CoordType>
 static __host__
-void correct_zbl_efv_launcher(CoordType *h_etot_ptr,
-                              CoordType *h_force,
-                              CoordType *h_virial,
-                              CoordType rmax,
-                              CoordType rmin,
-                              CoordType *h_cks,
-                              CoordType *h_dks,
-                              int inum,
-                              int *h_ilist,
-                              int *h_numneigh,
-                              int *h_firstneigh,
-                              CoordType (*h_rcs)[3],
-                              int *h_types,
-                              int ntypes,
-                              int *type_map,
-                              int umax_num_neigh_atoms);
+void correct_zbl_efv_launcher(
+    CoordType *h_betot_ptr,
+    CoordType *h_bforce,
+    CoordType *h_bvirial,
+    CoordType rmax,
+    CoordType rmin,
+    CoordType *h_cks,
+    CoordType *h_dks,
+    int batch_size,
+    int natoms_pad,
+    int *h_binum,
+    int *h_bilist,
+    int *h_bnumneigh,
+    int *h_bfirstneigh,
+    CoordType (*h_brcs)[3],
+    int *h_btypes,
+    int ntypes,
+    int *type_map,
+    int umax_num_neigh_atoms,
+    int nghost);
 
 template <typename CoordType>
 static __device__
@@ -180,39 +189,48 @@ void correct_zbl_ef_atom(CoordType *etot_ptr,
 
 template <typename CoordType>
 static __global__
-void correct_zbl_ef_kernel(CoordType *etot_ptr,
-                           CoordType *force,
-                           CoordType rmax,
-                           CoordType rmin,
-                           CoordType *cks,
-                           CoordType *dks,
-                           int inum,
-                           int *ilist,
-                           int *numneigh,
-                           int *firstneigh,
-                           CoordType (*rcs)[3],
-                           int *types,
-                           int ntypes,
-                           int *type_map,
-                           int umax_num_neigh_atoms);
+void correct_zbl_ef_kernel(
+    CoordType *betot_ptr,
+    CoordType *bforce,
+    CoordType rmax,
+    CoordType rmin,
+    CoordType *cks,
+    CoordType *dks,
+    int batch_size,
+    int natoms_pad,
+    int *binum,
+    int *bilist,
+    int *bnumneigh,
+    int *bfirstneigh,
+    CoordType (*brcs)[3],
+    int *btypes,
+    int ntypes,
+    int *type_map,
+    int umax_num_neigh_atoms,
+    int nghost);
+
 
 template <typename CoordType>
 static __host__
-void correct_zbl_ef_launcher(CoordType *h_etot_ptr,
-                             CoordType *h_force,
-                             CoordType rmax,
-                             CoordType rmin,
-                             CoordType *h_cks,
-                             CoordType *h_dks,
-                             int inum,
-                             int *h_ilist,
-                             int *h_numneigh,
-                             int *h_firstneigh,
-                             CoordType (*h_rcs)[3],
-                             int *h_types,
-                             int ntypes,
-                             int *type_map,
-                             int umax_num_neigh_atoms);
+void correct_zbl_ef_launcher(
+    CoordType *h_betot_ptr,
+    CoordType *h_bforce,
+    CoordType rmax,
+    CoordType rmin,
+    CoordType *h_cks,
+    CoordType *h_dks,
+    int batch_size,
+    int natoms_pad,
+    int *h_binum,
+    int *h_bilist,
+    int *h_bnumneigh,
+    int *h_bfirstneigh,
+    CoordType (*h_brcs)[3],
+    int *h_btypes,
+    int ntypes,
+    int *type_map,
+    int umax_num_neigh_atoms,
+    int nghost);
 
 
 
@@ -402,22 +420,23 @@ void PairZBL<CoordType>::add_virial_one(CoordType *virial,
 
 template <typename CoordType>
 __device__
-void correct_zbl_efv_atom(CoordType *etot_ptr,
-                          CoordType *force,
-                          CoordType *virial,
-                          CoordType rmax,
-                          CoordType rmin,
-                          CoordType *cks,
-                          CoordType *dks,
-                          int silist,
-                          int snumneigh,
-                          int *sfirstneigh,
-                          CoordType (*srcs)[3],
-                          int *types,
-                          int ntypes,
-                          int *type_map,
-                          int umax_num_neigh_atoms,
-                          CoordType *s_local_virial)
+void correct_zbl_efv_atom(
+    CoordType *etot_ptr,
+    CoordType *force,
+    CoordType *virial,
+    CoordType rmax,
+    CoordType rmin,
+    CoordType *cks,
+    CoordType *dks,
+    int silist,
+    int snumneigh,
+    int *sfirstneigh,
+    CoordType (*srcs)[3],
+    int *types,
+    int ntypes,
+    int *type_map,
+    int umax_num_neigh_atoms,
+    CoordType *s_local_virial)
 {
     int center_idx = silist;
     int type_central = types[center_idx];
@@ -481,53 +500,67 @@ void correct_zbl_efv_atom(CoordType *etot_ptr,
 
 template <typename CoordType>
 __global__
-void correct_zbl_efv_kernel(CoordType *etot_ptr,
-                            CoordType *force,
-                            CoordType *virial,
-                            CoordType rmax,
-                            CoordType rmin,
-                            CoordType *cks,
-                            CoordType *dks,
-                            int inum,
-                            int *ilist,
-                            int *numneigh,
-                            int *firstneigh,
-                            CoordType (*rcs)[3],
-                            int *types,
-                            int ntypes,
-                            int *type_map,
-                            int umax_num_neigh_atoms)
+void correct_zbl_efv_kernel(
+    CoordType *betot_ptr,
+    CoordType *bforce,
+    CoordType *bvirial,
+    CoordType rmax,
+    CoordType rmin,
+    CoordType *cks,
+    CoordType *dks,
+    int batch_size,
+    int natoms_pad,
+    int *binum,
+    int *bilist,
+    int *bnumneigh,
+    int *bfirstneigh,
+    CoordType (*brcs)[3],
+    int *btypes,
+    int ntypes,
+    int *type_map,
+    int umax_num_neigh_atoms,
+    int nghost)
 {
     int nx = blockIdx.x * blockDim.x + threadIdx.x;
-    int ii = nx;
+    int istruct = nx / natoms_pad;
+    int ii = nx % natoms_pad;
+    if (istruct >= batch_size)
+        return;
 
     __shared__ CoordType s_local_virial[64][9];
     int tid = threadIdx.x;
     for (int ii=0; ii<9; ii++)
         s_local_virial[tid][ii] = 0.0;
 
-    if (ii < inum) {
-        int silist = ilist[ii];
-        int snumneigh = numneigh[ii];
-        int *sfirstneigh = &firstneigh[ii*umax_num_neigh_atoms];
-        CoordType (*srcs)[3] = (CoordType (*)[3])&rcs[ii*umax_num_neigh_atoms][0];
+    CoordType *etot_ptr = &betot_ptr[istruct];
+    CoordType *force = &bforce[istruct*(natoms_pad+nghost)*3 + 0];
+    CoordType *virial = &bvirial[istruct*9 + 0];
+    int inum = binum[istruct];
+    int *types = &btypes[istruct*(natoms_pad+nghost)];
 
-        correct_zbl_efv_atom<CoordType>(etot_ptr,
-                                        force,
-                                        virial,
-                                        rmax,
-                                        rmin,
-                                        cks,
-                                        dks,
-                                        silist,
-                                        snumneigh,
-                                        sfirstneigh,
-                                        srcs,
-                                        types,
-                                        ntypes,
-                                        type_map,
-                                        umax_num_neigh_atoms,
-                                        s_local_virial[tid]);
+    if (ii < inum) {
+        int silist = bilist[istruct*natoms_pad + ii];
+        int snumneigh = bnumneigh[istruct*natoms_pad + ii];
+        int *sfirstneigh = &bfirstneigh[istruct*natoms_pad*umax_num_neigh_atoms + ii*umax_num_neigh_atoms];
+        CoordType (*srcs)[3] = (CoordType (*)[3])(&brcs[istruct*natoms_pad*umax_num_neigh_atoms + ii*umax_num_neigh_atoms][0]);
+
+        correct_zbl_efv_atom<CoordType>(
+            etot_ptr,
+            force,
+            virial,
+            rmax,
+            rmin,
+            cks,
+            dks,
+            silist,
+            snumneigh,
+            sfirstneigh,
+            srcs,
+            types,
+            ntypes,
+            type_map,
+            umax_num_neigh_atoms,
+            s_local_virial[tid]);
     }
     __syncthreads();
 
@@ -541,84 +574,95 @@ void correct_zbl_efv_kernel(CoordType *etot_ptr,
 
 template <typename CoordType>
 static __host__
-void correct_zbl_efv_launcher(CoordType *h_etot_ptr,
-                              CoordType *h_force,
-                              CoordType *h_virial,
-                              CoordType rmax,
-                              CoordType rmin,
-                              CoordType *h_cks,
-                              CoordType *h_dks,
-                              int inum,
-                              int *h_ilist,
-                              int *h_numneigh,
-                              int *h_firstneigh,
-                              CoordType (*h_rcs)[3],
-                              int *h_types,
-                              int ntypes,
-                              int *h_type_map,
-                              int umax_num_neigh_atoms)
+void correct_zbl_efv_launcher(
+    CoordType *h_betot_ptr,
+    CoordType *h_bforce,
+    CoordType *h_bvirial,
+    CoordType rmax,
+    CoordType rmin,
+    CoordType *h_cks,
+    CoordType *h_dks,
+    int batch_size,
+    int natoms_pad,
+    int *h_binum,
+    int *h_bilist,
+    int *h_bnumneigh,
+    int *h_bfirstneigh,
+    CoordType (*h_brcs)[3],
+    int *h_btypes,
+    int ntypes,
+    int *h_type_map,
+    int umax_num_neigh_atoms,
+    int nghost)
 {
     int block_size_x = 64;
-    int grid_size_x = (inum - 1) / block_size_x + 1;
+    int grid_size_x = (batch_size*natoms_pad - 1) / block_size_x + 1;
     dim3 grid_size(grid_size_x);
     dim3 block_size(block_size_x);
 
-    CoordType *d_etot_ptr;
-    CoordType *d_force;
-    CoordType *d_virial;
+    CoordType *d_betot_ptr;
+    CoordType *d_bforce;
+    CoordType *d_bvirial;
     CoordType *d_cks;
     CoordType *d_dks;
-    int *d_ilist;
-    int *d_numneigh;
-    int *d_firstneigh;
-    CoordType (*d_rcs)[3];
-    int *d_types;
+    int *d_binum;
+    int *d_bilist;
+    int *d_bnumneigh;
+    int *d_bfirstneigh;
+    CoordType (*d_brcs)[3];
+    int *d_btypes;
     int *d_type_map;
 
-    CHECK_CUDA_API( cudaMalloc((void**)&d_etot_ptr, sizeof(CoordType)) );
-    CHECK_CUDA_API( cudaMemset(d_etot_ptr, 0.0, sizeof(CoordType)) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_force, sizeof(CoordType)*inum*3) );
-    CHECK_CUDA_API( cudaMemset(d_force, 0.0, sizeof(CoordType)*inum*3) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_virial, sizeof(CoordType)*9) );
-    CHECK_CUDA_API( cudaMemset(d_virial, 0.0, sizeof(CoordType)*9) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_betot_ptr, sizeof(CoordType) * batch_size) );
+    CHECK_CUDA_API( cudaMemset(d_betot_ptr, 0.0, sizeof(CoordType) * batch_size) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bforce, sizeof(CoordType) * batch_size * (natoms_pad+nghost) * 3) );
+    CHECK_CUDA_API( cudaMemset(d_bforce, 0.0, sizeof(CoordType) * batch_size * (natoms_pad+nghost) * 3) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bvirial, sizeof(CoordType) * batch_size * 9) );
+    CHECK_CUDA_API( cudaMemset(d_bvirial, 0.0, sizeof(CoordType) * batch_size * 9) );
 
-    CHECK_CUDA_API( cudaMalloc((void**)&d_cks, sizeof(CoordType)*ntypes*ntypes*4) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_dks, sizeof(CoordType)*ntypes*ntypes*4) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_ilist, sizeof(int)*inum) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_numneigh, sizeof(int)*inum) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_firstneigh, sizeof(int)*inum*umax_num_neigh_atoms) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_rcs, sizeof(CoordType)*inum*umax_num_neigh_atoms*3) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_types, sizeof(int)*inum) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_type_map, sizeof(int)*ntypes) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_cks, sizeof(CoordType) * ntypes * ntypes * 4) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_dks, sizeof(CoordType) * ntypes * ntypes * 4) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_binum, sizeof(int) * batch_size) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bilist, sizeof(int) * batch_size * natoms_pad) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bnumneigh, sizeof(int) * batch_size * natoms_pad) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bfirstneigh, sizeof(int) * batch_size * natoms_pad * umax_num_neigh_atoms) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_brcs, sizeof(CoordType) * batch_size * natoms_pad * umax_num_neigh_atoms * 3) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_btypes, sizeof(int) * batch_size * (natoms_pad+nghost)) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_type_map, sizeof(int) * ntypes) );
 
-    CHECK_CUDA_API( cudaMemcpy(d_cks, h_cks, sizeof(CoordType)*ntypes*ntypes*4, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_dks, h_dks, sizeof(CoordType)*ntypes*ntypes*4, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_ilist, h_ilist, sizeof(int)*inum, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_numneigh, h_numneigh, sizeof(int)*inum, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_firstneigh, h_firstneigh, sizeof(int)*inum*umax_num_neigh_atoms, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_rcs, h_rcs, sizeof(CoordType)*inum*umax_num_neigh_atoms*3, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_types, h_types, sizeof(int)*inum, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_cks, h_cks, sizeof(CoordType) * ntypes * ntypes * 4, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_dks, h_dks, sizeof(CoordType) * ntypes * ntypes * 4, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_binum, h_binum, sizeof(int)*batch_size, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_bilist, h_bilist, sizeof(int)*batch_size*natoms_pad, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_bnumneigh, h_bnumneigh, sizeof(int)*batch_size*natoms_pad, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_bfirstneigh, h_bfirstneigh, sizeof(int)*batch_size*natoms_pad*umax_num_neigh_atoms, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_brcs, h_brcs, sizeof(CoordType)*batch_size*natoms_pad*umax_num_neigh_atoms*3, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_btypes, h_btypes, sizeof(int)*(natoms_pad+nghost), cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_type_map, h_type_map, sizeof(int)*ntypes, cudaMemcpyHostToDevice) );
 
     auto t1 = std::chrono::high_resolution_clock::now();
 
     // Launch kernel
-    correct_zbl_efv_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (d_etot_ptr,
-                                                                          d_force,
-                                                                          d_virial,
-                                                                          rmax,
-                                                                          rmin,
-                                                                          d_cks,
-                                                                          d_dks,
-                                                                          inum,
-                                                                          d_ilist,
-                                                                          d_numneigh,
-                                                                          d_firstneigh,
-                                                                          d_rcs,
-                                                                          d_types,
-                                                                          ntypes,
-                                                                          d_type_map,
-                                                                          umax_num_neigh_atoms);
+    correct_zbl_efv_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (
+        d_betot_ptr,
+        d_bforce,
+        d_bvirial,
+        rmax,
+        rmin,
+        d_cks,
+        d_dks,
+        batch_size,
+        natoms_pad,
+        d_binum,
+        d_bilist,
+        d_bnumneigh,
+        d_bfirstneigh,
+        d_brcs,
+        d_btypes,
+        ntypes,
+        d_type_map,
+        umax_num_neigh_atoms,
+        nghost);
 
     CHECK_CUDA_API( cudaDeviceSynchronize() );
     CHECK_CUDA_API( cudaGetLastError() );
@@ -627,20 +671,21 @@ void correct_zbl_efv_launcher(CoordType *h_etot_ptr,
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
     std::cout << "cost time: " << duration.count() << " ms.\n";
 
-    CHECK_CUDA_API( cudaMemcpy(h_etot_ptr, d_etot_ptr, sizeof(CoordType), cudaMemcpyDeviceToHost) );
-    CHECK_CUDA_API( cudaMemcpy(h_force, d_force, sizeof(CoordType)*inum*3, cudaMemcpyDeviceToHost) );
-    CHECK_CUDA_API( cudaMemcpy(h_virial, d_virial, sizeof(CoordType)*9, cudaMemcpyDeviceToHost) );
+    CHECK_CUDA_API( cudaMemcpy(h_betot_ptr, d_betot_ptr, sizeof(CoordType)*batch_size, cudaMemcpyDeviceToHost) );
+    CHECK_CUDA_API( cudaMemcpy(h_bforce, d_bforce, sizeof(CoordType)*batch_size*(natoms_pad+nghost)*3, cudaMemcpyDeviceToHost) );
+    CHECK_CUDA_API( cudaMemcpy(h_bvirial, d_bvirial, sizeof(CoordType)*batch_size*9, cudaMemcpyDeviceToHost) );
 
-    CHECK_CUDA_API( cudaFree(d_etot_ptr) );
-    CHECK_CUDA_API( cudaFree(d_force) );
-    CHECK_CUDA_API( cudaFree(d_virial) );
+    CHECK_CUDA_API( cudaFree(d_betot_ptr) );
+    CHECK_CUDA_API( cudaFree(d_bforce) );
+    CHECK_CUDA_API( cudaFree(d_bvirial) );
     CHECK_CUDA_API( cudaFree(d_cks) );
     CHECK_CUDA_API( cudaFree(d_dks) );
-    CHECK_CUDA_API( cudaFree(d_ilist) );
-    CHECK_CUDA_API( cudaFree(d_numneigh) );
-    CHECK_CUDA_API( cudaFree(d_firstneigh) );
-    CHECK_CUDA_API( cudaFree(d_rcs) );
-    CHECK_CUDA_API( cudaFree(d_types) );
+    CHECK_CUDA_API( cudaFree(d_binum) );
+    CHECK_CUDA_API( cudaFree(d_bilist) );
+    CHECK_CUDA_API( cudaFree(d_bnumneigh) );
+    CHECK_CUDA_API( cudaFree(d_bfirstneigh) );
+    CHECK_CUDA_API( cudaFree(d_brcs) );
+    CHECK_CUDA_API( cudaFree(d_btypes) );
     CHECK_CUDA_API( cudaFree(d_type_map) );
 }
 
@@ -715,124 +760,148 @@ void correct_zbl_ef_atom(CoordType *etot_ptr,
 
 template <typename CoordType>
 __global__
-void correct_zbl_ef_kernel(CoordType *etot_ptr,
-                           CoordType *force,
-                           CoordType rmax,
-                           CoordType rmin,
-                           CoordType *cks,
-                           CoordType *dks,
-                           int inum,
-                           int *ilist,
-                           int *numneigh,
-                           int *firstneigh,
-                           CoordType (*rcs)[3],
-                           int *types,
-                           int ntypes,
-                           int *type_map,
-                           int umax_num_neigh_atoms)
+void correct_zbl_ef_kernel(
+    CoordType *betot_ptr,
+    CoordType *bforce,
+    CoordType rmax,
+    CoordType rmin,
+    CoordType *cks,
+    CoordType *dks,
+    int batch_size,
+    int natoms_pad,
+    int *binum,
+    int *bilist,
+    int *bnumneigh,
+    int *bfirstneigh,
+    CoordType (*brcs)[3],
+    int *btypes,
+    int ntypes,
+    int *type_map,
+    int umax_num_neigh_atoms,
+    int nghost)
 {
     int nx = blockIdx.x * blockDim.x + threadIdx.x;
-    int ii = nx;
+    int istruct = nx / natoms_pad;
+    int ii = nx % natoms_pad;
+    if (istruct >= batch_size)
+        return;
+
+    CoordType *etot_ptr = &betot_ptr[istruct];
+    CoordType *force = &bforce[istruct*(natoms_pad+nghost)*3 + 0];
+    int inum = binum[istruct];
+    int *types = &btypes[istruct*(natoms_pad+nghost)];
 
     if (ii < inum) {
-        int silist = ilist[ii];
-        int snumneigh = numneigh[ii];
-        int *sfirstneigh = &firstneigh[ii*umax_num_neigh_atoms];
-        CoordType (*srcs)[3] = (CoordType (*)[3])&rcs[ii*umax_num_neigh_atoms][0];
+        int silist = bilist[istruct*natoms_pad + ii];
+        int snumneigh = bnumneigh[istruct*natoms_pad + ii];
+        int *sfirstneigh = &bfirstneigh[istruct*natoms_pad*umax_num_neigh_atoms + ii*umax_num_neigh_atoms + 0];
+        CoordType (*srcs)[3] = (CoordType (*)[3])&brcs[istruct*natoms_pad*umax_num_neigh_atoms + ii*umax_num_neigh_atoms + 0][0];
 
-        correct_zbl_ef_atom<CoordType>(etot_ptr,
-                                       force,
-                                       rmax,
-                                       rmin,
-                                       cks,
-                                       dks,
-                                       silist,
-                                       snumneigh,
-                                       sfirstneigh,
-                                       srcs,
-                                       types,
-                                       ntypes,
-                                       type_map,
-                                       umax_num_neigh_atoms);
+        correct_zbl_ef_atom<CoordType>(
+            etot_ptr,
+            force,
+            rmax,
+            rmin,
+            cks,
+            dks,
+            silist,
+            snumneigh,
+            sfirstneigh,
+            srcs,
+            types,
+            ntypes,
+            type_map,
+            umax_num_neigh_atoms);
     }
 }
 
 
 template <typename CoordType>
 static __host__
-void correct_zbl_ef_launcher(CoordType *h_etot_ptr,
-                             CoordType *h_force,
-                             CoordType rmax,
-                             CoordType rmin,
-                             CoordType *h_cks,
-                             CoordType *h_dks,
-                             int inum,
-                             int *h_ilist,
-                             int *h_numneigh,
-                             int *h_firstneigh,
-                             CoordType (*h_rcs)[3],
-                             int *h_types,
-                             int ntypes,
-                             int *h_type_map,
-                             int umax_num_neigh_atoms)
+void correct_zbl_ef_launcher(
+    CoordType *h_betot_ptr,
+    CoordType *h_bforce,
+    CoordType rmax,
+    CoordType rmin,
+    CoordType *h_cks,
+    CoordType *h_dks,
+    int batch_size,
+    int natoms_pad,
+    int *h_binum,
+    int *h_bilist,
+    int *h_bnumneigh,
+    int *h_bfirstneigh,
+    CoordType (*h_brcs)[3],
+    int *h_btypes,
+    int ntypes,
+    int *h_type_map,
+    int umax_num_neigh_atoms,
+    int nghost)
 {
     int block_size_x = 64;
-    int grid_size_x = (inum - 1) / block_size_x + 1;
+    int grid_size_x = (batch_size * natoms_pad - 1) / block_size_x + 1;
     dim3 grid_size(grid_size_x);
     dim3 block_size(block_size_x);
 
-    CoordType *d_etot_ptr;
-    CoordType *d_force;
+    CoordType *d_betot_ptr;
+    CoordType *d_bforce;
     CoordType *d_cks;
     CoordType *d_dks;
-    int *d_ilist;
-    int *d_numneigh;
-    int *d_firstneigh;
-    CoordType (*d_rcs)[3];
-    int *d_types;
+    int *d_binum;
+    int *d_bilist;
+    int *d_bnumneigh;
+    int *d_bfirstneigh;
+    CoordType (*d_brcs)[3];
+    int *d_btypes;
     int *d_type_map;
 
-    CHECK_CUDA_API( cudaMalloc((void**)&d_etot_ptr, sizeof(CoordType)) );
-    CHECK_CUDA_API( cudaMemset(d_etot_ptr, 0.0, sizeof(CoordType)) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_force, sizeof(CoordType)*inum*3) );
-    CHECK_CUDA_API( cudaMemset(d_force, 0.0, sizeof(CoordType)*inum*3) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_betot_ptr, sizeof(CoordType) * batch_size) );
+    CHECK_CUDA_API( cudaMemset(d_betot_ptr, 0.0, sizeof(CoordType) * batch_size) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bforce, sizeof(CoordType) * batch_size * (natoms_pad+nghost) * 3) );
+    CHECK_CUDA_API( cudaMemset(d_bforce, 0.0, sizeof(CoordType) * batch_size * (natoms_pad+nghost) * 3) );
 
-    CHECK_CUDA_API( cudaMalloc((void**)&d_cks, sizeof(CoordType)*ntypes*ntypes*4) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_dks, sizeof(CoordType)*ntypes*ntypes*4) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_ilist, sizeof(int)*inum) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_numneigh, sizeof(int)*inum) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_firstneigh, sizeof(int)*inum*umax_num_neigh_atoms) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_rcs, sizeof(CoordType)*inum*umax_num_neigh_atoms*3) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_types, sizeof(int)*inum) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_type_map, sizeof(int)*ntypes) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_cks, sizeof(CoordType) * ntypes * ntypes * 4) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_dks, sizeof(CoordType) * ntypes * ntypes * 4) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_binum, sizeof(CoordType) * batch_size) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bilist, sizeof(int) * batch_size * natoms_pad) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bnumneigh, sizeof(int) * batch_size * natoms_pad) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bfirstneigh, sizeof(int) * batch_size * natoms_pad * umax_num_neigh_atoms) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_brcs, sizeof(CoordType) * batch_size * natoms_pad * umax_num_neigh_atoms * 3) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_btypes, sizeof(int) * batch_size * (natoms_pad+nghost)) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_type_map, sizeof(int) * ntypes) );
 
     CHECK_CUDA_API( cudaMemcpy(d_cks, h_cks, sizeof(CoordType)*ntypes*ntypes*4, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_dks, h_dks, sizeof(CoordType)*ntypes*ntypes*4, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_ilist, h_ilist, sizeof(int)*inum, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_numneigh, h_numneigh, sizeof(int)*inum, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_firstneigh, h_firstneigh, sizeof(int)*inum*umax_num_neigh_atoms, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_rcs, h_rcs, sizeof(CoordType)*inum*umax_num_neigh_atoms*3, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_types, h_types, sizeof(int)*inum, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_binum, h_binum, sizeof(int)*batch_size, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_bilist, h_bilist, sizeof(int)*batch_size*natoms_pad, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_bnumneigh, h_bnumneigh, sizeof(int)*batch_size*natoms_pad, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_bfirstneigh, h_bfirstneigh, sizeof(int)*batch_size*natoms_pad*umax_num_neigh_atoms, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_brcs, h_brcs, sizeof(CoordType)*batch_size*natoms_pad*umax_num_neigh_atoms*3, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_btypes, h_btypes, sizeof(int)*batch_size*(natoms_pad+nghost), cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_type_map, h_type_map, sizeof(int)*ntypes, cudaMemcpyHostToDevice) );
 
     auto t1 = std::chrono::high_resolution_clock::now();
 
     // Launch kernel
-    correct_zbl_ef_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (d_etot_ptr,
-                                                                          d_force,
-                                                                          rmax,
-                                                                          rmin,
-                                                                          d_cks,
-                                                                          d_dks,
-                                                                          inum,
-                                                                          d_ilist,
-                                                                          d_numneigh,
-                                                                          d_firstneigh,
-                                                                          d_rcs,
-                                                                          d_types,
-                                                                          ntypes,
-                                                                          d_type_map,
-                                                                          umax_num_neigh_atoms);
+    correct_zbl_ef_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (
+        d_betot_ptr,
+        d_bforce,
+        rmax,
+        rmin,
+        d_cks,
+        d_dks,
+        batch_size,
+        natoms_pad,
+        d_binum,
+        d_bilist,
+        d_bnumneigh,
+        d_bfirstneigh,
+        d_brcs,
+        d_btypes,
+        ntypes,
+        d_type_map,
+        umax_num_neigh_atoms,
+        nghost);
 
     CHECK_CUDA_API( cudaDeviceSynchronize() );
     CHECK_CUDA_API( cudaGetLastError() );
@@ -841,18 +910,19 @@ void correct_zbl_ef_launcher(CoordType *h_etot_ptr,
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
     std::cout << "cost time: " << duration.count() << " ms.\n";
 
-    CHECK_CUDA_API( cudaMemcpy(h_etot_ptr, d_etot_ptr, sizeof(CoordType), cudaMemcpyDeviceToHost) );
-    CHECK_CUDA_API( cudaMemcpy(h_force, d_force, sizeof(CoordType)*inum*3, cudaMemcpyDeviceToHost) );
+    CHECK_CUDA_API( cudaMemcpy(h_betot_ptr, d_betot_ptr, sizeof(CoordType)*batch_size, cudaMemcpyDeviceToHost) );
+    CHECK_CUDA_API( cudaMemcpy(h_bforce, d_bforce, sizeof(CoordType)*batch_size*(natoms_pad+nghost)*3, cudaMemcpyDeviceToHost) );
 
-    CHECK_CUDA_API( cudaFree(d_etot_ptr) );
-    CHECK_CUDA_API( cudaFree(d_force) );
+    CHECK_CUDA_API( cudaFree(d_betot_ptr) );
+    CHECK_CUDA_API( cudaFree(d_bforce) );
     CHECK_CUDA_API( cudaFree(d_cks) );
     CHECK_CUDA_API( cudaFree(d_dks) );
-    CHECK_CUDA_API( cudaFree(d_ilist) );
-    CHECK_CUDA_API( cudaFree(d_numneigh) );
-    CHECK_CUDA_API( cudaFree(d_firstneigh) );
-    CHECK_CUDA_API( cudaFree(d_rcs) );
-    CHECK_CUDA_API( cudaFree(d_types) );
+    CHECK_CUDA_API( cudaFree(d_binum) );
+    CHECK_CUDA_API( cudaFree(d_bilist) );
+    CHECK_CUDA_API( cudaFree(d_bnumneigh) );
+    CHECK_CUDA_API( cudaFree(d_bfirstneigh) );
+    CHECK_CUDA_API( cudaFree(d_brcs) );
+    CHECK_CUDA_API( cudaFree(d_btypes) );
     CHECK_CUDA_API( cudaFree(d_type_map) );
 }
 

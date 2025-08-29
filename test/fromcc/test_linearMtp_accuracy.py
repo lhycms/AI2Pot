@@ -31,26 +31,29 @@ class LinearMtpTest(unittest.TestCase):
         print("LinearMtpTest (TestCase) is setting up...\n")
         # 0.
         self.torch_float_dtype: torch._C.dtype = torch.float64
-        self.device: torch._C.device = torch.device("cpu")
+        self.device: torch._C.device = torch.device("cuda")
         
         # 1. 
-        self.mtp_level: int = 8
+        self.mtp_level: int = 16
         #self.ntypes: int = 4
         self.chebyshev_size: int = 8
         self.rmax: float = 5.0
         self.rmin: float = 0.0
-        self.umax_num_neighs: int = 200
+        self.umax_num_neigh_atoms: int = 200
         self.fit_virial: bool = False
         
         """
         self.ntypes: int = 4
+        self.type_map: List[int] = [16, 34, 41,75]
+        self.type_map_tensor = torch.tensor(self.type_map, dtype=torch.int32).to(self.device)
         self.structure: Structure = Structure.from_file(ReNbSSe_POSCAR_PATH)
         """
         self.ntypes: int = 1
-        self.type_map_tensor: torch.Tensor = torch.tensor(data=[1], dtype=torch.int32)
+        self.type_map: List[int] = [1]
+        self.type_map_tensor: torch.Tensor = torch.tensor(data=[1], dtype=torch.int32).to(self.device)
         self.structure: Structure = Structure(lattice=[[10, 0, 0], [0, 10, 0], [0, 0, 10]],
                                               species=["H", "H", "H"],
-                                              coords=[[0, 0, 0], 
+                                              coords=[[0, 0, 0],
                                                       [0, 4.0, 0],
                                                       [3.0, 0.0, 0]
                                                       ],
@@ -78,14 +81,14 @@ class LinearMtpTest(unittest.TestCase):
                 self.zbl_dks_tensor[idx*4 + 2] = 0.4029
                 self.zbl_dks_tensor[idx*4 + 3] = 0.20162
         
-        self.mlff_to_loss_input: MlffToLossInput = MlffToLossInput(type_map=[1],
+        self.mlff_to_loss_input: MlffToLossInput = MlffToLossInput(type_map=self.type_map,
                                                                    rcut=self.rmax,
-                                                                   umax_num_neighs=self.umax_num_neighs,
+                                                                   umax_num_neigh_atoms=self.umax_num_neigh_atoms,
                                                                    dtype=self.torch_float_dtype,
                                                                    device=self.device)
-        self.mlff_input: MlffInput = MlffInput(type_map=[1],
+        self.mlff_input: MlffInput = MlffInput(type_map=self.type_map,
                                                 rcut=self.rmax,
-                                                umax_num_neighs=self.umax_num_neighs,
+                                                umax_num_neigh_atoms=self.umax_num_neigh_atoms,
                                                 dtype=self.torch_float_dtype,
                                                 device=self.device)
         
@@ -120,7 +123,7 @@ class LinearMtpTest(unittest.TestCase):
         # 1. Parameters
         e_weight: float = 1.0
         f_weight: float = 0.1
-        v_weight: float = 0.1
+        v_weight: float = 0.0
         self.coeffs_tensor.requires_grad_(True)
         self.linear_coeffs_tensor.requires_grad_(True)
         self.type_bias_tensor.requires_grad_(True)
