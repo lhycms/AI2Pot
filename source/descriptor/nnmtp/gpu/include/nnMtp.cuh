@@ -61,9 +61,9 @@ void find_efv_atom(
 template <typename CoordType>
 static __global__
 void find_efv_kernel(
-    CoordType *etot_ptr,
-    CoordType (*force)[3],
-    CoordType *virial,
+    CoordType *betot_ptr,
+    CoordType (*bforce)[3],
+    CoordType *bvirial,
     int chebyshev_size,
     int num_neurons,
     CoordType *coeffs,
@@ -78,12 +78,14 @@ void find_efv_kernel(
     const int alpha_scalar_moments,
     const int *alpha_moment_mapping,
     int nmus,
-    int inum,
-    int *ilist,
-    int *numneigh,
-    int *firstneigh,
-    CoordType (*rcs)[3],
-    int *types,
+    int batch_size,
+    int natoms_pad,
+    int *binum,
+    int *bilist,
+    int *bnumneigh,
+    int *bfirstneigh,
+    CoordType (*brcs)[3],
+    int *btypes,
     int ntypes,
     int *type_map,
     int umax_num_neigh_atoms,
@@ -95,9 +97,9 @@ void find_efv_kernel(
 template <typename CoordType>
 static __host__
 void find_efv_launcher(
-    CoordType *h_etot_ptr,
-    CoordType (*h_force)[3],
-    CoordType *h_virial,
+    CoordType *h_betot_ptr,
+    CoordType (*h_bforce)[3],
+    CoordType *h_bvirial,
     int chebyshev_size,
     int num_neurons,
     CoordType *h_coeffs,
@@ -112,12 +114,14 @@ void find_efv_launcher(
     const int alpha_scalar_moments,
     const int *h_alpha_moment_mapping,
     int nmus,
-    int inum,
-    int *h_ilist,
-    int *h_numneigh,
-    int *h_firstneigh,
-    CoordType (*h_rcs)[3],
-    int *h_types,
+    int batch_size,
+    int natoms_pad,
+    int *h_binum,
+    int *h_bilist,
+    int *h_bnumneigh,
+    int *h_bfirstneigh,
+    CoordType (*h_brcs)[3],
+    int *h_btypes,
     int ntypes,
     int *h_type_map,
     int umax_num_neigh_atoms,
@@ -159,8 +163,8 @@ void find_ef_atom(
 template <typename CoordType>
 static __global__ 
 void find_ef_kernel(
-    CoordType *etot_ptr,
-    CoordType (*force)[3],
+    CoordType *betot_ptr,
+    CoordType (*bforce)[3],
     int chebyshev_size,
     int num_neurons,
     CoordType *coeffs,
@@ -175,12 +179,14 @@ void find_ef_kernel(
     const int alpha_scalar_moments,
     const int *alpha_moment_mapping,
     int nmus,
-    int inum,
-    int *ilist,
-    int *numneigh,
-    int *firstneigh,
-    CoordType (*rcs)[3],
-    int *types,
+    int batch_size,
+    int natoms_pad,
+    int *binum,
+    int *bilist,
+    int *bnumneigh,
+    int *bfirstneigh,
+    CoordType (*brcs)[3],
+    int *btypes,
     int ntypes,
     int *type_map,
     int umax_num_neigh_atoms,
@@ -191,8 +197,8 @@ void find_ef_kernel(
 template <typename CoordType>
 static __host__
 void find_ef_launcher(
-    CoordType *h_etot_ptr,
-    CoordType (*h_force)[3],
+    CoordType *h_betot_ptr,
+    CoordType (*h_bforce)[3],
     int chebyshev_size,
     int num_neurons,
     CoordType *h_coeffs,
@@ -207,12 +213,14 @@ void find_ef_launcher(
     const int alpha_scalar_moments,
     const int *h_alpha_moment_mapping,
     int nmus,
-    int inum,
-    int *h_ilist,
-    int *h_numneigh,
-    int *h_firstneigh,
-    CoordType (*h_rcs)[3],
-    int *h_types,
+    int batch_size,
+    int natoms_pad,
+    int *h_binum,
+    int *h_bilist,
+    int *h_bnumneigh,
+    int *h_bfirstneigh,
+    CoordType (*h_brcs)[3],
+    int *h_btypes,
     int ntypes,
     int *h_type_map,
     int umax_num_neigh_atoms,
@@ -476,9 +484,9 @@ void find_efv_atom(
 template <typename CoordType>
 static __global__
 void find_efv_kernel(
-    CoordType *etot_ptr,
-    CoordType (*force)[3],
-    CoordType *virial,
+    CoordType *betot_ptr,
+    CoordType (*bforce)[3],
+    CoordType *bvirial,
     int chebyshev_size,
     int num_neurons,
     CoordType *coeffs,
@@ -493,12 +501,14 @@ void find_efv_kernel(
     const int alpha_scalar_moments,
     const int *alpha_moment_mapping,
     int nmus,
-    int inum,
-    int *ilist,
-    int *numneigh,
-    int *firstneigh,
-    CoordType (*rcs)[3],
-    int *types,
+    int batch_size,
+    int natoms_pad,
+    int *binum,
+    int *bilist,
+    int *bnumneigh,
+    int *bfirstneigh,
+    CoordType (*brcs)[3],
+    int *btypes,
     int ntypes,
     int *type_map,
     int umax_num_neigh_atoms,
@@ -507,7 +517,10 @@ void find_efv_kernel(
     CoordType rmin)
 {
     int nx = blockIdx.x * blockDim.x + threadIdx.x;
-    int ii = nx;
+    int istruct = nx / natoms_pad;
+    if (istruct >= batch_size)
+        return;
+    int ii = nx % natoms_pad;
 
     __shared__ CoordType s_local_virial[64][9];
     int tid = threadIdx.x;
@@ -515,11 +528,17 @@ void find_efv_kernel(
         s_local_virial[tid][ii] = 0.0;
     //__syncthreads();
 
+    CoordType *etot_ptr = &betot_ptr[istruct];
+    CoordType (*force)[3] = &bforce[istruct*(natoms_pad+nghost) + 0];
+    CoordType *virial = &bvirial[istruct*9 + 0];
+    int inum = binum[istruct];
+    int *types = &btypes[istruct*(natoms_pad+nghost)];
+
     if (ii < inum) {
-        int silist = ilist[ii];
-        int snumneigh = numneigh[ii];
-        int *sfirstneigh = &firstneigh[ii*umax_num_neigh_atoms];
-        CoordType (*srcs)[3] = (CoordType (*)[3])(&rcs[ii*umax_num_neigh_atoms][0]);
+        int silist = bilist[istruct*natoms_pad + ii];
+        int snumneigh = bnumneigh[istruct*natoms_pad + ii];
+        int *sfirstneigh = &bfirstneigh[istruct*natoms_pad*umax_num_neigh_atoms + ii*umax_num_neigh_atoms];
+        CoordType (*srcs)[3] = (CoordType (*)[3])(&brcs[istruct*natoms_pad*umax_num_neigh_atoms + ii*umax_num_neigh_atoms][0]);
         find_efv_atom<CoordType>(
             etot_ptr,
             force,
@@ -564,9 +583,9 @@ void find_efv_kernel(
 template <typename CoordType>
 __host__
 void find_efv_launcher(
-    CoordType *h_etot_ptr,
-    CoordType (*h_force)[3],
-    CoordType *h_virial,
+    CoordType *h_betot_ptr,
+    CoordType (*h_bforce)[3],
+    CoordType *h_bvirial,
     int chebyshev_size,
     int num_neurons,
     CoordType *h_coeffs,
@@ -581,12 +600,14 @@ void find_efv_launcher(
     const int alpha_scalar_moments,
     const int *h_alpha_moment_mapping,
     int nmus,
-    int inum,
-    int *h_ilist,
-    int *h_numneigh,
-    int *h_firstneigh,
-    CoordType (*h_rcs)[3],
-    int *h_types,
+    int batch_size,
+    int natoms_pad,
+    int *h_binum,
+    int *h_bilist,
+    int *h_bnumneigh,
+    int *h_bfirstneigh,
+    CoordType (*h_brcs)[3],
+    int *h_btypes,
     int ntypes,
     int *h_type_map,
     int umax_num_neigh_atoms,
@@ -595,13 +616,13 @@ void find_efv_launcher(
     CoordType rmin)
 {
     int block_size_x = 64;
-    int grid_size_x = (inum - 1) / block_size_x + 1;
+    int grid_size_x = (batch_size*natoms_pad - 1) / block_size_x + 1;
     dim3 grid_size(grid_size_x);
     dim3 block_size(block_size_x);
 
-    CoordType *d_etot_ptr;
-    CoordType (*d_force)[3];
-    CoordType *d_virial;
+    CoordType *d_betot_ptr;
+    CoordType (*d_bforce)[3];
+    CoordType *d_bvirial;
     CoordType *d_coeffs;
     CoordType *d_w0;
     CoordType *d_w1;
@@ -609,21 +630,22 @@ void find_efv_launcher(
     int (*d_alpha_index_basic)[4];
     int (*d_alpha_index_times)[4];
     int *d_alpha_moment_mapping;
-    int *d_ilist;
-    int *d_numneigh;
-    int *d_firstneigh;
-    CoordType (*d_rcs)[3];
-    int *d_types;
+    int *d_binum;
+    int *d_bilist;
+    int *d_bnumneigh;
+    int *d_bfirstneigh;
+    CoordType (*d_brcs)[3];
+    int *d_btypes;
     int *d_type_map;
 
     int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
 
-    CHECK_CUDA_API( cudaMalloc((void**)&d_etot_ptr, sizeof(CoordType)) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_force, sizeof(CoordType) * (inum + nghost) * 3) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_virial, sizeof(CoordType) * 9) );
-    CHECK_CUDA_API( cudaMemset(d_etot_ptr, 0.0, sizeof(CoordType)) );
-    CHECK_CUDA_API( cudaMemset(d_force, 0.0, sizeof(CoordType) * (inum + nghost) * 3) );
-    CHECK_CUDA_API( cudaMemset(d_virial, 0.0, sizeof(CoordType) * 9) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_betot_ptr, sizeof(CoordType)*batch_size) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bforce, sizeof(CoordType)*batch_size*(natoms_pad+nghost)*3) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bvirial, sizeof(CoordType)*batch_size*9) );
+    CHECK_CUDA_API( cudaMemset(d_betot_ptr, 0.0, sizeof(CoordType)*batch_size) );
+    CHECK_CUDA_API( cudaMemset(d_bforce, 0.0, sizeof(CoordType)*batch_size*(natoms_pad+nghost)*3) );
+    CHECK_CUDA_API( cudaMemset(d_bvirial, 0.0, sizeof(CoordType)*batch_size*9) );
 
     CHECK_CUDA_API( cudaMalloc((void**)&d_coeffs, sizeof(CoordType) * num_coeffs) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_w0, sizeof(CoordType) * ntypes * num_neurons * alpha_scalar_moments) );
@@ -632,12 +654,13 @@ void find_efv_launcher(
     CHECK_CUDA_API( cudaMalloc((void**)&d_alpha_index_basic, sizeof(int) * alpha_index_basic_count * 4) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_alpha_index_times, sizeof(int) * alpha_index_times_count * 4) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_alpha_moment_mapping, sizeof(int) * alpha_scalar_moments) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_ilist, sizeof(int) * inum) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_numneigh, sizeof(int) * inum) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_firstneigh, sizeof(int) * inum * umax_num_neigh_atoms) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_rcs, sizeof(CoordType) * inum * umax_num_neigh_atoms * 3) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_types, sizeof(int) * (inum + nghost)) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_type_map, sizeof(int) * ntypes) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_binum, sizeof(int)*batch_size) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bilist, sizeof(int)*batch_size*natoms_pad) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bnumneigh, sizeof(int)*batch_size*natoms_pad) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bfirstneigh, sizeof(int)*batch_size*natoms_pad*umax_num_neigh_atoms) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_brcs, sizeof(CoordType)*batch_size*natoms_pad*umax_num_neigh_atoms*3) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_btypes, sizeof(int)*batch_size*(natoms_pad+nghost)) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_type_map, sizeof(int)*ntypes) );
 
     //CHECK_CUDA_API( cudaMemcpy(d_etot_ptr, &h_etot, sizeof(CoordType), cudaMemcpyHostToDevice) );
     //CHECK_CUDA_API( cudaMemcpy(d_force, h_force, sizeof(CoordType)*(inum+nghost)*3, cudaMemcpyHostToDevice) );
@@ -649,19 +672,20 @@ void find_efv_launcher(
     CHECK_CUDA_API( cudaMemcpy(d_alpha_index_basic, h_alpha_index_basic, sizeof(int)*alpha_index_basic_count*4, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_alpha_index_times, h_alpha_index_times, sizeof(int)*alpha_index_times_count*4, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_alpha_moment_mapping, h_alpha_moment_mapping, sizeof(int)*alpha_scalar_moments, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_ilist, h_ilist, sizeof(int)*inum, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_numneigh, h_numneigh, sizeof(int)*inum, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_firstneigh, h_firstneigh, sizeof(int)*inum*umax_num_neigh_atoms, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_rcs, h_rcs, sizeof(CoordType)*inum*umax_num_neigh_atoms*3, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_types, h_types, sizeof(int)*(inum+nghost), cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_binum, h_binum, sizeof(int)*batch_size, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_bilist, h_bilist, sizeof(int)*batch_size*natoms_pad, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_bnumneigh, h_bnumneigh, sizeof(int)*batch_size*natoms_pad, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_bfirstneigh, h_bfirstneigh, sizeof(int)*batch_size*natoms_pad*umax_num_neigh_atoms, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_brcs, h_brcs, sizeof(CoordType)*batch_size*natoms_pad*umax_num_neigh_atoms*3, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_btypes, h_btypes, sizeof(int)*batch_size*(natoms_pad+nghost), cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_type_map, h_type_map, sizeof(int)*ntypes, cudaMemcpyHostToDevice) );
 
     // Call global function
     auto t1 = std::chrono::high_resolution_clock::now();
     find_efv_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (
-        d_etot_ptr,
-        d_force,
-        d_virial,
+        d_betot_ptr,
+        d_bforce,
+        d_bvirial,
         chebyshev_size,
         num_neurons,
         d_coeffs,
@@ -676,12 +700,14 @@ void find_efv_launcher(
         alpha_scalar_moments,
         d_alpha_moment_mapping,
         nmus,
-        inum,
-        d_ilist,
-        d_numneigh,
-        d_firstneigh,
-        d_rcs,
-        d_types,
+        batch_size,
+        natoms_pad,
+        d_binum,
+        d_bilist,
+        d_bnumneigh,
+        d_bfirstneigh,
+        d_brcs,
+        d_btypes,
         ntypes,
         d_type_map,
         umax_num_neigh_atoms,
@@ -694,13 +720,13 @@ void find_efv_launcher(
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
     std::cout << "find_efv_kernel() cost time: " << duration.count() << " us.\n";
 
-    CHECK_CUDA_API( cudaMemcpy(h_etot_ptr, d_etot_ptr, sizeof(CoordType), cudaMemcpyDeviceToHost) );
-    CHECK_CUDA_API( cudaMemcpy(h_force, d_force, sizeof(CoordType)*(inum+nghost)*3, cudaMemcpyDeviceToHost) );
-    CHECK_CUDA_API( cudaMemcpy(h_virial, d_virial, sizeof(CoordType)*9, cudaMemcpyDeviceToHost) );
+    CHECK_CUDA_API( cudaMemcpy(h_betot_ptr, d_betot_ptr, sizeof(CoordType)*batch_size, cudaMemcpyDeviceToHost) );
+    CHECK_CUDA_API( cudaMemcpy(h_bforce, d_bforce, sizeof(CoordType)*batch_size*(natoms_pad+nghost)*3, cudaMemcpyDeviceToHost) );
+    CHECK_CUDA_API( cudaMemcpy(h_bvirial, d_bvirial, sizeof(CoordType)*batch_size*9, cudaMemcpyDeviceToHost) );
 
-    CHECK_CUDA_API( cudaFree(d_etot_ptr) );
-    CHECK_CUDA_API( cudaFree(d_force) );
-    CHECK_CUDA_API( cudaFree(d_virial) );
+    CHECK_CUDA_API( cudaFree(d_betot_ptr) );
+    CHECK_CUDA_API( cudaFree(d_bforce) );
+    CHECK_CUDA_API( cudaFree(d_bvirial) );
     CHECK_CUDA_API( cudaFree(d_coeffs) );
     CHECK_CUDA_API( cudaFree(d_w0) );
     CHECK_CUDA_API( cudaFree(d_w1) );
@@ -708,11 +734,12 @@ void find_efv_launcher(
     CHECK_CUDA_API( cudaFree(d_alpha_index_basic) );
     CHECK_CUDA_API( cudaFree(d_alpha_index_times) );
     CHECK_CUDA_API( cudaFree(d_alpha_moment_mapping) );
-    CHECK_CUDA_API( cudaFree(d_ilist) );
-    CHECK_CUDA_API( cudaFree(d_numneigh) );
-    CHECK_CUDA_API( cudaFree(d_firstneigh) );
-    CHECK_CUDA_API( cudaFree(d_rcs) );
-    CHECK_CUDA_API( cudaFree(d_types) );
+    CHECK_CUDA_API( cudaFree(d_binum) );
+    CHECK_CUDA_API( cudaFree(d_bilist) );
+    CHECK_CUDA_API( cudaFree(d_bnumneigh) );
+    CHECK_CUDA_API( cudaFree(d_bfirstneigh) );
+    CHECK_CUDA_API( cudaFree(d_brcs) );
+    CHECK_CUDA_API( cudaFree(d_btypes) );
     CHECK_CUDA_API( cudaFree(d_type_map) );
 }
 
@@ -960,8 +987,8 @@ void find_ef_atom(
 template <typename CoordType>
 static __global__
 void find_ef_kernel(
-    CoordType *etot_ptr,
-    CoordType (*force)[3],
+    CoordType *betot_ptr,
+    CoordType (*bforce)[3],
     int chebyshev_size,
     int num_neurons,
     CoordType *coeffs,
@@ -976,12 +1003,14 @@ void find_ef_kernel(
     const int alpha_scalar_moments,
     const int *alpha_moment_mapping,
     int nmus,
-    int inum,
-    int *ilist,
-    int *numneigh,
-    int *firstneigh,
-    CoordType (*rcs)[3],
-    int *types,
+    int batch_size,
+    int natoms_pad,
+    int *binum,
+    int *bilist,
+    int *bnumneigh,
+    int *bfirstneigh,
+    CoordType (*brcs)[3],
+    int *btypes,
     int ntypes,
     int *type_map,
     int umax_num_neigh_atoms,
@@ -990,13 +1019,21 @@ void find_ef_kernel(
     CoordType rmin)
 {
     int nx = blockIdx.x * blockDim.x + threadIdx.x;
-    int ii = nx;
+    int istruct = nx / natoms_pad;
+    if (istruct >= batch_size)
+        return;
+    int ii = nx % natoms_pad;
+
+    CoordType *etot_ptr = &betot_ptr[istruct];
+    CoordType (*force)[3] = &bforce[istruct*(natoms_pad+nghost) + 0];
+    int inum = binum[istruct];
+    int *types = &btypes[istruct*(natoms_pad+nghost)];
 
     if (ii < inum) {
-        int silist = ilist[ii];
-        int snumneigh = numneigh[ii];
-        int *sfirstneigh = &firstneigh[ii*umax_num_neigh_atoms];
-        CoordType (*srcs)[3] = (CoordType (*)[3])(&rcs[ii*umax_num_neigh_atoms][0]);
+        int silist = bilist[istruct*natoms_pad + ii];
+        int snumneigh = bnumneigh[istruct*natoms_pad + ii];
+        int *sfirstneigh = &bfirstneigh[istruct*natoms_pad*umax_num_neigh_atoms + ii*umax_num_neigh_atoms];
+        CoordType (*srcs)[3] = (CoordType (*)[3])(&brcs[istruct*natoms_pad*umax_num_neigh_atoms + ii*umax_num_neigh_atoms][0]);
         find_ef_atom<CoordType>(
             etot_ptr,
             force,
@@ -1032,8 +1069,8 @@ void find_ef_kernel(
 template <typename CoordType>
 __host__
 void find_ef_launcher(
-    CoordType *h_etot_ptr,
-    CoordType (*h_force)[3],
+    CoordType *h_betot_ptr,
+    CoordType (*h_bforce)[3],
     int chebyshev_size,
     int num_neurons,
     CoordType *h_coeffs,
@@ -1048,12 +1085,14 @@ void find_ef_launcher(
     const int alpha_scalar_moments,
     const int *h_alpha_moment_mapping,
     int nmus,
-    int inum,
-    int *h_ilist,
-    int *h_numneigh,
-    int *h_firstneigh,
-    CoordType (*h_rcs)[3],
-    int *h_types,
+    int batch_size,
+    int natoms_pad,
+    int *h_binum,
+    int *h_bilist,
+    int *h_bnumneigh,
+    int *h_bfirstneigh,
+    CoordType (*h_brcs)[3],
+    int *h_btypes,
     int ntypes,
     int *h_type_map,
     int umax_num_neigh_atoms,
@@ -1062,12 +1101,12 @@ void find_ef_launcher(
     CoordType rmin)
 {
     int block_size_x = 64;
-    int grid_size_x = (inum - 1) / block_size_x + 1;
+    int grid_size_x = (batch_size*natoms_pad - 1) / block_size_x + 1;
     dim3 grid_size(grid_size_x);
     dim3 block_size(block_size_x);
 
-    CoordType *d_etot_ptr;
-    CoordType (*d_force)[3];
+    CoordType *d_betot_ptr;
+    CoordType (*d_bforce)[3];
     CoordType *d_coeffs;
     CoordType *d_w0;
     CoordType *d_w1;
@@ -1075,19 +1114,20 @@ void find_ef_launcher(
     int (*d_alpha_index_basic)[4];
     int (*d_alpha_index_times)[4];
     int *d_alpha_moment_mapping;
-    int *d_ilist;
-    int *d_numneigh;
-    int *d_firstneigh;
-    CoordType (*d_rcs)[3];
-    int *d_types;
+    int *d_binum;
+    int *d_bilist;
+    int *d_bnumneigh;
+    int *d_bfirstneigh;
+    CoordType (*d_brcs)[3];
+    int *d_btypes;
     int *d_type_map;
 
     int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
 
-    CHECK_CUDA_API( cudaMalloc((void**)&d_etot_ptr, sizeof(CoordType)) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_force, sizeof(CoordType) * (inum + nghost) * 3) );
-    CHECK_CUDA_API( cudaMemset(d_etot_ptr, 0.0, sizeof(CoordType)) );
-    CHECK_CUDA_API( cudaMemset(d_force, 0.0, sizeof(CoordType) * (inum + nghost) * 3) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_betot_ptr, sizeof(CoordType)*batch_size) );
+    CHECK_CUDA_API( cudaMemset(d_betot_ptr, 0.0, sizeof(CoordType)*batch_size) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bforce, sizeof(CoordType)*batch_size*(natoms_pad+nghost)*3) );
+    CHECK_CUDA_API( cudaMemset(d_bforce, 0.0, sizeof(CoordType)*batch_size*(natoms_pad+nghost)*3) );
 
     CHECK_CUDA_API( cudaMalloc((void**)&d_coeffs, sizeof(CoordType) * num_coeffs) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_w0, sizeof(CoordType) * ntypes * num_neurons * alpha_scalar_moments) );
@@ -1096,12 +1136,13 @@ void find_ef_launcher(
     CHECK_CUDA_API( cudaMalloc((void**)&d_alpha_index_basic, sizeof(int) * alpha_index_basic_count * 4) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_alpha_index_times, sizeof(int) * alpha_index_times_count * 4) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_alpha_moment_mapping, sizeof(int) * alpha_scalar_moments) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_ilist, sizeof(int) * inum) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_numneigh, sizeof(int) * inum) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_firstneigh, sizeof(int) * inum * umax_num_neigh_atoms) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_rcs, sizeof(CoordType) * inum * umax_num_neigh_atoms * 3) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_types, sizeof(int) * (inum + nghost)) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_type_map, sizeof(int) * ntypes) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_binum, sizeof(int)*batch_size) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bilist, sizeof(int)*batch_size*natoms_pad) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bnumneigh, sizeof(int)*batch_size*natoms_pad) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bfirstneigh, sizeof(int)*batch_size*natoms_pad*umax_num_neigh_atoms) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_brcs, sizeof(CoordType)*batch_size*natoms_pad*umax_num_neigh_atoms*3) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_btypes, sizeof(int)*batch_size*(natoms_pad+nghost)) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_type_map, sizeof(int)*ntypes) );
 
     //CHECK_CUDA_API( cudaMemcpy(d_etot_ptr, &h_etot, sizeof(CoordType), cudaMemcpyHostToDevice) );
     //CHECK_CUDA_API( cudaMemcpy(d_force, h_force, sizeof(CoordType)*(inum+nghost)*3, cudaMemcpyHostToDevice) );
@@ -1113,18 +1154,19 @@ void find_ef_launcher(
     CHECK_CUDA_API( cudaMemcpy(d_alpha_index_basic, h_alpha_index_basic, sizeof(int)*alpha_index_basic_count*4, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_alpha_index_times, h_alpha_index_times, sizeof(int)*alpha_index_times_count*4, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_alpha_moment_mapping, h_alpha_moment_mapping, sizeof(int)*alpha_scalar_moments, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_ilist, h_ilist, sizeof(int)*inum, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_numneigh, h_numneigh, sizeof(int)*inum, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_firstneigh, h_firstneigh, sizeof(int)*inum*umax_num_neigh_atoms, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_rcs, h_rcs, sizeof(CoordType)*inum*umax_num_neigh_atoms*3, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_types, h_types, sizeof(int)*(inum+nghost), cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_binum, h_binum, sizeof(int)*batch_size, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_bilist, h_bilist, sizeof(int)*batch_size*natoms_pad, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_bnumneigh, h_bnumneigh, sizeof(int)*batch_size*natoms_pad, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_bfirstneigh, h_bfirstneigh, sizeof(int)*batch_size*natoms_pad*umax_num_neigh_atoms, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_brcs, h_brcs, sizeof(CoordType)*batch_size*natoms_pad*umax_num_neigh_atoms*3, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_btypes, h_btypes, sizeof(int)*batch_size*(natoms_pad+nghost), cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_type_map, h_type_map, sizeof(int)*ntypes, cudaMemcpyHostToDevice) );
 
     // Call global function
     auto t1 = std::chrono::high_resolution_clock::now();
     find_ef_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (
-        d_etot_ptr,
-        d_force,
+        d_betot_ptr,
+        d_bforce,
         chebyshev_size,
         num_neurons,
         d_coeffs,
@@ -1139,12 +1181,14 @@ void find_ef_launcher(
         alpha_scalar_moments,
         d_alpha_moment_mapping,
         nmus,
-        inum,
-        d_ilist,
-        d_numneigh,
-        d_firstneigh,
-        d_rcs,
-        d_types,
+        batch_size,
+        natoms_pad,
+        d_binum,
+        d_bilist,
+        d_bnumneigh,
+        d_bfirstneigh,
+        d_brcs,
+        d_btypes,
         ntypes,
         d_type_map,
         umax_num_neigh_atoms,
@@ -1157,11 +1201,11 @@ void find_ef_launcher(
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
     std::cout << "find_ef_kernel() cost time: " << duration.count() << " us.\n";
 
-    CHECK_CUDA_API( cudaMemcpy(h_etot_ptr, d_etot_ptr, sizeof(CoordType), cudaMemcpyDeviceToHost) );
-    CHECK_CUDA_API( cudaMemcpy(h_force, d_force, sizeof(CoordType)*(inum+nghost)*3, cudaMemcpyDeviceToHost) );
+    CHECK_CUDA_API( cudaMemcpy(h_betot_ptr, d_betot_ptr, sizeof(CoordType)*batch_size, cudaMemcpyDeviceToHost) );
+    CHECK_CUDA_API( cudaMemcpy(h_bforce, d_bforce, sizeof(CoordType)*batch_size*(natoms_pad+nghost)*3, cudaMemcpyDeviceToHost) );
 
-    CHECK_CUDA_API( cudaFree(d_etot_ptr) );
-    CHECK_CUDA_API( cudaFree(d_force) );
+    CHECK_CUDA_API( cudaFree(d_betot_ptr) );
+    CHECK_CUDA_API( cudaFree(d_bforce) );
     CHECK_CUDA_API( cudaFree(d_coeffs) );
     CHECK_CUDA_API( cudaFree(d_w0) );
     CHECK_CUDA_API( cudaFree(d_w1) );
@@ -1169,11 +1213,12 @@ void find_ef_launcher(
     CHECK_CUDA_API( cudaFree(d_alpha_index_basic) );
     CHECK_CUDA_API( cudaFree(d_alpha_index_times) );
     CHECK_CUDA_API( cudaFree(d_alpha_moment_mapping) );
-    CHECK_CUDA_API( cudaFree(d_ilist) );
-    CHECK_CUDA_API( cudaFree(d_numneigh) );
-    CHECK_CUDA_API( cudaFree(d_firstneigh) );
-    CHECK_CUDA_API( cudaFree(d_rcs) );
-    CHECK_CUDA_API( cudaFree(d_types) );
+    CHECK_CUDA_API( cudaFree(d_binum) );
+    CHECK_CUDA_API( cudaFree(d_bilist) );
+    CHECK_CUDA_API( cudaFree(d_bnumneigh) );
+    CHECK_CUDA_API( cudaFree(d_bfirstneigh) );
+    CHECK_CUDA_API( cudaFree(d_brcs) );
+    CHECK_CUDA_API( cudaFree(d_btypes) );
     CHECK_CUDA_API( cudaFree(d_type_map) );
 }
 
