@@ -74,14 +74,14 @@ protected:
     real *bvirial_;
 
 
-    real *loss_der2coeffs;
-    real *loss_der2w0;
-    real *loss_der2w1;
-    real *loss_der2type_bias;
+    real *bloss_der2coeffs;
+    real *bloss_der2w0;
+    real *bloss_der2w1;
+    real *bloss_der2type_bias;
 
-    real etot_dft;
-    real (*force_dft)[3];
-    real *virial_dft;
+    real *betot_dft;
+    real (*bforce_dft)[3];
+    real *bvirial_dft;
 
 
     static void SetUpTestSuite() {
@@ -114,6 +114,7 @@ protected:
         num_neurons = 30;
         batch_size = 1;
         natoms_pad = 12;
+        nghost = 0;
 
         ntypes = 2;
 
@@ -242,20 +243,21 @@ protected:
         bvirial_ = (real*)malloc(sizeof(real)*batch_size*9);
         memset(bvirial_, 0.0, sizeof(real)*batch_size*9);
 
-        loss_der2coeffs = (real*)malloc(sizeof(real) * ntypes * ntypes * mtp_param.nmus() * chebyshev_size);
-        memset(loss_der2coeffs, 0, sizeof(real) * ntypes * ntypes * mtp_param.nmus() * chebyshev_size);
-        loss_der2w0 = (real*)malloc(sizeof(real) * ntypes * num_neurons * mtp_param.alpha_scalar_moments());
-        memset(loss_der2w0, 0, sizeof(real) * ntypes * num_neurons * mtp_param.alpha_scalar_moments());
-        loss_der2w1 = (real*)malloc(sizeof(real) * ntypes * num_neurons);
-        memset(loss_der2w1, 0, sizeof(real) * ntypes * num_neurons);
-        loss_der2type_bias = (real*)malloc(sizeof(real) * ntypes);
-        memset(loss_der2type_bias, 0, sizeof(real) * ntypes);
+        bloss_der2coeffs = (real*)malloc(sizeof(real)*batch_size*ntypes*ntypes*mtp_param.nmus()*chebyshev_size);
+        memset(bloss_der2coeffs, 0, sizeof(real)*batch_size*ntypes*ntypes*mtp_param.nmus()*chebyshev_size);
+        bloss_der2w0 = (real*)malloc(sizeof(real)*batch_size*ntypes*num_neurons*mtp_param.alpha_scalar_moments());
+        memset(bloss_der2w0, 0, sizeof(real)*batch_size*ntypes*num_neurons*mtp_param.alpha_scalar_moments());
+        bloss_der2w1 = (real*)malloc(sizeof(real)*batch_size*ntypes*num_neurons);
+        memset(bloss_der2w1, 0, sizeof(real)*batch_size*ntypes*num_neurons);
+        bloss_der2type_bias = (real*)malloc(sizeof(real)*batch_size*ntypes);
+        memset(bloss_der2type_bias, 0, sizeof(real)*batch_size*ntypes);
 
-        etot_dft = 0.0;
-        force_dft = (real (*)[3])malloc(sizeof(real) * natoms_pad * 3);
-        memset(force_dft, 0, sizeof(real)*natoms_pad*3);
-        virial_dft = (real*)malloc(sizeof(real) * 9);
-        memset(virial_dft, 0, sizeof(real)*9);
+        betot_dft = (real*)malloc(sizeof(real)*batch_size);
+        memset(betot_dft, 0, sizeof(real)*batch_size);
+        bforce_dft = (real (*)[3])malloc(sizeof(real)*batch_size*natoms_pad*3);
+        memset(bforce_dft, 0, sizeof(real)*batch_size*natoms_pad*3);
+        bvirial_dft = (real*)malloc(sizeof(real)*batch_size*9);
+        memset(bvirial_dft, 0, sizeof(real)*batch_size*9);
     }
 
     void TearDown() override {
@@ -278,12 +280,13 @@ protected:
         free(bforce_);
         free(bvirial_);
 
-        free(loss_der2coeffs);
-        free(loss_der2w0);
-        free(loss_der2w1);
-        free(loss_der2type_bias);
-        free(force_dft);
-        free(virial_dft);
+        free(bloss_der2coeffs);
+        free(bloss_der2w0);
+        free(bloss_der2w1);
+        free(bloss_der2type_bias);
+        free(betot_dft);
+        free(bforce_dft);
+        free(bvirial_dft);
     }
 };  // class : NNMtpTest
 
@@ -494,17 +497,16 @@ for (int ii=0; ii<natoms_pad; ii++)
 }
 
 
-/*
 TEST_F(NNMtpTest, find_loss_backward_launcer)
 {
     real e_weight = 1.0;
     real f_weight = 1.0;
-    real v_weight = 1.0;
+    real v_weight = 0.0;
     
     ai2pot::nnmtp::find_efv_launcher<real>(
-        &etot,
-        force,
-        virial,
+        betot,
+        bforce,
+        bvirial,
         chebyshev_size,
         num_neurons,
         coeffs,
@@ -519,12 +521,14 @@ TEST_F(NNMtpTest, find_loss_backward_launcer)
         mtp_param.alpha_scalar_moments(),
         mtp_param.alpha_moment_mapping(),
         mtp_param.nmus(),
-        inum,
-        ilist,
-        numneigh,
-        firstneigh,
-        (real (*)[3])rcs,
-        types,
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        bnumneigh,
+        bfirstneigh,
+        (real (*)[3])brcs,
+        btypes,
         ntypes,
         type_map,
         umax_num_neigh_atoms,
@@ -533,19 +537,19 @@ TEST_F(NNMtpTest, find_loss_backward_launcer)
         rmin);
 
     ai2pot::nnmtp::find_loss_backward_launcher<real>(
-        loss_der2coeffs,
-        loss_der2w0,
-        loss_der2w1,
-        loss_der2type_bias,
+        bloss_der2coeffs,
+        bloss_der2w0,
+        bloss_der2w1,
+        bloss_der2type_bias,
         e_weight,
         f_weight,
         v_weight,
-        etot,
-        etot_dft,
-        force,
-        force_dft,
-        virial,
-        virial_dft,
+        betot,
+        betot_dft,
+        bforce,
+        bforce_dft,
+        bvirial,
+        bvirial_dft,
         chebyshev_size,
         num_neurons,
         coeffs,
@@ -560,12 +564,14 @@ TEST_F(NNMtpTest, find_loss_backward_launcer)
         mtp_param.alpha_scalar_moments(),
         mtp_param.alpha_moment_mapping(),
         mtp_param.nmus(),
-        inum,
-        ilist,
-        numneigh,
-        firstneigh,
-        (real (*)[3])rcs,
-        types,
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        bnumneigh,
+        bfirstneigh,
+        (real (*)[3])brcs,
+        btypes,
         ntypes,
         type_map,
         umax_num_neigh_atoms,
@@ -575,24 +581,25 @@ TEST_F(NNMtpTest, find_loss_backward_launcer)
 
 printf("1. loss_der2coeffs:\n");
 for (int ii=0; ii<ntypes*ntypes*mtp_param.nmus()*chebyshev_size; ii++)
-    printf("%.15f, ", loss_der2coeffs[ii]);
+    printf("%.15f, ", bloss_der2coeffs[ii]);
 printf("\n\n");
 
 printf("2. loss_der2w0:\n");
 for (int ii=0; ii<ntypes*num_neurons*mtp_param.alpha_scalar_moments(); ii++)
-    printf("%.15f, ", loss_der2w0[ii]);
+    printf("%.15f, ", bloss_der2w0[ii]);
 printf("\n\n");
 
 printf("3. loss_der2w1:\n");
 for (int ii=0; ii<ntypes*num_neurons; ii++)
-    printf("%.15f, ", loss_der2w1[ii]);
+    printf("%.15f, ", bloss_der2w1[ii]);
 printf("\n\n");
 
 printf("4. loss_der2type_bias:\n");
 for (int ii=0; ii<ntypes; ii++)
-    printf("%.15f, ", loss_der2type_bias[ii]);
+    printf("%.15f, ", bloss_der2type_bias[ii]);
 printf("\n\n");
 }
+
 
 
 TEST_F(NNMtpTest, find_ef_loss_backward_launcer)
@@ -601,8 +608,8 @@ TEST_F(NNMtpTest, find_ef_loss_backward_launcer)
     real f_weight = 1.0;
     
     ai2pot::nnmtp::find_ef_launcher<real>(
-        &etot,
-        force,
+        betot,
+        bforce,
         chebyshev_size,
         num_neurons,
         coeffs,
@@ -617,12 +624,14 @@ TEST_F(NNMtpTest, find_ef_loss_backward_launcer)
         mtp_param.alpha_scalar_moments(),
         mtp_param.alpha_moment_mapping(),
         mtp_param.nmus(),
-        inum,
-        ilist,
-        numneigh,
-        firstneigh,
-        (real (*)[3])rcs,
-        types,
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        bnumneigh,
+        bfirstneigh,
+        (real (*)[3])brcs,
+        btypes,
         ntypes,
         type_map,
         umax_num_neigh_atoms,
@@ -631,16 +640,16 @@ TEST_F(NNMtpTest, find_ef_loss_backward_launcer)
         rmin);
 
     ai2pot::nnmtp::find_ef_loss_backward_launcher<real>(
-        loss_der2coeffs,
-        loss_der2w0,
-        loss_der2w1,
-        loss_der2type_bias,
+        bloss_der2coeffs,
+        bloss_der2w0,
+        bloss_der2w1,
+        bloss_der2type_bias,
         e_weight,
         f_weight,
-        etot,
-        etot_dft,
-        force,
-        force_dft,
+        betot,
+        betot_dft,
+        bforce,
+        bforce_dft,
         chebyshev_size,
         num_neurons,
         coeffs,
@@ -655,12 +664,14 @@ TEST_F(NNMtpTest, find_ef_loss_backward_launcer)
         mtp_param.alpha_scalar_moments(),
         mtp_param.alpha_moment_mapping(),
         mtp_param.nmus(),
-        inum,
-        ilist,
-        numneigh,
-        firstneigh,
-        (real (*)[3])rcs,
-        types,
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        bnumneigh,
+        bfirstneigh,
+        (real (*)[3])brcs,
+        btypes,
         ntypes,
         type_map,
         umax_num_neigh_atoms,
@@ -670,25 +681,25 @@ TEST_F(NNMtpTest, find_ef_loss_backward_launcer)
 
 printf("1. loss_der2coeffs:\n");
 for (int ii=0; ii<ntypes*ntypes*mtp_param.nmus()*chebyshev_size; ii++)
-    printf("%.15f, ", loss_der2coeffs[ii]);
+    printf("%.15f, ", bloss_der2coeffs[ii]);
 printf("\n\n");
 
 printf("2. loss_der2w0:\n");
 for (int ii=0; ii<ntypes*num_neurons*mtp_param.alpha_scalar_moments(); ii++)
-    printf("%.15f, ", loss_der2w0[ii]);
+    printf("%.15f, ", bloss_der2w0[ii]);
 printf("\n\n");
 
 printf("3. loss_der2w1:\n");
 for (int ii=0; ii<ntypes*num_neurons; ii++)
-    printf("%.15f, ", loss_der2w1[ii]);
+    printf("%.15f, ", bloss_der2w1[ii]);
 printf("\n\n");
 
 printf("4. loss_der2type_bias:\n");
 for (int ii=0; ii<ntypes; ii++)
-    printf("%.15f, ", loss_der2type_bias[ii]);
+    printf("%.15f, ", bloss_der2type_bias[ii]);
 printf("\n\n");
 }
-*/
+
 
 
 int main(int argc, char **argv) {

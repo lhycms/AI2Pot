@@ -147,19 +147,19 @@ void find_loss_backward_atom(
 template <typename CoordType>
 static __global__
 void find_loss_backward_kernel(
-    CoordType *loss_der2coeffs,
-    CoordType *loss_der2w0,
-    CoordType *loss_der2w1,
-    CoordType *loss_der2type_bias,
+    CoordType *bloss_der2coeffs,
+    CoordType *bloss_der2w0,
+    CoordType *bloss_der2w1,
+    CoordType *bloss_der2type_bias,
     CoordType e_weight,
     CoordType f_weight,
     CoordType v_weight,
-    CoordType etot_ml,
-    CoordType etot_dft,
-    CoordType (*force_ml)[3],
-    CoordType (*force_dft)[3],
-    CoordType *virial_ml,
-    CoordType *virial_dft,
+    CoordType *betot_ml,
+    CoordType *betot_dft,
+    CoordType (*bforce_ml)[3],
+    CoordType (*bforce_dft)[3],
+    CoordType *bvirial_ml,
+    CoordType *bvirial_dft,
     int chebyshev_size,
     int num_neurons,
     CoordType *coeffs,
@@ -174,12 +174,14 @@ void find_loss_backward_kernel(
     const int alpha_scalar_moments,
     const int *alpha_moment_mapping,
     int nmus,
-    int inum,
-    int *ilist,
-    int *numneigh,
-    int *firstneigh,
-    CoordType (*rcs)[3],
-    int *types,
+    int batch_size,
+    int natoms_pad,
+    int *binum,
+    int *bilist,
+    int *bnumneigh,
+    int *bfirstneigh,
+    CoordType (*brcs)[3],
+    int *btypes,
     int ntypes,
     int *type_map,
     int umax_num_neigh_atoms,
@@ -190,19 +192,19 @@ void find_loss_backward_kernel(
 template <typename CoordType>
 static __host__
 void find_loss_backward_launcher(
-    CoordType *h_loss_der2coeffs,
-    CoordType *h_loss_der2w0,
-    CoordType *h_loss_der2w1,
-    CoordType *h_loss_der2type_bias,
+    CoordType *h_bloss_der2coeffs,
+    CoordType *h_bloss_der2w0,
+    CoordType *h_bloss_der2w1,
+    CoordType *h_bloss_der2type_bias,
     CoordType e_weight,
     CoordType f_weight,
     CoordType v_weight,
-    CoordType etot_ml,
-    CoordType etot_dft,
-    CoordType (*h_force_ml)[3],
-    CoordType (*h_force_dft)[3],
-    CoordType *h_virial_ml,
-    CoordType *h_virial_dft,
+    CoordType *h_betot_ml,
+    CoordType *h_betot_dft,
+    CoordType (*h_bforce_ml)[3],
+    CoordType (*h_bforce_dft)[3],
+    CoordType *h_bvirial_ml,
+    CoordType *h_bvirial_dft,
     int chebyshev_size,
     int num_neurons,
     CoordType *h_coeffs,
@@ -217,12 +219,14 @@ void find_loss_backward_launcher(
     const int alpha_scalar_moments,
     const int *h_alpha_moment_mapping,
     int nmus,
-    int inum,
-    int *h_ilist,
-    int *h_numneigh,
-    int *h_firstneigh,
-    CoordType (*h_rcs)[3],
-    int *h_types,
+    int batch_size,
+    int natoms_pad,
+    int *h_binum,
+    int *h_bilist,
+    int *h_bnumneigh,
+    int *h_bfirstneigh,
+    CoordType (*h_brcs)[3],
+    int *h_btypes,
     int ntypes,
     int *h_type_map,
     int umax_num_neigh_atoms,
@@ -274,16 +278,16 @@ void find_ef_loss_backward_atom(
 template <typename CoordType>
 static __global__
 void find_ef_loss_backward_kernel(
-    CoordType *loss_der2coeffs,
-    CoordType *loss_der2w0,
-    CoordType *loss_der2w1,
-    CoordType *loss_der2type_bias,
+    CoordType *bloss_der2coeffs,
+    CoordType *bloss_der2w0,
+    CoordType *bloss_der2w1,
+    CoordType *bloss_der2type_bias,
     CoordType e_weight,
     CoordType f_weight,
-    CoordType etot_ml,
-    CoordType etot_dft,
-    CoordType (*force_ml)[3],
-    CoordType (*force_dft)[3],
+    CoordType *betot_ml,
+    CoordType *betot_dft,
+    CoordType (*bforce_ml)[3],
+    CoordType (*bforce_dft)[3],
     int chebyshev_size,
     int num_neurons,
     CoordType *coeffs,
@@ -298,12 +302,14 @@ void find_ef_loss_backward_kernel(
     const int alpha_scalar_moments,
     const int *alpha_moment_mapping,
     int nmus,
-    int inum,
-    int *ilist,
-    int *numneigh,
-    int *firstneigh,
-    CoordType (*rcs)[3],
-    int *types,
+    int batch_size,
+    int natoms_pad,
+    int *binum,
+    int *bilist,
+    int *bnumneigh,
+    int *bfirstneigh,
+    CoordType (*brcs)[3],
+    int *btypes,
     int ntypes,
     int *type_map,
     int umax_num_neigh_atoms,
@@ -315,16 +321,16 @@ void find_ef_loss_backward_kernel(
 template <typename CoordType>
 static __host__
 void find_ef_loss_backward_launcher(
-    CoordType *h_loss_der2coeffs,
-    CoordType *h_loss_der2w0,
-    CoordType *h_loss_der2w1,
-    CoordType *h_loss_der2type_bias,
+    CoordType *h_bloss_der2coeffs,
+    CoordType *h_bloss_der2w0,
+    CoordType *h_bloss_der2w1,
+    CoordType *h_bloss_der2type_bias,
     CoordType e_weight,
     CoordType f_weight,
-    CoordType etot_ml,
-    CoordType etot_dft,
-    CoordType (*h_force_ml)[3],
-    CoordType (*h_force_dft)[3],
+    CoordType *h_betot_ml,
+    CoordType *h_betot_dft,
+    CoordType (*h_bforce_ml)[3],
+    CoordType (*h_bforce_dft)[3],
     int chebyshev_size,
     int num_neurons,
     CoordType *h_coeffs,
@@ -339,12 +345,14 @@ void find_ef_loss_backward_launcher(
     const int alpha_scalar_moments,
     const int *h_alpha_moment_mapping,
     int nmus,
-    int inum,
-    int *h_ilist,
-    int *h_numneigh,
-    int *h_firstneigh,
-    CoordType (*h_rcs)[3],
-    int *h_types,
+    int batch_size,
+    int natoms_pad,
+    int *h_binum,
+    int *h_bilist,
+    int *h_bnumneigh,
+    int *h_bfirstneigh,
+    CoordType (*h_brcs)[3],
+    int *h_btypes,
     int ntypes,
     int *h_type_map,
     int umax_num_neigh_atoms,
@@ -973,19 +981,19 @@ void find_loss_backward_atom(
 template <typename CoordType>
 __global__
 void find_loss_backward_kernel(
-    CoordType *loss_der2coeffs,
-    CoordType *loss_der2w0,
-    CoordType *loss_der2w1,
-    CoordType *loss_der2type_bias,
+    CoordType *bloss_der2coeffs,
+    CoordType *bloss_der2w0,
+    CoordType *bloss_der2w1,
+    CoordType *bloss_der2type_bias,
     CoordType e_weight,
     CoordType f_weight,
     CoordType v_weight,
-    CoordType etot_ml,
-    CoordType etot_dft,
-    CoordType (*force_ml)[3],
-    CoordType (*force_dft)[3],
-    CoordType *virial_ml,
-    CoordType *virial_dft,
+    CoordType *betot_ml,
+    CoordType *betot_dft,
+    CoordType (*bforce_ml)[3],
+    CoordType (*bforce_dft)[3],
+    CoordType *bvirial_ml,
+    CoordType *bvirial_dft,
     int chebyshev_size,
     int num_neurons,
     CoordType *coeffs,
@@ -1000,12 +1008,14 @@ void find_loss_backward_kernel(
     const int alpha_scalar_moments,
     const int *alpha_moment_mapping,
     int nmus,
-    int inum,
-    int *ilist,
-    int *numneigh,
-    int *firstneigh,
-    CoordType (*rcs)[3],
-    int *types,
+    int batch_size,
+    int natoms_pad,
+    int *binum,
+    int *bilist,
+    int *bnumneigh,
+    int *bfirstneigh,
+    CoordType (*brcs)[3],
+    int *btypes,
     int ntypes,
     int *type_map,
     int umax_num_neigh_atoms,
@@ -1014,13 +1024,30 @@ void find_loss_backward_kernel(
     CoordType rmin)
 {
     int nx = blockIdx.x * blockDim.x + threadIdx.x;
-    int ii = nx;
+    int istruct = nx / natoms_pad;
+    if (istruct >= batch_size)
+        return;
+    int ii = nx % natoms_pad;
+    int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
+
+    CoordType *loss_der2coeffs = &bloss_der2coeffs[istruct*num_coeffs + 0];
+    CoordType *loss_der2w0 = &bloss_der2w0[istruct*ntypes*num_neurons*alpha_scalar_moments + 0];
+    CoordType *loss_der2w1 = &bloss_der2w1[istruct*ntypes*num_neurons + 0];
+    CoordType *loss_der2type_bias = &bloss_der2type_bias[istruct*ntypes + 0];
+    CoordType etot_ml = betot_ml[istruct];
+    CoordType etot_dft = betot_dft[istruct];
+    CoordType (*force_ml)[3] = &bforce_ml[istruct*natoms_pad + 0];
+    CoordType (*force_dft)[3] = &bforce_dft[istruct*natoms_pad + 0];
+    CoordType *virial_ml = &bvirial_ml[istruct*9 + 0];
+    CoordType *virial_dft = &bvirial_dft[istruct*9 + 0];
+    int inum = binum[istruct];
+    int *types = &btypes[istruct*natoms_pad + 0];
 
     if (ii < inum) {
-        int silist = ilist[ii];
-        int snumneigh = numneigh[ii];
-        int *sfirstneigh = &firstneigh[ii*umax_num_neigh_atoms];
-        CoordType (*srcs)[3] = (CoordType (*)[3])(&rcs[ii*umax_num_neigh_atoms][0]);
+        int silist = bilist[istruct*natoms_pad + ii];
+        int snumneigh = bnumneigh[istruct*natoms_pad + ii];
+        int *sfirstneigh = &bfirstneigh[istruct*natoms_pad*umax_num_neigh_atoms + ii*umax_num_neigh_atoms];
+        CoordType (*srcs)[3] = &brcs[istruct*natoms_pad*umax_num_neigh_atoms + ii*umax_num_neigh_atoms];
         find_loss_backward_atom<CoordType>(
             loss_der2coeffs,
             loss_der2w0,
@@ -1068,19 +1095,19 @@ void find_loss_backward_kernel(
 template <typename CoordType>
 __host__
 void find_loss_backward_launcher(
-    CoordType *h_loss_der2coeffs,
-    CoordType *h_loss_der2w0,
-    CoordType *h_loss_der2w1,
-    CoordType *h_loss_der2type_bias,
+    CoordType *h_bloss_der2coeffs,
+    CoordType *h_bloss_der2w0,
+    CoordType *h_bloss_der2w1,
+    CoordType *h_bloss_der2type_bias,
     CoordType e_weight,
     CoordType f_weight,
     CoordType v_weight,
-    CoordType etot_ml,
-    CoordType etot_dft,
-    CoordType (*h_force_ml)[3],
-    CoordType (*h_force_dft)[3],
-    CoordType *h_virial_ml,
-    CoordType *h_virial_dft,
+    CoordType *h_betot_ml,
+    CoordType *h_betot_dft,
+    CoordType (*h_bforce_ml)[3],
+    CoordType (*h_bforce_dft)[3],
+    CoordType *h_bvirial_ml,
+    CoordType *h_bvirial_dft,
     int chebyshev_size,
     int num_neurons,
     CoordType *h_coeffs,
@@ -1095,12 +1122,14 @@ void find_loss_backward_launcher(
     const int alpha_scalar_moments,
     const int *h_alpha_moment_mapping,
     int nmus,
-    int inum,
-    int *h_ilist,
-    int *h_numneigh,
-    int *h_firstneigh,
-    CoordType (*h_rcs)[3],
-    int *h_types,
+    int batch_size,
+    int natoms_pad,
+    int *h_binum,
+    int *h_bilist,
+    int *h_bnumneigh,
+    int *h_bfirstneigh,
+    CoordType (*h_brcs)[3],
+    int *h_btypes,
     int ntypes,
     int *h_type_map,
     int umax_num_neigh_atoms,
@@ -1109,19 +1138,21 @@ void find_loss_backward_launcher(
     CoordType rmin)
 {
     int block_size_x = 64;
-    int grid_size_x = (inum - 1) / block_size_x + 1;
+    int grid_size_x = (batch_size*natoms_pad - 1) / block_size_x + 1;
     dim3 grid_size(grid_size_x);
     dim3 block_size(block_size_x);
 
     int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
-    CoordType *d_loss_der2coeffs;
-    CoordType *d_loss_der2w0;
-    CoordType *d_loss_der2w1;
-    CoordType *d_loss_der2type_bias;
-    CoordType (*d_force_ml)[3];
-    CoordType (*d_force_dft)[3];
-    CoordType *d_virial_ml;
-    CoordType *d_virial_dft;
+    CoordType *d_bloss_der2coeffs;
+    CoordType *d_bloss_der2w0;
+    CoordType *d_bloss_der2w1;
+    CoordType *d_bloss_der2type_bias;
+    CoordType *d_betot_ml;
+    CoordType *d_betot_dft;
+    CoordType (*d_bforce_ml)[3];
+    CoordType (*d_bforce_dft)[3];
+    CoordType *d_bvirial_ml;
+    CoordType *d_bvirial_dft;
     CoordType *d_coeffs;
     CoordType *d_w0;
     CoordType *d_w1;
@@ -1129,44 +1160,50 @@ void find_loss_backward_launcher(
     int (*d_alpha_index_basic)[4];
     int (*d_alpha_index_times)[4];
     int *d_alpha_moment_mapping;
-    int *d_ilist;
-    int *d_numneigh;
-    int *d_firstneigh;
-    CoordType (*d_rcs)[3];
-    int *d_types;
+    int *d_binum;
+    int *d_bilist;
+    int *d_bnumneigh;
+    int *d_bfirstneigh;
+    CoordType (*d_brcs)[3];
+    int *d_btypes;
     int *d_type_map;
 
-    CHECK_CUDA_API( cudaMalloc((void**)&d_loss_der2coeffs, sizeof(CoordType) * num_coeffs) );
-    CHECK_CUDA_API( cudaMemset(d_loss_der2coeffs, 0.0, sizeof(CoordType) * num_coeffs) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_loss_der2w0, sizeof(CoordType) * ntypes * num_neurons * alpha_scalar_moments) );
-    CHECK_CUDA_API( cudaMemset(d_loss_der2w0, 0.0, sizeof(CoordType) * ntypes * num_neurons * alpha_scalar_moments) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_loss_der2w1, sizeof(CoordType) * ntypes * num_neurons) );
-    CHECK_CUDA_API( cudaMemset(d_loss_der2w1, 0.0, sizeof(CoordType) * ntypes * num_neurons) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_loss_der2type_bias, sizeof(CoordType) * ntypes) );
-    CHECK_CUDA_API( cudaMemset(d_loss_der2type_bias, 0.0, sizeof(CoordType) * ntypes) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bloss_der2coeffs, sizeof(CoordType)*batch_size*num_coeffs) );
+    CHECK_CUDA_API( cudaMemset(d_bloss_der2coeffs, 0.0, sizeof(CoordType)*batch_size*num_coeffs) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bloss_der2w0, sizeof(CoordType)*batch_size*ntypes*num_neurons*alpha_scalar_moments) );
+    CHECK_CUDA_API( cudaMemset(d_bloss_der2w0, 0.0, sizeof(CoordType)*batch_size*ntypes*num_neurons*alpha_scalar_moments) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bloss_der2w1, sizeof(CoordType)*batch_size*ntypes*num_neurons) );
+    CHECK_CUDA_API( cudaMemset(d_bloss_der2w1, 0.0, sizeof(CoordType)*batch_size*ntypes*num_neurons) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bloss_der2type_bias, sizeof(CoordType)*batch_size*ntypes) );
+    CHECK_CUDA_API( cudaMemset(d_bloss_der2type_bias, 0.0, sizeof(CoordType)*batch_size*ntypes) );
 
-    CHECK_CUDA_API( cudaMalloc((void**)&d_force_ml, sizeof(CoordType) * inum * 3) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_force_dft, sizeof(CoordType) * inum * 3) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_virial_ml, sizeof(CoordType) * 9) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_virial_dft, sizeof(CoordType) * 9) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_betot_ml, sizeof(CoordType)*batch_size) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_betot_dft, sizeof(CoordType)*batch_size) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bforce_ml, sizeof(CoordType)*batch_size*natoms_pad*3) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bforce_dft, sizeof(CoordType)*batch_size*natoms_pad*3) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bvirial_ml, sizeof(CoordType)*batch_size*9) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bvirial_dft, sizeof(CoordType)*batch_size*9) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_coeffs, sizeof(CoordType) * num_coeffs) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_w0, sizeof(CoordType) * ntypes * num_neurons * alpha_scalar_moments) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_w1, sizeof(CoordType) * ntypes * num_neurons) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_type_bias, sizeof(CoordType) * alpha_scalar_moments) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_type_bias, sizeof(CoordType) * ntypes) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_alpha_index_basic, sizeof(int) * alpha_index_basic_count * 4) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_alpha_index_times, sizeof(int) * alpha_index_times_count * 4) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_alpha_moment_mapping, sizeof(int) * alpha_scalar_moments) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_ilist, sizeof(int) * inum) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_numneigh, sizeof(int) * inum) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_firstneigh, sizeof(int) * inum * umax_num_neigh_atoms) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_rcs, sizeof(CoordType) * inum * umax_num_neigh_atoms * 3) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_types, sizeof(int) * inum) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_type_map, sizeof(int) * ntypes) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_binum, sizeof(int)*batch_size) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bilist, sizeof(int)*batch_size*natoms_pad) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bnumneigh, sizeof(int)*batch_size*natoms_pad) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bfirstneigh, sizeof(int)*batch_size*natoms_pad*umax_num_neigh_atoms) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_brcs, sizeof(CoordType)*batch_size*natoms_pad*umax_num_neigh_atoms*3) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_btypes, sizeof(int)*batch_size*natoms_pad) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_type_map, sizeof(int)*ntypes) );
 
-    CHECK_CUDA_API( cudaMemcpy(d_force_ml, h_force_ml, sizeof(CoordType)*inum*3, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_force_dft, h_force_dft, sizeof(CoordType)*inum*3, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_virial_ml, h_virial_ml, sizeof(CoordType)*9, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_virial_dft, h_virial_dft, sizeof(CoordType)*9, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_betot_ml, h_betot_ml, sizeof(CoordType)*batch_size, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_betot_dft, h_betot_dft, sizeof(CoordType)*batch_size, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_bforce_ml, h_bforce_ml, sizeof(CoordType)*batch_size*natoms_pad*3, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_bforce_dft, h_bforce_dft, sizeof(CoordType)*batch_size*natoms_pad*3, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_bvirial_ml, h_bvirial_ml, sizeof(CoordType)*batch_size*9, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_bvirial_dft, h_bvirial_dft, sizeof(CoordType)*batch_size*9, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_coeffs, h_coeffs, sizeof(CoordType)*num_coeffs, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_w0, h_w0, sizeof(CoordType)*ntypes*num_neurons*alpha_scalar_moments, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_w1, h_w1, sizeof(CoordType)*ntypes*num_neurons, cudaMemcpyHostToDevice) );
@@ -1174,29 +1211,30 @@ void find_loss_backward_launcher(
     CHECK_CUDA_API( cudaMemcpy(d_alpha_index_basic, h_alpha_index_basic, sizeof(int)*alpha_index_basic_count*4, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_alpha_index_times, h_alpha_index_times, sizeof(int)*alpha_index_times_count*4, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_alpha_moment_mapping, h_alpha_moment_mapping, sizeof(int)*alpha_scalar_moments, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_ilist, h_ilist, sizeof(int)*inum, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_numneigh, h_numneigh, sizeof(int)*inum, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_firstneigh, h_firstneigh, sizeof(int)*inum*umax_num_neigh_atoms, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_rcs, h_rcs, sizeof(CoordType)*inum*umax_num_neigh_atoms*3, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_types, h_types, sizeof(int)*inum, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_binum, h_binum, sizeof(int)*batch_size, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_bilist, h_bilist, sizeof(int)*batch_size*natoms_pad, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_bnumneigh, h_bnumneigh, sizeof(int)*batch_size*natoms_pad, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_bfirstneigh, h_bfirstneigh, sizeof(int)*batch_size*natoms_pad*umax_num_neigh_atoms, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_brcs, h_brcs, sizeof(CoordType)*batch_size*natoms_pad*umax_num_neigh_atoms*3, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_btypes, h_btypes, sizeof(int)*batch_size*natoms_pad, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_type_map, h_type_map, sizeof(int)*ntypes, cudaMemcpyHostToDevice) );
 
 
     auto t1 = std::chrono::high_resolution_clock::now();
     find_loss_backward_kernel KERNEL_ARG2(grid_size, block_size) (
-        d_loss_der2coeffs,
-        d_loss_der2w0,
-        d_loss_der2w1,
-        d_loss_der2type_bias,
+        d_bloss_der2coeffs,
+        d_bloss_der2w0,
+        d_bloss_der2w1,
+        d_bloss_der2type_bias,
         e_weight,
         f_weight,
         v_weight,
-        etot_ml,
-        etot_dft,
-        d_force_ml,
-        d_force_dft,
-        d_virial_ml,
-        d_virial_dft,
+        d_betot_ml,
+        d_betot_dft,
+        d_bforce_ml,
+        d_bforce_dft,
+        d_bvirial_ml,
+        d_bvirial_dft,
         chebyshev_size,
         num_neurons,
         d_coeffs,
@@ -1211,12 +1249,14 @@ void find_loss_backward_launcher(
         alpha_scalar_moments,
         d_alpha_moment_mapping,
         nmus,
-        inum,
-        d_ilist,
-        d_numneigh,
-        d_firstneigh,
-        d_rcs,
-        d_types,
+        batch_size,
+        natoms_pad,
+        d_binum,
+        d_bilist,
+        d_bnumneigh,
+        d_bfirstneigh,
+        d_brcs,
+        d_btypes,
         ntypes,
         d_type_map,
         umax_num_neigh_atoms,
@@ -1230,30 +1270,34 @@ void find_loss_backward_launcher(
     std::cout << "find_loss_backward_launcher() cost time: " << duration.count() << " us." << std::endl;
 
 
-    CHECK_CUDA_API( cudaMemcpy(h_loss_der2coeffs, d_loss_der2coeffs, sizeof(CoordType)*num_coeffs, cudaMemcpyDeviceToHost) );
-    CHECK_CUDA_API( cudaMemcpy(h_loss_der2w0, d_loss_der2w0, sizeof(CoordType)*ntypes*num_neurons*alpha_scalar_moments, cudaMemcpyDeviceToHost) );
-    CHECK_CUDA_API( cudaMemcpy(h_loss_der2w1, d_loss_der2w1, sizeof(CoordType)*ntypes*num_neurons, cudaMemcpyDeviceToHost) );
-    CHECK_CUDA_API( cudaMemcpy(h_loss_der2type_bias, d_loss_der2type_bias, sizeof(CoordType)*ntypes, cudaMemcpyDeviceToHost) );
+    CHECK_CUDA_API( cudaMemcpy(h_bloss_der2coeffs, d_bloss_der2coeffs, sizeof(CoordType)*batch_size*num_coeffs, cudaMemcpyDeviceToHost) );
+    CHECK_CUDA_API( cudaMemcpy(h_bloss_der2w0, d_bloss_der2w0, sizeof(CoordType)*batch_size*ntypes*num_neurons*alpha_scalar_moments, cudaMemcpyDeviceToHost) );
+    CHECK_CUDA_API( cudaMemcpy(h_bloss_der2w1, d_bloss_der2w1, sizeof(CoordType)*batch_size*ntypes*num_neurons, cudaMemcpyDeviceToHost) );
+    CHECK_CUDA_API( cudaMemcpy(h_bloss_der2type_bias, d_bloss_der2type_bias, sizeof(CoordType)*batch_size*ntypes, cudaMemcpyDeviceToHost) );
 
-    CHECK_CUDA_API( cudaFree(d_loss_der2coeffs) );
-    CHECK_CUDA_API( cudaFree(d_loss_der2w0) );
-    CHECK_CUDA_API( cudaFree(d_loss_der2w1) );
-    CHECK_CUDA_API( cudaFree(d_loss_der2type_bias) );
-    CHECK_CUDA_API( cudaFree(d_force_ml) );
-    CHECK_CUDA_API( cudaFree(d_force_dft) );
-    CHECK_CUDA_API( cudaFree(d_virial_ml) );
-    CHECK_CUDA_API( cudaFree(d_virial_dft) );
+    CHECK_CUDA_API( cudaFree(d_bloss_der2coeffs) );
+    CHECK_CUDA_API( cudaFree(d_bloss_der2w0) );
+    CHECK_CUDA_API( cudaFree(d_bloss_der2w1) );
+    CHECK_CUDA_API( cudaFree(d_bloss_der2type_bias) );
+    CHECK_CUDA_API( cudaFree(d_betot_ml) );
+    CHECK_CUDA_API( cudaFree(d_betot_dft) );
+    CHECK_CUDA_API( cudaFree(d_bforce_ml) );
+    CHECK_CUDA_API( cudaFree(d_bforce_dft) );
+    CHECK_CUDA_API( cudaFree(d_bvirial_ml) );
+    CHECK_CUDA_API( cudaFree(d_bvirial_dft) );
     CHECK_CUDA_API( cudaFree(d_coeffs) );
     CHECK_CUDA_API( cudaFree(d_w0) );
     CHECK_CUDA_API( cudaFree(d_w1) );
     CHECK_CUDA_API( cudaFree(d_type_bias) );
     CHECK_CUDA_API( cudaFree(d_alpha_index_basic) );
     CHECK_CUDA_API( cudaFree(d_alpha_index_times) );
-    CHECK_CUDA_API( cudaFree(d_ilist) );
-    CHECK_CUDA_API( cudaFree(d_numneigh) );
-    CHECK_CUDA_API( cudaFree(d_firstneigh) );
-    CHECK_CUDA_API( cudaFree(d_rcs) );
-    CHECK_CUDA_API( cudaFree(d_types) );
+    CHECK_CUDA_API( cudaFree(d_alpha_moment_mapping) );
+    CHECK_CUDA_API( cudaFree(d_binum) );
+    CHECK_CUDA_API( cudaFree(d_bilist) );
+    CHECK_CUDA_API( cudaFree(d_bnumneigh) );
+    CHECK_CUDA_API( cudaFree(d_bfirstneigh) );
+    CHECK_CUDA_API( cudaFree(d_brcs) );
+    CHECK_CUDA_API( cudaFree(d_btypes) );
     CHECK_CUDA_API( cudaFree(d_type_map) );
 }
 
@@ -1598,16 +1642,16 @@ void find_ef_loss_backward_atom(
 template <typename CoordType>
 __global__
 void find_ef_loss_backward_kernel(
-    CoordType *loss_der2coeffs,
-    CoordType *loss_der2w0,
-    CoordType *loss_der2w1,
-    CoordType *loss_der2type_bias,
+    CoordType *bloss_der2coeffs,
+    CoordType *bloss_der2w0,
+    CoordType *bloss_der2w1,
+    CoordType *bloss_der2type_bias,
     CoordType e_weight,
     CoordType f_weight,
-    CoordType etot_ml,
-    CoordType etot_dft,
-    CoordType (*force_ml)[3],
-    CoordType (*force_dft)[3],
+    CoordType *betot_ml,
+    CoordType *betot_dft,
+    CoordType (*bforce_ml)[3],
+    CoordType (*bforce_dft)[3],
     int chebyshev_size,
     int num_neurons,
     CoordType *coeffs,
@@ -1622,12 +1666,14 @@ void find_ef_loss_backward_kernel(
     const int alpha_scalar_moments,
     const int *alpha_moment_mapping,
     int nmus,
-    int inum,
-    int *ilist,
-    int *numneigh,
-    int *firstneigh,
-    CoordType (*rcs)[3],
-    int *types,
+    int batch_size,
+    int natoms_pad,
+    int *binum,
+    int *bilist,
+    int *bnumneigh,
+    int *bfirstneigh,
+    CoordType (*brcs)[3],
+    int *btypes,
     int ntypes,
     int *type_map,
     int umax_num_neigh_atoms,
@@ -1636,7 +1682,26 @@ void find_ef_loss_backward_kernel(
     CoordType rmin)
 {
     int nx = blockIdx.x * blockDim.x + threadIdx.x;
-    int ii = nx;
+    int istruct = nx / natoms_pad;
+    if (istruct >= batch_size)
+        return;
+    int ii = nx % natoms_pad;
+    int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
+
+    CoordType *loss_der2coeffs = &bloss_der2coeffs[istruct*num_coeffs + 0];
+    CoordType *loss_der2w0 = &bloss_der2w0[istruct*ntypes*num_neurons*alpha_scalar_moments+ 0];
+    CoordType *loss_der2w1 = &bloss_der2w1[istruct*ntypes*num_neurons + 0];
+    CoordType *loss_der2type_bias = &bloss_der2type_bias[istruct*ntypes + 0];
+    CoordType etot_ml = betot_ml[istruct];
+    CoordType etot_dft = betot_dft[istruct];
+    CoordType (*force_ml)[3] = &bforce_ml[istruct*natoms_pad + 0];
+    CoordType (*force_dft)[3] = &bforce_dft[istruct*natoms_pad + 0];
+    int inum = binum[istruct];
+    int *types = &btypes[istruct*natoms_pad + 0];
+    int *ilist = &bilist[istruct*natoms_pad + 0];
+    int *numneigh = &bnumneigh[istruct*natoms_pad + 0];
+    int *firstneigh = &bfirstneigh[istruct*natoms_pad*umax_num_neigh_atoms + 0];
+    CoordType (*rcs)[3] = &brcs[istruct*natoms_pad*umax_num_neigh_atoms + 0];
 
     if (ii < inum) {
         int silist = ilist[ii];
@@ -1687,16 +1752,16 @@ void find_ef_loss_backward_kernel(
 template <typename CoordType>
 __host__
 void find_ef_loss_backward_launcher(
-    CoordType *h_loss_der2coeffs,
-    CoordType *h_loss_der2w0,
-    CoordType *h_loss_der2w1,
-    CoordType *h_loss_der2type_bias,
+    CoordType *h_bloss_der2coeffs,
+    CoordType *h_bloss_der2w0,
+    CoordType *h_bloss_der2w1,
+    CoordType *h_bloss_der2type_bias,
     CoordType e_weight,
     CoordType f_weight,
-    CoordType etot_ml,
-    CoordType etot_dft,
-    CoordType (*h_force_ml)[3],
-    CoordType (*h_force_dft)[3],
+    CoordType *h_betot_ml,
+    CoordType *h_betot_dft,
+    CoordType (*h_bforce_ml)[3],
+    CoordType (*h_bforce_dft)[3],
     int chebyshev_size,
     int num_neurons,
     CoordType *h_coeffs,
@@ -1711,12 +1776,14 @@ void find_ef_loss_backward_launcher(
     const int alpha_scalar_moments,
     const int *h_alpha_moment_mapping,
     int nmus,
-    int inum,
-    int *h_ilist,
-    int *h_numneigh,
-    int *h_firstneigh,
-    CoordType (*h_rcs)[3],
-    int *h_types,
+    int batch_size,
+    int natoms_pad,
+    int *h_binum,
+    int *h_bilist,
+    int *h_bnumneigh,
+    int *h_bfirstneigh,
+    CoordType (*h_brcs)[3],
+    int *h_btypes,
     int ntypes,
     int *h_type_map,
     int umax_num_neigh_atoms,
@@ -1725,17 +1792,19 @@ void find_ef_loss_backward_launcher(
     CoordType rmin)
 {
     int block_size_x = 64;
-    int grid_size_x = (inum - 1) / block_size_x + 1;
+    int grid_size_x = (batch_size*natoms_pad - 1) / block_size_x + 1;
     dim3 grid_size(grid_size_x);
     dim3 block_size(block_size_x);
 
     int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
-    CoordType *d_loss_der2coeffs;
-    CoordType *d_loss_der2w0;
-    CoordType *d_loss_der2w1;
-    CoordType *d_loss_der2type_bias;
-    CoordType (*d_force_ml)[3];
-    CoordType (*d_force_dft)[3];
+    CoordType *d_bloss_der2coeffs;
+    CoordType *d_bloss_der2w0;
+    CoordType *d_bloss_der2w1;
+    CoordType *d_bloss_der2type_bias;
+    CoordType *d_betot_ml;
+    CoordType *d_betot_dft;
+    CoordType (*d_bforce_ml)[3];
+    CoordType (*d_bforce_dft)[3];
     CoordType *d_coeffs;
     CoordType *d_w0;
     CoordType *d_w1;
@@ -1743,24 +1812,27 @@ void find_ef_loss_backward_launcher(
     int (*d_alpha_index_basic)[4];
     int (*d_alpha_index_times)[4];
     int *d_alpha_moment_mapping;
-    int *d_ilist;
-    int *d_numneigh;
-    int *d_firstneigh;
-    CoordType (*d_rcs)[3];
-    int *d_types;
+    int *d_binum;
+    int *d_bilist;
+    int *d_bnumneigh;
+    int *d_bfirstneigh;
+    CoordType (*d_brcs)[3];
+    int *d_btypes;
     int *d_type_map;
 
-    CHECK_CUDA_API( cudaMalloc((void**)&d_loss_der2coeffs, sizeof(CoordType) * num_coeffs) );
-    CHECK_CUDA_API( cudaMemset(d_loss_der2coeffs, 0.0, sizeof(CoordType) * num_coeffs) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_loss_der2w0, sizeof(CoordType) * ntypes * num_neurons * alpha_scalar_moments) );
-    CHECK_CUDA_API( cudaMemset(d_loss_der2w0, 0.0, sizeof(CoordType) * ntypes * num_neurons * alpha_scalar_moments) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_loss_der2w1, sizeof(CoordType) * ntypes * num_neurons) );
-    CHECK_CUDA_API( cudaMemset(d_loss_der2w1, 0.0, sizeof(CoordType) * ntypes * num_neurons) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_loss_der2type_bias, sizeof(CoordType) * ntypes) );
-    CHECK_CUDA_API( cudaMemset(d_loss_der2type_bias, 0.0, sizeof(CoordType) * ntypes) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bloss_der2coeffs, sizeof(CoordType)*batch_size*num_coeffs) );
+    CHECK_CUDA_API( cudaMemset(d_bloss_der2coeffs, 0.0, sizeof(CoordType)*batch_size*num_coeffs) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bloss_der2w0, sizeof(CoordType)*batch_size*ntypes*num_neurons*alpha_scalar_moments) );
+    CHECK_CUDA_API( cudaMemset(d_bloss_der2w0, 0.0, sizeof(CoordType)*batch_size*ntypes*num_neurons*alpha_scalar_moments) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bloss_der2w1, sizeof(CoordType)*batch_size*ntypes*num_neurons) );
+    CHECK_CUDA_API( cudaMemset(d_bloss_der2w1, 0.0, sizeof(CoordType)*batch_size*ntypes*num_neurons) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bloss_der2type_bias, sizeof(CoordType)*batch_size*ntypes) );
+    CHECK_CUDA_API( cudaMemset(d_bloss_der2type_bias, 0.0, sizeof(CoordType)*batch_size*ntypes) );
 
-    CHECK_CUDA_API( cudaMalloc((void**)&d_force_ml, sizeof(CoordType) * inum * 3) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_force_dft, sizeof(CoordType) * inum * 3) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_betot_ml, sizeof(CoordType)*batch_size) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_betot_dft, sizeof(CoordType)*batch_size) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bforce_ml, sizeof(CoordType)*batch_size*natoms_pad*3) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bforce_dft, sizeof(CoordType)*batch_size*natoms_pad*3) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_coeffs, sizeof(CoordType) * num_coeffs) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_w0, sizeof(CoordType) * ntypes * num_neurons * alpha_scalar_moments) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_w1, sizeof(CoordType) * ntypes * num_neurons) );
@@ -1768,15 +1840,18 @@ void find_ef_loss_backward_launcher(
     CHECK_CUDA_API( cudaMalloc((void**)&d_alpha_index_basic, sizeof(int) * alpha_index_basic_count * 4) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_alpha_index_times, sizeof(int) * alpha_index_times_count * 4) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_alpha_moment_mapping, sizeof(int) * alpha_scalar_moments) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_ilist, sizeof(int) * inum) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_numneigh, sizeof(int) * inum) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_firstneigh, sizeof(int) * inum * umax_num_neigh_atoms) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_rcs, sizeof(CoordType) * inum * umax_num_neigh_atoms * 3) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_types, sizeof(int) * inum) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_binum, sizeof(int)*batch_size) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bilist, sizeof(int)*batch_size*natoms_pad) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bnumneigh, sizeof(int)*batch_size*natoms_pad) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bfirstneigh, sizeof(int)*batch_size*natoms_pad*umax_num_neigh_atoms) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_brcs, sizeof(CoordType)*batch_size*natoms_pad*umax_num_neigh_atoms*3) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_btypes, sizeof(int)*batch_size*natoms_pad) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_type_map, sizeof(int) * ntypes) );
 
-    CHECK_CUDA_API( cudaMemcpy(d_force_ml, h_force_ml, sizeof(CoordType)*inum*3, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_force_dft, h_force_dft, sizeof(CoordType)*inum*3, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_betot_ml, h_betot_ml, sizeof(CoordType)*batch_size, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_betot_dft, h_betot_dft, sizeof(CoordType)*batch_size, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_bforce_ml, h_bforce_ml, sizeof(CoordType)*batch_size*natoms_pad*3, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_bforce_dft, h_bforce_dft, sizeof(CoordType)*batch_size*natoms_pad*3, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_coeffs, h_coeffs, sizeof(CoordType)*num_coeffs, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_w0, h_w0, sizeof(CoordType)*ntypes*num_neurons*alpha_scalar_moments, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_w1, h_w1, sizeof(CoordType)*ntypes*num_neurons, cudaMemcpyHostToDevice) );
@@ -1784,26 +1859,27 @@ void find_ef_loss_backward_launcher(
     CHECK_CUDA_API( cudaMemcpy(d_alpha_index_basic, h_alpha_index_basic, sizeof(int)*alpha_index_basic_count*4, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_alpha_index_times, h_alpha_index_times, sizeof(int)*alpha_index_times_count*4, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_alpha_moment_mapping, h_alpha_moment_mapping, sizeof(int)*alpha_scalar_moments, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_ilist, h_ilist, sizeof(int)*inum, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_numneigh, h_numneigh, sizeof(int)*inum, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_firstneigh, h_firstneigh, sizeof(int)*inum*umax_num_neigh_atoms, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_rcs, h_rcs, sizeof(CoordType)*inum*umax_num_neigh_atoms*3, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_types, h_types, sizeof(int)*inum, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_binum, h_binum, sizeof(int)*batch_size, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_bilist, h_bilist, sizeof(int)*batch_size*natoms_pad, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_bnumneigh, h_bnumneigh, sizeof(int)*batch_size*natoms_pad, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_bfirstneigh, h_bfirstneigh, sizeof(int)*batch_size*natoms_pad*umax_num_neigh_atoms, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_brcs, h_brcs, sizeof(CoordType)*batch_size*natoms_pad*umax_num_neigh_atoms*3, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_btypes, h_btypes, sizeof(int)*batch_size*natoms_pad, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_type_map, h_type_map, sizeof(int)*ntypes, cudaMemcpyHostToDevice) );
 
 
     auto t1 = std::chrono::high_resolution_clock::now();
     find_ef_loss_backward_kernel KERNEL_ARG2(grid_size, block_size) (
-        d_loss_der2coeffs,
-        d_loss_der2w0,
-        d_loss_der2w1,
-        d_loss_der2type_bias,
+        d_bloss_der2coeffs,
+        d_bloss_der2w0,
+        d_bloss_der2w1,
+        d_bloss_der2type_bias,
         e_weight,
         f_weight,
-        etot_ml,
-        etot_dft,
-        d_force_ml,
-        d_force_dft,
+        d_betot_ml,
+        d_betot_dft,
+        d_bforce_ml,
+        d_bforce_dft,
         chebyshev_size,
         num_neurons,
         d_coeffs,
@@ -1818,12 +1894,14 @@ void find_ef_loss_backward_launcher(
         alpha_scalar_moments,
         d_alpha_moment_mapping,
         nmus,
-        inum,
-        d_ilist,
-        d_numneigh,
-        d_firstneigh,
-        d_rcs,
-        d_types,
+        batch_size,
+        natoms_pad,
+        d_binum,
+        d_bilist,
+        d_bnumneigh,
+        d_bfirstneigh,
+        d_brcs,
+        d_btypes,
         ntypes,
         d_type_map,
         umax_num_neigh_atoms,
@@ -1837,28 +1915,32 @@ void find_ef_loss_backward_launcher(
     std::cout << "find_ef_loss_backward_launcher() cost time: " << duration.count() << " us." << std::endl;
 
 
-    CHECK_CUDA_API( cudaMemcpy(h_loss_der2coeffs, d_loss_der2coeffs, sizeof(CoordType)*num_coeffs, cudaMemcpyDeviceToHost) );
-    CHECK_CUDA_API( cudaMemcpy(h_loss_der2w0, d_loss_der2w0, sizeof(CoordType)*ntypes*num_neurons*alpha_scalar_moments, cudaMemcpyDeviceToHost) );
-    CHECK_CUDA_API( cudaMemcpy(h_loss_der2w1, d_loss_der2w1, sizeof(CoordType)*ntypes*num_neurons, cudaMemcpyDeviceToHost) );
-    CHECK_CUDA_API( cudaMemcpy(h_loss_der2type_bias, d_loss_der2type_bias, sizeof(CoordType)*ntypes, cudaMemcpyDeviceToHost) );
+    CHECK_CUDA_API( cudaMemcpy(h_bloss_der2coeffs, d_bloss_der2coeffs, sizeof(CoordType)*batch_size*num_coeffs, cudaMemcpyDeviceToHost) );
+    CHECK_CUDA_API( cudaMemcpy(h_bloss_der2w0, d_bloss_der2w0, sizeof(CoordType)*batch_size*ntypes*num_neurons*alpha_scalar_moments, cudaMemcpyDeviceToHost) );
+    CHECK_CUDA_API( cudaMemcpy(h_bloss_der2w1, d_bloss_der2w1, sizeof(CoordType)*batch_size*ntypes*num_neurons, cudaMemcpyDeviceToHost) );
+    CHECK_CUDA_API( cudaMemcpy(h_bloss_der2type_bias, d_bloss_der2type_bias, sizeof(CoordType)*batch_size*ntypes, cudaMemcpyDeviceToHost) );
 
-    CHECK_CUDA_API( cudaFree(d_loss_der2coeffs) );
-    CHECK_CUDA_API( cudaFree(d_loss_der2w0) );
-    CHECK_CUDA_API( cudaFree(d_loss_der2w1) );
-    CHECK_CUDA_API( cudaFree(d_loss_der2type_bias) );
-    CHECK_CUDA_API( cudaFree(d_force_ml) );
-    CHECK_CUDA_API( cudaFree(d_force_dft) );
+    CHECK_CUDA_API( cudaFree(d_bloss_der2coeffs) );
+    CHECK_CUDA_API( cudaFree(d_bloss_der2w0) );
+    CHECK_CUDA_API( cudaFree(d_bloss_der2w1) );
+    CHECK_CUDA_API( cudaFree(d_bloss_der2type_bias) );
+    CHECK_CUDA_API( cudaFree(d_betot_ml) );
+    CHECK_CUDA_API( cudaFree(d_betot_dft) );
+    CHECK_CUDA_API( cudaFree(d_bforce_ml) );
+    CHECK_CUDA_API( cudaFree(d_bforce_dft) );
     CHECK_CUDA_API( cudaFree(d_coeffs) );
     CHECK_CUDA_API( cudaFree(d_w0) );
     CHECK_CUDA_API( cudaFree(d_w1) );
     CHECK_CUDA_API( cudaFree(d_type_bias) );
     CHECK_CUDA_API( cudaFree(d_alpha_index_basic) );
     CHECK_CUDA_API( cudaFree(d_alpha_index_times) );
-    CHECK_CUDA_API( cudaFree(d_ilist) );
-    CHECK_CUDA_API( cudaFree(d_numneigh) );
-    CHECK_CUDA_API( cudaFree(d_firstneigh) );
-    CHECK_CUDA_API( cudaFree(d_rcs) );
-    CHECK_CUDA_API( cudaFree(d_types) );
+    CHECK_CUDA_API( cudaFree(d_alpha_moment_mapping) );
+    CHECK_CUDA_API( cudaFree(d_binum) );
+    CHECK_CUDA_API( cudaFree(d_bilist) );
+    CHECK_CUDA_API( cudaFree(d_bnumneigh) );
+    CHECK_CUDA_API( cudaFree(d_bfirstneigh) );
+    CHECK_CUDA_API( cudaFree(d_brcs) );
+    CHECK_CUDA_API( cudaFree(d_btypes) );
     CHECK_CUDA_API( cudaFree(d_type_map) );
 }
 
