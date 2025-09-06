@@ -26,38 +26,42 @@ namespace nnmtp {
 template <typename CoordType>
 __host__
 void find_loss_torch_launcher(
-    CoordType *d_loss_ptr,
-    int inum,
-    int *d_ilist,
+    CoordType *d_bloss_ptr,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
     CoordType e_weight,
     CoordType f_weight,
     CoordType v_weight,
-    CoordType etot_ml,
-    CoordType etot_dft,
-    CoordType (*d_force_ml)[3],
-    CoordType (*d_force_dft)[3],
-    CoordType *d_virial_ml,
-    CoordType *d_virial_dft)
+    CoordType *d_betot_ml,
+    CoordType *d_betot_dft,
+    CoordType (*d_bforce_ml)[3],
+    CoordType (*d_bforce_dft)[3],
+    CoordType *d_bvirial_ml,
+    CoordType *d_bvirial_dft)
 {
     int block_size_x = 64;
-    int grid_size_x = (inum - 1) / block_size_x + 1;
+    int grid_size_x = (batch_size*natoms_pad- 1) / block_size_x + 1;
     dim3 grid_size(grid_size_x);
     dim3 block_size(block_size_x);
 
     
     find_loss_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (
-        d_loss_ptr,
-        inum,
-        d_ilist,
+        d_bloss_ptr,
+        batch_size,
+        natoms_pad,
+        d_binum,
+        d_bilist,
         e_weight,
         f_weight,
         v_weight,
-        etot_ml,
-        etot_dft,
-        d_force_ml,
-        d_force_dft,
-        d_virial_ml,
-        d_virial_dft);
+        d_betot_ml,
+        d_betot_dft,
+        d_bforce_ml,
+        d_bforce_dft,
+        d_bvirial_ml,
+        d_bvirial_dft);
     
 
     CHECK_CUDA_API( cudaDeviceSynchronize() );
@@ -69,31 +73,35 @@ void find_loss_torch_launcher(
 template <typename CoordType>
 __host__
 void find_ef_loss_torch_launcher(
-    CoordType *d_loss_ptr,
-    int inum,
-    int *d_ilist,
+    CoordType *d_bloss_ptr,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
     CoordType e_weight,
     CoordType f_weight,
-    CoordType etot_ml,
-    CoordType etot_dft,
-    CoordType (*d_force_ml)[3],
-    CoordType (*d_force_dft)[3])
+    CoordType *d_betot_ml,
+    CoordType *d_betot_dft,
+    CoordType (*d_bforce_ml)[3],
+    CoordType (*d_bforce_dft)[3])
 {
     int block_size_x = 64;
-    int grid_size_x = (inum - 1) / block_size_x + 1;
+    int grid_size_x = (batch_size*natoms_pad - 1) / block_size_x + 1;
     dim3 grid_size(grid_size_x);
     dim3 block_size(block_size_x);
 
     find_ef_loss_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (
-        d_loss_ptr,
-        inum,
-        d_ilist,
+        d_bloss_ptr,
+        batch_size,
+        natoms_pad,
+        d_binum,
+        d_bilist,
         e_weight,
         f_weight,
-        etot_ml,
-        etot_dft,
-        d_force_ml,
-        d_force_dft);
+        d_betot_ml,
+        d_betot_dft,
+        d_bforce_ml,
+        d_bforce_dft);
 
     CHECK_CUDA_API( cudaDeviceSynchronize() );
     CHECK_CUDA_API( cudaGetLastError() );
@@ -104,19 +112,19 @@ void find_ef_loss_torch_launcher(
 template <typename CoordType>
 __host__
 void find_loss_backward_torch_launcher(
-    CoordType *d_loss_der2coeffs,
-    CoordType *d_loss_der2w0,
-    CoordType *d_loss_der2w1,
-    CoordType *d_loss_der2type_bias,
+    CoordType *d_bloss_der2coeffs,
+    CoordType *d_bloss_der2w0,
+    CoordType *d_bloss_der2w1,
+    CoordType *d_bloss_der2type_bias,
     CoordType e_weight,
     CoordType f_weight,
     CoordType v_weight,
-    CoordType etot_ml,
-    CoordType etot_dft,
-    CoordType (*d_force_ml)[3],
-    CoordType (*d_force_dft)[3],
-    CoordType *d_virial_ml,
-    CoordType *d_virial_dft,
+    CoordType *d_betot_ml,
+    CoordType *d_betot_dft,
+    CoordType (*d_bforce_ml)[3],
+    CoordType (*d_bforce_dft)[3],
+    CoordType *d_bvirial_ml,
+    CoordType *d_bvirial_dft,
     int chebyshev_size,
     int num_neurons,
     CoordType *d_coeffs,
@@ -131,12 +139,14 @@ void find_loss_backward_torch_launcher(
     const int alpha_scalar_moments,
     const int *d_alpha_moment_mapping,
     int nmus,
-    int inum,
-    int *d_ilist,
-    int *d_numneigh,
-    int *d_firstneigh,
-    CoordType (*d_rcs)[3],
-    int *d_types,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    int *d_bnumneigh,
+    int *d_bfirstneigh,
+    CoordType (*d_brcs)[3],
+    int *d_btypes,
     int ntypes,
     int *d_type_map,
     int umax_num_neigh_atoms,
@@ -145,24 +155,24 @@ void find_loss_backward_torch_launcher(
     CoordType rmin)
 {
     int block_size_x = 64;
-    int grid_size_x = (inum - 1) / block_size_x + 1;
+    int grid_size_x = (batch_size*natoms_pad - 1) / block_size_x + 1;
     dim3 grid_size(grid_size_x);
     dim3 block_size(block_size_x);
 
     find_loss_backward_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (
-        d_loss_der2coeffs,
-        d_loss_der2w0,
-        d_loss_der2w1,
-        d_loss_der2type_bias,
+        d_bloss_der2coeffs,
+        d_bloss_der2w0,
+        d_bloss_der2w1,
+        d_bloss_der2type_bias,
         e_weight,
         f_weight,
         v_weight,
-        etot_ml,
-        etot_dft,
-        d_force_ml,
-        d_force_dft,
-        d_virial_ml,
-        d_virial_dft,
+        d_betot_ml,
+        d_betot_dft,
+        d_bforce_ml,
+        d_bforce_dft,
+        d_bvirial_ml,
+        d_bvirial_dft,
         chebyshev_size,
         num_neurons,
         d_coeffs,
@@ -177,12 +187,14 @@ void find_loss_backward_torch_launcher(
         alpha_scalar_moments,
         d_alpha_moment_mapping,
         nmus,
-        inum,
-        d_ilist,
-        d_numneigh,
-        d_firstneigh,
-        d_rcs,
-        d_types,
+        batch_size,
+        natoms_pad,
+        d_binum,
+        d_bilist,
+        d_bnumneigh,
+        d_bfirstneigh,
+        d_brcs,
+        d_btypes,
         ntypes,
         d_type_map,
         umax_num_neigh_atoms,
@@ -199,16 +211,16 @@ void find_loss_backward_torch_launcher(
 template <typename CoordType>
 __host__
 void find_ef_loss_backward_torch_launcher(
-    CoordType *d_loss_der2coeffs,
-    CoordType *d_loss_der2w0,
-    CoordType *d_loss_der2w1,
-    CoordType *d_loss_der2type_bias,
+    CoordType *d_bloss_der2coeffs,
+    CoordType *d_bloss_der2w0,
+    CoordType *d_bloss_der2w1,
+    CoordType *d_bloss_der2type_bias,
     CoordType e_weight,
     CoordType f_weight,
-    CoordType etot_ml,
-    CoordType etot_dft,
-    CoordType (*d_force_ml)[3],
-    CoordType (*d_force_dft)[3],
+    CoordType *d_betot_ml,
+    CoordType *d_betot_dft,
+    CoordType (*d_bforce_ml)[3],
+    CoordType (*d_bforce_dft)[3],
     int chebyshev_size,
     int num_neurons,
     CoordType *d_coeffs,
@@ -223,12 +235,14 @@ void find_ef_loss_backward_torch_launcher(
     const int alpha_scalar_moments,
     const int *d_alpha_moment_mapping,
     int nmus,
-    int inum,
-    int *d_ilist,
-    int *d_numneigh,
-    int *d_firstneigh,
-    CoordType (*d_rcs)[3],
-    int *d_types,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    int *d_bnumneigh,
+    int *d_bfirstneigh,
+    CoordType (*d_brcs)[3],
+    int *d_btypes,
     int ntypes,
     int *d_type_map,
     int umax_num_neigh_atoms,
@@ -237,21 +251,21 @@ void find_ef_loss_backward_torch_launcher(
     CoordType rmin)
 {
     int block_size_x = 64;
-    int grid_size_x = (inum - 1) / block_size_x + 1;
+    int grid_size_x = (batch_size*natoms_pad - 1) / block_size_x + 1;
     dim3 grid_size(grid_size_x);
     dim3 block_size(block_size_x);
 
     find_ef_loss_backward_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (
-        d_loss_der2coeffs,
-        d_loss_der2w0,
-        d_loss_der2w1,
-        d_loss_der2type_bias,
+        d_bloss_der2coeffs,
+        d_bloss_der2w0,
+        d_bloss_der2w1,
+        d_bloss_der2type_bias,
         e_weight,
         f_weight,
-        etot_ml,
-        etot_dft,
-        d_force_ml,
-        d_force_dft,
+        d_betot_ml,
+        d_betot_dft,
+        d_bforce_ml,
+        d_bforce_dft,
         chebyshev_size,
         num_neurons,
         d_coeffs,
@@ -266,12 +280,14 @@ void find_ef_loss_backward_torch_launcher(
         alpha_scalar_moments,
         d_alpha_moment_mapping,
         nmus,
-        inum,
-        d_ilist,
-        d_numneigh,
-        d_firstneigh,
-        d_rcs,
-        d_types,
+        batch_size,
+        natoms_pad,
+        d_binum,
+        d_bilist,
+        d_bnumneigh,
+        d_bfirstneigh,
+        d_brcs,
+        d_btypes,
         ntypes,
         d_type_map,
         umax_num_neigh_atoms,
