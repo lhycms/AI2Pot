@@ -34,7 +34,7 @@ class LinearMtpTest(unittest.TestCase):
         self.device: torch._C.device = torch.device("cuda")
         
         # 1. 
-        self.mtp_level: int = 16
+        self.mtp_level: int = 12
         #self.ntypes: int = 4
         self.chebyshev_size: int = 8
         self.rmax: float = 5.0
@@ -42,7 +42,7 @@ class LinearMtpTest(unittest.TestCase):
         self.umax_num_neigh_atoms: int = 200
         self.fit_virial: bool = False
         
-        """
+        
         self.ntypes: int = 4
         self.type_map: List[int] = [16, 34, 41,75]
         self.type_map_tensor = torch.tensor(self.type_map, dtype=torch.int32).to(self.device)
@@ -58,6 +58,7 @@ class LinearMtpTest(unittest.TestCase):
                                                       [3.0, 0.0, 0]
                                                       ],
                                               coords_are_cartesian=True)
+        """
         print(self.structure)
     
         # 2. ZBL
