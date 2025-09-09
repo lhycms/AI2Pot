@@ -23,6 +23,7 @@
 #include <random>
 
 #include "../include/linearMtp.h"
+#include "../include/linearMtpLoss.h"
 #include "../include/mtpBasis.h"
 #include "../include/mtpParam.h"
 #include "../../../nblist/include/structure.h"
@@ -744,16 +745,11 @@ TEST_F(LinearMtpTest, find_loss_backward) {
     e_weight = 1.0;
     f_weight = 1.0;
     v_weight = 0.0;
-    ai2pot::mtpr::LinearMtp<real>::find_loss_backward(
-        loss_der2coeffs,
-        loss_der2linear_coeffs,
-        loss_der2type_bias,
-        e_weight,
-        f_weight,
-        v_weight,
-        etot_dft,
-        force_dft,
-        virial_dft,
+
+    ai2pot::mtpr::LinearMtp<real>::find_efv(
+        etot,
+        force,
+        virial,
         chebyshev_size,
         coeffs,
         linear_coeffs,
@@ -765,7 +761,7 @@ TEST_F(LinearMtpTest, find_loss_backward) {
         mtp_param.alpha_index_times(),
         mtp_param.alpha_scalar_moments(),
         mtp_param.alpha_moment_mapping(),
-        mtp_param.nmus(),
+        nmus,
         inum,
         ilist,
         numneigh,
@@ -782,6 +778,44 @@ TEST_F(LinearMtpTest, find_loss_backward) {
         zbl_rmin,
         zbl_cks,
         zbl_dks);
+    
+    ai2pot::mtpr::LinearMtpLoss<real>::find_loss_backward(
+        loss_der2coeffs,
+        loss_der2linear_coeffs,
+        loss_der2type_bias,
+        e_weight,
+        f_weight,
+        v_weight,
+        etot,
+        etot_dft,
+        force,
+        force_dft,
+        virial,
+        virial_dft,
+        chebyshev_size,
+        coeffs,
+        linear_coeffs,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        nmus,
+        inum,
+        ilist,
+        numneigh,
+        firstneigh,
+        (real (*)[3])rcs,
+        types,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin);
 
 printf("1. loss_der2coeffs:\n");
 for (int ii=0; ii<ntypes*ntypes*nmus*chebyshev_size; ii++)
@@ -804,14 +838,9 @@ TEST_F(LinearMtpTest, find_ef_loss_backward) {
     e_weight = 1.0;
     f_weight = 1.0;
     v_weight = 0.0;
-    ai2pot::mtpr::LinearMtp<real>::find_ef_loss_backward(
-        loss_der2coeffs,
-        loss_der2linear_coeffs,
-        loss_der2type_bias,
-        e_weight,
-        f_weight,
-        etot_dft,
-        force_dft,
+    ai2pot::mtpr::LinearMtp<real>::find_ef(
+        etot,
+        force,
         chebyshev_size,
         coeffs,
         linear_coeffs,
@@ -823,7 +852,7 @@ TEST_F(LinearMtpTest, find_ef_loss_backward) {
         mtp_param.alpha_index_times(),
         mtp_param.alpha_scalar_moments(),
         mtp_param.alpha_moment_mapping(),
-        mtp_param.nmus(),
+        nmus,
         inum,
         ilist,
         numneigh,
@@ -840,6 +869,41 @@ TEST_F(LinearMtpTest, find_ef_loss_backward) {
         zbl_rmin,
         zbl_cks,
         zbl_dks);
+
+    ai2pot::mtpr::LinearMtpLoss<real>::find_ef_loss_backward(
+        loss_der2coeffs,
+        loss_der2linear_coeffs,
+        loss_der2type_bias,
+        e_weight,
+        f_weight,
+        etot,
+        etot_dft,
+        force,
+        force_dft,
+        chebyshev_size,
+        coeffs,
+        linear_coeffs,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        nmus,
+        inum,
+        ilist,
+        numneigh,
+        firstneigh,
+        (real (*)[3])rcs,
+        types,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin);
 
 printf("1. loss_der2coeffs:\n");
 for (int ii=0; ii<ntypes*ntypes*nmus*chebyshev_size; ii++)
