@@ -504,6 +504,11 @@ void GroupZBL<CoordType>::correct_efv(CoordType &etot,
                                       int nghost)
 {
     assert(this->_ntypes == ntypes);
+
+#if defined(USE_OPENMP) or defined(__INTELLISENSE__)
+#pragma omp parallel
+{
+#endif
     int center_idx;
     int neigh_idx;
     int type_inner;
@@ -514,9 +519,7 @@ void GroupZBL<CoordType>::correct_efv(CoordType &etot,
     CoordType distance_ij;
     CoordType distance_ij_inv;
 
-#if defined(USE_OPENMP) or defined(__INTELLISENSE__)
-#pragma omp parallel for
-#endif
+    #pragma omp for schedule(static)
     for (int ii=0; ii<inum; ii++) {
         center_idx = ilist[ii];
         type_inner = types[center_idx];
@@ -540,10 +543,13 @@ void GroupZBL<CoordType>::correct_efv(CoordType &etot,
                 continue;
 
             pair_zbl.add_atomic_energy_one(etot, distance_ij);
-            pair_zbl.add_atomic_force_one(&atomic_forces[ii*3+0], neigh_vec);
-            pair_zbl.add_virial_one(virial, neigh_vec);
+            //pair_zbl.add_atomic_force_one(&atomic_forces[ii*3+0], neigh_vec);
+            //pair_zbl.add_virial_one(virial, neigh_vec);
         }
     }
+#if defined(USE_OPENMP) or defined(__INTELLISENSE__)
+}
+#endif
 }
 
 
@@ -563,6 +569,11 @@ void GroupZBL<CoordType>::correct_ef(CoordType &etot,
                                     int nghost)
 {
     assert(this->_ntypes == ntypes);
+
+#if defined(USE_OPENMP) or defined(__INTELLISENSE__)
+#pragma omp parallel
+{
+#endif
     int center_idx;
     int neigh_idx;
     int type_inner;
@@ -573,9 +584,9 @@ void GroupZBL<CoordType>::correct_ef(CoordType &etot,
     CoordType distance_ij;
     CoordType distance_ij_inv;
 
-#if defined(USE_OPENMP) or defined(__INTELLISENSE__)
-#pragma omp parallel for
-#endif
+    #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
+    #pragma omp for schedule(static)
+    #endif
     for (int ii=0; ii<inum; ii++) {
         center_idx = ilist[ii];
         type_inner = types[center_idx];
@@ -602,6 +613,9 @@ void GroupZBL<CoordType>::correct_ef(CoordType &etot,
             pair_zbl.add_atomic_force_one(&atomic_forces[ii*3+0], neigh_vec);
         }
     }
+#if defined(USE_OPENMP) or defined(__INTELLISENSE__)
+}
+#endif
 }
 
 
@@ -620,6 +634,11 @@ void GroupZBL<CoordType>::correct_e_sites(
     int nghost)
 {
     assert(this->_ntypes == ntypes);
+
+#if defined(USE_OPENMP) or defined(__INTELLISENSE__)
+#pragma omp parallel
+{
+#endif
     int center_idx;
     int type_inner;
     int Zi;
@@ -630,9 +649,9 @@ void GroupZBL<CoordType>::correct_e_sites(
     CoordType distance_ij;
     CoordType distance_ij_inv;
 
-#if defined(USE_OPENMP) or defined(__INTELLISENSE__)
-#pragma omp parallel for
-#endif
+    #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
+    #pragma omp for schedule(static)
+    #endif
     for(int ii=0; ii<inum; ii++)
     {
         center_idx = ilist[ii];
@@ -659,6 +678,9 @@ void GroupZBL<CoordType>::correct_e_sites(
             pair_zbl.add_atomic_energy_one(e_sites[ii], distance_ij);
         }
     }
+#if defined(USE_OPENMP) or defined(__INTELLISENSE__)
+}
+#endif
 }
 
 

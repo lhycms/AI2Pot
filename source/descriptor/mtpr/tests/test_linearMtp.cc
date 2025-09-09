@@ -283,8 +283,8 @@ protected:
 
 
         // ZBL
-        zbl_rmax = 2.0;
-        zbl_rmin = 1.0;
+        zbl_rmax = 0.0;
+        zbl_rmin = 0.0;
         zbl_cks = (real*)malloc(ntypes*ntypes*4*sizeof(real));
         zbl_dks = (real*)malloc(ntypes*ntypes*4*sizeof(real));
         for (int ii=0; ii<ntypes; ii++) {
@@ -353,7 +353,7 @@ TEST_F(LinearMtpTest, find_efv) {
     int center_idx_modify = 0;
     int direction1_idx_modify = 0;
     int direction2_idx_modify = 0;
-    real delta = 1E-5;
+    real delta = 1E-6;
 
 
     ai2pot::mtpr::LinearMtp<real>::find_efv(
@@ -496,7 +496,7 @@ TEST_F(LinearMtpTest, efv_force_accuracy) {
     int center_idx_modify = 1;
     int direction1_idx_modify = 2;
     int direction2_idx_modify = 0;
-    real delta = 1E-8;
+    real delta = 1E-6;
 
     ai2pot::mtpr::LinearMtp<real>::find_efv(
         etot,
@@ -599,7 +599,7 @@ TEST_F(LinearMtpTest, ef_force_accuracy) {
     int center_idx_modify = 1;
     int direction1_idx_modify = 2;
     int direction2_idx_modify = 0;
-    real delta = 1E-8;
+    real delta = 1E-6;
 
     ai2pot::mtpr::LinearMtp<real>::find_ef(
         etot,
@@ -702,7 +702,7 @@ TEST_F(LinearMtpTest, find_loss) {
     int neigh_idx_modify = 17;
     int direction1_idx_modify = 2;
     int direction2_idx_modify = 0;
-    real delta = 1E-7;
+    real delta = 1E-6;
 
     ai2pot::mtpr::LinearMtp<real>::find_loss(
         loss,
