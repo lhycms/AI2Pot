@@ -62,11 +62,7 @@ public:
         int umax_num_neigh_atoms,
         int nghost,
         CoordType rmax,
-        CoordType rmin,
-        CoordType zbl_rmax,
-        CoordType zbl_rmin,
-        CoordType *zbl_cks,
-        CoordType *zbl_dks);
+        CoordType rmin);
 
 
     static void find_ef(
@@ -95,11 +91,7 @@ public:
         int umax_num_neigh_atoms,
         int nghost,
         CoordType rmax,
-        CoordType rmin,
-        CoordType zbl_rmax,
-        CoordType zbl_rmin,
-        CoordType *zbl_cks,
-        CoordType *zbl_dks);
+        CoordType rmin);
 
     static void find_e_sites(
         CoordType *e_sites,
@@ -126,11 +118,7 @@ public:
         int umax_num_neigh_atoms,
         int nghost,
         CoordType rmax,
-        CoordType rmin,
-        CoordType zbl_rmax,
-        CoordType zbl_rmin,
-        CoordType *zbl_cks,
-        CoordType *zbl_dks);
+        CoordType rmin);
 
 
     static void find_e_sites_backward(
@@ -220,11 +208,7 @@ void LinearMtp<CoordType>::find_efv(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin,
-    CoordType zbl_rmax,
-    CoordType zbl_rmin,
-    CoordType *zbl_cks,
-    CoordType *zbl_dks)
+    CoordType rmin)
 {
     // Step 1.
     CoordType *mom_vals;
@@ -354,29 +338,6 @@ void LinearMtp<CoordType>::find_efv(
 #ifdef USE_OPENMP
 }
 #endif
-
-    if (zbl_rmax > 0.0) {
-        ai2pot::correction::GroupZBL<CoordType> gzbl(ntypes, 
-                                                    type_map, 
-                                                    type_map,
-                                                    zbl_rmax,
-                                                    zbl_rmin,
-                                                    zbl_cks,
-                                                    zbl_dks);
-        gzbl.correct_efv(etot,
-                        (CoordType*)force,
-                        virial,
-                        inum,
-                        ilist,
-                        numneigh,
-                        firstneigh,
-                        relative_coords,
-                        types,
-                        ntypes,
-                        type_map,
-                        umax_num_neigh_atoms,
-                        nghost);
-    }
 }
 
 
@@ -407,11 +368,7 @@ void LinearMtp<CoordType>::find_ef(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin,
-    CoordType zbl_rmax,
-    CoordType zbl_rmin,
-    CoordType *zbl_cks,
-    CoordType *zbl_dks)
+    CoordType rmin)
 {
     // Step 1.
     CoordType *mom_vals;
@@ -534,28 +491,6 @@ void LinearMtp<CoordType>::find_ef(
 #ifdef USE_OPENMP
 }
 #endif
-
-    if (zbl_rmax > 0.0) {
-        ai2pot::correction::GroupZBL<CoordType> gzbl(ntypes, 
-                                                    type_map, 
-                                                    type_map,
-                                                    zbl_rmax,
-                                                    zbl_rmin,
-                                                    zbl_cks,
-                                                    zbl_dks);
-        gzbl.correct_ef(etot,
-                        (CoordType*)force,
-                        inum,
-                        ilist,
-                        numneigh,
-                        firstneigh,
-                        relative_coords,
-                        types,
-                        ntypes,
-                        type_map,
-                        umax_num_neigh_atoms,
-                        nghost);
-    }
 }
 
 
@@ -585,11 +520,7 @@ void LinearMtp<CoordType>::find_e_sites(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin,
-    CoordType zbl_rmax,
-    CoordType zbl_rmin,
-    CoordType *zbl_cks,
-    CoordType *zbl_dks)
+    CoordType rmin)
 {
     // Step 1.
     CoordType *mom_vals;
@@ -657,28 +588,6 @@ void LinearMtp<CoordType>::find_e_sites(
 #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
 }
 #endif
-
-    if (zbl_rmax > 0.0) {
-        ai2pot::correction::GroupZBL<CoordType> gzbl(ntypes,
-                                                    type_map,
-                                                    type_map,
-                                                    zbl_rmax,
-                                                    zbl_rmin,
-                                                    zbl_cks,
-                                                    zbl_dks);
-        
-        gzbl.correct_e_sites(e_sites,
-                            inum,
-                            ilist,
-                            numneigh,
-                            firstneigh,
-                            relative_coords,
-                            types,
-                            ntypes,
-                            type_map,
-                            umax_num_neigh_atoms,
-                            nghost);
-    }
 }
 
 

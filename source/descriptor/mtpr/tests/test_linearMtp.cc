@@ -448,11 +448,7 @@ TEST_F(LinearMtpTest, find_e) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin,
-        zbl_rmax,
-        zbl_rmin,
-        zbl_cks,
-        zbl_dks);
+        rmin);
 
     real etot = 0;
     for (int ii=0; ii<inum; ii++)
@@ -526,11 +522,7 @@ TEST_F(LinearMtpTest, efv_force_accuracy) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin,
-        zbl_rmax,
-        zbl_rmin,
-        zbl_cks,
-        zbl_dks);
+        rmin);
 
     // *** delta
     real cart_coords[inum][3] = {0};
@@ -578,11 +570,7 @@ TEST_F(LinearMtpTest, efv_force_accuracy) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin,
-        zbl_rmax,
-        zbl_rmin,
-        zbl_cks,
-        zbl_dks);
+        rmin);
 
 printf("1.1. energy = %.15lf\n", etot);
 printf("1.1. force[%d][%d] calculated by custom code = %.15lf\n", center_idx_modify, direction1_idx_modify, force[center_idx_modify][direction1_idx_modify]);
@@ -628,11 +616,7 @@ TEST_F(LinearMtpTest, ef_force_accuracy) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin,
-        zbl_rmax,
-        zbl_rmin,
-        zbl_cks,
-        zbl_dks);
+        rmin);
 
     // *** delta
     real cart_coords[inum][3] = {0};
@@ -679,11 +663,7 @@ TEST_F(LinearMtpTest, ef_force_accuracy) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin,
-        zbl_rmax,
-        zbl_rmin,
-        zbl_cks,
-        zbl_dks);
+        rmin);
 
 printf("1.1. energy = %.15lf\n", etot);
 printf("1.1. force[%d][%d] calculated by custom code = %.15lf\n", center_idx_modify, direction1_idx_modify, force[center_idx_modify][direction1_idx_modify]);
@@ -773,11 +753,7 @@ TEST_F(LinearMtpTest, find_loss_backward) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin,
-        zbl_rmax,
-        zbl_rmin,
-        zbl_cks,
-        zbl_dks);
+        rmin);
     
     ai2pot::mtpr::LinearMtpLoss<real>::find_loss_backward(
         loss_der2coeffs,
@@ -864,11 +840,7 @@ TEST_F(LinearMtpTest, find_ef_loss_backward) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin,
-        zbl_rmax,
-        zbl_rmin,
-        zbl_cks,
-        zbl_dks);
+        rmin);
 
     ai2pot::mtpr::LinearMtpLoss<real>::find_ef_loss_backward(
         loss_der2coeffs,
