@@ -3402,7 +3402,30 @@ torch::autograd::variable_list LinearMtpToEsitesFunction::forward(
             int *types = (int*)btypes_tensor[bb].data_ptr<int>();
             int *type_map = (int*)type_map_tensor.data_ptr<int>();
 
-            /*
+            if (zbl_rmax > 0.0) {
+                ai2pot::correction::GroupZBL<float> gzbl(
+                    ntypes,
+                    type_map,
+                    type_map,
+                    zbl_rmax,
+                    zbl_rmin,
+                    zbl_cks,
+                    zbl_dks);
+
+                gzbl.correct_e_sites(
+                    e_sites,
+                    inum,
+                    ilist,
+                    numneigh,
+                    firstneigh,
+                    rcs,
+                    types,
+                    ntypes,
+                    type_map,
+                    umax_num_neigh_atoms,
+                    nghost);
+            }
+
             LinearMtp<float>::find_e_sites(
                 e_sites,
                 chebyshev_size,
@@ -3428,12 +3451,7 @@ torch::autograd::variable_list LinearMtpToEsitesFunction::forward(
                 umax_num_neigh_atoms,
                 nghost,
                 rmax,
-                rmin,
-                zbl_rmax,
-                zbl_rmin,
-                zbl_cks,
-                zbl_dks);
-            */
+                rmin);
         }
     } else {
         float_options = c10::TensorOptions()
@@ -3459,7 +3477,30 @@ torch::autograd::variable_list LinearMtpToEsitesFunction::forward(
             int *types = (int*)btypes_tensor[bb].data_ptr<int>();
             int *type_map = (int*)type_map_tensor.data_ptr<int>();
 
-            /*
+            if (zbl_rmax > 0.0) {
+                ai2pot::correction::GroupZBL<double> gzbl(
+                    ntypes,
+                    type_map,
+                    type_map,
+                    zbl_rmax,
+                    zbl_rmin,
+                    zbl_cks,
+                    zbl_dks);
+
+                gzbl.correct_e_sites(
+                    e_sites,
+                    inum,
+                    ilist,
+                    numneigh,
+                    firstneigh,
+                    rcs,
+                    types,
+                    ntypes,
+                    type_map,
+                    umax_num_neigh_atoms,
+                    nghost);
+            }
+
             LinearMtp<double>::find_e_sites(
                 e_sites,
                 chebyshev_size,
@@ -3485,12 +3526,7 @@ torch::autograd::variable_list LinearMtpToEsitesFunction::forward(
                 umax_num_neigh_atoms,
                 nghost,
                 rmax,
-                rmin,
-                zbl_rmax,
-                zbl_rmin,
-                zbl_cks,
-                zbl_dks);
-            */
+                rmin);
         }
     }
 
@@ -3608,7 +3644,6 @@ torch::autograd::variable_list LinearMtpToEsitesFunction::backward(
             float (*rcs)[3] = (float (*)[3])brcs_tensor[bb].data_ptr<float>();
             int *types = btypes_tensor[bb].data_ptr<int>();
 
-            /*
             LinearMtp<float>::find_e_sites_backward(
                 e_sites_der2coeffs,
                 e_sites_der2linear_coeffs,
@@ -3637,7 +3672,6 @@ torch::autograd::variable_list LinearMtpToEsitesFunction::backward(
                 nghost,
                 rmax,
                 rmin);
-            */
         }
     } else {
         float_options = c10::TensorOptions()
@@ -3661,7 +3695,6 @@ torch::autograd::variable_list LinearMtpToEsitesFunction::backward(
             double (*rcs)[3] = (double (*)[3])brcs_tensor[bb].data_ptr<double>();
             int *types = btypes_tensor[bb].data_ptr<int>();
 
-            /*
             LinearMtp<double>::find_e_sites_backward(
                 e_sites_der2coeffs,
                 e_sites_der2linear_coeffs,
@@ -3690,7 +3723,6 @@ torch::autograd::variable_list LinearMtpToEsitesFunction::backward(
                 nghost,
                 rmax,
                 rmin);
-            */
         }
     }
     return {
