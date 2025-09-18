@@ -333,11 +333,7 @@ TEST_F(NNMtpTest, find_ef_accuracy) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin,
-        zbl_rmax,
-        zbl_rmin,
-        zbl_cks,
-        zbl_dks);
+        rmin);
 
     // *** delta
     double cart_coords[12][3] = {0};
@@ -386,11 +382,7 @@ TEST_F(NNMtpTest, find_ef_accuracy) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin,
-        zbl_rmax,
-        zbl_rmin,
-        zbl_cks,
-        zbl_dks);
+        rmin);
 
 printf("1.1. energy = %.15lf\n", etot);
 printf("1.1. force[%d][%d] calculated by custom code = %.15lf\n", center_idx_modify, direction1_idx_modify, forces[center_idx_modify][direction1_idx_modify]);
@@ -437,11 +429,7 @@ TEST_F(NNMtpTest, find_efv_accuracy) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin,
-        zbl_rmax,
-        zbl_rmin,
-        zbl_cks,
-        zbl_dks);
+        rmin);
 
     // *** delta
     double cart_coords[12][3] = {0};
@@ -491,11 +479,7 @@ TEST_F(NNMtpTest, find_efv_accuracy) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin,
-        zbl_rmax,
-        zbl_rmin,
-        zbl_cks,
-        zbl_dks);
+        rmin);
 
 printf("1.1. energy = %.15lf\n", etot);
 printf("1.1. force[%d][%d] calculated by custom code = %.15lf\n", center_idx_modify, direction1_idx_modify, forces[center_idx_modify][direction1_idx_modify]);
@@ -512,11 +496,143 @@ for (int ii=0; ii<inum; ii++)
 TEST_F(NNMtpTest, find_ef_loss)
 {
     double loss = 0.0;
-    ai2pot::nnmtp::NNMtp<double>::find_ef_loss(
+    ai2pot::nnmtp::NNMtp<double>::find_ef(
+        etot,
+        forces,
+        chebyshev_size,
+        num_neurons,
+        coeffs,
+        w0,
+        w1,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        mtp_param.nmus(),
+        inum,
+        ilist,
+        numneigh,
+        firstneigh,
+        (double (*)[3])rcs,
+        types,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin);
+
+    ai2pot::nnmtp::NNMtpLoss<double>::find_ef_loss(
         loss,
+        inum,
+        ilist,
         e_weight,
         f_weight,
+        etot,
         etot_dft,
+        forces,
+        forces_dft);
+printf("\t1. ef_loss = %.15lf\n", loss);
+}
+
+
+TEST_F(NNMtpTest, find_loss)
+{
+    double loss = 0.0;
+    double v_weight = 0.0;
+    ai2pot::nnmtp::NNMtp<double>::find_efv(
+        etot,
+        forces,
+        virial,
+        chebyshev_size,
+        num_neurons,
+        coeffs,
+        w0,
+        w1,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        mtp_param.nmus(),
+        inum,
+        ilist,
+        numneigh,
+        firstneigh,
+        (double (*)[3])rcs,
+        types,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin);
+
+    ai2pot::nnmtp::NNMtpLoss<double>::find_loss(
+        loss,
+        inum,
+        ilist,
+        e_weight,
+        f_weight,
+        v_weight,
+        etot,
+        etot_dft,
+        forces,
+        forces_dft,
+        virial,
+        virial_dft);
+printf("\t1. efv_loss = %.15lf\n", loss);
+}
+
+
+TEST_F(NNMtpTest, find_ef_loss_backward) {
+    ai2pot::nnmtp::NNMtp<double>::find_ef(
+        etot,
+        forces,
+        chebyshev_size,
+        num_neurons,
+        coeffs,
+        w0,
+        w1,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        mtp_param.nmus(),
+        inum,
+        ilist,
+        numneigh,
+        firstneigh,
+        (double (*)[3])rcs,
+        types,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin);
+
+    ai2pot::nnmtp::NNMtpLoss<double>::find_ef_loss_backward(
+        loss_der2coeffs,
+        loss_der2w0,
+        loss_der2w1,
+        loss_der2type_bias,
+        e_weight,
+        f_weight,
+        etot,
+        etot_dft,
+        forces,
         forces_dft,
         chebyshev_size,
         num_neurons,
@@ -543,26 +659,78 @@ TEST_F(NNMtpTest, find_ef_loss)
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin,
-        zbl_rmax,
-        zbl_rmin,
-        zbl_cks,
-        zbl_dks);
-printf("\t1. ef_loss = %.15lf\n", loss);
+        rmin);
+
+printf("1. loss_der2coeffs:\n");
+for (int ii=0; ii<ntypes*ntypes*mtp_param.nmus()*chebyshev_size; ii++)
+    printf("%.15f, ", loss_der2coeffs[ii]);
+printf("\n\n");
+
+printf("2. loss_der2w0:\n");
+for (int ii=0; ii<ntypes*num_neurons*mtp_param.alpha_scalar_moments(); ii++)
+    printf("%.15f, ", loss_der2w0[ii]);
+printf("\n\n");
+
+printf("3. loss_der2w1:\n");
+for (int ii=0; ii<ntypes*num_neurons; ii++)
+    printf("%.15f, ", loss_der2w1[ii]);
+printf("\n\n");
+
+printf("4. loss_der2type_bias:\n");
+for (int ii=0; ii<ntypes; ii++)
+    printf("%.15f, ", loss_der2type_bias[ii]);
+printf("\n\n");
 }
 
 
-TEST_F(NNMtpTest, find_loss)
-{
-    double loss = 0.0;
-    double v_weight = 0.0;
-    ai2pot::nnmtp::NNMtp<double>::find_loss(
-        loss,
+
+TEST_F(NNMtpTest, find_loss_backward) {
+    v_weight = 0.0;
+    
+    ai2pot::nnmtp::NNMtp<double>::find_efv(
+        etot,
+        forces,
+        virial,
+        chebyshev_size,
+        num_neurons,
+        coeffs,
+        w0,
+        w1,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        mtp_param.nmus(),
+        inum,
+        ilist,
+        numneigh,
+        firstneigh,
+        (double (*)[3])rcs,
+        types,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin);
+
+    ai2pot::nnmtp::NNMtpLoss<double>::find_loss_backward(
+        loss_der2coeffs,
+        loss_der2w0,
+        loss_der2w1,
+        loss_der2type_bias,
         e_weight,
         f_weight,
         v_weight,
+        etot,
         etot_dft,
+        forces,
         forces_dft,
+        virial,
         virial_dft,
         chebyshev_size,
         num_neurons,
@@ -589,55 +757,7 @@ TEST_F(NNMtpTest, find_loss)
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin,
-        zbl_rmax,
-        zbl_rmin,
-        zbl_cks,
-        zbl_dks);
-printf("\t1. efv_loss = %.15lf\n", loss);
-}
-
-
-TEST_F(NNMtpTest, find_ef_loss_backward) {
-    ai2pot::nnmtp::NNMtp<double>::find_ef_loss_backward(
-        loss_der2coeffs,
-        loss_der2w0,
-        loss_der2w1,
-        loss_der2type_bias,
-        e_weight,
-        f_weight,
-        etot_dft,
-        forces_dft,
-        chebyshev_size,
-        num_neurons,
-        coeffs,
-        w0,
-        w1,
-        type_bias,
-        mtp_param.alpha_moments_count(),
-        mtp_param.alpha_index_basic_count(),
-        mtp_param.alpha_index_basic(),
-        mtp_param.alpha_index_times_count(),
-        mtp_param.alpha_index_times(),
-        mtp_param.alpha_scalar_moments(),
-        mtp_param.alpha_moment_mapping(),
-        mtp_param.nmus(),
-        inum,
-        ilist,
-        numneigh,
-        firstneigh,
-        (double (*)[3])rcs,
-        types,
-        ntypes,
-        type_map,
-        umax_num_neigh_atoms,
-        nghost,
-        rmax,
-        rmin,
-        zbl_rmax,
-        zbl_rmin,
-        zbl_cks,
-        zbl_dks);
+        rmin);
 
 printf("1. loss_der2coeffs:\n");
 for (int ii=0; ii<ntypes*ntypes*mtp_param.nmus()*chebyshev_size; ii++)
@@ -662,72 +782,6 @@ printf("\n\n");
 
 
 /*
-TEST_F(NNMtpTest, find_loss_backward) {
-    ai2pot::nnmtp::NNMtp<double>::find_loss_backward(
-        loss_der2coeffs,
-        loss_der2w0,
-        loss_der2w1,
-        loss_der2type_bias,
-        e_weight,
-        f_weight,
-        v_weight,
-        etot_dft,
-        forces_dft,
-        virial_dft,
-        chebyshev_size,
-        num_neurons,
-        coeffs,
-        w0,
-        w1,
-        type_bias,
-        mtp_param.alpha_moments_count(),
-        mtp_param.alpha_index_basic_count(),
-        mtp_param.alpha_index_basic(),
-        mtp_param.alpha_index_times_count(),
-        mtp_param.alpha_index_times(),
-        mtp_param.alpha_scalar_moments(),
-        mtp_param.alpha_moment_mapping(),
-        mtp_param.nmus(),
-        inum,
-        ilist,
-        numneigh,
-        firstneigh,
-        (double (*)[3])rcs,
-        types,
-        ntypes,
-        type_map,
-        umax_num_neigh_atoms,
-        nghost,
-        rmax,
-        rmin,
-        zbl_rmax,
-        zbl_rmin,
-        zbl_cks,
-        zbl_dks);
-
-printf("1. loss_der2coeffs:\n");
-for (int ii=0; ii<ntypes*ntypes*mtp_param.nmus()*chebyshev_size; ii++)
-    printf("%.15f, ", loss_der2coeffs[ii]);
-printf("\n\n");
-
-printf("2. loss_der2w0:\n");
-for (int ii=0; ii<ntypes*num_neurons*mtp_param.alpha_scalar_moments(); ii++)
-    printf("%.15f, ", loss_der2w0[ii]);
-printf("\n\n");
-
-printf("3. loss_der2w1:\n");
-for (int ii=0; ii<ntypes*num_neurons; ii++)
-    printf("%.15f, ", loss_der2w1[ii]);
-printf("\n\n");
-
-printf("4. loss_der2type_bias:\n");
-for (int ii=0; ii<ntypes; ii++)
-    printf("%.15f, ", loss_der2type_bias[ii]);
-printf("\n\n");
-}
-*/
-
-
 TEST_F(NNMtpTest, find_descriptors) {
     ai2pot::nnmtp::NNMtp<double>::find_descriptors(
         descriptors,
@@ -788,18 +842,14 @@ TEST_F(NNMtpTest, find_e_sites) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin,
-        zbl_rmax,
-        zbl_rmin,
-        zbl_cks,
-        zbl_dks);
+        rmin;
 
 double result = 0;
 for (int ii=0; ii<inum; ii++)
     result += e_sites[ii];
 printf("1. Sum of e_sites = %.15lf\n", result);
 }
-
+*/
 
 int main(int argc, char **argv){
     ::testing::InitGoogleTest(&argc, argv);

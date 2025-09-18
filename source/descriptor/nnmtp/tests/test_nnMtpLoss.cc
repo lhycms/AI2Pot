@@ -85,11 +85,11 @@ protected:
         free(virial_ml);
         free(virial_dft);
     }
-};  // class : LinearMtpLossTest
+};  // class : NNMtpLossTest
 
 
 TEST_F(NNMtpLossTest, find_loss) {
-    ai2pot::nnmtp::MtpLoss<double>::find_loss(loss,
+    ai2pot::nnmtp::NNMtpLoss<double>::find_loss(loss,
                                              inum,
                                              ilist,
                                              e_weight,
