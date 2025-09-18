@@ -18,6 +18,7 @@
 
 #include "../include/nnMtp.h"
 #include "../include/nnMtpOp.h"
+#include "../../correction/include/zbl.h"
 
 
 #if defined(USE_CUDA) or defined(__INTELLISENSE__)
@@ -546,6 +547,8 @@ torch::autograd::variable_list NNMtpToEFLossFunction::forward(
 
     // 3. 
     at::Tensor bloss_tensor;
+    at::Tensor betot_tensor;
+    at::Tensor bforce_tensor;
 
     // 4.
     if (brcs_tensor.scalar_type() == torch::kFloat32) {
@@ -553,6 +556,8 @@ torch::autograd::variable_list NNMtpToEFLossFunction::forward(
                         .dtype(torch::kFloat32)
                         .device(brcs_tensor.device());
         bloss_tensor = at::zeros({batch_size}, float_options);
+        betot_tensor = at::zeros({batch_size}, float_options);
+        bforce_tensor = at::zeros({batch_size, natoms_pad, 3}, float_options);
         float *coeffs = coeffs_tensor.data_ptr<float>();
         float *w0 = w0_tensor.data_ptr<float>();
         float *w1 = w1_tensor.data_ptr<float>();
@@ -563,8 +568,10 @@ torch::autograd::variable_list NNMtpToEFLossFunction::forward(
         if (brcs_tensor.device() == c10::kCPU) {
             for (int bb=0; bb<batch_size; bb++) 
             {
-                float *loss = (float*)bloss_tensor[bb].data_ptr<float>();
+                float *loss_ptr = &(bloss_tensor.data_ptr<float>()[bb]);
+                float *etot_ptr = &(betot_tensor.data_ptr<float>()[bb]);
                 float etot_dft = betot_dft_tensor[bb].item<float>();
+                float (*force)[3] = (float (*)[3])bforce_tensor[bb].data_ptr<float>();
                 float (*force_dft)[3] = (float (*)[3])bforce_dft_tensor[bb].data_ptr<float>();
                 int inum = binum_tensor[bb].item<int>();
                 int *ilist = (int*)bilist_tensor[bb].data_ptr<int>();
@@ -573,12 +580,34 @@ torch::autograd::variable_list NNMtpToEFLossFunction::forward(
                 float (*rcs)[3] = (float (*)[3])brcs_tensor[bb].data_ptr<float>();
                 int *types = (int*)btypes_tensor[bb].data_ptr<int>();
 
-                NNMtp<float>::find_ef_loss(
-                    (*loss),
-                    e_weight,
-                    f_weight,
-                    etot_dft,
-                    force_dft,
+                if (zbl_rmax > 0.0) {
+                    ai2pot::correction::GroupZBL<float> gzbl(
+                        ntypes,
+                        type_map,
+                        type_map,
+                        zbl_rmax,
+                        zbl_rmin,
+                        zbl_cks,
+                        zbl_dks);
+                    
+                    gzbl.correct_ef(
+                        (*etot_ptr),
+                        (float*)force,
+                        inum,
+                        ilist,
+                        numneigh,
+                        firstneigh,
+                        rcs,
+                        types,
+                        ntypes,
+                        type_map,
+                        umax_num_neigh_atoms,
+                        nghost);
+                }
+
+                NNMtp<float>::find_ef(
+                    (*etot_ptr),
+                    force,
                     chebyshev_size,
                     num_neurons,
                     coeffs,
@@ -603,17 +632,22 @@ torch::autograd::variable_list NNMtpToEFLossFunction::forward(
                     type_map,
                     umax_num_neigh_atoms,
                     nghost,
-                    rmax,
-                    rmin,
-                    zbl_rmax,
-                    zbl_rmin,
-                    zbl_cks,
-                    zbl_dks);
+                    (float)rmax,
+                    (float)rmin);
+                
+                NNMtpLoss<float>::find_ef_loss(
+                    (*loss_ptr),
+                    inum,
+                    ilist,
+                    (float)e_weight,
+                    (float)f_weight,
+                    (*etot_ptr),
+                    etot_dft,
+                    force,
+                    force_dft);
             }
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
-            at::Tensor betot_tensor = at::zeros({batch_size}, float_options);
-            at::Tensor bforce_tensor = at::zeros({batch_size, natoms_pad+nghost, 3}, float_options);
             float *bloss = bloss_tensor.data_ptr<float>();
             float *betot = betot_tensor.data_ptr<float>();
             float (*bforce)[3] = (float (*)[3])bforce_tensor.data_ptr<float>();
@@ -698,6 +732,8 @@ torch::autograd::variable_list NNMtpToEFLossFunction::forward(
                         .dtype(torch::kFloat64)
                         .device(brcs_tensor.device());
         bloss_tensor = at::zeros({batch_size}, float_options);
+        betot_tensor = at::zeros({batch_size}, float_options);
+        bforce_tensor = at::zeros({batch_size, natoms_pad, 3}, float_options);
         double *coeffs = coeffs_tensor.data_ptr<double>();
         double *w0 = w0_tensor.data_ptr<double>();
         double *w1 = w1_tensor.data_ptr<double>();
@@ -708,8 +744,10 @@ torch::autograd::variable_list NNMtpToEFLossFunction::forward(
         if (brcs_tensor.device() == c10::kCPU) {
             for (int bb=0; bb<batch_size; bb++) 
             {
-                double *loss = (double*)bloss_tensor[bb].data_ptr<double>();
+                double *loss_ptr = &(bloss_tensor.data_ptr<double>()[bb]);
+                double *etot_ptr = &(betot_tensor.data_ptr<double>()[bb]);
                 double etot_dft = betot_dft_tensor[bb].item<double>();
+                double (*force)[3] = (double (*)[3])bforce_tensor[bb].data_ptr<double>();
                 double (*force_dft)[3] = (double (*)[3])bforce_dft_tensor[bb].data_ptr<double>();
                 int inum = binum_tensor[bb].item<int>();
                 int *ilist = (int*)bilist_tensor[bb].data_ptr<int>();
@@ -718,12 +756,34 @@ torch::autograd::variable_list NNMtpToEFLossFunction::forward(
                 double (*rcs)[3] = (double (*)[3])brcs_tensor[bb].data_ptr<double>();
                 int *types = (int*)btypes_tensor[bb].data_ptr<int>();
 
-                NNMtp<double>::find_ef_loss(
-                    (*loss),
-                    e_weight,
-                    f_weight,
-                    etot_dft,
-                    force_dft,
+                if (zbl_rmax > 0.0) {
+                    ai2pot::correction::GroupZBL<double> gzbl(
+                        ntypes,
+                        type_map,
+                        type_map,
+                        zbl_rmax,
+                        zbl_rmin,
+                        zbl_cks,
+                        zbl_dks);
+                    
+                    gzbl.correct_ef(
+                        (*etot_ptr),
+                        (double*)force,
+                        inum,
+                        ilist,
+                        numneigh,
+                        firstneigh,
+                        rcs,
+                        types,
+                        ntypes,
+                        type_map,
+                        umax_num_neigh_atoms,
+                        nghost);
+                }
+
+                NNMtp<double>::find_ef(
+                    (*etot_ptr),
+                    force,
                     chebyshev_size,
                     num_neurons,
                     coeffs,
@@ -749,16 +809,21 @@ torch::autograd::variable_list NNMtpToEFLossFunction::forward(
                     umax_num_neigh_atoms,
                     nghost,
                     rmax,
-                    rmin,
-                    zbl_rmax,
-                    zbl_rmin,
-                    zbl_cks,
-                    zbl_dks);
+                    rmin);
+                
+                NNMtpLoss<double>::find_ef_loss(
+                    (*loss_ptr),
+                    inum,
+                    ilist,
+                    e_weight,
+                    f_weight,
+                    (*etot_ptr),
+                    etot_dft,
+                    force,
+                    force_dft);
             }
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
-            at::Tensor betot_tensor = at::zeros({batch_size}, float_options);
-            at::Tensor bforce_tensor = at::zeros({batch_size, natoms_pad+nghost, 3}, float_options);
             double *bloss = bloss_tensor.data_ptr<double>();
             double *betot = betot_tensor.data_ptr<double>();
             double (*bforce)[3] = (double (*)[3])bforce_tensor.data_ptr<double>();
@@ -940,6 +1005,8 @@ torch::autograd::variable_list NNMtpToEFLossFunction::backward(
     at::Tensor bloss_der2w0_tensor;
     at::Tensor bloss_der2w1_tensor;
     at::Tensor bloss_der2type_bias_tensor;
+    at::Tensor betot_tensor;
+    at::Tensor bforce_tensor;
 
     // 4. 
     if (brcs_tensor.scalar_type() == torch::kFloat32) {
@@ -950,6 +1017,8 @@ torch::autograd::variable_list NNMtpToEFLossFunction::backward(
         bloss_der2w0_tensor = at::zeros({batch_size, ntypes*num_neurons*alpha_scalar_moments}, float_options);
         bloss_der2w1_tensor = at::zeros({batch_size, ntypes*num_neurons}, float_options);
         bloss_der2type_bias_tensor = at::zeros({batch_size, ntypes}, float_options);
+        betot_tensor = at::zeros({batch_size}, float_options);
+        bforce_tensor = at::zeros({batch_size, natoms_pad, 3}, float_options);
 
         float *coeffs = (float*)coeffs_tensor.data_ptr<float>();
         float *w0 = (float*)w0_tensor.data_ptr<float>();
@@ -965,7 +1034,9 @@ torch::autograd::variable_list NNMtpToEFLossFunction::backward(
                 float *loss_der2w0 = bloss_der2w0_tensor[bb].data_ptr<float>();
                 float *loss_der2w1 = bloss_der2w1_tensor[bb].data_ptr<float>();
                 float *loss_der2type_bias = bloss_der2type_bias_tensor[bb].data_ptr<float>();
+                float *etot_ptr = &(betot_tensor.data_ptr<float>()[bb]);
                 float etot_dft = betot_dft_tensor[bb].item<float>();
+                float (*force)[3] = (float (*)[3])bforce_tensor[bb].data_ptr<float>();
                 float (*force_dft)[3] = (float (*)[3])bforce_dft_tensor[bb].data_ptr<float>();
                 int inum = binum_tensor[bb].item<int>();
                 int *ilist = (int*)bilist_tensor[bb].data_ptr<int>();
@@ -974,14 +1045,71 @@ torch::autograd::variable_list NNMtpToEFLossFunction::backward(
                 float (*rcs)[3] = (float (*)[3])brcs_tensor[bb].data_ptr<float>();
                 int *types = (int*)btypes_tensor[bb].data_ptr<int>();
 
-                NNMtp<float>::find_ef_loss_backward(
+                if (zbl_rmax > 0.0) {
+                    ai2pot::correction::GroupZBL<float> gzbl(
+                        ntypes,
+                        type_map,
+                        type_map,
+                        zbl_rmax,
+                        zbl_rmin,
+                        zbl_cks,
+                        zbl_dks);
+                    
+                    gzbl.correct_ef(
+                        (*etot_ptr),
+                        (float*)force,
+                        inum,
+                        ilist,
+                        numneigh,
+                        firstneigh,
+                        rcs,
+                        types,
+                        ntypes,
+                        type_map,
+                        umax_num_neigh_atoms,
+                        nghost);
+                }
+
+                NNMtp<float>::find_ef(
+                    (*etot_ptr),
+                    force,
+                    chebyshev_size,
+                    num_neurons,
+                    coeffs,
+                    w0,
+                    w1,
+                    type_bias,
+                    alpha_moments_count,
+                    alpha_index_basic_count,
+                    alpha_index_basic,
+                    alpha_index_times_count,
+                    alpha_index_times,
+                    alpha_scalar_moments,
+                    alpha_moment_mapping,
+                    nmus,
+                    inum,
+                    ilist,
+                    numneigh,
+                    firstneigh,
+                    rcs,
+                    types,
+                    ntypes,
+                    type_map,
+                    umax_num_neigh_atoms,
+                    nghost,
+                    (float)rmax,
+                    (float)rmin);
+                
+                NNMtpLoss<float>::find_ef_loss_backward(
                     loss_der2coeffs,
                     loss_der2w0,
                     loss_der2w1,
                     loss_der2type_bias,
-                    e_weight,
-                    f_weight,
+                    (float)e_weight,
+                    (float)f_weight,
+                    (*etot_ptr),
                     etot_dft,
+                    force,
                     force_dft,
                     chebyshev_size,
                     num_neurons,
@@ -1007,18 +1135,11 @@ torch::autograd::variable_list NNMtpToEFLossFunction::backward(
                     type_map,
                     umax_num_neigh_atoms,
                     nghost,
-                    rmax,
-                    rmin,
-                    zbl_rmax,
-                    zbl_rmin,
-                    zbl_cks,
-                    zbl_dks);
+                    (float)rmax,
+                    (float)rmin);
             }
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
-            at::Tensor betot_tensor = at::zeros({batch_size}, float_options);
-            at::Tensor bforce_tensor = at::zeros({batch_size, natoms_pad+nghost, 3}, float_options);
-
             float *bloss_der2coeffs = bloss_der2coeffs_tensor.data_ptr<float>();
             float *bloss_der2w0 = bloss_der2w0_tensor.data_ptr<float>();
             float *bloss_der2w1 = bloss_der2w1_tensor.data_ptr<float>();
@@ -1137,6 +1258,8 @@ torch::autograd::variable_list NNMtpToEFLossFunction::backward(
         bloss_der2w0_tensor = at::zeros({batch_size, ntypes*num_neurons*alpha_scalar_moments}, float_options);
         bloss_der2w1_tensor = at::zeros({batch_size, ntypes*num_neurons}, float_options);
         bloss_der2type_bias_tensor = at::zeros({batch_size, ntypes}, float_options);
+        betot_tensor = at::zeros({batch_size}, float_options);
+        bforce_tensor = at::zeros({batch_size, natoms_pad, 3}, float_options);
 
         double *coeffs = (double*)coeffs_tensor.data_ptr<double>();
         double *w0 = (double*)w0_tensor.data_ptr<double>();
@@ -1152,7 +1275,9 @@ torch::autograd::variable_list NNMtpToEFLossFunction::backward(
                 double *loss_der2w0 = bloss_der2w0_tensor[bb].data_ptr<double>();
                 double *loss_der2w1 = bloss_der2w1_tensor[bb].data_ptr<double>();
                 double *loss_der2type_bias = bloss_der2type_bias_tensor[bb].data_ptr<double>();
+                double *etot_ptr = &(betot_tensor.data_ptr<double>()[bb]);
                 double etot_dft = betot_dft_tensor[bb].item<double>();
+                double (*force)[3] = (double (*)[3])bforce_tensor[bb].data_ptr<double>();
                 double (*force_dft)[3] = (double (*)[3])bforce_dft_tensor[bb].data_ptr<double>();
                 int inum = binum_tensor[bb].item<int>();
                 int *ilist = (int*)bilist_tensor[bb].data_ptr<int>();
@@ -1161,14 +1286,71 @@ torch::autograd::variable_list NNMtpToEFLossFunction::backward(
                 double (*rcs)[3] = (double (*)[3])brcs_tensor[bb].data_ptr<double>();
                 int *types = (int*)btypes_tensor[bb].data_ptr<int>();
 
-                NNMtp<double>::find_ef_loss_backward(
+                if (zbl_rmax > 0.0) {
+                    ai2pot::correction::GroupZBL<double> gzbl(
+                        ntypes,
+                        type_map,
+                        type_map,
+                        zbl_rmax,
+                        zbl_rmin,
+                        zbl_cks,
+                        zbl_dks);
+                    
+                    gzbl.correct_ef(
+                        (*etot_ptr),
+                        (double*)force,
+                        inum,
+                        ilist,
+                        numneigh,
+                        firstneigh,
+                        rcs,
+                        types,
+                        ntypes,
+                        type_map,
+                        umax_num_neigh_atoms,
+                        nghost);
+                }
+
+                NNMtp<double>::find_ef(
+                    (*etot_ptr),
+                    force,
+                    chebyshev_size,
+                    num_neurons,
+                    coeffs,
+                    w0,
+                    w1,
+                    type_bias,
+                    alpha_moments_count,
+                    alpha_index_basic_count,
+                    alpha_index_basic,
+                    alpha_index_times_count,
+                    alpha_index_times,
+                    alpha_scalar_moments,
+                    alpha_moment_mapping,
+                    nmus,
+                    inum,
+                    ilist,
+                    numneigh,
+                    firstneigh,
+                    rcs,
+                    types,
+                    ntypes,
+                    type_map,
+                    umax_num_neigh_atoms,
+                    nghost,
+                    rmax,
+                    rmin);
+                
+                NNMtpLoss<double>::find_ef_loss_backward(
                     loss_der2coeffs,
                     loss_der2w0,
                     loss_der2w1,
                     loss_der2type_bias,
                     e_weight,
                     f_weight,
+                    (*etot_ptr),
                     etot_dft,
+                    force,
                     force_dft,
                     chebyshev_size,
                     num_neurons,
@@ -1195,18 +1377,10 @@ torch::autograd::variable_list NNMtpToEFLossFunction::backward(
                     umax_num_neigh_atoms,
                     nghost,
                     rmax,
-                    rmin,
-                    zbl_rmax,
-                    zbl_rmin,
-                    zbl_cks,
-                    zbl_dks);
-        
+                    rmin);
             }
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
-            at::Tensor betot_tensor = at::zeros({batch_size}, float_options);
-            at::Tensor bforce_tensor = at::zeros({batch_size, natoms_pad+nghost, 3}, float_options);
-
             double *bloss_der2coeffs = bloss_der2coeffs_tensor.data_ptr<double>();
             double *bloss_der2w0 = bloss_der2w0_tensor.data_ptr<double>();
             double *bloss_der2w1 = bloss_der2w1_tensor.data_ptr<double>();
@@ -1407,6 +1581,9 @@ torch::autograd::variable_list NNMtpToLossFunction::forward(
 
     // 3. 
     at::Tensor bloss_tensor;
+    at::Tensor betot_tensor;
+    at::Tensor bforce_tensor;
+    at::Tensor bvirial_tensor;
 
     // 4.
     if (brcs_tensor.scalar_type() == torch::kFloat32) {
@@ -1414,6 +1591,9 @@ torch::autograd::variable_list NNMtpToLossFunction::forward(
                         .dtype(torch::kFloat32)
                         .device(brcs_tensor.device());
         bloss_tensor = at::zeros({batch_size}, float_options);
+        betot_tensor = at::zeros({batch_size}, float_options);
+        bforce_tensor = at::zeros({batch_size, natoms_pad, 3}, float_options);
+        bvirial_tensor = at::zeros({batch_size, 9}, float_options);
 
         float *coeffs = coeffs_tensor.data_ptr<float>();
         float *w0 = w0_tensor.data_ptr<float>();
@@ -1425,9 +1605,12 @@ torch::autograd::variable_list NNMtpToLossFunction::forward(
         if (brcs_tensor.device() == c10::kCPU) {
             for (int bb=0; bb<batch_size; bb++) 
             {
-                float *loss = (float*)bloss_tensor[bb].data_ptr<float>();
+                float *loss_ptr = &(bloss_tensor.data_ptr<float>()[bb]);
+                float *etot_ptr = &(betot_tensor.data_ptr<float>()[bb]);
                 float etot_dft = betot_dft_tensor[bb].item<float>();
+                float (*force)[3] = (float (*)[3])bforce_tensor[bb].data_ptr<float>();
                 float (*force_dft)[3] = (float (*)[3])bforce_dft_tensor[bb].data_ptr<float>();
+                float *virial = (float*)bvirial_tensor[bb].data_ptr<float>();
                 float *virial_dft = (float*)bvirial_dft_tensor[bb].data_ptr<float>();
                 int inum = binum_tensor[bb].item<int>();
                 int *ilist = (int*)bilist_tensor[bb].data_ptr<int>();
@@ -1436,14 +1619,36 @@ torch::autograd::variable_list NNMtpToLossFunction::forward(
                 float (*rcs)[3] = (float (*)[3])brcs_tensor[bb].data_ptr<float>();
                 int *types = (int*)btypes_tensor[bb].data_ptr<int>();
 
-                NNMtp<float>::find_loss(
-                    (*loss),
-                    e_weight,
-                    f_weight,
-                    v_weight,
-                    etot_dft,
-                    force_dft,
-                    virial_dft,
+                if (zbl_rmax > 0.0) {
+                    ai2pot::correction::GroupZBL<float> gzbl(
+                        ntypes,
+                        type_map,
+                        type_map,
+                        zbl_rmax,
+                        zbl_rmin,
+                        zbl_cks,
+                        zbl_dks);
+                    
+                    gzbl.correct_efv(
+                        (*etot_ptr),
+                        (float*)force,
+                        virial,
+                        inum,
+                        ilist,
+                        numneigh,
+                        firstneigh,
+                        rcs,
+                        types,
+                        ntypes,
+                        type_map,
+                        umax_num_neigh_atoms,
+                        nghost);
+                }
+
+                NNMtp<float>::find_efv(
+                    (*etot_ptr),
+                    force,
+                    virial,
                     chebyshev_size,
                     num_neurons,
                     coeffs,
@@ -1468,18 +1673,25 @@ torch::autograd::variable_list NNMtpToLossFunction::forward(
                     type_map,
                     umax_num_neigh_atoms,
                     nghost,
-                    rmax,
-                    rmin,
-                    zbl_rmax,
-                    zbl_rmin,
-                    zbl_cks,
-                    zbl_dks);
+                    (float)rmax,
+                    (float)rmin);
+                
+                NNMtpLoss<float>::find_loss(
+                    (*loss_ptr),
+                    inum,
+                    ilist,
+                    (float)e_weight,
+                    (float)f_weight,
+                    (float)v_weight,
+                    (*etot_ptr),
+                    etot_dft,
+                    force,
+                    force_dft,
+                    virial,
+                    virial_dft);
             }
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
-            at::Tensor betot_tensor = at::zeros({batch_size}, float_options);
-            at::Tensor bforce_tensor = at::zeros({batch_size, natoms_pad+nghost, 3}, float_options);
-            at::Tensor bvirial_tensor = at::zeros({batch_size, 9}, float_options);
             float *bloss = bloss_tensor.data_ptr<float>();
             float *betot = betot_tensor.data_ptr<float>();
             float (*bforce)[3] = (float (*)[3])bforce_tensor.data_ptr<float>();
@@ -1571,6 +1783,9 @@ torch::autograd::variable_list NNMtpToLossFunction::forward(
                         .dtype(torch::kFloat64)
                         .device(brcs_tensor.device());
         bloss_tensor = at::zeros({batch_size}, float_options);
+        betot_tensor = at::zeros({batch_size}, float_options);
+        bforce_tensor = at::zeros({batch_size, natoms_pad, 3}, float_options);
+        bvirial_tensor = at::zeros({batch_size, 9}, float_options);
 
         double *coeffs = coeffs_tensor.data_ptr<double>();
         double *w0 = w0_tensor.data_ptr<double>();
@@ -1582,9 +1797,12 @@ torch::autograd::variable_list NNMtpToLossFunction::forward(
         if (brcs_tensor.device() == c10::kCPU) {
             for (int bb=0; bb<batch_size; bb++)
             {
-                double *loss = (double*)bloss_tensor[bb].data_ptr<double>();
+                double *loss_ptr = &(bloss_tensor.data_ptr<double>()[bb]);
+                double *etot_ptr = &(betot_tensor.data_ptr<double>()[bb]);
                 double etot_dft = betot_dft_tensor[bb].item<double>();
+                double (*force)[3] = (double (*)[3])bforce_tensor[bb].data_ptr<double>();
                 double (*force_dft)[3] = (double (*)[3])bforce_dft_tensor[bb].data_ptr<double>();
+                double *virial = (double*)bvirial_tensor[bb].data_ptr<double>();
                 double *virial_dft = (double*)bvirial_dft_tensor[bb].data_ptr<double>();
                 int inum = binum_tensor[bb].item<int>();
                 int *ilist = (int*)bilist_tensor[bb].data_ptr<int>();
@@ -1593,14 +1811,36 @@ torch::autograd::variable_list NNMtpToLossFunction::forward(
                 double (*rcs)[3] = (double (*)[3])brcs_tensor[bb].data_ptr<double>();
                 int *types = (int*)btypes_tensor[bb].data_ptr<int>();
 
-                NNMtp<double>::find_loss(
-                    (*loss),
-                    e_weight,
-                    f_weight,
-                    v_weight,
-                    etot_dft,
-                    force_dft,
-                    virial_dft,
+                if (zbl_rmax > 0.0) {
+                    ai2pot::correction::GroupZBL<double> gzbl(
+                        ntypes,
+                        type_map,
+                        type_map,
+                        zbl_rmax,
+                        zbl_rmin,
+                        zbl_cks,
+                        zbl_dks);
+                    
+                    gzbl.correct_efv(
+                        (*etot_ptr),
+                        (double*)force,
+                        virial,
+                        inum,
+                        ilist,
+                        numneigh,
+                        firstneigh,
+                        rcs,
+                        types,
+                        ntypes,
+                        type_map,
+                        umax_num_neigh_atoms,
+                        nghost);
+                }
+
+                NNMtp<double>::find_efv(
+                    (*etot_ptr),
+                    force,
+                    virial,
                     chebyshev_size,
                     num_neurons,
                     coeffs,
@@ -1626,17 +1866,24 @@ torch::autograd::variable_list NNMtpToLossFunction::forward(
                     umax_num_neigh_atoms,
                     nghost,
                     rmax,
-                    rmin,
-                    zbl_rmax,
-                    zbl_rmin,
-                    zbl_cks,
-                    zbl_dks);
+                    rmin);
+                
+                NNMtpLoss<double>::find_loss(
+                    (*loss_ptr),
+                    inum,
+                    ilist,
+                    e_weight,
+                    f_weight,
+                    v_weight,
+                    (*etot_ptr),
+                    etot_dft,
+                    force,
+                    force_dft,
+                    virial,
+                    virial_dft);
             }
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
-            at::Tensor betot_tensor = at::zeros({batch_size}, float_options);
-            at::Tensor bforce_tensor = at::zeros({batch_size, natoms_pad+nghost, 3}, float_options);
-            at::Tensor bvirial_tensor = at::zeros({batch_size, 9}, float_options);
             double *bloss = bloss_tensor.data_ptr<double>();
             double *betot = betot_tensor.data_ptr<double>();
             double (*bforce)[3] = (double (*)[3])bforce_tensor.data_ptr<double>();
@@ -1830,6 +2077,9 @@ torch::autograd::variable_list NNMtpToLossFunction::backward(
     at::Tensor bloss_der2w0_tensor;
     at::Tensor bloss_der2w1_tensor;
     at::Tensor bloss_der2type_bias_tensor;
+    at::Tensor betot_tensor;
+    at::Tensor bforce_tensor;
+    at::Tensor bvirial_tensor;
 
     // 4. 
     if (brcs_tensor.scalar_type() == torch::kFloat32) {
@@ -1840,6 +2090,9 @@ torch::autograd::variable_list NNMtpToLossFunction::backward(
         bloss_der2w0_tensor = at::zeros({batch_size, ntypes*num_neurons*alpha_scalar_moments}, float_options);
         bloss_der2w1_tensor = at::zeros({batch_size, ntypes*num_neurons}, float_options);
         bloss_der2type_bias_tensor = at::zeros({batch_size, ntypes}, float_options);
+        betot_tensor = at::zeros({batch_size}, float_options);
+        bforce_tensor = at::zeros({batch_size, natoms_pad, 3}, float_options);
+        bvirial_tensor = at::zeros({batch_size, 9}, float_options);
 
         float *coeffs = (float*)coeffs_tensor.data_ptr<float>();
         float *w0 = (float*)w0_tensor.data_ptr<float>();
@@ -1855,8 +2108,11 @@ torch::autograd::variable_list NNMtpToLossFunction::backward(
                 float *loss_der2w0 = bloss_der2w0_tensor[bb].data_ptr<float>();
                 float *loss_der2w1 = bloss_der2w1_tensor[bb].data_ptr<float>();
                 float *loss_der2type_bias = bloss_der2type_bias_tensor[bb].data_ptr<float>();
+                float *etot_ptr = &(betot_tensor.data_ptr<float>()[bb]);
                 float etot_dft = betot_dft_tensor[bb].item<float>();
+                float (*force)[3] = (float (*)[3])bforce_tensor[bb].data_ptr<float>();
                 float (*force_dft)[3] = (float (*)[3])bforce_dft_tensor[bb].data_ptr<float>();
+                float *virial = (float*)bvirial_tensor[bb].data_ptr<float>();
                 float *virial_dft = (float*)bvirial_dft_tensor[bb].data_ptr<float>();
                 int inum = binum_tensor[bb].item<int>();
                 int *ilist = (int*)bilist_tensor[bb].data_ptr<int>();
@@ -1865,16 +2121,76 @@ torch::autograd::variable_list NNMtpToLossFunction::backward(
                 float (*rcs)[3] = (float (*)[3])brcs_tensor[bb].data_ptr<float>();
                 int *types = (int*)btypes_tensor[bb].data_ptr<int>();
 
-                NNMtp<float>::find_loss_backward(
+                if (zbl_rmax > 0.0) {
+                    ai2pot::correction::GroupZBL<float> gzbl(
+                        ntypes,
+                        type_map,
+                        type_map,
+                        zbl_rmax,
+                        zbl_rmin,
+                        zbl_cks,
+                        zbl_dks);
+                    
+                    gzbl.correct_efv(
+                        (*etot_ptr),
+                        (float*)force,
+                        virial,
+                        inum,
+                        ilist,
+                        numneigh,
+                        firstneigh,
+                        rcs,
+                        types,
+                        ntypes,
+                        type_map,
+                        umax_num_neigh_atoms,
+                        nghost);
+                }
+
+                NNMtp<float>::find_efv(
+                    (*etot_ptr),
+                    force,
+                    virial,
+                    chebyshev_size,
+                    num_neurons,
+                    coeffs,
+                    w0,
+                    w1,
+                    type_bias,
+                    alpha_moments_count,
+                    alpha_index_basic_count,
+                    alpha_index_basic,
+                    alpha_index_times_count,
+                    alpha_index_times,
+                    alpha_scalar_moments,
+                    alpha_moment_mapping,
+                    nmus,
+                    inum,
+                    ilist,
+                    numneigh,
+                    firstneigh,
+                    rcs,
+                    types,
+                    ntypes,
+                    type_map,
+                    umax_num_neigh_atoms,
+                    nghost,
+                    (float)rmax,
+                    (float)rmin);
+                
+                NNMtpLoss<float>::find_loss_backward(
                     loss_der2coeffs,
                     loss_der2w0,
                     loss_der2w1,
                     loss_der2type_bias,
-                    e_weight,
-                    f_weight,
-                    v_weight,
+                    (float)e_weight,
+                    (float)f_weight,
+                    (float)v_weight,
+                    (*etot_ptr),
                     etot_dft,
+                    force,
                     force_dft,
+                    virial,
                     virial_dft,
                     chebyshev_size,
                     num_neurons,
@@ -1900,19 +2216,11 @@ torch::autograd::variable_list NNMtpToLossFunction::backward(
                     type_map,
                     umax_num_neigh_atoms,
                     nghost,
-                    rmax,
-                    rmin,
-                    zbl_rmax,
-                    zbl_rmin,
-                    zbl_cks,
-                    zbl_dks);   
+                    (float)rmax,
+                    (float)rmin);
             }
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
-            at::Tensor betot_tensor = at::zeros({batch_size}, float_options);
-            at::Tensor bforce_tensor = at::zeros({batch_size, natoms_pad+nghost, 3}, float_options);
-            at::Tensor bvirial_tensor = at::zeros({batch_size, 9}, float_options);
-
             float *bloss_der2coeffs = bloss_der2coeffs_tensor.data_ptr<float>();
             float *bloss_der2w0 = bloss_der2w0_tensor.data_ptr<float>();
             float *bloss_der2w1 = bloss_der2w1_tensor.data_ptr<float>();
@@ -2038,6 +2346,9 @@ torch::autograd::variable_list NNMtpToLossFunction::backward(
         bloss_der2w0_tensor = at::zeros({batch_size, ntypes*num_neurons*alpha_scalar_moments}, float_options);
         bloss_der2w1_tensor = at::zeros({batch_size, ntypes*num_neurons}, float_options);
         bloss_der2type_bias_tensor = at::zeros({batch_size, ntypes}, float_options);
+        betot_tensor = at::zeros({batch_size}, float_options);
+        bforce_tensor = at::zeros({batch_size, natoms_pad, 3}, float_options);
+        bvirial_tensor = at::zeros({batch_size, 9}, float_options);
 
         double *coeffs = (double*)coeffs_tensor.data_ptr<double>();
         double *w0 = (double*)w0_tensor.data_ptr<double>();
@@ -2053,8 +2364,11 @@ torch::autograd::variable_list NNMtpToLossFunction::backward(
                 double *loss_der2w0 = bloss_der2w0_tensor[bb].data_ptr<double>();
                 double *loss_der2w1 = bloss_der2w1_tensor[bb].data_ptr<double>();
                 double *loss_der2type_bias = bloss_der2type_bias_tensor[bb].data_ptr<double>();
+                double *etot_ptr = &(betot_tensor.data_ptr<double>()[bb]);
                 double etot_dft = betot_dft_tensor[bb].item<double>();
+                double (*force)[3] = (double (*)[3])bforce_tensor[bb].data_ptr<double>();
                 double (*force_dft)[3] = (double (*)[3])bforce_dft_tensor[bb].data_ptr<double>();
+                double *virial = (double*)bvirial_tensor[bb].data_ptr<double>();
                 double *virial_dft = (double*)bvirial_dft_tensor[bb].data_ptr<double>();
                 int inum = binum_tensor[bb].item<int>();
                 int *ilist = (int*)bilist_tensor[bb].data_ptr<int>();
@@ -2063,7 +2377,64 @@ torch::autograd::variable_list NNMtpToLossFunction::backward(
                 double (*rcs)[3] = (double (*)[3])brcs_tensor[bb].data_ptr<double>();
                 int *types = (int*)btypes_tensor[bb].data_ptr<int>();
 
-                NNMtp<double>::find_loss_backward(
+                if (zbl_rmax > 0.0) {
+                    ai2pot::correction::GroupZBL<double> gzbl(
+                        ntypes,
+                        type_map,
+                        type_map,
+                        zbl_rmax,
+                        zbl_rmin,
+                        zbl_cks,
+                        zbl_dks);
+                    
+                    gzbl.correct_efv(
+                        (*etot_ptr),
+                        (double*)force,
+                        virial,
+                        inum,
+                        ilist,
+                        numneigh,
+                        firstneigh,
+                        rcs,
+                        types,
+                        ntypes,
+                        type_map,
+                        umax_num_neigh_atoms,
+                        nghost);
+                }
+
+                NNMtp<double>::find_efv(
+                    (*etot_ptr),
+                    force,
+                    virial,
+                    chebyshev_size,
+                    num_neurons,
+                    coeffs,
+                    w0,
+                    w1,
+                    type_bias,
+                    alpha_moments_count,
+                    alpha_index_basic_count,
+                    alpha_index_basic,
+                    alpha_index_times_count,
+                    alpha_index_times,
+                    alpha_scalar_moments,
+                    alpha_moment_mapping,
+                    nmus,
+                    inum,
+                    ilist,
+                    numneigh,
+                    firstneigh,
+                    rcs,
+                    types,
+                    ntypes,
+                    type_map,
+                    umax_num_neigh_atoms,
+                    nghost,
+                    rmax,
+                    rmin);
+                
+                NNMtpLoss<double>::find_loss_backward(
                     loss_der2coeffs,
                     loss_der2w0,
                     loss_der2w1,
@@ -2071,8 +2442,11 @@ torch::autograd::variable_list NNMtpToLossFunction::backward(
                     e_weight,
                     f_weight,
                     v_weight,
+                    (*etot_ptr),
                     etot_dft,
+                    force,
                     force_dft,
+                    virial,
                     virial_dft,
                     chebyshev_size,
                     num_neurons,
@@ -2099,18 +2473,10 @@ torch::autograd::variable_list NNMtpToLossFunction::backward(
                     umax_num_neigh_atoms,
                     nghost,
                     rmax,
-                    rmin,
-                    zbl_rmax,
-                    zbl_rmin,
-                    zbl_cks,
-                    zbl_dks);
+                    rmin);
             }
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
-            at::Tensor betot_tensor = at::zeros({batch_size}, float_options);
-            at::Tensor bforce_tensor = at::zeros({batch_size, natoms_pad+nghost, 3}, float_options);
-            at::Tensor bvirial_tensor = at::zeros({batch_size, 9}, float_options);
-
             double *bloss_der2coeffs = bloss_der2coeffs_tensor.data_ptr<double>();
             double *bloss_der2w0 = bloss_der2w0_tensor.data_ptr<double>();
             double *bloss_der2w1 = bloss_der2w1_tensor.data_ptr<double>();
@@ -2313,18 +2679,18 @@ torch::autograd::variable_list NNMtpToEFVFunction::forward(
     c10::TensorOptions float_options;
 
     // 3. 
-    at::Tensor betot_ml_tensor;
-    at::Tensor bforce_ml_tensor;
-    at::Tensor bvirial_ml_tensor;
+    at::Tensor betot_tensor;
+    at::Tensor bforce_tensor;
+    at::Tensor bvirial_tensor;
 
     // 4.
     if (brcs_tensor.scalar_type() == torch::kFloat32) {
         float_options = c10::TensorOptions()
                         .dtype(torch::kFloat32)
                         .device(brcs_tensor.device());
-        betot_ml_tensor = at::zeros({batch_size}, float_options);
-        bforce_ml_tensor = at::zeros({batch_size, natoms_pad+nghost, 3}, float_options);
-        bvirial_ml_tensor = at::zeros({batch_size, 9}, float_options);
+        betot_tensor = at::zeros({batch_size}, float_options);
+        bforce_tensor = at::zeros({batch_size, natoms_pad+nghost, 3}, float_options);
+        bvirial_tensor = at::zeros({batch_size, 9}, float_options);
         float *coeffs = coeffs_tensor.data_ptr<float>();
         float *w0 = w0_tensor.data_ptr<float>();
         float *w1 = w1_tensor.data_ptr<float>();
@@ -2335,9 +2701,9 @@ torch::autograd::variable_list NNMtpToEFVFunction::forward(
         if (brcs_tensor.device() == c10::kCPU) {
             for (int bb=0; bb<batch_size; bb++) 
             {
-                float *etot_ml = (float*)betot_ml_tensor[bb].data_ptr<float>();
-                float (*force_ml)[3] = (float (*)[3])bforce_ml_tensor[bb].data_ptr<float>();
-                float *virial_ml = (float*)bvirial_ml_tensor[bb].data_ptr<float>();
+                float *etot_ptr = &(betot_tensor.data_ptr<float>()[bb]);
+                float (*force)[3] = (float (*)[3])bforce_tensor[bb].data_ptr<float>();
+                float *virial = (float*)bvirial_tensor[bb].data_ptr<float>();
                 int inum = binum_tensor[bb].item<int>();
                 int *ilist = (int*)bilist_tensor[bb].data_ptr<int>();
                 int *numneigh = (int*)bnumneigh_tensor[bb].data_ptr<int>();
@@ -2345,10 +2711,36 @@ torch::autograd::variable_list NNMtpToEFVFunction::forward(
                 float (*rcs)[3] = (float (*)[3])brcs_tensor[bb].data_ptr<float>();
                 int *types = (int*)btypes_tensor[bb].data_ptr<int>();
 
+                if (zbl_rmax > 0.0) {
+                    ai2pot::correction::GroupZBL<float> gzbl(
+                        ntypes,
+                        type_map,
+                        type_map,
+                        zbl_rmax,
+                        zbl_rmin,
+                        zbl_cks,
+                        zbl_dks);
+                    
+                    gzbl.correct_efv(
+                        (*etot_ptr),
+                        (float*)force,
+                        virial,
+                        inum,
+                        ilist,
+                        numneigh,
+                        firstneigh,
+                        rcs,
+                        types,
+                        ntypes,
+                        type_map,
+                        umax_num_neigh_atoms,
+                        nghost);
+                }
+
                 NNMtp<float>::find_efv(
-                    (*etot_ml),
-                    force_ml,
-                    virial_ml,
+                    (*etot_ptr),
+                    force,
+                    virial,
                     chebyshev_size,
                     num_neurons,
                     coeffs,
@@ -2373,18 +2765,14 @@ torch::autograd::variable_list NNMtpToEFVFunction::forward(
                     type_map,
                     umax_num_neigh_atoms,
                     nghost,
-                    rmax,
-                    rmin,
-                    zbl_rmax,
-                    zbl_rmin,
-                    zbl_cks,
-                    zbl_dks);
+                    (float)rmax,
+                    (float)rmin);
             }
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
-            float *betot = betot_ml_tensor.data_ptr<float>();
-            float (*bforce)[3] = (float (*)[3])bforce_ml_tensor.data_ptr<float>();
-            float *bvirial = bvirial_ml_tensor.data_ptr<float>();
+            float *betot = betot_tensor.data_ptr<float>();
+            float (*bforce)[3] = (float (*)[3])bforce_tensor.data_ptr<float>();
+            float *bvirial = bvirial_tensor.data_ptr<float>();
             int *binum = binum_tensor.data_ptr<int>();
             int *bilist = bilist_tensor.data_ptr<int>();
             int *bnumneigh = bnumneigh_tensor.data_ptr<int>();
@@ -2452,9 +2840,9 @@ torch::autograd::variable_list NNMtpToEFVFunction::forward(
         float_options = c10::TensorOptions()
                         .dtype(torch::kFloat64)
                         .device(brcs_tensor.device());
-        betot_ml_tensor = at::zeros({batch_size}, float_options);
-        bforce_ml_tensor = at::zeros({batch_size, natoms_pad+nghost, 3}, float_options);
-        bvirial_ml_tensor = at::zeros({batch_size, 9}, float_options);
+        betot_tensor = at::zeros({batch_size}, float_options);
+        bforce_tensor = at::zeros({batch_size, natoms_pad+nghost, 3}, float_options);
+        bvirial_tensor = at::zeros({batch_size, 9}, float_options);
         double *coeffs = coeffs_tensor.data_ptr<double>();
         double *w0 = w0_tensor.data_ptr<double>();
         double *w1 = w1_tensor.data_ptr<double>();
@@ -2465,9 +2853,9 @@ torch::autograd::variable_list NNMtpToEFVFunction::forward(
         if (brcs_tensor.device() == c10::kCPU) {
             for (int bb=0; bb<batch_size; bb++) 
             {
-                double *etot_ml = (double*)betot_ml_tensor[bb].data_ptr<double>();
-                double (*force_ml)[3] = (double (*)[3])bforce_ml_tensor[bb].data_ptr<double>();
-                double *virial_ml = (double*)bvirial_ml_tensor[bb].data_ptr<double>();
+                double *etot_ptr = &(betot_tensor.data_ptr<double>()[bb]);
+                double (*force)[3] = (double (*)[3])bforce_tensor[bb].data_ptr<double>();
+                double *virial = (double*)bvirial_tensor[bb].data_ptr<double>();
                 int inum = binum_tensor[bb].item<int>();
                 int *ilist = (int*)bilist_tensor[bb].data_ptr<int>();
                 int *numneigh = (int*)bnumneigh_tensor[bb].data_ptr<int>();
@@ -2475,10 +2863,36 @@ torch::autograd::variable_list NNMtpToEFVFunction::forward(
                 double (*rcs)[3] = (double (*)[3])brcs_tensor[bb].data_ptr<double>();
                 int *types = (int*)btypes_tensor[bb].data_ptr<int>();
 
+                if (zbl_rmax > 0.0) {
+                    ai2pot::correction::GroupZBL<double> gzbl(
+                        ntypes,
+                        type_map,
+                        type_map,
+                        zbl_rmax,
+                        zbl_rmin,
+                        zbl_cks,
+                        zbl_dks);
+                    
+                    gzbl.correct_efv(
+                        (*etot_ptr),
+                        (double*)force,
+                        virial,
+                        inum,
+                        ilist,
+                        numneigh,
+                        firstneigh,
+                        rcs,
+                        types,
+                        ntypes,
+                        type_map,
+                        umax_num_neigh_atoms,
+                        nghost);
+                }
+
                 NNMtp<double>::find_efv(
-                    (*etot_ml),
-                    force_ml,
-                    virial_ml,
+                    (*etot_ptr),
+                    force,
+                    virial,
                     chebyshev_size,
                     num_neurons,
                     coeffs,
@@ -2504,17 +2918,13 @@ torch::autograd::variable_list NNMtpToEFVFunction::forward(
                     umax_num_neigh_atoms,
                     nghost,
                     rmax,
-                    rmin,
-                    zbl_rmax,
-                    zbl_rmin,
-                    zbl_cks,
-                    zbl_dks);
+                    rmin);
             }
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
-            double *betot = betot_ml_tensor.data_ptr<double>();
-            double (*bforce)[3] = (double (*)[3])bforce_ml_tensor.data_ptr<double>();
-            double *bvirial = bvirial_ml_tensor.data_ptr<double>();
+            double *betot = betot_tensor.data_ptr<double>();
+            double (*bforce)[3] = (double (*)[3])bforce_tensor.data_ptr<double>();
+            double *bvirial = bvirial_tensor.data_ptr<double>();
             int *binum = binum_tensor.data_ptr<int>();
             int *bilist = bilist_tensor.data_ptr<int>();
             int *bnumneigh = bnumneigh_tensor.data_ptr<int>();
@@ -2610,9 +3020,9 @@ torch::autograd::variable_list NNMtpToEFVFunction::forward(
         zbl_cks_tensor,
         zbl_dks_tensor});
 
-    return {betot_ml_tensor,
-            bforce_ml_tensor,
-            bvirial_ml_tensor};
+    return {betot_tensor,
+            bforce_tensor,
+            bvirial_tensor};
 }
 
 
@@ -2696,16 +3106,16 @@ torch::autograd::variable_list NNMtpToEFFunction::forward(
     c10::TensorOptions float_options;
 
     // 3. 
-    at::Tensor betot_ml_tensor;
-    at::Tensor bforce_ml_tensor;
+    at::Tensor betot_tensor;
+    at::Tensor bforce_tensor;
 
     // 4.
     if (brcs_tensor.scalar_type() == torch::kFloat32) {
         float_options = c10::TensorOptions()
                         .dtype(torch::kFloat32)
                         .device(brcs_tensor.device());
-        betot_ml_tensor = at::zeros({batch_size}, float_options);
-        bforce_ml_tensor = at::zeros({batch_size, natoms_pad+nghost, 3}, float_options);
+        betot_tensor = at::zeros({batch_size}, float_options);
+        bforce_tensor = at::zeros({batch_size, natoms_pad+nghost, 3}, float_options);
         float *coeffs = coeffs_tensor.data_ptr<float>();
         float *w0 = w0_tensor.data_ptr<float>();
         float *w1 = w1_tensor.data_ptr<float>();
@@ -2716,8 +3126,8 @@ torch::autograd::variable_list NNMtpToEFFunction::forward(
         if (brcs_tensor.device() == c10::kCPU) {
             for (int bb=0; bb<batch_size; bb++) 
             {
-                float *etot_ml = (float*)betot_ml_tensor[bb].data_ptr<float>();
-                float (*force_ml)[3] = (float (*)[3])bforce_ml_tensor[bb].data_ptr<float>();
+                float *etot_ptr = &(betot_tensor.data_ptr<float>()[bb]);
+                float (*force)[3] = (float (*)[3])bforce_tensor[bb].data_ptr<float>();
                 int inum = binum_tensor[bb].item<int>();
                 int *ilist = (int*)bilist_tensor[bb].data_ptr<int>();
                 int *numneigh = (int*)bnumneigh_tensor[bb].data_ptr<int>();
@@ -2725,9 +3135,34 @@ torch::autograd::variable_list NNMtpToEFFunction::forward(
                 float (*rcs)[3] = (float (*)[3])brcs_tensor[bb].data_ptr<float>();
                 int *types = (int*)btypes_tensor[bb].data_ptr<int>();
 
+                if (zbl_rmax > 0.0) {
+                    ai2pot::correction::GroupZBL<float> gzbl(
+                        ntypes,
+                        type_map,
+                        type_map,
+                        zbl_rmax,
+                        zbl_rmin,
+                        zbl_cks,
+                        zbl_dks);
+                    
+                    gzbl.correct_ef(
+                        (*etot_ptr),
+                        (float*)force,
+                        inum,
+                        ilist,
+                        numneigh,
+                        firstneigh,
+                        rcs,
+                        types,
+                        ntypes,
+                        type_map,
+                        umax_num_neigh_atoms,
+                        nghost);
+                }
+
                 NNMtp<float>::find_ef(
-                    (*etot_ml),
-                    force_ml,
+                    (*etot_ptr),
+                    force,
                     chebyshev_size,
                     num_neurons,
                     coeffs,
@@ -2752,17 +3187,13 @@ torch::autograd::variable_list NNMtpToEFFunction::forward(
                     type_map,
                     umax_num_neigh_atoms,
                     nghost,
-                    rmax,
-                    rmin,
-                    zbl_rmax,
-                    zbl_rmin,
-                    zbl_cks,
-                    zbl_dks);
+                    (float)rmax,
+                    (float)rmin);
             }
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
-            float *betot = betot_ml_tensor.data_ptr<float>();
-            float (*bforce)[3] = (float (*)[3])bforce_ml_tensor.data_ptr<float>();
+            float *betot = betot_tensor.data_ptr<float>();
+            float (*bforce)[3] = (float (*)[3])bforce_tensor.data_ptr<float>();
             int *binum = binum_tensor.data_ptr<int>();
             int *bilist = bilist_tensor.data_ptr<int>();
             int *bnumneigh = bnumneigh_tensor.data_ptr<int>();
@@ -2828,8 +3259,8 @@ torch::autograd::variable_list NNMtpToEFFunction::forward(
         float_options = c10::TensorOptions()
                         .dtype(torch::kFloat64)
                         .device(brcs_tensor.device());
-        betot_ml_tensor = at::zeros({batch_size}, float_options);
-        bforce_ml_tensor = at::zeros({batch_size, natoms_pad+nghost, 3}, float_options);
+        betot_tensor = at::zeros({batch_size}, float_options);
+        bforce_tensor = at::zeros({batch_size, natoms_pad+nghost, 3}, float_options);
         double *coeffs = coeffs_tensor.data_ptr<double>();
         double *w0 = w0_tensor.data_ptr<double>();
         double *w1 = w1_tensor.data_ptr<double>();
@@ -2840,8 +3271,8 @@ torch::autograd::variable_list NNMtpToEFFunction::forward(
         if (brcs_tensor.device() == c10::kCPU) {
             for (int bb=0; bb<batch_size; bb++) 
             {
-                double *etot_ml = (double*)betot_ml_tensor[bb].data_ptr<double>();
-                double (*force_ml)[3] = (double (*)[3])bforce_ml_tensor[bb].data_ptr<double>();
+                double *etot_ptr = &(betot_tensor.data_ptr<double>()[bb]);
+                double (*force)[3] = (double (*)[3])bforce_tensor[bb].data_ptr<double>();
                 int inum = binum_tensor[bb].item<int>();
                 int *ilist = (int*)bilist_tensor[bb].data_ptr<int>();
                 int *numneigh = (int*)bnumneigh_tensor[bb].data_ptr<int>();
@@ -2849,9 +3280,34 @@ torch::autograd::variable_list NNMtpToEFFunction::forward(
                 double (*rcs)[3] = (double (*)[3])brcs_tensor[bb].data_ptr<double>();
                 int *types = (int*)btypes_tensor[bb].data_ptr<int>();
 
+                if (zbl_rmax > 0.0) {
+                    ai2pot::correction::GroupZBL<double> gzbl(
+                        ntypes,
+                        type_map,
+                        type_map,
+                        zbl_rmax,
+                        zbl_rmin,
+                        zbl_cks,
+                        zbl_dks);
+                    
+                    gzbl.correct_ef(
+                        (*etot_ptr),
+                        (double*)force,
+                        inum,
+                        ilist,
+                        numneigh,
+                        firstneigh,
+                        rcs,
+                        types,
+                        ntypes,
+                        type_map,
+                        umax_num_neigh_atoms,
+                        nghost);
+                }
+
                 NNMtp<double>::find_ef(
-                    (*etot_ml),
-                    force_ml,
+                    (*etot_ptr),
+                    force,
                     chebyshev_size,
                     num_neurons,
                     coeffs,
@@ -2877,16 +3333,12 @@ torch::autograd::variable_list NNMtpToEFFunction::forward(
                     umax_num_neigh_atoms,
                     nghost,
                     rmax,
-                    rmin,
-                    zbl_rmax,
-                    zbl_rmin,
-                    zbl_cks,
-                    zbl_dks);
+                    rmin);
             }
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
-            double *betot = betot_ml_tensor.data_ptr<double>();
-            double (*bforce)[3] = (double (*)[3])bforce_ml_tensor.data_ptr<double>();
+            double *betot = betot_tensor.data_ptr<double>();
+            double (*bforce)[3] = (double (*)[3])bforce_tensor.data_ptr<double>();
             int *binum = binum_tensor.data_ptr<int>();
             int *bilist = bilist_tensor.data_ptr<int>();
             int *bnumneigh = bnumneigh_tensor.data_ptr<int>();
@@ -2980,8 +3432,8 @@ torch::autograd::variable_list NNMtpToEFFunction::forward(
         zbl_cks_tensor,
         zbl_dks_tensor});
 
-    return {betot_ml_tensor,
-            bforce_ml_tensor};
+    return {betot_tensor,
+            bforce_tensor};
 }
 
 torch::autograd::variable_list NNMtpToEFFunction::backward(
@@ -3298,6 +3750,30 @@ torch::autograd::variable_list NNMtpToEsitesFunction::forward(
             int *types = (int*)btypes_tensor[bb].data_ptr<int>();
             int *type_map = (int*)type_map_tensor.data_ptr<int>();
 
+            if (zbl_rmax > 0.0) {
+                ai2pot::correction::GroupZBL<float> gzbl(
+                    ntypes,
+                    type_map,
+                    type_map,
+                    zbl_rmax,
+                    zbl_rmin,
+                    zbl_cks,
+                    zbl_dks);
+                
+                gzbl.correct_e_sites(
+                    e_sites,
+                    inum,
+                    ilist,
+                    numneigh,
+                    firstneigh,
+                    rcs,
+                    types,
+                    ntypes,
+                    type_map,
+                    umax_num_neigh_atoms,
+                    nghost);
+            }
+
             NNMtp<float>::find_e_sites(
                 e_sites,
                 chebyshev_size,
@@ -3325,11 +3801,7 @@ torch::autograd::variable_list NNMtpToEsitesFunction::forward(
                 umax_num_neigh_atoms,
                 nghost,
                 rmax,
-                rmin,
-                zbl_rmax,
-                zbl_rmin,
-                zbl_cks,
-                zbl_dks);
+                rmin);
         }
     } else {
         float_options = c10::TensorOptions()
@@ -3352,6 +3824,30 @@ torch::autograd::variable_list NNMtpToEsitesFunction::forward(
             double (*rcs)[3] = (double (*)[3])brcs_tensor[bb].data_ptr<double>();
             int *types = (int*)btypes_tensor[bb].data_ptr<int>();
             int *type_map = (int*)type_map_tensor.data_ptr<int>();
+
+            if (zbl_rmax > 0.0) {
+                ai2pot::correction::GroupZBL<double> gzbl(
+                    ntypes,
+                    type_map,
+                    type_map,
+                    zbl_rmax,
+                    zbl_rmin,
+                    zbl_cks,
+                    zbl_dks);
+                
+                gzbl.correct_e_sites(
+                    e_sites,
+                    inum,
+                    ilist,
+                    numneigh,
+                    firstneigh,
+                    rcs,
+                    types,
+                    ntypes,
+                    type_map,
+                    umax_num_neigh_atoms,
+                    nghost);
+            }
 
             NNMtp<double>::find_e_sites(
                 e_sites,
@@ -3380,11 +3876,7 @@ torch::autograd::variable_list NNMtpToEsitesFunction::forward(
                 umax_num_neigh_atoms,
                 nghost,
                 rmax,
-                rmin,
-                zbl_rmax,
-                zbl_rmin,
-                zbl_cks,
-                zbl_dks);
+                rmin);
         }
     }
 
@@ -3540,11 +4032,7 @@ torch::autograd::variable_list NNMtpToEsitesFunction::backward(
                 umax_num_neigh_atoms,
                 nghost,
                 rmax,
-                rmin,
-                zbl_rmax,
-                zbl_rmin,
-                zbl_cks,
-                zbl_dks);
+                rmin);
         }
     } else {
         float_options = c10::TensorOptions()
@@ -3603,11 +4091,7 @@ torch::autograd::variable_list NNMtpToEsitesFunction::backward(
                 umax_num_neigh_atoms,
                 nghost,
                 rmax,
-                rmin,
-                zbl_rmax,
-                zbl_rmin,
-                zbl_cks,
-                zbl_dks);
+                rmin);
         }
     }
     
