@@ -31,10 +31,10 @@ class LinearMtpTest(unittest.TestCase):
         print("LinearMtpTest (TestCase) is setting up...\n")
         # 0.
         self.torch_float_dtype: torch._C.dtype = torch.float64
-        self.device: torch._C.device = torch.device("cuda")
+        self.device: torch._C.device = torch.device("cpu")
         
         # 1. 
-        self.mtp_level: int = 12
+        self.mtp_level: int = 16
         #self.ntypes: int = 4
         self.chebyshev_size: int = 8
         self.rmax: float = 5.0
@@ -42,23 +42,23 @@ class LinearMtpTest(unittest.TestCase):
         self.umax_num_neigh_atoms: int = 200
         self.fit_virial: bool = False
         
-        
+        """
         self.ntypes: int = 4
         self.type_map: List[int] = [16, 34, 41,75]
         self.type_map_tensor = torch.tensor(self.type_map, dtype=torch.int32).to(self.device)
         self.structure: Structure = Structure.from_file(ReNbSSe_POSCAR_PATH)
         """
-        self.ntypes: int = 1
-        self.type_map: List[int] = [1]
-        self.type_map_tensor: torch.Tensor = torch.tensor(data=[1], dtype=torch.int32).to(self.device)
+        self.ntypes: int = 2
+        self.type_map: List[int] = [1, 8]
+        self.type_map_tensor: torch.Tensor = torch.tensor(data=self.type_map, 
+                                                          dtype=torch.int32).to(self.device)
         self.structure: Structure = Structure(lattice=[[10, 0, 0], [0, 10, 0], [0, 0, 10]],
-                                              species=["H", "H", "H"],
+                                              species=["H", "H", "O"],
                                               coords=[[0, 0, 0],
                                                       [0, 4.0, 0],
                                                       [3.0, 0.0, 0]
                                                       ],
                                               coords_are_cartesian=True)
-        """
         print(self.structure)
     
         # 2. ZBL
@@ -120,7 +120,7 @@ class LinearMtpTest(unittest.TestCase):
         print("LinearMtpTest (TestCase) is tearing down...\n")
     
     
-    def test_linearMtpToLoss(self):
+    def est_linearMtpToLoss(self):
         # 1. Parameters
         e_weight: float = 1.0
         f_weight: float = 0.1
@@ -172,7 +172,7 @@ class LinearMtpTest(unittest.TestCase):
         print("-------------------------------------------------")
 
 
-    def est_linearMtpToEsites(self):
+    def test_linearMtpToEsites(self):
         # 1. Parameters
         self.coeffs_tensor.requires_grad_(True)
         self.linear_coeffs_tensor.requires_grad_(True)

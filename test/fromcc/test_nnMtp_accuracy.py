@@ -33,7 +33,7 @@ class NNMtpTest(unittest.TestCase):
         self.device: torch._C.device = torch.device("cuda")
         
         # 1. 
-        self.mtp_level: int = 6
+        self.mtp_level: int = 12
         #self.ntypes: int = 4
         self.chebyshev_size: int = 8
         self.num_neurons: int = 30
@@ -42,21 +42,20 @@ class NNMtpTest(unittest.TestCase):
         self.umax_num_neigh_atoms: int = 200
         self.fit_virial: bool = False
         
-        
+        """
         self.ntypes: int = 4
         self.type_map_tensor: torch.Tensor = torch.tensor(data=[16, 34, 41, 75], dtype=torch.int32)
         self.structure: Structure = Structure.from_file(ReNbSSe_POSCAR_PATH)
         """
-        self.ntypes: int = 1
-        self.type_map_tensor: torch.Tensor = torch.tensor(data=[1], dtype=torch.int32)
+        self.ntypes: int = 2
+        self.type_map_tensor: torch.Tensor = torch.tensor(data=[1, 8], dtype=torch.int32)
         self.structure: Structure = Structure(lattice=[[10, 0, 0], [0, 10, 0], [0, 0, 10]],
-                                              species=["H", "H", "H"],
+                                              species=["H", "H", "O"],
                                               coords=[[0, 0, 0], 
                                                       [0, 4.0, 0],
                                                       [3.0, 0.0, 0]
                                                       ],
                                               coords_are_cartesian=True)
-        """
         print(self.structure)
     
         # 2. ZBL
