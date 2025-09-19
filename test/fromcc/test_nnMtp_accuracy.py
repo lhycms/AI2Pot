@@ -12,7 +12,8 @@ from ai2pot.fromcc import (
     nnMtpToEFLossOp,
     nnMtpToLossOp,
     mtpParamOp,
-    nnMtpToEsitesOp
+    nnMtpToEsitesOp,
+    nnMtpToDescriptorsOp
 )
 
 
@@ -30,7 +31,7 @@ class NNMtpTest(unittest.TestCase):
         print("NNMtpTest (TestCase) is setting up...\n")
         # 0.
         self.torch_float_dtype: torch._C.dtype = torch.float64
-        self.device: torch._C.device = torch.device("cuda")
+        self.device: torch._C.device = torch.device("cpu")
         
         # 1. 
         self.mtp_level: int = 12
@@ -275,6 +276,34 @@ class NNMtpTest(unittest.TestCase):
         print("* nnMtpToEsitesOp Gradient pass check: ", test)
         print("-------------------------------------------------")
 
+
+    def test_output_descriptors(self):
+        input_info: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(self.structure)
+        for item in input_info:
+            item.to(self.device)
+
+        bdescriptors = nnMtpToDescriptorsOp(
+            self.chebyshev_size,
+            self.coeffs_tensor,
+            self.w0_tensor,
+            self.w1_tensor,
+            self.type_bias_tensor,
+            self.alpha_moments_count,
+            self.alpha_index_basic_tensor,
+            self.alpha_index_times_tensor,
+            self.alpha_moment_mapping_tensor,
+            self.nmus,
+            input_info[0],
+            input_info[1],
+            input_info[2],
+            input_info[3],
+            input_info[4],
+            input_info[5],
+            self.type_map_tensor,
+            input_info[6].item(),
+            self.rmax,
+            self.rmin)[0]
+        print("1. bdescriptor.shape = ", bdescriptors.shape)
 
 
 if __name__ == "__main__":

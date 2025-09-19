@@ -72,6 +72,7 @@ protected:
     real (*bforce_)[3];
     real *bvirial;
     real *bvirial_;
+    real *bdescriptors;
 
 
     real *bloss_der2coeffs;
@@ -258,6 +259,9 @@ protected:
         memset(bforce_dft, 0, sizeof(real)*batch_size*natoms_pad*3);
         bvirial_dft = (real*)malloc(sizeof(real)*batch_size*9);
         memset(bvirial_dft, 0, sizeof(real)*batch_size*9);
+
+        bdescriptors = (real*)malloc(sizeof(real) * batch_size * natoms_pad * mtp_param.alpha_scalar_moments());
+        memset(bdescriptors, 0, sizeof(real) * batch_size * natoms_pad * mtp_param.alpha_scalar_moments());
     }
 
     void TearDown() override {
@@ -287,6 +291,7 @@ protected:
         free(betot_dft);
         free(bforce_dft);
         free(bvirial_dft);
+        free(bdescriptors);
     }
 };  // class : NNMtpTest
 
@@ -700,6 +705,41 @@ for (int ii=0; ii<ntypes; ii++)
 printf("\n\n");
 }
 
+
+TEST_F(NNMtpTest, find_descriptors_launcher) {
+    int center_idx = 0;
+    ai2pot::nnmtp::find_descriptors_launcher(
+        bdescriptors,
+        chebyshev_size,
+        coeffs,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        mtp_param.nmus(),
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        bnumneigh,
+        bfirstneigh,
+        (real (*)[3])brcs,
+        btypes,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin);
+    
+    printf("1. Descriptors of atom#%d:\n", center_idx);
+    for (int k=0; k<mtp_param.alpha_scalar_moments(); k++)
+        printf("%.5lf, ", bdescriptors[0*natoms_pad*mtp_param.alpha_scalar_moments() + center_idx*mtp_param.alpha_scalar_moments() + k]);
+    printf("\n");
+}
 
 
 int main(int argc, char **argv) {

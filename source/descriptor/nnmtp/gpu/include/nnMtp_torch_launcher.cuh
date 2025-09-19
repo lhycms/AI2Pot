@@ -175,6 +175,68 @@ void find_ef_torch_launcher(
 }
 
 
+template <typename CoordType>
+__host__
+void find_descriptors_torch_launcher(
+    CoordType *d_bdescriptors,
+    int chebyshev_size,
+    CoordType *d_coeffs,
+    const int alpha_moments_count,
+    const int alpha_index_basic_count,
+    const int (*d_alpha_index_basic)[4],
+    const int alpha_index_times_count,
+    const int (*d_alpha_index_times)[4],
+    const int alpha_scalar_moments,
+    const int *d_alpha_moment_mapping,
+    int nmus,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    int *d_bnumneigh,
+    int *d_bfirstneigh,
+    CoordType (*d_brcs)[3],
+    int *d_btypes,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    CoordType rmax,
+    CoordType rmin)
+{
+    int block_size_x = 64;
+    int grid_size_x = (batch_size * natoms_pad - 1) / block_size_x + 1;
+    dim3 grid_size(grid_size_x);
+    dim3 block_size(block_size_x);
+
+    find_descriptors_kernel KERNEL_ARG2(grid_size, block_size) (
+        d_bdescriptors,
+        chebyshev_size,
+        d_coeffs,
+        alpha_moments_count,
+        alpha_index_basic_count,
+        d_alpha_index_basic,
+        alpha_index_times_count,
+        d_alpha_index_times,
+        alpha_scalar_moments,
+        d_alpha_moment_mapping,
+        nmus,
+        batch_size,
+        natoms_pad,
+        d_binum,
+        d_bilist,
+        d_bnumneigh,
+        d_bfirstneigh,
+        d_brcs,
+        d_btypes,
+        ntypes,
+        d_type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin);
+}
+
 };  // namespace : nnmtp
 };  // namespace : ai2pot
 

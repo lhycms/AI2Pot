@@ -781,8 +781,10 @@ printf("\n\n");
 }
 
 
-/*
+
 TEST_F(NNMtpTest, find_descriptors) {
+    int center_idx = 0;
+    
     ai2pot::nnmtp::NNMtp<double>::find_descriptors(
         descriptors,
         chebyshev_size,
@@ -811,9 +813,15 @@ TEST_F(NNMtpTest, find_descriptors) {
         nghost,
         rmax,
         rmin);
+    
+    printf("1. Descriptors of atom#%d:\n", center_idx);
+    for (int k=0; k<mtp_param.alpha_scalar_moments(); k++)
+        printf("%.5lf, ", descriptors[center_idx*mtp_param.alpha_scalar_moments() + k]);
+    printf("\n");
 }
 
 
+/*
 TEST_F(NNMtpTest, find_e_sites) {
     ai2pot::nnmtp::NNMtp<double>::find_e_sites(
         e_sites,

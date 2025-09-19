@@ -89,6 +89,34 @@ void find_ef_torch_launcher(
     CoordType rmin);
 
 
+template <typename CoordType>
+void find_descriptors_torch_launcher(
+    CoordType *d_bdescriptors,
+    int chebyshev_size,
+    CoordType *d_coeffs,
+    const int alpha_moments_count,
+    const int alpha_index_basic_count,
+    const int (*d_alpha_index_basic)[4],
+    const int alpha_index_times_count,
+    const int (*d_alpha_index_times)[4],
+    const int alpha_scalar_moments,
+    const int *d_alpha_moment_mapping,
+    int nmus,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    int *d_bnumneigh,
+    int *d_bfirstneigh,
+    CoordType (*d_brcs)[3],
+    int *d_btypes,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    CoordType rmax,
+    CoordType rmin);
+
 };  // class : nnmtp
 };  // class : ai2pot
 
