@@ -338,13 +338,9 @@ class NNMtp(nn.Module):
                             brcs_tensor: torch.Tensor,
                             btypes_tensor: torch.Tensor,
                             bnghost_tensor: torch.Tensor):
-        assert(brcs_tensor.device == torch.device("cpu"))
         bdescriptors_tensor: torch.Tensor = nnMtpToDescriptorsOp(
             self.chebyshev_size,
             self.coeffs_tensor,
-            self.w0_tensor,
-            self.w1_tensor,
-            self.type_bias_tensor,
             self.alpha_moments_count,
             self.alpha_index_basic_tensor,
             self.alpha_index_times_tensor,

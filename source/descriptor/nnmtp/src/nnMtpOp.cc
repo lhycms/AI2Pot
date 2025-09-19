@@ -3528,9 +3528,6 @@ torch::autograd::variable_list NNMtpToDescriptorsFunction::forward(
     torch::autograd::AutogradContext *ctx,
     int chebyshev_size,
     const at::Tensor& coeffs_tensor,
-    const at::Tensor& w0_tensor,
-    const at::Tensor& w1_tensor,
-    const at::Tensor& type_bias_tensor,
     int alpha_moments_count,
     const at::Tensor& alpha_index_basic_tensor,
     const at::Tensor& alpha_index_times_tensor,
@@ -3555,7 +3552,6 @@ torch::autograd::variable_list NNMtpToDescriptorsFunction::forward(
     int alpha_scalar_moments = alpha_moment_mapping_tensor.size(0);
     int umax_num_neigh_atoms = bfirstneigh_tensor.size(2);
     int ntypes = type_map_tensor.size(0);
-    int num_neurons = (int)(w1_tensor.size(0) / ntypes);
     const int (*alpha_index_basic)[4] = (int (*)[4])alpha_index_basic_tensor.data_ptr<int>();
     const int (*alpha_index_times)[4] = (int (*)[4])alpha_index_times_tensor.data_ptr<int>();
     const int *alpha_moment_mapping = (int*)alpha_moment_mapping_tensor.data_ptr<int>();
@@ -3577,9 +3573,6 @@ torch::autograd::variable_list NNMtpToDescriptorsFunction::forward(
                         .device(brcs_tensor.device());
         bdescriptors_tensor = at::zeros({batch_size, natoms_pad, alpha_scalar_moments}, float_options);
         float *coeffs = (float*)coeffs_tensor.data_ptr<float>();
-        float *w0 = (float*)w0_tensor.data_ptr<float>();
-        float *w1 = (float*)w1_tensor.data_ptr<float>();
-        float *type_bias = (float*)type_bias_tensor.data_ptr<float>();
 
         if (brcs_tensor.device() == c10::kCPU) {
             for (int bb=0; bb<batch_size; bb++) {
@@ -3595,11 +3588,7 @@ torch::autograd::variable_list NNMtpToDescriptorsFunction::forward(
                 NNMtp<float>::find_descriptors(
                     descriptors,
                     chebyshev_size,
-                    num_neurons,
                     coeffs,
-                    w0,
-                    w1,
-                    type_bias,
                     alpha_moments_count,
                     alpha_index_basic_count,
                     alpha_index_basic,
@@ -3665,9 +3654,6 @@ torch::autograd::variable_list NNMtpToDescriptorsFunction::forward(
                         .device(brcs_tensor.device());
         bdescriptors_tensor = at::zeros({batch_size, natoms_pad, alpha_scalar_moments}, float_options);
         double *coeffs = (double*)coeffs_tensor.data_ptr<double>();
-        double *w0 = (double*)w0_tensor.data_ptr<double>();
-        double *w1 = (double*)w1_tensor.data_ptr<double>();
-        double *type_bias = (double*)type_bias_tensor.data_ptr<double>();
 
         if (brcs_tensor.device() == c10::kCPU) {
             for (int bb=0; bb<batch_size; bb++) {
@@ -3683,11 +3669,7 @@ torch::autograd::variable_list NNMtpToDescriptorsFunction::forward(
                 NNMtp<double>::find_descriptors(
                     descriptors,
                     chebyshev_size,
-                    num_neurons,
                     coeffs,
-                    w0,
-                    w1,
-                    type_bias,
                     alpha_moments_count,
                     alpha_index_basic_count,
                     alpha_index_basic,
@@ -3756,9 +3738,6 @@ torch::autograd::variable_list NNMtpToDescriptorsFunction::forward(
     ctx->save_for_backward({
         torch::tensor(chebyshev_size, int_options),
         coeffs_tensor,
-        w0_tensor,
-        w1_tensor,
-        type_bias_tensor,
         torch::tensor(alpha_moments_count, int_options),
         alpha_index_basic_tensor,
         alpha_index_times_tensor,
@@ -3784,9 +3763,6 @@ torch::autograd::variable_list NNMtpToDescriptorsFunction::backward(
     torch::autograd::variable_list bgrad_outputs_tensor)
 {
     return {
-        at::Tensor(),
-        at::Tensor(),
-        at::Tensor(),
         at::Tensor(),
         at::Tensor(),
         at::Tensor(),
@@ -4498,9 +4474,6 @@ torch::autograd::variable_list NNMtpToEFVOp(
 torch::autograd::variable_list NNMtpToDescriptorsOp(
     int chebyshev_size,
     const at::Tensor& coeffs_tensor,
-    const at::Tensor& w0_tensor,
-    const at::Tensor& w1_tensor,
-    const at::Tensor& type_bias_tensor,
     int alpha_moments_count,
     const at::Tensor& alpha_index_basic_tensor,
     const at::Tensor& alpha_index_times_tensor,
@@ -4520,9 +4493,6 @@ torch::autograd::variable_list NNMtpToDescriptorsOp(
     return NNMtpToDescriptorsFunction::apply(
         chebyshev_size,
         coeffs_tensor,
-        w0_tensor,
-        w1_tensor,
-        type_bias_tensor,
         alpha_moments_count,
         alpha_index_basic_tensor,
         alpha_index_times_tensor,

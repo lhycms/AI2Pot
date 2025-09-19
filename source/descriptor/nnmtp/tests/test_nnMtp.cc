@@ -788,11 +788,7 @@ TEST_F(NNMtpTest, find_descriptors) {
     ai2pot::nnmtp::NNMtp<double>::find_descriptors(
         descriptors,
         chebyshev_size,
-        num_neurons,
         coeffs,
-        w0,
-        w1,
-        type_bias,
         mtp_param.alpha_moments_count(),
         mtp_param.alpha_index_basic_count(),
         mtp_param.alpha_index_basic(),

@@ -31,7 +31,7 @@ class NNMtpTest(unittest.TestCase):
         print("NNMtpTest (TestCase) is setting up...\n")
         # 0.
         self.torch_float_dtype: torch._C.dtype = torch.float64
-        self.device: torch._C.device = torch.device("cpu")
+        self.device: torch._C.device = torch.device("cuda")
         
         # 1. 
         self.mtp_level: int = 12
@@ -285,9 +285,6 @@ class NNMtpTest(unittest.TestCase):
         bdescriptors = nnMtpToDescriptorsOp(
             self.chebyshev_size,
             self.coeffs_tensor,
-            self.w0_tensor,
-            self.w1_tensor,
-            self.type_bias_tensor,
             self.alpha_moments_count,
             self.alpha_index_basic_tensor,
             self.alpha_index_times_tensor,

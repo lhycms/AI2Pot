@@ -99,11 +99,7 @@ public:
     static void find_descriptors(
         CoordType *all_descriptors,
         int chebyshev_size,
-        int num_neurons,
         CoordType *coeffs,
-        CoordType *w0,
-        CoordType *w1,
-        CoordType *type_bias,
         const int alpha_moments_count,
         const int alpha_index_basic_count,
         const int (*alpha_index_basic)[4],
@@ -559,11 +555,7 @@ template <typename CoordType>
 void NNMtp<CoordType>::find_descriptors(
     CoordType *all_descriptors,
     int chebyshev_size,
-    int num_neurons,
     CoordType *coeffs,
-    CoordType *w0,
-    CoordType *w1,
-    CoordType *type_bias,
     const int alpha_moments_count,
     const int alpha_index_basic_count,
     const int (*alpha_index_basic)[4],
