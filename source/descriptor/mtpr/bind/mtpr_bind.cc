@@ -396,8 +396,6 @@ TORCH_LIBRARY(mtpr, m) {
         "linearMtpToDescriptorsOp",
         [](int64_t chebyshev_size,
            const at::Tensor& coeffs_tensor,
-           const at::Tensor& linear_coeffs_tensor,
-           const at::Tensor& type_bias_tensor,
            int64_t alpha_moments_count,
            const at::Tensor& alpha_index_basic_tensor,
            const at::Tensor& alpha_index_times_tensor,
@@ -422,8 +420,6 @@ TORCH_LIBRARY(mtpr, m) {
             return ai2pot::mtpr::LinearMtpToDescriptorsOp(
                 (int)chebyshev_size,
                 coeffs_tensor,
-                linear_coeffs_tensor,
-                type_bias_tensor,
                 (int)alpha_moments_count,
                 alpha_index_basic_tensor,
                 alpha_index_times_tensor,

@@ -32,7 +32,7 @@ class LinearMtpTest(unittest.TestCase):
         print("LinearMtpTest (TestCase) is setting up...\n")
         # 0.
         self.torch_float_dtype: torch._C.dtype = torch.float64
-        self.device: torch._C.device = torch.device("cuda")
+        self.device: torch._C.device = torch.device("cpu")
         
         # 1. 
         self.mtp_level: int = 16
@@ -224,8 +224,6 @@ class LinearMtpTest(unittest.TestCase):
         bdescriptors = linearMtpToDescriptorsOp(
             self.chebyshev_size,
             self.coeffs_tensor,
-            self.linear_coeffs_tensor,
-            self.type_bias_tensor,
             self.alpha_moments_count,
             self.alpha_index_basic_tensor,
             self.alpha_index_times_tensor,

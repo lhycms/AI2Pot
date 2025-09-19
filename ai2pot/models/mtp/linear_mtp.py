@@ -324,8 +324,6 @@ class LinearMtp(nn.Module):
         bdescriptors_tensor: torch.Tensor = linearMtpToDescriptorsOp(
                                                     self.chebyshev_size,
                                                     self.coeffs_tensor,
-                                                    self.linear_coeffs_tensor,
-                                                    self.type_bias_tensor,
                                                     self.alpha_moments_count,
                                                     self.alpha_index_basic_tensor,
                                                     self.alpha_index_times_tensor,

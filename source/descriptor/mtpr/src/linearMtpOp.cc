@@ -3813,8 +3813,6 @@ torch::autograd::variable_list LinearMtpToDescriptorsFunction::forward(
     torch::autograd::AutogradContext *ctx,
     int chebyshev_size,
     const at::Tensor& coeffs_tensor,
-    const at::Tensor& linear_coeffs_tensor,
-    const at::Tensor& type_bias_tensor,
     int alpha_moments_count,
     const at::Tensor& alpha_index_basic_tensor,
     const at::Tensor& alpha_index_times_tensor,
@@ -3860,8 +3858,6 @@ torch::autograd::variable_list LinearMtpToDescriptorsFunction::forward(
                         .device(brcs_tensor.device());
         bdescriptors_tensor = at::zeros({batch_size, natoms_pad, alpha_scalar_moments}, float_options);
         float *coeffs = (float*)coeffs_tensor.data_ptr<float>();
-        float *linear_coeffs = (float*)linear_coeffs_tensor.data_ptr<float>();
-        float *type_bias = (float*)type_bias_tensor.data_ptr<float>();
 
         if (brcs_tensor.device() == c10::kCPU) {
             for (int bb=0; bb<batch_size; bb++) {
@@ -3878,8 +3874,6 @@ torch::autograd::variable_list LinearMtpToDescriptorsFunction::forward(
                     descriptors,
                     chebyshev_size,
                     coeffs,
-                    linear_coeffs,
-                    type_bias,
                     alpha_moments_count,
                     alpha_index_basic_count,
                     alpha_index_basic,
@@ -3945,8 +3939,6 @@ torch::autograd::variable_list LinearMtpToDescriptorsFunction::forward(
                         .device(brcs_tensor.device());
         bdescriptors_tensor = at::zeros({batch_size, natoms_pad, alpha_scalar_moments}, float_options);
         double *coeffs = (double*)coeffs_tensor.data_ptr<double>();
-        double *linear_coeffs = (double*)linear_coeffs_tensor.data_ptr<double>();
-        double *type_bias = (double*)type_bias_tensor.data_ptr<double>();
 
         if (brcs_tensor.device() == c10::kCPU) {
             for (int bb=0; bb<batch_size; bb++) {
@@ -3963,8 +3955,6 @@ torch::autograd::variable_list LinearMtpToDescriptorsFunction::forward(
                     descriptors,
                     chebyshev_size,
                     coeffs,
-                    linear_coeffs,
-                    type_bias,
                     alpha_moments_count,
                     alpha_index_basic_count,
                     alpha_index_basic,
@@ -4033,8 +4023,6 @@ torch::autograd::variable_list LinearMtpToDescriptorsFunction::forward(
     ctx->save_for_backward({
         torch::tensor(chebyshev_size, int_options),
         coeffs_tensor,
-        linear_coeffs_tensor,
-        type_bias_tensor,
         torch::tensor(alpha_moments_count, int_options),
         alpha_index_basic_tensor,
         alpha_index_times_tensor,
@@ -4061,8 +4049,6 @@ torch::autograd::variable_list LinearMtpToDescriptorsFunction::backward(
     torch::autograd::variable_list bgrad_outputs_tensor)
 {
     return {
-        at::Tensor(),
-        at::Tensor(),
         at::Tensor(),
         at::Tensor(),
         at::Tensor(),
@@ -4366,8 +4352,6 @@ torch::autograd::variable_list LinearMtpToEsitesOp(
 torch::autograd::variable_list LinearMtpToDescriptorsOp(
     int chebyshev_size,
     const at::Tensor& coeffs_tensor,
-    const at::Tensor& linear_coeffs_tensor,
-    const at::Tensor& type_bias_tensor,
     int alpha_moments_count,
     const at::Tensor& alpha_index_basic_tensor,
     const at::Tensor& alpha_index_times_tensor,
@@ -4387,8 +4371,6 @@ torch::autograd::variable_list LinearMtpToDescriptorsOp(
     return LinearMtpToDescriptorsFunction::apply(
         chebyshev_size,
         coeffs_tensor,
-        linear_coeffs_tensor,
-        type_bias_tensor,
         alpha_moments_count,
         alpha_index_basic_tensor,
         alpha_index_times_tensor,

@@ -399,8 +399,6 @@ TEST_F(LinearMtpTest, find_descriptors)
         all_descriptors,
         chebyshev_size,
         coeffs,
-        linear_coeffs,
-        type_bias,
         mtp_param.alpha_moments_count(),
         mtp_param.alpha_index_basic_count(),
         mtp_param.alpha_index_basic(),

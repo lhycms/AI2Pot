@@ -216,8 +216,6 @@ public:
         torch::autograd::AutogradContext *ctx,
         int chebyshev_size,
         const at::Tensor& coeffs_tensor,
-        const at::Tensor& linear_coeffs_tensor,
-        const at::Tensor& type_bias_tensor,
         int alpha_moments_count,
         const at::Tensor& alpha_index_basic_tensor,
         const at::Tensor& alpha_index_times_tensor,
@@ -384,8 +382,6 @@ torch::autograd::variable_list LinearMtpToEsitesOp(
 torch::autograd::variable_list LinearMtpToDescriptorsOp(
     int chebyshev_size,
     const at::Tensor& coeffs_tensor,
-    const at::Tensor& linear_coeffs_Tensor,
-    const at::Tensor& type_bias_tensor,
     int alpha_moments_count,
     const at::Tensor& alpha_index_basic_tensor,
     const at::Tensor& alpha_index_times_tensor,
