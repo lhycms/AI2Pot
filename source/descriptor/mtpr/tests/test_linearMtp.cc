@@ -393,6 +393,8 @@ printf("3. virial[%d][%d] = %g\n", direction1_idx_modify, direction2_idx_modify,
 
 TEST_F(LinearMtpTest, find_descriptors)
 {
+    int center_idx = 0;
+
     ai2pot::mtpr::LinearMtp<real>::find_descriptors(
         all_descriptors,
         chebyshev_size,
@@ -419,6 +421,11 @@ TEST_F(LinearMtpTest, find_descriptors)
         nghost,
         rmax,
         rmin);
+
+    printf("1. Descriptors of atom#%d:\n", center_idx);
+    for (int k=0; k<mtp_param.alpha_scalar_moments(); k++)
+        printf("%.5lf, ", all_descriptors[center_idx*mtp_param.alpha_scalar_moments() + k]);
+    printf("\n");
 }
 
 
