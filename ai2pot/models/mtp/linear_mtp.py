@@ -321,7 +321,6 @@ class LinearMtp(nn.Module):
                             brcs_tensor: torch.Tensor,
                             btypes_tensor: torch.Tensor,
                             bnghost_tensor: torch.Tensor):
-        assert(brcs_tensor.device == torch.device("cpu"))
         bdescriptors_tensor: torch.Tensor = linearMtpToDescriptorsOp(
                                                     self.chebyshev_size,
                                                     self.coeffs_tensor,

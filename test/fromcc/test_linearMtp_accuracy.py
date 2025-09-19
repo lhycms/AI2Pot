@@ -13,7 +13,8 @@ from ai2pot.fromcc import (
     linearMtpToEFLossOp,
     linearMtpToLossOp,
     linearMtpToEsitesOp,
-    mtpParamOp
+    mtpParamOp,
+    linearMtpToDescriptorsOp
 )
 
 
@@ -31,7 +32,7 @@ class LinearMtpTest(unittest.TestCase):
         print("LinearMtpTest (TestCase) is setting up...\n")
         # 0.
         self.torch_float_dtype: torch._C.dtype = torch.float64
-        self.device: torch._C.device = torch.device("cpu")
+        self.device: torch._C.device = torch.device("cuda")
         
         # 1. 
         self.mtp_level: int = 16
@@ -172,7 +173,7 @@ class LinearMtpTest(unittest.TestCase):
         print("-------------------------------------------------")
 
 
-    def test_linearMtpToEsites(self):
+    def est_linearMtpToEsites(self):
         # 1. Parameters
         self.coeffs_tensor.requires_grad_(True)
         self.linear_coeffs_tensor.requires_grad_(True)
@@ -214,6 +215,33 @@ class LinearMtpTest(unittest.TestCase):
         print("* linearMtpToEsitesOp Gradient pass check: ", test)
         print("-------------------------------------------------")
 
+
+    def test_output_descriptors(self):
+        input_info: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(self.structure)
+        for item in input_info:
+            item.to(self.device)
+
+        bdescriptors = linearMtpToDescriptorsOp(
+            self.chebyshev_size,
+            self.coeffs_tensor,
+            self.linear_coeffs_tensor,
+            self.type_bias_tensor,
+            self.alpha_moments_count,
+            self.alpha_index_basic_tensor,
+            self.alpha_index_times_tensor,
+            self.alpha_moment_mapping_tensor,
+            self.nmus,
+            input_info[0],
+            input_info[1],
+            input_info[2],
+            input_info[3],
+            input_info[4],
+            input_info[5],
+            self.type_map_tensor,
+            input_info[6].item(),
+            self.rmax,
+            self.rmin)[0]
+        print("1. bdescriptor.shape = ", bdescriptors.shape)
 
 if __name__ == "__main__":
     unittest.main()

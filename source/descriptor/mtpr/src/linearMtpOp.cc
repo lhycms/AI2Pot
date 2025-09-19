@@ -157,6 +157,63 @@ extern template void ai2pot::mtpr::find_ef_torch_launcher<double>(
     double rmin);
 
 
+// 1.3. find_descriptors_torch_launcher()
+extern template void ai2pot::mtpr::find_descriptors_torch_launcher<float>(
+    float *d_bdescriptors,
+    int chebyshev_size,
+    float *d_coeffs,
+    const int alpha_moments_count,
+    const int alpha_index_basic_count,
+    const int (*d_alpha_index_basic)[4],
+    const int alpha_index_times_count,
+    const int (*d_alpha_index_times)[4],
+    const int alpha_scalar_moments,
+    const int *d_alpha_moment_mapping,
+    int nmus,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    int *d_bnumneigh,
+    int *d_bfirstneigh,
+    float (*d_brcs)[3],
+    int *d_btypes,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    float rmax,
+    float rmin);
+
+
+extern template void ai2pot::mtpr::find_descriptors_torch_launcher<double>(
+    double *d_bdescriptors,
+    int chebyshev_size,
+    double *d_coeffs,
+    const int alpha_moments_count,
+    const int alpha_index_basic_count,
+    const int (*d_alpha_index_basic)[4],
+    const int alpha_index_times_count,
+    const int (*d_alpha_index_times)[4],
+    const int alpha_scalar_moments,
+    const int *d_alpha_moment_mapping,
+    int nmus,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    int *d_bnumneigh,
+    int *d_bfirstneigh,
+    double (*d_brcs)[3],
+    int *d_btypes,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    double rmax,
+    double rmin);
+
+
 
 // 2. linearMtpLoss_torch_launcher.cu
 // 2.1. find_loss_torch_launcher()
@@ -3782,6 +3839,10 @@ torch::autograd::variable_list LinearMtpToDescriptorsFunction::forward(
     int alpha_scalar_moments = alpha_moment_mapping_tensor.size(0);
     int umax_num_neigh_atoms = bfirstneigh_tensor.size(2);
     int ntypes = type_map_tensor.size(0);
+    const int (*alpha_index_basic)[4] = (int (*)[4])alpha_index_basic_tensor.data_ptr<int>();
+    const int (*alpha_index_times)[4] = (int (*)[4])alpha_index_times_tensor.data_ptr<int>();
+    const int *alpha_moment_mapping = (int*)alpha_moment_mapping_tensor.data_ptr<int>();
+    int *type_map = type_map_tensor.data_ptr<int>();
 
     // 2. 
     c10::TensorOptions int_options = c10::TensorOptions()
@@ -3798,29 +3859,62 @@ torch::autograd::variable_list LinearMtpToDescriptorsFunction::forward(
                         .dtype(torch::kFloat32)
                         .device(brcs_tensor.device());
         bdescriptors_tensor = at::zeros({batch_size, natoms_pad, alpha_scalar_moments}, float_options);
-        const int (*alpha_index_basic)[4] = (int (*)[4])alpha_index_basic_tensor.data_ptr<int>();
-        const int (*alpha_index_times)[4] = (int (*)[4])alpha_index_times_tensor.data_ptr<int>();
-        const int *alpha_moment_mapping = (int*)alpha_moment_mapping_tensor.data_ptr<int>();
         float *coeffs = (float*)coeffs_tensor.data_ptr<float>();
         float *linear_coeffs = (float*)linear_coeffs_tensor.data_ptr<float>();
         float *type_bias = (float*)type_bias_tensor.data_ptr<float>();
 
-        for (int bb=0; bb<batch_size; bb++) {
-            float *descriptors = (float*)bdescriptors_tensor[bb].data_ptr<float>();
-            int inum = binum_tensor[bb].item<int>();
-            int *ilist = (int*)bilist_tensor[bb].data_ptr<int>();
-            int *numneigh = (int*)bnumneigh_tensor[bb].data_ptr<int>();
-            int *firstneigh = (int*)bfirstneigh_tensor[bb].data_ptr<int>();
-            float (*rcs)[3] = (float (*)[3])brcs_tensor[bb].data_ptr<float>();
-            int *types = (int*)btypes_tensor[bb].data_ptr<int>();
-            int *type_map = (int*)type_map_tensor.data_ptr<int>();
+        if (brcs_tensor.device() == c10::kCPU) {
+            for (int bb=0; bb<batch_size; bb++) {
+                float *descriptors = (float*)bdescriptors_tensor[bb].data_ptr<float>();
+                int inum = binum_tensor[bb].item<int>();
+                int *ilist = (int*)bilist_tensor[bb].data_ptr<int>();
+                int *numneigh = (int*)bnumneigh_tensor[bb].data_ptr<int>();
+                int *firstneigh = (int*)bfirstneigh_tensor[bb].data_ptr<int>();
+                float (*rcs)[3] = (float (*)[3])brcs_tensor[bb].data_ptr<float>();
+                int *types = (int*)btypes_tensor[bb].data_ptr<int>();
+                int *type_map = (int*)type_map_tensor.data_ptr<int>();
 
-            LinearMtp<float>::find_descriptors(
-                descriptors,
+                LinearMtp<float>::find_descriptors(
+                    descriptors,
+                    chebyshev_size,
+                    coeffs,
+                    linear_coeffs,
+                    type_bias,
+                    alpha_moments_count,
+                    alpha_index_basic_count,
+                    alpha_index_basic,
+                    alpha_index_times_count,
+                    alpha_index_times,
+                    alpha_scalar_moments,
+                    alpha_moment_mapping,
+                    nmus,
+                    inum,
+                    ilist,
+                    numneigh,
+                    firstneigh,
+                    rcs,
+                    types,
+                    ntypes,
+                    type_map,
+                    umax_num_neigh_atoms,
+                    nghost,
+                    (float)rmax,
+                    (float)rmin);
+            }
+        } else {
+            #if defined(USE_CUDA) or defined(__INTELLISENSE__)
+            float *bdescriptors = bdescriptors_tensor.data_ptr<float>();
+            int *binum = binum_tensor.data_ptr<int>();
+            int *bilist = bilist_tensor.data_ptr<int>();
+            int *bnumneigh = bnumneigh_tensor.data_ptr<int>();
+            int *bfirstneigh = bfirstneigh_tensor.data_ptr<int>();
+            float (*brcs)[3] = (float (*)[3])brcs_tensor.data_ptr<float>();
+            int *btypes = btypes_tensor.data_ptr<int>();
+
+            find_descriptors_torch_launcher<float>(
+                bdescriptors,
                 chebyshev_size,
                 coeffs,
-                linear_coeffs,
-                type_bias,
                 alpha_moments_count,
                 alpha_index_basic_count,
                 alpha_index_basic,
@@ -3829,48 +3923,83 @@ torch::autograd::variable_list LinearMtpToDescriptorsFunction::forward(
                 alpha_scalar_moments,
                 alpha_moment_mapping,
                 nmus,
-                inum,
-                ilist,
-                numneigh,
-                firstneigh,
-                rcs,
-                types,
+                batch_size,
+                natoms_pad,
+                binum,
+                bilist,
+                bnumneigh,
+                bfirstneigh,
+                brcs,
+                btypes,
                 ntypes,
                 type_map,
                 umax_num_neigh_atoms,
                 nghost,
-                (float)rmax,
-                (float)rmin);
+                rmax,
+                rmin);
+            #endif
         }
-
     } else {
         float_options = c10::TensorOptions()
                         .dtype(torch::kFloat64)
                         .device(brcs_tensor.device());
         bdescriptors_tensor = at::zeros({batch_size, natoms_pad, alpha_scalar_moments}, float_options);
-        const int (*alpha_index_basic)[4] = (int (*)[4])alpha_index_basic_tensor.data_ptr<int>();
-        const int (*alpha_index_times)[4] = (int (*)[4])alpha_index_times_tensor.data_ptr<int>();
-        const int *alpha_moment_mapping = (int*)alpha_moment_mapping_tensor.data_ptr<int>();
         double *coeffs = (double*)coeffs_tensor.data_ptr<double>();
         double *linear_coeffs = (double*)linear_coeffs_tensor.data_ptr<double>();
         double *type_bias = (double*)type_bias_tensor.data_ptr<double>();
 
-        for (int bb=0; bb<batch_size; bb++) {
-            double *descriptors = (double*)bdescriptors_tensor[bb].data_ptr<double>();
-            int inum = binum_tensor[bb].item<int>();
-            int *ilist = (int*)bilist_tensor[bb].data_ptr<int>();
-            int *numneigh = (int*)bnumneigh_tensor[bb].data_ptr<int>();
-            int *firstneigh = (int*)bfirstneigh_tensor[bb].data_ptr<int>();
-            double (*rcs)[3] = (double (*)[3])brcs_tensor[bb].data_ptr<double>();
-            int *types = (int*)btypes_tensor[bb].data_ptr<int>();
-            int *type_map = (int*)type_map_tensor.data_ptr<int>();
+        if (brcs_tensor.device() == c10::kCPU) {
+            for (int bb=0; bb<batch_size; bb++) {
+                double *descriptors = (double*)bdescriptors_tensor[bb].data_ptr<double>();
+                int inum = binum_tensor[bb].item<int>();
+                int *ilist = (int*)bilist_tensor[bb].data_ptr<int>();
+                int *numneigh = (int*)bnumneigh_tensor[bb].data_ptr<int>();
+                int *firstneigh = (int*)bfirstneigh_tensor[bb].data_ptr<int>();
+                double (*rcs)[3] = (double (*)[3])brcs_tensor[bb].data_ptr<double>();
+                int *types = (int*)btypes_tensor[bb].data_ptr<int>();
+                int *type_map = (int*)type_map_tensor.data_ptr<int>();
 
-            LinearMtp<double>::find_descriptors(
-                descriptors,
+                LinearMtp<double>::find_descriptors(
+                    descriptors,
+                    chebyshev_size,
+                    coeffs,
+                    linear_coeffs,
+                    type_bias,
+                    alpha_moments_count,
+                    alpha_index_basic_count,
+                    alpha_index_basic,
+                    alpha_index_times_count,
+                    alpha_index_times,
+                    alpha_scalar_moments,
+                    alpha_moment_mapping,
+                    nmus,
+                    inum,
+                    ilist,
+                    numneigh,
+                    firstneigh,
+                    rcs,
+                    types,
+                    ntypes,
+                    type_map,
+                    umax_num_neigh_atoms,
+                    nghost,
+                    (double)rmax,
+                    (double)rmin);
+            }
+        } else {
+            #if defined(USE_CUDA) or defined(__INTELLISENSE__)
+            double *bdescriptors = bdescriptors_tensor.data_ptr<double>();
+            int *binum = binum_tensor.data_ptr<int>();
+            int *bilist = bilist_tensor.data_ptr<int>();
+            int *bnumneigh = bnumneigh_tensor.data_ptr<int>();
+            int *bfirstneigh = bfirstneigh_tensor.data_ptr<int>();
+            double (*brcs)[3] = (double (*)[3])brcs_tensor.data_ptr<double>();
+            int *btypes = btypes_tensor.data_ptr<int>();
+
+            find_descriptors_torch_launcher<double>(
+                bdescriptors,
                 chebyshev_size,
                 coeffs,
-                linear_coeffs,
-                type_bias,
                 alpha_moments_count,
                 alpha_index_basic_count,
                 alpha_index_basic,
@@ -3879,18 +4008,21 @@ torch::autograd::variable_list LinearMtpToDescriptorsFunction::forward(
                 alpha_scalar_moments,
                 alpha_moment_mapping,
                 nmus,
-                inum,
-                ilist,
-                numneigh,
-                firstneigh,
-                rcs,
-                types,
+                batch_size,
+                natoms_pad,
+                binum,
+                bilist,
+                bnumneigh,
+                bfirstneigh,
+                brcs,
+                btypes,
                 ntypes,
                 type_map,
                 umax_num_neigh_atoms,
                 nghost,
-                (double)rmax,
-                (double)rmin);
+                rmax,
+                rmin);
+            #endif
         }
     }
 
@@ -4230,7 +4362,7 @@ torch::autograd::variable_list LinearMtpToEsitesOp(
         zbl_dks_tensor);
 }
 
-
+ 
 torch::autograd::variable_list LinearMtpToDescriptorsOp(
     int chebyshev_size,
     const at::Tensor& coeffs_tensor,
