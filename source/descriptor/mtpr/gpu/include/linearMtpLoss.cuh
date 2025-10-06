@@ -136,7 +136,8 @@ void find_loss_backward_atom(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin);
+    CoordType rmin,
+    CoordType *q_scaler);
 
 
 template <typename CoordType>
@@ -179,7 +180,8 @@ void find_loss_backward_kernel(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin);
+    CoordType rmin,
+    CoordType *q_scaler);
 
 
 template <typename CoordType>
@@ -222,7 +224,8 @@ void find_loss_backward_launcher(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin);
+    CoordType rmin,
+    CoordType *h_q_scaler);
 
 
 template <typename CoordType>
@@ -260,7 +263,8 @@ void find_ef_loss_backward_atom(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin);
+    CoordType rmin,
+    CoordType *q_scaler);
 
 
 template <typename CoordType>
@@ -300,7 +304,8 @@ void find_ef_loss_backward_kernel(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin);
+    CoordType rmin,
+    CoordType *q_scaler);
 
 
 template <typename CoordType>
@@ -340,7 +345,8 @@ void find_ef_loss_backward_launcher(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin);
+    CoordType rmin,
+    CoordType *h_q_scaler);
 
 
 
@@ -647,7 +653,8 @@ void find_loss_backward_atom(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin)
+    CoordType rmin,
+    CoordType *q_scaler)
 {
     CoordType mom_vals[MAX_ALPHA_MOMENTS_COUNT] = {0.0};
     CoordType e_site_der2mom[MAX_ALPHA_MOMENTS_COUNT] = {0.0};
@@ -775,7 +782,7 @@ void find_loss_backward_atom(
 
     // 2.1. Linear Energy derivative w.r.t. mom_vals
     for (int i=0; i<alpha_scalar_moments; i++)
-        e_site_der2mom[alpha_moment_mapping[i]] = linear_coeffs[i];
+        e_site_der2mom[alpha_moment_mapping[i]] = linear_coeffs[i] / q_scaler[i];
 
     // 2.2. Pass to basic moments
     for (int i=alpha_index_times_count-1; i>=0; i--) {
@@ -893,12 +900,14 @@ void find_loss_backward_atom(
 
 
     // 2.4. loss derivative w.r.t. linear_coeffs
-    for (int i=0; i<alpha_scalar_moments; i++)
-        atomicAdd(&loss_der2linear_coeffs[i],
-                  2*e_weight/inum
-                  * (etot_ml - etot_dft)
-                  * mom_vals[alpha_moment_mapping[i]]
-                  + dloss_combination[alpha_moment_mapping[i]]);
+    for (int i=0; i<alpha_scalar_moments; i++) {
+        CoordType tmp_loss_der2linear_coeff = 2*e_weight/inum
+                                              * (etot_ml - etot_dft)
+                                              * mom_vals[alpha_moment_mapping[i]]
+                                              + dloss_combination[alpha_moment_mapping[i]];
+
+        atomicAdd(&loss_der2linear_coeffs[i], tmp_loss_der2linear_coeff / q_scaler[i]);
+    }
 
     // 2.5. loss derivative w.r.t. type_bias
     atomicAdd(&loss_der2type_bias[type_central],
@@ -947,7 +956,8 @@ void find_loss_backward_kernel(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin)
+    CoordType rmin,
+    CoordType *q_scaler)
 {
     int nx = blockIdx.x * blockDim.x + threadIdx.x;
     int istruct = nx / natoms_pad;
@@ -1009,7 +1019,8 @@ void find_loss_backward_kernel(
             umax_num_neigh_atoms,
             nghost,
             rmax,
-            rmin);
+            rmin,
+            q_scaler);
     }
 }
 
@@ -1054,7 +1065,8 @@ void find_loss_backward_launcher(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin)
+    CoordType rmin,
+    CoordType *h_q_scaler)
 {
     int block_size_x = 64;
     int grid_size_x = (batch_size*natoms_pad - 1) / block_size_x + 1;
@@ -1084,6 +1096,7 @@ void find_loss_backward_launcher(
     CoordType (*d_brcs)[3];
     int *d_btypes;
     int *d_type_map;
+    CoordType *d_q_scaler;
 
     CHECK_CUDA_API( cudaMalloc((void**)&d_bloss_der2coeffs, sizeof(CoordType) * batch_size * num_coeffs) );
     CHECK_CUDA_API( cudaMemset(d_bloss_der2coeffs, 0, sizeof(CoordType) * batch_size * num_coeffs) );
@@ -1111,6 +1124,7 @@ void find_loss_backward_launcher(
     CHECK_CUDA_API( cudaMalloc((void**)&d_brcs, sizeof(CoordType) * batch_size * natoms_pad * umax_num_neigh_atoms * 3) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_btypes, sizeof(int) * batch_size * natoms_pad) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_type_map, sizeof(int) * ntypes) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_q_scaler, sizeof(CoordType) * alpha_scalar_moments) );
 
     CHECK_CUDA_API( cudaMemcpy(d_betot_ml, h_betot_ml, sizeof(CoordType)*batch_size, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_betot_dft, h_betot_dft, sizeof(CoordType)*batch_size, cudaMemcpyHostToDevice) );
@@ -1131,6 +1145,7 @@ void find_loss_backward_launcher(
     CHECK_CUDA_API( cudaMemcpy(d_brcs, h_brcs, sizeof(CoordType)*batch_size*natoms_pad*umax_num_neigh_atoms*3, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_btypes, h_btypes, sizeof(int)*batch_size*natoms_pad, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_type_map, h_type_map, sizeof(int)*ntypes, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_q_scaler, h_q_scaler, sizeof(CoordType)*alpha_scalar_moments, cudaMemcpyHostToDevice) );
 
 
     auto t1 = std::chrono::high_resolution_clock::now();
@@ -1173,7 +1188,8 @@ void find_loss_backward_launcher(
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        d_q_scaler);
     CHECK_CUDA_API( cudaDeviceSynchronize() );
     CHECK_CUDA_API( cudaGetLastError() );
     auto t2 = std::chrono::high_resolution_clock::now();
@@ -1206,6 +1222,7 @@ void find_loss_backward_launcher(
     CHECK_CUDA_API( cudaFree(d_brcs) );
     CHECK_CUDA_API( cudaFree(d_btypes) );
     CHECK_CUDA_API( cudaFree(d_type_map) );
+    CHECK_CUDA_API( cudaFree(d_q_scaler) );
 }
 
 
@@ -1244,7 +1261,8 @@ void find_ef_loss_backward_atom(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin)
+    CoordType rmin,
+    CoordType *q_scaler)
 {
     CoordType mom_vals[MAX_ALPHA_MOMENTS_COUNT] = {0.0};
     CoordType e_site_der2mom[MAX_ALPHA_MOMENTS_COUNT] = {0.0};
@@ -1366,7 +1384,7 @@ void find_ef_loss_backward_atom(
 
     // 2.1. Linear Energy derivative w.r.t. mom_vals
     for (int i=0; i<alpha_scalar_moments; i++)
-        e_site_der2mom[alpha_moment_mapping[i]] = linear_coeffs[i];
+        e_site_der2mom[alpha_moment_mapping[i]] = linear_coeffs[i] / q_scaler[i];
 
     // 2.2. Pass to basic moments
     for (int i=alpha_index_times_count-1; i>=0; i--) {
@@ -1478,12 +1496,13 @@ void find_ef_loss_backward_atom(
 
 
     // 2.4. loss derivative w.r.t. linear_coeffs
-    for (int i=0; i<alpha_scalar_moments; i++)
-        atomicAdd(&loss_der2linear_coeffs[i],
-                  2*e_weight/inum
-                  * (etot_ml - etot_dft)
-                  * mom_vals[alpha_moment_mapping[i]]
-                  + dloss_combination[alpha_moment_mapping[i]]);
+    for (int i=0; i<alpha_scalar_moments; i++) {
+        CoordType tmp_loss_der2linear_coeff = 2*e_weight/inum
+                                              * (etot_ml - etot_dft)
+                                              * mom_vals[alpha_moment_mapping[i]]
+                                              + dloss_combination[alpha_moment_mapping[i]];
+        atomicAdd(&loss_der2linear_coeffs[i], tmp_loss_der2linear_coeff / q_scaler[i]);
+    }
 
     // 2.5. loss derivative w.r.t. type_bias
     atomicAdd(&loss_der2type_bias[type_central],
@@ -1528,7 +1547,8 @@ void find_ef_loss_backward_kernel(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin)
+    CoordType rmin,
+    CoordType *q_scaler)
 {
     int nx = blockIdx.x * blockDim.x + threadIdx.x;
     int istruct = nx / natoms_pad;
@@ -1585,7 +1605,8 @@ void find_ef_loss_backward_kernel(
             umax_num_neigh_atoms,
             nghost,
             rmax,
-            rmin);
+            rmin,
+            q_scaler);
     }
 }
 
@@ -1627,7 +1648,8 @@ void find_ef_loss_backward_launcher(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin)
+    CoordType rmin,
+    CoordType *h_q_scaler)
 {
     int block_size_x = 64;
     int grid_size_x = (batch_size * natoms_pad - 1) / block_size_x + 1;
@@ -1655,6 +1677,7 @@ void find_ef_loss_backward_launcher(
     CoordType (*d_brcs)[3];
     int *d_btypes;
     int *d_type_map;
+    CoordType *d_q_scaler;
 
     CHECK_CUDA_API( cudaMalloc((void**)&d_bloss_der2coeffs, sizeof(CoordType) * batch_size * num_coeffs) );
     CHECK_CUDA_API( cudaMemset(d_bloss_der2coeffs, 0.0, sizeof(CoordType) * batch_size * num_coeffs) );
@@ -1680,6 +1703,7 @@ void find_ef_loss_backward_launcher(
     CHECK_CUDA_API( cudaMalloc((void**)&d_brcs, sizeof(CoordType) * batch_size * natoms_pad * umax_num_neigh_atoms * 3) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_btypes, sizeof(int) * batch_size * natoms_pad) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_type_map, sizeof(int) * ntypes) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_q_scaler, sizeof(CoordType) * alpha_scalar_moments) );
 
     CHECK_CUDA_API( cudaMemcpy(d_betot_ml, h_betot_ml, sizeof(CoordType)*batch_size, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_betot_dft, h_betot_dft, sizeof(CoordType)*batch_size, cudaMemcpyHostToDevice) );
@@ -1698,6 +1722,7 @@ void find_ef_loss_backward_launcher(
     CHECK_CUDA_API( cudaMemcpy(d_brcs, h_brcs, sizeof(CoordType)*batch_size*natoms_pad*umax_num_neigh_atoms*3, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_btypes, h_btypes, sizeof(int)*batch_size*natoms_pad, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_type_map, h_type_map, sizeof(int)*ntypes, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_q_scaler, h_q_scaler, sizeof(CoordType) * alpha_scalar_moments, cudaMemcpyHostToDevice) );
 
 
     auto t1 = std::chrono::high_resolution_clock::now();
@@ -1736,7 +1761,8 @@ void find_ef_loss_backward_launcher(
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        d_q_scaler);
     CHECK_CUDA_API( cudaDeviceSynchronize() );
     CHECK_CUDA_API( cudaGetLastError() );
     auto t2 = std::chrono::high_resolution_clock::now();
@@ -1767,6 +1793,7 @@ void find_ef_loss_backward_launcher(
     CHECK_CUDA_API( cudaFree(d_brcs) );
     CHECK_CUDA_API( cudaFree(d_btypes) );
     CHECK_CUDA_API( cudaFree(d_type_map) );
+    CHECK_CUDA_API( cudaFree(d_q_scaler) );
 }
 
 

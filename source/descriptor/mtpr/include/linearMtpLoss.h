@@ -90,7 +90,8 @@ public:
         int umax_num_neigh_atoms,
         int nghost,
         CoordType rmax,
-        CoordType rmin);
+        CoordType rmin,
+        CoordType *q_scaler);
 
 
     static void find_ef_loss_backward(
@@ -126,7 +127,8 @@ public:
         int umax_num_neigh_atoms,
         int nghost,
         CoordType rmax,
-        CoordType rmin);
+        CoordType rmin,
+        CoordType *q_shifter);
 };  // class : LinearMtpLoss
 
 
@@ -241,7 +243,8 @@ void LinearMtpLoss<CoordType>::find_loss_backward(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin)
+    CoordType rmin,
+    CoordType *q_scaler)
 {
     // Step 1.
     CoordType *mom_vals;
@@ -390,7 +393,7 @@ void LinearMtpLoss<CoordType>::find_loss_backward(
 
         // Step 4.1. Linear Energy derivative w.r.t. xyz
         for (int i=0; i<alpha_scalar_moments; i++)
-            e_site_der2mom[alpha_moment_mapping[i]] = linear_coeffs[i];
+            e_site_der2mom[alpha_moment_mapping[i]] = linear_coeffs[i] / q_scaler[i];
 
         // Step 4.2. Pass to basic moments
         for (int i=alpha_index_times_count-1; i>=0; i--) {
@@ -514,7 +517,7 @@ void LinearMtpLoss<CoordType>::find_loss_backward(
             #ifdef USE_OPENMP
             #pragma omp atomic
             #endif
-            loss_der2linear_coeffs[i] += tmp_loss_der2linear_coeff;
+            loss_der2linear_coeffs[i] += tmp_loss_der2linear_coeff / q_scaler[i];
         }
 
         // Step 4.5. Loss derivative w.r.t. type_bias
@@ -573,7 +576,8 @@ void LinearMtpLoss<CoordType>::find_ef_loss_backward(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin)
+    CoordType rmin,
+    CoordType *q_scaler)
 {
     // Step 1.
     CoordType *mom_vals;
@@ -718,7 +722,7 @@ void LinearMtpLoss<CoordType>::find_ef_loss_backward(
 
         // Step 4.1. Linear Energy derivative w.r.t. xyz
         for (int i=0; i<alpha_scalar_moments; i++)
-            e_site_der2mom[alpha_moment_mapping[i]] = linear_coeffs[i];
+            e_site_der2mom[alpha_moment_mapping[i]] = linear_coeffs[i] / q_scaler[i];
 
         // Step 4.2. Pass to basic moments
         for (int i=alpha_index_times_count-1; i>=0; i--) {
@@ -836,7 +840,7 @@ void LinearMtpLoss<CoordType>::find_ef_loss_backward(
             #ifndef USE_OPENMP
             #pragma omp atomic
             #endif
-            loss_der2linear_coeffs[i] += tmp_loss_der2linear_coeff;
+            loss_der2linear_coeffs[i] += tmp_loss_der2linear_coeff / q_scaler[i];
         }
 
         // Step 4.5. Loss derivative w.r.t. type_bias

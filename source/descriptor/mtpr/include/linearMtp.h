@@ -61,7 +61,9 @@ public:
         int umax_num_neigh_atoms,
         int nghost,
         CoordType rmax,
-        CoordType rmin);
+        CoordType rmin,
+        CoordType *q_shifter,
+        CoordType *q_scaler);
 
 
     static void find_ef(
@@ -90,7 +92,9 @@ public:
         int umax_num_neigh_atoms,
         int nghost,
         CoordType rmax,
-        CoordType rmin);
+        CoordType rmin,
+        CoordType *q_shifter,
+        CoordType *q_scaler);
 
     static void find_e_sites(
         CoordType *e_sites,
@@ -117,7 +121,9 @@ public:
         int umax_num_neigh_atoms,
         int nghost,
         CoordType rmax,
-        CoordType rmin);
+        CoordType rmin,
+        CoordType *q_shifter,
+        CoordType *q_scaler);
 
 
     static void find_e_sites_backward(
@@ -147,7 +153,8 @@ public:
         int umax_num_neigh_atoms,
         int nghost,
         CoordType rmax,
-        CoordType rmin);
+        CoordType rmin,
+        CoordType *q_scaler);
 
 
     static void find_descriptors(
@@ -205,7 +212,9 @@ void LinearMtp<CoordType>::find_efv(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin)
+    CoordType rmin,
+    CoordType *q_shifter,
+    CoordType *q_scaler)
 {
     // Step 1.
     CoordType *mom_vals;
@@ -268,7 +277,7 @@ void LinearMtp<CoordType>::find_efv(
         // Linear Energy
         e_site = type_bias[type_central];
         for (int i=0; i<alpha_scalar_moments; i++)
-            e_site += linear_coeffs[i] * mom_vals[alpha_moment_mapping[i]];
+            e_site += linear_coeffs[i] * (mom_vals[alpha_moment_mapping[i]] - q_shifter[i]) / q_scaler[i];
         #ifdef USE_OPENMP
         #pragma omp atomic
         #endif
@@ -276,7 +285,7 @@ void LinearMtp<CoordType>::find_efv(
 
         // Linear Energy derivative w.r.t. xyz
         for (int i=0; i<alpha_scalar_moments; i++)
-            e_site_der2mom[alpha_moment_mapping[i]] = linear_coeffs[i];
+            e_site_der2mom[alpha_moment_mapping[i]] = linear_coeffs[i] / q_scaler[i];
 
         for (int i=alpha_index_times_count-1; i>=0; i--) {
             CoordType val0 = mom_vals[alpha_index_times[i][0]];
@@ -365,7 +374,9 @@ void LinearMtp<CoordType>::find_ef(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin)
+    CoordType rmin,
+    CoordType *q_shifter,
+    CoordType *q_scaler)
 {
     // Step 1.
     CoordType *mom_vals;
@@ -427,7 +438,7 @@ void LinearMtp<CoordType>::find_ef(
         // Linear Energy
         e_site = type_bias[type_central];
         for (int i=0; i<alpha_scalar_moments; i++)
-            e_site += linear_coeffs[i] * mom_vals[alpha_moment_mapping[i]];
+            e_site += linear_coeffs[i] * (mom_vals[alpha_moment_mapping[i]] - q_shifter[i]) / q_scaler[i];
         #ifdef USE_OPENMP
         #pragma omp atomic 
         #endif
@@ -435,7 +446,7 @@ void LinearMtp<CoordType>::find_ef(
 
         // Linear Energy derivative w.r.t. xyz
         for (int i=0; i<alpha_scalar_moments; i++)
-            e_site_der2mom[alpha_moment_mapping[i]] = linear_coeffs[i];
+            e_site_der2mom[alpha_moment_mapping[i]] = linear_coeffs[i] / q_scaler[i];
 
         for (int i=alpha_index_times_count-1; i>=0; i--) {
             CoordType val0 = mom_vals[alpha_index_times[i][0]];
@@ -517,7 +528,9 @@ void LinearMtp<CoordType>::find_e_sites(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin)
+    CoordType rmin,
+    CoordType *q_shifter,
+    CoordType *q_scaler)
 {
     // Step 1.
     CoordType *mom_vals;
@@ -575,7 +588,7 @@ void LinearMtp<CoordType>::find_e_sites(
         // Linear Energy
         e_sites[ii] = type_bias[type_central];
         for (int i=0; i<alpha_scalar_moments; i++)
-            e_sites[ii] += linear_coeffs[i] * mom_vals[alpha_moment_mapping[i]];
+            e_sites[ii] += linear_coeffs[i] * (mom_vals[alpha_moment_mapping[i]] - q_shifter[i]) / q_scaler[i];
     }
 
     // Step . Free
@@ -616,7 +629,8 @@ void LinearMtp<CoordType>::find_e_sites_backward(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin)
+    CoordType rmin,
+    CoordType *q_scaler)
 {
     // Step 1.
     CoordType *mom_vals;
@@ -714,7 +728,7 @@ void LinearMtp<CoordType>::find_e_sites_backward(
 
         // Step 4.
         for (int i=0; i<alpha_scalar_moments; i++)
-            e_site_der2mom[alpha_moment_mapping[i]] = linear_coeffs[i];
+            e_site_der2mom[alpha_moment_mapping[i]] = linear_coeffs[i] / q_scaler[i];
         
         for (int i=alpha_index_times_count-1; i>=0; i--) {
             CoordType val0 = mom_vals[alpha_index_times[i][0]];
@@ -773,7 +787,7 @@ void LinearMtp<CoordType>::find_e_sites_backward(
         }
 
         for (int i=0; i<alpha_scalar_moments; i++) {
-            e_sites_der2linear_coeffs[ii*alpha_scalar_moments + i] = mom_vals[alpha_moment_mapping[i]];
+            e_sites_der2linear_coeffs[ii*alpha_scalar_moments + i] = mom_vals[alpha_moment_mapping[i]] / q_scaler[i];
         }
         
         e_sites_der2type_bias[ii*ntypes + type_central] += 1;

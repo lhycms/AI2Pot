@@ -118,7 +118,8 @@ template void ai2pot::mtpr::find_loss_backward_torch_launcher<float>(
     int umax_num_neigh_atoms,
     int nghost,
     float rmax,
-    float rmin);
+    float rmin,
+    float *d_q_scaler);
 
 
 template void ai2pot::mtpr::find_loss_backward_torch_launcher<double>(
@@ -159,7 +160,8 @@ template void ai2pot::mtpr::find_loss_backward_torch_launcher<double>(
     int umax_num_neigh_atoms,
     int nghost,
     double rmax,
-    double rmin);
+    double rmin,
+    double *d_q_scaler);
 
 
 // 4. find_ef_loss_backward_torch_launcher()
@@ -198,7 +200,8 @@ template void ai2pot::mtpr::find_ef_loss_backward_torch_launcher<float>(
     int umax_num_neigh_atoms,
     int nghost,
     float rmax,
-    float rmin);
+    float rmin,
+    float *d_q_scaler);
 
 template void ai2pot::mtpr::find_ef_loss_backward_torch_launcher<double>(
     double *d_bloss_der2coeffs,
@@ -235,4 +238,5 @@ template void ai2pot::mtpr::find_ef_loss_backward_torch_launcher<double>(
     int umax_num_neigh_atoms,
     int nghost,
     double rmax,
-    double rmin);
+    double rmin,
+    double *d_q_scaler);

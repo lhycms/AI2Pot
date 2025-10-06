@@ -92,7 +92,8 @@ void find_loss_backward_torch_launcher(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin);
+    CoordType rmin,
+    CoordType *d_q_scaler);
 
 
 template <typename CoordType>
@@ -131,7 +132,8 @@ void find_ef_loss_backward_torch_launcher(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin);
+    CoordType rmin,
+    CoordType *d_q_scaler);
 
 
 };  // namespace : mtpr

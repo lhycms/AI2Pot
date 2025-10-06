@@ -103,6 +103,9 @@ protected:
     real *e_sites_der2linear_coeffs;
     real *e_sites_der2type_bias;
 
+    real *q_shifter;
+    real *q_scaler;
+
     static void SetUpTestSuite() {
         std::cout << "MtpBasisTest (TestSuite) is setting up...\n";
     }
@@ -310,6 +313,17 @@ protected:
         memset(e_sites_der2linear_coeffs, 0.0, sizeof(real) * inum * mtp_param.alpha_scalar_moments());
         e_sites_der2type_bias = (real*)malloc(sizeof(real) * inum * ntypes);
         memset(e_sites_der2type_bias, 0.0, sizeof(real) * inum * ntypes);
+
+        q_shifter = (real*)malloc(sizeof(real) * mtp_param.alpha_scalar_moments());
+        q_scaler = (real*)malloc(sizeof(real) * mtp_param.alpha_scalar_moments());
+        for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++) {
+            q_shifter[ii] = 0.1 + 0.01 * ii;
+            q_scaler[ii] = 0.67 + 0.05 * ii;
+        }
+        //for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++) {
+        //    q_shifter[ii] = 0.0;
+        //    q_scaler[ii] = 1.0;
+        //}
     }
 
     void TearDown() override {
@@ -345,50 +359,12 @@ protected:
         free(e_sites_der2coeffs);
         free(e_sites_der2linear_coeffs);
         free(e_sites_der2type_bias);
+
+        free(q_shifter);
+        free(q_scaler);
     }
 };
 
-
-/*
-TEST_F(LinearMtpTest, find_efv) {
-    int center_idx_modify = 0;
-    int direction1_idx_modify = 0;
-    int direction2_idx_modify = 0;
-    real delta = 1E-6;
-
-
-    ai2pot::mtpr::LinearMtp<real>::find_efv(
-        etot,
-        force,
-        virial,
-        chebyshev_size,
-        coeffs,
-        linear_coeffs,
-        type_bias,
-        mtp_param.alpha_moments_count(),
-        mtp_param.alpha_index_basic_count(),
-        mtp_param.alpha_index_basic(),
-        mtp_param.alpha_index_times_count(),
-        mtp_param.alpha_index_times(),
-        mtp_param.alpha_scalar_moments(),
-        mtp_param.alpha_moment_mapping(),
-        nmus,
-        inum,
-        ilist,
-        numneigh,
-        firstneigh,
-        (real (*)[3])rcs,
-        types,
-        ntypes,
-        umax_num_neigh_atoms,
-        nghost,
-        rmax,
-        rmin);
-printf("1. etot = %g\n", etot);
-printf("2. force[%d][%d] = %g\n", center_idx_modify, direction1_idx_modify, force[center_idx_modify][direction1_idx_modify]);
-printf("3. virial[%d][%d] = %g\n", direction1_idx_modify, direction2_idx_modify, virial[direction1_idx_modify*3 + direction2_idx_modify]);
-}
-*/
 
 
 TEST_F(LinearMtpTest, find_descriptors)
@@ -453,7 +429,9 @@ TEST_F(LinearMtpTest, find_e) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        q_shifter,
+        q_scaler);
 
     real etot = 0;
     for (int ii=0; ii<inum; ii++)
@@ -490,7 +468,8 @@ TEST_F(LinearMtpTest, find_e_sites_backward) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        q_scaler);
 }
 
 
@@ -527,7 +506,9 @@ TEST_F(LinearMtpTest, efv_force_accuracy) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        q_shifter,
+        q_scaler);
 
     // *** delta
     real cart_coords[inum][3] = {0};
@@ -575,7 +556,9 @@ TEST_F(LinearMtpTest, efv_force_accuracy) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        q_shifter,
+        q_scaler);
 
 printf("1.1. energy = %.15lf\n", etot);
 printf("1.1. force[%d][%d] calculated by custom code = %.15lf\n", center_idx_modify, direction1_idx_modify, force[center_idx_modify][direction1_idx_modify]);
@@ -621,7 +604,9 @@ TEST_F(LinearMtpTest, ef_force_accuracy) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        q_shifter,
+        q_scaler);
 
     // *** delta
     real cart_coords[inum][3] = {0};
@@ -668,7 +653,9 @@ TEST_F(LinearMtpTest, ef_force_accuracy) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        q_shifter,
+        q_scaler);
 
 printf("1.1. energy = %.15lf\n", etot);
 printf("1.1. force[%d][%d] calculated by custom code = %.15lf\n", center_idx_modify, direction1_idx_modify, force[center_idx_modify][direction1_idx_modify]);
@@ -680,50 +667,6 @@ printf("2.2. force=\n");
 for (int ii=0; ii<inum; ii++)
     printf("\t\t%3d: [%.15f, %.15f, %.15f]\n", ii, force[ii][0], force[ii][1], force[ii][2]);
 }
-
-
-/*
-TEST_F(LinearMtpTest, find_loss) {
-    int center_idx_modify = 0;
-    int neigh_idx_modify = 17;
-    int direction1_idx_modify = 2;
-    int direction2_idx_modify = 0;
-    real delta = 1E-6;
-
-    ai2pot::mtpr::LinearMtp<real>::find_loss(
-        loss,
-        e_weight,
-        f_weight,
-        v_weight,
-        etot_dft,
-        force_dft,
-        virial_dft,
-        chebyshev_size,
-        coeffs,
-        linear_coeffs,
-        type_bias,
-        mtp_param.alpha_moments_count(),
-        mtp_param.alpha_index_basic_count(),
-        mtp_param.alpha_index_basic(),
-        mtp_param.alpha_index_times_count(),
-        mtp_param.alpha_index_times(),
-        mtp_param.alpha_scalar_moments(),
-        mtp_param.alpha_moment_mapping(),
-        nmus,
-        inum,
-        ilist,
-        numneigh,
-        firstneigh,
-        (real (*)[3])rcs,
-        types,
-        ntypes,
-        umax_num_neigh_atoms,
-        nghost,
-        rmax,
-        rmin);
-printf("1. loss = %g\n", loss);
-}
-*/
 
 
 TEST_F(LinearMtpTest, find_loss_backward) {
@@ -758,7 +701,9 @@ TEST_F(LinearMtpTest, find_loss_backward) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        q_shifter,
+        q_scaler);
     
     ai2pot::mtpr::LinearMtpLoss<real>::find_loss_backward(
         loss_der2coeffs,
@@ -796,7 +741,8 @@ TEST_F(LinearMtpTest, find_loss_backward) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        q_scaler);
 
 printf("1. loss_der2coeffs:\n");
 for (int ii=0; ii<ntypes*ntypes*nmus*chebyshev_size; ii++)
@@ -813,6 +759,7 @@ for (int ii=0; ii<ntypes; ii++)
     printf("%.15f, ", loss_der2type_bias[ii]);
 printf("\n\n");
 }
+
 
 
 TEST_F(LinearMtpTest, find_ef_loss_backward) {
@@ -845,7 +792,9 @@ TEST_F(LinearMtpTest, find_ef_loss_backward) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        q_shifter,
+        q_scaler);
 
     ai2pot::mtpr::LinearMtpLoss<real>::find_ef_loss_backward(
         loss_der2coeffs,
@@ -880,7 +829,8 @@ TEST_F(LinearMtpTest, find_ef_loss_backward) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        q_scaler);
 
 printf("1. loss_der2coeffs:\n");
 for (int ii=0; ii<ntypes*ntypes*nmus*chebyshev_size; ii++)
@@ -897,7 +847,6 @@ for (int ii=0; ii<ntypes; ii++)
     printf("%.15f, ", loss_der2type_bias[ii]);
 printf("\n\n");
 }
-
 
 
 int main(int argc, char **argv) {
