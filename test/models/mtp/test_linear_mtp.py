@@ -24,7 +24,7 @@ class LinearMtpTest(unittest.TestCase):
         self.chebyshev_size: int = 8
         self.rmax: float = 5.0
         self.rmin: float = 0.0
-        self.umax_num_neighs = 200
+        self.umax_num_neigh_atoms = 200
         self.device: torch._C.device = torch.device("cuda")
         self.torch_float_dtype: torch._C.dtype = torch.float32
         self.linear_mtp: LinearMtp = LinearMtp(mtp_level=4,
@@ -32,33 +32,46 @@ class LinearMtpTest(unittest.TestCase):
                                                chebyshev_size=self.chebyshev_size,
                                                rmax=self.rmax,
                                                rmin=self.rmin,
-                                               umax_num_neighs=self.umax_num_neighs,
+                                               umax_num_neigh_atoms=self.umax_num_neigh_atoms,
+                                               q_shifter=None,
+                                               q_scaler=None,
                                                fit_virial=True)
         self.linear_mtp.to(self.device)
         self.linear_mtp.to(self.torch_float_dtype)
+        self.alpha_scalar_moments: int = self.linear_mtp.num_descriptors
         self.mlff_input: MlffInput = MlffInput(type_map=self.type_map,
                                                rcut=self.rmax,
-                                               umax_num_neighs=self.umax_num_neighs,
+                                               umax_num_neigh_atoms=self.umax_num_neigh_atoms,
                                                dtype=self.torch_float_dtype,
                                                device=self.device)
         self.mlff_to_loss_input: MlffToLossInput = MlffToLossInput(type_map=self.type_map,
                                                                    rcut=self.rmax,
-                                                                   umax_num_neighs=self.umax_num_neighs,
+                                                                   umax_num_neigh_atoms=self.umax_num_neigh_atoms,
                                                                    dtype=self.torch_float_dtype,
                                                                    device=self.device)
         self.mlff_to_ef_loss_input: MlffToEFLossInput = MlffToEFLossInput(type_map=self.type_map,
                                                                           rcut=self.rmax,
-                                                                          umax_num_neighs=self.umax_num_neighs,
+                                                                          umax_num_neigh_atoms=self.umax_num_neigh_atoms,
                                                                           dtype=self.torch_float_dtype,
                                                                           device=self.device)
         self.structure: Structure = Structure.from_file(ReNbSSe_POSCAR_PATH)
+
+        ### q_shifter && q_scaler
+        self.q_shifter_tensor: torch.Tensor = torch.zeros(self.alpha_scalar_moments,
+                                                          dtype=self.torch_float_dtype,
+                                                          device=self.device)
+        self.q_scaler_tensor: torch.Tensor = torch.randn(self.alpha_scalar_moments,
+                                                         dtype=self.torch_float_dtype,
+                                                         device=self.device)
+        self.linear_mtp.q_shifter_tensor = self.q_shifter_tensor
+        self.linear_mtp.q_scaler_tensor = self.q_scaler_tensor
     
-    
+
     def tearDown(self):
         print("LinearMtpTest (TestSuite) is tearing down...\n")
     
 
-    def est_predict_loss(self):
+    def test_predict_loss(self):
         times_list: List[float] = []
         for ii in range(110):
             t1 = time.time()
@@ -79,7 +92,6 @@ class LinearMtpTest(unittest.TestCase):
         print("1. Loss = ", loss)
 
 
-
     def test_predict_ef_loss(self):
         times_list: List[float] = []
         for ii in range(110):
@@ -89,8 +101,8 @@ class LinearMtpTest(unittest.TestCase):
                                                                                                    f_weight=1.0))
             ef_loss.sum().backward()
             t2 = time.time()
-            if (ii == 0):
-                print(self.linear_mtp.type_bias_tensor.grad)
+            #if (ii == 0):
+            #    print(self.linear_mtp.type_bias_tensor.grad)
 
             if (ii>9):
                 times_list.append(t2-t1)
@@ -116,7 +128,7 @@ class LinearMtpTest(unittest.TestCase):
         print("3. Virial.shape = \n", v)
 
     
-    def est_predict_ef(self):
+    def test_predict_ef(self):
         times_list: List[float] = []
         for ii in range(110):
             t1 = time.time()

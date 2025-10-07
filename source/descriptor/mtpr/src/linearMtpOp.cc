@@ -2160,7 +2160,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
         bloss_der2linear_coeffs_tensor = at::zeros({batch_size, num_linear_coeffs}, float_options);
         bloss_der2type_bias_tensor = at::zeros({batch_size, ntypes}, float_options);
         betot_tensor = at::zeros({batch_size}, float_options);
-        bforce_tensor = at::zeros({batch_size, natoms_pad}, float_options);
+        bforce_tensor = at::zeros({batch_size, natoms_pad, 3}, float_options);
 
         float *coeffs = coeffs_tensor.data_ptr<float>();
         float *linear_coeffs = linear_coeffs_tensor.data_ptr<float>();
