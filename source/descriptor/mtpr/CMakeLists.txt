@@ -39,23 +39,22 @@ if (TORCH_OP)
     target_link_libraries(mtpBasisGradOp PRIVATE ${TORCH_LIBRARIES})
 
 
-    # ============
-    #add_library(linearMtpOp SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/linearMtpOp.cc)
-    #target_link_libraries(linearMtpOp PRIVATE ${TORCH_LIBRARIES})
-    #if (USE_OPENMP)
-    #    target_compile_definitions(linearMtpOp PRIVATE USE_OPENMP USE_CUDA)
-    #endif()
-    #if (USE_CUDA AND CUDA_FOUND)
-    #    target_compile_definitions(linearMtpOp PRIVATE USE_CUDA)
-    #    target_link_libraries(linearMtpOp PRIVATE linear_mtp_torch_launcher 
-    #                                              linear_mtp_loss_torch_launcher
-    #                                              zbl_torch_launcher)
-    #endif()
-    #if (MAX_MTP_LEVEL)
-    #    target_compile_definitions(linearMtpOp PRIVATE MAX_MTP_LEVEL=${MAX_MTP_LEVEL})
-    #endif()
-    # ============
+    add_library(linearMtpOp SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/linearMtpOp.cc)
+    target_link_libraries(linearMtpOp PRIVATE ${TORCH_LIBRARIES})
+    if (USE_OPENMP)
+        target_compile_definitions(linearMtpOp PRIVATE USE_OPENMP USE_CUDA)
+    endif()
+    if (USE_CUDA AND CUDA_FOUND)
+        target_compile_definitions(linearMtpOp PRIVATE USE_CUDA)
+        target_link_libraries(linearMtpOp PRIVATE linear_mtp_torch_launcher 
+                                                  linear_mtp_loss_torch_launcher
+                                                  zbl_torch_launcher)
+    endif()
+    if (MAX_MTP_LEVEL)
+        target_compile_definitions(linearMtpOp PRIVATE MAX_MTP_LEVEL=${MAX_MTP_LEVEL})
+    endif()
 
+    
     # ============
     #add_library(mtpr_bind SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bind/mtpr_bind.cc)
     #target_include_directories(mtpr_bind PRIVATE ${PYTHON_INCLUDE_DIRS})

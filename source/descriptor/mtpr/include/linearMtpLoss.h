@@ -128,7 +128,7 @@ public:
         int nghost,
         CoordType rmax,
         CoordType rmin,
-        CoordType *q_shifter);
+        CoordType *q_scaler);
 };  // class : LinearMtpLoss
 
 
