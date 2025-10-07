@@ -277,7 +277,8 @@ void LinearMtp<CoordType>::find_efv(
         // Linear Energy
         e_site = type_bias[type_central];
         for (int i=0; i<alpha_scalar_moments; i++)
-            e_site += linear_coeffs[i] * (mom_vals[alpha_moment_mapping[i]] - q_shifter[i]) / q_scaler[i];
+            e_site += linear_coeffs[i] 
+                      * (mom_vals[alpha_moment_mapping[i]] - q_shifter[i]) / q_scaler[i];
         #ifdef USE_OPENMP
         #pragma omp atomic
         #endif
@@ -438,7 +439,8 @@ void LinearMtp<CoordType>::find_ef(
         // Linear Energy
         e_site = type_bias[type_central];
         for (int i=0; i<alpha_scalar_moments; i++)
-            e_site += linear_coeffs[i] * (mom_vals[alpha_moment_mapping[i]] - q_shifter[i]) / q_scaler[i];
+            e_site += linear_coeffs[i] 
+                      * (mom_vals[alpha_moment_mapping[i]] - q_shifter[i]) / q_scaler[i];
         #ifdef USE_OPENMP
         #pragma omp atomic 
         #endif

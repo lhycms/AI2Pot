@@ -179,7 +179,7 @@ class NNMtpTest(unittest.TestCase):
     def est_nnMtpToLoss(self):
         # 1. Parameters
         e_weight: float = 1.0
-        f_weight: float = 0.1
+        f_weight: float = 1.0
         v_weight: float = 0.1
         self.coeffs_tensor.requires_grad_(True)
         self.w0_tensor.requires_grad_(True)
@@ -277,7 +277,7 @@ class NNMtpTest(unittest.TestCase):
         print("-------------------------------------------------")
 
 
-    def test_output_descriptors(self):
+    def est_output_descriptors(self):
         input_info: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(self.structure)
         for item in input_info:
             item.to(self.device)

@@ -55,20 +55,18 @@ if (TORCH_OP)
     endif()
 
     
-    # ============
-    #add_library(mtpr_bind SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bind/mtpr_bind.cc)
-    #target_include_directories(mtpr_bind PRIVATE ${PYTHON_INCLUDE_DIRS})
-    #target_link_libraries(mtpr_bind PRIVATE mtpParamOp mtpBasisOp linearMtpOp ${TORCH_LIBRARIES} ${PYTHON_LIBRARIES})
-    #if (USE_OPENMP)
-    #    target_compile_definitions(linearMtpOp PRIVATE USE_OPENMP)
-    #endif()
-    #if (USE_CUDA AND CUDA_FOUND)
-    #    target_compile_definitions(linearMtpOp PRIVATE USE_CUDA)
-    #endif()
-    #if (MAX_MTP_LEVEL)
-    #    target_compile_definitions(linearMtpOp PRIVATE MAX_MTP_LEVEL=${MAX_MTP_LEVEL})
-    #endif()
-    # ============
+    add_library(mtpr_bind SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bind/mtpr_bind.cc)
+    target_include_directories(mtpr_bind PRIVATE ${PYTHON_INCLUDE_DIRS})
+    target_link_libraries(mtpr_bind PRIVATE mtpParamOp mtpBasisOp linearMtpOp ${TORCH_LIBRARIES} ${PYTHON_LIBRARIES})
+    if (USE_OPENMP)
+        target_compile_definitions(linearMtpOp PRIVATE USE_OPENMP)
+    endif()
+    if (USE_CUDA AND CUDA_FOUND)
+        target_compile_definitions(linearMtpOp PRIVATE USE_CUDA)
+    endif()
+    if (MAX_MTP_LEVEL)
+        target_compile_definitions(linearMtpOp PRIVATE MAX_MTP_LEVEL=${MAX_MTP_LEVEL})
+    endif()
 endif()
 
 
