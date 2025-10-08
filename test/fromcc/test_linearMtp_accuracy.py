@@ -35,7 +35,7 @@ class LinearMtpTest(unittest.TestCase):
         self.device: torch._C.device = torch.device("cuda")
         
         # 1. 
-        self.mtp_level: int = 12
+        self.mtp_level: int = 16
         #self.ntypes: int = 4
         self.chebyshev_size: int = 8
         self.rmax: float = 5.0
@@ -107,15 +107,15 @@ class LinearMtpTest(unittest.TestCase):
         self.coeffs_tensor: torch.Tensor = torch.zeros(self.ntypes*self.ntypes*self.nmus*self.chebyshev_size, 
                                                        dtype=self.torch_float_dtype,
                                                        device=self.device)
-        nn.init.normal_(self.coeffs_tensor, mean=0.0, std=0.1)
+        nn.init.normal_(self.coeffs_tensor, mean=1.0, std=0.1)
         self.linear_coeffs_tensor: torch.Tensor = torch.zeros(self.alpha_moment_mapping_tensor.size(0),
                                                               dtype=self.torch_float_dtype,
                                                               device=self.device)
-        nn.init.normal_(self.linear_coeffs_tensor, mean=0.0, std=0.1)
+        nn.init.normal_(self.linear_coeffs_tensor, mean=1.0, std=0.1)
         self.type_bias_tensor: torch.Tensor = torch.zeros(self.ntypes,
                                                           dtype=self.torch_float_dtype,
                                                           device=self.device)
-        nn.init.normal_(self.type_bias_tensor, mean=0.0, std=1.0)
+        nn.init.normal_(self.type_bias_tensor, mean=1.0, std=0.1)
         
         # q_shifter_tensor, q_scaler_tensor
         self.q_shifter_tensor: torch.Tensor = torch.zeros(self.alpha_scalar_moments,
@@ -229,7 +229,7 @@ class LinearMtpTest(unittest.TestCase):
         print("-------------------------------------------------")
 
 
-    def est_output_descriptors(self):
+    def test_output_descriptors(self):
         input_info: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(self.structure)
         for item in input_info:
             item.to(self.device)
@@ -253,6 +253,7 @@ class LinearMtpTest(unittest.TestCase):
             self.rmax,
             self.rmin)[0]
         print("1. bdescriptor.shape = ", bdescriptors)
+
 
 if __name__ == "__main__":
     unittest.main()
