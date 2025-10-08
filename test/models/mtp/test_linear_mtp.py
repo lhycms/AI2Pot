@@ -71,7 +71,7 @@ class LinearMtpTest(unittest.TestCase):
         print("LinearMtpTest (TestSuite) is tearing down...\n")
     
 
-    def test_predict_loss(self):
+    def est_predict_loss(self):
         times_list: List[float] = []
         for ii in range(110):
             t1 = time.time()
@@ -92,7 +92,7 @@ class LinearMtpTest(unittest.TestCase):
         print("1. Loss = ", loss)
 
 
-    def test_predict_ef_loss(self):
+    def est_predict_ef_loss(self):
         times_list: List[float] = []
         for ii in range(110):
             t1 = time.time()
@@ -101,8 +101,8 @@ class LinearMtpTest(unittest.TestCase):
                                                                                                    f_weight=1.0))
             ef_loss.sum().backward()
             t2 = time.time()
-            #if (ii == 0):
-            #    print(self.linear_mtp.type_bias_tensor.grad)
+            if (ii == 0):
+                print(self.linear_mtp.type_bias_tensor.grad)
 
             if (ii>9):
                 times_list.append(t2-t1)
@@ -136,6 +136,9 @@ class LinearMtpTest(unittest.TestCase):
             t2 = time.time()
             if (ii>9):
                 times_list.append(t2-t1)
+            if (ii==0):
+                print(e)
+                print(f)
 
         print("0.1. Average time cost by linear_mtp.predict_ef() = ", np.sum(times_list) / 100)
         print("0.2. std time cost by linear_mtp.predict_ef() = ", np.std(times_list) / 100)

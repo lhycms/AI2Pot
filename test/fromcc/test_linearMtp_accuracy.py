@@ -115,7 +115,7 @@ class LinearMtpTest(unittest.TestCase):
         self.type_bias_tensor: torch.Tensor = torch.zeros(self.ntypes,
                                                           dtype=self.torch_float_dtype,
                                                           device=self.device)
-        nn.init.normal_(self.type_bias_tensor, mean=1.0, std=0.1)
+        nn.init.normal_(self.type_bias_tensor, mean=0.0, std=0.1)
         
         # q_shifter_tensor, q_scaler_tensor
         self.q_shifter_tensor: torch.Tensor = torch.zeros(self.alpha_scalar_moments,

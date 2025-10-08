@@ -88,7 +88,7 @@ class LinearMtp(nn.Module):
             self.register_parameter(name="type_bias_tensor", param=nn.Parameter(data=type_bias_tensor))
         else:
             type_bias_tensor: torch.Tensor = torch.Tensor(self.ntypes)
-            nn.init.normal_(type_bias_tensor, mean=1.0, std=0.1)
+            nn.init.normal_(type_bias_tensor, mean=0.0, std=0.1)
             self.register_parameter(name="type_bias_tensor", param=nn.Parameter(data=type_bias_tensor))
 
 
