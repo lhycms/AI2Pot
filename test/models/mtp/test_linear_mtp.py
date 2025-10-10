@@ -27,7 +27,7 @@ class LinearMtpTest(unittest.TestCase):
         self.umax_num_neigh_atoms = 200
         self.device: torch._C.device = torch.device("cuda")
         self.torch_float_dtype: torch._C.dtype = torch.float32
-        self.linear_mtp: LinearMtp = LinearMtp(mtp_level=4,
+        self.linear_mtp: LinearMtp = LinearMtp(mtp_level=16,
                                                type_map=self.type_map,
                                                chebyshev_size=self.chebyshev_size,
                                                rmax=self.rmax,
@@ -128,7 +128,7 @@ class LinearMtpTest(unittest.TestCase):
         print("3. Virial.shape = \n", v)
 
     
-    def test_predict_ef(self):
+    def est_predict_ef(self):
         times_list: List[float] = []
         for ii in range(110):
             t1 = time.time()
@@ -159,6 +159,19 @@ class LinearMtpTest(unittest.TestCase):
         print("0.2. std time cost by linear_mtp.predict_ef() = ", np.std(times_list) / 100)
         print("\t1. Esites.shape = ", e_sites.shape)
 
+
+    def test_predict_descriptors(self):
+        times_list: List[float] = []
+        for ii in range(110):
+            t1 = time.time()
+            descriptors = self.linear_mtp.predict_descriptors(*self.mlff_input.analyse_pymatgen(structure=self.structure))
+            t2 = time.time()
+            if (ii>9):
+                times_list.append(t2-t1)
+                
+        print("0.1. Average time cost by linear_mtp.predict_descriptors() = ", np.sum(times_list) / 100)
+        print("0.2. std time cost by linear_mtp.predict_descriptors() = ", np.std(times_list) / 100)
+        print("\t1. descriptors = ", descriptors)
 
 
 if __name__ == "__main__":

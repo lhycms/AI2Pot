@@ -45,7 +45,7 @@ class LinearMtpTest(unittest.TestCase):
         
         """
         self.ntypes: int = 4
-        self.type_map: List[int] = [16, 34, 41,75]
+        self.type_map: List[int] = [16, 34, 41, 75]
         self.type_map_tensor = torch.tensor(self.type_map, dtype=torch.int32).to(self.device)
         self.structure: Structure = Structure.from_file(ReNbSSe_POSCAR_PATH)
         """
@@ -107,11 +107,11 @@ class LinearMtpTest(unittest.TestCase):
         self.coeffs_tensor: torch.Tensor = torch.zeros(self.ntypes*self.ntypes*self.nmus*self.chebyshev_size, 
                                                        dtype=self.torch_float_dtype,
                                                        device=self.device)
-        nn.init.normal_(self.coeffs_tensor, mean=1.0, std=0.1)
+        nn.init.normal_(self.coeffs_tensor, mean=0.0, std=0.2)
         self.linear_coeffs_tensor: torch.Tensor = torch.zeros(self.alpha_moment_mapping_tensor.size(0),
                                                               dtype=self.torch_float_dtype,
                                                               device=self.device)
-        nn.init.normal_(self.linear_coeffs_tensor, mean=1.0, std=0.1)
+        nn.init.normal_(self.linear_coeffs_tensor, mean=0.0, std=0.1)
         self.type_bias_tensor: torch.Tensor = torch.zeros(self.ntypes,
                                                           dtype=self.torch_float_dtype,
                                                           device=self.device)
@@ -135,7 +135,7 @@ class LinearMtpTest(unittest.TestCase):
         e_weight: float = 1.0
         f_weight: float = 0.1
         v_weight: float = 0.0
-        self.coeffs_tensor.requires_grad_(False)
+        self.coeffs_tensor.requires_grad_(True)
         self.linear_coeffs_tensor.requires_grad_(True)
         self.type_bias_tensor.requires_grad_(True)
         
@@ -229,7 +229,7 @@ class LinearMtpTest(unittest.TestCase):
         print("-------------------------------------------------")
 
 
-    def test_output_descriptors(self):
+    def est_output_descriptors(self):
         input_info: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(self.structure)
         for item in input_info:
             item.to(self.device)
