@@ -32,7 +32,7 @@ class LinearMtpTest(unittest.TestCase):
         print("LinearMtpTest (TestCase) is setting up...\n")
         # 0.
         self.torch_float_dtype: torch._C.dtype = torch.float64
-        self.device: torch._C.device = torch.device("cuda")
+        self.device: torch._C.device = torch.device("cpu")
         
         # 1. 
         self.mtp_level: int = 16
@@ -107,7 +107,7 @@ class LinearMtpTest(unittest.TestCase):
         self.coeffs_tensor: torch.Tensor = torch.zeros(self.ntypes*self.ntypes*self.nmus*self.chebyshev_size, 
                                                        dtype=self.torch_float_dtype,
                                                        device=self.device)
-        nn.init.normal_(self.coeffs_tensor, mean=0.0, std=0.2)
+        nn.init.normal_(self.coeffs_tensor, mean=0.1, std=0.1)
         self.linear_coeffs_tensor: torch.Tensor = torch.zeros(self.alpha_moment_mapping_tensor.size(0),
                                                               dtype=self.torch_float_dtype,
                                                               device=self.device)
@@ -118,7 +118,7 @@ class LinearMtpTest(unittest.TestCase):
         nn.init.normal_(self.type_bias_tensor, mean=0.0, std=0.1)
         
         # q_shifter_tensor, q_scaler_tensor
-        self.q_shifter_tensor: torch.Tensor = torch.zeros(self.alpha_scalar_moments,
+        self.q_shifter_tensor: torch.Tensor = torch.randn(self.alpha_scalar_moments,
                                                           dtype=self.torch_float_dtype,
                                                           device=self.device)
         self.q_scaler_tensor: torch.Tensor = torch.randn(self.alpha_scalar_moments,

@@ -85,6 +85,9 @@ protected:
     double *zbl_cks;
     double *zbl_dks;
 
+    at::Tensor q_shifter_tensor;
+    at::Tensor q_scaler_tensor;
+
     static void SetUpTestSuite() {
         std::cout << "LinearMtpOpTest (TestSuite) is setting up...\n";
     }
@@ -293,6 +296,9 @@ protected:
                 zbl_dks[zbl_idx * 4 + 3] = 0.20162;
             }
         }
+
+        q_shifter_tensor = at::zeros({mtp_param.alpha_scalar_moments()}, float_options);
+        q_scaler_tensor = at::ones({mtp_param.alpha_scalar_moments()}, float_options);
     }
 
     void TearDown() override {
@@ -328,6 +334,8 @@ TEST_F(LinearMtpOpTest, LinearMtpToLoss_apply) {
         nghost,
         rmax,
         rmin,
+        q_shifter_tensor,
+        q_scaler_tensor,
         zbl_rmax,
         zbl_rmin,
         zbl_cks_tensor,
@@ -365,6 +373,8 @@ TEST_F(LinearMtpOpTest, ef_apply) {
         nghost,
         rmax,
         rmin,
+        q_shifter_tensor,
+        q_scaler_tensor,
         zbl_rmax,
         zbl_rmin,
         zbl_cks_tensor,

@@ -91,6 +91,7 @@ public:
         int nghost,
         CoordType rmax,
         CoordType rmin,
+        CoordType *q_shifter,
         CoordType *q_scaler);
 
 
@@ -128,6 +129,7 @@ public:
         int nghost,
         CoordType rmax,
         CoordType rmin,
+        CoordType *q_shifter,
         CoordType *q_scaler);
 };  // class : LinearMtpLoss
 
@@ -244,6 +246,7 @@ void LinearMtpLoss<CoordType>::find_loss_backward(
     int nghost,
     CoordType rmax,
     CoordType rmin,
+    CoordType *q_shifter,
     CoordType *q_scaler)
 {
     // Step 1.
@@ -512,7 +515,7 @@ void LinearMtpLoss<CoordType>::find_loss_backward(
         for (int i=0; i<alpha_scalar_moments; i++) {
             CoordType tmp_loss_der2linear_coeff = 2*e_weight/inum
                                                   * (etot_ml - etot_dft)
-                                                  * mom_vals[alpha_moment_mapping[i]]
+                                                  * (mom_vals[alpha_moment_mapping[i]] - q_shifter[i])
                                                   + dloss_combination[alpha_moment_mapping[i]];
             #ifdef USE_OPENMP
             #pragma omp atomic
@@ -577,6 +580,7 @@ void LinearMtpLoss<CoordType>::find_ef_loss_backward(
     int nghost,
     CoordType rmax,
     CoordType rmin,
+    CoordType *q_shifter,
     CoordType *q_scaler)
 {
     // Step 1.
@@ -834,7 +838,7 @@ void LinearMtpLoss<CoordType>::find_ef_loss_backward(
         for (int i=0; i<alpha_scalar_moments; i++) {
             CoordType tmp_loss_der2linear_coeff = 2*e_weight/inum 
                                                   * (etot_ml - etot_dft) 
-                                                  * mom_vals[alpha_moment_mapping[i]]
+                                                  * (mom_vals[alpha_moment_mapping[i]] - q_shifter[i])
                                                   + dloss_combination[alpha_moment_mapping[i]];
             
             #ifndef USE_OPENMP

@@ -326,6 +326,7 @@ extern template void ai2pot::mtpr::find_loss_backward_torch_launcher<float>(
     int nghost,
     float rmax,
     float rmin,
+    float *d_q_shifter,
     float *d_q_scaler);
 
 
@@ -368,6 +369,7 @@ extern template void ai2pot::mtpr::find_loss_backward_torch_launcher<double>(
     int nghost,
     double rmax,
     double rmin,
+    double *d_q_shifter,
     double *d_q_scaler);
 
 
@@ -408,6 +410,7 @@ extern template void ai2pot::mtpr::find_ef_loss_backward_torch_launcher<float>(
     int nghost,
     float rmax,
     float rmin,
+    float *d_q_shifter,
     float *d_q_scaler);
 
 extern template void ai2pot::mtpr::find_ef_loss_backward_torch_launcher<double>(
@@ -446,6 +449,7 @@ extern template void ai2pot::mtpr::find_ef_loss_backward_torch_launcher<double>(
     int nghost,
     double rmax,
     double rmin,
+    double *d_q_shifter,
     double *d_q_scaler);
 
 };  // namespace : mtpr
@@ -1233,6 +1237,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
                     nghost,
                     (float)rmax,
                     (float)rmin,
+                    q_shifter,
                     q_scaler); 
             }
         } else {
@@ -1347,6 +1352,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
                 nghost,
                 (float)rmax,
                 (float)rmin,
+                q_shifter,
                 q_scaler);
             #endif
         }
@@ -1481,6 +1487,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
                     nghost,
                     rmax,
                     rmin,
+                    q_shifter,
                     q_scaler);
             }
         } else {
@@ -1595,6 +1602,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
                 nghost,
                 rmax,
                 rmin,
+                q_shifter,
                 q_scaler);
             #endif
         }
@@ -2275,6 +2283,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
                     nghost,
                     (float)rmax,
                     (float)rmin,
+                    q_shifter,
                     q_scaler); 
             }
         } else {
@@ -2382,6 +2391,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
                 nghost,
                 (float)rmax,
                 (float)rmin,
+                q_shifter,
                 q_scaler);
             #endif
         }
@@ -2508,6 +2518,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
                     nghost,
                     rmax,
                     rmin,
+                    q_shifter,
                     q_scaler); 
             }
         } else {
@@ -2615,6 +2626,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
                 nghost,
                 rmax,
                 rmin,
+                q_shifter,
                 q_scaler);
             #endif
         }

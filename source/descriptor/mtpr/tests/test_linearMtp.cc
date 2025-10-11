@@ -742,6 +742,7 @@ TEST_F(LinearMtpTest, find_loss_backward) {
         nghost,
         rmax,
         rmin,
+        q_shifter,
         q_scaler);
 
 printf("1. loss_der2coeffs:\n");
@@ -830,6 +831,7 @@ TEST_F(LinearMtpTest, find_ef_loss_backward) {
         nghost,
         rmax,
         rmin,
+        q_shifter,
         q_scaler);
 
 printf("1. loss_der2coeffs:\n");
