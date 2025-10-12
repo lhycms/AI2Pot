@@ -824,7 +824,6 @@ printf("\n\n");
 
 
 
-/*
 TEST_F(NNMtpTest, find_descriptors) {
     int center_idx = 0;
     
@@ -888,14 +887,16 @@ TEST_F(NNMtpTest, find_e_sites) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin;
+        rmin,
+        q_shifter,
+        q_scaler);
 
 double result = 0;
 for (int ii=0; ii<inum; ii++)
     result += e_sites[ii];
 printf("1. Sum of e_sites = %.15lf\n", result);
 }
-*/
+
 
 int main(int argc, char **argv){
     ::testing::InitGoogleTest(&argc, argv);
