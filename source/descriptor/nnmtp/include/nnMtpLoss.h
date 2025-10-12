@@ -90,7 +90,9 @@ public:
         int umax_num_neigh_atoms,
         int nghost,
         CoordType rmax,
-        CoordType rmin);
+        CoordType rmin,
+        CoordType *q_shifter,
+        CoordType *q_scaler);
     
 
     static void find_ef_loss_backward(
@@ -129,7 +131,9 @@ public:
         int umax_num_neigh_atoms,
         int nghost,
         CoordType rmax,
-        CoordType rmin);
+        CoordType rmin,
+        CoordType *q_shifter,
+        CoordType *q_scaler);
 
 };  // class : NNMtpLoss
 
@@ -248,7 +252,9 @@ void NNMtpLoss<CoordType>::find_loss_backward(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin)
+    CoordType rmin,
+    CoordType *q_shifter,
+    CoordType *q_scaler)
 {
     // Step 1.
     CoordType *mom_vals;
@@ -407,12 +413,13 @@ void NNMtpLoss<CoordType>::find_loss_backward(
             CoordType hidden_val = 0;
             CoordType activated_hidden_der = 0;
             for (int k=0; k<alpha_scalar_moments; k++)
-                hidden_val += type_central_w0[p*alpha_scalar_moments + k] * mom_vals[alpha_moment_mapping[k]];
+                hidden_val += type_central_w0[p*alpha_scalar_moments + k] * (mom_vals[alpha_moment_mapping[k]] - q_shifter[k]) / q_scaler[k];
             TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
             for (int k=0; k<alpha_scalar_moments; k++)
                 e_site_der2mom[alpha_moment_mapping[k]] += type_central_w1[p] 
                                                            * activated_hidden_der
-                                                           * type_central_w0[p*alpha_scalar_moments + k];
+                                                           * type_central_w0[p*alpha_scalar_moments + k]
+                                                           / q_scaler[k];
         }
 
         // Step 4.2. Pass to basic moments
@@ -532,7 +539,7 @@ void NNMtpLoss<CoordType>::find_loss_backward(
             CoordType activated_hidden_val = 0;
             CoordType activated_hidden_der = 0;
             for (int k=0; k<alpha_scalar_moments; k++)
-                hidden_val += type_central_w0[p*alpha_scalar_moments+k] * mom_vals[alpha_moment_mapping[k]];
+                hidden_val += type_central_w0[p*alpha_scalar_moments+k] * (mom_vals[alpha_moment_mapping[k]] - q_shifter[k]) / q_scaler[k];
             TanhActivationFunc<CoordType>::find_val(activated_hidden_val, hidden_val);
             TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
             tmpe_loss_der2w1 = 2*e_weight/inum*(etot_ml - etot_dft)
@@ -540,7 +547,8 @@ void NNMtpLoss<CoordType>::find_loss_backward(
             for (int k=0; k<alpha_scalar_moments; k++) {
                 tmpf_loss_der2w1 += dloss_combination[alpha_moment_mapping[k]]
                                     * activated_hidden_der
-                                    * type_central_w0[p*alpha_scalar_moments + k];
+                                    * type_central_w0[p*alpha_scalar_moments + k]
+                                    / q_scaler[k];
             }
             
             #ifdef USE_OPENMP
@@ -556,20 +564,22 @@ void NNMtpLoss<CoordType>::find_loss_backward(
             CoordType activated_hidden_der = 0;
             CoordType activated_hidden_der2der = 0;
             for (int k=0; k<alpha_scalar_moments; k++)
-                hidden_val += type_central_w0[p*alpha_scalar_moments+k] * mom_vals[alpha_moment_mapping[k]];
+                hidden_val += type_central_w0[p*alpha_scalar_moments+k] * (mom_vals[alpha_moment_mapping[k]] - q_shifter[k]) / q_scaler[k];
             TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
             TanhActivationFunc<CoordType>::find_der2der(activated_hidden_der2der, hidden_val);
             for (int k=0; k<alpha_scalar_moments; k++) {
                 CoordType tmpe_loss_der2w0 = 2*e_weight/inum*(etot_ml - etot_dft)
                                              * type_central_w1[p]
                                              * activated_hidden_der
-                                             * mom_vals[alpha_moment_mapping[k]];
+                                             * (mom_vals[alpha_moment_mapping[k]] - q_shifter[k]) / q_scaler[k];
                 CoordType tmpf_loss_der2w0 = dloss_combination[alpha_moment_mapping[k]]
                                              * type_central_w1[p]
+                                             / q_scaler[k]
                                              * (activated_hidden_der
                                                 + activated_hidden_der2der
                                                   * type_central_w0[p*alpha_scalar_moments+k]
-                                                  * mom_vals[alpha_moment_mapping[k]]);
+                                                  / q_scaler[k]
+                                                  * (mom_vals[alpha_moment_mapping[k]] - q_shifter[k]));
                 
                 #ifdef USE_OPENMP
                 #pragma omp atomic
@@ -636,7 +646,9 @@ void NNMtpLoss<CoordType>::find_ef_loss_backward(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin)
+    CoordType rmin,
+    CoordType *q_shifter,
+    CoordType *q_scaler)
 {
     // Step 1.
     CoordType *mom_vals;
@@ -788,12 +800,13 @@ void NNMtpLoss<CoordType>::find_ef_loss_backward(
             CoordType hidden_val = 0;
             CoordType activated_hidden_der = 0;
             for (int k=0; k<alpha_scalar_moments; k++)
-                hidden_val += type_central_w0[p*alpha_scalar_moments + k] * mom_vals[alpha_moment_mapping[k]];
+                hidden_val += type_central_w0[p*alpha_scalar_moments + k] * (mom_vals[alpha_moment_mapping[k]] - q_shifter[k]) / q_scaler[k];
             TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
             for (int k=0; k<alpha_scalar_moments; k++)
                 e_site_der2mom[alpha_moment_mapping[k]] += type_central_w1[p] 
                                                            * activated_hidden_der
-                                                           * type_central_w0[p*alpha_scalar_moments + k];
+                                                           * type_central_w0[p*alpha_scalar_moments + k]
+                                                           / q_scaler[k];
         }
 
         // Step 4.2. Pass to basic moments
@@ -908,7 +921,7 @@ void NNMtpLoss<CoordType>::find_ef_loss_backward(
             CoordType activated_hidden_val = 0;
             CoordType activated_hidden_der = 0;
             for (int k=0; k<alpha_scalar_moments; k++)
-                hidden_val += type_central_w0[p*alpha_scalar_moments+k] * mom_vals[alpha_moment_mapping[k]];
+                hidden_val += type_central_w0[p*alpha_scalar_moments+k] * (mom_vals[alpha_moment_mapping[k]] - q_shifter[k]) / q_scaler[k];
             TanhActivationFunc<CoordType>::find_val(activated_hidden_val, hidden_val);
             TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
             tmpe_loss_der2w1 = 2*e_weight/inum*(etot_ml - etot_dft)
@@ -916,7 +929,8 @@ void NNMtpLoss<CoordType>::find_ef_loss_backward(
             for (int k=0; k<alpha_scalar_moments; k++) {
                 tmpf_loss_der2w1 += dloss_combination[alpha_moment_mapping[k]]
                                     * activated_hidden_der
-                                    * type_central_w0[p*alpha_scalar_moments + k];
+                                    * type_central_w0[p*alpha_scalar_moments + k]
+                                    / q_scaler[k];
             }
             
             #ifdef USE_OPENMP
@@ -932,20 +946,23 @@ void NNMtpLoss<CoordType>::find_ef_loss_backward(
             CoordType activated_hidden_der = 0;
             CoordType activated_hidden_der2der = 0;
             for (int k=0; k<alpha_scalar_moments; k++)
-                hidden_val += type_central_w0[p*alpha_scalar_moments+k] * mom_vals[alpha_moment_mapping[k]];
+                hidden_val += type_central_w0[p*alpha_scalar_moments+k] * (mom_vals[alpha_moment_mapping[k]] - q_shifter[k]) / q_scaler[k];
             TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
             TanhActivationFunc<CoordType>::find_der2der(activated_hidden_der2der, hidden_val);
             for (int k=0; k<alpha_scalar_moments; k++) {
                 CoordType tmpe_loss_der2w0 = 2*e_weight/inum*(etot_ml - etot_dft)
                                              * type_central_w1[p]
                                              * activated_hidden_der
-                                             * mom_vals[alpha_moment_mapping[k]];
+                                             * (mom_vals[alpha_moment_mapping[k]] - q_shifter[k])
+                                             / q_scaler[k];
                 CoordType tmpf_loss_der2w0 = dloss_combination[alpha_moment_mapping[k]]
                                              * type_central_w1[p]
+                                             / q_scaler[k]
                                              * (activated_hidden_der
                                                 + activated_hidden_der2der
                                                   * type_central_w0[p*alpha_scalar_moments+k]
-                                                  * mom_vals[alpha_moment_mapping[k]]);
+                                                  / q_scaler[k]
+                                                  * (mom_vals[alpha_moment_mapping[k]] - q_shifter[k]) );
                 
                 #ifdef USE_OPENMP
                 #pragma omp atomic

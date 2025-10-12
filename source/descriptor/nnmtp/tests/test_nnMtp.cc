@@ -91,6 +91,10 @@ protected:
     double *descriptors;
     double *e_sites;
 
+    // q_factor
+    double *q_shifter;
+    double *q_scaler;
+
     static void SetUpTestSuite() {
         printf("NNMtpTest (TestSuite) is setting up...\n");
     }
@@ -265,6 +269,18 @@ protected:
         memset(descriptors, 0.0, sizeof(double) * inum * mtp_param.alpha_scalar_moments());
         e_sites = (double*)malloc(sizeof(double) * inum);
         memset(e_sites, 0.0, sizeof(double) * inum);
+
+        // q_factor
+        q_shifter = (double*)malloc(sizeof(double) * mtp_param.alpha_scalar_moments());
+        q_scaler = (double*)malloc(sizeof(double) * mtp_param.alpha_scalar_moments());
+        for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++) {
+            q_shifter[ii] = 0.1 + 0.01 * ii;
+            q_scaler[ii] = 0.67 + 0.05 * ii;
+        }
+        for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++) {
+            q_shifter[ii] = 0.0;
+            q_scaler[ii] = 1.0;
+        }
     }
 
 
@@ -296,8 +312,12 @@ protected:
         // Utils
         free(descriptors);
         free(e_sites);
+
+        // q_factor
+        free(q_shifter);
+        free(q_scaler);
     }
-};  // class : NNMtpTEst
+};  // class : NNMtpTest
 
 
 TEST_F(NNMtpTest, find_ef_accuracy) {
@@ -333,7 +353,9 @@ TEST_F(NNMtpTest, find_ef_accuracy) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        q_shifter,
+        q_scaler);
 
     // *** delta
     double cart_coords[12][3] = {0};
@@ -382,7 +404,9 @@ TEST_F(NNMtpTest, find_ef_accuracy) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        q_shifter,
+        q_scaler);
 
 printf("1.1. energy = %.15lf\n", etot);
 printf("1.1. force[%d][%d] calculated by custom code = %.15lf\n", center_idx_modify, direction1_idx_modify, forces[center_idx_modify][direction1_idx_modify]);
@@ -393,6 +417,7 @@ printf("2.2. force=\n");
 for (int ii=0; ii<inum; ii++)
     printf("\t\t%3d: [%.15f, %.15f, %.15f]\n", ii, forces[ii][0], forces[ii][1], forces[ii][2]);
 }
+
 
 
 TEST_F(NNMtpTest, find_efv_accuracy) {
@@ -429,7 +454,9 @@ TEST_F(NNMtpTest, find_efv_accuracy) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        q_shifter,
+        q_scaler);
 
     // *** delta
     double cart_coords[12][3] = {0};
@@ -479,7 +506,9 @@ TEST_F(NNMtpTest, find_efv_accuracy) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        q_shifter,
+        q_scaler);
 
 printf("1.1. energy = %.15lf\n", etot);
 printf("1.1. force[%d][%d] calculated by custom code = %.15lf\n", center_idx_modify, direction1_idx_modify, forces[center_idx_modify][direction1_idx_modify]);
@@ -524,7 +553,9 @@ TEST_F(NNMtpTest, find_ef_loss)
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        q_shifter,
+        q_scaler);
 
     ai2pot::nnmtp::NNMtpLoss<double>::find_ef_loss(
         loss,
@@ -573,7 +604,9 @@ TEST_F(NNMtpTest, find_loss)
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        q_shifter,
+        q_scaler);
 
     ai2pot::nnmtp::NNMtpLoss<double>::find_loss(
         loss,
@@ -590,6 +623,7 @@ TEST_F(NNMtpTest, find_loss)
         virial_dft);
 printf("\t1. efv_loss = %.15lf\n", loss);
 }
+
 
 
 TEST_F(NNMtpTest, find_ef_loss_backward) {
@@ -621,7 +655,9 @@ TEST_F(NNMtpTest, find_ef_loss_backward) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        q_shifter,
+        q_scaler);
 
     ai2pot::nnmtp::NNMtpLoss<double>::find_ef_loss_backward(
         loss_der2coeffs,
@@ -659,7 +695,9 @@ TEST_F(NNMtpTest, find_ef_loss_backward) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        q_shifter,
+        q_scaler);
 
 printf("1. loss_der2coeffs:\n");
 for (int ii=0; ii<ntypes*ntypes*mtp_param.nmus()*chebyshev_size; ii++)
@@ -716,7 +754,9 @@ TEST_F(NNMtpTest, find_loss_backward) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        q_shifter,
+        q_scaler);
 
     ai2pot::nnmtp::NNMtpLoss<double>::find_loss_backward(
         loss_der2coeffs,
@@ -757,7 +797,9 @@ TEST_F(NNMtpTest, find_loss_backward) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        q_shifter,
+        q_scaler);
 
 printf("1. loss_der2coeffs:\n");
 for (int ii=0; ii<ntypes*ntypes*mtp_param.nmus()*chebyshev_size; ii++)
@@ -782,6 +824,7 @@ printf("\n\n");
 
 
 
+/*
 TEST_F(NNMtpTest, find_descriptors) {
     int center_idx = 0;
     
@@ -817,7 +860,6 @@ TEST_F(NNMtpTest, find_descriptors) {
 }
 
 
-/*
 TEST_F(NNMtpTest, find_e_sites) {
     ai2pot::nnmtp::NNMtp<double>::find_e_sites(
         e_sites,

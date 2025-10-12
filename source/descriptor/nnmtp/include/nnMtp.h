@@ -62,7 +62,9 @@ public:
         int umax_num_neigh_atoms,
         int nghost,
         CoordType rmax,
-        CoordType rmin);
+        CoordType rmin,
+        CoordType *q_shifter,
+        CoordType *q_scaler);
 
     static void find_efv(
         CoordType &etot,
@@ -93,7 +95,9 @@ public:
         int umax_num_neigh_atoms,
         int nghost,
         CoordType rmax,
-        CoordType rmin);
+        CoordType rmin,
+        CoordType *q_shifter,
+        CoordType *q_scaler);
 
 
     static void find_descriptors(
@@ -214,7 +218,9 @@ void NNMtp<CoordType>::find_ef(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin)
+    CoordType rmin,
+    CoordType *q_shifter,
+    CoordType *q_scaler)
 {
     // Step 1.
     CoordType *mom_vals;
@@ -285,7 +291,7 @@ void NNMtp<CoordType>::find_ef(
             CoordType activated_hidden_val = 0;
             for (int k=0; k<alpha_scalar_moments; k++) {
                 //printf("** %.15lf, %.15lf\n", type_central_w0[p*alpha_scalar_moments + k], mom_vals[alpha_moment_mapping[k]]);
-                hidden_val += type_central_w0[p*alpha_scalar_moments + k] * mom_vals[alpha_moment_mapping[k]];
+                hidden_val += type_central_w0[p*alpha_scalar_moments + k] * (mom_vals[alpha_moment_mapping[k]] - q_shifter[k]) / q_scaler[k];
             }
             TanhActivationFunc<CoordType>::find_val(activated_hidden_val, hidden_val);
             e_site += type_central_w1[p] * activated_hidden_val;
@@ -302,12 +308,13 @@ void NNMtp<CoordType>::find_ef(
             CoordType hidden_val = 0;
             CoordType activated_hidden_der = 0;
             for (int k=0; k<alpha_scalar_moments; k++)
-                hidden_val += type_central_w0[p*alpha_scalar_moments + k] * mom_vals[alpha_moment_mapping[k]];
+                hidden_val += type_central_w0[p*alpha_scalar_moments + k] * (mom_vals[alpha_moment_mapping[k]] - q_shifter[k]) / q_scaler[k];
             TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
             for (int k=0; k<alpha_scalar_moments; k++)
                 e_site_der2mom[alpha_moment_mapping[k]] += type_central_w1[p]
                                                            * activated_hidden_der
-                                                           * type_central_w0[p*alpha_scalar_moments + k];
+                                                           * type_central_w0[p*alpha_scalar_moments + k]
+                                                           / q_scaler[k];
         }
 
         for (int i=alpha_index_times_count-1; i>=0; i--) {
@@ -393,7 +400,9 @@ void NNMtp<CoordType>::find_efv(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin)
+    CoordType rmin,
+    CoordType *q_shifter,
+    CoordType *q_scaler)
 {
     // Step 1.
     CoordType *mom_vals;
@@ -464,7 +473,7 @@ void NNMtp<CoordType>::find_efv(
             CoordType activated_hidden_val = 0;
             for (int k=0; k<alpha_scalar_moments; k++) {
                 //printf("** %.15lf, %.15lf\n", type_central_w0[p*alpha_scalar_moments + k], mom_vals[alpha_moment_mapping[k]]);
-                hidden_val += type_central_w0[p*alpha_scalar_moments + k] * mom_vals[alpha_moment_mapping[k]];
+                hidden_val += type_central_w0[p*alpha_scalar_moments + k] * (mom_vals[alpha_moment_mapping[k]] - q_shifter[k]) / q_scaler[k];
             }
             TanhActivationFunc<CoordType>::find_val(activated_hidden_val, hidden_val);
             e_site += type_central_w1[p] * activated_hidden_val;
@@ -481,12 +490,13 @@ void NNMtp<CoordType>::find_efv(
             CoordType hidden_val = 0;
             CoordType activated_hidden_der = 0;
             for (int k=0; k<alpha_scalar_moments; k++)
-                hidden_val += type_central_w0[p*alpha_scalar_moments + k] * mom_vals[alpha_moment_mapping[k]];
+                hidden_val += type_central_w0[p*alpha_scalar_moments + k] * (mom_vals[alpha_moment_mapping[k]] - q_shifter[k]) / q_scaler[k];
             TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
             for (int k=0; k<alpha_scalar_moments; k++)
                 e_site_der2mom[alpha_moment_mapping[k]] += type_central_w1[p]
                                                            * activated_hidden_der
-                                                           * type_central_w0[p*alpha_scalar_moments + k];
+                                                           * type_central_w0[p*alpha_scalar_moments + k]
+                                                           / q_scaler[k];
         }
 
         for (int i=alpha_index_times_count-1; i>=0; i--) {
