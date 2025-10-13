@@ -56,6 +56,8 @@ void find_efv_atom(
     int nghost,
     CoordType rmax,
     CoordType rmin,
+    CoordType *q_shifter,
+    CoordType *q_scaler,
     CoordType *s_local_virial);
 
 template <typename CoordType>
@@ -91,7 +93,9 @@ void find_efv_kernel(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin);
+    CoordType rmin,
+    CoordType *q_shifter,
+    CoordType *q_scaler);
 
 
 template <typename CoordType>
@@ -127,7 +131,9 @@ void find_efv_launcher(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin);
+    CoordType rmin,
+    CoordType *h_q_shifter,
+    CoordType *h_q_scaler);
 
 template <typename CoordType>
 static __host__ __device__
@@ -158,7 +164,9 @@ void find_ef_atom(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin);
+    CoordType rmin,
+    CoordType *q_shifter,
+    CoordType *q_scaler);
 
 template <typename CoordType>
 static __global__ 
@@ -192,7 +200,9 @@ void find_ef_kernel(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin);
+    CoordType rmin,
+    CoordType *q_shifter,
+    CoordType *q_scaler);
 
 template <typename CoordType>
 static __host__
@@ -226,7 +236,9 @@ void find_ef_launcher(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin);
+    CoordType rmin,
+    CoordType *h_q_shifter,
+    CoordType *h_q_scaler);
 
 
 template <typename CoordType>
@@ -351,6 +363,8 @@ void find_efv_atom(
     int nghost,
     CoordType rmax,
     CoordType rmin,
+    CoordType *q_shifter,
+    CoordType *q_scaler,
     CoordType *s_local_virial)
 {   
     // Step 1. Init temp array
@@ -448,7 +462,7 @@ void find_efv_atom(
         CoordType hidden_val = 0.0;
         CoordType activated_hidden_val = 0.0;
         for (int k=0; k<alpha_scalar_moments; k++)
-            hidden_val += type_central_w0[p*alpha_scalar_moments + k] * mom_vals[alpha_moment_mapping[k]];
+            hidden_val += type_central_w0[p*alpha_scalar_moments + k] * (mom_vals[alpha_moment_mapping[k]] - q_shifter[k]) / q_scaler[k];
         TanhActivationFunc<CoordType>::find_val(activated_hidden_val, hidden_val);
         e_site += type_central_w1[p] * activated_hidden_val;
     }
@@ -458,12 +472,13 @@ void find_efv_atom(
         CoordType hidden_val = 0.0;
         CoordType activated_hidden_der = 0.0;
         for (int k=0; k<alpha_scalar_moments; k++)
-            hidden_val += type_central_w0[p*alpha_scalar_moments + k] * mom_vals[alpha_moment_mapping[k]];
+            hidden_val += type_central_w0[p*alpha_scalar_moments + k] * (mom_vals[alpha_moment_mapping[k]] - q_shifter[k]) / q_scaler[k];
         TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
         for (int k=0; k<alpha_scalar_moments; k++)
             e_site_der2mom[alpha_moment_mapping[k]] += type_central_w1[p]
                                                        * activated_hidden_der
-                                                       * type_central_w0[p*alpha_scalar_moments + k];
+                                                       * type_central_w0[p*alpha_scalar_moments + k]
+                                                       / q_scaler[k];
     }
 
     for (int i=alpha_index_times_count-1; i>=0; i--) {
@@ -600,7 +615,9 @@ void find_efv_kernel(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin)
+    CoordType rmin,
+    CoordType *q_shifter,
+    CoordType *q_scaler)
 {
     int nx = blockIdx.x * blockDim.x + threadIdx.x;
     int istruct = nx / natoms_pad;
@@ -654,6 +671,8 @@ void find_efv_kernel(
             nghost,
             rmax,
             rmin,
+            q_shifter,
+            q_scaler,
             s_local_virial[tid]);
     }
     __syncthreads();
@@ -699,7 +718,9 @@ void find_efv_launcher(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin)
+    CoordType rmin,
+    CoordType *h_q_shifter,
+    CoordType *h_q_scaler)
 {
     int block_size_x = 64;
     int grid_size_x = (batch_size*natoms_pad - 1) / block_size_x + 1;
@@ -723,6 +744,8 @@ void find_efv_launcher(
     CoordType (*d_brcs)[3];
     int *d_btypes;
     int *d_type_map;
+    CoordType *d_q_shifter;
+    CoordType *d_q_scaler;
 
     int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
 
@@ -747,6 +770,8 @@ void find_efv_launcher(
     CHECK_CUDA_API( cudaMalloc((void**)&d_brcs, sizeof(CoordType)*batch_size*natoms_pad*umax_num_neigh_atoms*3) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_btypes, sizeof(int)*batch_size*(natoms_pad+nghost)) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_type_map, sizeof(int)*ntypes) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_q_shifter, sizeof(CoordType)*alpha_scalar_moments) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_q_scaler, sizeof(CoordType)*alpha_scalar_moments) );
 
     //CHECK_CUDA_API( cudaMemcpy(d_etot_ptr, &h_etot, sizeof(CoordType), cudaMemcpyHostToDevice) );
     //CHECK_CUDA_API( cudaMemcpy(d_force, h_force, sizeof(CoordType)*(inum+nghost)*3, cudaMemcpyHostToDevice) );
@@ -765,6 +790,8 @@ void find_efv_launcher(
     CHECK_CUDA_API( cudaMemcpy(d_brcs, h_brcs, sizeof(CoordType)*batch_size*natoms_pad*umax_num_neigh_atoms*3, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_btypes, h_btypes, sizeof(int)*batch_size*(natoms_pad+nghost), cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_type_map, h_type_map, sizeof(int)*ntypes, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_q_shifter, h_q_shifter, sizeof(CoordType)*alpha_scalar_moments, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_q_scaler, h_q_scaler, sizeof(CoordType)*alpha_scalar_moments, cudaMemcpyHostToDevice) );
 
     // Call global function
     auto t1 = std::chrono::high_resolution_clock::now();
@@ -799,7 +826,9 @@ void find_efv_launcher(
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        d_q_shifter,
+        d_q_scaler);
     CHECK_CUDA_API( cudaDeviceSynchronize() );
     CHECK_CUDA_API( cudaGetLastError() );
     auto t2 = std::chrono::high_resolution_clock::now();
@@ -827,6 +856,8 @@ void find_efv_launcher(
     CHECK_CUDA_API( cudaFree(d_brcs) );
     CHECK_CUDA_API( cudaFree(d_btypes) );
     CHECK_CUDA_API( cudaFree(d_type_map) );
+    CHECK_CUDA_API( cudaFree(d_q_shifter) );
+    CHECK_CUDA_API( cudaFree(d_q_scaler) );
 }
 
 
@@ -859,7 +890,9 @@ void find_ef_atom(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin)
+    CoordType rmin,
+    CoordType *q_shifter,
+    CoordType *q_scaler)
 {   
     // Step 1. Init temp array
     CoordType mom_vals[MAX_ALPHA_MOMENTS_COUNT] = {0.};
@@ -956,7 +989,7 @@ void find_ef_atom(
         CoordType hidden_val = 0.0;
         CoordType activated_hidden_val = 0.0;
         for (int k=0; k<alpha_scalar_moments; k++)
-            hidden_val += type_central_w0[p*alpha_scalar_moments + k] * mom_vals[alpha_moment_mapping[k]];
+            hidden_val += type_central_w0[p*alpha_scalar_moments + k] * (mom_vals[alpha_moment_mapping[k]] - q_shifter[k]) / q_scaler[k];
         TanhActivationFunc<CoordType>::find_val(activated_hidden_val, hidden_val);
         e_site += type_central_w1[p] * activated_hidden_val;
     }
@@ -966,12 +999,13 @@ void find_ef_atom(
         CoordType hidden_val = 0.0;
         CoordType activated_hidden_der = 0.0;
         for (int k=0; k<alpha_scalar_moments; k++)
-            hidden_val += type_central_w0[p*alpha_scalar_moments + k] * mom_vals[alpha_moment_mapping[k]];
+            hidden_val += type_central_w0[p*alpha_scalar_moments + k] * (mom_vals[alpha_moment_mapping[k]] - q_shifter[k]) / q_scaler[k];
         TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
         for (int k=0; k<alpha_scalar_moments; k++)
             e_site_der2mom[alpha_moment_mapping[k]] += type_central_w1[p]
                                                        * activated_hidden_der
-                                                       * type_central_w0[p*alpha_scalar_moments + k];
+                                                       * type_central_w0[p*alpha_scalar_moments + k]
+                                                       / q_scaler[k];
     }
 
     for (int i=alpha_index_times_count-1; i>=0; i--) {
@@ -1102,7 +1136,9 @@ void find_ef_kernel(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin)
+    CoordType rmin,
+    CoordType *q_shifter,
+    CoordType *q_scaler)
 {
     int nx = blockIdx.x * blockDim.x + threadIdx.x;
     int istruct = nx / natoms_pad;
@@ -1147,7 +1183,9 @@ void find_ef_kernel(
             umax_num_neigh_atoms,
             nghost,
             rmax,
-            rmin);
+            rmin,
+            q_shifter,
+            q_scaler);
     }
 }
 
@@ -1184,7 +1222,9 @@ void find_ef_launcher(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin)
+    CoordType rmin,
+    CoordType *h_q_shifter,
+    CoordType *h_q_scaler)
 {
     int block_size_x = 64;
     int grid_size_x = (batch_size*natoms_pad - 1) / block_size_x + 1;
@@ -1207,6 +1247,8 @@ void find_ef_launcher(
     CoordType (*d_brcs)[3];
     int *d_btypes;
     int *d_type_map;
+    CoordType *d_q_shifter;
+    CoordType *d_q_scaler;
 
     int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
 
@@ -1229,6 +1271,8 @@ void find_ef_launcher(
     CHECK_CUDA_API( cudaMalloc((void**)&d_brcs, sizeof(CoordType)*batch_size*natoms_pad*umax_num_neigh_atoms*3) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_btypes, sizeof(int)*batch_size*(natoms_pad+nghost)) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_type_map, sizeof(int)*ntypes) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_q_shifter, sizeof(CoordType)*alpha_scalar_moments) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_q_scaler, sizeof(CoordType)*alpha_scalar_moments) );
 
     //CHECK_CUDA_API( cudaMemcpy(d_etot_ptr, &h_etot, sizeof(CoordType), cudaMemcpyHostToDevice) );
     //CHECK_CUDA_API( cudaMemcpy(d_force, h_force, sizeof(CoordType)*(inum+nghost)*3, cudaMemcpyHostToDevice) );
@@ -1247,6 +1291,8 @@ void find_ef_launcher(
     CHECK_CUDA_API( cudaMemcpy(d_brcs, h_brcs, sizeof(CoordType)*batch_size*natoms_pad*umax_num_neigh_atoms*3, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_btypes, h_btypes, sizeof(int)*batch_size*(natoms_pad+nghost), cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_type_map, h_type_map, sizeof(int)*ntypes, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_q_shifter, h_q_shifter, sizeof(CoordType)*alpha_scalar_moments, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_q_scaler, h_q_scaler, sizeof(CoordType)*alpha_scalar_moments, cudaMemcpyHostToDevice) );
 
     // Call global function
     auto t1 = std::chrono::high_resolution_clock::now();
@@ -1280,7 +1326,9 @@ void find_ef_launcher(
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        d_q_shifter,
+        d_q_scaler);
     CHECK_CUDA_API( cudaDeviceSynchronize() );
     CHECK_CUDA_API( cudaGetLastError() );
     auto t2 = std::chrono::high_resolution_clock::now();
@@ -1306,6 +1354,8 @@ void find_ef_launcher(
     CHECK_CUDA_API( cudaFree(d_brcs) );
     CHECK_CUDA_API( cudaFree(d_btypes) );
     CHECK_CUDA_API( cudaFree(d_type_map) );
+    CHECK_CUDA_API( cudaFree(d_q_shifter) );
+    CHECK_CUDA_API( cudaFree(d_q_scaler) );
 }
 
 

@@ -277,10 +277,10 @@ protected:
             q_shifter[ii] = 0.1 + 0.01 * ii;
             q_scaler[ii] = 0.67 + 0.05 * ii;
         }
-        for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++) {
-            q_shifter[ii] = 0.0;
-            q_scaler[ii] = 1.0;
-        }
+        //for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++) {
+        //    q_shifter[ii] = 0.0;
+        //    q_scaler[ii] = 1.0;
+        //}
     }
 
 

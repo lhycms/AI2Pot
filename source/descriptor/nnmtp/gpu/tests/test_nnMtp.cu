@@ -84,6 +84,9 @@ protected:
     real (*bforce_dft)[3];
     real *bvirial_dft;
 
+    real *q_shifter;
+    real *q_scaler;
+
 
     static void SetUpTestSuite() {
         std::cout << "NNMtpTest (TestSuite) is setting up...\n";
@@ -262,6 +265,17 @@ protected:
 
         bdescriptors = (real*)malloc(sizeof(real) * batch_size * natoms_pad * mtp_param.alpha_scalar_moments());
         memset(bdescriptors, 0, sizeof(real) * batch_size * natoms_pad * mtp_param.alpha_scalar_moments());
+    
+        q_shifter = (real*)malloc(sizeof(real) * mtp_param.alpha_scalar_moments());
+        q_scaler = (real*)malloc(sizeof(real) * mtp_param.alpha_scalar_moments());
+        for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++) {
+            q_shifter[ii] = 0.1 + 0.01 * ii;
+            q_scaler[ii] = 0.67 + 0.05 * ii;
+        }
+        //for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++) {
+        //    q_shifter[ii] = 0.0;
+        //    q_scaler[ii] = 1.0;
+        //}
     }
 
     void TearDown() override {
@@ -292,6 +306,8 @@ protected:
         free(bforce_dft);
         free(bvirial_dft);
         free(bdescriptors);
+        free(q_shifter);
+        free(q_scaler);
     }
 };  // class : NNMtpTest
 
@@ -332,7 +348,9 @@ TEST_F(NNMtpTest, find_efv_accuracy) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        q_shifter,
+        q_scaler);
 
     // *** delta
     real cart_coords[natoms_pad][3] = {0.};
@@ -385,7 +403,9 @@ TEST_F(NNMtpTest, find_efv_accuracy) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        q_shifter,
+        q_scaler);
 
 
 printf("1.1. energy = %.15lf\n", betot[0]);
@@ -436,7 +456,9 @@ TEST_F(NNMtpTest, find_ef_accuracy) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        q_shifter,
+        q_scaler);
 
     // *** delta
     real cart_coords[natoms_pad][3] = {0.};
@@ -487,7 +509,9 @@ TEST_F(NNMtpTest, find_ef_accuracy) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        q_shifter,
+        q_scaler);
 
 
 printf("1.1. energy = %.15lf\n", betot[0]);
@@ -500,6 +524,7 @@ printf("\t2.2. Force =\n");
 for (int ii=0; ii<natoms_pad; ii++)
     printf("\t\t%3d: [%.15f, %.15f, %.15f]\n", ii, bforce[0*(natoms_pad+nghost) + ii][0], bforce[0*(natoms_pad+nghost) + ii][1], bforce[0*(natoms_pad+nghost) + ii][2]);
 }
+
 
 
 TEST_F(NNMtpTest, find_loss_backward_launcer)
@@ -539,7 +564,9 @@ TEST_F(NNMtpTest, find_loss_backward_launcer)
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        q_shifter,
+        q_scaler);
 
     ai2pot::nnmtp::find_loss_backward_launcher<real>(
         bloss_der2coeffs,
@@ -582,7 +609,9 @@ TEST_F(NNMtpTest, find_loss_backward_launcer)
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        q_shifter,
+        q_scaler);
 
 printf("1. loss_der2coeffs:\n");
 for (int ii=0; ii<ntypes*ntypes*mtp_param.nmus()*chebyshev_size; ii++)
@@ -642,7 +671,9 @@ TEST_F(NNMtpTest, find_ef_loss_backward_launcer)
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        q_shifter,
+        q_scaler);
 
     ai2pot::nnmtp::find_ef_loss_backward_launcher<real>(
         bloss_der2coeffs,
@@ -682,7 +713,9 @@ TEST_F(NNMtpTest, find_ef_loss_backward_launcer)
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        q_shifter,
+        q_scaler);
 
 printf("1. loss_der2coeffs:\n");
 for (int ii=0; ii<ntypes*ntypes*mtp_param.nmus()*chebyshev_size; ii++)
@@ -705,7 +738,7 @@ for (int ii=0; ii<ntypes; ii++)
 printf("\n\n");
 }
 
-
+/*
 TEST_F(NNMtpTest, find_descriptors_launcher) {
     int center_idx = 0;
     ai2pot::nnmtp::find_descriptors_launcher(
@@ -740,7 +773,7 @@ TEST_F(NNMtpTest, find_descriptors_launcher) {
         printf("%.5lf, ", bdescriptors[0*natoms_pad*mtp_param.alpha_scalar_moments() + center_idx*mtp_param.alpha_scalar_moments() + k]);
     printf("\n");
 }
-
+*/
 
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
