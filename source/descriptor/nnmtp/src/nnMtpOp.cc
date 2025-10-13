@@ -62,7 +62,9 @@ extern template void ai2pot::nnmtp::find_efv_torch_launcher<float>(
     int umax_num_neigh_atoms,
     int nghost,
     float rmax,
-    float rmin);
+    float rmin,
+    float *d_q_shifter,
+    float *d_q_scaler);
 
 extern template void ai2pot::nnmtp::find_efv_torch_launcher<double>(
     double *d_betot_ptr,
@@ -95,7 +97,9 @@ extern template void ai2pot::nnmtp::find_efv_torch_launcher<double>(
     int umax_num_neigh_atoms,
     int nghost,
     double rmax,
-    double rmin);
+    double rmin,
+    double *d_q_shifter,
+    double *d_q_scaler);
 
 // 1.2. find_ef_torch_launcher()
 extern template void ai2pot::nnmtp::find_ef_torch_launcher<float>(
@@ -128,7 +132,9 @@ extern template void ai2pot::nnmtp::find_ef_torch_launcher<float>(
     int umax_num_neigh_atoms,
     int nghost,
     float rmax,
-    float rmin);
+    float rmin,
+    float *d_q_shifter,
+    float *d_q_scaler);
 
 extern template void ai2pot::nnmtp::find_ef_torch_launcher<double>(
     double *d_betot_ptr,
@@ -160,7 +166,9 @@ extern template void ai2pot::nnmtp::find_ef_torch_launcher<double>(
     int umax_num_neigh_atoms,
     int nghost,
     double rmax,
-    double rmin);
+    double rmin,
+    double *d_q_shifter,
+    double *d_q_scaler);
 
 
 // 1.3. find_descriptors_torch_launcher()
@@ -322,7 +330,9 @@ extern template void ai2pot::nnmtp::find_loss_backward_torch_launcher<float>(
     int umax_num_neigh_atoms,
     int nghost,
     float rmax,
-    float rmin);
+    float rmin,
+    float *d_q_shifter,
+    float *d_q_scaler);
 
 extern template void ai2pot::nnmtp::find_loss_backward_torch_launcher<double>(
     double *d_bloss_der2coeffs,
@@ -365,7 +375,9 @@ extern template void ai2pot::nnmtp::find_loss_backward_torch_launcher<double>(
     int umax_num_neigh_atoms,
     int nghost,
     double rmax,
-    double rmin);
+    double rmin,
+    double *d_q_shifter,
+    double *d_q_scaler);
 
 
 // 2.4. find_ef_loss_backward_torch_launcher()
@@ -407,7 +419,9 @@ extern template void ai2pot::nnmtp::find_ef_loss_backward_torch_launcher<float>(
     int umax_num_neigh_atoms,
     int nghost,
     float rmax,
-    float rmin);
+    float rmin,
+    float *d_q_shifter,
+    float *d_q_scaler);
 
 
 extern template void ai2pot::nnmtp::find_ef_loss_backward_torch_launcher<double>(
@@ -448,7 +462,9 @@ extern template void ai2pot::nnmtp::find_ef_loss_backward_torch_launcher<double>
     int umax_num_neigh_atoms,
     int nghost,
     double rmax,
-    double rmin);
+    double rmin,
+    double *d_q_shifter,
+    double *d_q_scaler);
 
 };  // namespace : nnmtp
 };  // namespace : ai2pot
