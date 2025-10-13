@@ -592,6 +592,8 @@ torch::autograd::variable_list NNMtpToEFLossFunction::forward(
     int nghost,
     double rmax,
     double rmin,
+    const at::Tensor& q_shifter_tensor,
+    const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
     double zbl_rmin,
     const at::Tensor& zbl_cks_tensor,
@@ -636,6 +638,8 @@ torch::autograd::variable_list NNMtpToEFLossFunction::forward(
         float *type_bias = type_bias_tensor.data_ptr<float>();
         float *zbl_cks = zbl_cks_tensor.data_ptr<float>();
         float *zbl_dks = zbl_dks_tensor.data_ptr<float>();
+        float *q_shifter = q_shifter_tensor.data_ptr<float>();
+        float *q_scaler = q_scaler_tensor.data_ptr<float>();
 
         if (brcs_tensor.device() == c10::kCPU) {
             for (int bb=0; bb<batch_size; bb++) 
@@ -705,7 +709,9 @@ torch::autograd::variable_list NNMtpToEFLossFunction::forward(
                     umax_num_neigh_atoms,
                     nghost,
                     (float)rmax,
-                    (float)rmin);
+                    (float)rmin,
+                    q_shifter,
+                    q_scaler);
                 
                 NNMtpLoss<float>::find_ef_loss(
                     (*loss_ptr),
@@ -783,7 +789,9 @@ torch::autograd::variable_list NNMtpToEFLossFunction::forward(
                 umax_num_neigh_atoms,
                 nghost,
                 (float)rmax,
-                (float)rmin);
+                (float)rmin,
+                q_shifter,
+                q_scaler);
             
             find_ef_loss_torch_launcher(
                 bloss,
@@ -812,6 +820,8 @@ torch::autograd::variable_list NNMtpToEFLossFunction::forward(
         double *type_bias = type_bias_tensor.data_ptr<double>();
         double *zbl_cks = zbl_cks_tensor.data_ptr<double>();
         double *zbl_dks = zbl_dks_tensor.data_ptr<double>();
+        double *q_shifter = q_shifter_tensor.data_ptr<double>();
+        double *q_scaler = q_scaler_tensor.data_ptr<double>();
 
         if (brcs_tensor.device() == c10::kCPU) {
             for (int bb=0; bb<batch_size; bb++) 
@@ -881,7 +891,9 @@ torch::autograd::variable_list NNMtpToEFLossFunction::forward(
                     umax_num_neigh_atoms,
                     nghost,
                     rmax,
-                    rmin);
+                    rmin,
+                    q_shifter,
+                    q_scaler);
                 
                 NNMtpLoss<double>::find_ef_loss(
                     (*loss_ptr),
@@ -959,7 +971,9 @@ torch::autograd::variable_list NNMtpToEFLossFunction::forward(
                 umax_num_neigh_atoms,
                 nghost,
                 rmax,
-                rmin);
+                rmin,
+                q_shifter,
+                q_scaler);
             
             find_ef_loss_torch_launcher(
                 bloss,
@@ -1006,6 +1020,8 @@ torch::autograd::variable_list NNMtpToEFLossFunction::forward(
         torch::tensor(nghost, int_options),
         torch::tensor(rmax, float_options),
         torch::tensor(rmin, float_options),
+        q_shifter_tensor,
+        q_scaler_tensor,
         torch::tensor(zbl_rmax, float_options),
         torch::tensor(zbl_rmin, float_options),
         zbl_cks_tensor,
@@ -1046,10 +1062,12 @@ torch::autograd::variable_list NNMtpToEFLossFunction::backward(
     int nghost = ctx->get_saved_variables()[21].item<int>();
     double rmax = ctx->get_saved_variables()[22].item<double>();
     double rmin = ctx->get_saved_variables()[23].item<double>();
-    double zbl_rmax = ctx->get_saved_variables()[24].item<double>();
-    double zbl_rmin = ctx->get_saved_variables()[25].item<double>();
-    at::Tensor zbl_cks_tensor = ctx->get_saved_variables()[26];
-    at::Tensor zbl_dks_tensor = ctx->get_saved_variables()[27];
+    at::Tensor q_shifter_tensor = ctx->get_saved_variables()[24];
+    at::Tensor q_scaler_tensor = ctx->get_saved_variables()[25];
+    double zbl_rmax = ctx->get_saved_variables()[26].item<double>();
+    double zbl_rmin = ctx->get_saved_variables()[27].item<double>();
+    at::Tensor zbl_cks_tensor = ctx->get_saved_variables()[28];
+    at::Tensor zbl_dks_tensor = ctx->get_saved_variables()[29];
     
     // 1. 
     int batch_size = (int)bfirstneigh_tensor.size(0);
@@ -1098,6 +1116,8 @@ torch::autograd::variable_list NNMtpToEFLossFunction::backward(
         float *type_bias = (float*)type_bias_tensor.data_ptr<float>();
         float *zbl_cks = (float*)zbl_cks_tensor.data_ptr<float>();
         float *zbl_dks = (float*)zbl_dks_tensor.data_ptr<float>();
+        float *q_shifter = q_shifter_tensor.data_ptr<float>();
+        float *q_scaler = q_scaler_tensor.data_ptr<float>();
 
         if (brcs_tensor.device() == c10::kCPU) {
             for (int bb=0; bb<batch_size; bb++)
@@ -1170,7 +1190,9 @@ torch::autograd::variable_list NNMtpToEFLossFunction::backward(
                     umax_num_neigh_atoms,
                     nghost,
                     (float)rmax,
-                    (float)rmin);
+                    (float)rmin,
+                    q_shifter,
+                    q_scaler);
                 
                 NNMtpLoss<float>::find_ef_loss_backward(
                     loss_der2coeffs,
@@ -1208,7 +1230,9 @@ torch::autograd::variable_list NNMtpToEFLossFunction::backward(
                     umax_num_neigh_atoms,
                     nghost,
                     (float)rmax,
-                    (float)rmin);
+                    (float)rmin,
+                    q_shifter,
+                    q_scaler);
             }
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
@@ -1279,7 +1303,9 @@ torch::autograd::variable_list NNMtpToEFLossFunction::backward(
                 umax_num_neigh_atoms,
                 nghost,
                 (float)rmax,
-                (float)rmin);
+                (float)rmin,
+                q_shifter,
+                q_scaler);
 
             find_ef_loss_backward_torch_launcher(
                 bloss_der2coeffs,
@@ -1319,7 +1345,9 @@ torch::autograd::variable_list NNMtpToEFLossFunction::backward(
                 umax_num_neigh_atoms,
                 nghost,
                 (float)rmax,
-                (float)rmin);
+                (float)rmin,
+                q_shifter,
+                q_scaler);
             #endif
         }
     } else {
@@ -1339,6 +1367,8 @@ torch::autograd::variable_list NNMtpToEFLossFunction::backward(
         double *type_bias = (double*)type_bias_tensor.data_ptr<double>();
         double *zbl_cks = (double*)zbl_cks_tensor.data_ptr<double>();
         double *zbl_dks = (double*)zbl_dks_tensor.data_ptr<double>();
+        double *q_shifter = q_shifter_tensor.data_ptr<double>();
+        double *q_scaler = q_scaler_tensor.data_ptr<double>();
 
         if (brcs_tensor.device() == c10::kCPU) {
             for (int bb=0; bb<batch_size; bb++)
@@ -1411,7 +1441,9 @@ torch::autograd::variable_list NNMtpToEFLossFunction::backward(
                     umax_num_neigh_atoms,
                     nghost,
                     rmax,
-                    rmin);
+                    rmin,
+                    q_shifter,
+                    q_scaler);
                 
                 NNMtpLoss<double>::find_ef_loss_backward(
                     loss_der2coeffs,
@@ -1449,7 +1481,9 @@ torch::autograd::variable_list NNMtpToEFLossFunction::backward(
                     umax_num_neigh_atoms,
                     nghost,
                     rmax,
-                    rmin);
+                    rmin,
+                    q_shifter,
+                    q_scaler);
             }
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
@@ -1520,7 +1554,9 @@ torch::autograd::variable_list NNMtpToEFLossFunction::backward(
                 umax_num_neigh_atoms,
                 nghost,
                 rmax,
-                rmin);
+                rmin,
+                q_shifter,
+                q_scaler);
 
             find_ef_loss_backward_torch_launcher(
                 bloss_der2coeffs,
@@ -1560,7 +1596,9 @@ torch::autograd::variable_list NNMtpToEFLossFunction::backward(
                 umax_num_neigh_atoms,
                 nghost,
                 rmax,
-                rmin);
+                rmin,
+                q_shifter,
+                q_scaler);
             #endif
         }
 
@@ -1576,6 +1614,8 @@ torch::autograd::variable_list NNMtpToEFLossFunction::backward(
         torch::matmul(bgrad_output_tensor, bloss_der2w0_tensor),
         torch::matmul(bgrad_output_tensor, bloss_der2w1_tensor),
         torch::matmul(bgrad_output_tensor, bloss_der2type_bias_tensor),
+        at::Tensor(),
+        at::Tensor(),
         at::Tensor(),
         at::Tensor(),
         at::Tensor(),
@@ -1626,6 +1666,8 @@ torch::autograd::variable_list NNMtpToLossFunction::forward(
     int nghost,
     double rmax,
     double rmin,
+    const at::Tensor& q_shifter_tensor,
+    const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
     double zbl_rmin,
     const at::Tensor& zbl_cks_tensor,
@@ -1673,6 +1715,8 @@ torch::autograd::variable_list NNMtpToLossFunction::forward(
         float *type_bias = type_bias_tensor.data_ptr<float>();
         float *zbl_cks = zbl_cks_tensor.data_ptr<float>();
         float *zbl_dks = zbl_dks_tensor.data_ptr<float>();
+        float *q_shifter = q_shifter_tensor.data_ptr<float>();
+        float *q_scaler = q_scaler_tensor.data_ptr<float>();
 
         if (brcs_tensor.device() == c10::kCPU) {
             for (int bb=0; bb<batch_size; bb++) 
@@ -1746,7 +1790,9 @@ torch::autograd::variable_list NNMtpToLossFunction::forward(
                     umax_num_neigh_atoms,
                     nghost,
                     (float)rmax,
-                    (float)rmin);
+                    (float)rmin,
+                    q_shifter,
+                    q_scaler);
                 
                 NNMtpLoss<float>::find_loss(
                     (*loss_ptr),
@@ -1831,7 +1877,9 @@ torch::autograd::variable_list NNMtpToLossFunction::forward(
                 umax_num_neigh_atoms,
                 nghost,
                 (float)rmax,
-                (float)rmin);
+                (float)rmin,
+                q_shifter,
+                q_scaler);
             
             find_loss_torch_launcher(
                 bloss,
@@ -1865,6 +1913,8 @@ torch::autograd::variable_list NNMtpToLossFunction::forward(
         double *type_bias = type_bias_tensor.data_ptr<double>();
         double *zbl_cks = zbl_cks_tensor.data_ptr<double>();
         double *zbl_dks = zbl_dks_tensor.data_ptr<double>();
+        double *q_shifter = q_shifter_tensor.data_ptr<double>();
+        double *q_scaler = q_scaler_tensor.data_ptr<double>();
 
         if (brcs_tensor.device() == c10::kCPU) {
             for (int bb=0; bb<batch_size; bb++)
@@ -1938,7 +1988,9 @@ torch::autograd::variable_list NNMtpToLossFunction::forward(
                     umax_num_neigh_atoms,
                     nghost,
                     rmax,
-                    rmin);
+                    rmin,
+                    q_shifter,
+                    q_scaler);
                 
                 NNMtpLoss<double>::find_loss(
                     (*loss_ptr),
@@ -2023,7 +2075,9 @@ torch::autograd::variable_list NNMtpToLossFunction::forward(
                 umax_num_neigh_atoms,
                 nghost,
                 rmax,
-                rmin);
+                rmin,
+                q_shifter,
+                q_scaler);
             
             find_loss_torch_launcher(
                 bloss,
@@ -2075,6 +2129,8 @@ torch::autograd::variable_list NNMtpToLossFunction::forward(
         torch::tensor(nghost, int_options),
         torch::tensor(rmax, float_options),
         torch::tensor(rmin, float_options),
+        q_shifter_tensor,
+        q_scaler_tensor,
         torch::tensor(zbl_rmax, float_options),
         torch::tensor(zbl_rmin, float_options),
         zbl_cks_tensor,
@@ -2118,10 +2174,12 @@ torch::autograd::variable_list NNMtpToLossFunction::backward(
     int nghost = ctx->get_saved_variables()[23].item<int>();
     double rmax = ctx->get_saved_variables()[24].item<double>();
     double rmin = ctx->get_saved_variables()[25].item<double>();
-    double zbl_rmax = ctx->get_saved_variables()[26].item<double>();
-    double zbl_rmin = ctx->get_saved_variables()[27].item<double>();
-    at::Tensor zbl_cks_tensor = ctx->get_saved_variables()[28];
-    at::Tensor zbl_dks_tensor = ctx->get_saved_variables()[29];
+    at::Tensor q_shifter_tensor = ctx->get_saved_variables()[26];
+    at::Tensor q_scaler_tensor = ctx->get_saved_variables()[27];
+    double zbl_rmax = ctx->get_saved_variables()[28].item<double>();
+    double zbl_rmin = ctx->get_saved_variables()[29].item<double>();
+    at::Tensor zbl_cks_tensor = ctx->get_saved_variables()[30];
+    at::Tensor zbl_dks_tensor = ctx->get_saved_variables()[31];
 
     // 1. 
     int batch_size = (int)bfirstneigh_tensor.size(0);
@@ -2172,6 +2230,8 @@ torch::autograd::variable_list NNMtpToLossFunction::backward(
         float *type_bias = (float*)type_bias_tensor.data_ptr<float>();
         float *zbl_cks = (float*)zbl_cks_tensor.data_ptr<float>();
         float *zbl_dks = (float*)zbl_dks_tensor.data_ptr<float>();
+        float *q_shifter = q_shifter_tensor.data_ptr<float>();
+        float *q_scaler = q_scaler_tensor.data_ptr<float>();
 
         if (brcs_tensor.device() == c10::kCPU) {
             for (int bb=0; bb<batch_size; bb++)
@@ -2248,7 +2308,9 @@ torch::autograd::variable_list NNMtpToLossFunction::backward(
                     umax_num_neigh_atoms,
                     nghost,
                     (float)rmax,
-                    (float)rmin);
+                    (float)rmin,
+                    q_shifter,
+                    q_scaler);
                 
                 NNMtpLoss<float>::find_loss_backward(
                     loss_der2coeffs,
@@ -2289,7 +2351,9 @@ torch::autograd::variable_list NNMtpToLossFunction::backward(
                     umax_num_neigh_atoms,
                     nghost,
                     (float)rmax,
-                    (float)rmin);
+                    (float)rmin,
+                    q_shifter,
+                    q_scaler);
             }
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
@@ -2364,7 +2428,9 @@ torch::autograd::variable_list NNMtpToLossFunction::backward(
                 umax_num_neigh_atoms,
                 nghost,
                 (float)rmax,
-                (float)rmin);
+                (float)rmin,
+                q_shifter,
+                q_scaler);
 
             find_loss_backward_torch_launcher(
                 bloss_der2coeffs,
@@ -2407,7 +2473,9 @@ torch::autograd::variable_list NNMtpToLossFunction::backward(
                 umax_num_neigh_atoms,
                 nghost,
                 (float)rmax,
-                (float)rmin);
+                (float)rmin,
+                q_shifter,
+                q_scaler);
             #endif
         }
     } else {
@@ -2428,6 +2496,8 @@ torch::autograd::variable_list NNMtpToLossFunction::backward(
         double *type_bias = (double*)type_bias_tensor.data_ptr<double>();
         double *zbl_cks = (double*)zbl_cks_tensor.data_ptr<double>();
         double *zbl_dks = (double*)zbl_dks_tensor.data_ptr<double>();
+        double *q_shifter = q_shifter_tensor.data_ptr<double>();
+        double *q_scaler = q_scaler_tensor.data_ptr<double>();
 
         if (brcs_tensor.device() == c10::kCPU) {
             for (int bb=0; bb<batch_size; bb++)
@@ -2504,7 +2574,9 @@ torch::autograd::variable_list NNMtpToLossFunction::backward(
                     umax_num_neigh_atoms,
                     nghost,
                     rmax,
-                    rmin);
+                    rmin,
+                    q_shifter,
+                    q_scaler);
                 
                 NNMtpLoss<double>::find_loss_backward(
                     loss_der2coeffs,
@@ -2545,7 +2617,9 @@ torch::autograd::variable_list NNMtpToLossFunction::backward(
                     umax_num_neigh_atoms,
                     nghost,
                     rmax,
-                    rmin);
+                    rmin,
+                    q_shifter,
+                    q_scaler);
             }
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
@@ -2620,7 +2694,9 @@ torch::autograd::variable_list NNMtpToLossFunction::backward(
                 umax_num_neigh_atoms,
                 nghost,
                 rmax,
-                rmin);
+                rmin,
+                q_shifter,
+                q_scaler);
 
             find_loss_backward_torch_launcher(
                 bloss_der2coeffs,
@@ -2663,7 +2739,9 @@ torch::autograd::variable_list NNMtpToLossFunction::backward(
                 umax_num_neigh_atoms,
                 nghost,
                 rmax,
-                rmin);
+                rmin,
+                q_shifter,
+                q_scaler);
             #endif
         }
     }
@@ -2680,6 +2758,8 @@ torch::autograd::variable_list NNMtpToLossFunction::backward(
         torch::matmul(bgrad_output_tensor, bloss_der2w0_tensor),
         torch::matmul(bgrad_output_tensor, bloss_der2w1_tensor),
         torch::matmul(bgrad_output_tensor, bloss_der2type_bias_tensor),
+        at::Tensor(),
+        at::Tensor(),
         at::Tensor(),
         at::Tensor(),
         at::Tensor(),
@@ -2725,6 +2805,8 @@ torch::autograd::variable_list NNMtpToEFVFunction::forward(
     int nghost,
     double rmax,
     double rmin,
+    const at::Tensor& q_shifter_tensor,
+    const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
     double zbl_rmin,
     const at::Tensor& zbl_cks_tensor,
@@ -2769,6 +2851,8 @@ torch::autograd::variable_list NNMtpToEFVFunction::forward(
         float *type_bias = type_bias_tensor.data_ptr<float>();
         float *zbl_cks = zbl_cks_tensor.data_ptr<float>();
         float *zbl_dks = zbl_dks_tensor.data_ptr<float>();
+        float *q_shifter = q_shifter_tensor.data_ptr<float>();
+        float *q_scaler = q_scaler_tensor.data_ptr<float>();
 
         if (brcs_tensor.device() == c10::kCPU) {
             for (int bb=0; bb<batch_size; bb++) 
@@ -2838,7 +2922,9 @@ torch::autograd::variable_list NNMtpToEFVFunction::forward(
                     umax_num_neigh_atoms,
                     nghost,
                     (float)rmax,
-                    (float)rmin);
+                    (float)rmin,
+                    q_shifter,
+                    q_scaler);
             }
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
@@ -2905,7 +2991,9 @@ torch::autograd::variable_list NNMtpToEFVFunction::forward(
                 umax_num_neigh_atoms,
                 nghost,
                 (float)rmax,
-                (float)rmin);
+                (float)rmin,
+                q_shifter,
+                q_scaler);
             #endif
         }
     } else {
@@ -2921,6 +3009,8 @@ torch::autograd::variable_list NNMtpToEFVFunction::forward(
         double *type_bias = type_bias_tensor.data_ptr<double>();
         double *zbl_cks = zbl_cks_tensor.data_ptr<double>();
         double *zbl_dks = zbl_dks_tensor.data_ptr<double>();
+        double *q_shifter = q_shifter_tensor.data_ptr<double>();
+        double *q_scaler = q_scaler_tensor.data_ptr<double>();
 
         if (brcs_tensor.device() == c10::kCPU) {
             for (int bb=0; bb<batch_size; bb++) 
@@ -2990,7 +3080,9 @@ torch::autograd::variable_list NNMtpToEFVFunction::forward(
                     umax_num_neigh_atoms,
                     nghost,
                     rmax,
-                    rmin);
+                    rmin,
+                    q_shifter,
+                    q_scaler);
             }
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
@@ -3057,7 +3149,9 @@ torch::autograd::variable_list NNMtpToEFVFunction::forward(
                 umax_num_neigh_atoms,
                 nghost,
                 rmax,
-                rmin);
+                rmin,
+                q_shifter,
+                q_scaler);
             #endif
         }
     }
@@ -3087,6 +3181,8 @@ torch::autograd::variable_list NNMtpToEFVFunction::forward(
         torch::tensor(nghost, int_options),
         torch::tensor(rmax, float_options),
         torch::tensor(rmin, float_options),
+        q_shifter_tensor,
+        q_scaler_tensor,
         torch::tensor(zbl_rmax, float_options),
         torch::tensor(zbl_rmin, float_options),
         zbl_cks_tensor,
@@ -3103,6 +3199,8 @@ torch::autograd::variable_list NNMtpToEFVFunction::backward(
     torch::autograd::variable_list bgrad_outputs_tensor)
 {
     return {
+        at::Tensor(),
+        at::Tensor(),
         at::Tensor(),
         at::Tensor(),
         at::Tensor(),
@@ -3152,6 +3250,8 @@ torch::autograd::variable_list NNMtpToEFFunction::forward(
     int nghost,
     double rmax,
     double rmin,
+    const at::Tensor& q_shifter_tensor,
+    const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
     double zbl_rmin,
     const at::Tensor& zbl_cks_tensor,
@@ -3194,6 +3294,8 @@ torch::autograd::variable_list NNMtpToEFFunction::forward(
         float *type_bias = type_bias_tensor.data_ptr<float>();
         float *zbl_cks = zbl_cks_tensor.data_ptr<float>();
         float *zbl_dks = zbl_dks_tensor.data_ptr<float>();
+        float *q_shifter = q_shifter_tensor.data_ptr<float>();
+        float *q_scaler = q_scaler_tensor.data_ptr<float>();
 
         if (brcs_tensor.device() == c10::kCPU) {
             for (int bb=0; bb<batch_size; bb++) 
@@ -3260,7 +3362,9 @@ torch::autograd::variable_list NNMtpToEFFunction::forward(
                     umax_num_neigh_atoms,
                     nghost,
                     (float)rmax,
-                    (float)rmin);
+                    (float)rmin,
+                    q_shifter,
+                    q_scaler);
             }
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
@@ -3324,7 +3428,9 @@ torch::autograd::variable_list NNMtpToEFFunction::forward(
                 umax_num_neigh_atoms,
                 nghost,
                 (float)rmax,
-                (float)rmin);
+                (float)rmin,
+                q_shifter,
+                q_scaler);
             #endif
         }
     } else {
@@ -3339,6 +3445,8 @@ torch::autograd::variable_list NNMtpToEFFunction::forward(
         double *type_bias = type_bias_tensor.data_ptr<double>();
         double *zbl_cks = zbl_cks_tensor.data_ptr<double>();
         double *zbl_dks = zbl_dks_tensor.data_ptr<double>();
+        double *q_shifter = q_shifter_tensor.data_ptr<double>();
+        double *q_scaler = q_scaler_tensor.data_ptr<double>();
 
         if (brcs_tensor.device() == c10::kCPU) {
             for (int bb=0; bb<batch_size; bb++) 
@@ -3405,7 +3513,9 @@ torch::autograd::variable_list NNMtpToEFFunction::forward(
                     umax_num_neigh_atoms,
                     nghost,
                     rmax,
-                    rmin);
+                    rmin,
+                    q_shifter,
+                    q_scaler);
             }
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
@@ -3469,7 +3579,9 @@ torch::autograd::variable_list NNMtpToEFFunction::forward(
                 umax_num_neigh_atoms,
                 nghost,
                 rmax,
-                rmin);
+                rmin,
+                q_shifter,
+                q_scaler);
             #endif
         }
     }
@@ -3499,6 +3611,8 @@ torch::autograd::variable_list NNMtpToEFFunction::forward(
         torch::tensor(nghost, int_options),
         torch::tensor(rmax, float_options),
         torch::tensor(rmin, float_options),
+        q_shifter_tensor,
+        q_scaler_tensor,
         torch::tensor(zbl_rmax, float_options),
         torch::tensor(zbl_rmin, float_options),
         zbl_cks_tensor,
@@ -3536,8 +3650,11 @@ torch::autograd::variable_list NNMtpToEFFunction::backward(
         at::Tensor(),
         at::Tensor(),
         at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
         at::Tensor()};
 }
+
 
 
 torch::autograd::variable_list NNMtpToDescriptorsFunction::forward(
@@ -3821,6 +3938,8 @@ torch::autograd::variable_list NNMtpToEsitesFunction::forward(
     int nghost,
     double rmax,
     double rmin,
+    const at::Tensor& q_shifter_tensor,
+    const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
     double zbl_rmin,
     const at::Tensor& zbl_cks_tensor,
@@ -3862,6 +3981,8 @@ torch::autograd::variable_list NNMtpToEsitesFunction::forward(
         float *type_bias = (float*)type_bias_tensor.data_ptr<float>();
         float *zbl_cks = (float*)zbl_cks_tensor.data_ptr<float>();
         float *zbl_dks = (float*)zbl_dks_tensor.data_ptr<float>();
+        float *q_shifter = q_shifter_tensor.data_ptr<float>();
+        float *q_scaler = q_scaler_tensor.data_ptr<float>();
 
         for (int bb=0; bb<batch_size; bb++) {
             float *e_sites = (float*)be_sites_tensor[bb].data_ptr<float>();
@@ -3924,7 +4045,9 @@ torch::autograd::variable_list NNMtpToEsitesFunction::forward(
                 umax_num_neigh_atoms,
                 nghost,
                 rmax,
-                rmin);
+                rmin,
+                q_shifter,
+                q_scaler);
         }
     } else {
         float_options = c10::TensorOptions()
@@ -3937,6 +4060,8 @@ torch::autograd::variable_list NNMtpToEsitesFunction::forward(
         double *type_bias = (double*)type_bias_tensor.data_ptr<double>();
         double *zbl_cks = (double*)zbl_cks_tensor.data_ptr<double>();
         double *zbl_dks = (double*)zbl_dks_tensor.data_ptr<double>();
+        double *q_shifter = q_shifter_tensor.data_ptr<double>();
+        double *q_scaler = q_scaler_tensor.data_ptr<double>();
 
         for (int bb=0; bb<batch_size; bb++) {
             double *e_sites = (double*)be_sites_tensor[bb].data_ptr<double>();
@@ -3999,7 +4124,9 @@ torch::autograd::variable_list NNMtpToEsitesFunction::forward(
                 umax_num_neigh_atoms,
                 nghost,
                 rmax,
-                rmin);
+                rmin,
+                q_shifter,
+                q_scaler);
         }
     }
 
@@ -4028,6 +4155,8 @@ torch::autograd::variable_list NNMtpToEsitesFunction::forward(
         torch::tensor(nghost, int_options),
         torch::tensor(rmax, float_options),
         torch::tensor(rmin, float_options),
+        q_shifter_tensor,
+        q_scaler_tensor,
         torch::tensor(zbl_rmax, float_options),
         torch::tensor(zbl_rmin, float_options),
         zbl_cks_tensor,
@@ -4065,10 +4194,12 @@ torch::autograd::variable_list NNMtpToEsitesFunction::backward(
     int nghost = ctx->get_saved_variables()[17].item<int>();
     double rmax = ctx->get_saved_variables()[18].item<double>();
     double rmin = ctx->get_saved_variables()[19].item<double>();
-    double zbl_rmax = ctx->get_saved_variables()[20].item<double>();
-    double zbl_rmin = ctx->get_saved_variables()[21].item<double>();
-    at::Tensor zbl_cks_tensor = ctx->get_saved_variables()[22];
-    at::Tensor zbl_dks_tensor = ctx->get_saved_variables()[23];
+    at::Tensor q_shifter_tensor = ctx->get_saved_variables()[20];
+    at::Tensor q_scaler_tensor = ctx->get_saved_variables()[21];
+    double zbl_rmax = ctx->get_saved_variables()[22].item<double>();
+    double zbl_rmin = ctx->get_saved_variables()[23].item<double>();
+    at::Tensor zbl_cks_tensor = ctx->get_saved_variables()[24];
+    at::Tensor zbl_dks_tensor = ctx->get_saved_variables()[25];
     
     // 1. 
     int batch_size = bfirstneigh_tensor.size(0);
@@ -4112,6 +4243,8 @@ torch::autograd::variable_list NNMtpToEsitesFunction::backward(
         float *type_bias = (float*)type_bias_tensor.data_ptr<float>();
         float *zbl_cks = (float*)zbl_cks_tensor.data_ptr<float>();
         float *zbl_dks = (float*)zbl_dks_tensor.data_ptr<float>();
+        float *q_shifter = q_shifter_tensor.data_ptr<float>();
+        float *q_scaler = q_scaler_tensor.data_ptr<float>();
 
         for (int bb=0; bb<batch_size; bb++) {
             float *e_sites_der2coeffs = (float*)be_sites_der2coeffs_tensor[bb].data_ptr<float>();
@@ -4155,7 +4288,9 @@ torch::autograd::variable_list NNMtpToEsitesFunction::backward(
                 umax_num_neigh_atoms,
                 nghost,
                 rmax,
-                rmin);
+                rmin,
+                q_shifter,
+                q_scaler);
         }
     } else {
         float_options = c10::TensorOptions()
@@ -4171,6 +4306,8 @@ torch::autograd::variable_list NNMtpToEsitesFunction::backward(
         double *type_bias = (double*)type_bias_tensor.data_ptr<double>();
         double *zbl_cks = (double*)zbl_cks_tensor.data_ptr<double>();
         double *zbl_dks = (double*)zbl_dks_tensor.data_ptr<double>();
+        double *q_shifter = q_shifter_tensor.data_ptr<double>();
+        double *q_scaler = q_scaler_tensor.data_ptr<double>();
 
         for (int bb=0; bb<batch_size; bb++) {
             double *e_sites_der2coeffs = (double*)be_sites_der2coeffs_tensor[bb].data_ptr<double>();
@@ -4214,7 +4351,9 @@ torch::autograd::variable_list NNMtpToEsitesFunction::backward(
                 umax_num_neigh_atoms,
                 nghost,
                 rmax,
-                rmin);
+                rmin,
+                q_shifter,
+                q_scaler);
         }
     }
     
@@ -4243,8 +4382,11 @@ torch::autograd::variable_list NNMtpToEsitesFunction::backward(
         at::Tensor(),
         at::Tensor(),
         at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
         at::Tensor()};
 }
+
 
 
 
@@ -4277,6 +4419,8 @@ torch::autograd::variable_list NNMtpToEFLossOp(
         int nghost,
         double rmax,
         double rmin,
+        const at::Tensor& q_shifter_tensor,
+        const at::Tensor& q_scaler_tensor,
         double zbl_rmax,
         double zbl_rmin,
         const at::Tensor& zbl_cks_tensor,
@@ -4307,6 +4451,8 @@ torch::autograd::variable_list NNMtpToEFLossOp(
         nghost,
         rmax,
         rmin,
+        q_shifter_tensor,
+        q_scaler_tensor,
         zbl_rmax,
         zbl_rmin,
         zbl_cks_tensor,
@@ -4341,6 +4487,8 @@ torch::autograd::variable_list NNMtpToLossOp(
         int nghost,
         double rmax,
         double rmin,
+        const at::Tensor& q_shifter_tensor,
+        const at::Tensor& q_scaler_tensor,
         double zbl_rmax,
         double zbl_rmin,
         const at::Tensor& zbl_cks_tensor,
@@ -4373,6 +4521,8 @@ torch::autograd::variable_list NNMtpToLossOp(
         nghost,
         rmax,
         rmin,
+        q_shifter_tensor,
+        q_scaler_tensor,
         zbl_rmax,
         zbl_rmin,
         zbl_cks_tensor,
@@ -4402,6 +4552,8 @@ torch::autograd::variable_list NNMtpToEFOp(
         int nghost,
         double rmax,
         double rmin,
+        const at::Tensor& q_shifter_tensor,
+        const at::Tensor& q_scaler_tensor,
         double zbl_rmax,
         double zbl_rmin,
         const at::Tensor& zbl_cks_tensor,
@@ -4428,6 +4580,8 @@ torch::autograd::variable_list NNMtpToEFOp(
         nghost,
         rmax,
         rmin,
+        q_shifter_tensor,
+        q_scaler_tensor,
         zbl_rmax,
         zbl_rmin,
         zbl_cks_tensor,
@@ -4455,6 +4609,8 @@ torch::autograd::variable_list NNMtpToEFVOp(
         int nghost,
         double rmax,
         double rmin,
+        const at::Tensor& q_shifter_tensor,
+        const at::Tensor& q_scaler_tensor,
         double zbl_rmax,
         double zbl_rmin,
         const at::Tensor& zbl_cks_tensor,
@@ -4481,11 +4637,15 @@ torch::autograd::variable_list NNMtpToEFVOp(
         nghost,
         rmax,
         rmin,
+        q_shifter_tensor,
+        q_scaler_tensor,
         zbl_rmax,
         zbl_rmin,
         zbl_cks_tensor,
         zbl_dks_tensor);
 }
+
+
 
 torch::autograd::variable_list NNMtpToDescriptorsOp(
     int chebyshev_size,
@@ -4527,6 +4687,7 @@ torch::autograd::variable_list NNMtpToDescriptorsOp(
 }
 
 
+
 torch::autograd::variable_list NNMtpToEsitesOp(
     int chebyshev_size,
     const at::Tensor& coeffs_tensor,
@@ -4548,6 +4709,8 @@ torch::autograd::variable_list NNMtpToEsitesOp(
     int nghost,
     double rmax,
     double rmin,
+    const at::Tensor& q_shifter_tensor,
+    const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
     double zbl_rmin,
     const at::Tensor& zbl_cks_tensor,
@@ -4574,11 +4737,14 @@ torch::autograd::variable_list NNMtpToEsitesOp(
         nghost,
         rmax,
         rmin,
+        q_shifter_tensor,
+        q_scaler_tensor,
         zbl_rmax,
         zbl_rmin,
         zbl_cks_tensor,
         zbl_dks_tensor);
 }
+
 
 };  // namespace : nnmtp
 };  // namespace : ai2pot
