@@ -16,14 +16,17 @@
 # along with AI2Pot.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from typing import List
+from typing import (List, Union, Tuple, Optional)
 import numpy as np
 from dpdata import LabeledSystem, MultiSystems
 from ase import Atoms
 from ase.io import read as ase_read
+import torch
+from torch.utils.data import DataLoader
 
 from ai2pot.core.nblist import Nblist
 from ai2pot.data.mlffdataset import ExtxyzDataset
+from ai2pot.fromcc import targetStatisticsOp
 
 
 def svd_solve(A, b):
@@ -310,3 +313,55 @@ class ExtxyzAnalyser(object):
         return distances_array
 
     
+
+class ExtxyzDatasetPreprocessor(object):
+    @staticmethod
+    def get_dataset_target_statistics(extxyz_dataset: ExtxyzDataset,
+                                      batch_size: int = 200):
+        'Welford algorithm'
+        dataloader: DataLoader = DataLoader(dataset=extxyz_dataset,
+                                            batch_size=batch_size,
+                                            shuffle=False)
+        
+        batch_size_old: int = 0     # $n_{old}$ for ei
+        num_atoms_old: int = 0      # $n_{old}$ for force
+        ei_mean_old: float = 0.0
+        ei_M2_old: float = 0.0
+        force_M2_old: float = 0.0
+
+        ei_mean_new: float = 0.0
+        ei_M2_new: float = 0.0
+        force_M2_new: float = 0.0
+
+        for batch_idx, batch_data in enumerate(dataloader):
+            # 1. Calculate for batch
+            binum_tensor: torch.Tensor = batch_data[0]
+            betot_dft_tensor: torch.Tensor = batch_data[7]
+            bforce_dft_tensor: torch.Tensor = batch_data[8]
+            batch_size_batch: int = binum_tensor.shape[0]
+            natoms_in_batch, ei_mean_batch, ei_M2_batch, force_M2_batch = targetStatisticsOp(binum_tensor,
+                                                                                             betot_dft_tensor,
+                                                                                             bforce_dft_tensor)
+            natoms_in_batch = natoms_in_batch.item()
+            ei_mean_batch = ei_mean_batch.item()
+            ei_M2_batch = ei_M2_batch.item()
+            force_M2_batch = force_M2_batch.item()
+
+            # 2. Update
+            ei_mean_new = ei_mean_old + batch_size_batch/(batch_size_batch+batch_size_old) * (ei_mean_batch - ei_mean_old)
+            ei_M2_new = ei_M2_old + ei_M2_batch + \
+                        (batch_size_old*batch_size_batch)/(batch_size_old+batch_size_batch)*((ei_mean_batch - ei_mean_old)**2)
+            force_M2_new = force_M2_old + force_M2_batch
+
+
+            # 3. Reassign
+            ei_mean_old = ei_mean_new
+            ei_M2_old = ei_M2_new
+            force_M2_old = force_M2_new
+            num_atoms_old += natoms_in_batch
+            batch_size_old += batch_size_batch
+        
+        ei_std_old: float = (ei_M2_old/batch_size_old)**0.5
+        force_std_old: float = (force_M2_old/(3*num_atoms_old))**0.5
+        print(force_M2_old, num_atoms_old)
+        return (ei_mean_old, ei_std_old, force_std_old)

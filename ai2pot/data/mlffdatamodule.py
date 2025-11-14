@@ -90,56 +90,28 @@ class ExtxyzDataModule(LightningDataModule):
 
     def train_dataloader(self):
         # trainer.fit(model, datamodule=dm)
-        trainset_dataset = ExtxyzDataset(filename=self.trainset_path,
-                                        rcut=self.rcut,
-                                        umax_num_neigh_atoms=self.umax_num_neigh_atoms,
-                                        pbc_xyz=self.pbc_xyz,
-                                        sort=self.sort,
-                                        torch_float_dtype=self.torch_float_dtype,
-                                        has_virial=self.has_virial)
-        return DataLoader(dataset=trainset_dataset,
+        return DataLoader(dataset=self.trainset_dataset,
                           batch_size=self.batch_size,
                           shuffle=True)
     
 
     def val_dataloader(self):
         # trainer.fit(model, datamodule=dm)
-        validset_dataset = ExtxyzDataset(filename=self.validset_path,
-                                        rcut=self.rcut,
-                                        umax_num_neigh_atoms=self.umax_num_neigh_atoms,
-                                        pbc_xyz=self.pbc_xyz,
-                                        sort=self.sort,
-                                        torch_float_dtype=self.torch_float_dtype,
-                                        has_virial=self.has_virial)
-        return DataLoader(dataset=validset_dataset,
+        return DataLoader(dataset=self.validset_dataset,
                           batch_size=self.batch_size,
                           shuffle=True)
     
 
     def test_dataloader(self):
         # trainer.test(model, datamodule=dm)
-        testset_dataset = ExtxyzDataset(filename=self.testset_path,
-                                        rcut=self.rcut,
-                                        umax_num_neigh_atoms=self.umax_num_neigh_atoms,
-                                        pbc_xyz=self.pbc_xyz,
-                                        sort=self.sort,
-                                        torch_float_dtype=self.torch_float_dtype,
-                                        has_virial=self.has_virial)
-        return DataLoader(dataset=testset_dataset,
+        return DataLoader(dataset=self.testset_dataset,
                           batch_size=self.batch_size,
                           shuffle=True)
 
     
     def predict_dataloader(self):
         # trainer.predict(model, datamodule=dm)
-        predictset_dataset = ExtxyzDataset(filename=self.predict_path,
-                                        rcut=self.rcut,
-                                        umax_num_neigh_atoms=self.umax_num_neigh_atoms,
-                                        pbc_xyz=self.pbc_xyz,
-                                        sort=self.sort,
-                                        torch_float_dtype=self.torch_float_dtype,
-                                        has_virial=self.has_virial)
-        return DataLoader(dataset=predictset_dataset,
+        return DataLoader(dataset=self.predictset_dataset,
                           batch_size=self.batch_size,
                           shuffle=True)
     
