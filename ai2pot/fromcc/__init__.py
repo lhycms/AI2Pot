@@ -29,14 +29,22 @@ nblist_lib_dir: str = os.path.join(ai2pot_source_build_lib_dir, "nblist")
 sys.path.append(nblist_lib_dir)
 import nblist
 
-### Part 2.1. deepmd
+
+### Part 2.1. fituils
+fitutils_lib_dir:str = os.path.join(ai2pot_source_build_lib_dir, "descriptor", "fitutils")
+fitutils_bind_so_path: str = os.path.join(fitutils_lib_dir, "libfitutils_bind.so")
+torch.ops.load_library(fitutils_bind_so_path)
+targetStatisticsOp = torch.ops.fitutils.targetStatisticsOp
+
+### Part 2.2. deepmd
 deepmd_lib_dir:str = os.path.join(ai2pot_source_build_lib_dir, "descriptor", "deepmd")
 envMatrixOp_bind_so_path:str = os.path.join(deepmd_lib_dir, "libenvMatrixOp_bind.so")
 torch.ops.load_library(envMatrixOp_bind_so_path)
 # name `envMatrixOp`
 envMatrixOp = torch.ops.deepmd.EnvMatrixOp
 
-### Part 2.2. mtpr
+
+### Part 2.3. mtpr
 mtpr_lib_dir:str = os.path.join(ai2pot_source_build_lib_dir, "descriptor", "mtpr")
 mtpr_bind_so_path: str = os.path.join(mtpr_lib_dir, "libmtpr_bind.so")
 torch.ops.load_library(mtpr_bind_so_path)
@@ -51,7 +59,7 @@ linearMtpToEsitesOp = torch.ops.mtpr.linearMtpToEsitesOp
 linearMtpToDescriptorsOp = torch.ops.mtpr.linearMtpToDescriptorsOp
 
 
-### Part 2.3. nnmtp
+### Part 2.4. nnmtp
 nnmtp_lib_dir:str = os.path.join(ai2pot_source_build_lib_dir, "descriptor", "nnmtp")
 nnmtp_bind_so_path: str = os.path.join(nnmtp_lib_dir, "libnnmtp_bind.so")
 torch.ops.load_library(nnmtp_bind_so_path)
