@@ -15,6 +15,7 @@
 
 #include <ATen/ATen.h>
 #include <torch/torch.h>
+#include <stdio.h>
 
 #include "../include/targetStatistics.h"
 #include "../include/targetStatisticsOp.h"
@@ -50,7 +51,7 @@ torch::autograd::variable_list TargetStatisticsFunction::forward(
         float_options = c10::TensorOptions()
                             .dtype(torch::kFloat32)
                             .device(betot_dft_tensor.device());
-        natoms_in_batch_tensor = torch::tensor(0, float_options);
+        natoms_in_batch_tensor = torch::tensor(0, int_options);
         ei_mean_tensor = torch::tensor(0, float_options);
         ei_M2_tensor = torch::tensor(0, float_options);
         force_M2_tensor = torch::tensor(0, float_options);
@@ -82,7 +83,7 @@ torch::autograd::variable_list TargetStatisticsFunction::forward(
         float_options = c10::TensorOptions()
                             .dtype(torch::kFloat64)
                             .device(betot_dft_tensor.device());
-        natoms_in_batch_tensor = torch::tensor(0, float_options);
+        natoms_in_batch_tensor = torch::tensor(0, int_options);
         ei_mean_tensor = torch::tensor(0, float_options);
         ei_M2_tensor = torch::tensor(0, float_options);
         force_M2_tensor = torch::tensor(0, float_options);
