@@ -17,13 +17,23 @@ if (TORCH_OP)
     add_library(target_statistics_op SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/targetStatisticsOp.cc)
     target_link_libraries(target_statistics_op PRIVATE ${TORCH_LIBRARIES})
 
+    add_library(descriptor_statistics_op SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/descriptorsStatisticsOp.cc)
+    target_link_libraries(descriptor_statistics_op PRIVATE ${TORCH_LIBRARIES})
+
     add_library(fitutils_bind SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bind/fitutils_bind.cc)
     target_include_directories(fitutils_bind PRIVATE ${PYTHON_INCLUDE_DIRS})
-    target_link_libraries(fitutils_bind PRIVATE target_statistics_op ${TORCH_LIBRARIES} ${PYTHON_LIBRARIES})
+    target_link_libraries(fitutils_bind PRIVATE target_statistics_op descriptor_statistics_op ${TORCH_LIBRARIES} ${PYTHON_LIBRARIES})
 endif()
 
 # 6. Compile test
 if (BUILD_TEST)
     add_executable(test_target_statistics ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_targetStatistics.cc)
     target_link_libraries(test_target_statistics PRIVATE gtest gtest_main)
+
+    add_executable(test_all_type_descriptors_statistics ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_AllTypeDescriptorsStatistics.cc)
+    target_link_libraries(test_all_type_descriptors_statistics PRIVATE gtest gtest_main)
+
+    gtest_discover_tests(test_target_statistics)
+    gtest_discover_tests(test_all_type_descriptors_statistics)
 endif()
+

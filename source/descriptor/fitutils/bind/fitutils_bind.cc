@@ -19,6 +19,7 @@
 #include <cassert>
 
 #include "../include/targetStatisticsOp.h"
+#include "../include/descriptorsStatisticsOp.h"
 
 
 TORCH_LIBRARY(fitutils, m) {
@@ -32,6 +33,17 @@ TORCH_LIBRARY(fitutils, m) {
                 binum_tensor,
                 betot_dft_tensor,
                 bforce_dft_tensor);
+        }
+    );
+
+    m.def(
+        "allTypeDescriptorsStatisticsOp",
+        [](const at::Tensor& binum_tensor,
+           const at::Tensor& bdescriptors_tensor)
+        {
+            return ai2pot::fitutils::AllTypeDescriptorsStatisticsOp(
+                binum_tensor,
+                bdescriptors_tensor);
         }
     );
 }
