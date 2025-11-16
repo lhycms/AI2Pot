@@ -26,7 +26,7 @@ class ExtxyzDatasetPreprocessorTest(unittest.TestCase):
         umax_num_neigh_atoms: int = 200
         pbc_xyz: List[bool] = [True, True, True]
         sort: bool = False
-        torch_float_dtype: torch._C.dtype = torch.float32
+        torch_float_dtype: torch._C.dtype = torch.float64
         has_virial: bool = False
         self.extxyz_dataset: ExtxyzDataset = ExtxyzDataset(filename=filename,
                                                       rcut=rcut,

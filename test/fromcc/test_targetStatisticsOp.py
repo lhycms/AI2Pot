@@ -28,7 +28,7 @@ class TargetStatisticsOpTest(unittest.TestCase):
         umax_num_neigh_atoms: int = 200
         pbc_xyz: List[bool] = [True, True, True]
         sort: bool = False
-        torch_float_dtype: torch._C.dtype = torch.float32
+        torch_float_dtype: torch._C.dtype = torch.float64
         has_virial: bool = False
         self.extxyz_dataset: ExtxyzDataset = ExtxyzDataset(filename=filename,
                                                       rcut=rcut,
@@ -56,15 +56,15 @@ class TargetStatisticsOpTest(unittest.TestCase):
             natoms_in_batch, ei_mean, ei_M2, force_M2 = results
 
             print("1. Calculate using torch:")
-            print("\t1.2. ei_mean = ", torch.sum(batch_data[7])/natoms_in_batch)
-            print("\t1.4. force_std = ", torch.std(batch_data[8]))
+            print("\t1.2. ei_mean = ", (torch.sum(batch_data[7])/natoms_in_batch).item())
+            print("\t1.4. force_std = ", torch.std(batch_data[8]).item())
             print("\n")
 
         print("2. Calculate using targetStatisticsOp:")
         print("\t2.1. natoms_in_batch = ", natoms_in_batch)
-        print("\t2.2. ei_mean = ", ei_mean)
-        print("\t2.3. ei_std = ", torch.sqrt(ei_M2/batch_size))
-        print("\t2.4. force_std = ", torch.sqrt(force_M2/(3*natoms_in_batch)))
+        print("\t2.2. ei_mean = ", ei_mean.item())
+        print("\t2.3. ei_std = ", torch.sqrt(ei_M2/(batch_size-1)).item())
+        print("\t2.4. force_std = ", torch.sqrt(force_M2/(3*natoms_in_batch-1)).item())
 
 
 if __name__ == "__main__":

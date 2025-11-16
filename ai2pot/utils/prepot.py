@@ -361,7 +361,7 @@ class ExtxyzDatasetPreprocessor(object):
             num_atoms_old += natoms_in_batch
             batch_size_old += batch_size_batch
         
-        ei_std_old: float = (ei_M2_old/batch_size_old)**0.5
-        force_std_old: float = (force_M2_old/(3*num_atoms_old))**0.5
+        ei_std_old: float = (ei_M2_old/(batch_size_old-1))**0.5
+        force_std_old: float = (force_M2_old/(3*num_atoms_old-1))**0.5
         print(force_M2_old, num_atoms_old)
         return (ei_mean_old, ei_std_old, force_std_old)

@@ -43,7 +43,7 @@ class LinearMtpTest(unittest.TestCase):
         self.umax_num_neigh_atoms: int = 200
         self.fit_virial: bool = False
         
-        """
+        
         self.ntypes: int = 4
         self.type_map: List[int] = [16, 34, 41, 75]
         self.type_map_tensor = torch.tensor(self.type_map, dtype=torch.int32).to(self.device)
@@ -60,6 +60,7 @@ class LinearMtpTest(unittest.TestCase):
                                                       [3.0, 0.0, 0]
                                                       ],
                                               coords_are_cartesian=True)
+        """
         print(self.structure)
     
         # 2. ZBL
@@ -107,7 +108,7 @@ class LinearMtpTest(unittest.TestCase):
         self.coeffs_tensor: torch.Tensor = torch.zeros(self.ntypes*self.ntypes*self.nmus*self.chebyshev_size, 
                                                        dtype=self.torch_float_dtype,
                                                        device=self.device)
-        nn.init.normal_(self.coeffs_tensor, mean=0.1, std=0.1)
+        nn.init.normal_(self.coeffs_tensor, mean=0.0, std=0.1)
         self.linear_coeffs_tensor: torch.Tensor = torch.zeros(self.alpha_moment_mapping_tensor.size(0),
                                                               dtype=self.torch_float_dtype,
                                                               device=self.device)
@@ -130,7 +131,7 @@ class LinearMtpTest(unittest.TestCase):
         print("LinearMtpTest (TestCase) is tearing down...\n")
     
     
-    def test_linearMtpToLoss(self):
+    def est_linearMtpToLoss(self):
         # 1. Parameters
         e_weight: float = 1.0
         f_weight: float = 0.1
@@ -229,7 +230,7 @@ class LinearMtpTest(unittest.TestCase):
         print("-------------------------------------------------")
 
 
-    def est_output_descriptors(self):
+    def test_output_descriptors(self):
         input_info: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(self.structure)
         for item in input_info:
             item.to(self.device)
@@ -252,7 +253,7 @@ class LinearMtpTest(unittest.TestCase):
             input_info[6].item(),
             self.rmax,
             self.rmin)[0]
-        print("1. bdescriptor.shape = ", bdescriptors)
+        print("1. bdescriptor.shape = ", bdescriptors[0, 71, :])
 
 
 if __name__ == "__main__":
