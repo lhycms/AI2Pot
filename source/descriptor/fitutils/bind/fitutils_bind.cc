@@ -46,4 +46,23 @@ TORCH_LIBRARY(fitutils, m) {
                 bdescriptors_tensor);
         }
     );
+
+    m.def(
+        "eachTypeDescriptorsStatisticsOp",
+        [](const at::Tensor& binum_tensor,
+           const at::Tensor& bilist_tensor,
+           const at::Tensor& btypes_tensor,
+           int64_t ntypes,
+           const at::Tensor& bdescriptors_tensor)
+        {
+            assert(ntypes < INT_MAX);
+
+            return ai2pot::fitutils::EachTypeDescriptorsStatisticsOp(
+                binum_tensor,
+                bilist_tensor,
+                btypes_tensor,
+                (int)ntypes,
+                bdescriptors_tensor);
+        }
+    );
 }

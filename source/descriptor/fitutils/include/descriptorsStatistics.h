@@ -36,7 +36,28 @@ public:
         int descriptor_dim,
         int *binum,
         CoordType *bdescriptors);
-};  // class : AllDescriptorStatistics
+};  // class : AllTypeDescriptorsStatistics
+
+
+template <typename CoordType>
+class EachTypeDescriptorsStatistics {
+public:
+    static void find_descriptors_statistics(
+        int *natoms_in_batch,
+        CoordType *descriptors_mean,
+        CoordType *descriptors_M2,
+        int batch_size,
+        int natoms_pad,
+        int descriptor_dim,
+        int *binum,
+        int *bilist,
+        int *btypes,
+        int ntypes,
+        CoordType *bdescriptors);
+};  // class : EachTypeDescriptorsStatistics
+
+
+
 
 
 
@@ -78,6 +99,66 @@ void AllTypeDescriptorsStatistics<CoordType>::find_descriptors_statistics(
 
     // Step . Reassign
     (*natoms_in_batch_ptr) = natoms_in_batch;
+}
+
+
+template <typename CoordType>
+void EachTypeDescriptorsStatistics<CoordType>::find_descriptors_statistics(
+    int *natoms_in_batch,
+    CoordType *descriptors_mean,
+    CoordType *descriptors_M2,
+    int batch_size,
+    int natoms_pad,
+    int descriptor_dim,
+    int *binum,
+    int *bilist,
+    int *btypes,
+    int ntypes,
+    CoordType *bdescriptors)
+{
+    memset(natoms_in_batch, 0, sizeof(int)*ntypes);
+    memset(descriptors_mean, 0, sizeof(CoordType)*ntypes*descriptor_dim);
+    memset(descriptors_M2, 0, sizeof(CoordType)*ntypes*descriptor_dim);
+
+    for (int bb=0; bb<batch_size; bb++) {
+        for (int ii=0; ii<binum[bb]; ii++) {
+            int center_idx = bilist[bb*natoms_pad + ii];
+            int type_central = btypes[bb*natoms_pad + center_idx];
+            natoms_in_batch[type_central]++;
+        }
+    }
+
+    for (int kk=0; kk<descriptor_dim; kk++) {
+        for (int bb=0; bb<batch_size; bb++) {
+            for (int ii=0; ii<binum[bb]; ii++) {
+                int center_idx = bilist[bb*natoms_pad + ii];
+                int type_central = btypes[bb*natoms_pad + center_idx];
+
+                descriptors_mean[type_central*descriptor_dim + kk] += bdescriptors[bb*natoms_pad*descriptor_dim
+                                                                                   + ii*descriptor_dim
+                                                                                   + kk];
+            }
+        }
+
+        for (int tt=0; tt<ntypes; tt++) {
+            if (natoms_in_batch[tt] != 0)
+                descriptors_mean[tt*descriptor_dim + kk] = descriptors_mean[tt*descriptor_dim + kk] / natoms_in_batch[tt];
+        }
+    }
+
+    for (int kk=0; kk<descriptor_dim; kk++) {
+        for (int bb=0; bb<batch_size; bb++) {
+            for (int ii=0; ii<binum[bb]; ii++) {
+                int center_idx = bilist[bb*natoms_pad + ii];
+                int type_central = btypes[bb*natoms_pad + center_idx];
+                
+                CoordType tmp_descriptor = bdescriptors[bb*natoms_pad*descriptor_dim
+                                                        + ii*descriptor_dim
+                                                        + kk];
+                descriptors_M2[type_central*descriptor_dim + kk] += std::pow(tmp_descriptor-descriptors_mean[type_central*descriptor_dim + kk], 2);
+            }
+        }
+    }
 }
 
 
