@@ -10,7 +10,10 @@ file(MAKE_DIRECTORY ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY})
 
 
 # 4. Add subdirectory
-# ...
+if (CUDA_FOUND AND USE_CUDA)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/gpu)
+endif()
+
 
 # 5. Compile 
 if (TORCH_OP)
