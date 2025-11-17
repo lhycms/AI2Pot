@@ -23,9 +23,9 @@ namespace fitutils {
 
 template <typename CoordType>
 static __global__
-void find_all_type_descriptors_psum_kernel(
+void find_all_type_descriptors_sum_kernel(
     int natoms_in_batch,
-    CoordType *descriptors_psum,
+    CoordType *descriptors_sum,
     int batch_size,
     int natoms_pad,
     int descriptor_dim,
@@ -35,9 +35,9 @@ void find_all_type_descriptors_psum_kernel(
 
 template <typename CoordType>
 static __global__
-void find_all_type_descriptors_pM2_kernel(
+void find_all_type_descriptors_M2_kernel(
     int natoms_in_batch,
-    CoordType *descriptors_pM2,
+    CoordType *descriptors_M2,
     int batch_size,
     int natoms_pad,
     int descriptor_dim,
@@ -60,7 +60,7 @@ void find_all_type_descriptors_statistics_launcher(
 
 template <typename CoordType>
 static __global__
-void find_each_type_descriptors_psum_kernel(
+void find_each_type_descriptors_sum_kernel(
     int *natoms_in_batch,
     CoordType *descriptors_psum,
     int batch_size,
@@ -75,7 +75,7 @@ void find_each_type_descriptors_psum_kernel(
 
 template <typename CoordType>
 static __global__
-void find_each_type_descriptors_pM2_kernel(
+void find_each_type_descriptors_M2_kernel(
     int *natoms_in_batch,
     CoordType *descriptors_pM2,
     int batch_size,
@@ -86,6 +86,11 @@ void find_each_type_descriptors_pM2_kernel(
     int *btypes,
     int ntypes,
     CoordType *bdescriptors);
+
+
+
+
+
 
 
 
@@ -113,14 +118,34 @@ void find_all_type_descriptors_statistics_launcher(
     dim3 block_size(block_size_x);
     int sh_mem = sizeof(CoordType) * block_size_x;
 
-    CoordType *d_descriptors_psum;
-    CoordType *d_descriptors_pM2;
-    CHECK_CUDA_API( cudaMalloc((void**)&d_descriptors_psum, sizeof(CoordType) * descriptor_dim) );
-    
+    CoordType *d_descriptors_sum;
+    CoordType *d_descriptors_M2;
+    CHECK_CUDA_API( cudaMalloc((void**)&d_descriptors_sum, sizeof(CoordType)*descriptor_dim) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_descriptors_M2, sizeof(CoordType)*descriptor_dim) );
+    CHECK_CUDA_API( cudaMemset(d_descriptors_sum, 0, sizeof(CoordType)*descriptor_dim) );
+    CHECK_CUDA_API( cudaMemset(d_descriptors_M2, 0, sizeof(CoordType)*descriptor_dim) );
 
-    find_all_type_descriptors_psum_kernel KERNEL_ARG3() 
+    int *d_binum;
+    CoordType *d_bdescriptors;
+    CHECK_CUDA_API( cudaMalloc((void**)&d_binum, sizeof(int)*batch_size) );
+    CHECK_CUDA_API( cudaMemcpy(d_binum, h_binum, sizeof(int)*batch_size, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bdescriptors, sizeof(CoordType)*batch_size*natoms_pad*descriptor_dim) );
+    CHECK_CUDA_API( cudaMemcpy(d_bdescriptors, h_bdescriptors, sizeof(CoordType)*batch_size*natoms_pad*descriptor_dim, cudaMemcpyHostToDevice) );
 
-    CHECK_CUDA_KERNEL;
+    //find_all_type_descriptors_sum_kernel KERNEL_ARG3(grid_size, block_size, sh_mem) (
+        //natoms_in_batch,
+        //d_descriptors_sum,
+        //batch_size,
+        //natoms_pad,
+        //descriptor_dim,
+        //d_binum,
+        //d_bdescriptors);
+    //CHECK_CUDA_KERNEL;
+
+    CHECK_CUDA_API( cudaFree(d_descriptors_sum) );
+    CHECK_CUDA_API( cudaFree(d_descriptors_M2) );
+    CHECK_CUDA_API( cudaFree(d_binum) );
+    CHECK_CUDA_API( cudaFree(d_bdescriptors) );
 }
 
 
