@@ -225,7 +225,10 @@ torch::autograd::variable_list EachTypeDescriptorsStatisticsFunction::forward(
          btypes_tensor,
          torch::tensor(ntypes, int_options),
          bdescriptors_tensor});
-    return {at::Tensor()};
+         
+    return {natoms_in_batch_tensor,
+            descriptors_mean_tensor,
+            descriptors_M2_tensor};
 }
 
 
