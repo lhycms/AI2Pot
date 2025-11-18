@@ -10,7 +10,11 @@ file(MAKE_DIRECTORY ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY})
 
 
 # 5. Compile
-
+add_library(descriptor_statistics_torch_launcher_gpu SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/descriptorsStatistics_torch_launcher.cu)
+set_target_properties(descriptor_statistics_torch_launcher_gpu PROPERTIES
+    CUDA_SEPARABLE_COMPILATION on
+    CUDA_STANDARD ${CUDA_STANDARD}
+    CUDA_ARCHITECTURES ${CUDA_ARCHITECTURES})
 
 
 # 6. Compile test

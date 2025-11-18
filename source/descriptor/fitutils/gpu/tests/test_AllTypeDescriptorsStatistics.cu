@@ -36,7 +36,7 @@ protected:
     void SetUp() override {
         batch_size = 33;
         natoms_pad = 50;
-        descriptor_dim = 9;
+        descriptor_dim = 10;
 
         natoms_in_batch_ptr = (int*)malloc(sizeof(int));
         descriptors_mean = (real*)malloc(sizeof(real) * descriptor_dim);
@@ -76,6 +76,14 @@ TEST_F(AllTypeDescriptorsStatisticsTest, find_all_type_descriptors_statistics_la
         bdescriptors);
     
     printf("\t1. natoms_in_batch = %d\n", *natoms_in_batch_ptr);
+    printf("\t2. descriptors_mean: ");
+    for (int kk=0; kk<descriptor_dim; kk++)
+        printf("%g, ", descriptors_mean[kk]);
+    printf("\n");
+    printf("\t3. descriptors_M2: ");
+    for (int kk=0; kk<descriptor_dim; kk++)
+        printf("%g, ", descriptors_M2[kk]);
+    printf("\n");
 }
 
 

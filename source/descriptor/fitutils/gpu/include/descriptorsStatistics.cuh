@@ -15,17 +15,27 @@
 
 #ifndef AI2POT_FITUTILS_DESCRIPTORS_STATISTICS_CUH
 #define AI2POT_FITUTILS_DESCRIPTORS_STATISTICS_CUH
+#include <chrono>
+#include <iostream>
 #include "./fitutils_utilities.cuh"
 
 
 namespace ai2pot {
 namespace fitutils {
 
+
+static __global__
+void find_natoms_in_batch_kernel(
+    int *natoms_in_batch_ptr,
+    int batch_size,
+    int *binum);
+
+
 template <typename CoordType>
 static __global__
-void find_all_type_descriptors_sum_kernel(
-    int natoms_in_batch,
-    CoordType *descriptors_sum,
+void find_all_type_descriptors_mean_kernel(
+    int *natoms_in_batch_ptr,
+    CoordType *descriptors_mean,
     int batch_size,
     int natoms_pad,
     int descriptor_dim,
@@ -36,7 +46,8 @@ void find_all_type_descriptors_sum_kernel(
 template <typename CoordType>
 static __global__
 void find_all_type_descriptors_M2_kernel(
-    int natoms_in_batch,
+    int *natoms_in_batch_ptr,
+    CoordType *descriptors_mean,
     CoordType *descriptors_M2,
     int batch_size,
     int natoms_pad,
@@ -58,41 +69,118 @@ void find_all_type_descriptors_statistics_launcher(
     CoordType *h_bdescriptors);
 
 
+
+
+__global__ void find_natoms_in_batch_kernel(
+    int *natoms_in_batch_ptr,
+    int batch_size,
+    int *binum)
+{
+    int nx = blockIdx.x * blockDim.x + threadIdx.x;
+
+    int tmp_natoms_in_batch = 0;
+    for (int i=nx; i<batch_size; i+=gridDim.x*blockDim.x) {
+        tmp_natoms_in_batch += binum[i];
+    }
+
+    atomicAdd(natoms_in_batch_ptr, tmp_natoms_in_batch);
+}
+
+
 template <typename CoordType>
-static __global__
-void find_each_type_descriptors_sum_kernel(
-    int *natoms_in_batch,
-    CoordType *descriptors_psum,
+__global__
+void find_all_type_descriptors_mean_kernel(
+    int *natoms_in_batch_ptr,
+    CoordType *descriptors_mean,
     int batch_size,
     int natoms_pad,
     int descriptor_dim,
     int *binum,
-    int *bilist,
-    int *btypes,
-    int ntypes,
-    CoordType *bdescriptors);
+    CoordType *bdescriptors)
+{
+    int bid = blockIdx.x;
+    int tid = threadIdx.x;
+
+    __shared__ CoordType s_part_x[1024];
+
+    CoordType tmp_part_x = 0.0;
+    for (int i=tid; i<batch_size*natoms_pad; i+=blockDim.x) {
+        int bb = i / natoms_pad;
+        int ii = i % natoms_pad;
+        if (ii>=binum[bb])
+            continue;
+        tmp_part_x += bdescriptors[(bb*natoms_pad+ii)*descriptor_dim + bid];
+    }
+    s_part_x[tid] = tmp_part_x;
+    __syncthreads();
+
+    for (int offset=blockDim.x>>1; offset>=32; offset>>=1) {
+        if (tid < offset) {
+            s_part_x[tid] += s_part_x[tid+offset];
+        }
+        __syncthreads();
+    }
+
+    for (int offset=16; offset>0; offset>>=1) {
+        if (tid < offset) {
+            s_part_x[tid] += s_part_x[tid+offset];
+        }
+        __syncwarp();
+    }
+
+    if (tid == 0) {
+        descriptors_mean[bid] = s_part_x[0] / (*natoms_in_batch_ptr);
+    }
+}
 
 
 template <typename CoordType>
-static __global__
-void find_each_type_descriptors_M2_kernel(
-    int *natoms_in_batch,
-    CoordType *descriptors_pM2,
+__global__
+void find_all_type_descriptors_M2_kernel(
+    int *natoms_in_batch_ptr,
+    CoordType *descriptors_mean,
+    CoordType *descriptors_M2,
     int batch_size,
     int natoms_pad,
     int descriptor_dim,
     int *binum,
-    int *bilist,
-    int *btypes,
-    int ntypes,
-    CoordType *bdescriptors);
+    CoordType *bdescriptors)
+{
+    int bid = blockIdx.x;
+    int tid = threadIdx.x;
 
+    __shared__ CoordType s_part_x[1024];
 
+    CoordType tmp_part_x = 0.0;
+    for (int i=tid; i<batch_size*natoms_pad; i+=blockDim.x) {
+        int bb = i / natoms_pad;
+        int ii = i % natoms_pad;
+        if (ii>=binum[bb])
+            continue;
+        tmp_part_x += std::pow((bdescriptors[(bb*natoms_pad+ii)*descriptor_dim + bid] 
+                                - descriptors_mean[bid]), 2);
+    }
+    s_part_x[tid] = tmp_part_x;
+    __syncthreads();
 
+    for (int offset=blockDim.x>>1; offset>=32; offset>>=1) {
+        if (tid < offset) {
+            s_part_x[tid] += s_part_x[tid+offset];
+        }
+        __syncthreads();
+    }
 
+    for (int offset=16; offset>0; offset>>=1) {
+        if (tid < offset) {
+            s_part_x[tid] += s_part_x[tid+offset];
+        }
+        __syncwarp();
+    }
 
-
-
+    if (tid == 0) {
+        descriptors_M2[bid] = s_part_x[0];
+    }
+}
 
 
 template <typename CoordType>
@@ -107,24 +195,22 @@ void find_all_type_descriptors_statistics_launcher(
     int *h_binum,
     CoordType *h_bdescriptors)
 {
-    int natoms_in_batch = 0;
-    for (int bb=0; bb<batch_size; bb++)
-        natoms_in_batch += h_binum[bb];
-    (*h_natoms_in_batch_ptr) = natoms_in_batch;
+    int *d_natoms_in_batch_ptr;
+    CHECK_CUDA_API( cudaMalloc((void**)&d_natoms_in_batch_ptr, sizeof(int)) );
+    CHECK_CUDA_API( cudaMemset(d_natoms_in_batch_ptr, 0, sizeof(int)) );
 
     int grid_size_x = descriptor_dim;
     int block_size_x = 1024;
     dim3 grid_size(grid_size_x);
     dim3 block_size(block_size_x);
-    int sh_mem = sizeof(CoordType) * block_size_x;
-
-    CoordType *d_descriptors_sum;
+    
+    CoordType *d_descriptors_mean;
     CoordType *d_descriptors_M2;
-    CHECK_CUDA_API( cudaMalloc((void**)&d_descriptors_sum, sizeof(CoordType)*descriptor_dim) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_descriptors_mean, sizeof(CoordType)*descriptor_dim) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_descriptors_M2, sizeof(CoordType)*descriptor_dim) );
-    CHECK_CUDA_API( cudaMemset(d_descriptors_sum, 0, sizeof(CoordType)*descriptor_dim) );
+    CHECK_CUDA_API( cudaMemset(d_descriptors_mean, 0, sizeof(CoordType)*descriptor_dim) );
     CHECK_CUDA_API( cudaMemset(d_descriptors_M2, 0, sizeof(CoordType)*descriptor_dim) );
-
+    
     int *d_binum;
     CoordType *d_bdescriptors;
     CHECK_CUDA_API( cudaMalloc((void**)&d_binum, sizeof(int)*batch_size) );
@@ -132,17 +218,47 @@ void find_all_type_descriptors_statistics_launcher(
     CHECK_CUDA_API( cudaMalloc((void**)&d_bdescriptors, sizeof(CoordType)*batch_size*natoms_pad*descriptor_dim) );
     CHECK_CUDA_API( cudaMemcpy(d_bdescriptors, h_bdescriptors, sizeof(CoordType)*batch_size*natoms_pad*descriptor_dim, cudaMemcpyHostToDevice) );
 
-    //find_all_type_descriptors_sum_kernel KERNEL_ARG3(grid_size, block_size, sh_mem) (
-        //natoms_in_batch,
-        //d_descriptors_sum,
-        //batch_size,
-        //natoms_pad,
-        //descriptor_dim,
-        //d_binum,
-        //d_bdescriptors);
-    //CHECK_CUDA_KERNEL;
+    auto t1 = std::chrono::high_resolution_clock::now();
+    // 1. natoms_in_batch_ptr
+    find_natoms_in_batch_kernel KERNEL_ARG2(grid_size, block_size) (
+        d_natoms_in_batch_ptr,
+        batch_size,
+        d_binum);
+    CHECK_CUDA_KERNEL;
 
-    CHECK_CUDA_API( cudaFree(d_descriptors_sum) );
+    // 2. mean
+    find_all_type_descriptors_mean_kernel KERNEL_ARG2(grid_size, block_size) (
+        d_natoms_in_batch_ptr,
+        d_descriptors_mean,
+        batch_size,
+        natoms_pad,
+        descriptor_dim,
+        d_binum,
+        d_bdescriptors);
+    CHECK_CUDA_KERNEL;
+
+    // 3. M2
+    find_all_type_descriptors_M2_kernel KERNEL_ARG2(grid_size, block_size) (
+        d_natoms_in_batch_ptr,
+        d_descriptors_mean,
+        d_descriptors_M2,
+        batch_size,
+        natoms_pad,
+        descriptor_dim,
+        d_binum,
+        d_bdescriptors);
+
+
+    auto t2 = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
+    std::cout << "find_all_type_descriptors_statistics_launcher() cost time: " << duration.count() << " us." << std::endl;
+
+    CHECK_CUDA_API( cudaMemcpy(h_natoms_in_batch_ptr, d_natoms_in_batch_ptr, sizeof(int), cudaMemcpyDeviceToHost) );
+    CHECK_CUDA_API( cudaMemcpy(h_descriptors_mean, d_descriptors_mean, sizeof(CoordType)*descriptor_dim, cudaMemcpyDeviceToHost) );
+    CHECK_CUDA_API( cudaMemcpy(h_descriptors_M2, d_descriptors_M2, sizeof(CoordType)*descriptor_dim, cudaMemcpyDeviceToHost) );
+
+    CHECK_CUDA_API( cudaFree(d_natoms_in_batch_ptr) );
+    CHECK_CUDA_API( cudaFree(d_descriptors_mean) );
     CHECK_CUDA_API( cudaFree(d_descriptors_M2) );
     CHECK_CUDA_API( cudaFree(d_binum) );
     CHECK_CUDA_API( cudaFree(d_bdescriptors) );
