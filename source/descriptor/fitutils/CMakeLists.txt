@@ -22,10 +22,17 @@ if (TORCH_OP)
 
     add_library(descriptor_statistics_op SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/descriptorsStatisticsOp.cc)
     target_link_libraries(descriptor_statistics_op PRIVATE ${TORCH_LIBRARIES})
+    if (USE_CUDA AND CUDA_FOUND)
+        target_compile_definitions(descriptor_statistics_op PRIVATE USE_CUDA)
+        target_link_libraries(descriptor_statistics_op PRIVATE descriptor_statistics_torch_launcher)
+    endif()
 
     add_library(fitutils_bind SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bind/fitutils_bind.cc)
     target_include_directories(fitutils_bind PRIVATE ${PYTHON_INCLUDE_DIRS})
-    target_link_libraries(fitutils_bind PRIVATE target_statistics_op descriptor_statistics_op ${TORCH_LIBRARIES} ${PYTHON_LIBRARIES})
+    target_link_libraries(fitutils_bind PRIVATE target_statistics_op 
+                                                descriptor_statistics_op 
+                                                ${TORCH_LIBRARIES} 
+                                                ${PYTHON_LIBRARIES})
 endif()
 
 # 6. Compile test
@@ -42,4 +49,3 @@ if (BUILD_TEST)
     gtest_discover_tests(test_target_statistics)
     gtest_discover_tests(test_all_type_descriptors_statistics)
 endif()
-

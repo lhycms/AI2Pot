@@ -13,7 +13,6 @@
     along with AI2Pot.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "../include/descriptorsStatistics.cuh"
 #include "../include/descriptorsStatistics_torch_launcher.cuh"
 
 

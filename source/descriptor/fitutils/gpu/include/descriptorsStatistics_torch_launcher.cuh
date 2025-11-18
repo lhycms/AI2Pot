@@ -24,7 +24,7 @@ namespace ai2pot {
 namespace fitutils {
 
 template <typename CoordType>
-static __host__
+__host__
 void find_all_type_descriptors_statistics_torch_launcher(
     int *d_natoms_in_batch_ptr,
     CoordType *d_descriptors_mean,

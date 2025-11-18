@@ -21,6 +21,41 @@
 #include "../include/descriptorsStatistics.h"
 
 
+#if defined(USE_CUDA) or defined(__INTELLISENSE__)
+#include "../gpu/include/descriptorsStatistics_torch_launcher.h"
+
+namespace ai2pot {
+namespace fitutils {
+
+// 1. find_all_type_descriptors_statistics_torch_launcher()
+extern template void find_all_type_descriptors_statistics_torch_launcher<float>(
+    int *d_natoms_in_batch_ptr,
+    float *d_descriptors_mean,
+    float *d_descriptors_M2,
+    int batch_size,
+    int natoms_pad,
+    int descriptor_dim,
+    int *d_binum,
+    float *d_bdescriptors);
+
+extern template void find_all_type_descriptors_statistics_torch_launcher<double>(
+    int *d_natoms_in_batch_ptr,
+    double *d_descriptors_mean,
+    double *d_descriptors_M2,
+    int batch_size,
+    int natoms_pad,
+    int descriptor_dim,
+    int *d_binum,
+    double *d_bdescriptors);
+
+
+// 2. find_each_type_descriptors_statistics_torch_launcher()
+
+};  // namespace : fitutils
+};  // namespace : ai2pot
+#endif
+
+
 namespace ai2pot {
 namespace fitutils {
 
@@ -72,7 +107,15 @@ torch::autograd::variable_list AllTypeDescriptorsStatisticsFunction::forward(
                 bdescriptors);
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
-            // ...
+            ai2pot::fitutils::find_all_type_descriptors_statistics_torch_launcher(
+                natoms_in_batch_ptr,
+                descriptors_mean,
+                descriptors_M2,
+                batch_size,
+                natoms_pad,
+                descriptor_dim,
+                binum,
+                bdescriptors);
             #endif
         }
     } else {
@@ -100,7 +143,15 @@ torch::autograd::variable_list AllTypeDescriptorsStatisticsFunction::forward(
                 bdescriptors);
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
-            // ...
+            ai2pot::fitutils::find_all_type_descriptors_statistics_torch_launcher(
+                natoms_in_batch_ptr,
+                descriptors_mean,
+                descriptors_M2,
+                batch_size,
+                natoms_pad,
+                descriptor_dim,
+                binum,
+                bdescriptors);
             #endif
         }
     }

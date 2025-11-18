@@ -16,8 +16,12 @@
 #ifndef AI2POT_FITUTILS_DESCRIPTORS_STATISTICS_TORCH_LAUNCHER_H
 #define AI2POT_FITUTILS_DESCRIPTORS_STATISTICS_TORCH_LAUNCHER_H
 
+
+namespace ai2pot {
+namespace fitutils {
+
 template <typename CoordType>
-static void find_all_type_descriptors_statistics_torch_launcher(
+void find_all_type_descriptors_statistics_torch_launcher(
     int *d_natoms_in_batch_ptr,
     CoordType *d_descriptors_mean,
     CoordType *d_descriptors_M2,
@@ -27,4 +31,6 @@ static void find_all_type_descriptors_statistics_torch_launcher(
     int *d_binum,
     CoordType *d_bdescriptors);
 
+};  // namespace : fitutils
+};  // namespace : ai2pot
 #endif

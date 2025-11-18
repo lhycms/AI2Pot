@@ -16,7 +16,7 @@ class AllTypeDescriptorsStatisticsOp(unittest.TestCase):
     def setUp(self):
         print("AllTypeDescriptorsStatisticsOp (TestCase) is setting up...")
 
-        device: torch._C.device = torch.device('cpu')
+        device: torch._C.device = torch.device('cuda')
         torch_float_dtype: torch._C.device = torch.float64
 
         batch_size: int = 31
