@@ -24,7 +24,61 @@ PbTe_EXTXYZ_PATH = os.path.join(TEST_FILES_DIR, "XYZ", "11_NEP_potential_PbTe", 
 
 #torch.use_deterministic_algorithms(True)
 torch.set_num_threads(16)
-torch.manual_seed(2143)
+torch.manual_seed(21432)
+
+
+
+
+
+def save_bar_plot(xs_list, ys_list):
+    import matplotlib.pyplot as plt
+    ### Plot
+    ### 0. 全局设置
+    # 0.1. 字体设置
+    plt.rcParams["font.family"] = "Times New Roman"
+    plt.rcParams['mathtext.fontset'] = 'custom'
+    plt.rcParams['mathtext.rm'] = 'Times New Roman'
+    plt.rcParams['mathtext.it'] = 'Times New Roman:italic'
+    plt.rcParams['mathtext.bf'] = 'Times New Roman:bold'
+    # 0.2. 刻度线朝内
+    plt.rcParams['xtick.direction'] = 'in'
+    plt.rcParams['ytick.direction'] = 'in'
+
+    plt.figure(figsize=(9, 9))
+    plt.bar(xs_list, ys_list)
+
+    # 1. Retouch the xlabel, ylabel
+    plt.xlabel("MTP Descriptor Index", fontsize=35,
+            fontweight="bold")
+    plt.ylabel("MTP Descriptor Value", fontsize=35, 
+            fontweight="bold"
+            )
+
+    # 2. Retouch the ticks of x-axis/y-axis
+    plt.xticks(fontsize=30, 
+            fontweight="bold"
+            )
+    plt.yticks(fontsize=30,
+            fontweight="bold"
+            )
+
+    # 4. 刻度线的粗细
+    plt.tick_params(
+            width=2,        # 刻度线的粗细
+            length=5,       # 刻度线的长短
+            #labelsize=28   # 刻度线的字体大小
+            )
+
+    # 5. 设置坐标轴的粗细
+    ax = plt.gca()
+    ax.spines['bottom'].set_linewidth(1.5);###设置底部坐标轴的粗细
+    ax.spines['left'].set_linewidth(1.5);####设置左边坐标轴的粗细
+    ax.spines['right'].set_linewidth(1.5);###设置右边坐标轴的粗细
+    ax.spines['top'].set_linewidth(1.5);###设置右边坐标轴的粗细
+
+    plt.ylim(-2, 2)
+
+    plt.savefig("/data/home/liuhanyu/mycode/AI2Pot/test/fromcc/pics/descripotrs.png", dpi=300, bbox_inches="tight")
 
 
 class LinearMtpTest(unittest.TestCase):
@@ -253,7 +307,10 @@ class LinearMtpTest(unittest.TestCase):
             input_info[6].item(),
             self.rmax,
             self.rmin)[0]
-        print("1. bdescriptor.shape = ", bdescriptors[0, 71, :])
+        print("1. bdescriptor.shape = ", bdescriptors[0, 0, :])
+
+        print(bdescriptors.reshape(-1, bdescriptors.shape[-1]).min(dim=0).values)
+        save_bar_plot([*range(bdescriptors.shape[-1])], bdescriptors.reshape(-1, bdescriptors.shape[-1]).min(dim=0).values)
 
 
 if __name__ == "__main__":

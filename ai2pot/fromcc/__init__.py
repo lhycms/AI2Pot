@@ -37,6 +37,7 @@ torch.ops.load_library(fitutils_bind_so_path)
 targetStatisticsOp = torch.ops.fitutils.targetStatisticsOp
 allTypeDescriptorsStatisticsOp = torch.ops.fitutils.allTypeDescriptorsStatisticsOp
 eachTypeDescriptorsStatisticsOp = torch.ops.fitutils.eachTypeDescriptorsStatisticsOp
+allTypeDescriptorsMaxminOp = torch.ops.fitutils.allTypeDescriptorsMaxminOp
 
 ### Part 2.2. deepmd
 deepmd_lib_dir:str = os.path.join(ai2pot_source_build_lib_dir, "descriptor", "deepmd")
