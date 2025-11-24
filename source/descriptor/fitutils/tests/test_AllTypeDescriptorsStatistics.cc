@@ -30,6 +30,9 @@ protected:
     int *natoms_in_batch_ptr;
     real *descriptors_mean;
     real *descriptors_M2;
+    real *descriptors_max;
+    real *descriptors_min;
+
     int batch_size;
     int natoms_pad;
     int descriptor_dim;
@@ -49,6 +52,8 @@ protected:
         natoms_in_batch_ptr = (int*)malloc(sizeof(real));
         descriptors_mean = (real*)malloc(sizeof(real) * descriptor_dim);
         descriptors_M2 = (real*)malloc(sizeof(real) * descriptor_dim);
+        descriptors_max = (real*)malloc(sizeof(real) * descriptor_dim);
+        descriptors_min = (real*)malloc(sizeof(real) * descriptor_dim);
         
         batch_size = 33;
         natoms_pad = 50;
@@ -68,6 +73,8 @@ protected:
         free(natoms_in_batch_ptr);
         free(descriptors_mean);
         free(descriptors_M2);
+        free(descriptors_max);
+        free(descriptors_min);
         free(binum);
         free(bdescriptors);
     }
@@ -93,6 +100,27 @@ TEST_F(AllTypeDescriptorsStatisticsTest, find_descriptors_statistics) {
     printf("\t3. descriptors_M2: ");
     for (int kk=0; kk<descriptor_dim; kk++)
         printf("%g, ", descriptors_M2[kk]);
+    printf("\n");
+}
+
+
+TEST_F(AllTypeDescriptorsStatisticsTest, find_descriptors_maxmin) {
+    ai2pot::fitutils::AllTypeDescriptorsMaxmin<real>::find_descriptors_maxmin(
+        descriptors_max,
+        descriptors_min,
+        batch_size,
+        natoms_pad,
+        descriptor_dim,
+        binum,
+        bdescriptors);
+    
+    printf("\t1. descriptors_max: ");
+    for (int kk=0; kk<descriptor_dim; kk++)
+        printf("%g, ", descriptors_max[kk]);
+    printf("\n");
+    printf("\t2. descriptors_min: ");
+    for (int kk=0; kk<descriptor_dim; kk++)
+        printf("%g, ", descriptors_min[kk]);
     printf("\n");
 }
 

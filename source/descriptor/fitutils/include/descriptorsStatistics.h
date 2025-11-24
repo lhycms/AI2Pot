@@ -18,6 +18,7 @@
 
 #include <math.h>
 #include <stdlib.h>
+#include <float.h>
 
 
 namespace ai2pot {
@@ -55,6 +56,20 @@ public:
         int ntypes,
         CoordType *bdescriptors);
 };  // class : EachTypeDescriptorsStatistics
+
+
+template <typename CoordType>
+class AllTypeDescriptorsMaxmin {
+public:
+    static void find_descriptors_maxmin(
+        CoordType *descriptors_max,
+        CoordType *descriptors_min,
+        int batch_size,
+        int natoms_pad,
+        int descriptor_dim,
+        int *binum,
+        CoordType *bdescriptors);
+};  // class : AllTypeDescriptorsStatistics
 
 
 
@@ -161,6 +176,32 @@ void EachTypeDescriptorsStatistics<CoordType>::find_descriptors_statistics(
     }
 }
 
+
+template <typename CoordType>
+void AllTypeDescriptorsMaxmin<CoordType>::find_descriptors_maxmin(
+    CoordType *descriptors_max,
+    CoordType *descriptors_min,
+    int batch_size,
+    int natoms_pad,
+    int descriptor_dim,
+    int *binum,
+    CoordType *bdescriptors)
+{
+    for (int ii=0; ii<descriptor_dim; ii++) {
+        descriptors_max[ii] = FLT_MIN;
+        descriptors_min[ii] = FLT_MAX;
+    }
+
+    for (int kk=0; kk<descriptor_dim; kk++) {
+        for (int bb=0; bb<batch_size; bb++) {
+            for (int ii=0; ii<binum[bb]; ii++) {
+                int tmp_descriptor_idx = bb*natoms_pad*descriptor_dim + ii*descriptor_dim + kk;
+                descriptors_max[kk] = (descriptors_max[kk] > bdescriptors[tmp_descriptor_idx]) ? descriptors_max[kk] : bdescriptors[tmp_descriptor_idx];
+                descriptors_min[kk] = (descriptors_min[kk] < bdescriptors[tmp_descriptor_idx]) ? descriptors_min[kk] : bdescriptors[tmp_descriptor_idx];
+            }
+        }
+    }
+}
 
 };  // namespace : fituitls
 };  // namespace : ai2pot
