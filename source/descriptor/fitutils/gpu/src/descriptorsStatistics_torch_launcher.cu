@@ -39,3 +39,24 @@ template void ai2pot::fitutils::find_all_type_descriptors_statistics_torch_launc
 
 
 // 2. find_each_type_descriptors_statistics_torch_launcher()
+
+
+
+// 3. find_all_type_descriptors_max_min_torch_launcher()
+template void ai2pot::fitutils::find_all_type_descriptors_maxmin_torch_launcher<float>(
+    float *descriptors_max,
+    float *descriptors_min,
+    int batch_size,
+    int natoms_pad,
+    int descriptor_dim,
+    int *binum,
+    float *bdescriptors);
+
+template void ai2pot::fitutils::find_all_type_descriptors_maxmin_torch_launcher<double>(
+    double *descriptors_max,
+    double *descriptors_min,
+    int batch_size,
+    int natoms_pad,
+    int descriptor_dim,
+    int *binum,
+    double *bdescriptors);

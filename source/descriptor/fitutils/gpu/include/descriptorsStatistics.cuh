@@ -305,7 +305,7 @@ void find_all_type_descriptors_maxmin_kernel(
     int bid = blockIdx.x;
     int tid = threadIdx.x;
 
-    extern __shared__ CoordType s_max_min[];
+    __shared__ CoordType s_max_min[1024];
     CoordType* s_max = s_max_min;
     CoordType* s_min = s_max_min + blockDim.x;
 

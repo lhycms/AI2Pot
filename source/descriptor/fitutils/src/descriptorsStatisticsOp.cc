@@ -51,6 +51,26 @@ extern template void find_all_type_descriptors_statistics_torch_launcher<double>
 
 // 2. find_each_type_descriptors_statistics_torch_launcher()
 
+
+// 3. find_all_type_descriptors_maxmin_torch_launcher()
+extern template void find_all_type_descriptors_maxmin_torch_launcher<float>(
+    float *descriptors_max,
+    float *descriptors_min,
+    int batch_size,
+    int natoms_pad,
+    int descriptor_dim,
+    int *binum,
+    float *bdescriptors);
+
+extern template void find_all_type_descriptors_maxmin_torch_launcher<double>(
+    double *descriptors_max,
+    double *descriptors_min,
+    int batch_size,
+    int natoms_pad,
+    int descriptor_dim,
+    int *binum,
+    double *bdescriptors);
+
 };  // namespace : fitutils
 };  // namespace : ai2pot
 #endif
@@ -296,6 +316,110 @@ torch::autograd::variable_list EachTypeDescriptorsStatisticsFunction::backward(
 }
 
 
+torch::autograd::variable_list AllTypeDescriptorsMaxminFunction::forward(
+    torch::autograd::AutogradContext *ctx,
+    const at::Tensor& binum_tensor,
+    const at::Tensor& bdescriptors_tensor)
+{
+    // 1.
+    int batch_size = bdescriptors_tensor.size(0);
+    int natoms_pad = bdescriptors_tensor.size(1);
+    int descriptor_dim = bdescriptors_tensor.size(2);
+    int *binum = binum_tensor.data_ptr<int>();
+    
+    // 2. 
+    c10::TensorOptions int_options = c10::TensorOptions()
+                                        .dtype(torch::kInt32)
+                                        .device(bdescriptors_tensor.device());
+    c10::TensorOptions float_options;
+
+    // 3. 
+    at::Tensor descriptors_max_tensor;
+    at::Tensor descriptors_min_tensor;
+
+    // 4. 
+    if (bdescriptors_tensor.scalar_type() == torch::kFloat32) {
+        float_options = c10::TensorOptions()
+                            .dtype(torch::kFloat32)
+                            .device(bdescriptors_tensor.device());
+        descriptors_max_tensor = at::zeros({descriptor_dim}, float_options);
+        descriptors_min_tensor = at::zeros({descriptor_dim}, float_options);
+        
+        float *bdescriptors = bdescriptors_tensor.data_ptr<float>();
+        float *descriptors_max = descriptors_max_tensor.data_ptr<float>();
+        float *descriptors_min = descriptors_min_tensor.data_ptr<float>();
+
+        if (bdescriptors_tensor.device() == c10::kCPU) {
+            AllTypeDescriptorsMaxmin<float>::find_descriptors_maxmin(
+                descriptors_max,
+                descriptors_min,
+                batch_size,
+                natoms_pad,
+                descriptor_dim,
+                binum,
+                bdescriptors);
+        } else {
+            #if defined(USE_CUDA) or defined(__INTELLISENSE__)
+            find_all_type_descriptors_maxmin_torch_launcher(
+                descriptors_max,
+                descriptors_min,
+                batch_size,
+                natoms_pad,
+                descriptor_dim,
+                binum,
+                bdescriptors);
+            #endif
+        }
+    } else {
+        float_options = c10::TensorOptions()
+                            .dtype(torch::kFloat64)
+                            .device(bdescriptors_tensor.device());
+        descriptors_max_tensor = at::zeros({descriptor_dim}, float_options);
+        descriptors_min_tensor = at::zeros({descriptor_dim}, float_options);
+        
+        double *bdescriptors = bdescriptors_tensor.data_ptr<double>();
+        double *descriptors_max = descriptors_max_tensor.data_ptr<double>();
+        double *descriptors_min = descriptors_min_tensor.data_ptr<double>();
+        
+        if (bdescriptors_tensor.device() == c10::kCPU) {
+            AllTypeDescriptorsMaxmin<double>::find_descriptors_maxmin(
+                descriptors_max,
+                descriptors_min,
+                batch_size,
+                natoms_pad,
+                descriptor_dim,
+                binum,
+                bdescriptors);
+        } else {
+            #if defined(USE_CUDA) or defined(__INTELLISENSE__)
+            find_all_type_descriptors_maxmin_torch_launcher(
+                descriptors_max,
+                descriptors_min,
+                batch_size,
+                natoms_pad,
+                descriptor_dim,
+                binum,
+                bdescriptors);
+            #endif
+        }
+    }
+    
+    return {descriptors_max_tensor,
+            descriptors_min_tensor};
+}
+
+
+torch::autograd::variable_list AllTypeDescriptorsMaxminFunction::backward(
+    torch::autograd::AutogradContext *ctx,
+    torch::autograd::variable_list bgrad_outputs_tensor)
+{
+    return {at::Tensor(),
+            at::Tensor()};
+}
+
+
+
+
 torch::autograd::variable_list AllTypeDescriptorsStatisticsOp(
     const at::Tensor& binum_tensor,
     const at::Tensor& bdescriptors_tensor)
@@ -320,6 +444,17 @@ torch::autograd::variable_list EachTypeDescriptorsStatisticsOp(
         ntypes,
         bdescriptors_tensor);
 }
+
+
+torch::autograd::variable_list AllTypeDescriptorsMaxminOp(
+    const at::Tensor& binum_tensor,
+    const at::Tensor& bdescriptors_tensor)
+{
+    return AllTypeDescriptorsMaxminFunction::apply(
+        binum_tensor,
+        bdescriptors_tensor);
+}
+
 
 };  // namespace : fituitls
 };  // namespace : ai2pot

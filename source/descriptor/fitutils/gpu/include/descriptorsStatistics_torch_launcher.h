@@ -31,6 +31,17 @@ void find_all_type_descriptors_statistics_torch_launcher(
     int *d_binum,
     CoordType *d_bdescriptors);
 
+
+template <typename CoordType>
+void find_all_type_descriptors_maxmin_torch_launcher(
+    CoordType *d_descriptors_max,
+    CoordType *d_descriptors_min,
+    int batch_size,
+    int natoms_pad,
+    int descriptor_dim,
+    int *d_binum,
+    CoordType *d_bdescriptors);
+
 };  // namespace : fitutils
 };  // namespace : ai2pot
 #endif

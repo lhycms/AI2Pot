@@ -65,4 +65,16 @@ TORCH_LIBRARY(fitutils, m) {
                 bdescriptors_tensor);
         }
     );
+
+
+    m.def(
+        "allTypeDescriptorsMaxminOp",
+        [](const at::Tensor& binum_tensor,
+           const at::Tensor& bdescriptors_tensor)
+        {
+            return ai2pot::fitutils::AllTypeDescriptorsMaxminOp(
+                binum_tensor,
+                bdescriptors_tensor);
+        }
+    );
 }

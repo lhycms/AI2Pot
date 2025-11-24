@@ -72,6 +72,33 @@ void find_all_type_descriptors_statistics_torch_launcher(
 }
 
 
+template <typename CoordType>
+__host__
+void find_all_type_descriptors_maxmin_torch_launcher(
+    CoordType *d_descriptors_max,
+    CoordType *d_descriptors_min,
+    int batch_size,
+    int natoms_pad,
+    int descriptor_dim,
+    int *d_binum,
+    CoordType *d_bdescriptors)
+{
+    int grid_size_x = descriptor_dim;
+    int block_size_x = 512;
+    dim3 grid_size(grid_size_x);
+    dim3 block_size(block_size_x);
+
+    find_all_type_descriptors_maxmin_kernel KERNEL_ARG2(grid_size, block_size) (
+        d_descriptors_max,
+        d_descriptors_min,
+        batch_size,
+        natoms_pad,
+        descriptor_dim,
+        d_binum,
+        d_bdescriptors);
+    CHECK_CUDA_KERNEL;
+}
+
 };  // namespace : fitutils
 };  // namespace : ai2pot
 #endif

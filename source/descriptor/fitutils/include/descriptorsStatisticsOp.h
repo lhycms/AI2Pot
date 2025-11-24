@@ -53,6 +53,20 @@ public:
 };  // class : EachTypeDescriptorsStatisticsFunction
 
 
+class AllTypeDescriptorsMaxminFunction : public torch::autograd::Function<AllTypeDescriptorsMaxminFunction>
+{
+public:
+    static torch::autograd::variable_list forward(
+        torch::autograd::AutogradContext *ctx,
+        const at::Tensor& binum_tensor,
+        const at::Tensor& bdescriptors_tensor);
+    
+    static torch::autograd::variable_list backward(
+        torch::autograd::AutogradContext *ctx,
+        torch::autograd::variable_list bgrad_outputs_tensor);
+};  // class : AllTypeDescriptorsMaxminFunction
+
+
 torch::autograd::variable_list AllTypeDescriptorsStatisticsOp(
     const at::Tensor& binum_tensor,
     const at::Tensor& bdescriptors_tensor);
@@ -63,6 +77,10 @@ torch::autograd::variable_list EachTypeDescriptorsStatisticsOp(
     const at::Tensor& bilist_tensor,
     const at::Tensor& btypes_tensor,
     int ntypes,
+    const at::Tensor& bdescriptors_tensor);
+
+torch::autograd::variable_list AllTypeDescriptorsMaxminOp(
+    const at::Tensor& binum_tensor,
     const at::Tensor& bdescriptors_tensor);
 
 };  // namespace : fitutils
