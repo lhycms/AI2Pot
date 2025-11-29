@@ -17,7 +17,11 @@ file(MAKE_DIRECTORY ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY})
 
 # 6. compile test
 if (BUILD_TEST)
-    add_executable(test_nep_utilities ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nep_utilities.cc)
-    target_link_libraries(test_nep_utilities PRIVATE gtest gtest_main)
-    gtest_discover_tests(test_nep_utilities)
+    add_executable(test_nep_index ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nep_index.cc)
+    target_link_libraries(test_nep_index PRIVATE gtest gtest_main)
+    gtest_discover_tests(test_nep_index)
+
+    add_executable(test_Blm ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_Blm.cc)
+    target_link_libraries(test_Blm PRIVATE gtest gtest_main)
+    gtest_discover_tests(test_Blm)
 endif()
