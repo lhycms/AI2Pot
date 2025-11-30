@@ -16,6 +16,12 @@
 #ifndef AI2POT_NEP_NEP_H
 #define AI2POT_NEP_NEP_H
 
+#include <omp.h>
+#include <stdlib.h>
+
+#include "./basis.h"
+#include "./nep_utilities.h"
+
 
 namespace ai2pot {
 namespace nep {
@@ -31,6 +37,7 @@ public:
         int n_radial_basis,
         int n_angular_basis,
         int l_max,
+        int num_neurons,
         CoordType *coeffs,
         CoordType *w0,
         CoordType *w1,
@@ -60,6 +67,7 @@ void Nep<CoordType>::find_ef(
     int n_radial_basis,
     int n_angular_basis,
     int l_max,
+    int num_neurons,
     CoordType *coeffs,
     CoordType *w0,
     CoordType *w1,
@@ -78,7 +86,130 @@ void Nep<CoordType>::find_ef(
     CoordType rmin,
     CoordType *q_scaler)
 {
-    
+    // Step 1. 
+    CoordType *mom_vals;
+    CoordType *dod_vals;
+    CoordType *e_sites_der2mom;
+    CoordType *e_sites_der2dod;
+    int num_coeffs = ntypes * ntypes * (n_radial_basis + n_angular_basis) * chebyshev_size;
+    int num_descriptors = NepIndex::get_num_descriptors(n_radial_basis, n_angular_basis, l_max);
+    int num_Sinlm = NepIndex::get_num_Sinlm(n_angular_basis, l_max);
+
+    // Step 2. 
+    etot = 0;
+    memset(force, 0, sizeof(CoordType) * (inum+nghost) * 3);
+
+    #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
+    #pragma omp parallel private(mom_vals, dod_vals, e_sites_der2mom, e_sites_der2dod);
+    {
+    #endif
+    mom_vals = (CoordType*)malloc(sizeof(CoordType) * num_Sinlm);
+    dod_vals = (CoordType*)malloc(sizeof(CoordType) * num_descriptors);
+    e_sites_der2mom = (CoordType*)malloc(sizeof(CoordType) * num_Sinlm);
+    e_sites_der2dod = (CoordType*)malloc(sizeof(CoordType) * num_descriptors);
+    CoordType *auto_dist_powers_ = (CoordType*)malloc(sizeof(CoordType) * (l_max+1));
+
+    int center_idx;
+    int type_central;
+    int neigh_idx;
+    int type_outer;
+    CoordType neigh_vec[3];
+    CoordType distance_ij;
+    RQ_Chebyshev<CoordType> *p_RadialBasis;
+    p_RadialBasis = new RQ_Chebyshev<CoordType>(size, rmax, rmin);
+
+    #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
+    #pragma omp for schedule(static)
+    #endif
+    for (int ii=0; ii<inum; ii++)
+    {
+        center_idx = ilist[ii];
+        type_central = types[center_idx];
+        memset(mom_vals, 0, sizeof(CoordType) * num_Sinlm);
+        memset(dod_vals, 0, sizeof(CoordType) * num_descriptors);
+        memset(e_sites_der2mom, 0, sizeof(CoordType) * num_Sinlm);
+        memset(e_sites_der2dod, 0, sizeof(CoordType) * num_descriptors);
+        CoordType e_site = 0;
+
+        for (int jj=0; jj<numneigh[ii]; jj++) {
+            neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
+            type_outer = types[neigh_idx];
+            for (int aa=0; aa<3; aa++)
+                neigh_vec[aa] = rcs[ii*umax_num_neigh_atoms + jj][aa];
+            distance_ij = std::sqrt(std::pow(neigh_vec[0], 2)
+                                    + std::pow(neigh_vec[1], 2)
+                                    + std::pow(neigh_vec[2], 2));
+            if (distance_ij > rmax)
+                continue;
+            p_RadialBasis->build(distance_ij);
+
+            auto_dist_powers_[0] = 1.0;
+            for (int k=1; k<=l_max; k++)
+                auto_dist_powers_[k] = auto_dist_powers_[k-1] * distance_ij;
+            
+            // Step 2.1. R forward
+            for (int mu=0; mu<n_radial_basis; mu++) {
+                for (int xi=0; xi<chebyshev_size; xi++) {
+                    int idx = (type_central*ntypes+type_outer)*(n_radial_basis+n_angular_basis)*chebyshev_size
+                              + mu*chebyshev_size + xi;
+                    dod_vals[mu] += coeffs[idx] * p_RadialBasis->vals()[xi];
+                }
+            }
+
+            // Step 2.2. A forward: basic
+            for (int mu=n_radial_basis; mu<n_angular_basis; mu++) {
+                for (int l=1; l<=l_max; l++) {
+                    for (int mp=0; mp<2*l+1; mp++) {
+                        for (int xi=0; xi<chebyshev_size; xi++) {
+                            int idx = (type_central*ntypes+type_outer)*(n_radial_basis+n_angular_basis)*chebyshev_size
+                                      + mu*chebyshev_size + xi;
+                            int idx_Sinlm = NepIndex::get_Sinlm_index(l_max, mu, l, mp);
+
+                            CoordType A = p_RadialBasis->vals()[xi];
+                            CoordType B;
+                            Blm<CoordType>::find_blm_val(&B, l, mp, neigh_vec, distance_ij);
+                            CoordType C = 1/auto_dist_powers_[l];
+                            mom_vals[idx_Sinlm] += coeffs[idx] * A * B * C;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Step 2.3. A forward: times
+        for (int mu=n_radial_basis; mu<n_angular_basis; mu++) {
+            for (int l=1; l<=l_max; l++) {
+                for (int mp=0; mp<2*l+1; mp++) {
+                    int idx_qinl = NepIndex::get_qinl_index(l_max, mu, l);
+                    int idx_Sinlm = NepIndex::get_Sinlm_index(l_max, mu, l, mp);
+                    int idx_Clm = NepIndex::get_Clm_index(l, mp);
+                    dod_vals[n_radial_basis+idx_qinl] += C3B[idx_Clm] * std::pow(mom_vals[idx_Sinlm], 2);
+                }
+            }
+        }
+
+        // Step 2.4. Ei
+        e_site = type_bias[type_central];
+        for (int p=0; p<num_neurons; p++) {
+            CoordType hidden_val = 0;
+            CoordType activated_hidden_val = 0;
+            for (int k=0; k<num_descriptors; k++) {
+                
+            }
+        }
+    }
+
+
+    // Step . Free
+    free(mom_vals);
+    free(dod_vals);
+    free(e_sites_der2mom);
+    free(e_sites_der2dod);
+    free(auto_dist_powers_);
+    delete p_RadialBasis;
+    #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
+    }
+    #endif
 }
 
 

@@ -26,6 +26,24 @@ namespace nep {
 
 class NepIndex {
 public:
+    static int get_num_descriptors(
+        int n_radial_basis,
+        int n_angular_basis,
+        int l_max) {
+        assert((l_max>=1) && (l_max<=L_MAX));
+        
+        return n_radial_basis + n_angular_basis * l_max;
+    }
+
+    static int get_num_Sinlm(
+        int n_angular_basis,
+        int l_max)
+    {
+        assert((l_max>=1) && (l_max<=L_MAX));
+
+        return n_angular_basis * (l_max*l_max + 2*l_max);
+    }
+
     static int get_Clm_index(
         int l,
         int mp) {
@@ -64,7 +82,7 @@ public:
 template <typename CoordType>
 class Blm {
 public:
-    inline static void find_blm_val(
+    static void find_blm_val(
         CoordType *blm_ptr,
         int l,
         int mp,
@@ -170,7 +188,7 @@ public:
         }
     }
 
-    inline static void find_blm_der2xyz(
+    static void find_blm_der2xyz(
         CoordType *blm_der2xyz,
         int l,
         int mp,

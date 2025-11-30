@@ -25,6 +25,7 @@
 class NepIndexTest : public ::testing::Test
 {
 protected:
+    int n_radial_basis;
     int n_angular_basis;
     int l_max;
 
@@ -39,6 +40,7 @@ protected:
 
 
     void SetUp() override {
+        n_radial_basis = 8;
         n_angular_basis = 2;
         l_max = 4;
     }
@@ -48,6 +50,17 @@ protected:
     }
 };  // class : NepIndexTest
 
+
+TEST_F(NepIndexTest, test_get_num_descriptors) {
+    int num_descriptors = ai2pot::nep::NepIndex::get_num_descriptors(n_radial_basis, n_angular_basis, l_max);
+    printf("Number of descriptors = %d\n", num_descriptors);
+}
+
+
+TEST_F(NepIndexTest, test_get_num_Sinlm) {
+    int num_Sinlm = ai2pot::nep::NepIndex::get_num_Sinlm(n_angular_basis, l_max);
+    printf("Number of Sinlm = %d\n", num_Sinlm);
+}
 
 TEST_F(NepIndexTest, test_get_Clm_index) {
     for (int l=1; l<=l_max; l++) {
