@@ -123,6 +123,8 @@ void Nep<CoordType>::find_ef(
     #endif
     for (int ii=0; ii<inum; ii++)
     {
+        CoordType *type_central_w0 = &w0[type_central*num_neurons*num_descriptors];
+        CoordType *type_central_w1 = &w1[type_central*num_neurons];
         center_idx = ilist[ii];
         type_central = types[center_idx];
         memset(mom_vals, 0, sizeof(CoordType) * num_Sinlm);
@@ -157,7 +159,7 @@ void Nep<CoordType>::find_ef(
             }
 
             // Step 2.2. A forward: basic
-            for (int mu=n_radial_basis; mu<n_angular_basis; mu++) {
+            for (int mu=n_radial_basis; mu<(n_radial_basis+n_angular_basis); mu++) {
                 for (int l=1; l<=l_max; l++) {
                     for (int mp=0; mp<2*l+1; mp++) {
                         for (int xi=0; xi<chebyshev_size; xi++) {
@@ -177,13 +179,13 @@ void Nep<CoordType>::find_ef(
         }
 
         // Step 2.3. A forward: times
-        for (int mu=n_radial_basis; mu<n_angular_basis; mu++) {
+        for (int mu=n_radial_basis; mu<(n_radial_basis+n_angular_basis); mu++) {
             for (int l=1; l<=l_max; l++) {
                 for (int mp=0; mp<2*l+1; mp++) {
                     int idx_qinl = NepIndex::get_qinl_index(l_max, mu, l);
                     int idx_Sinlm = NepIndex::get_Sinlm_index(l_max, mu, l, mp);
                     int idx_Clm = NepIndex::get_Clm_index(l, mp);
-                    dod_vals[n_radial_basis+idx_qinl] += C3B[idx_Clm] * std::pow(mom_vals[idx_Sinlm], 2);
+                    dod_vals[n_radial_basis+idx_qinl] += (CoordType)C3B[idx_Clm] * std::pow(mom_vals[idx_Sinlm], 2);
                 }
             }
         }
@@ -194,9 +196,23 @@ void Nep<CoordType>::find_ef(
             CoordType hidden_val = 0;
             CoordType activated_hidden_val = 0;
             for (int k=0; k<num_descriptors; k++) {
-                
+                hidden_val += type_central_w0[p*num_descriptors + k] * dod_vals[k];
             }
+            // 激活 ...
+            e_site += type_central_w1[p] * activated_hidden_val;
         }
+        #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
+        #pragma omp atomic
+        #endif
+        etot += e_site;
+
+        // 3. Force
+        // 3.1. 
+
+        // 3.2. 
+
+        // 3.3. 
+
     }
 
 

@@ -51,6 +51,41 @@ protected:
 };  // class : NepIndexTest
 
 
+typedef double real;
+
+class TanhTest : public ::testing::Test
+{
+protected:
+    real hidden_val;
+    real activated_hidden_val;
+    real activated_hidden_val_;
+    real activated_hidden_der;
+    real activated_hidden_der_;
+    real activated_hidden_der2der;
+    
+    static void SetUpTestSuite() {
+        printf("TanhTest (TestSuite) is setting up...\n");
+    }
+
+    static void TearDownTestSuite() {
+        printf("TanhTest (TestSuite) is tearing down...\n");
+    }
+
+    void SetUp() override {
+        activated_hidden_val = 0;
+        activated_hidden_val_ = 0;
+        activated_hidden_der = 0;
+        activated_hidden_der_ = 0;
+        activated_hidden_der2der = 0;
+        hidden_val = 0.1;
+    }
+
+    void TearDown() override {
+
+    }
+};  // class : NNMtpUtilsTest
+
+
 TEST_F(NepIndexTest, test_get_num_descriptors) {
     int num_descriptors = ai2pot::nep::NepIndex::get_num_descriptors(n_radial_basis, n_angular_basis, l_max);
     printf("Number of descriptors = %d\n", num_descriptors);
@@ -92,6 +127,33 @@ TEST_F(NepIndexTest, test_get_qinl_index) {
         }
     }
 }
+
+
+
+
+TEST_F(TanhTest, der_accuracy) {
+    real delta = 1e-5;
+    ai2pot::nep::TanhActivationFunc<real>::find_val(activated_hidden_val, hidden_val);
+    ai2pot::nep::TanhActivationFunc<real>::find_der(activated_hidden_der, hidden_val);
+    ai2pot::nep::TanhActivationFunc<real>::find_val(activated_hidden_val_, hidden_val+delta);
+
+    printf("Tanh der accuracy:\n");
+    printf("\t1. Derivative calculated by custom code = %.10lf\n", (activated_hidden_val_ - activated_hidden_val)/delta);
+    printf("\t2. Derivative calculated by fdm = %.10lf\n", activated_hidden_der);
+}
+
+
+TEST_F(TanhTest, der2der_accuracy) {
+    real delta = 1e-5;
+    ai2pot::nep::TanhActivationFunc<real>::find_der(activated_hidden_der, hidden_val);
+    ai2pot::nep::TanhActivationFunc<real>::find_der2der(activated_hidden_der2der, hidden_val);
+    ai2pot::nep::TanhActivationFunc<real>::find_der(activated_hidden_der_, hidden_val+delta);
+
+    printf("Tanh der2der accuracy:\n");
+    printf("\t1. Derivative^2 calculated by custom code = %.10lf\n", (activated_hidden_der_ - activated_hidden_der)/delta);
+    printf("\t2. Derivative^2 calculated by fdm = %.10lf\n", activated_hidden_der2der);
+}
+
 
 
 int main(int argc, char **argv) {

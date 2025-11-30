@@ -18,8 +18,18 @@
 #include <cassert>
 #include <math.h>
 
-
 #define L_MAX 4
+
+// 3 + 5 + 7 + 9
+const int FLATTEN_LM_DIM = 24;
+double C3B[FLATTEN_LM_DIM] = {
+    0.238732414637843, 0.119366207318922f, 0.119366207318922f, 0.099471839432435f,
+    0.596831036594608, 0.596831036594608f, 0.149207759148652f, 0.149207759148652f,
+    0.139260575205408, 0.104445431404056f, 0.104445431404056f, 1.044454314040563f,
+    1.044454314040563, 0.174075719006761f, 0.174075719006761f, 0.011190581936149f,
+    0.223811638722978, 0.223811638722978f, 0.111905819361489f, 0.111905819361489f,
+    1.566681471060845, 1.566681471060845f, 0.195835183882606f, 0.195835183882606f};
+
 
 namespace ai2pot {
 namespace nep {
@@ -363,6 +373,63 @@ public:
         }
     }
 };  // class : Blm
+
+
+
+template <typename CoordType>
+class TanhActivationFunc {
+public:
+    static void find_val(
+        CoordType &val, 
+        CoordType hidden_val);
+
+    static void find_der(
+        CoordType &der,
+        CoordType hidden_val);
+
+    static void find_der2der(
+        CoordType &der2der,
+        CoordType hidden_val);
+
+    static void find_all_info(
+        CoordType &val,
+        CoordType &der,
+        CoordType &der2der,
+        CoordType hidden_val);
+};  // class : TanhActivationFunc
+
+
+template <typename CoordType>
+void TanhActivationFunc<CoordType>::find_val(
+    CoordType &val,
+    CoordType hidden_val)
+{
+    val = (std::exp(hidden_val) - std::exp(-hidden_val)) 
+          / (std::exp(hidden_val) + std::exp(-hidden_val));
+}
+
+
+template <typename CoordType>
+void TanhActivationFunc<CoordType>::find_der(
+    CoordType &der,
+    CoordType hidden_val)
+{
+    CoordType val = (std::exp(hidden_val) - std::exp(-hidden_val)) 
+                    / (std::exp(hidden_val) + std::exp(-hidden_val));
+    der = 1 - std::pow(val, 2);
+}
+
+
+template <typename CoordType>
+void TanhActivationFunc<CoordType>::find_der2der(
+    CoordType &der2der,
+    CoordType hidden_val)
+{
+    CoordType val = (std::exp(hidden_val) - std::exp(-hidden_val))
+                    / (std::exp(hidden_val) + std::exp(-hidden_val));
+    der2der = -2*val + 2*std::pow(val, 3);
+}
+
 
 };  // namespace : nep
 };  // namespace : ai2pot
