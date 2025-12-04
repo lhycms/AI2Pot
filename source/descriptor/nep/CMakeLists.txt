@@ -29,8 +29,12 @@ if (BUILD_TEST)
     target_link_libraries(test_nep_basis PRIVATE gtest gtest_main)
     gtest_discover_tests(test_nep_basis)
 
-
     add_executable(test_nep ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nep.cc)
     target_link_libraries(test_nep PRIVATE gtest gtest_main)
     gtest_discover_tests(test_nep)
+
+
+    add_executable(test_nep_loss ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nepLoss.cc)
+    target_link_libraries(test_nep_loss PRIVATE gtest gtest_main)
+    gtest_discover_tests(test_nep_loss)
 endif()
