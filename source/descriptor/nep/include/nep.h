@@ -149,7 +149,7 @@ void Nep<CoordType>::find_ef(
             for (int k=1; k<=l_max; k++)
                 auto_dist_powers_[k] = auto_dist_powers_[k-1] * distance_ij;
             
-            // Step 2.1. R forward
+            // Step 2.1. Radial forward
             for (int mu=0; mu<n_radial_basis; mu++) {
                 for (int xi=0; xi<chebyshev_size; xi++) {
                     int idx = (type_central*ntypes+type_outer)*(n_radial_basis+n_angular_basis)*chebyshev_size
@@ -158,13 +158,13 @@ void Nep<CoordType>::find_ef(
                 }
             }
 
-            // Step 2.2. A forward: basic
-            for (int mu=n_radial_basis; mu<(n_radial_basis+n_angular_basis); mu++) {
+            // Step 2.2. Angular forward: basic
+            for (int mu=0; mu<n_angular_basis; mu++) {
                 for (int l=1; l<=l_max; l++) {
                     for (int mp=0; mp<2*l+1; mp++) {
                         for (int xi=0; xi<chebyshev_size; xi++) {
                             int idx = (type_central*ntypes+type_outer)*(n_radial_basis+n_angular_basis)*chebyshev_size
-                                      + mu*chebyshev_size + xi;
+                                      + (n_radial_basis+mu)*chebyshev_size + xi;
                             int idx_Sinlm = NepIndex::get_Sinlm_index(l_max, mu, l, mp);
 
                             CoordType A = p_RadialBasis->vals()[xi];
@@ -179,7 +179,7 @@ void Nep<CoordType>::find_ef(
         }
 
         // Step 2.3. A forward: times
-        for (int mu=n_radial_basis; mu<(n_radial_basis+n_angular_basis); mu++) {
+        for (int mu=0; mu<n_angular_basis; mu++) {
             for (int l=1; l<=l_max; l++) {
                 for (int mp=0; mp<2*l+1; mp++) {
                     int idx_qinl = NepIndex::get_qinl_index(l_max, mu, l);
@@ -193,12 +193,11 @@ void Nep<CoordType>::find_ef(
         // Step 2.4. Ei
         e_site = type_bias[type_central];
         for (int p=0; p<num_neurons; p++) {
-            CoordType hidden_val = 0;
-            CoordType activated_hidden_val = 0;
-            for (int k=0; k<num_descriptors; k++) {
+            CoordType hidden_val = 0.0;
+            CoordType activated_hidden_val = 0.0;
+            for (int k=0; k<num_descriptors; k++)
                 hidden_val += type_central_w0[p*num_descriptors + k] * dod_vals[k];
-            }
-            // 激活 ...
+            TanhActivationFunc<CoordType>::find_val(activated_hidden_val, hidden_val);
             e_site += type_central_w1[p] * activated_hidden_val;
         }
         #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
@@ -206,15 +205,109 @@ void Nep<CoordType>::find_ef(
         #endif
         etot += e_site;
 
-        // 3. Force
-        // 3.1. 
+        // 3. backward (Force)
+        // 3.1. RA basic
+        for (int p=0; p<num_neurons; p++) {
+            CoordType hidden_val = 0.0;
+            CoordType activated_hidden_der = 0.0;
+            for (int k=0; k<num_descriptors; k++)
+                hidden_val += type_central_w0[p*num_descriptors + k] * dod_vals[k];
+            TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
+            
+            for (int k=0; k<num_descriptors; k++)
+                e_sites_der2dod[k] += type_central_w1[p] 
+                                      * activated_hidden_der 
+                                      * type_central_w0[p*num_descriptors + k];
+        }
+        
+        // 3.2. Angular times
+        for (int mu=0; mu<n_angular_basis; mu++) {
+            for (int l=1; l<=l_max; l++) {
+                for (int mp=0; mp<2*l; l++) {
+                    int idx_Clm = NepIndex::get_Clm_index(l, mp);
+                    int idx_Sinlm = NepIndex::get_Sinlm_index(l_max, mu, l, mp);
+                    int idx_qinl = NepIndex::get_qinl_index(l_max, mu, l);
 
-        // 3.2. 
+                    e_sites_der2mom[idx_Sinlm] = e_sites_der2dod[n_radial_basis + idx_qinl] 
+                                                 * 2 * (CoordType)C3B[idx_Clm] * mom_vals[idx_Sinlm];
+                }
+            }
+        }
 
         // 3.3. 
+        for (int jj=0; jj<numneigh[ii]; jj++) {
+            neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
+            type_outer = types[neigh_idx];
+            neigh_vec[0] = rcs[ii*umax_num_neigh_atoms + jj][0];
+            neigh_vec[1] = rcs[ii*umax_num_neigh_atoms + jj][1];
+            neigh_vec[2] = rcs[ii*umax_num_neigh_atoms + jj][2];
+            distance_ij = std::sqrt(std::pow(neigh_vec[0], 2)
+                                    + std::pow(neigh_vec[1], 2)
+                                    + std::pow(neigh_vec[2], 2));
+            if (distance_ij > rmax)
+                continue;
+            p_RadialBasis->build(distance_ij);
+            
+            auto_dist_powers_[0] = 1.0;
+            for (int k=1; k<=l_max; k++)
+                auto_dist_powers_[k] = auto_dist_powers_[k-1] * distance_ij;
 
+            for (int aa=0; aa<3; aa++) {
+                CoordType e_site_ders_ija = 0.0;
+                // 3.3.1. Raidal contribution
+                for (int mu=0; mu<n_radial_basis; mu++) {
+                    for (int xi=0; xi<chebyshev_size; xi++) {
+                        int idx = (type_central*ntypes+type_outer)*(n_radial_basis+n_angular_basis)*chebyshev_size
+                                  + mu*chebyshev_size + xi;
+        
+                        e_site_ders_ija += e_sites_der2dod[mu]
+                                           * p_RadialBasis->ders2r()[xi] 
+                                           * neigh_vec[aa] / distance_ij;
+                    }
+                }
+
+                // 3.3.2. Angular contribution
+                for (int mu=0; mu<n_angular_basis; mu++) {
+                    for (int l=1; l<=l_max; l++) {
+                        for (int mp=0; mp<2*l; mp++) {
+                            int idx_Sinlm = NepIndex::get_Sinlm_index(l_max, mu, l, mp);
+                            for (int xi=0; xi<chebyshev_size; xi++) {
+                                int idx = (type_central*ntypes+type_outer)*(n_radial_basis+n_angular_basis)*chebyshev_size
+                                          * (n_radial_basis+mu)*chebyshev_size + xi;
+                                
+                                CoordType A = p_RadialBasis->vals()[xi];
+                                CoordType B = 0.0;
+                                Blm<CoordType>::find_blm_val(&B, l, mp, neigh_vec, distance_ij);
+                                CoordType C = 1.0/auto_dist_powers_[l];
+                                
+                                CoordType A_ders[3] = {0.0};
+                                CoordType B_ders[3] = {0.0};
+                                CoordType C_ders[3] = {0.0};
+                                A_ders[aa] = p_RadialBasis->ders2r()[xi] * neigh_vec[aa] / distance_ij;
+                                Blm<CoordType>::find_blm_der2xyz(B_ders, l, mp, neigh_vec, distance_ij);
+                                C_ders[aa] = -l / (auto_dist_powers_[l]*distance_ij) 
+                                             * (neigh_vec[aa] / distance_ij);
+                                
+                                e_site_ders_ija += e_sites_der2mom[idx_Sinlm] * 
+                                                   (A_ders[aa] * B * C
+                                                    + A * B_ders[aa] * C
+                                                    + A * B * C_ders[aa]);
+                            }
+                        }
+                    }
+                }
+
+                #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
+                #pragma omp atomic
+                #endif
+                force[center_idx][aa] += e_site_ders_ija;
+                #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
+                #pragma omp atomic
+                #endif
+                force[neigh_idx][aa] -= e_site_ders_ija;
+            }
+        }
     }
-
 
     // Step . Free
     free(mom_vals);
@@ -231,7 +324,6 @@ void Nep<CoordType>::find_ef(
 
 };  // namespace : nep
 };  // namespace : ai2pot
-
 
 
 #endif
