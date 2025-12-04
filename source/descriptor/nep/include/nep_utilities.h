@@ -40,6 +40,9 @@ public:
         int n_radial_basis,
         int n_angular_basis,
         int l_max) {
+        if (l_max == 0)
+            return n_radial_basis;
+
         assert((l_max>=1) && (l_max<=L_MAX));
         
         return n_radial_basis + n_angular_basis * l_max;
@@ -49,6 +52,8 @@ public:
         int n_angular_basis,
         int l_max)
     {
+        if (l_max == 0)
+            return 0;
         assert((l_max>=1) && (l_max<=L_MAX));
 
         return n_angular_basis * (l_max*l_max + 2*l_max);

@@ -28,4 +28,9 @@ if (BUILD_TEST)
     add_executable(test_nep_basis ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_basis.cc)
     target_link_libraries(test_nep_basis PRIVATE gtest gtest_main)
     gtest_discover_tests(test_nep_basis)
+
+
+    add_executable(test_nep ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nep.cc)
+    target_link_libraries(test_nep PRIVATE gtest gtest_main)
+    gtest_discover_tests(test_nep)
 endif()

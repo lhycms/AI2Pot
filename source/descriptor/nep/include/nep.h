@@ -100,7 +100,7 @@ void Nep<CoordType>::find_ef(
     memset(force, 0, sizeof(CoordType) * (inum+nghost) * 3);
 
     #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
-    #pragma omp parallel private(mom_vals, dod_vals, e_sites_der2mom, e_sites_der2dod);
+    #pragma omp parallel private(mom_vals, dod_vals, e_sites_der2mom, e_sites_der2dod)
     {
     #endif
     mom_vals = (CoordType*)malloc(sizeof(CoordType) * num_Sinlm);
@@ -116,17 +116,17 @@ void Nep<CoordType>::find_ef(
     CoordType neigh_vec[3];
     CoordType distance_ij;
     RQ_Chebyshev<CoordType> *p_RadialBasis;
-    p_RadialBasis = new RQ_Chebyshev<CoordType>(size, rmax, rmin);
+    p_RadialBasis = new RQ_Chebyshev<CoordType>(chebyshev_size, rmax, rmin);
 
     #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
     #pragma omp for schedule(static)
     #endif
     for (int ii=0; ii<inum; ii++)
     {
-        CoordType *type_central_w0 = &w0[type_central*num_neurons*num_descriptors];
-        CoordType *type_central_w1 = &w1[type_central*num_neurons];
         center_idx = ilist[ii];
         type_central = types[center_idx];
+        CoordType *type_central_w0 = &w0[type_central*num_neurons*num_descriptors];
+        CoordType *type_central_w1 = &w1[type_central*num_neurons];
         memset(mom_vals, 0, sizeof(CoordType) * num_Sinlm);
         memset(dod_vals, 0, sizeof(CoordType) * num_descriptors);
         memset(e_sites_der2mom, 0, sizeof(CoordType) * num_Sinlm);
@@ -168,7 +168,7 @@ void Nep<CoordType>::find_ef(
                             int idx_Sinlm = NepIndex::get_Sinlm_index(l_max, mu, l, mp);
 
                             CoordType A = p_RadialBasis->vals()[xi];
-                            CoordType B;
+                            CoordType B = 0.0;
                             Blm<CoordType>::find_blm_val(&B, l, mp, neigh_vec, distance_ij);
                             CoordType C = 1/auto_dist_powers_[l];
                             mom_vals[idx_Sinlm] += coeffs[idx] * A * B * C;
@@ -195,8 +195,9 @@ void Nep<CoordType>::find_ef(
         for (int p=0; p<num_neurons; p++) {
             CoordType hidden_val = 0.0;
             CoordType activated_hidden_val = 0.0;
-            for (int k=0; k<num_descriptors; k++)
+            for (int k=0; k<num_descriptors; k++) {
                 hidden_val += type_central_w0[p*num_descriptors + k] * dod_vals[k];
+            }
             TanhActivationFunc<CoordType>::find_val(activated_hidden_val, hidden_val);
             e_site += type_central_w1[p] * activated_hidden_val;
         }
@@ -219,11 +220,11 @@ void Nep<CoordType>::find_ef(
                                       * activated_hidden_der 
                                       * type_central_w0[p*num_descriptors + k];
         }
-        
+
         // 3.2. Angular times
         for (int mu=0; mu<n_angular_basis; mu++) {
             for (int l=1; l<=l_max; l++) {
-                for (int mp=0; mp<2*l; l++) {
+                for (int mp=0; mp<2*l+1; mp++) {
                     int idx_Clm = NepIndex::get_Clm_index(l, mp);
                     int idx_Sinlm = NepIndex::get_Sinlm_index(l_max, mu, l, mp);
                     int idx_qinl = NepIndex::get_qinl_index(l_max, mu, l);
@@ -261,6 +262,7 @@ void Nep<CoordType>::find_ef(
                                   + mu*chebyshev_size + xi;
         
                         e_site_ders_ija += e_sites_der2dod[mu]
+                                           * coeffs[idx]
                                            * p_RadialBasis->ders2r()[xi] 
                                            * neigh_vec[aa] / distance_ij;
                     }
@@ -269,11 +271,11 @@ void Nep<CoordType>::find_ef(
                 // 3.3.2. Angular contribution
                 for (int mu=0; mu<n_angular_basis; mu++) {
                     for (int l=1; l<=l_max; l++) {
-                        for (int mp=0; mp<2*l; mp++) {
+                        for (int mp=0; mp<2*l+1; mp++) {
                             int idx_Sinlm = NepIndex::get_Sinlm_index(l_max, mu, l, mp);
                             for (int xi=0; xi<chebyshev_size; xi++) {
                                 int idx = (type_central*ntypes+type_outer)*(n_radial_basis+n_angular_basis)*chebyshev_size
-                                          * (n_radial_basis+mu)*chebyshev_size + xi;
+                                          + (n_radial_basis+mu)*chebyshev_size + xi;
                                 
                                 CoordType A = p_RadialBasis->vals()[xi];
                                 CoordType B = 0.0;
@@ -288,7 +290,8 @@ void Nep<CoordType>::find_ef(
                                 C_ders[aa] = -l / (auto_dist_powers_[l]*distance_ij) 
                                              * (neigh_vec[aa] / distance_ij);
                                 
-                                e_site_ders_ija += e_sites_der2mom[idx_Sinlm] * 
+                                e_site_ders_ija += e_sites_der2mom[idx_Sinlm]
+                                                   * coeffs[idx] *
                                                    (A_ders[aa] * B * C
                                                     + A * B_ders[aa] * C
                                                     + A * B * C_ders[aa]);
