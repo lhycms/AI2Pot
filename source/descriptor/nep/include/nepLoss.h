@@ -265,8 +265,8 @@ void NepLoss<CoordType>::find_ef_loss_backward(
                 continue;
             p_RadialBasis->build(distance_ij);
             auto_dist_powers_[0] = 1.0;
-            for (int k=0; k<=l_max; k++)
-                auto_dist_powers_[k] = auto_dist_powers[k-1] * distance_ij;
+            for (int k=1; k<=l_max; k++)
+                auto_dist_powers_[k] = auto_dist_powers_[k-1] * distance_ij;
             
 
             // Step 2.1. Radial forward
@@ -275,6 +275,14 @@ void NepLoss<CoordType>::find_ef_loss_backward(
                     int idx = (type_central*ntypes+type_outer)*(n_radial_basis+n_angular_basis)*chebyshev_size
                               + mu*chebyshev_size + xi;
                     dod_vals[mu] += coeffs[idx] * p_RadialBasis->vals()[xi];
+                    for (int aa=0; aa<3; aa++) {
+                        dloss_combination_dod[mu] += 2*f_weight/(3*inum)
+                                                     * (force_ml[center_idx][aa] - force_dft[center_idx][aa])
+                                                     * coeffs[idx] * p_RadialBasis->ders2r()[xi] * neigh_vec[aa] / distance_ij;
+                        dloss_combination_dod[mu] -= 2*f_weight/(3*inum)
+                                                     * (force_ml[neigh_idx][aa] - force_dft[neigh_idx][aa])
+                                                     * coeffs[idx] * p_RadialBasis->ders2r()[xi] * neigh_vec[aa] / distance_ij;
+                    }
                 }
             }
 
@@ -289,9 +297,29 @@ void NepLoss<CoordType>::find_ef_loss_backward(
 
                             CoordType A = p_RadialBasis->vals()[xi];
                             CoordType B = 0.0;
-                            Blm<CoordType>::find_blm_val(&b, l, mp, neigh_vec, distance);
+                            Blm<CoordType>::find_blm_val(&B, l, mp, neigh_vec, distance_ij);
                             CoordType C = 1/auto_dist_powers_[l];
+                            CoordType A_ders[3] = {0.0};
+                            CoordType B_ders[3] = {0.0};
+                            CoordType C_ders[3] = {0.0};
+                            Blm<CoordType>::find_blm_der2xyz(B_ders, l, mp, neigh_vec, distance_ij);
+                            for (int aa=0; aa<3; aa++) {
+                                A_ders[aa] = p_RadialBasis->ders2r()[xi] * neigh_vec[aa] / distance_ij;
+                                C_ders[aa] = -l / (auto_dist_powers_[l] * distance_ij) * (neigh_vec[aa] / distance_ij);
+                            }
                             mom_vals[idx_Sinlm] = coeffs[idx] * A * B * C;
+
+                            for (int aa=0; aa<3; aa++) {
+                                CoordType tmp_deriv = coeffs[idx] * (A_ders[aa] * B * C
+                                                                     + A * B_ders[aa] * C
+                                                                     + A * B * C_ders[aa]);
+                                dloss_combination_mom[idx_Sinlm] += 2*f_weight/(3*inum)
+                                                                    * (force_ml[center_idx][aa] - force_dft[center_idx][aa])
+                                                                    * tmp_deriv;
+                                dloss_combination_mom[idx_Sinlm] -= 2*f_weight/(3*inum)
+                                                                    * (force_ml[neigh_idx][aa] - force_dft[neigh_idx][aa])
+                                                                    * tmp_deriv;
+                            }
                         }
                     }
                 }
@@ -306,6 +334,9 @@ void NepLoss<CoordType>::find_ef_loss_backward(
                     int idx_Clm = NepIndex::get_Clm_index(l, mp);
                     int idx_qinl = NepIndex::get_qinl_index(l_max, mu, l);
                     dod_vals[n_radial_basis+idx_qinl] += (CoordType)C3B[idx_Clm] * std::pow(mom_vals[idx_Sinlm], 2);
+
+                    dloss_combination_dod[n_radial_basis + idx_qinl] = dloss_combination_mom[idx_Sinlm]
+                                                                       * 2 * (CoordType)C3B[idx_Clm] * mom_vals[idx_Sinlm];
                 }
             }
         }
@@ -353,7 +384,7 @@ void NepLoss<CoordType>::find_ef_loss_backward(
             p_RadialBasis->build(distance_ij);
             auto_dist_powers_[0] = 1.0;
             for (int k=1; k<=l_max; k++)
-                auto_dist_powers_[k] = auto_dist_powers[k-1] * distance_ij;
+                auto_dist_powers_[k] = auto_dist_powers_[k-1] * distance_ij;
             
             // 4.1.1. loss_der2coeffs -- Radial
             for (int mu=0; mu<n_radial_basis; mu++) {
@@ -447,16 +478,24 @@ void NepLoss<CoordType>::find_ef_loss_backward(
             for (int k=0; k<num_descriptors; k++)
                 hidden_val += type_central_w0[p*num_descriptors+k] * dod_vals[k];
             TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
-
+            TanhActivationFunc<CoordType>::find_der2der(activated_hidden_der2der, hidden_val);
             for (int k=0; k<num_descriptors; k++) {
                 CoordType tmpe_loss_der2w0 = 2*e_weight/inum*(etot_ml-etot_dft)
                                              * type_central_w1[p]
                                              * activated_hidden_der
                                              * dod_vals[k];
-                CoordType tmpf_loss_der2w0 = 0.0;
-                /*
-                    ...
-                */
+                CoordType tmpf_loss_der2w0 = dloss_combination_dod[k]
+                                             * type_central_w1[p]
+                                             * (activated_hidden_der
+                                               + activated_hidden_der2der
+                                                 * type_central_w0[p*num_descriptors+k]
+                                                 * dod_vals[k]);
+                
+                #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
+                #pragma omp atomic
+                #endif
+                loss_der2w0[type_central*num_neurons*num_descriptors + p*num_descriptors + k] += tmpe_loss_der2w0
+                                                                                                 + tmpf_loss_der2w0;
             }
         }
 
@@ -470,12 +509,20 @@ void NepLoss<CoordType>::find_ef_loss_backward(
             for (int k=0; k<num_descriptors; k++)
                 hidden_val += type_central_w0[p*num_descriptors+k] * dod_vals[k];
             TanhActivationFunc<CoordType>::find_val(activated_hidden_val, hidden_val);
-
+            TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
             tmpe_loss_der2w1 = 2*e_weight/inum*(etot_ml-etot_dft)
                                * activated_hidden_val;
-            /*
-                ...
-            */
+            for (int k=0; k<num_descriptors; k++) {
+                tmpf_loss_der2w1 += dloss_combination_dod[k]
+                                    * activated_hidden_der
+                                    * type_central_w0[p*num_descriptors + k];
+            }
+
+            #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
+            #pragma omp atomic
+            #endif
+            loss_der2w1[type_central*num_neurons + p] += (tmpe_loss_der2w1
+                                                          + tmpf_loss_der2w1);
         }
 
         // Step 4.4. der2type_bias
@@ -493,7 +540,7 @@ void NepLoss<CoordType>::find_ef_loss_backward(
     free(dloss_combination_mom);
     free(dloss_combination_dod);
     delete p_RadialBasis;
-    free(auto_dist_powers);
+    free(auto_dist_powers_);
     #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
     }
     #endif

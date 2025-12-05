@@ -21,6 +21,7 @@
 #include "../../../nblist/include/neighborList.h"
 #include "../include/nep_utilities.h"
 #include "../include/nep.h"
+#include "../include/nepLoss.h"
 
 
 class NepTest : public ::testing::Test {
@@ -63,6 +64,20 @@ protected:
     double *w0;
     double *w1;
     double *type_bias;
+
+    // Loss
+    double e_weight;
+    double f_weight;
+    double v_weight;
+    double etot_dft;
+    double (*forces_dft)[3];
+    double *virial_dft;
+
+    // Loss derivatives
+    double *loss_der2coeffs;
+    double *loss_der2w0;
+    double *loss_der2w1;
+    double *loss_der2type_bias;
 
 
     static void SetUpTestSuite() {
@@ -175,8 +190,8 @@ protected:
 
         chebyshev_size = 8;
         num_neurons = 30;
-        n_radial_basis = 10;
-        n_angular_basis = 8;
+        n_radial_basis = 6;
+        n_angular_basis = 4;
         l_max = 3;
         num_descriptors = ai2pot::nep::NepIndex::get_num_descriptors(n_radial_basis, n_angular_basis, l_max);
 
@@ -195,6 +210,27 @@ protected:
         type_bias = (double*)malloc(sizeof(double) * ntypes);
         type_bias[0] = -0.1;
         type_bias[1] = -0.2;
+
+
+        // Loss
+        e_weight = 0.1;
+        f_weight = 0.2;
+        v_weight = 0.3;
+        etot_dft = 0.0;
+        forces_dft = (double (*)[3])malloc(sizeof(double) * inum * 3);
+        memset(forces_dft, 0.0, sizeof(double) * inum * 3);
+        virial_dft = (double *)malloc(sizeof(double) * 9);
+        memset(virial_dft, 0.0, sizeof(double) * 9);
+
+        // Loss derivative
+        loss_der2coeffs = (double*)malloc(sizeof(double) * ntypes * ntypes * (n_radial_basis+n_angular_basis) * chebyshev_size);
+        memset(loss_der2coeffs, 0, sizeof(double) * ntypes * ntypes * (n_radial_basis+n_angular_basis) * chebyshev_size);
+        loss_der2w0 = (double*)malloc(sizeof(double) * ntypes * num_neurons * num_descriptors);
+        memset(loss_der2w0, 0, sizeof(double) * ntypes * num_neurons * num_descriptors);
+        loss_der2w1 = (double*)malloc(sizeof(double) * ntypes * num_neurons);
+        memset(loss_der2w1, 0, sizeof(double) * ntypes * num_neurons);
+        loss_der2type_bias = (double*)malloc(sizeof(double) * ntypes);
+        memset(loss_der2type_bias, 0, sizeof(double) * ntypes);
     }
 
     void TearDown() override {
@@ -213,6 +249,14 @@ protected:
         free(type_bias);
 
         // Loss
+        free(forces_dft);
+        free(virial_dft);
+
+        // Loss derivatives
+        free(loss_der2coeffs);
+        free(loss_der2w0);
+        free(loss_der2w1);
+        free(loss_der2type_bias);
     }
 };  // class : NepTest
 
@@ -301,6 +345,90 @@ printf("2.1. energy = %.15lf\n", etot);
 printf("2.2. force=\n");
 for (int ii=0; ii<inum; ii++)
     printf("\t\t%3d: [%.15f, %.15f, %.15f]\n", ii, forces[ii][0], forces[ii][1], forces[ii][2]);
+}
+
+
+TEST_F(NepTest, find_ef_loss_backward) {
+    ai2pot::nep::Nep<double>::find_ef(
+        etot,
+        forces,
+        chebyshev_size,
+        n_radial_basis,
+        n_angular_basis,
+        l_max,
+        num_neurons,
+        coeffs,
+        w0,
+        w1,
+        type_bias,
+        inum,
+        ilist,
+        numneigh,
+        firstneigh,
+        (double (*)[3])rcs,
+        types,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin,
+        nullptr);
+
+    ai2pot::nep::NepLoss<double>::find_ef_loss_backward(
+        loss_der2coeffs,
+        loss_der2w0,
+        loss_der2w1,
+        loss_der2type_bias,
+        e_weight,
+        f_weight,
+        etot,
+        etot_dft,
+        forces,
+        forces_dft,
+        chebyshev_size,
+        n_radial_basis,
+        n_angular_basis,
+        l_max,
+        num_neurons,
+        coeffs,
+        w0,
+        w1,
+        type_bias,
+        inum,
+        ilist,
+        numneigh,
+        firstneigh,
+        (double (*)[3])rcs,
+        types,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin,
+        nullptr);
+
+printf("***+++ %d\n", ntypes*ntypes*(n_radial_basis+n_angular_basis)*chebyshev_size);
+printf("1. loss_der2coeffs:\n");
+for (int ii=0; ii<ntypes*ntypes*(n_radial_basis+n_angular_basis)*chebyshev_size; ii++)
+    printf("%.15f, ", loss_der2coeffs[ii]);
+printf("\n\n");
+
+printf("2. loss_der2w0:\n");
+for (int ii=0; ii<ntypes*num_neurons*num_descriptors; ii++)
+    printf("%.15f, ", loss_der2w0[ii]);
+printf("\n\n");
+
+printf("3. loss_der2w1:\n");
+for (int ii=0; ii<ntypes*num_neurons; ii++)
+    printf("%.15f, ", loss_der2w1[ii]);
+printf("\n\n");
+
+printf("4. loss_der2type_bias:\n");
+for (int ii=0; ii<ntypes; ii++)
+    printf("%.15f, ", loss_der2type_bias[ii]);
+printf("\n\n");
 }
 
 
