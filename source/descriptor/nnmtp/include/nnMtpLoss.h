@@ -278,7 +278,7 @@ void NNMtpLoss<CoordType>::find_loss_backward(
 
     // Step 3.
 #ifdef USE_OPENMP
-#pragma omp parallem private(mom_vals, e_site_der2mom, dloss_combination, auto_dist_powers_, auto_coords_powers_, p_RadialBasis)
+#pragma omp parallel private(mom_vals, e_site_der2mom, dloss_combination, auto_dist_powers_, auto_coords_powers_, p_RadialBasis)
 {
 #endif
     mom_vals = (CoordType*)malloc(sizeof(CoordType) * alpha_moments_count);

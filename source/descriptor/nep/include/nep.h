@@ -229,7 +229,7 @@ void Nep<CoordType>::find_ef(
                     int idx_Sinlm = NepIndex::get_Sinlm_index(l_max, mu, l, mp);
                     int idx_qinl = NepIndex::get_qinl_index(l_max, mu, l);
 
-                    e_sites_der2mom[idx_Sinlm] = e_sites_der2dod[n_radial_basis + idx_qinl] 
+                    e_sites_der2mom[idx_Sinlm] = e_sites_der2dod[n_radial_basis + idx_qinl]
                                                  * 2 * (CoordType)C3B[idx_Clm] * mom_vals[idx_Sinlm];
                 }
             }
