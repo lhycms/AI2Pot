@@ -335,8 +335,8 @@ void NepLoss<CoordType>::find_ef_loss_backward(
                     int idx_qinl = NepIndex::get_qinl_index(l_max, mu, l);
                     dod_vals[n_radial_basis+idx_qinl] += (CoordType)C3B[idx_Clm] * std::pow(mom_vals[idx_Sinlm], 2);
 
-                    dloss_combination_dod[n_radial_basis + idx_qinl] = dloss_combination_mom[idx_Sinlm]
-                                                                       * 2 * (CoordType)C3B[idx_Clm] * mom_vals[idx_Sinlm];
+                    dloss_combination_dod[n_radial_basis + idx_qinl] += dloss_combination_mom[idx_Sinlm]
+                                                                        * 2 * (CoordType)C3B[idx_Clm] * mom_vals[idx_Sinlm];
                 }
             }
         }
