@@ -96,10 +96,7 @@ void check_orthogonality(
 
 
 
-TEST_F(SchmidtOrthTest, find_orthogonal_basis_set) {
-    int mu1 = 0;
-    int mu2 = 1;
-    
+TEST_F(SchmidtOrthTest, find_orthogonal_basis_set) {    
     ai2pot::mtpr::CoeffsSchmidtOrth<double>::find_orthogonal_basis_set(
         orth_coeffs,
         ntypes,

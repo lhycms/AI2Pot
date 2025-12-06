@@ -72,7 +72,7 @@ class LinearMtp(nn.Module):
         self.num_coeffs: int = self.ntypes * self.ntypes * self.nmus * self.chebyshev_size
         
         coeffs_tensor: torch.Tensor = torch.Tensor(self.ntypes*self.ntypes*self.nmus*self.chebyshev_size)
-        nn.init.normal_(coeffs_tensor, mean=0.0, std=0.2)
+        nn.init.normal_(coeffs_tensor, mean=0.0, std=0.1)
         self.register_parameter(name="coeffs_tensor", param=nn.Parameter(data=coeffs_tensor))
         
         linear_coeffs_tensor: torch.Tensor = torch.Tensor(self.num_descriptors)

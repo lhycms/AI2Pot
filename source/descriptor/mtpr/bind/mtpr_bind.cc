@@ -18,12 +18,32 @@
 #include <climits>
 #include <cassert>
 
+#include "../include/schmidt_orth_op.h"
 #include "../include/mtpParamOp.h"
 #include "../include/mtpBasisOp.h"
 #include "../include/linearMtpOp.h"
 
 
 TORCH_LIBRARY(mtpr, m) {
+    m.def(
+        "CoeffsSchmidtOrthOp",
+        [](int64_t ntypes,
+           int64_t nmus,
+           int64_t chebyshev_size,
+           const at::Tensor& coeffs_tensor)
+        {
+            assert(ntypes <= INT_MAX);
+            assert(nmus <= INT_MAX);
+            assert(chebyshev_size <= INT_MAX);
+
+            return ai2pot::mtpr::CoeffsSchmidtOrthOp(
+                (int)ntypes,
+                (int)nmus,
+                (int)chebyshev_size,
+                coeffs_tensor);
+        }
+    );
+
     m.def(
         "mtpParamOp",
         [](int64_t mtp_level)

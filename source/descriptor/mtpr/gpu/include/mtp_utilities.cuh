@@ -47,6 +47,13 @@ do {                                                                        \
 } while(0);
 
 
+#define CHECK_CUDA_KERNEL                       \
+do {                                            \
+    CHECK_CUDA_API( cudaDeviceSynchronize() );  \
+    CHECK_CUDA_API( cudaGetLastError() );       \
+} while(0);
+
+
 #ifdef __INTELLISENSE__
 #define MAX_NUM_MUS 5
 #define MAX_ALPHA_INDEX_BASIC 8

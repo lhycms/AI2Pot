@@ -22,11 +22,14 @@ from dpdata import LabeledSystem, MultiSystems
 from ase import Atoms
 from ase.io import read as ase_read
 import torch
+import torch.nn as nn
 from torch.utils.data import DataLoader
 
 from ai2pot.core.nblist import Nblist
 from ai2pot.data.mlffdataset import ExtxyzDataset
-from ai2pot.fromcc import targetStatisticsOp
+from ai2pot.fromcc import (targetStatisticsOp,
+                           allTypeDescriptorsStatisticsOp,
+                           allTypeDescriptorsMaxminOp)
 
 
 def svd_solve(A, b):
@@ -315,6 +318,7 @@ class ExtxyzAnalyser(object):
     
 
 class ExtxyzDatasetPreprocessor(object):
+    'Some pre-precoesses must use torch.util.data.DataLoader'
     @staticmethod
     def get_dataset_target_statistics(extxyz_dataset: ExtxyzDataset,
                                       batch_size: int = 200):
@@ -363,5 +367,94 @@ class ExtxyzDatasetPreprocessor(object):
         
         ei_std_old: float = (ei_M2_old/(batch_size_old-1))**0.5
         force_std_old: float = (force_M2_old/(3*num_atoms_old-1))**0.5
-        print(force_M2_old, num_atoms_old)
         return (ei_mean_old, ei_std_old, force_std_old)
+
+
+    @staticmethod
+    def get_dataset_descriptors_maxmin(extxyz_dataset: ExtxyzDataset,
+                                       model: nn.Module,
+                                       batch_size: int = 200):
+        dataloader: DataLoader = DataLoader(dataset=extxyz_dataset,
+                                            batch_size=batch_size,
+                                            shuffle=False)
+        
+        descriptor_dim: int = model.get_num_descriptors()
+        descriptors_max_tensor: torch.Tensor = torch.full((descriptor_dim,), -float('inf'))
+        descriptors_min_tensor: torch.Tensor = torch.full((descriptor_dim,), float('inf'))
+        for batch_idx, batch_data in enumerate(dataloader):
+            bdescriptors_tensor: torch.Tensor = model.predict_descriptors(batch_data[0],
+                                                                          batch_data[1],
+                                                                          batch_data[2],
+                                                                          batch_data[3],
+                                                                          batch_data[4],
+                                                                          batch_data[5],
+                                                                          batch_data[6])
+            batch_descriptors_max_tensor, batch_descriptors_min_tensor = allTypeDescriptorsMaxminOp(batch_data[0],
+                                                                                                    bdescriptors_tensor)
+            descriptors_max_tensor = torch.max(descriptors_max_tensor, batch_descriptors_max_tensor)
+            descriptors_min_tensor = torch.min(descriptors_min_tensor, batch_descriptors_min_tensor)
+
+        return descriptors_max_tensor, descriptors_min_tensor
+
+
+    @staticmethod
+    def get_dataset_q_scaler_maxmin(extxyz_dataset: ExtxyzDataset,
+                                    model: nn.Module,
+                                    batch_size: int = 200):
+        dataloader: DataLoader = DataLoader(dataset=extxyz_dataset,
+                                            batch_size=batch_size,
+                                            shuffle=False)
+        
+        descriptor_dim: int = model.get_num_descriptors()
+        descriptors_max_tensor: torch.Tensor = torch.full((descriptor_dim,), -float('inf'))
+        descriptors_min_tensor: torch.Tensor = torch.full((descriptor_dim,), float('inf'))
+        for batch_idx, batch_data in enumerate(dataloader):
+            bdescriptors_tensor: torch.Tensor = model.predict_descriptors(batch_data[0],
+                                                                          batch_data[1],
+                                                                          batch_data[2],
+                                                                          batch_data[3],
+                                                                          batch_data[4],
+                                                                          batch_data[5],
+                                                                          batch_data[6])
+            batch_descriptors_max_tensor, batch_descriptors_min_tensor = allTypeDescriptorsMaxminOp(batch_data[0],
+                                                                                                    bdescriptors_tensor)
+            descriptors_max_tensor = torch.max(descriptors_max_tensor, batch_descriptors_max_tensor)
+            descriptors_min_tensor = torch.min(descriptors_min_tensor, batch_descriptors_min_tensor)
+
+        return (descriptors_max_tensor-descriptors_min_tensor)
+
+
+    @staticmethod
+    def get_dataset_q_scaler_statistics(extxyz_dataset: ExtxyzDataset,
+                                        model: nn.Module,
+                                        batch_size: int = 200):
+        dataloader: DataLoader = DataLoader(dataset=extxyz_dataset,
+                                            batch_size=batch_size,
+                                            shuffle=False)
+        descriptor_dim: int = model.get_num_descriptors()
+        descriptors_std_tensor: torch.Tensor = torch.zeros(descriptor_dim)
+
+        #
+        old_descriptors_mean_tensor: torch.Tensor = torch.zeros(descriptor_dim)
+        old_descriptors_M2_tensor: torch.Tensor = torch.zeros(descriptor_dim)
+        new_descriptors_mean_tensor: torch.Tensor = torch.zeros(descriptor_dim)
+        new_descriptors_M2_tensor: torch.Tensor = torch.zeros(descriptor_dim)
+        
+        for batch_idx, batch_data in enumerate(dataloader):
+            # 1. Calculte for batch
+            bdescriptors_tensor: torch.Tensor = model.predict_descriptors(batch_data[0],
+                                                                          batch_data[1],
+                                                                          batch_data[2],
+                                                                          batch_data[3],
+                                                                          batch_data[4],
+                                                                          batch_data[5],
+                                                                          batch_data[6])
+            natoms_in_batch, batch_descriptors_mean_tensor, batch_descriptors_M2_tensor = allTypeDescriptorsStatisticsOp(batch_data[0],
+                                                                                                                         bdescriptors_tensor)
+            # 2. Update
+            new_descriptors_mean_tensor = old_descriptors_mean_tensor + 1
+
+            # 3. Reassign
+
+        #return descriptors_std_tensor
+    
