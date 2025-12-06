@@ -49,7 +49,8 @@ public:
         const at::Tensor& type_map_tensor,
         int nghost,
         double rmax,
-        double rmin);
+        double rmin,
+        const at::Tensor& q_scaler_tensor);
     
     static torch::autograd::variable_list backward(
         torch::autograd::AutogradContext *ctx,
@@ -79,7 +80,8 @@ torch::autograd::variable_list NepToEFLossOp(
     const at::Tensor& type_map_tensor,
     int nghost,
     double rmax,
-    double rmin);
+    double rmin,
+    const at::Tensor& q_scaler_tensor);
 
 };  // namespace : nep
 };  // namespace : ai2pot

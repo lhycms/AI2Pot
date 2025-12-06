@@ -46,7 +46,8 @@ torch::autograd::variable_list NepToEFLossFunction::forward(
     const at::Tensor& type_map_tensor,
     int nghost,
     double rmax,
-    double rmin)
+    double rmin,
+    const at::Tensor& q_scaler_tensor)
 {
     // 1. 
     int batch_size = bfirstneigh_tensor.size(0);
@@ -114,7 +115,8 @@ torch::autograd::variable_list NepToEFLossFunction::forward(
         type_map_tensor,
         torch::tensor(nghost, int_options),
         torch::tensor(rmax, float_options),
-        torch::tensor(rmin, float_options)});
+        torch::tensor(rmin, float_options)},
+        q_scaler_tensor);
     
     return {bloss_tensor};
 }
@@ -157,7 +159,8 @@ torch::autograd::variable_list NepToEFLossOp(
     const at::Tensor& type_map_tensor,
     int nghost,
     double rmax,
-    double rmin)
+    double rmin,
+    const at::Tensor& q_scaler_tensor)
 {
     return NepToEFLossFunction::apply(
         e_weight,
@@ -181,7 +184,8 @@ torch::autograd::variable_list NepToEFLossOp(
         type_map_tensor,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        q_scaler_tensor);
 }
 
 

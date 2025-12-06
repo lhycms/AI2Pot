@@ -72,6 +72,9 @@ endif()
 
 # 6. compile test
 if (BUILD_TEST)
+    add_executable(test_schmidt_orth ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_schmidt_orth.cc)
+    target_link_libraries(test_schmidt_orth PRIVATE gtest gtest_main)
+
     add_executable(test_basis ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_basis.cc)
     target_link_libraries(test_basis PRIVATE gtest gtest_main)
 
@@ -124,6 +127,7 @@ if (BUILD_TEST)
         #gtest_discover_tests(test_mtpBasisOp DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT})
     endif()
 
+    gtest_discover_tests(test_schmidt_orth)
     gtest_discover_tests(test_basis)
     gtest_discover_tests(test_mtpParam)
     gtest_discover_tests(test_mtpBasis)
