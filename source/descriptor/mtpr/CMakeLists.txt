@@ -85,6 +85,7 @@ if (BUILD_TEST)
     add_executable(test_schmidt_orth ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_schmidt_orth.cc)
     target_link_libraries(test_schmidt_orth PRIVATE gtest gtest_main)
 
+
     add_executable(test_basis ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_basis.cc)
     target_link_libraries(test_basis PRIVATE gtest gtest_main)
 
@@ -96,6 +97,12 @@ if (BUILD_TEST)
 
     add_executable(test_mtpBasisGrad ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mtpBasisGrad.cc)
     target_link_libraries(test_mtpBasisGrad PRIVATE mtpParam gtest gtest_main)
+
+    add_executable(test_linear_mtp_gram_and_cross ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_linear_mtp_gram_and_cross.cc)
+    target_link_libraries(test_linear_mtp_gram_and_cross PRIVATE mtpParam gtest gtest_main)
+    if (USE_OPENMP)
+        target_compile_definitions(test_linear_mtp_gram_and_cross PRIVATE USE_OPENMP)
+    endif()
 
     add_executable(test_linearMtp ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_linearMtp.cc)
     target_link_libraries(test_linearMtp PRIVATE mtpParam gtest gtest_main)
@@ -140,6 +147,7 @@ if (BUILD_TEST)
     gtest_discover_tests(test_schmidt_orth)
     gtest_discover_tests(test_basis)
     gtest_discover_tests(test_mtpParam)
+    gtest_discover_tests(test_linear_mtp_gram_and_cross)
     gtest_discover_tests(test_mtpBasis)
     gtest_discover_tests(test_mtpBasisGrad)
 endif()

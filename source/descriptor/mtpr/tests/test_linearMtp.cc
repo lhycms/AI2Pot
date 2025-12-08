@@ -400,6 +400,18 @@ TEST_F(LinearMtpTest, find_descriptors)
     for (int k=0; k<mtp_param.alpha_scalar_moments(); k++)
         printf("%.5lf, ", all_descriptors[center_idx*mtp_param.alpha_scalar_moments() + k]);
     printf("\n");
+
+printf("\n------------------------------------------------------------------\n");
+printf("energy_components:\n\t");
+real *energy_components = (real*)malloc(sizeof(real) * (mtp_param.alpha_scalar_moments() + 0));
+memset(energy_components, 0, sizeof(real) * (mtp_param.alpha_scalar_moments() + 0));
+for (int ii=0; ii<inum; ii++)
+    for (int k=0; k<mtp_param.alpha_scalar_moments(); k++)
+        energy_components[k] += all_descriptors[ii*mtp_param.alpha_scalar_moments() + k];
+for (int k=0; k<mtp_param.alpha_scalar_moments(); k++)
+    printf("%.10lf, ", energy_components[k]);
+printf("\n");
+free(energy_components);
 }
 
 
