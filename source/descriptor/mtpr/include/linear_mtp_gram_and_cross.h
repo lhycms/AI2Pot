@@ -59,6 +59,62 @@ public:
         int nghost,
         CoordType rmax,
         CoordType rmin);
+
+    static void find_lin_matrix_lin_vector(
+        CoordType *lin_matrix,
+        CoordType *lin_vector,
+        CoordType e_weight,
+        CoordType f_weight,
+        CoordType v_weight,
+        CoordType *betot_dft,
+        CoordType (*bforce_dft)[3],
+        CoordType *bvirial_dft,
+        CoordType *benergy_components,
+        CoordType *bforce_components,
+        CoordType *bvirial_components,
+        int alpha_scalar_moments,
+        int nmus,
+        int batch_size,
+        int natoms_pad,
+        int *binum,
+        int *bilist,
+        int ntypes);
+    
+    static void find_lin_matrix_lin_vector_launcher(
+        CoordType *lin_matrix,
+        CoordType *lin_vector,
+        CoordType e_weight,
+        CoordType f_weight,
+        CoordType v_weight,
+        CoordType *betot_dft,
+        CoordType (*bforce_dft)[3],
+        CoordType *bvirial_dft,
+        int chebyshev_size,
+        CoordType *coeffs,
+        CoordType *linear_coeffs,
+        CoordType *type_bias,
+        const int alpha_moments_count,
+        const int alpha_index_basic_count,
+        const int (*alpha_index_basic)[4],
+        const int alpha_index_times_count,
+        const int (*alpha_index_times)[4],
+        const int alpha_scalar_moments,
+        const int *alpha_moment_mapping,
+        int nmus,
+        int batch_size,
+        int natoms_pad,
+        int *binum,
+        int *bilist,
+        int *bnumneigh,
+        int *bfirstneigh,
+        CoordType (*brcs)[3],
+        int *btypes,
+        int ntypes,
+        int *type_map,
+        int umax_num_neigh_atoms,
+        int nghost,
+        CoordType rmax,
+        CoordType rmin);
 };  // class : LinearMtpGramAndCross
 
 
@@ -311,6 +367,207 @@ void LinearMtpGramAndCross<CoordType>::accumulate_structure_efv_components(
     }
     #endif
 }
+
+
+template <typename CoordType>
+void LinearMtpGramAndCross<CoordType>::find_lin_matrix_lin_vector(
+    CoordType *lin_matrix,
+    CoordType *lin_vector,
+    CoordType e_weight,
+    CoordType f_weight,
+    CoordType v_weight,
+    CoordType *betot_dft,
+    CoordType (*bforce_dft)[3],
+    CoordType *bvirial_dft,
+    CoordType *benergy_components,
+    CoordType *bforce_components,
+    CoordType *bvirial_components,
+    int alpha_scalar_moments,
+    int nmus,
+    int batch_size,
+    int natoms_pad,
+    int *binum,
+    int *bilist,
+    int ntypes)
+{
+    int num_parameters = alpha_scalar_moments + ntypes;
+    memset(lin_matrix, 0, sizeof(CoordType)*num_parameters*num_parameters);
+    memset(lin_vector, 0, sizeof(CoordType)*num_parameters);
+
+    for (int bb=0; bb<batch_size; bb++) {
+        // 1. energy term
+        for (int k1=0; k1<num_parameters; k1++) {
+            for (int k2=k1; k2<num_parameters; k2++) {
+                lin_matrix[k1*num_parameters + k2] += e_weight 
+                                                      * benergy_components[bb*num_parameters + k1]
+                                                      * benergy_components[bb*num_parameters + k2];
+            }
+            lin_vector[k1] += e_weight * betot_dft[bb] * benergy_components[bb*num_parameters + k1];
+        }
+
+        // 2. force term
+        for (int ii=0; ii<binum[bb]; ii++) {
+            int center_idx = bilist[bb*natoms_pad + ii];
+            for (int aa=0; aa<3; aa++) {
+                for (int k1=0; k1<num_parameters; k1++) {
+                    for (int k2=k1; k2<num_parameters; k2++) {
+                        lin_matrix[k1*num_parameters + k2] += f_weight 
+                                                              * bforce_components[(bb*natoms_pad*3+center_idx*3+aa)*num_parameters + k1]
+                                                              * bforce_components[(bb*natoms_pad*3+center_idx*3+aa)*num_parameters + k2];
+                    }
+                    lin_vector[k1] += f_weight 
+                                      * bforce_dft[bb*natoms_pad + center_idx][aa]
+                                      * bforce_components[(bb*natoms_pad*3+center_idx*3+aa)*num_parameters + k1];
+                }
+            }
+        }
+
+        // 3. virial term
+        for (int alpha=0; alpha<3; alpha++) {
+            for (int beta=0; beta<3; beta++) {
+                for (int k1=0; k1<num_parameters; k1++) {
+                    for (int k2=k1; k2<num_parameters; k2++) {
+                        lin_matrix[k1*num_parameters + k2] += v_weight
+                                                              * bvirial_components[(bb*3*3+alpha*3+beta)*num_parameters + k1]
+                                                              * bvirial_components[(bb*3*3+alpha*3+beta)*num_parameters + k2];
+                    }
+                    lin_vector[k1] += v_weight
+                                      * bvirial_dft[bb*3*3 + alpha*3 + beta]
+                                      * bvirial_components[(bb*3*3+alpha*3+beta)*num_parameters + k1];
+                }
+            }
+        }
+    }
+
+    for (int k1=0; k1<num_parameters; k1++)
+        for (int k2=k1+1; k2<num_parameters; k2++)
+            lin_matrix[k2*num_parameters + k1] = lin_matrix[k1*num_parameters + k2];
+}
+
+
+
+template <typename CoordType>
+void LinearMtpGramAndCross<CoordType>::find_lin_matrix_lin_vector_launcher(
+    CoordType *lin_matrix,
+    CoordType *lin_vector,
+    CoordType e_weight,
+    CoordType f_weight,
+    CoordType v_weight,
+    CoordType *betot_dft,
+    CoordType (*bforce_dft)[3],
+    CoordType *bvirial_dft,
+    int chebyshev_size,
+    CoordType *coeffs,
+    CoordType *linear_coeffs,
+    CoordType *type_bias,
+    const int alpha_moments_count,
+    const int alpha_index_basic_count,
+    const int (*alpha_index_basic)[4],
+    const int alpha_index_times_count,
+    const int (*alpha_index_times)[4],
+    const int alpha_scalar_moments,
+    const int *alpha_moment_mapping,
+    int nmus,
+    int batch_size,
+    int natoms_pad,
+    int *binum,
+    int *bilist,
+    int *bnumneigh,
+    int *bfirstneigh,
+    CoordType (*brcs)[3],
+    int *btypes,
+    int ntypes,
+    int *type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    CoordType rmax,
+    CoordType rmin)
+{
+    // Step . 
+    int num_parameters = alpha_scalar_moments + ntypes;
+    memset(lin_matrix, 0, sizeof(CoordType)*num_parameters*num_parameters);
+    memset(lin_vector, 0, sizeof(CoordType)*num_parameters);
+    
+    CoordType *benergy_components;
+    CoordType *bforce_components;
+    CoordType *bvirial_components;
+    benergy_components = (CoordType*)malloc(sizeof(CoordType)*batch_size*num_parameters);
+    bforce_components = (CoordType*)malloc(sizeof(CoordType)*batch_size*natoms_pad*3*num_parameters);
+    bvirial_components = (CoordType*)malloc(sizeof(CoordType)*batch_size*3*3*num_parameters);
+    memset(benergy_components, 0, sizeof(CoordType)*batch_size*num_parameters);
+    memset(bforce_components, 0, sizeof(CoordType)*batch_size*natoms_pad*3*num_parameters);
+    memset(bvirial_components, 0, sizeof(CoordType)*batch_size*3*3*num_parameters);
+
+    // Step 1. 
+    for (int bb=0; bb<batch_size; bb++) {
+        CoordType *energy_components = &benergy_components[bb*num_parameters];
+        CoordType *force_components = &bforce_components[bb*natoms_pad*3*num_parameters];
+        CoordType *virial_components = &bvirial_components[bb*3*3*num_parameters];
+        int inum = binum[bb];
+        int *ilist = &bilist[bb*natoms_pad];
+        int *numneigh = &bnumneigh[bb*natoms_pad];
+        int *firstneigh = &bfirstneigh[bb*natoms_pad*umax_num_neigh_atoms];
+        CoordType (*rcs)[3] = &brcs[bb*natoms_pad*umax_num_neigh_atoms];
+        int *types = &btypes[bb*natoms_pad];
+
+        accumulate_structure_efv_components(
+            energy_components,
+            force_components,
+            virial_components,
+            chebyshev_size,
+            coeffs,
+            linear_coeffs,
+            type_bias,
+            alpha_moments_count,
+            alpha_index_basic_count,
+            alpha_index_basic,
+            alpha_index_times_count,
+            alpha_index_times,
+            alpha_scalar_moments,
+            alpha_moment_mapping,
+            nmus,
+            natoms_pad,
+            inum,
+            ilist,
+            numneigh,
+            firstneigh,
+            rcs,
+            types,
+            ntypes,
+            type_map,
+            umax_num_neigh_atoms,
+            nghost,
+            rmax,
+            rmin);
+    }
+    
+    // Step 2. 
+    find_lin_matrix_lin_vector(
+        lin_matrix,
+        lin_vector,
+        e_weight,
+        f_weight,
+        v_weight,
+        betot_dft,
+        bforce_dft,
+        bvirial_dft,
+        benergy_components,
+        bforce_components,
+        bvirial_components,
+        alpha_scalar_moments,
+        nmus,
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        ntypes);
+
+    // Step . Free
+    free(benergy_components);
+    free(bforce_components);
+    free(bvirial_components);
+}
+
 
 };  // namespace : mtpr
 };  // namespace : ai2pot

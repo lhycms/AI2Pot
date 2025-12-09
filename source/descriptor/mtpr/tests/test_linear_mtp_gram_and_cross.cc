@@ -30,8 +30,9 @@ typedef double real;
 
 class LinearMtpGramAndCrossTest : public ::testing::Test {
 protected:
+    int batch_size;
     int natoms_pad;
-    int inum;
+    int *binum;
     int num_parameters;
 
     int chebyshev_size;
@@ -42,6 +43,10 @@ protected:
     real rmax;
     real rmin;
     int ntypes;
+
+    real *betot_dft;
+    real (*bforce_dft)[3];
+    real *bvirial_dft;
 
     std::vector<std::string> filenames;
     ai2pot::mtpr::MtpParam mtp_param;
@@ -56,11 +61,11 @@ protected:
     int type_map[2];
 
     int umax_num_neigh_atoms;
-    int* ilist;
-    int* numneigh;
-    int* firstneigh;
-    real* rcs;
-    int* types;
+    int* bilist;
+    int* bnumneigh;
+    int* bfirstneigh;
+    real* brcs;
+    int* btypes;
     int nghost;
 
     ai2pot::Structure<real> structure;
@@ -69,6 +74,12 @@ protected:
     real *energy_components;
     real *force_components;
     real *virial_components;
+    real *lin_matrix;
+    real *lin_vector;
+
+    real e_weight;
+    real f_weight;
+    real v_weight;
 
 
     static void SetUpTestSuite() {
@@ -82,6 +93,7 @@ protected:
 
 
     void SetUp() override {
+        batch_size = 1;
         natoms_pad = 12;
         filenames = {
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/depreciated-02.almtp", 
@@ -101,7 +113,7 @@ protected:
         };
         mtp_param._load(filenames[7]);
 
-        inum = 12;
+        nghost = 0;
         ntypes = 2;
         chebyshev_size = 8;
         nmus = mtp_param.nmus();
@@ -190,21 +202,22 @@ protected:
         neighbor_list = ai2pot::NeighborList<real>(structure, rcut, bin_size_xyz, pbc_xyz, true);
 
 
-        inum = 12;
-        ilist = (int*)malloc(sizeof(int) * inum);
-        numneigh = (int*)malloc(sizeof(int) * inum);
-        firstneigh = (int*)malloc(sizeof(int) * inum * umax_num_neigh_atoms);
-        rcs = (real*)malloc(sizeof(real) * inum * umax_num_neigh_atoms * 3);
-        types = (int*)malloc(sizeof(int) * inum);
-        neighbor_list.find_info4mlff(
-            inum,
-            ilist,
-            numneigh,
-            firstneigh,
-            rcs,
-            types,
-            nghost,
-            umax_num_neigh_atoms);
+        binum = (int*)malloc(sizeof(int) * batch_size);
+        bilist = (int*)malloc(sizeof(int) * batch_size * natoms_pad);
+        bnumneigh = (int*)malloc(sizeof(int) * batch_size * natoms_pad);
+        bfirstneigh = (int*)malloc(sizeof(int) * batch_size * natoms_pad * umax_num_neigh_atoms);
+        brcs = (real*)malloc(sizeof(real) * batch_size * natoms_pad * umax_num_neigh_atoms * 3);
+        btypes = (int*)malloc(sizeof(int) * batch_size * (natoms_pad + nghost));
+        for (int bb=0; bb<batch_size; bb++)
+            neighbor_list.find_info4mlff(
+                binum[bb],
+                &bilist[bb*natoms_pad],
+                &bnumneigh[bb*natoms_pad],
+                &bfirstneigh[bb*natoms_pad*umax_num_neigh_atoms],
+                &brcs[bb*natoms_pad*umax_num_neigh_atoms*3],
+                &btypes[bb*(natoms_pad+nghost)],
+                nghost,
+                umax_num_neigh_atoms);
 
         linear_coeffs = (real*)malloc(sizeof(real) * mtp_param.alpha_scalar_moments());
         type_bias = (real*)malloc(sizeof(real) * ntypes);
@@ -221,19 +234,53 @@ protected:
         memset(energy_components, 0, sizeof(real) * num_parameters);
         memset(force_components, 0, sizeof(real) * natoms_pad * 3 * num_parameters);
         memset(virial_components, 0, sizeof(real) * 3 * 3 * num_parameters);
+
+        lin_matrix = (real*)malloc(sizeof(real) * num_parameters * num_parameters);
+        lin_vector = (real*)malloc(sizeof(real) * num_parameters);
+        memset(lin_matrix, 0, sizeof(real) * num_parameters * num_parameters);
+        memset(lin_vector, 0, sizeof(real) * num_parameters);
+        
+        e_weight = 0.1;
+        f_weight = 0.2;
+        v_weight = 0.3;
+        betot_dft = (real*)malloc(sizeof(real) * batch_size);
+        betot_dft[0] = 102;
+        bforce_dft = (real (*)[3])malloc(sizeof(real) * batch_size * natoms_pad * 3);
+        for (int bb=0; bb<batch_size; bb++) {
+            for (int ii=0; ii<natoms_pad; ii++) {
+                for (int aa=0; aa<3; aa++) {
+                    bforce_dft[bb*natoms_pad + ii][aa] = 1.02 + ii*0.01;
+                }
+            }
+        }
+        bvirial_dft = (real*)malloc(sizeof(real) * batch_size * 9);
+        for (int b=0; b<batch_size; b++) {
+            for (int aa=0; aa<3; aa++) {
+                for (int bb=0; bb<3; bb++) {
+                    bvirial_dft[b*9 + aa*3 + bb] = 1.00 + (aa+bb)*0.01;
+                }
+            }
+        }
     }
 
 
     void TearDown() override {
+        free(lin_matrix);
+        free(lin_vector);
+
         free(coeffs);
         free(linear_coeffs);
         free(type_bias);
 
-        free(ilist);
-        free(numneigh);
-        free(firstneigh);
-        free(rcs);
-        free(types);
+        free(binum);
+        free(bilist);
+        free(bnumneigh);
+        free(bfirstneigh);
+        free(brcs);
+        free(btypes);
+        free(betot_dft);
+        free(bforce_dft);
+        free(bvirial_dft);
 
         free(energy_components);
         free(force_components);
@@ -261,12 +308,12 @@ TEST_F(LinearMtpGramAndCrossTest, accumulate_efv_components) {
         mtp_param.alpha_moment_mapping(),
         mtp_param.nmus(),
         natoms_pad,
-        inum,
-        ilist,
-        numneigh,
-        firstneigh,
-        (real (*)[3])rcs,
-        types,
+        binum[0],
+        bilist,
+        bnumneigh,
+        bfirstneigh,
+        (real (*)[3])brcs,
+        btypes,
         ntypes,
         type_map,
         umax_num_neigh_atoms,
@@ -278,6 +325,53 @@ TEST_F(LinearMtpGramAndCrossTest, accumulate_efv_components) {
         printf("%.10lf, ", energy_components[k]);
     printf("\n");
 }
+
+
+
+TEST_F(LinearMtpGramAndCrossTest, find_lin_matrix_lin_vector_launcher)
+{
+    ai2pot::mtpr::LinearMtpGramAndCross<real>::find_lin_matrix_lin_vector_launcher(
+        lin_matrix,
+        lin_vector,
+        e_weight,
+        f_weight,
+        v_weight,
+        betot_dft,
+        bforce_dft,
+        bvirial_dft,
+        chebyshev_size,
+        coeffs,
+        linear_coeffs,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        nmus,
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        bnumneigh,
+        bfirstneigh,
+        (real (*)[3])brcs,
+        btypes,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin);
+    
+for (int k=0; k<num_parameters; k++)
+    printf("%.10lf, ", lin_vector[k]);
+printf("\n");
+}
+
+
 
 
 int main(int argc, char **argv) {
