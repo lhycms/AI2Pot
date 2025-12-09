@@ -1,55 +1,35 @@
-/*
-    Copyright 2025 Hanyu Liu
-    This file is part of AI2Pot.
-    AI2Pot is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-    AI2Pot is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-    You should have received a copy of the GNU General Public License
-    along with AI2Pot.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
 #include <gtest/gtest.h>
+#include <cuda.h>
+#include <cuda_runtime.h>
+#include <device_launch_parameters.h>
+#include <stdio.h>
 #include <iostream>
 #include <stdlib.h>
-#include <stdio.h>
 #include <vector>
 #include <string>
 
-#include "../include/mtpParam.h"
-#include "../../../nblist/include/structure.h"
-#include "../../../nblist/include/neighborList.h"
-#include "../include/linear_mtp_gram_and_cross.h"
+#include "../include/mtp_utilities.cuh"
+#include "../../include/mtpParam.h"
+#include "../../../../nblist/include/structure.h"
+#include "../../../../nblist/include/neighborList.h"
+#include "../include/linear_mtp_gram_and_cross.cuh"
 
 
 typedef double real;
 
-class LinearMtpGramAndCrossTest : public ::testing::Test {
+class LinearMtpGramAndCrossTest : public ::testing::Test
+{
 protected:
-    int batch_size;
-    int natoms_pad;
-    int *binum;
-    int num_parameters;
-
+    std::vector<std::string> filenames;
+    ai2pot::mtpr::MtpParam mtp_param;
     int chebyshev_size;
+    int ntypes;
+
     real *coeffs;
     real *linear_coeffs;
     real *type_bias;
-    int nmus;
     real rmax;
     real rmin;
-    int ntypes;
-
-    real *betot_dft;
-    real (*bforce_dft)[3];
-    real *bvirial_dft;
-
-    std::vector<std::string> filenames;
-    ai2pot::mtpr::MtpParam mtp_param;
 
     int num_atoms;
     real basis_vectors[3][3];
@@ -60,43 +40,41 @@ protected:
     bool pbc_xyz[3];
     int type_map[2];
 
+    int batch_size;
+    int natoms_pad;
     int umax_num_neigh_atoms;
-    int* bilist;
-    int* bnumneigh;
-    int* bfirstneigh;
-    real* brcs;
-    int* btypes;
+    int *binum;
+    int *bilist;
+    int *bnumneigh;
+    int *bfirstneigh;
+    real *brcs;
+    int *btypes;
     int nghost;
 
     ai2pot::Structure<real> structure;
     ai2pot::NeighborList<real> neighbor_list;
 
-    real *energy_components;
-    real *force_components;
-    real *virial_components;
-    real *lin_matrix;
-    real *lin_vector;
 
-    real e_weight;
-    real f_weight;
-    real v_weight;
+    real *betot_dft;
+    real (*bforce_dft)[3];
+    real *bvirial_dft;
 
+    int num_parameters;
+    real *benergy_components;
+    real *bforce_components;
+    real *bvirial_components;
 
     static void SetUpTestSuite() {
-        std::cout << "LinearMtpGramAndCrossTest (TestSuite) is setting up...\n";
+        std::cout << "LinearMtpTest (TestSuite) is setting up...\n";
     }
-
 
     static void TearDownTestSuite() {
-        std::cout << "LinearMtpGramAndCrossTest (TestSuite) is tearing down...\n";
+        std::cout << "LinearMtpTest (TestSuite) is tearing down...\n";
     }
 
-
     void SetUp() override {
-        batch_size = 1;
-        natoms_pad = 12;
         filenames = {
-            (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/depreciated-02.almtp", 
+            (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/depreciated-02.almtp",
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/depreciated-04.almtp",
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/06.almtp",
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/08.almtp",
@@ -112,19 +90,22 @@ protected:
             (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/28.almtp"
         };
         mtp_param._load(filenames[7]);
-
-        nghost = 0;
-        ntypes = 2;
         chebyshev_size = 8;
-        nmus = mtp_param.nmus();
-        rmax = 5.0;
-        rmin = 2.0;
-        umax_num_neigh_atoms = 20;
-        coeffs = (real*)malloc(sizeof(real) * ntypes * ntypes * mtp_param.nmus() * chebyshev_size);
 
+        ntypes = 2;
+
+        coeffs = (real*)malloc(sizeof(real) * ntypes * ntypes * mtp_param.nmus() * chebyshev_size);
+        linear_coeffs = (real*)malloc(sizeof(real) * mtp_param.alpha_scalar_moments());
+        type_bias = (real*)malloc(sizeof(real) * ntypes);
         for (int ii=0; ii<ntypes*ntypes*mtp_param.nmus()*chebyshev_size; ii++)
             coeffs[ii] = 0.01 + 0.001 * ii;
-    
+        for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++)
+            linear_coeffs[ii] = 0.01 + 0.001 * ii;
+        type_bias[0] = -0.1;
+        type_bias[1] = -0.2;
+        rmax = 5.0;
+        rmin = 2.0;
+
         // Establish neighbor list
         num_atoms = 12;
         basis_vectors[0][0] = 3.1903157348;
@@ -138,8 +119,6 @@ protected:
         basis_vectors[2][2] = 23.1297687334;
 
         // 42: 0;  16: 1
-        type_map[0] = 42;
-        type_map[1] = 16;
         atomic_numbers[0] = 0;
         atomic_numbers[1] = 1;
         atomic_numbers[2] = 1;
@@ -197,11 +176,16 @@ protected:
         pbc_xyz[0] = true;
         pbc_xyz[1] = true;
         pbc_xyz[2] = true;
+        
+        type_map[0] = 42;
+        type_map[1] = 16;
 
         structure = ai2pot::Structure<real>(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
         neighbor_list = ai2pot::NeighborList<real>(structure, rcut, bin_size_xyz, pbc_xyz, true);
-
-
+        batch_size = 1;
+        natoms_pad = 12;
+        umax_num_neigh_atoms = 20;
+        nghost = 0;
         binum = (int*)malloc(sizeof(int) * batch_size);
         bilist = (int*)malloc(sizeof(int) * batch_size * natoms_pad);
         bnumneigh = (int*)malloc(sizeof(int) * batch_size * natoms_pad);
@@ -219,82 +203,51 @@ protected:
                 nghost,
                 umax_num_neigh_atoms);
 
-        linear_coeffs = (real*)malloc(sizeof(real) * mtp_param.alpha_scalar_moments());
-        type_bias = (real*)malloc(sizeof(real) * ntypes);
-        for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++)
-            linear_coeffs[ii] = 0.01 + 0.001 * ii;
-        type_bias[0] = -0.1;
-        type_bias[1] = -0.2;
 
+        betot_dft = (real*)malloc(sizeof(real) * batch_size);
+        memset(betot_dft, 0, sizeof(real)*batch_size);
+        bforce_dft = (real (*)[3])malloc(sizeof(real) * batch_size * natoms_pad * 3);
+        memset(bforce_dft, 0, sizeof(real)*batch_size*natoms_pad*3);
+        bvirial_dft = (real*)malloc(sizeof(real) * batch_size * 9);
+        memset(bvirial_dft, 0, sizeof(real)*batch_size*9);
 
         num_parameters = mtp_param.alpha_scalar_moments() + ntypes;
-        energy_components = (real*)malloc(sizeof(real) * num_parameters);
-        force_components = (real*)malloc(sizeof(real) * natoms_pad * 3 * num_parameters);
-        virial_components = (real*)malloc(sizeof(real) * 3 * 3 * num_parameters);
-        memset(energy_components, 0, sizeof(real) * num_parameters);
-        memset(force_components, 0, sizeof(real) * natoms_pad * 3 * num_parameters);
-        memset(virial_components, 0, sizeof(real) * 3 * 3 * num_parameters);
-
-        lin_matrix = (real*)malloc(sizeof(real) * num_parameters * num_parameters);
-        lin_vector = (real*)malloc(sizeof(real) * num_parameters);
-        memset(lin_matrix, 0, sizeof(real) * num_parameters * num_parameters);
-        memset(lin_vector, 0, sizeof(real) * num_parameters);
-        
-        e_weight = 0.1;
-        f_weight = 0.2;
-        v_weight = 0.3;
-        betot_dft = (real*)malloc(sizeof(real) * batch_size);
-        betot_dft[0] = 102;
-        bforce_dft = (real (*)[3])malloc(sizeof(real) * batch_size * natoms_pad * 3);
-        for (int bb=0; bb<batch_size; bb++) {
-            for (int ii=0; ii<natoms_pad; ii++) {
-                for (int aa=0; aa<3; aa++) {
-                    bforce_dft[bb*natoms_pad + ii][aa] = 1.02 + ii*0.01;
-                }
-            }
-        }
-        bvirial_dft = (real*)malloc(sizeof(real) * batch_size * 9);
-        for (int b=0; b<batch_size; b++) {
-            for (int aa=0; aa<3; aa++) {
-                for (int bb=0; bb<3; bb++) {
-                    bvirial_dft[b*9 + aa*3 + bb] = 1.00 + (aa+bb)*0.01;
-                }
-            }
-        }
+        benergy_components = (real*)malloc(sizeof(real)*batch_size*num_parameters);
+        bforce_components = (real*)malloc(sizeof(real)*batch_size*natoms_pad*3*num_parameters);
+        bvirial_components = (real*)malloc(sizeof(real)*batch_size*3*3*num_parameters);
+        memset(benergy_components, 0, sizeof(real)*batch_size*num_parameters);
+        memset(bforce_components, 0, sizeof(real)*batch_size*natoms_pad*3*num_parameters);
+        memset(bvirial_components, 0, sizeof(real)*batch_size*3*3*num_parameters);
     }
 
-
     void TearDown() override {
-        free(lin_matrix);
-        free(lin_vector);
-
-        free(coeffs);
-        free(linear_coeffs);
-        free(type_bias);
-
         free(binum);
         free(bilist);
         free(bnumneigh);
         free(bfirstneigh);
         free(brcs);
         free(btypes);
+
+        free(coeffs);
+        free(linear_coeffs);
+        free(type_bias);
+
         free(betot_dft);
         free(bforce_dft);
         free(bvirial_dft);
 
-        free(energy_components);
-        free(force_components);
-        free(virial_components);
+        free(benergy_components);
+        free(bforce_components);
+        free(bvirial_components);
     }
 };  // class : LinearMtpGramAndCrossTest
 
 
-
-TEST_F(LinearMtpGramAndCrossTest, accumulate_efv_components) {
-    ai2pot::mtpr::LinearMtpGramAndCross<real>::accumulate_structure_efv_components(
-        energy_components,
-        force_components,
-        virial_components,
+TEST_F(LinearMtpGramAndCrossTest, find_efv_components_launcher) {    
+    ai2pot::mtpr::find_efv_components_launcher(
+        benergy_components,
+        bforce_components,
+        bvirial_components,
         chebyshev_size,
         coeffs,
         linear_coeffs,
@@ -307,50 +260,6 @@ TEST_F(LinearMtpGramAndCrossTest, accumulate_efv_components) {
         mtp_param.alpha_scalar_moments(),
         mtp_param.alpha_moment_mapping(),
         mtp_param.nmus(),
-        natoms_pad,
-        binum[0],
-        bilist,
-        bnumneigh,
-        bfirstneigh,
-        (real (*)[3])brcs,
-        btypes,
-        ntypes,
-        type_map,
-        umax_num_neigh_atoms,
-        nghost,
-        rmax,
-        rmin);
-    
-for (int k=0; k<num_parameters; k++)
-    printf("%.10lf, ", energy_components[k]);
-printf("\n");
-}
-
-
-
-TEST_F(LinearMtpGramAndCrossTest, find_lin_matrix_lin_vector_launcher)
-{
-    ai2pot::mtpr::LinearMtpGramAndCross<real>::find_lin_matrix_lin_vector_launcher(
-        lin_matrix,
-        lin_vector,
-        e_weight,
-        f_weight,
-        v_weight,
-        betot_dft,
-        bforce_dft,
-        bvirial_dft,
-        chebyshev_size,
-        coeffs,
-        linear_coeffs,
-        type_bias,
-        mtp_param.alpha_moments_count(),
-        mtp_param.alpha_index_basic_count(),
-        mtp_param.alpha_index_basic(),
-        mtp_param.alpha_index_times_count(),
-        mtp_param.alpha_index_times(),
-        mtp_param.alpha_scalar_moments(),
-        mtp_param.alpha_moment_mapping(),
-        nmus,
         batch_size,
         natoms_pad,
         binum,
@@ -360,17 +269,15 @@ TEST_F(LinearMtpGramAndCrossTest, find_lin_matrix_lin_vector_launcher)
         (real (*)[3])brcs,
         btypes,
         ntypes,
-        type_map,
         umax_num_neigh_atoms,
         nghost,
         rmax,
         rmin);
-    
+
 for (int k=0; k<num_parameters; k++)
-    printf("%.10lf, ", lin_vector[k]);
+    printf("%.10lf, ", benergy_components[k]);
 printf("\n");
 }
-
 
 
 

@@ -328,7 +328,7 @@ void LinearMtpGramAndCross<CoordType>::accumulate_structure_efv_components(
                     CoordType val2 = alpha_index_times[i][2];
                     
                     moms_der2xyz[alpha_index_times[i][3]] += val2 * (moms_der2xyz[alpha_index_times[i][0]] * val1
-                                                             + val0 * moms_der2xyz[alpha_index_times[i][1]]);
+                                                                    + val0 * moms_der2xyz[alpha_index_times[i][1]]);
                 }
 
                 // force_components
@@ -336,11 +336,11 @@ void LinearMtpGramAndCross<CoordType>::accumulate_structure_efv_components(
                     #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
                     #pragma omp atomic
                     #endif
-                    force_components[center_idx*3*alpha_scalar_moments + aa*alpha_scalar_moments + k] += moms_der2xyz[alpha_moment_mapping[k]];
+                    force_components[center_idx*3*num_parameters + aa*num_parameters + k] += moms_der2xyz[alpha_moment_mapping[k]];
                     #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
                     #pragma omp atomic
                     #endif
-                    force_components[neigh_idx*3*alpha_scalar_moments + aa*alpha_scalar_moments + k] -= moms_der2xyz[alpha_moment_mapping[k]];
+                    force_components[neigh_idx*3*num_parameters + aa*num_parameters + k] -= moms_der2xyz[alpha_moment_mapping[k]];
                 }
 
                 // virial_components
@@ -349,7 +349,7 @@ void LinearMtpGramAndCross<CoordType>::accumulate_structure_efv_components(
                         #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
                         #pragma omp atomic
                         #endif
-                        virial_components[(aa*3+bb)*alpha_scalar_moments + k] -= moms_der2xyz[alpha_moment_mapping[k]] * neigh_vec[bb];
+                        virial_components[(aa*3+bb)*num_parameters + k] -= moms_der2xyz[alpha_moment_mapping[k]] * neigh_vec[bb];
                     }
                 }
             }
