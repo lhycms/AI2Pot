@@ -243,7 +243,10 @@ protected:
 };  // class : LinearMtpGramAndCrossTest
 
 
-TEST_F(LinearMtpGramAndCrossTest, find_efv_components_launcher) {    
+TEST_F(LinearMtpGramAndCrossTest, find_efv_components_launcher) {
+    int fc_center_idx = 0;
+    int fc_a = 0; 
+    
     ai2pot::mtpr::find_efv_components_launcher(
         benergy_components,
         bforce_components,
@@ -276,7 +279,10 @@ TEST_F(LinearMtpGramAndCrossTest, find_efv_components_launcher) {
 
 for (int k=0; k<num_parameters; k++)
     printf("%.10lf, ", benergy_components[k]);
-printf("\n");
+printf("\n\n");
+for (int k=0; k<num_parameters; k++)
+    printf("%.10lf, ", bforce_components[fc_center_idx*3*num_parameters + fc_a*num_parameters + k]);
+printf("\n\n");
 }
 
 

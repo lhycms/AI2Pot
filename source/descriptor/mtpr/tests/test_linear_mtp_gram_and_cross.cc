@@ -291,6 +291,9 @@ protected:
 
 
 TEST_F(LinearMtpGramAndCrossTest, accumulate_efv_components) {
+    int fc_center_idx = 0;
+    int fc_a = 0; 
+
     ai2pot::mtpr::LinearMtpGramAndCross<real>::accumulate_structure_efv_components(
         energy_components,
         force_components,
@@ -323,7 +326,10 @@ TEST_F(LinearMtpGramAndCrossTest, accumulate_efv_components) {
     
 for (int k=0; k<num_parameters; k++)
     printf("%.10lf, ", energy_components[k]);
-printf("\n");
+printf("\n\n");
+for (int k=0; k<num_parameters; k++)
+    printf("%.10lf, ", force_components[fc_center_idx*3*num_parameters + fc_a*num_parameters + k]);
+printf("\n\n");
 }
 
 
