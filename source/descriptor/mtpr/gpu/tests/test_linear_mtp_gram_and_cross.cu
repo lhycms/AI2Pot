@@ -64,6 +64,13 @@ protected:
     real *bforce_components;
     real *bvirial_components;
 
+    real e_weight;
+    real f_weight;
+    real v_weight;
+
+    real *lin_matrix;
+    real *lin_vector;
+
     static void SetUpTestSuite() {
         std::cout << "LinearMtpTest (TestSuite) is setting up...\n";
     }
@@ -205,11 +212,23 @@ protected:
 
 
         betot_dft = (real*)malloc(sizeof(real) * batch_size);
-        memset(betot_dft, 0, sizeof(real)*batch_size);
+        betot_dft[0] = 102;
         bforce_dft = (real (*)[3])malloc(sizeof(real) * batch_size * natoms_pad * 3);
-        memset(bforce_dft, 0, sizeof(real)*batch_size*natoms_pad*3);
+        for (int bb=0; bb<batch_size; bb++) {
+            for (int ii=0; ii<natoms_pad; ii++) {
+                for (int aa=0; aa<3; aa++) {
+                    bforce_dft[bb*natoms_pad + ii][aa] = 1.02 + ii*0.01;
+                }
+            }
+        }
         bvirial_dft = (real*)malloc(sizeof(real) * batch_size * 9);
-        memset(bvirial_dft, 0, sizeof(real)*batch_size*9);
+        for (int b=0; b<batch_size; b++) {
+            for (int aa=0; aa<3; aa++) {
+                for (int bb=0; bb<3; bb++) {
+                    bvirial_dft[b*9 + aa*3 + bb] = 1.00 + (aa+bb)*0.01;
+                }
+            }
+        }
 
         num_parameters = mtp_param.alpha_scalar_moments() + ntypes;
         benergy_components = (real*)malloc(sizeof(real)*batch_size*num_parameters);
@@ -218,6 +237,15 @@ protected:
         memset(benergy_components, 0, sizeof(real)*batch_size*num_parameters);
         memset(bforce_components, 0, sizeof(real)*batch_size*natoms_pad*3*num_parameters);
         memset(bvirial_components, 0, sizeof(real)*batch_size*3*3*num_parameters);
+
+        e_weight = 0.1;
+        f_weight = 0.2;
+        v_weight = 0.3;
+
+        lin_matrix = (real*)malloc(sizeof(real)*num_parameters*num_parameters);
+        lin_vector = (real*)malloc(sizeof(real)*num_parameters);
+        memset(lin_matrix, 0, sizeof(real)*num_parameters*num_parameters);
+        memset(lin_vector, 0, sizeof(real)*num_parameters);
     }
 
     void TearDown() override {
@@ -239,6 +267,9 @@ protected:
         free(benergy_components);
         free(bforce_components);
         free(bvirial_components);
+
+        free(lin_matrix);
+        free(lin_vector);
     }
 };  // class : LinearMtpGramAndCrossTest
 
@@ -285,6 +316,47 @@ for (int k=0; k<num_parameters; k++)
 printf("\n\n");
 }
 
+
+TEST_F(LinearMtpGramAndCrossTest, find_lin_matrix_lin_vector_launcher) {
+    ai2pot::mtpr::find_lin_matrix_lin_vector_launcher(
+        lin_matrix,
+        lin_vector,
+        e_weight,
+        f_weight,
+        v_weight,
+        betot_dft,
+        bforce_dft,
+        bvirial_dft,
+        chebyshev_size,
+        coeffs,
+        linear_coeffs,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        mtp_param.nmus(),
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        bnumneigh,
+        bfirstneigh,
+        (real (*)[3])brcs,
+        btypes,
+        ntypes,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin);
+
+for (int k=0; k<num_parameters; k++)
+    printf("%.10lf, ", lin_vector[k]);
+printf("\n");
+}
 
 
 int main(int argc, char **argv) {

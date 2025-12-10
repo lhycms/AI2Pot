@@ -13,3 +13,53 @@
     along with AI2Pot.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef AI2POT_MTPR_LINEAR_MTP_GRAM_AND_CROSS_TORCH_LAUNCHER_H
+#define AI2POT_MTPR_LINEAR_MTP_GRAM_AND_CROSS_TORCH_LAUNCHER_H
+
+#include "./mtp_utilities.cuh"
+#include "./linear_mtp_gram_and_cross.cuh"
+
+
+namespace ai2pot {
+namespace mtpr {
+
+template <typename CoordType>
+void find_lin_matrix_lin_vector_torch_launcher(
+    CoordType *d_lin_matrix,
+    CoordType *d_lin_vector,
+    CoordType e_weight,
+    CoordType f_weight,
+    CoordType v_weight,
+    CoordType *d_betot_dft,
+    CoordType (*d_bforce_dft)[3],
+    CoordType *d_bvirial_dft,
+    int chebyshev_size,
+    CoordType *d_coeffs,
+    CoordType *d_linear_coeffs,
+    CoordType *d_type_bias,
+    const int alpha_moments_count,
+    const int alpha_index_basic_count,
+    const int (*d_alpha_index_basic)[4],
+    const int alpha_index_times_count,
+    const int (*d_alpha_index_times)[4],
+    const int alpha_scalar_moments,
+    const int *d_alpha_moment_mapping,
+    int nmus,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    int *d_bnumneigh,
+    int *d_bfirstneigh,
+    CoordType (*d_brcs)[3],
+    int *d_btypes,
+    int ntypes,
+    int umax_num_neigh_atoms,
+    int nghost,
+    CoordType rmax,
+    CoordType rmin);
+
+};  // namespace : mtpr
+};  // namespace : ai2pot
+
+#endif
