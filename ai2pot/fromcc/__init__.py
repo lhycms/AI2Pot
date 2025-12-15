@@ -77,6 +77,14 @@ nnMtpToDescriptorsOp = torch.ops.nnmtp.nnMtpToDescriptorsOp
 nnMtpToEsitesOp = torch.ops.nnmtp.nnMtpToEsitesOp
 
 
+### Part 2.5. nep
+nep_lib_dir:str = os.path.join(ai2pot_source_build_lib_dir, "descriptor", "nep")
+nep_bind_so_path: str = os.path.join(nep_lib_dir, "libnep_bind.so")
+torch.ops.load_library(nep_bind_so_path)
+# name
+nepToEFLossOp = torch.ops.nep.nepToEFLossOp
+
+
 ### Part 3. fvt
 fvt_sr_lib_dir: str = os.path.join(ai2pot_source_build_lib_dir, "fvt")
 fvt_sr_bind_so_path: str = os.path.join(fvt_sr_lib_dir, "libfvt_sr_op_bind.so")

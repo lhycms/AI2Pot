@@ -26,6 +26,45 @@
 namespace ai2pot {
 namespace nep {
 
+
+template <typename CoordType>
+static void find_ef_loss_cpu_launcher(
+    CoordType *bloss,
+    int batch_size,
+    int natoms_pad,
+    int *binum,
+    int *bilist,
+    CoordType e_weight,
+    CoordType f_weight,
+    CoordType *betot_ml,
+    CoordType *betot_dft,
+    CoordType (*bforce_ml)[3],
+    CoordType (*bforce_dft)[3])
+{
+    for (int bb=0; bb<batch_size; bb++) {
+        CoordType *loss_ptr = bloss + bb;
+        int inum = binum[bb];
+        int *ilist = &bilist[bb*natoms_pad];
+        CoordType *etot_ml_ptr = betot_ml + bb;
+        CoordType *etot_dft_ptr = betot_dft + bb;
+        CoordType (*force_ml)[3] = &bforce_ml[bb*natoms_pad];
+        CoordType (*force_dft)[3] = &bforce_dft[bb*natoms_pad];
+
+        NepLoss<CoordType>::find_ef_loss(
+            *loss_ptr,
+            inum,
+            ilist,
+            e_weight,
+            f_weight,
+            *etot_ml_ptr,
+            *etot_dft_ptr,
+            force_ml,
+            force_dft);
+    }
+}
+
+
+
 template <typename CoordType>
 static void find_ef_loss_backward_cpu_launcher(
     CoordType *bloss_der2coeffs,
