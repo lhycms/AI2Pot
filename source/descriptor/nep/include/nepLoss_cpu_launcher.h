@@ -13,3 +13,113 @@
     along with AI2Pot.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef AI2POT_NEP_NEP_LOSS_CPU_LAUNCHER_H
+#define AI2POT_NEP_NEP_LOSS_CPU_LAUNCHER_H
+
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "./nep_utilities.h"
+#include "./nepLoss.h"
+
+
+namespace ai2pot {
+namespace nep {
+
+template <typename CoordType>
+static void find_ef_loss_backward_cpu_launcher(
+    CoordType *bloss_der2coeffs,
+    CoordType *bloss_der2w0,
+    CoordType *bloss_der2w1,
+    CoordType *bloss_der2type_bias,
+    CoordType e_weight,
+    CoordType f_weight,
+    CoordType *betot_ml,
+    CoordType *betot_dft,
+    CoordType (*bforce_ml)[3],
+    CoordType (*bforce_dft)[3],
+    int chebyshev_size,
+    int n_radial_basis,
+    int n_angular_basis,
+    int l_max,
+    int num_neurons,
+    CoordType *coeffs,
+    CoordType *w0,
+    CoordType *w1,
+    CoordType *type_bias,
+    int batch_size,
+    int natoms_pad,
+    int *binum,
+    int *bilist,
+    int *bnumneigh,
+    int *bfirstneigh,
+    CoordType (*brcs)[3],
+    int *btypes,
+    int ntypes,
+    int *type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    CoordType rmax,
+    CoordType rmin,
+    CoordType *q_scaler)
+{
+    int num_descriptors = NepIndex::get_num_descriptors(n_radial_basis, n_angular_basis, l_max);
+    int num_coeffs = ntypes * ntypes * (n_radial_basis + n_angular_basis) * chebyshev_size;
+    for (int bb=0; bb<batch_size; bb++) {
+        CoordType *loss_der2coeffs = &bloss_der2coeffs[bb*num_coeffs];
+        CoordType *loss_der2w0 = &bloss_der2w0[bb*ntypes*num_neurons*num_descriptors];
+        CoordType *loss_der2w1 = &bloss_der2w1[bb*ntypes*num_neurons];
+        CoordType *loss_der2type_bias = &bloss_der2type_bias[bb*ntypes];
+
+        CoordType *etot_ml_ptr = betot_ml + bb;
+        CoordType *etot_dft_ptr = betot_dft + bb;
+        CoordType (*force_ml)[3] = &bforce_ml[bb*natoms_pad];
+        CoordType (*force_dft)[3] = &bforce_dft[bb*natoms_pad];
+        
+        int inum = binum[bb];
+        int *ilist = &bilist[bb*natoms_pad];
+        int *numneigh = &bnumneigh[bb*natoms_pad];
+        int *firstneigh = &bfirstneigh[bb*natoms_pad*umax_num_neigh_atoms];
+        CoordType (*rcs)[3] = &brcs[bb*natoms_pad*umax_num_neigh_atoms];
+        int *types = &btypes[bb*natoms_pad];
+
+        NepLoss<CoordType>::find_ef_loss_backward(
+            loss_der2coeffs,
+            loss_der2w0,
+            loss_der2w1,
+            loss_der2type_bias,
+            e_weight,
+            f_weight,
+            *etot_ml_ptr,
+            *etot_dft_ptr,
+            force_ml,
+            force_dft,
+            chebyshev_size,
+            n_radial_basis,
+            n_angular_basis,
+            l_max,
+            num_neurons,
+            coeffs,
+            w0,
+            w1,
+            type_bias,
+            inum,
+            ilist,
+            numneigh,
+            firstneigh,
+            rcs,
+            types,
+            ntypes,
+            type_map,
+            umax_num_neigh_atoms,
+            nghost,
+            rmax,
+            rmin,
+            q_scaler);
+    }
+}
+
+};  // namespace : nep
+};  // namespace : ai2pot
+
+#endif

@@ -8,6 +8,7 @@
 #include "../../../nblist/include/neighborList.h"
 #include "../include/nep_utilities.h"
 #include "../include/nep_cpu_launcher.h"
+#include "../include/nepLoss_cpu_launcher.h"
 
 
 typedef double real;
@@ -63,11 +64,16 @@ protected:
     real *bvirial_;
     real *bdescriptors;
 
+    // Loss derivatives
     real *bloss_der2coeffs;
     real *bloss_der2w0;
     real *bloss_der2w1;
     real *bloss_der2type_bias;
 
+    // Loss
+    real e_weight;
+    real f_weight;
+    real v_weight;
     real *betot_dft;
     real (*bforce_dft)[3];
     real *bvirial_dft;
@@ -89,16 +95,16 @@ protected:
         ntypes = 2;
         num_descriptors = ai2pot::nep::NepIndex::get_num_descriptors(n_radial_basis, n_angular_basis, l_max);
 
-        coeffs = (double*)malloc(sizeof(double) * ntypes * ntypes * (n_radial_basis+n_angular_basis) * chebyshev_size);
+        coeffs = (real*)malloc(sizeof(real) * ntypes * ntypes * (n_radial_basis+n_angular_basis) * chebyshev_size);
         for (int ii=0; ii<ntypes * ntypes * (n_radial_basis+n_angular_basis) * chebyshev_size; ii++)
             coeffs[ii] = 0.01 + 0.001 * ii;
-        w0 = (double*)malloc(sizeof(double) * ntypes * num_neurons * num_descriptors);
+        w0 = (real*)malloc(sizeof(real) * ntypes * num_neurons * num_descriptors);
         for (int ii=0; ii<ntypes * num_neurons * num_descriptors; ii++)
             w0[ii] = 0.1 + 0.001 * ii;
-        w1 = (double*)malloc(sizeof(double) * ntypes * num_neurons);
+        w1 = (real*)malloc(sizeof(real) * ntypes * num_neurons);
         for (int ii=0; ii<ntypes * num_neurons; ii++)
             w1[ii] = 0.1 + 0.001 * ii;
-        type_bias = (double*)malloc(sizeof(double) * ntypes);
+        type_bias = (real*)malloc(sizeof(real) * ntypes);
         type_bias[0] = -0.1;
         type_bias[1] = -0.2;
 
@@ -180,7 +186,7 @@ protected:
         type_map[1] = 16;
 
         structure = ai2pot::Structure<real>(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-        neighbor_list = ai2pot::NeighborList<real>(structure, rcut, bin_size_xyz, pbc_xyz, true);
+        neighbor_list = ai2pot::NeighborList<real>(structure, rcut, bin_size_xyz, pbc_xyz, false);
         batch_size = 1;
         natoms_pad = 12;
         umax_num_neigh_atoms = 20;
@@ -217,15 +223,19 @@ protected:
         memset(bvirial_, 0.0, sizeof(real) * batch_size * 9);
 
         // Loss derivative
-        bloss_der2coeffs = (double*)malloc(sizeof(double) * batch_size * ntypes * ntypes * (n_radial_basis+n_angular_basis) * chebyshev_size);
-        memset(bloss_der2coeffs, 0, sizeof(double) * batch_size * ntypes * ntypes * (n_radial_basis+n_angular_basis) * chebyshev_size);
-        bloss_der2w0 = (double*)malloc(sizeof(double) * batch_size * ntypes * num_neurons * num_descriptors);
-        memset(bloss_der2w0, 0, sizeof(double) * batch_size * ntypes * num_neurons * num_descriptors);
-        bloss_der2w1 = (double*)malloc(sizeof(double) * batch_size * ntypes * num_neurons);
-        memset(bloss_der2w1, 0, sizeof(double) * batch_size * ntypes * num_neurons);
-        bloss_der2type_bias = (double*)malloc(sizeof(double) * batch_size * ntypes);
-        memset(bloss_der2type_bias, 0, sizeof(double) * batch_size * ntypes);
+        bloss_der2coeffs = (real*)malloc(sizeof(real) * batch_size * ntypes * ntypes * (n_radial_basis+n_angular_basis) * chebyshev_size);
+        memset(bloss_der2coeffs, 0, sizeof(real) * batch_size * ntypes * ntypes * (n_radial_basis+n_angular_basis) * chebyshev_size);
+        bloss_der2w0 = (real*)malloc(sizeof(real) * batch_size * ntypes * num_neurons * num_descriptors);
+        memset(bloss_der2w0, 0, sizeof(real) * batch_size * ntypes * num_neurons * num_descriptors);
+        bloss_der2w1 = (real*)malloc(sizeof(real) * batch_size * ntypes * num_neurons);
+        memset(bloss_der2w1, 0, sizeof(real) * batch_size * ntypes * num_neurons);
+        bloss_der2type_bias = (real*)malloc(sizeof(real) * batch_size * ntypes);
+        memset(bloss_der2type_bias, 0, sizeof(real) * batch_size * ntypes);
 
+        // Loss
+        e_weight = 0.1;
+        f_weight = 0.2;
+        v_weight = 0.3;
         betot_dft = (real*)malloc(sizeof(real) * batch_size);
         memset(betot_dft, 0, sizeof(real)*batch_size);
         bforce_dft = (real (*)[3])malloc(sizeof(real) * batch_size * natoms_pad * 3);
@@ -302,6 +312,95 @@ printf("1.2. force[%d][%d] calculated by custom code = %.15lf\n", center_idx_mod
 printf("1.3. force=\n");
 for (int ii=0; ii<natoms_pad; ii++)
     printf("\t\t%3d: [%.15f, %.15f, %.15f]\n", ii, bforce[ii][0], bforce[ii][1], bforce[ii][2]);
+}
+
+
+TEST_F(NepCPULauncher, find_ef_loss_backward_cpu_launcher)
+{
+    ai2pot::nep::find_ef_cpu_launcher<real>(
+        betot,
+        bforce,
+        chebyshev_size,
+        n_radial_basis,
+        n_angular_basis,
+        l_max,
+        num_neurons,
+        coeffs,
+        w0,
+        w1,
+        type_bias,
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        bnumneigh,
+        bfirstneigh,
+        (real (*)[3])brcs,
+        btypes,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin,
+        nullptr);
+
+    ai2pot::nep::find_ef_loss_backward_cpu_launcher<real>(
+        bloss_der2coeffs,
+        bloss_der2w0,
+        bloss_der2w1,
+        bloss_der2type_bias,
+        e_weight,
+        f_weight,
+        betot,
+        betot_dft,
+        bforce,
+        bforce_dft,
+        chebyshev_size,
+        n_radial_basis,
+        n_angular_basis,
+        l_max,
+        num_neurons,
+        coeffs,
+        w0,
+        w1,
+        type_bias,
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        bnumneigh,
+        bfirstneigh,
+        (real (*)[3])brcs,
+        btypes,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin,
+        nullptr);
+
+printf("***+++ %d\n", ntypes*ntypes*(n_radial_basis+n_angular_basis)*chebyshev_size);
+printf("1. bloss_der2coeffs:\n");
+for (int ii=0; ii<ntypes*ntypes*(n_radial_basis+n_angular_basis)*chebyshev_size; ii++)
+    printf("%.15f, ", bloss_der2coeffs[ii]);
+printf("\n\n");
+
+printf("2. bloss_der2w0:\n");
+for (int ii=0; ii<ntypes*num_neurons*num_descriptors; ii++)
+    printf("%.15f, ", bloss_der2w0[ii]);
+printf("\n\n");
+
+printf("3. bloss_der2w1:\n");
+for (int ii=0; ii<ntypes*num_neurons; ii++)
+    printf("%.15f, ", bloss_der2w1[ii]);
+printf("\n\n");
+
+printf("4. bloss_der2type_bias:\n");
+for (int ii=0; ii<ntypes; ii++)
+    printf("%.15f, ", bloss_der2type_bias[ii]);
+printf("\n\n");
 }
 
 

@@ -13,8 +13,8 @@
     along with AI2Pot.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef AI2POT_NEP_NEP_CPU_LAUNCHER
-#define AI2POT_NEP_NEP_CPU_LAUNCHER
+#ifndef AI2POT_NEP_NEP_CPU_LAUNCHER_H
+#define AI2POT_NEP_NEP_CPU_LAUNCHER_H
 
 
 #include "./nep.h"
@@ -22,8 +22,9 @@
 namespace ai2pot {
 namespace nep {
 
+
 template <typename CoordType>
-void find_ef_cpu_launcher(
+static void find_ef_cpu_launcher(
     CoordType *betot,
     CoordType (*bforce)[3],
     int chebyshev_size,
