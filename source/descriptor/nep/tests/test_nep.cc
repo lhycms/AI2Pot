@@ -79,6 +79,8 @@ protected:
     double *loss_der2w1;
     double *loss_der2type_bias;
 
+    // Descriptors
+    double *descriptors;
 
     static void SetUpTestSuite() {
         std::cout << "NepTest (TestSuite) is setting up...\n";
@@ -231,6 +233,10 @@ protected:
         memset(loss_der2w1, 0, sizeof(double) * ntypes * num_neurons);
         loss_der2type_bias = (double*)malloc(sizeof(double) * ntypes);
         memset(loss_der2type_bias, 0, sizeof(double) * ntypes);
+
+        // Descriptors
+        descriptors = (double*)malloc(sizeof(double) * inum * num_descriptors);
+        memset(descriptors, 0, sizeof(double) * inum * num_descriptors);
     }
 
     void TearDown() override {
@@ -257,6 +263,9 @@ protected:
         free(loss_der2w0);
         free(loss_der2w1);
         free(loss_der2type_bias);
+
+        // Descriptors
+        free(descriptors);
     }
 };  // class : NepTest
 
@@ -431,6 +440,28 @@ for (int ii=0; ii<ntypes; ii++)
 printf("\n\n");
 }
 
+
+TEST_F(NepTest, find_descriptors) {
+    ai2pot::nep::Nep<double>::find_descriptors(
+        descriptors,
+        chebyshev_size,
+        n_radial_basis,
+        n_angular_basis,
+        l_max,
+        coeffs,
+        inum,
+        ilist,
+        numneigh,
+        firstneigh,
+        (double (*)[3])rcs,
+        types,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin);
+}
 
 int main(int argc, char **argv)  {
     ::testing::InitGoogleTest(&argc, argv);

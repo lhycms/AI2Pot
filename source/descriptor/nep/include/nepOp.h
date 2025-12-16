@@ -90,6 +90,33 @@ public:
 };  // class : NepToEFLossFunction
 
 
+class NepToDescriptorsFunction : public torch::autograd::Function<NepToDescriptorsFunction>
+{
+public:
+    static torch::autograd::variable_list forward(
+        torch::autograd::AutogradContext *ctx,
+        int chebyshev_size,
+        int n_radial_basis,
+        int n_angular_basis,
+        int l_max,
+        const at::Tensor& coeffs_tensor,
+        const at::Tensor& binum_tensor,
+        const at::Tensor& bilist_tensor,
+        const at::Tensor& bnumneigh_tensor,
+        const at::Tensor& bfirstneigh_tensor,
+        const at::Tensor& brcs_tensor,
+        const at::Tensor& btypes_tensor,
+        const at::Tensor& type_map_tensor,
+        int nghost,
+        double rmax,
+        double rmin);
+
+    static torch::autograd::variable_list backward(
+        torch::autograd::AutogradContext *ctx,
+        torch::autograd::variable_list bgrad_outputs_tensor);
+};  // class : NepToDescriptorsFunction
+
+
 torch::autograd::variable_list NepToEFOp(
     int chebyshev_size,
     int n_radial_basis,
@@ -136,6 +163,24 @@ torch::autograd::variable_list NepToEFLossOp(
     double rmax,
     double rmin,
     const at::Tensor& q_scaler_tensor);
+
+
+torch::autograd::variable_list NepToDescriptorsOp(
+    int chebyshev_size,
+    int n_radial_basis,
+    int n_angular_basis,
+    int l_max,
+    const at::Tensor& coeffs_tensor,
+    const at::Tensor& binum_tensor,
+    const at::Tensor& bilist_tensor,
+    const at::Tensor& bnumneigh_tensor,
+    const at::Tensor& bfirstneigh_tensor,
+    const at::Tensor& brcs_tensor,
+    const at::Tensor& btypes_tensor,
+    const at::Tensor& type_map_tensor,
+    int nghost,
+    double rmax,
+    double rmin);
 
 };  // namespace : nep
 };  // namespace : ai2pot

@@ -62,7 +62,6 @@ protected:
     real (*bforce_)[3];
     real *bvirial;
     real *bvirial_;
-    real *bdescriptors;
 
     // Loss derivatives
     real *bloss_der2coeffs;
@@ -77,6 +76,9 @@ protected:
     real *betot_dft;
     real (*bforce_dft)[3];
     real *bvirial_dft;
+
+    // Descriptors
+    real *bdescriptors;
 
     static void SetUpTestSuite() {
         std::cout << "NepCPULauncher (TestSuite) is setting up...\n";
@@ -242,6 +244,10 @@ protected:
         memset(bforce_dft, 0, sizeof(real)*batch_size*natoms_pad*3);
         bvirial_dft = (real*)malloc(sizeof(real) * batch_size * 9);
         memset(bvirial_dft, 0, sizeof(real)*batch_size*9);
+
+        // Descriptors
+        bdescriptors = (real*)malloc(sizeof(real) * batch_size * natoms_pad * num_descriptors);
+        memset(bdescriptors, 0, sizeof(real) * batch_size * natoms_pad * num_descriptors);
     }
 
     void TearDown() override {
@@ -271,6 +277,8 @@ protected:
         free(betot_dft);
         free(bforce_dft);
         free(bvirial_dft);
+
+        free(bdescriptors);
     }
 };  // class : NepCPULauncher
 
@@ -401,6 +409,33 @@ printf("4. bloss_der2type_bias:\n");
 for (int ii=0; ii<ntypes; ii++)
     printf("%.15f, ", bloss_der2type_bias[ii]);
 printf("\n\n");
+}
+
+
+TEST_F(NepCPULauncher, find_descriptors_cpu_launcher)
+{
+    ai2pot::nep::find_descriptors_cpu_launcher<real>(
+        bdescriptors,
+        chebyshev_size,
+        n_radial_basis,
+        n_angular_basis,
+        l_max,
+        coeffs,
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        bnumneigh,
+        bfirstneigh,
+        (real (*)[3])brcs,
+        btypes,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin);
+
 }
 
 

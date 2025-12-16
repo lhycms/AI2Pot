@@ -53,6 +53,30 @@ static void find_ef_cpu_launcher(
     CoordType *q_scaler);
 
 
+template <typename CoordType>
+static void find_descriptors_cpu_launcher(
+    CoordType *bdescriptors,
+    int chebyshev_size,
+    int n_radial_basis,
+    int n_angular_basis,
+    int l_max,
+    CoordType *coeffs,
+    int batch_size,
+    int natoms_pad,
+    int *binum,
+    int *bilist,
+    int *bnumneigh,
+    int *bfirstneigh,
+    CoordType (*brcs)[3],
+    int *btypes,
+    int ntypes,
+    int *type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    CoordType rmax,
+    CoordType rmin);
+
+
 
 
 template <typename CoordType>
@@ -121,6 +145,64 @@ void find_ef_cpu_launcher(
             q_scaler);
     }
 }
+
+
+template <typename CoordType>
+void find_descriptors_cpu_launcher(
+    CoordType *bdescriptors,
+    int chebyshev_size,
+    int n_radial_basis,
+    int n_angular_basis,
+    int l_max,
+    CoordType *coeffs,
+    int batch_size,
+    int natoms_pad,
+    int *binum,
+    int *bilist,
+    int *bnumneigh,
+    int *bfirstneigh,
+    CoordType (*brcs)[3],
+    int *btypes,
+    int ntypes,
+    int *type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    CoordType rmax,
+    CoordType rmin)
+{
+    int num_descriptors = NepIndex::get_num_descriptors(n_radial_basis, n_angular_basis, l_max);
+
+    for (int bb=0; bb<batch_size; bb++) {
+        CoordType *descriptors = &bdescriptors[bb*natoms_pad*num_descriptors];
+        int inum = binum[bb];
+        int *ilist = &bilist[bb*natoms_pad];
+        int *numneigh = &bnumneigh[bb*natoms_pad];
+        int *firstneigh = &bfirstneigh[bb*natoms_pad*umax_num_neigh_atoms];
+        CoordType (*rcs)[3] = &brcs[bb*natoms_pad*umax_num_neigh_atoms];
+        int *types = &btypes[bb*natoms_pad];
+
+        Nep<CoordType>::find_descriptors(
+            descriptors,
+            chebyshev_size,
+            n_radial_basis,
+            n_angular_basis,
+            l_max,
+            coeffs,
+            inum,
+            ilist,
+            numneigh,
+            firstneigh,
+            rcs,
+            types,
+            ntypes,
+            type_map,
+            umax_num_neigh_atoms,
+            nghost,
+            rmax,
+            rmin);
+    }
+}
+
 
 };  // namespace : nep
 };  // namespace : ai2pot

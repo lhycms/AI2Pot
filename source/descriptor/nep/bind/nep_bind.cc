@@ -125,4 +125,42 @@ TORCH_LIBRARY(nep, m) {
                 q_scaler_tensor);
         }
     );
+
+
+    m.def(
+        "nepToDescriptorsOp",
+        [](int64_t chebyshev_size,
+           int64_t n_radial_basis,
+           int64_t n_angular_basis,
+           int64_t l_max,
+           const at::Tensor& coeffs_tensor,
+           const at::Tensor& binum_tensor,
+           const at::Tensor& bilist_tensor,
+           const at::Tensor& bnumneigh_tensor,
+           const at::Tensor& bfirstneigh_tensor,
+           const at::Tensor& brcs_tensor,
+           const at::Tensor& btypes_tensor,
+           const at::Tensor& type_map_tensor,
+           int64_t nghost,
+           double rmax,
+           double rmin)
+        {
+            return ai2pot::nep::NepToDescriptorsOp(
+                (int)chebyshev_size,
+                (int)n_radial_basis,
+                (int)n_angular_basis,
+                (int)l_max,
+                coeffs_tensor,
+                binum_tensor,
+                bilist_tensor,
+                bnumneigh_tensor,
+                bfirstneigh_tensor,
+                brcs_tensor,
+                btypes_tensor,
+                type_map_tensor,
+                (int)nghost,
+                rmax,
+                rmin);
+        }
+    );
 };

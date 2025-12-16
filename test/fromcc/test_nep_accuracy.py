@@ -10,7 +10,8 @@ from torch.autograd import gradcheck
 from ai2pot.utils.usepot import MlffToEFLossInput, MlffInput
 from ai2pot.fromcc import (
     nepToEFLossOp,
-    nepToEFOp)
+    nepToEFOp,
+    nepToDescriptorsOp)
 
 
 TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")
@@ -169,6 +170,28 @@ class NepTest(unittest.TestCase):
         print("* NepToEFLossOp Gradient pass check: ", test)
         print("-------------------------------------------------")
 
+
+    def test_nepToDescriptors(self):
+        input_info: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(self.structure)
+        bdescriptors_tensor: torch.Tensor = nepToDescriptorsOp(self.chebyshev_size,
+                                                               self.n_radial_basis,
+                                                               self.n_angular_basis,
+                                                               self.l_max,
+                                                               self.coeffs_tensor,
+                                                               input_info[0],
+                                                               input_info[1],
+                                                               input_info[2],
+                                                               input_info[3],
+                                                               input_info[4],
+                                                               input_info[5],
+                                                               self.type_map_tensor,
+                                                               input_info[6].item(),
+                                                               self.rmax,
+                                                               self.rmin)
+        print("-------------------------------------------------")
+        print("* bdescriptor_tensor: ")
+        print("-------------------------------------------------")
+        print(bdescriptors_tensor)
 
 
 if __name__ == "__main__":

@@ -84,7 +84,7 @@ torch.ops.load_library(nep_bind_so_path)
 # name
 nepToEFOp = torch.ops.nep.nepToEFOp
 nepToEFLossOp = torch.ops.nep.nepToEFLossOp
-
+nepToDescriptorsOp = torch.ops.nep.nepToDescriptorsOp
 
 ### Part 3. fvt
 fvt_sr_lib_dir: str = os.path.join(ai2pot_source_build_lib_dir, "fvt")
