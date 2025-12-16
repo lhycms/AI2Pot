@@ -26,6 +26,180 @@
 namespace ai2pot {
 namespace nep {
 
+
+torch::autograd::variable_list NepToEFFunction::forward(
+    torch::autograd::AutogradContext *ctx,
+    int chebyshev_size,
+    int n_radial_basis,
+    int n_angular_basis,
+    int l_max,
+    const at::Tensor& coeffs_tensor,
+    const at::Tensor& w0_tensor,
+    const at::Tensor& w1_tensor,
+    const at::Tensor& type_bias_tensor,
+    const at::Tensor& binum_tensor,
+    const at::Tensor& bilist_tensor,
+    const at::Tensor& bnumneigh_tensor,
+    const at::Tensor& bfirstneigh_tensor,
+    const at::Tensor& brcs_tensor,
+    const at::Tensor& btypes_tensor,
+    const at::Tensor& type_map_tensor,
+    int nghost,
+    double rmax,
+    double rmin,
+    const at::Tensor& q_scaler_tensor)
+{
+    // 1. 
+    int batch_size = bfirstneigh_tensor.size(0);
+    int natoms_pad = bfirstneigh_tensor.size(1);
+    int umax_num_neigh_atoms = bfirstneigh_tensor.size(2);
+    int ntypes = type_map_tensor.size(0);
+    int *type_map = type_map_tensor.data_ptr<int>();
+    int num_neurons = (int)(w1_tensor.size(0) / ntypes);
+    int num_descriptors = (int)(w0_tensor.size(0) / (ntypes*num_neurons));
+
+    int *binum = binum_tensor.data_ptr<int>();
+    int *bilist = bilist_tensor.data_ptr<int>();
+    int *bnumneigh = bnumneigh_tensor.data_ptr<int>();
+    int *bfirstneigh = bfirstneigh_tensor.data_ptr<int>();
+    int *btypes = btypes_tensor.data_ptr<int>();
+
+    // 2. 
+    c10::TensorOptions int_options = c10::TensorOptions()
+                                        .dtype(torch::kInt32)
+                                        .device(brcs_tensor.device());
+    c10::TensorOptions float_options = c10::TensorOptions()
+                                        .dtype(brcs_tensor.scalar_type())
+                                        .device(brcs_tensor.device());
+    
+    // 3.
+    at::Tensor betot_tensor = at::zeros({batch_size}, float_options);
+    at::Tensor bforce_tensor = at::zeros({batch_size, natoms_pad+nghost, 3}, float_options);
+
+    // 4. 
+    if (brcs_tensor.scalar_type() == torch::kFloat32) {
+        float *betot = betot_tensor.data_ptr<float>();
+        float (*bforce)[3] = (float (*)[3])bforce_tensor.data_ptr<float>();
+
+        float *coeffs = coeffs_tensor.data_ptr<float>();
+        float *w0 = w0_tensor.data_ptr<float>();
+        float *w1 = w1_tensor.data_ptr<float>();
+        float *type_bias = type_bias_tensor.data_ptr<float>();
+
+        float (*brcs)[3] = (float (*)[3])brcs_tensor.data_ptr<float>();
+        float *q_scaler = q_scaler_tensor.data_ptr<float>();
+
+        if (brcs_tensor.device() == c10::kCPU) {
+            find_ef_cpu_launcher<float>(
+                betot,
+                bforce,
+                chebyshev_size,
+                n_radial_basis,
+                n_angular_basis,
+                l_max,
+                num_neurons,
+                coeffs,
+                w0,
+                w1,
+                type_bias,
+                batch_size,
+                natoms_pad,
+                binum,
+                bilist,
+                bnumneigh,
+                bfirstneigh,
+                brcs,
+                btypes,
+                ntypes,
+                type_map,
+                umax_num_neigh_atoms,
+                nghost,
+                rmax,
+                rmin,
+                q_scaler);
+        } else {
+            #if defined(USE_CUDA) or defined(__INTELLISENSE__)
+            // ...
+            #endif
+        }
+    } else {
+        double *betot = betot_tensor.data_ptr<double>();
+        double (*bforce)[3] = (double (*)[3])bforce_tensor.data_ptr<double>();
+
+        double *coeffs = coeffs_tensor.data_ptr<double>();
+        double *w0 = w0_tensor.data_ptr<double>();
+        double *w1 = w1_tensor.data_ptr<double>();
+        double *type_bias = type_bias_tensor.data_ptr<double>();
+
+        double (*brcs)[3] = (double (*)[3])brcs_tensor.data_ptr<double>();
+        double *q_scaler = q_scaler_tensor.data_ptr<double>();
+
+        if (brcs_tensor.device() == c10::kCPU) {
+            find_ef_cpu_launcher<double>(
+                betot,
+                bforce,
+                chebyshev_size,
+                n_radial_basis,
+                n_angular_basis,
+                l_max,
+                num_neurons,
+                coeffs,
+                w0,
+                w1,
+                type_bias,
+                batch_size,
+                natoms_pad,
+                binum,
+                bilist,
+                bnumneigh,
+                bfirstneigh,
+                brcs,
+                btypes,
+                ntypes,
+                type_map,
+                umax_num_neigh_atoms,
+                nghost,
+                rmax,
+                rmin,
+                q_scaler);
+        } else {
+            #if defined(USE_CUDA) or defined(__INTELLISENSE__)
+            // ...
+            #endif
+        }
+    }
+
+    return {betot_tensor, bforce_tensor};
+}
+
+
+torch::autograd::variable_list NepToEFFunction::backward(
+    torch::autograd::AutogradContext *ctx,
+    torch::autograd::variable_list bgrad_outputs_tensor)
+{
+    return {
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor()};
+}
+
+
 torch::autograd::variable_list NepToEFLossFunction::forward(
     torch::autograd::AutogradContext *ctx,
     double e_weight,
@@ -509,6 +683,49 @@ torch::autograd::variable_list NepToEFLossFunction::backward(
         at::Tensor()};
 }
 
+
+torch::autograd::variable_list NepToEFOp(
+    int chebyshev_size,
+    int n_radial_basis,
+    int n_angular_basis,
+    int l_max,
+    const at::Tensor& coeffs_tensor,
+    const at::Tensor& w0_tensor,
+    const at::Tensor& w1_tensor,
+    const at::Tensor& type_bias_tensor,
+    const at::Tensor& binum_tensor,
+    const at::Tensor& bilist_tensor,
+    const at::Tensor& bnumneigh_tensor,
+    const at::Tensor& bfirstneigh_tensor,
+    const at::Tensor& brcs_tensor,
+    const at::Tensor& btypes_tensor,
+    const at::Tensor& type_map_tensor,
+    int nghost,
+    double rmax,
+    double rmin,
+    const at::Tensor& q_scaler_tensor)
+{
+    return NepToEFFunction::apply(
+        chebyshev_size,
+        n_radial_basis,
+        n_angular_basis,
+        l_max,
+        coeffs_tensor,
+        w0_tensor,
+        w1_tensor,
+        type_bias_tensor,
+        binum_tensor,
+        bilist_tensor,
+        bnumneigh_tensor,
+        bfirstneigh_tensor,
+        brcs_tensor,
+        btypes_tensor,
+        type_map_tensor,
+        nghost,
+        rmax,
+        rmin,
+        q_scaler_tensor);
+}
 
 
 torch::autograd::variable_list NepToEFLossOp(

@@ -307,7 +307,7 @@ void NepLoss<CoordType>::find_ef_loss_backward(
                                 A_ders[aa] = p_RadialBasis->ders2r()[xi] * neigh_vec[aa] / distance_ij;
                                 C_ders[aa] = -l / (auto_dist_powers_[l] * distance_ij) * (neigh_vec[aa] / distance_ij);
                             }
-                            mom_vals[idx_Sinlm] = coeffs[idx] * A * B * C;
+                            mom_vals[idx_Sinlm] += coeffs[idx] * A * B * C;
 
                             for (int aa=0; aa<3; aa++) {
                                 CoordType tmp_deriv = coeffs[idx] * (A_ders[aa] * B * C

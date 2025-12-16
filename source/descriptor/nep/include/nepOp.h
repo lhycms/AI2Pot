@@ -23,6 +23,38 @@
 namespace ai2pot {
 namespace nep {
 
+
+class NepToEFFunction : public torch::autograd::Function<NepToEFFunction>
+{
+public:
+    static torch::autograd::variable_list forward(
+        torch::autograd::AutogradContext *ctx,
+        int chebyshev_size,
+        int n_radial_basis,
+        int n_angular_basis,
+        int l_max,
+        const at::Tensor& coeffs_tensor,
+        const at::Tensor& w0_tensor,
+        const at::Tensor& w1_tensor,
+        const at::Tensor& type_bias_tensor,
+        const at::Tensor& binum_tensor,
+        const at::Tensor& bilist_tensor,
+        const at::Tensor& bnumneigh_tensor,
+        const at::Tensor& bfirstneigh_tensor,
+        const at::Tensor& brcs_tensor,
+        const at::Tensor& btypes_tensor,
+        const at::Tensor& type_map_tensor,
+        int nghost,
+        double rmax,
+        double rmin,
+        const at::Tensor& q_scaler_tensor);
+    
+    static torch::autograd::variable_list backward(
+        torch::autograd::AutogradContext *ctx,
+        torch::autograd::variable_list bgrad_outputs_tensor);
+};  // class : NepToEFFunction
+
+
 class NepToEFLossFunction : public torch::autograd::Function<NepToEFLossFunction>
 {
 public:
@@ -56,6 +88,28 @@ public:
         torch::autograd::AutogradContext *ctx,
         torch::autograd::variable_list bgrad_outputs_tensor);
 };  // class : NepToEFLossFunction
+
+
+torch::autograd::variable_list NepToEFOp(
+    int chebyshev_size,
+    int n_radial_basis,
+    int n_angular_basis,
+    int l_max,
+    const at::Tensor& coeffs_tensor,
+    const at::Tensor& w0_tensor,
+    const at::Tensor& w1_tensor,
+    const at::Tensor& type_bias_tensor,
+    const at::Tensor& binum_tensor,
+    const at::Tensor& bilist_tensor,
+    const at::Tensor& bnumneigh_tensor,
+    const at::Tensor& bfirstneigh_tensor,
+    const at::Tensor& brcs_tensor,
+    const at::Tensor& btypes_tensor,
+    const at::Tensor& type_map_tensor,
+    int nghost,
+    double rmax,
+    double rmin,
+    const at::Tensor& q_scaler_tensor);
 
 
 torch::autograd::variable_list NepToEFLossOp(

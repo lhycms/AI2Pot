@@ -82,6 +82,7 @@ nep_lib_dir:str = os.path.join(ai2pot_source_build_lib_dir, "descriptor", "nep")
 nep_bind_so_path: str = os.path.join(nep_lib_dir, "libnep_bind.so")
 torch.ops.load_library(nep_bind_so_path)
 # name
+nepToEFOp = torch.ops.nep.nepToEFOp
 nepToEFLossOp = torch.ops.nep.nepToEFLossOp
 
 
