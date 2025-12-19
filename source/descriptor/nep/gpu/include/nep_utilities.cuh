@@ -13,12 +13,18 @@
     along with AI2Pot.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef AI2POT_NEP_NEP_UTILITIES_H
-#define AI2POT_NEP_NEP_UTILITIES_H
+#ifndef AI2POT_NEP_NEP_UTILITIES_CUH
+#define AI2POT_NEP_NEP_UTILITIES_CUH
+#include <cuda.h>
+#include <cuda_runtime.h>
+#include <device_launch_parameters.h>
+#include <stdio.h>
 #include <cassert>
-#include <math.h>
 
+// 1. Hyperparameters.
+#define MAX_CHEBYSHEV_SIZE 20
 #define L_MAX 4
+#define L_MAX_PLUS_ONE 5
 
 // 3 + 5 + 7 + 9
 const int FLATTEN_LM_DIM = 24;
@@ -31,64 +37,96 @@ double C3B[FLATTEN_LM_DIM] = {
     1.566681471060845, 1.566681471060845f, 0.195835183882606f, 0.195835183882606f};
 
 
+
+// 2. About CUDA
+#ifdef __INTELLISENSE__
+#define KERNEL_ARG2(grid_size, block_size)
+#define KERNEL_ARG3(grid_size, block_size, sh_mem)
+#define KERNEL_ARG4(grid_size, block_size, sh_mem, stream)
+#else
+#define KERNEL_ARG2(grid_size, block_size) <<<grid_size, block_size>>>
+#define KERNEL_ARG3(grid_size, block_size, sh_mem) <<<grid_size, block_size, sh_mem>>>
+#define KERNEL_ARG4(grid_size, block_size, sh_mem, stream) <<<grid_size, block_size, sh_mem, stream>>>
+#endif
+
+
+#define CHECK_CUDA_API(call)                                                    \
+do {                                                                            \
+    cudaError_t error_code = call;                                              \
+    if (error_code != cudaSuccess)                                              \
+    {                                                                           \
+        printf("CUDA Error:\n");                                                \
+        printf("\t1. File : %s\n", __FILE__);                                   \
+        printf("\t2. Function : %s\n", __FUNCTION__);                           \
+        printf("\t3. Line : %d\n", __LINE__);                                   \
+        printf("\t4. Error code : %d\n", error_code);                           \
+        printf("\t5. Error text : %s\n", cudaGetErrorString(error_code));       \
+    }                                                                           \
+} while(0);
+
+
+#define CHECK_CUDA_KERNEL                               \
+do {                                                    \
+    CHECK_CUDA_API( cudaDeviceSynchronize() );          \
+    CHECK_CUDA_API( cudaGetLastError() );               \
+} while(0);
+
+
+
+// 3. Nep Utilities
 namespace ai2pot {
 namespace nep {
 
 class NepIndex {
 public:
-    static int get_num_descriptors(
+    static __host__ __device__
+    int get_num_descriptors(
         int n_radial_basis,
         int n_angular_basis,
-        int l_max) {
-        if (l_max == 0)
-            return n_radial_basis;
+        int l_max) 
+    {
+        assert((l_max >= 0) && (l_max<=4));
 
-        assert((l_max>=0) && (l_max<=L_MAX));
-        
         return n_radial_basis + n_angular_basis * l_max;
     }
 
-    static int get_num_Sinlm(
+
+    static __host__ __device__
+    int get_num_Sinlm(
         int n_angular_basis,
         int l_max)
     {
-        if (l_max == 0)
-            return 0;
-        assert((l_max>=0) && (l_max<=L_MAX));
+        assert((l_max >= 0) && (l_max<=4));
 
         return n_angular_basis * (l_max*l_max + 2*l_max);
     }
 
-    static int get_Clm_index(
-        int l,
-        int mp) {
-        assert(l >= 1);
-        assert(mp >= 0);
 
+    static __host__ __device__
+    int get_Clm_index(
+        int l,
+        int mp)
+    {
         return (l*l - 1) + mp;
     }
 
 
-    static int get_Sinlm_index(
+    static __host__ __device__
+    int get_Sinlm_index(
         int l_max,
         int mu,
         int l,
-        int mp) {
-        assert(l >= 1);
-        assert(l <= l_max);
-        assert(mp >= 0);
-
+        int mp)
+    {
         return mu*(l_max*l_max + 2*l_max) + (l*l - 1) + mp;
     }
 
-
-    static int get_qinl_index(
+    static __host__ __device__
+    int get_qinl_index(
         int l_max,
         int mu,
-        int l) {
-        assert(l >= 1);
-        assert(l <= l_max);
-        
+        int l)
+    {
         return mu*l_max + (l-1);
     }
 };  // class : NepIndex
@@ -97,7 +135,8 @@ public:
 template <typename CoordType>
 class Blm {
 public:
-    static void find_blm_val(
+    static __host__ __device__
+    void find_blm_val(
         CoordType *blm_ptr,
         int l,
         int mp,
@@ -203,7 +242,9 @@ public:
         }
     }
 
-    static void find_blm_der2xyz(
+
+    static __host__ __device__
+    void find_blm_der2xyz(
         CoordType *blm_der2xyz,
         int l,
         int mp,
@@ -380,55 +421,40 @@ public:
 };  // class : Blm
 
 
-
 template <typename CoordType>
-class TanhActivationFunc {
+class TanhActivationFunc
+{
 public:
-    static void find_val(
-        CoordType &val, 
-        CoordType hidden_val);
+    static __host__ __device__
+    void find_val(CoordType &val, CoordType hidden_val);
 
-    static void find_der(
-        CoordType &der,
-        CoordType hidden_val);
+    static __host__ __device__
+    void find_der(CoordType &der, CoordType hidden_val);
 
-    static void find_der2der(
-        CoordType &der2der,
-        CoordType hidden_val);
-
-    static void find_all_info(
-        CoordType &val,
-        CoordType &der,
-        CoordType &der2der,
-        CoordType hidden_val);
+    static __host__ __device__
+    void find_der2der(CoordType &der2der, CoordType hidden_val);
 };  // class : TanhActivationFunc
 
-
 template <typename CoordType>
-void TanhActivationFunc<CoordType>::find_val(
-    CoordType &val,
-    CoordType hidden_val)
+__host__ __device__
+void TanhActivationFunc<CoordType>::find_val(CoordType &val, CoordType hidden_val)
 {
-    val = (std::exp(hidden_val) - std::exp(-hidden_val)) 
+    val = (std::exp(hidden_val) - std::exp(-hidden_val))
           / (std::exp(hidden_val) + std::exp(-hidden_val));
 }
 
-
 template <typename CoordType>
-void TanhActivationFunc<CoordType>::find_der(
-    CoordType &der,
-    CoordType hidden_val)
+__host__ __device__
+void TanhActivationFunc<CoordType>::find_der(CoordType &der, CoordType hidden_val)
 {
-    CoordType val = (std::exp(hidden_val) - std::exp(-hidden_val)) 
+    CoordType val = (std::exp(hidden_val) - std::exp(-hidden_val))
                     / (std::exp(hidden_val) + std::exp(-hidden_val));
     der = 1 - std::pow(val, 2);
 }
 
-
 template <typename CoordType>
-void TanhActivationFunc<CoordType>::find_der2der(
-    CoordType &der2der,
-    CoordType hidden_val)
+__host__ __device__
+void TanhActivationFunc<CoordType>::find_der2der(CoordType &der2der, CoordType hidden_val)
 {
     CoordType val = (std::exp(hidden_val) - std::exp(-hidden_val))
                     / (std::exp(hidden_val) + std::exp(-hidden_val));
@@ -438,6 +464,5 @@ void TanhActivationFunc<CoordType>::find_der2der(
 
 };  // namespace : nep
 };  // namespace : ai2pot
-
 
 #endif
