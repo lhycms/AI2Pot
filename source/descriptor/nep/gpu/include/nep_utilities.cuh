@@ -25,6 +25,11 @@
 #define MAX_CHEBYSHEV_SIZE 20
 #define L_MAX 4
 #define L_MAX_PLUS_ONE 5
+#define MAX_NUM_RADIAL_BASIS 20
+#define MAX_NUM_ANGULAR_BASIS 12
+#define MAX_NUM_SINLM 288   // (4*4 + 2*4) * 12
+#define MAX_NUM_DESCRIPTORS 68  // 20 + 12*4
+
 
 // 3 + 5 + 7 + 9
 const int FLATTEN_LM_DIM = 24;

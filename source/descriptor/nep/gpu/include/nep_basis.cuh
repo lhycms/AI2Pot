@@ -13,8 +13,8 @@
     along with AI2Pot.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef AI2POT_MTP_BASIS_CUH
-#define AI2POT_MTP_BASIS_CUH
+#ifndef AI2POT_NEP_NEP_BASIS_CUH
+#define AI2POT_NEP_NEP_BASIS_CUH
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
