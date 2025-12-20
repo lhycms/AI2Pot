@@ -418,7 +418,6 @@ TEST_F(NepTest, find_ef_loss_backward) {
         rmin,
         nullptr);
 
-printf("***+++ %d\n", ntypes*ntypes*(n_radial_basis+n_angular_basis)*chebyshev_size);
 printf("1. loss_der2coeffs:\n");
 for (int ii=0; ii<ntypes*ntypes*(n_radial_basis+n_angular_basis)*chebyshev_size; ii++)
     printf("%.15f, ", loss_der2coeffs[ii]);

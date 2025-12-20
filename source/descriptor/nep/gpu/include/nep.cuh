@@ -519,6 +519,7 @@ void find_ef_launcher(
     CHECK_CUDA_API( cudaMemcpy(d_q_scaler, h_q_scaler, sizeof(CoordType)*num_descriptors, cudaMemcpyHostToDevice) );
 
     // Compute
+    auto t1 = std::chrono::high_resolution_clock::now();
     find_ef_kernel KERNEL_ARG2(grid_size, block_size) (
         d_betot_ptr,
         d_bforce,
@@ -547,6 +548,9 @@ void find_ef_launcher(
         rmin,
         d_q_scaler);
     CHECK_CUDA_KERNEL;
+    auto t2 = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
+    std::cout << "find_ef_kernel() cost time: " << duration.count() << " us.\n";
 
     // 
     CHECK_CUDA_API( cudaMemcpy(h_betot_ptr, d_betot_ptr, sizeof(CoordType)*batch_size, cudaMemcpyDeviceToHost) );
