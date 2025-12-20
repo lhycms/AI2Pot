@@ -155,7 +155,7 @@ void find_ef_atom(
     CoordType e_sites_der2dod[MAX_NUM_DESCRIPTORS] = {0.};
     CoordType auto_dist_powers_[L_MAX_PLUS_ONE] = {0.};
 
-    int num_coeffs = ntypes * ntypes * (n_radial_basis + n_angular_basis) * chebyshev_size;
+    //int num_coeffs = ntypes * ntypes * (n_radial_basis + n_angular_basis) * chebyshev_size;
     int num_descriptors = NepIndex::get_num_descriptors(n_radial_basis, n_angular_basis, l_max);
     int num_Sinlm = NepIndex::get_num_Sinlm(n_angular_basis, l_max);
 
@@ -214,7 +214,7 @@ void find_ef_atom(
                 for (int mp=0; mp<2*l+1; mp++) {
                     for (int xi=0; xi<chebyshev_size; xi++) {
                         int idx = (type_central*ntypes+type_outer)*(n_radial_basis+n_angular_basis)*chebyshev_size
-                                  * (n_radial_basis+mu)*chebyshev_size + xi;
+                                  + (n_radial_basis+mu)*chebyshev_size + xi;
                         int idx_Sinlm = NepIndex::get_Sinlm_index(l_max, mu, l, mp);
 
                         CoordType A = rq_chebyshev_vals[xi];
@@ -241,7 +241,7 @@ void find_ef_atom(
     }
 
     // Step 2.4. Ei
-    e_site = type_bias[type_central];
+    CoordType e_site = type_bias[type_central];
     for (int p=0; p<num_neurons; p++) {
         CoordType hidden_val = 0.0;
         CoordType activated_hidden_val = 0.0;
@@ -316,7 +316,7 @@ void find_ef_atom(
                               + mu*chebyshev_size + xi;
                     e_site_ders_ija += e_sites_der2dod[mu]
                                        * coeffs[idx]
-                                       * rq_chebyshev_vals[xi]
+                                       * rq_chebyshev_ders2r[xi]
                                        * neigh_vec[aa] * distance_ij_inv;
                 }
             }
@@ -325,21 +325,22 @@ void find_ef_atom(
                 for (int l=1; l<=l_max; l++) {
                     for (int mp=0; mp<2*l+1; mp++) {
                         int idx_Sinlm = NepIndex::get_Sinlm_index(l_max, mu, l, mp);
+                        CoordType B = 0.0;
+                        Blm<CoordType>::find_blm_val(&B, l, mp, neigh_vec, distance_ij);
+                        CoordType C = 1.0/auto_dist_powers_[l];
+                        CoordType B_ders[3] = {0.0};
+                        CoordType C_ders[3] = {0.0};
+                        Blm<CoordType>::find_blm_der2xyz(B_ders, l, mp, neigh_vec, distance_ij);
+                        C_ders[aa] = -l / (auto_dist_powers_[l]*distance_ij)
+                                     * (neigh_vec[aa] * distance_ij_inv);
+
                         for (int xi=0; xi<chebyshev_size; xi++) {
                             int idx = (type_central*ntypes+type_outer)*(n_radial_basis+n_angular_basis)*chebyshev_size
-                                      * (n_radial_basis+mu)*chebyshev_size + xi;
+                                      + (n_radial_basis+mu)*chebyshev_size + xi;
                             CoordType A = rq_chebyshev_vals[xi];
-                            CoordType B = 0.0;
-                            Blm<CoordType>::find_blm_val(&B, l, mp, neigh_vec, distance_ij);
-                            CoordType C = 1.0/auto_dist_powers_[l];
 
                             CoordType A_ders[3] = {0.0};
-                            CoordType B_ders[3] = {0.0};
-                            CoordType C_ders[3] = {0.0};
                             A_ders[aa] = rq_chebyshev_ders2r[xi] * neigh_vec[aa] * distance_ij_inv;
-                            Blm<CoordType>::find_blm_der2xyz(B_ders, l, mp, neigh_vec, distance_ij);
-                            C_ders[aa] = -l / (auto_dist_powers_[l]*distance_ij)
-                                         * (neigh_vec[aa] * distance_ij_inv);
                             
                             e_site_ders_ija += e_sites_der2mom[idx_Sinlm]
                                                * coeffs[idx] *
@@ -442,10 +443,10 @@ void find_ef_launcher(
     int n_angular_basis,
     int l_max,
     int num_neurons,
-    CoordType *coeffs,
-    CoordType *w0,
-    CoordType *w1,
-    CoordType *type_bias,
+    CoordType *h_coeffs,
+    CoordType *h_w0,
+    CoordType *h_w1,
+    CoordType *h_type_bias,
     int batch_size,
     int natoms_pad,
     int *h_binum,
@@ -506,7 +507,7 @@ void find_ef_launcher(
     // 
     CHECK_CUDA_API( cudaMemcpy(d_coeffs, h_coeffs, sizeof(CoordType)*num_coeffs, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_w0, h_w0, sizeof(CoordType)*ntypes*num_neurons*num_descriptors, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_w1, h_w1, sizeof(CoordType)*ntypes*num_neurons) );
+    CHECK_CUDA_API( cudaMemcpy(d_w1, h_w1, sizeof(CoordType)*ntypes*num_neurons, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_type_bias, h_type_bias, sizeof(CoordType)*ntypes, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_binum, h_binum, sizeof(int)*batch_size, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_bilist, h_bilist, sizeof(int)*batch_size*natoms_pad, cudaMemcpyHostToDevice) );

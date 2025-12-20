@@ -156,7 +156,7 @@ protected:
         pbc_xyz[0] = true;
         pbc_xyz[1] = true;
         pbc_xyz[2] = true;
-        nblist = ai2pot::NeighborList<double>(structure, rcut, pbc_xyz, false);
+        nblist = ai2pot::NeighborList<double>(structure, rcut, pbc_xyz, true);
         inum = 12;
         ntypes = 2;
         umax_num_neigh_atoms = 20;

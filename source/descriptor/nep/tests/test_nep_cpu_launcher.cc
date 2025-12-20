@@ -188,7 +188,7 @@ protected:
         type_map[1] = 16;
 
         structure = ai2pot::Structure<real>(num_atoms, basis_vectors, atomic_numbers, frac_coords, false);
-        neighbor_list = ai2pot::NeighborList<real>(structure, rcut, bin_size_xyz, pbc_xyz, false);
+        neighbor_list = ai2pot::NeighborList<real>(structure, rcut, bin_size_xyz, pbc_xyz, true);
         batch_size = 1;
         natoms_pad = 12;
         umax_num_neigh_atoms = 20;
