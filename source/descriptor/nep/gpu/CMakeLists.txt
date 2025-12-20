@@ -26,8 +26,12 @@ if (BUILD_TEST)
     add_executable(test_nep_gpu ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nep.cu)
     target_link_libraries(test_nep_gpu PRIVATE gtest gtest_main)
 
+    add_executable(test_nep_loss_gpu ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nepLoss.cu)
+    target_link_libraries(test_nep_loss_gpu PRIVATE gtest gtest_main)
+
     gtest_discover_tests(test_nep_basis_gpu DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT})
     gtest_discover_tests(test_nep_utilities_gpu DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT})
     gtest_discover_tests(test_blm_gpu DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT})
     gtest_discover_tests(test_nep_gpu DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT})
+    gtest_discover_tests(test_nep_loss_gpu DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT})
 endif()
