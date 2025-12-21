@@ -386,6 +386,96 @@ for (int ii=0; ii<natoms_pad; ii++)
 }
 
 
+TEST_F(NepTest, find_ef_loss_backward_launcher)
+{
+    real e_weight = 0.1;
+    real f_weight = 0.2;
+
+    ai2pot::nep::find_ef_launcher<real>(
+        betot,
+        bforce,
+        chebyshev_size,
+        n_radial_basis,
+        n_angular_basis,
+        l_max,
+        num_neurons,
+        coeffs,
+        w0,
+        w1,
+        type_bias,
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        bnumneigh,
+        bfirstneigh,
+        (real (*)[3])brcs,
+        btypes,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin,
+        q_scaler);
+    
+    ai2pot::nep::find_ef_loss_backward_launcher<real>(
+        bloss_der2coeffs,
+        bloss_der2w0,
+        bloss_der2w1,
+        bloss_der2type_bias,
+        e_weight,
+        f_weight,
+        betot,
+        betot_dft,
+        bforce,
+        bforce_dft,
+        chebyshev_size,
+        n_radial_basis,
+        n_angular_basis,
+        l_max,
+        num_neurons,
+        coeffs,
+        w0,
+        w1,
+        type_bias,
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        bnumneigh,
+        bfirstneigh,
+        (real (*)[3])brcs,
+        btypes,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin,
+        q_scaler);
+printf("1. loss_der2coeffs:\n");
+for (int ii=0; ii<ntypes*ntypes*(n_radial_basis+n_angular_basis)*chebyshev_size; ii++)
+    printf("%.15f, ", bloss_der2coeffs[ii]);
+printf("\n\n");
+
+printf("2. loss_der2w0:\n");
+for (int ii=0; ii<ntypes*num_neurons*num_descriptors; ii++)
+    printf("%.15f, ", bloss_der2w0[ii]);
+printf("\n\n");
+
+printf("3. loss_der2w1:\n");
+for (int ii=0; ii<ntypes*num_neurons; ii++)
+    printf("%.15f, ", bloss_der2w1[ii]);
+printf("\n\n");
+
+printf("4. loss_der2type_bias:\n");
+for (int ii=0; ii<ntypes; ii++)
+    printf("%.15f, ", bloss_der2type_bias[ii]);
+printf("\n\n");
+}
+
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();

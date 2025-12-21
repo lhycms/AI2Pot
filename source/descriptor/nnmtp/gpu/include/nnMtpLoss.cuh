@@ -1884,7 +1884,7 @@ void find_ef_loss_backward_launcher(
     CHECK_CUDA_API( cudaMalloc((void**)&d_coeffs, sizeof(CoordType) * num_coeffs) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_w0, sizeof(CoordType) * ntypes * num_neurons * alpha_scalar_moments) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_w1, sizeof(CoordType) * ntypes * num_neurons) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_type_bias, sizeof(CoordType) * alpha_scalar_moments) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_type_bias, sizeof(CoordType) * ntypes) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_alpha_index_basic, sizeof(int) * alpha_index_basic_count * 4) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_alpha_index_times, sizeof(int) * alpha_index_times_count * 4) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_alpha_moment_mapping, sizeof(int) * alpha_scalar_moments) );
