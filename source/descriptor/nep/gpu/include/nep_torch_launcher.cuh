@@ -27,6 +27,8 @@
 namespace ai2pot {
 namespace nep {
 
+
+// 2. find_ef_torch_launcher
 template <typename CoordType>
 __host__
 void find_ef_torch_launcher(
@@ -91,6 +93,61 @@ void find_ef_torch_launcher(
         rmin,
         d_q_scaler);
     CHECK_CUDA_KERNEL;
+}
+
+
+// 3. find_descriptor_torch_launcher
+template <typename CoordType>
+void find_descriptor_torch_launcher(
+    CoordType *d_bdescriptors,
+    int chebyshev_size,
+    int n_radial_basis,
+    int n_angular_basis,
+    int l_max,
+    CoordType *d_coeffs,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    int *d_bnumneigh,
+    int *d_bfirstneigh,
+    CoordType (*d_brcs)[3],
+    int *d_btypes,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    CoordType rmax,
+    CoordType rmin)
+{
+    int block_size_x = 64;
+    int grid_size_x = (batch_size * natoms_pad - 1) / block_size_x + 1;
+    dim3 grid_size(grid_size_x);
+    dim3 block_size(block_size_x);
+
+    // Compute
+    find_descriptors_kernel KERNEL_ARG2(grid_size, block_size) (
+        d_bdescriptors,
+        chebyshev_size,
+        n_radial_basis,
+        n_angular_basis,
+        l_max,
+        d_coeffs,
+        batch_size,
+        natoms_pad,
+        d_binum,
+        d_bilist,
+        d_bnumneigh,
+        d_bfirstneigh,
+        d_brcs,
+        d_btypes,
+        ntypes,
+        d_type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin);
+    CHECK_CUDA_KERNEL;   
 }
 
 };  // namespace : nep

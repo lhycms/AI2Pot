@@ -77,3 +77,46 @@ template void ai2pot::nep::find_ef_torch_launcher<double>(
 
 
 // 3. find_descriptors
+template void ai2pot::nep::find_descriptor_torch_launcher<float>(
+    float *d_bdescriptors,
+    int chebyshev_size,
+    int n_radial_basis,
+    int n_angular_basis,
+    int l_max,
+    float *d_coeffs,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    int *d_bnumneigh,
+    int *d_bfirstneigh,
+    float (*d_brcs)[3],
+    int *d_btypes,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    float rmax,
+    float rmin);
+
+template void ai2pot::nep::find_descriptor_torch_launcher<double>(
+    double *d_bdescriptors,
+    int chebyshev_size,
+    int n_radial_basis,
+    int n_angular_basis,
+    int l_max,
+    double *d_coeffs,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    int *d_bnumneigh,
+    int *d_bfirstneigh,
+    double (*d_brcs)[3],
+    int *d_btypes,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    double rmax,
+    double rmin);

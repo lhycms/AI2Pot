@@ -20,9 +20,45 @@
 namespace ai2pot {
 namespace nep {
 
-// 1. find_ef_loss_backward
+
+// 1. find_ef_loss
 template <typename CoordType>
-void find_ef_loss_backward_launcher(
+void find_ef_loss_torch_launcher(
+    CoordType *d_bloss_ptr,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    CoordType e_weight,
+    CoordType f_weight,
+    CoordType *d_betot_ml,
+    CoordType *d_betot_dft,
+    CoordType (*d_bforce_ml)[3],
+    CoordType (*d_bforce_dft)[3]);
+
+
+// 2. find_loss
+template <typename CoordType>
+void find_loss_torch_launcher(
+    CoordType *d_bloss_ptr,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    CoordType e_weight,
+    CoordType f_weight,
+    CoordType v_weight,
+    CoordType *d_betot_ml,
+    CoordType *d_betot_dft,
+    CoordType (*d_bforce_ml)[3],
+    CoordType (*d_bforce_dft)[3],
+    CoordType *d_bvirial_ml,
+    CoordType *d_bvirial_dft);
+
+
+// 3. find_ef_loss_backward
+template <typename CoordType>
+void find_ef_loss_backward_torch_launcher(
     CoordType *d_bloss_der2coeffs,
     CoordType *d_bloss_der2w0,
     CoordType *d_bloss_der2w1,

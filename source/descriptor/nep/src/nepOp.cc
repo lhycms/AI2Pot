@@ -20,6 +20,361 @@
 #include "../include/nep.h"
 #include "../include/nep_cpu_launcher.h"
 #include "../include/nepLoss_cpu_launcher.h"
+#include "../../correction/include/zbl.h"
+
+
+#if defined(USE_CUDA) or defined(__INTELLISENSE__)
+#include "../gpu/include/nep_torch_launcher.h"
+#include "../gpu/include/nepLoss_torch_launcher.h"
+#include "../../correction/gpu/include/zbl_torch_launcher.h"
+
+
+namespace ai2pot {
+namespace nep {
+
+// 1. nep_torch_launcher.cu
+// 1.1. find_ef_torch_launcher()
+extern template void find_ef_torch_launcher<float>(
+    float *d_betot_ptr,
+    float (*d_bforce)[3],
+    int chebyshev_size,
+    int n_radial_basis,
+    int n_angular_basis,
+    int l_max,
+    int num_neurons,
+    float *d_coeffs,
+    float *d_w0,
+    float *d_w1,
+    float *d_type_bias,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    int *d_bnumneigh,
+    int *d_bfirstneigh,
+    float (*d_brcs)[3],
+    int *d_btypes,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    float rmax,
+    float rmin,
+    float *d_q_scaler);
+
+extern template void find_ef_torch_launcher<double>(
+    double *d_betot_ptr,
+    double (*d_bforce)[3],
+    int chebyshev_size,
+    int n_radial_basis,
+    int n_angular_basis,
+    int l_max,
+    int num_neurons,
+    double *d_coeffs,
+    double *d_w0,
+    double *d_w1,
+    double *d_type_bias,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    int *d_bnumneigh,
+    int *d_bfirstneigh,
+    double (*d_brcs)[3],
+    int *d_btypes,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    double rmax,
+    double rmin,
+    double *d_q_scaler);
+
+
+// 1.2. find_efv_torch_launcher()
+
+
+// 1.3. find_descriptors_torch_launcher()
+extern template void find_descriptor_torch_launcher<float>(
+    float *d_bdescriptors,
+    int chebyshev_size,
+    int n_radial_basis,
+    int n_angular_basis,
+    int l_max,
+    float *d_coeffs,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    int *d_bnumneigh,
+    int *d_bfirstneigh,
+    float (*d_brcs)[3],
+    int *d_btypes,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    float rmax,
+    float rmin);
+
+extern template void find_descriptor_torch_launcher<double>(
+    double *d_bdescriptors,
+    int chebyshev_size,
+    int n_radial_basis,
+    int n_angular_basis,
+    int l_max,
+    double *d_coeffs,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    int *d_bnumneigh,
+    int *d_bfirstneigh,
+    double (*d_brcs)[3],
+    int *d_btypes,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    double rmax,
+    double rmin);
+
+
+
+// 2. nepLoss_torch_launcher.cu
+// 2.1. find_ef_loss_torch_launcher()
+extern template void find_ef_loss_torch_launcher<float>(
+    float *d_bloss_ptr,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    float e_weight,
+    float f_weight,
+    float *d_betot_ml,
+    float *d_betot_dft,
+    float (*d_bforce_ml)[3],
+    float (*d_bforce_dft)[3]);
+
+extern template void find_ef_loss_torch_launcher<double>(
+    double *d_bloss_ptr,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    double e_weight,
+    double f_weight,
+    double *d_betot_ml,
+    double *d_betot_dft,
+    double (*d_bforce_ml)[3],
+    double (*d_bforce_dft)[3]);
+
+
+// 2.2. find_loss_torch_launcher()
+extern template void find_loss_torch_launcher<float>(
+    float *d_bloss_ptr,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    float e_weight,
+    float f_weight,
+    float v_weight,
+    float *d_betot_ml,
+    float *d_betot_dft,
+    float (*d_bforce_ml)[3],
+    float (*d_bforce_dft)[3],
+    float *d_bvirial_ml,
+    float *d_bvirial_dft);
+
+extern template void find_loss_torch_launcher<double>(
+    double *d_bloss_ptr,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    double e_weight,
+    double f_weight,
+    double v_weight,
+    double *d_betot_ml,
+    double *d_betot_dft,
+    double (*d_bforce_ml)[3],
+    double (*d_bforce_dft)[3],
+    double *d_bvirial_ml,
+    double *d_bvirial_dft);
+
+
+// 2.3. find_ef_loss_backward_torch_launcher()
+extern template void find_ef_loss_backward_torch_launcher<float>(
+    float *d_bloss_der2coeffs,
+    float *d_bloss_der2w0,
+    float *d_bloss_der2w1,
+    float *d_bloss_der2type_bias,
+    float e_weight,
+    float f_weight,
+    float *d_betot_ml,
+    float *d_betot_dft,
+    float (*d_bforce_ml)[3],
+    float (*d_bforce_dft)[3],
+    int chebyshev_size,
+    int n_radial_basis,
+    int n_angular_basis,
+    int l_max,
+    int num_neurons,
+    float *d_coeffs,
+    float *d_w0,
+    float *d_w1,
+    float *d_type_bias,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    int *d_bnumneigh,
+    int *d_bfirstneigh,
+    float (*d_brcs)[3],
+    int *d_btypes,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    float rmax,
+    float rmin,
+    float *d_q_scaler);
+
+extern template void find_ef_loss_backward_torch_launcher<double>(
+    double *d_bloss_der2coeffs,
+    double *d_bloss_der2w0,
+    double *d_bloss_der2w1,
+    double *d_bloss_der2type_bias,
+    double e_weight,
+    double f_weight,
+    double *d_betot_ml,
+    double *d_betot_dft,
+    double (*d_bforce_ml)[3],
+    double (*d_bforce_dft)[3],
+    int chebyshev_size,
+    int n_radial_basis,
+    int n_angular_basis,
+    int l_max,
+    int num_neurons,
+    double *d_coeffs,
+    double *d_w0,
+    double *d_w1,
+    double *d_type_bias,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    int *d_bnumneigh,
+    int *d_bfirstneigh,
+    double (*d_brcs)[3],
+    int *d_btypes,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    double rmax,
+    double rmin,
+    double *d_q_scaler);
+
+};  // namespace : nep
+};  // namespace : ai2pot
+
+
+namespace ai2pot {
+namespace correction {
+
+extern template void ai2pot::correction::correct_zbl_efv_torch_launcher<float>(
+    float *d_betot_ptr,
+    float *d_bforce,
+    float *d_bvirial,
+    float rmax,
+    float rmin,
+    float *d_cks,
+    float *d_dks,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    int *d_bnumneigh,
+    int *d_bfirstneigh,
+    float (*d_brcs)[3],
+    int *d_btypes,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost);
+
+extern template void ai2pot::correction::correct_zbl_efv_torch_launcher<double>(
+    double *d_betot_ptr,
+    double *d_bforce,
+    double *d_bvirial,
+    double rmax,
+    double rmin,
+    double *d_cks,
+    double *d_dks,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    int *d_bnumneigh,
+    int *d_bfirstneigh,
+    double (*d_brcs)[3],
+    int *d_btypes,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost);
+
+
+extern template void ai2pot::correction::correct_zbl_ef_torch_launcher<float>(
+    float *d_betot_ptr,
+    float *d_bforce,
+    float rmax,
+    float rmin,
+    float *d_cks,
+    float *d_dks,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    int *d_bnumneigh,
+    int *d_bfirstneigh,
+    float (*d_brcs)[3],
+    int *d_btypes,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost);
+
+
+extern template void ai2pot::correction::correct_zbl_ef_torch_launcher<double>(
+    double *d_betot_ptr,
+    double *d_bforce,
+    double rmax,
+    double rmin,
+    double *d_cks,
+    double *d_dks,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    int *d_bnumneigh,
+    int *d_bfirstneigh,
+    double (*d_brcs)[3],
+    int *d_btypes,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost);
+
+};  // namespace : correction
+};  // namespace : ai2pot
+
+#endif
+
+
+
 
 
 
@@ -119,7 +474,33 @@ torch::autograd::variable_list NepToEFFunction::forward(
                 q_scaler);
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
-            // ...
+            find_ef_torch_launcher(
+                betot,
+                bforce,
+                chebyshev_size,
+                n_radial_basis,
+                n_angular_basis,
+                l_max,
+                num_neurons,
+                coeffs,
+                w0,
+                w1,
+                type_bias,
+                batch_size,
+                natoms_pad,
+                binum,
+                bilist,
+                bnumneigh,
+                bfirstneigh,
+                brcs,
+                btypes,
+                ntypes,
+                type_map,
+                umax_num_neigh_atoms,
+                nghost,
+                (float)rmax,
+                (float)rmin,
+                q_scaler);
             #endif
         }
     } else {
@@ -164,7 +545,33 @@ torch::autograd::variable_list NepToEFFunction::forward(
                 q_scaler);
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
-            // ...
+            find_ef_torch_launcher(
+                betot,
+                bforce,
+                chebyshev_size,
+                n_radial_basis,
+                n_angular_basis,
+                l_max,
+                num_neurons,
+                coeffs,
+                w0,
+                w1,
+                type_bias,
+                batch_size,
+                natoms_pad,
+                binum,
+                bilist,
+                bnumneigh,
+                bfirstneigh,
+                brcs,
+                btypes,
+                ntypes,
+                type_map,
+                umax_num_neigh_atoms,
+                nghost,
+                rmax,
+                rmin,
+                q_scaler);
             #endif
         }
     }
@@ -312,10 +719,48 @@ torch::autograd::variable_list NepToEFLossFunction::forward(
                 betot_dft,
                 bforce,
                 bforce_dft);
-
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
-            // ...
+            find_ef_torch_launcher(
+                betot,
+                bforce,
+                chebyshev_size,
+                n_radial_basis,
+                n_angular_basis,
+                l_max,
+                num_neurons,
+                coeffs,
+                w0,
+                w1,
+                type_bias,
+                batch_size,
+                natoms_pad,
+                binum,
+                bilist,
+                bnumneigh,
+                bfirstneigh,
+                brcs,
+                btypes,
+                ntypes,
+                type_map,
+                umax_num_neigh_atoms,
+                nghost,
+                (float)rmax,
+                (float)rmin,
+                q_scaler);
+            
+            find_ef_loss_torch_launcher(
+                bloss,
+                batch_size,
+                natoms_pad,
+                binum,
+                bilist,
+                (float)e_weight,
+                (float)f_weight,
+                betot,
+                betot_dft,
+                bforce,
+                bforce_dft);
             #endif
         }
     } else {
@@ -376,7 +821,46 @@ torch::autograd::variable_list NepToEFLossFunction::forward(
                 bforce_dft);
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
-            // ... 
+            find_ef_torch_launcher(
+                betot,
+                bforce,
+                chebyshev_size,
+                n_radial_basis,
+                n_angular_basis,
+                l_max,
+                num_neurons,
+                coeffs,
+                w0,
+                w1,
+                type_bias,
+                batch_size,
+                natoms_pad,
+                binum,
+                bilist,
+                bnumneigh,
+                bfirstneigh,
+                brcs,
+                btypes,
+                ntypes,
+                type_map,
+                umax_num_neigh_atoms,
+                nghost,
+                rmax,
+                rmin,
+                q_scaler);
+            
+            find_ef_loss_torch_launcher(
+                bloss,
+                batch_size,
+                natoms_pad,
+                binum,
+                bilist,
+                e_weight,
+                f_weight,
+                betot,
+                betot_dft,
+                bforce,
+                bforce_dft);
             #endif
         }
     }
@@ -564,7 +1048,69 @@ torch::autograd::variable_list NepToEFLossFunction::backward(
                 q_scaler);
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
-            // ...
+            find_ef_torch_launcher(
+                betot,
+                bforce,
+                chebyshev_size,
+                n_radial_basis,
+                n_angular_basis,
+                l_max,
+                num_neurons,
+                coeffs,
+                w0,
+                w1,
+                type_bias,
+                batch_size,
+                natoms_pad,
+                binum,
+                bilist,
+                bnumneigh,
+                bfirstneigh,
+                brcs,
+                btypes,
+                ntypes,
+                type_map,
+                umax_num_neigh_atoms,
+                nghost,
+                (float)rmax,
+                (float)rmin,
+                q_scaler);
+            
+            find_ef_loss_backward_torch_launcher(
+                bloss_der2coeffs,
+                bloss_der2w0,
+                bloss_der2w1,
+                bloss_der2type_bias,
+                (float)e_weight,
+                (float)f_weight,
+                betot,
+                betot_dft,
+                bforce,
+                bforce_dft,
+                chebyshev_size,
+                n_radial_basis,
+                n_angular_basis,
+                l_max,
+                num_neurons,
+                coeffs,
+                w0,
+                w1,
+                type_bias,
+                batch_size,
+                natoms_pad,
+                binum,
+                bilist,
+                bnumneigh,
+                bfirstneigh,
+                brcs,
+                btypes,
+                ntypes,
+                type_map,
+                umax_num_neigh_atoms,
+                nghost,
+                (float)rmax,
+                (float)rmin,
+                q_scaler);
             #endif
         }
     } else {
@@ -652,7 +1198,69 @@ torch::autograd::variable_list NepToEFLossFunction::backward(
                 q_scaler);
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
-            // ...
+            find_ef_torch_launcher(
+                betot,
+                bforce,
+                chebyshev_size,
+                n_radial_basis,
+                n_angular_basis,
+                l_max,
+                num_neurons,
+                coeffs,
+                w0,
+                w1,
+                type_bias,
+                batch_size,
+                natoms_pad,
+                binum,
+                bilist,
+                bnumneigh,
+                bfirstneigh,
+                brcs,
+                btypes,
+                ntypes,
+                type_map,
+                umax_num_neigh_atoms,
+                nghost,
+                rmax,
+                rmin,
+                q_scaler);
+            
+            find_ef_loss_backward_torch_launcher(
+                bloss_der2coeffs,
+                bloss_der2w0,
+                bloss_der2w1,
+                bloss_der2type_bias,
+                e_weight,
+                f_weight,
+                betot,
+                betot_dft,
+                bforce,
+                bforce_dft,
+                chebyshev_size,
+                n_radial_basis,
+                n_angular_basis,
+                l_max,
+                num_neurons,
+                coeffs,
+                w0,
+                w1,
+                type_bias,
+                batch_size,
+                natoms_pad,
+                binum,
+                bilist,
+                bnumneigh,
+                bfirstneigh,
+                brcs,
+                btypes,
+                ntypes,
+                type_map,
+                umax_num_neigh_atoms,
+                nghost,
+                rmax,
+                rmin,
+                q_scaler);
             #endif
         }
     }
@@ -757,7 +1365,27 @@ torch::autograd::variable_list NepToDescriptorsFunction::forward(
                 rmin);
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
-            // ...
+            find_descriptor_torch_launcher(
+                bdescriptors,
+                chebyshev_size,
+                n_radial_basis,
+                n_angular_basis,
+                l_max,
+                coeffs,
+                batch_size,
+                natoms_pad,
+                binum,
+                bilist,
+                bnumneigh,
+                bfirstneigh,
+                brcs,
+                btypes,
+                ntypes,
+                type_map,
+                umax_num_neigh_atoms,
+                nghost,
+                (float)rmax,
+                (float)rmin);
             #endif
         }
     } else {
@@ -789,7 +1417,27 @@ torch::autograd::variable_list NepToDescriptorsFunction::forward(
                 rmin);
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
-            // ...
+            find_descriptor_torch_launcher(
+                bdescriptors,
+                chebyshev_size,
+                n_radial_basis,
+                n_angular_basis,
+                l_max,
+                coeffs,
+                batch_size,
+                natoms_pad,
+                binum,
+                bilist,
+                bnumneigh,
+                bfirstneigh,
+                brcs,
+                btypes,
+                ntypes,
+                type_map,
+                umax_num_neigh_atoms,
+                nghost,
+                rmax,
+                rmin);
             #endif
         }
     }

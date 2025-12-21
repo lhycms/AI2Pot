@@ -25,7 +25,9 @@ if (TORCH_OP)
     endif()
     if (USE_CUDA AND CUDA_FOUND)
         target_compile_definitions(nepOp PRIVATE USE_CUDA)
-        # target_link ...
+        target_link_libraries(nepOp PRIVATE nep_torch_launcher
+                                            nep_loss_torch_launcher
+                                            zbl_torch_launcher)
     endif()
 
     add_library(nep_bind SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bind/nep_bind.cc)
@@ -36,6 +38,9 @@ if (TORCH_OP)
     endif()
     if (USE_CUDA AND CUDA_FOUND)
         target_compile_definitions(nep_bind PRIVATE USE_CUDA)
+        target_link_libraries(nep_bind PRIVATE nep_torch_launcher
+                                               nep_loss_torch_launcher
+                                               zbl_torch_launcher)
     endif()
 endif()
 

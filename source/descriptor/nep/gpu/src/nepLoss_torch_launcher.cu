@@ -17,7 +17,69 @@
 #include "../include/nepLoss_torch_launcher.cuh"
 
 
-// 1. find_ef_loss_backward
+// 1. find_ef_loss
+template void ai2pot::nep::find_ef_loss_torch_launcher<float>(
+    float *d_bloss_ptr,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    float e_weight,
+    float f_weight,
+    float *d_betot_ml,
+    float *d_betot_dft,
+    float (*d_bforce_ml)[3],
+    float (*d_bforce_dft)[3]);
+
+template void ai2pot::nep::find_ef_loss_torch_launcher<double>(
+    double *d_bloss_ptr,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    double e_weight,
+    double f_weight,
+    double *d_betot_ml,
+    double *d_betot_dft,
+    double (*d_bforce_ml)[3],
+    double (*d_bforce_dft)[3]);
+
+
+// 2. find_loss
+template void ai2pot::nep::find_loss_torch_launcher<float>(
+    float *d_bloss_ptr,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    float e_weight,
+    float f_weight,
+    float v_weight,
+    float *d_betot_ml,
+    float *d_betot_dft,
+    float (*d_bforce_ml)[3],
+    float (*d_bforce_dft)[3],
+    float *d_bvirial_ml,
+    float *d_bvirial_dft);
+
+template void ai2pot::nep::find_loss_torch_launcher<double>(
+    double *d_bloss_ptr,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    double e_weight,
+    double f_weight,
+    double v_weight,
+    double *d_betot_ml,
+    double *d_betot_dft,
+    double (*d_bforce_ml)[3],
+    double (*d_bforce_dft)[3],
+    double *d_bvirial_ml,
+    double *d_bvirial_dft);
+
+
+// 3. find_ef_loss_backward
 template void ai2pot::nep::find_ef_loss_backward_torch_launcher<float>(
     float *d_bloss_der2coeffs,
     float *d_bloss_der2w0,
@@ -90,4 +152,4 @@ template void ai2pot::nep::find_ef_loss_backward_torch_launcher<double>(
     double rmin,
     double *d_q_scaler);
 
-// 2. find_loss_backward
+// 4. find_loss_backward

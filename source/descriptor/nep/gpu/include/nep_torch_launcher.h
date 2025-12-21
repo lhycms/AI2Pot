@@ -20,6 +20,8 @@
 namespace ai2pot {
 namespace nep {
 
+
+// 2. find_ef_torch_launcher
 template <typename CoordType>
 void find_ef_torch_launcher(
     CoordType *d_betot_ptr,
@@ -48,6 +50,31 @@ void find_ef_torch_launcher(
     CoordType rmax,
     CoordType rmin,
     CoordType *d_q_scaler);
+
+
+// 3. find_descriptor_torch_launcher
+template <typename CoordType>
+void find_descriptor_torch_launcher(
+    CoordType *d_bdescriptors,
+    int chebyshev_size,
+    int n_radial_basis,
+    int n_angular_basis,
+    int l_max,
+    CoordType *d_coeffs,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    int *d_bnumneigh,
+    int *d_bfirstneigh,
+    CoordType (*d_brcs)[3],
+    int *d_btypes,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    CoordType rmax,
+    CoordType rmin);
 
 };  // namespace : nep
 };  // namespace : ai2pot

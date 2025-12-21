@@ -117,6 +117,78 @@ void find_ef_launcher(
     CoordType *h_q_scaler);
 
 
+template <typename CoordType>
+static __host__ __device__
+void find_descriptors_atom(
+    CoordType *sbdescriptors,
+    int chebyshev_size,
+    int n_radial_basis,
+    int n_angular_basis,
+    int l_max,
+    CoordType *coeffs,
+    int silist,
+    int snumneigh,
+    int *sfirstneigh,
+    CoordType (*srcs)[3],
+    int *types,
+    int ntypes,
+    int *type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    CoordType rmax,
+    CoordType rmin);
+
+
+template <typename CoordType>
+static __global__
+void find_descriptors_kernel(
+    CoordType *bdescriptors,
+    int chebyshev_size,
+    int n_radial_basis,
+    int n_angular_basis,
+    int l_max,
+    CoordType *coeffs,
+    int batch_size,
+    int natoms_pad,
+    int *binum,
+    int *bilist,
+    int *bnumneigh,
+    int *bfirstneigh,
+    CoordType (*brcs)[3],
+    int *btypes,
+    int ntypes,
+    int *type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    CoordType rmax,
+    CoordType rmin);
+
+
+template <typename CoordType>
+static __host__
+void find_descriptors_launcher(
+    CoordType *h_bdescriptors,
+    int chebyshev_size,
+    int n_radial_basis,
+    int n_angular_basis,
+    int l_max,
+    CoordType *d_coeffs,
+    int batch_size,
+    int natoms_pad,
+    int *h_binum,
+    int *h_bilist,
+    int *h_bnumneigh,
+    int *h_bfirstneigh,
+    CoordType (*h_brcs)[3],
+    int *h_btypes,
+    int ntypes,
+    int *h_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    CoordType rmax,
+    CoordType rmin);
+
+
 
 
 
@@ -571,6 +643,281 @@ void find_ef_launcher(
     CHECK_CUDA_API( cudaFree(d_btypes) );
     CHECK_CUDA_API( cudaFree(d_type_map) );
     CHECK_CUDA_API( cudaFree(d_q_scaler) );
+}
+
+
+template <typename CoordType>
+__host__ __device__
+void find_descriptors_atom(
+    CoordType *sdescriptors,
+    int chebyshev_size,
+    int n_radial_basis,
+    int n_angular_basis,
+    int l_max,
+    CoordType *coeffs,
+    int silist,
+    int snumneigh,
+    int *sfirstneigh,
+    CoordType (*srcs)[3],
+    int *types,
+    int ntypes,
+    int *type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    CoordType rmax,
+    CoordType rmin)
+{
+    // Step 1. Init temp array
+    CoordType mom_vals[MAX_NUM_SINLM] = {0.0};
+    CoordType dod_vals[MAX_NUM_DESCRIPTORS] = {0.0};
+    CoordType auto_dist_powers_[L_MAX_PLUS_ONE] = {0.0};
+    int num_descriptors = NepIndex::get_num_descriptors(n_radial_basis, n_angular_basis, l_max);
+
+    int center_idx;
+    int type_central;
+    int neigh_idx;
+    int type_outer;
+    CoordType neigh_vec[3];
+    CoordType distance_ij;
+    CoordType distance_ij_inv;
+
+    center_idx = silist;
+    type_central = types[center_idx];
+
+    // Step 2. Calculate descriptors
+    for (int jj=0; jj<snumneigh; jj++) {
+        neigh_idx = sfirstneigh[jj];
+        type_outer = types[neigh_idx];
+        for (int aa=0; aa<3; aa++)
+            neigh_vec[aa] = srcs[jj][aa];
+        
+        distance_ij = std::sqrt( std::pow(neigh_vec[0], 2)
+                                 + std::pow(neigh_vec[1], 2)
+                                 + std::pow(neigh_vec[2], 2) );
+        if (distance_ij > rmax)
+            continue;
+        distance_ij_inv = 1.0 / distance_ij;
+        CoordType rq_chebyshev_vals[MAX_CHEBYSHEV_SIZE] = {0.0};
+        CoordType rq_chebyshev_der2r[MAX_CHEBYSHEV_SIZE] = {0.0};
+        find_rq_chebyshev<CoordType>(
+            rq_chebyshev_vals,
+            rq_chebyshev_der2r,
+            chebyshev_size,
+            rmax,
+            rmin,
+            distance_ij);
+        
+        auto_dist_powers_[0] = 1.0;
+        for (int k=1; k<=l_max; k++)
+            auto_dist_powers_[k] = auto_dist_powers_[k-1] * distance_ij;
+        
+        // Step 2.1. 
+        for (int mu=0; mu<n_radial_basis; mu++) {
+            for (int xi=0; xi<chebyshev_size; xi++) {
+                int idx = (type_central*ntypes+type_outer)*(n_radial_basis+n_angular_basis)*chebyshev_size
+                          + mu*chebyshev_size + xi;
+                dod_vals[mu] += coeffs[idx] * rq_chebyshev_vals[xi];
+            }
+        }
+
+        // Step 2.2.
+        for (int mu=0; mu<n_angular_basis; mu++) {
+            for (int l=1; l<=l_max; l++) {
+                for (int mp=0; mp<2*l+1; mp++) {
+                    int idx_Sinlm = NepIndex::get_Sinlm_index(l_max, mu, l, mp);
+                    CoordType B = 0.0;
+                    Blm<CoordType>::find_blm_val(&B, l, mp, neigh_vec, distance_ij);
+                    CoordType C = 1.0 / auto_dist_powers_[l];
+
+                    for (int xi=0; xi<chebyshev_size; xi++) {
+                        int idx = (type_central*ntypes+type_outer)*(n_radial_basis+n_angular_basis)*chebyshev_size
+                                   + (n_radial_basis+mu)*chebyshev_size + xi;
+                        CoordType A = rq_chebyshev_vals[xi];
+                        mom_vals[idx_Sinlm] += coeffs[idx] * A * B * C;
+                    }
+                }
+            }
+        }
+    }
+    // Step 2.3. 
+    for (int mu=0; mu<n_angular_basis; mu++) {
+        for (int l=1; l<=l_max; l++) {
+            for (int mp=0; mp<2*l+1; mp++) {
+                int idx_qinl = NepIndex::get_qinl_index(l_max, mu, l);
+                int idx_Sinlm = NepIndex::get_Sinlm_index(l_max, mu, l, mp);
+                int idx_Clm = NepIndex::get_Clm_index(l, mp);
+                dod_vals[n_radial_basis+idx_qinl] += (CoordType)C3B[idx_Clm] * std::pow(mom_vals[idx_Sinlm], 2);
+            }
+        }
+    }
+
+    for (int k=0; k<num_descriptors; k++)
+        sdescriptors[k] = dod_vals[k];
+}
+
+
+template <typename CoordType>
+__global__
+void find_descriptors_kernel(
+    CoordType *bdescriptors,
+    int chebyshev_size,
+    int n_radial_basis,
+    int n_angular_basis,
+    int l_max,
+    CoordType *coeffs,
+    int batch_size,
+    int natoms_pad,
+    int *binum,
+    int *bilist,
+    int *bnumneigh,
+    int *bfirstneigh,
+    CoordType (*brcs)[3],
+    int *btypes,
+    int ntypes,
+    int *type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    CoordType rmax,
+    CoordType rmin)
+{
+    int nx = blockIdx.x * blockDim.x + threadIdx.x;
+    int istruct = nx / natoms_pad;
+    if (istruct >= batch_size)
+        return;
+    int inum = binum[istruct];
+    int ii = nx % natoms_pad;
+    int num_descriptors = NepIndex::get_num_descriptors(n_radial_basis, n_angular_basis, l_max);
+
+    int *types = &btypes[istruct*natoms_pad + 0];
+
+    if (ii < inum) {
+        CoordType *sdescriptors = &bdescriptors[batch_size*natoms_pad*num_descriptors + ii*num_descriptors];
+        int silist = bilist[istruct*natoms_pad + ii];
+        int snumneigh = bnumneigh[istruct*natoms_pad + ii];
+        int *sfirstneigh = &bfirstneigh[istruct*natoms_pad*umax_num_neigh_atoms + ii*umax_num_neigh_atoms];
+        CoordType (*srcs)[3] = &brcs[istruct*natoms_pad*umax_num_neigh_atoms + ii*umax_num_neigh_atoms];
+
+        find_descriptors_atom<CoordType>(
+            sdescriptors,
+            chebyshev_size,
+            n_radial_basis,
+            n_angular_basis,
+            l_max,
+            coeffs,
+            silist,
+            snumneigh,
+            sfirstneigh,
+            srcs,
+            types,
+            ntypes,
+            type_map,
+            umax_num_neigh_atoms,
+            nghost,
+            rmax,
+            rmin);
+    }
+}
+
+
+template <typename CoordType>
+__host__
+void find_descriptors_launcher(
+    CoordType *h_bdescriptors,
+    int chebyshev_size,
+    int n_radial_basis,
+    int n_angular_basis,
+    int l_max,
+    CoordType *h_coeffs,
+    int batch_size,
+    int natoms_pad,
+    int *h_binum,
+    int *h_bilist,
+    int *h_bnumneigh,
+    int *h_bfirstneigh,
+    CoordType (*h_brcs)[3],
+    int *h_btypes,
+    int ntypes,
+    int *h_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    CoordType rmax,
+    CoordType rmin)
+{
+    int block_size_x = 64;
+    int grid_size_x = (batch_size * natoms_pad - 1) / block_size_x + 1;
+    dim3 grid_size(grid_size_x);
+    dim3 block_size(block_size_x);
+    int num_descriptors = NepIndex::get_num_descriptors(n_radial_basis, n_angular_basis, l_max);
+    int num_coeffs = ntypes * ntypes * (n_radial_basis+n_angular_basis) * chebyshev_size;
+
+    CoordType *d_bdescriptors;
+    CoordType *d_coeffs;
+    int *d_binum;
+    int *d_bilist;
+    int *d_bnumneigh;
+    int *d_bfirstneigh;
+    CoordType (*d_brcs)[3];
+    int *d_btypes;
+    int *d_type_map;
+
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bdescriptors, sizeof(CoordType) * batch_size * natoms_pad * num_descriptors) );
+    CHECK_CUDA_API( cudaMemset(d_bdescriptors, 0, sizeof(CoordType) * batch_size * natoms_pad * num_descriptors) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_coeffs, sizeof(CoordType) * num_coeffs) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_binum, sizeof(int) * batch_size) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bilist, sizeof(int) * batch_size * natoms_pad) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bnumneigh, sizeof(int) * batch_size * natoms_pad) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bfirstneigh, sizeof(int) * batch_size * natoms_pad * umax_num_neigh_atoms) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_brcs, sizeof(CoordType) * batch_size * natoms_pad * umax_num_neigh_atoms * 3) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_btypes, sizeof(int) * batch_size * (natoms_pad + nghost)) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_type_map, sizeof(int) * ntypes) );
+
+    //
+    CHECK_CUDA_API( cudaMemcpy(d_coeffs, h_coeffs, sizeof(CoordType) * num_coeffs, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_binum, h_binum, sizeof(int) * batch_size, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_bilist, h_bilist, sizeof(int) * batch_size * natoms_pad, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_bnumneigh, h_bnumneigh, sizeof(int) * batch_size * natoms_pad, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_bfirstneigh, h_bfirstneigh, sizeof(int) * batch_size * natoms_pad * umax_num_neigh_atoms, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_brcs, h_brcs, sizeof(CoordType) * batch_size * natoms_pad * umax_num_neigh_atoms * 3, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_btypes, h_btypes, sizeof(int) * batch_size * (natoms_pad + nghost), cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_type_map, h_type_map, sizeof(int) * ntypes, cudaMemcpyHostToDevice) );
+
+    // Compute
+    find_descriptors_kernel KERNEL_ARG2(grid_size, block_size) (
+        d_bdescriptors,
+        chebyshev_size,
+        n_radial_basis,
+        n_angular_basis,
+        l_max,
+        d_coeffs,
+        batch_size,
+        natoms_pad,
+        d_binum,
+        d_bilist,
+        d_bnumneigh,
+        d_bfirstneigh,
+        d_brcs,
+        d_btypes,
+        ntypes,
+        d_type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin);
+    CHECK_CUDA_KERNEL;
+
+    // 
+    CHECK_CUDA_API( cudaMemcpy(h_bdescriptors, d_bdescriptors, sizeof(CoordType) * batch_size * natoms_pad * num_descriptors, cudaMemcpyDeviceToHost) );
+    
+    // Step . Free
+    CHECK_CUDA_API( cudaFree(d_bdescriptors) );
+    CHECK_CUDA_API( cudaFree(d_coeffs) );
+    CHECK_CUDA_API( cudaFree(d_binum) );
+    CHECK_CUDA_API( cudaFree(d_bilist) );
+    CHECK_CUDA_API( cudaFree(d_bnumneigh) );
+    CHECK_CUDA_API( cudaFree(d_bfirstneigh) );
+    CHECK_CUDA_API( cudaFree(d_brcs) );
+    CHECK_CUDA_API( cudaFree(d_btypes) );
+    CHECK_CUDA_API( cudaFree(d_type_map) );
 }
 
 

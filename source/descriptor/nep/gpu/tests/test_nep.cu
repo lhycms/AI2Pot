@@ -476,6 +476,32 @@ printf("\n\n");
 }
 
 
+TEST_F(NepTest, find_bdescriptors)
+{
+    ai2pot::nep::find_descriptors_launcher(
+        bdescriptors,
+        chebyshev_size,
+        n_radial_basis,
+        n_angular_basis,
+        l_max,
+        coeffs,
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        bnumneigh,
+        bfirstneigh,
+        (real (*)[3])brcs,
+        btypes,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin);
+}
+
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
