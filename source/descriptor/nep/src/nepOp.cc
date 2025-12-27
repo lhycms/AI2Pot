@@ -402,7 +402,11 @@ torch::autograd::variable_list NepToEFFunction::forward(
     int nghost,
     double rmax,
     double rmin,
-    const at::Tensor& q_scaler_tensor)
+    const at::Tensor& q_scaler_tensor,
+    double zbl_rmax,
+    double zbl_rmin,
+    const at::Tensor& zbl_cks_tensor,
+    const at::Tensor& zbl_dks_tensor)
 {
     // 1. 
     int batch_size = bfirstneigh_tensor.size(0);
@@ -443,8 +447,46 @@ torch::autograd::variable_list NepToEFFunction::forward(
 
         float (*brcs)[3] = (float (*)[3])brcs_tensor.data_ptr<float>();
         float *q_scaler = q_scaler_tensor.data_ptr<float>();
+        float *zbl_cks = zbl_cks_tensor.data_ptr<float>();
+        float *zbl_dks = zbl_dks_tensor.data_ptr<float>();
 
         if (brcs_tensor.device() == c10::kCPU) {
+            for (int bb=0; bb<batch_size; bb++) {
+                float *etot_ptr = &(betot_tensor.data_ptr<float>()[bb]);
+                float (*force)[3] = (float (*)[3])bforce_tensor[bb].data_ptr<float>();
+                int inum = binum_tensor[bb].item<int>();
+                int *ilist = (int*)bilist_tensor[bb].data_ptr<int>();
+                int *numneigh = (int*)bnumneigh_tensor[bb].data_ptr<int>();
+                int *firstneigh = (int*)bfirstneigh_tensor[bb].data_ptr<int>();
+                float (*rcs)[3] = (float (*)[3])brcs_tensor[bb].data_ptr<float>();
+                int *types = (int*)btypes_tensor[bb].data_ptr<int>();
+                
+                if (zbl_rmax > 0.0) {
+                    ai2pot::correction::GroupZBL<float> gzbl(
+                        ntypes,
+                        type_map,
+                        type_map,
+                        zbl_rmax,
+                        zbl_rmin,
+                        zbl_cks,
+                        zbl_dks);
+                    
+                    gzbl.correct_ef(
+                        (*etot_ptr),
+                        (float*)force,
+                        inum,
+                        ilist,
+                        numneigh,
+                        firstneigh,
+                        rcs,
+                        types,
+                        ntypes,
+                        type_map,
+                        umax_num_neigh_atoms,
+                        nghost);
+                }
+            }
+
             find_ef_cpu_launcher<float>(
                 betot,
                 bforce,
@@ -474,6 +516,27 @@ torch::autograd::variable_list NepToEFFunction::forward(
                 q_scaler);
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
+            if (zbl_rmax > 0)
+                ai2pot::correction::correct_zbl_ef_torch_launcher(
+                    betot,
+                    (float*)bforce,
+                    (float)zbl_rmax,
+                    (float)zbl_rmin,
+                    zbl_cks,
+                    zbl_dks,
+                    batch_size,
+                    natoms_pad,
+                    binum,
+                    bilist,
+                    bnumneigh,
+                    bfirstneigh,
+                    brcs,
+                    btypes,
+                    ntypes,
+                    type_map,
+                    umax_num_neigh_atoms,
+                    nghost);
+
             find_ef_torch_launcher(
                 betot,
                 bforce,
@@ -514,8 +577,46 @@ torch::autograd::variable_list NepToEFFunction::forward(
 
         double (*brcs)[3] = (double (*)[3])brcs_tensor.data_ptr<double>();
         double *q_scaler = q_scaler_tensor.data_ptr<double>();
+        double *zbl_cks = zbl_cks_tensor.data_ptr<double>();
+        double *zbl_dks = zbl_dks_tensor.data_ptr<double>();
 
         if (brcs_tensor.device() == c10::kCPU) {
+            for (int bb=0; bb<batch_size; bb++) {
+                double *etot_ptr = &(betot_tensor.data_ptr<double>()[bb]);
+                double (*force)[3] = (double (*)[3])bforce_tensor[bb].data_ptr<double>();
+                int inum = binum_tensor[bb].item<int>();
+                int *ilist = (int*)bilist_tensor[bb].data_ptr<int>();
+                int *numneigh = (int*)bnumneigh_tensor[bb].data_ptr<int>();
+                int *firstneigh = (int*)bfirstneigh_tensor[bb].data_ptr<int>();
+                double (*rcs)[3] = (double (*)[3])brcs_tensor[bb].data_ptr<double>();
+                int *types = (int*)btypes_tensor[bb].data_ptr<int>();
+                
+                if (zbl_rmax > 0.0) {
+                    ai2pot::correction::GroupZBL<double> gzbl(
+                        ntypes,
+                        type_map,
+                        type_map,
+                        zbl_rmax,
+                        zbl_rmin,
+                        zbl_cks,
+                        zbl_dks);
+                    
+                    gzbl.correct_ef(
+                        (*etot_ptr),
+                        (double*)force,
+                        inum,
+                        ilist,
+                        numneigh,
+                        firstneigh,
+                        rcs,
+                        types,
+                        ntypes,
+                        type_map,
+                        umax_num_neigh_atoms,
+                        nghost);
+                }
+            }
+
             find_ef_cpu_launcher<double>(
                 betot,
                 bforce,
@@ -545,6 +646,27 @@ torch::autograd::variable_list NepToEFFunction::forward(
                 q_scaler);
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
+            if (zbl_rmax > 0)
+                ai2pot::correction::correct_zbl_ef_torch_launcher(
+                    betot,
+                    (double*)bforce,
+                    zbl_rmax,
+                    zbl_rmin,
+                    zbl_cks,
+                    zbl_dks,
+                    batch_size,
+                    natoms_pad,
+                    binum,
+                    bilist,
+                    bnumneigh,
+                    bfirstneigh,
+                    brcs,
+                    btypes,
+                    ntypes,
+                    type_map,
+                    umax_num_neigh_atoms,
+                    nghost);
+
             find_ef_torch_launcher(
                 betot,
                 bforce,
@@ -631,7 +753,11 @@ torch::autograd::variable_list NepToEFLossFunction::forward(
     int nghost,
     double rmax,
     double rmin,
-    const at::Tensor& q_scaler_tensor)
+    const at::Tensor& q_scaler_tensor,
+    double zbl_rmax,
+    double zbl_rmin,
+    const at::Tensor& zbl_cks_tensor,
+    const at::Tensor& zbl_dks_tensor)
 {
     // 1. 
     int batch_size = bfirstneigh_tensor.size(0);
@@ -677,8 +803,46 @@ torch::autograd::variable_list NepToEFLossFunction::forward(
 
         float (*brcs)[3] = (float (*)[3])brcs_tensor.data_ptr<float>();
         float *q_scaler = q_scaler_tensor.data_ptr<float>();
+        float *zbl_cks = zbl_cks_tensor.data_ptr<float>();
+        float *zbl_dks = zbl_dks_tensor.data_ptr<float>();
 
         if (brcs_tensor.device() == c10::kCPU) {
+            for (int bb=0; bb<batch_size; bb++) {
+                float *etot_ptr = &(betot_tensor.data_ptr<float>()[bb]);
+                float (*force)[3] = (float (*)[3])bforce_tensor[bb].data_ptr<float>();
+                int inum = binum_tensor[bb].item<int>();
+                int *ilist = (int*)bilist_tensor[bb].data_ptr<int>();
+                int *numneigh = (int*)bnumneigh_tensor[bb].data_ptr<int>();
+                int *firstneigh = (int*)bfirstneigh_tensor[bb].data_ptr<int>();
+                float (*rcs)[3] = (float (*)[3])brcs_tensor[bb].data_ptr<float>();
+                int *types = (int*)btypes_tensor[bb].data_ptr<int>();
+                
+                if (zbl_rmax > 0.0) {
+                    ai2pot::correction::GroupZBL<float> gzbl(
+                        ntypes,
+                        type_map,
+                        type_map,
+                        zbl_rmax,
+                        zbl_rmin,
+                        zbl_cks,
+                        zbl_dks);
+                    
+                    gzbl.correct_ef(
+                        (*etot_ptr),
+                        (float*)force,
+                        inum,
+                        ilist,
+                        numneigh,
+                        firstneigh,
+                        rcs,
+                        types,
+                        ntypes,
+                        type_map,
+                        umax_num_neigh_atoms,
+                        nghost);
+                }
+            }
+
             find_ef_cpu_launcher<float>(
                 betot,
                 bforce,
@@ -721,6 +885,27 @@ torch::autograd::variable_list NepToEFLossFunction::forward(
                 bforce_dft);
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
+            if (zbl_rmax > 0)
+                ai2pot::correction::correct_zbl_ef_torch_launcher(
+                    betot,
+                    (float*)bforce,
+                    (float)zbl_rmax,
+                    (float)zbl_rmin,
+                    zbl_cks,
+                    zbl_dks,
+                    batch_size,
+                    natoms_pad,
+                    binum,
+                    bilist,
+                    bnumneigh,
+                    bfirstneigh,
+                    brcs,
+                    btypes,
+                    ntypes,
+                    type_map,
+                    umax_num_neigh_atoms,
+                    nghost);
+
             find_ef_torch_launcher(
                 betot,
                 bforce,
@@ -778,7 +963,46 @@ torch::autograd::variable_list NepToEFLossFunction::forward(
 
         double (*brcs)[3] = (double (*)[3])brcs_tensor.data_ptr<double>();
         double *q_scaler = q_scaler_tensor.data_ptr<double>();
+        double *zbl_cks = zbl_cks_tensor.data_ptr<double>();
+        double *zbl_dks = zbl_dks_tensor.data_ptr<double>();
+
         if (brcs_tensor.device() == c10::kCPU) {
+            for (int bb=0; bb<batch_size; bb++) {
+                double *etot_ptr = &(betot_tensor.data_ptr<double>()[bb]);
+                double (*force)[3] = (double (*)[3])bforce_tensor[bb].data_ptr<double>();
+                int inum = binum_tensor[bb].item<int>();
+                int *ilist = (int*)bilist_tensor[bb].data_ptr<int>();
+                int *numneigh = (int*)bnumneigh_tensor[bb].data_ptr<int>();
+                int *firstneigh = (int*)bfirstneigh_tensor[bb].data_ptr<int>();
+                double (*rcs)[3] = (double (*)[3])brcs_tensor[bb].data_ptr<double>();
+                int *types = (int*)btypes_tensor[bb].data_ptr<int>();
+                
+                if (zbl_rmax > 0.0) {
+                    ai2pot::correction::GroupZBL<double> gzbl(
+                        ntypes,
+                        type_map,
+                        type_map,
+                        zbl_rmax,
+                        zbl_rmin,
+                        zbl_cks,
+                        zbl_dks);
+                    
+                    gzbl.correct_ef(
+                        (*etot_ptr),
+                        (double*)force,
+                        inum,
+                        ilist,
+                        numneigh,
+                        firstneigh,
+                        rcs,
+                        types,
+                        ntypes,
+                        type_map,
+                        umax_num_neigh_atoms,
+                        nghost);
+                }
+            }
+
             find_ef_cpu_launcher<double>(
                 betot,
                 bforce,
@@ -821,6 +1045,27 @@ torch::autograd::variable_list NepToEFLossFunction::forward(
                 bforce_dft);
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
+            if (zbl_rmax > 0)
+                ai2pot::correction::correct_zbl_ef_torch_launcher(
+                    betot,
+                    (double*)bforce,
+                    zbl_rmax,
+                    zbl_rmin,
+                    zbl_cks,
+                    zbl_dks,
+                    batch_size,
+                    natoms_pad,
+                    binum,
+                    bilist,
+                    bnumneigh,
+                    bfirstneigh,
+                    brcs,
+                    btypes,
+                    ntypes,
+                    type_map,
+                    umax_num_neigh_atoms,
+                    nghost);
+
             find_ef_torch_launcher(
                 betot,
                 bforce,
@@ -891,7 +1136,11 @@ torch::autograd::variable_list NepToEFLossFunction::forward(
         torch::tensor(nghost, int_options),
         torch::tensor(rmax, float_options),
         torch::tensor(rmin, float_options),
-        q_scaler_tensor});
+        q_scaler_tensor,
+        torch::tensor(zbl_rmax, float_options),
+        torch::tensor(zbl_rmin, float_options),
+        zbl_cks_tensor,
+        zbl_dks_tensor});
     
     return {bloss_tensor};
 }
@@ -929,6 +1178,10 @@ torch::autograd::variable_list NepToEFLossFunction::backward(
     double rmax = ctx->get_saved_variables()[20].item<double>();
     double rmin = ctx->get_saved_variables()[21].item<double>();
     at::Tensor q_scaler_tensor = ctx->get_saved_variables()[22];
+    double zbl_rmax = ctx->get_saved_variables()[23].item<double>();
+    double zbl_rmin = ctx->get_saved_variables()[24].item<double>();
+    at::Tensor zbl_cks_tensor = ctx->get_saved_variables()[25];
+    at::Tensor zbl_dks_tensor = ctx->get_saved_variables()[26];
 
     // 1.
     int batch_size = bfirstneigh_tensor.size(0);
@@ -981,8 +1234,46 @@ torch::autograd::variable_list NepToEFLossFunction::backward(
 
         float (*brcs)[3] = (float (*)[3])brcs_tensor.data_ptr<float>();
         float *q_scaler = q_scaler_tensor.data_ptr<float>();
+        float *zbl_cks = zbl_cks_tensor.data_ptr<float>();
+        float *zbl_dks = zbl_dks_tensor.data_ptr<float>();
 
         if (brcs_tensor.device() == c10::kCPU) {
+            for (int bb=0; bb<batch_size; bb++) {
+                float *etot_ptr = &(betot_tensor.data_ptr<float>()[bb]);
+                float (*force)[3] = (float (*)[3])bforce_tensor[bb].data_ptr<float>();
+                int inum = binum_tensor[bb].item<int>();
+                int *ilist = (int*)bilist_tensor[bb].data_ptr<int>();
+                int *numneigh = (int*)bnumneigh_tensor[bb].data_ptr<int>();
+                int *firstneigh = (int*)bfirstneigh_tensor[bb].data_ptr<int>();
+                float (*rcs)[3] = (float (*)[3])brcs_tensor[bb].data_ptr<float>();
+                int *types = (int*)btypes_tensor[bb].data_ptr<int>();
+                
+                if (zbl_rmax > 0.0) {
+                    ai2pot::correction::GroupZBL<float> gzbl(
+                        ntypes,
+                        type_map,
+                        type_map,
+                        zbl_rmax,
+                        zbl_rmin,
+                        zbl_cks,
+                        zbl_dks);
+                    
+                    gzbl.correct_ef(
+                        (*etot_ptr),
+                        (float*)force,
+                        inum,
+                        ilist,
+                        numneigh,
+                        firstneigh,
+                        rcs,
+                        types,
+                        ntypes,
+                        type_map,
+                        umax_num_neigh_atoms,
+                        nghost);
+                }
+            }
+
             find_ef_cpu_launcher<float>(
                 betot,
                 bforce,
@@ -1048,6 +1339,27 @@ torch::autograd::variable_list NepToEFLossFunction::backward(
                 q_scaler);
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
+            if (zbl_rmax > 0)
+                ai2pot::correction::correct_zbl_ef_torch_launcher(
+                    betot,
+                    (float*)bforce,
+                    (float)zbl_rmax,
+                    (float)zbl_rmin,
+                    zbl_cks,
+                    zbl_dks,
+                    batch_size,
+                    natoms_pad,
+                    binum,
+                    bilist,
+                    bnumneigh,
+                    bfirstneigh,
+                    brcs,
+                    btypes,
+                    ntypes,
+                    type_map,
+                    umax_num_neigh_atoms,
+                    nghost);
+
             find_ef_torch_launcher(
                 betot,
                 bforce,
@@ -1131,8 +1443,46 @@ torch::autograd::variable_list NepToEFLossFunction::backward(
 
         double (*brcs)[3] = (double (*)[3])brcs_tensor.data_ptr<double>();
         double *q_scaler = q_scaler_tensor.data_ptr<double>();
+        double *zbl_cks = zbl_cks_tensor.data_ptr<double>();
+        double *zbl_dks = zbl_dks_tensor.data_ptr<double>();
 
         if (brcs_tensor.device() == c10::kCPU) {
+            for (int bb=0; bb<batch_size; bb++) {
+                double *etot_ptr = &(betot_tensor.data_ptr<double>()[bb]);
+                double (*force)[3] = (double (*)[3])bforce_tensor[bb].data_ptr<double>();
+                int inum = binum_tensor[bb].item<int>();
+                int *ilist = (int*)bilist_tensor[bb].data_ptr<int>();
+                int *numneigh = (int*)bnumneigh_tensor[bb].data_ptr<int>();
+                int *firstneigh = (int*)bfirstneigh_tensor[bb].data_ptr<int>();
+                double (*rcs)[3] = (double (*)[3])brcs_tensor[bb].data_ptr<double>();
+                int *types = (int*)btypes_tensor[bb].data_ptr<int>();
+                
+                if (zbl_rmax > 0.0) {
+                    ai2pot::correction::GroupZBL<double> gzbl(
+                        ntypes,
+                        type_map,
+                        type_map,
+                        zbl_rmax,
+                        zbl_rmin,
+                        zbl_cks,
+                        zbl_dks);
+                    
+                    gzbl.correct_ef(
+                        (*etot_ptr),
+                        (double*)force,
+                        inum,
+                        ilist,
+                        numneigh,
+                        firstneigh,
+                        rcs,
+                        types,
+                        ntypes,
+                        type_map,
+                        umax_num_neigh_atoms,
+                        nghost);
+                }
+            }
+
             find_ef_cpu_launcher<double>(
                 betot,
                 bforce,
@@ -1198,6 +1548,27 @@ torch::autograd::variable_list NepToEFLossFunction::backward(
                 q_scaler);
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
+            if (zbl_rmax > 0)
+                ai2pot::correction::correct_zbl_ef_torch_launcher(
+                    betot,
+                    (double*)bforce,
+                    zbl_rmax,
+                    zbl_rmin,
+                    zbl_cks,
+                    zbl_dks,
+                    batch_size,
+                    natoms_pad,
+                    binum,
+                    bilist,
+                    bnumneigh,
+                    bfirstneigh,
+                    brcs,
+                    btypes,
+                    ntypes,
+                    type_map,
+                    umax_num_neigh_atoms,
+                    nghost);
+
             find_ef_torch_launcher(
                 betot,
                 bforce,
@@ -1278,6 +1649,10 @@ torch::autograd::variable_list NepToEFLossFunction::backward(
         torch::matmul(bgrad_output_tensor, bloss_der2w0_tensor),
         torch::matmul(bgrad_output_tensor, bloss_der2w1_tensor),
         torch::matmul(bgrad_output_tensor, bloss_der2type_bias_tensor),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
         at::Tensor(),
         at::Tensor(),
         at::Tensor(),
@@ -1488,7 +1863,11 @@ torch::autograd::variable_list NepToEFOp(
     int nghost,
     double rmax,
     double rmin,
-    const at::Tensor& q_scaler_tensor)
+    const at::Tensor& q_scaler_tensor,
+    double zbl_rmax,
+    double zbl_rmin,
+    const at::Tensor& zbl_cks_tensor,
+    const at::Tensor& zbl_dks_tensor)
 {
     return NepToEFFunction::apply(
         chebyshev_size,
@@ -1509,7 +1888,11 @@ torch::autograd::variable_list NepToEFOp(
         nghost,
         rmax,
         rmin,
-        q_scaler_tensor);
+        q_scaler_tensor,
+        zbl_rmax,
+        zbl_rmin,
+        zbl_cks_tensor,
+        zbl_dks_tensor);
 }
 
 
@@ -1536,7 +1919,11 @@ torch::autograd::variable_list NepToEFLossOp(
     int nghost,
     double rmax,
     double rmin,
-    const at::Tensor& q_scaler_tensor)
+    const at::Tensor& q_scaler_tensor,
+    double zbl_rmax,
+    double zbl_rmin,
+    const at::Tensor& zbl_cks_tensor,
+    const at::Tensor& zbl_dks_tensor)
 {
     return NepToEFLossFunction::apply(
         e_weight,
@@ -1561,7 +1948,11 @@ torch::autograd::variable_list NepToEFLossOp(
         nghost,
         rmax,
         rmin,
-        q_scaler_tensor);
+        q_scaler_tensor,
+        zbl_rmax,
+        zbl_rmin,
+        zbl_cks_tensor,
+        zbl_dks_tensor);
 }
 
 

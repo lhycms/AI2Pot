@@ -29,7 +29,7 @@ class NepTest(unittest.TestCase):
         print("NepTest (TestCase) is setting up...\n")
         # 0.
         self.torch_float_dtype: torch._C.dtype = torch.float64
-        self.device: torch._C.device = torch.device("cpu")
+        self.device: torch._C.device = torch.device("cuda")
 
         # 1. 
         self.n_radial_basis: int = 4
@@ -61,6 +61,25 @@ class NepTest(unittest.TestCase):
         print(self.structure)
 
         # 2. ZBL
+        self.zbl_rmax: float = 0.0
+        self.zbl_rmin: float = 0.0
+        self.zbl_cks_tensor: torch.Tensor = torch.zeros(self.ntypes*self.ntypes*4, 
+                                                        dtype=self.torch_float_dtype,
+                                                        device=self.device)
+        self.zbl_dks_tensor: torch.Tensor = torch.zeros(self.ntypes*self.ntypes*4, 
+                                                        dtype=self.torch_float_dtype,
+                                                        device=self.device)
+        for ii in range(self.ntypes):
+            for jj in range(self.ntypes):
+                idx = ii*self.ntypes + jj
+                self.zbl_cks_tensor[idx*4 + 0] = 0.18175
+                self.zbl_cks_tensor[idx*4 + 1] = 0.50986
+                self.zbl_cks_tensor[idx*4 + 2] = 0.28022
+                self.zbl_cks_tensor[idx*4 + 3] = 0.02817
+                self.zbl_dks_tensor[idx*4 + 0] = 3.1998
+                self.zbl_dks_tensor[idx*4 + 1] = 0.94229
+                self.zbl_dks_tensor[idx*4 + 2] = 0.4029
+                self.zbl_dks_tensor[idx*4 + 3] = 0.20162
 
         # 3. 
         self.mlff_to_loss_input: MlffToEFLossInput = MlffToEFLossInput(type_map=self.type_map_tensor.numpy().tolist(),
@@ -93,9 +112,9 @@ class NepTest(unittest.TestCase):
         nn.init.normal_(self.type_bias_tensor, mean=0.0, std=1.0)
 
         # q_scaler_tensor
-        self.q_scaler_tensor: torch.Tensor = torch.randn(self.num_descriptors,
+        self.q_scaler_tensor: torch.Tensor = torch.ones(self.num_descriptors,
                                                         dtype=self.torch_float_dtype,
-                                                        device=self.device)
+                                                        device=self.device) - 0.11
 
     
     def tearDown(self):
@@ -122,7 +141,11 @@ class NepTest(unittest.TestCase):
                          input_info[6],
                          self.rmax,
                          self.rmin,
-                         self.q_scaler_tensor)
+                         self.q_scaler_tensor,
+                         self.zbl_rmax,
+                         self.zbl_rmin,
+                         self.zbl_cks_tensor,
+                         self.zbl_dks_tensor)
         e: torch.Tensor
         f: torch.Tensor
         print(e)
@@ -165,13 +188,68 @@ class NepTest(unittest.TestCase):
                                  input_info[10].item(),
                                  self.rmax,
                                  self.rmin,
-                                 self.q_scaler_tensor))
+                                 self.q_scaler_tensor,
+                                 self.zbl_rmax,
+                                 self.zbl_rmin,
+                                 self.zbl_cks_tensor,
+                                 self.zbl_dks_tensor))
         print("-------------------------------------------------")
         print("* NepToEFLossOp Gradient pass check: ", test)
         print("-------------------------------------------------")
 
 
-    def test_nepToDescriptors(self):
+    def test_nepToEFLoss_print(self):
+        # 1. Parameters
+        e_weight: float = 2.0
+        f_weight: float = 2.0
+        self.coeffs_tensor.requires_grad_(True)
+        self.w0_tensor.requires_grad_(True)
+        self.w1_tensor.requires_grad_(True)
+        self.type_bias_tensor.requires_grad_(True)
+        
+        # 2. Run
+        input_info: List[torch.Tensor] = self.mlff_to_loss_input.analyse_pymatgen(self.structure,
+                                                                                  e_weight=e_weight,
+                                                                                  f_weight=f_weight)
+        loss = nepToEFLossOp(e_weight,
+                            f_weight,
+                            input_info[2],
+                            input_info[3],
+                            self.chebyshev_size,
+                            self.n_radial_basis,
+                            self.n_angular_basis,
+                            self.l_max,
+                            self.coeffs_tensor,
+                            self.w0_tensor,
+                            self.w1_tensor,
+                            self.type_bias_tensor,
+                            input_info[4],
+                            input_info[5],
+                            input_info[6],
+                            input_info[7],
+                            input_info[8],
+                            input_info[9],
+                            self.type_map_tensor,
+                            input_info[10].item(),
+                            self.rmax,
+                            self.rmin,
+                            self.q_scaler_tensor,
+                            self.zbl_rmax,
+                            self.zbl_rmin,
+                            self.zbl_cks_tensor,
+                            self.zbl_dks_tensor)[0].sum()
+        loss.backward()
+        print("1. self.coeffs_tensor.grad:")
+        print(self.coeffs_tensor.grad)
+        print("2. self.w0_tensor.grad:")
+        print(self.w0_tensor.grad)
+        print("3. self.w1_tensor.grad:")
+        print(self.w1_tensor.grad)
+        print("4. self.type_bias_tensor.grad:")
+        print(self.type_bias_tensor.grad)
+
+
+    def est_nepToDescriptors(self):
         input_info: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(self.structure)
         bdescriptors_tensor: torch.Tensor = nepToDescriptorsOp(self.chebyshev_size,
                                                                self.n_radial_basis,

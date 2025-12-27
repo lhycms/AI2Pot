@@ -117,7 +117,7 @@ protected:
         type_bias[1] = -0.2;
         q_scaler = (real*)malloc(sizeof(real) * num_descriptors);
         for (int k=0; k<num_descriptors; k++)
-            q_scaler[k] = 1.0;
+            q_scaler[k] = 0.67 + 0.05 * k;
 
         // Structure && Nblist
         num_atoms = 12;

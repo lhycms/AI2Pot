@@ -82,6 +82,9 @@ protected:
     // Descriptors
     double *descriptors;
 
+    // q factors
+    double *q_scaler;
+
     static void SetUpTestSuite() {
         std::cout << "NepTest (TestSuite) is setting up...\n";
     }
@@ -237,6 +240,12 @@ protected:
         // Descriptors
         descriptors = (double*)malloc(sizeof(double) * inum * num_descriptors);
         memset(descriptors, 0, sizeof(double) * inum * num_descriptors);
+
+        // 
+        q_scaler = (double*)malloc(sizeof(double) * num_descriptors);
+        for (int ii=0; ii<num_descriptors; ii++) {
+            q_scaler[ii] = 0.67 + 0.05 * ii;
+        }
     }
 
     void TearDown() override {
@@ -266,6 +275,9 @@ protected:
 
         // Descriptors
         free(descriptors);
+
+        //
+        free(q_scaler);
     }
 };  // class : NepTest
 
@@ -299,7 +311,7 @@ TEST_F(NepTest, find_ef_accuracy) {
         nghost,
         rmax,
         rmin,
-        nullptr);
+        q_scaler);
 
     // *** delta
     double cart_coords[12][3] = {0};
@@ -344,7 +356,7 @@ TEST_F(NepTest, find_ef_accuracy) {
         nghost,
         rmax,
         rmin,
-        nullptr);
+        q_scaler);
 
 printf("1.1. energy = %.15lf\n", etot);
 printf("1.1. force[%d][%d] calculated by custom code = %.15lf\n", center_idx_modify, direction1_idx_modify, forces[center_idx_modify][direction1_idx_modify]);
@@ -382,7 +394,7 @@ TEST_F(NepTest, find_ef_loss_backward) {
         nghost,
         rmax,
         rmin,
-        nullptr);
+        q_scaler);
 
     ai2pot::nep::NepLoss<double>::find_ef_loss_backward(
         loss_der2coeffs,
@@ -416,7 +428,7 @@ TEST_F(NepTest, find_ef_loss_backward) {
         nghost,
         rmax,
         rmin,
-        nullptr);
+        q_scaler);
 
 printf("1. loss_der2coeffs:\n");
 for (int ii=0; ii<ntypes*ntypes*(n_radial_basis+n_angular_basis)*chebyshev_size; ii++)

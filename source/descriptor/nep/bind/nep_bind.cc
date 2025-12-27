@@ -42,7 +42,11 @@ TORCH_LIBRARY(nep, m) {
            int64_t nghost,
            double rmax,
            double rmin,
-           const at::Tensor& q_scaler_tensor)
+           const at::Tensor& q_scaler_tensor,
+           double zbl_rmax,
+           double zbl_rmin,
+           const at::Tensor& zbl_cks_tensor,
+           const at::Tensor& zbl_dks_tensor)
         {
             return ai2pot::nep::NepToEFOp(
                 (int)chebyshev_size,
@@ -63,7 +67,11 @@ TORCH_LIBRARY(nep, m) {
                 (int)nghost,
                 rmax,
                 rmin,
-                q_scaler_tensor);
+                q_scaler_tensor,
+                zbl_rmax,
+                zbl_rmin,
+                zbl_cks_tensor,
+                zbl_dks_tensor);
         }
     );
 
@@ -91,7 +99,11 @@ TORCH_LIBRARY(nep, m) {
            int64_t nghost,
            double rmax,
            double rmin,
-           const at::Tensor& q_scaler_tensor)
+           const at::Tensor& q_scaler_tensor,
+           double zbl_rmax,
+           double zbl_rmin,
+           const at::Tensor& zbl_cks_tensor,
+           const at::Tensor& zbl_dks_tensor)
         {
             assert(chebyshev_size < INT_MAX);
             assert(n_radial_basis < INT_MAX);
@@ -122,7 +134,11 @@ TORCH_LIBRARY(nep, m) {
                 (int)nghost,
                 rmax,
                 rmin,
-                q_scaler_tensor);
+                q_scaler_tensor,
+                zbl_rmax,
+                zbl_rmin,
+                zbl_cks_tensor,
+                zbl_dks_tensor);
         }
     );
 

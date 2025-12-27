@@ -318,7 +318,7 @@ void find_ef_atom(
         CoordType hidden_val = 0.0;
         CoordType activated_hidden_val = 0.0;
         for (int k=0; k<num_descriptors; k++)
-            hidden_val += type_central_w0[p*num_descriptors + k] * dod_vals[k];
+            hidden_val += type_central_w0[p*num_descriptors + k] * dod_vals[k] / q_scaler[k];
         TanhActivationFunc<CoordType>::find_val(activated_hidden_val, hidden_val);
         e_site += type_central_w1[p] * activated_hidden_val;
     }
@@ -330,13 +330,14 @@ void find_ef_atom(
         CoordType hidden_val = 0.0;
         CoordType activated_hidden_der = 0.0;
         for (int k=0; k<num_descriptors; k++)
-            hidden_val += type_central_w0[p*num_descriptors + k] * dod_vals[k];
+            hidden_val += type_central_w0[p*num_descriptors + k] * dod_vals[k] / q_scaler[k];
         TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
 
         for (int k=0; k<num_descriptors; k++)
             e_sites_der2dod[k] += type_central_w1[p]
                                   * activated_hidden_der
-                                  * type_central_w0[p*num_descriptors + k];
+                                  * type_central_w0[p*num_descriptors + k]
+                                  / q_scaler[k];
     }
 
     // Step 3.2. Angular_times
@@ -791,7 +792,7 @@ void find_descriptors_kernel(
     int *types = &btypes[istruct*natoms_pad + 0];
 
     if (ii < inum) {
-        CoordType *sdescriptors = &bdescriptors[batch_size*natoms_pad*num_descriptors + ii*num_descriptors];
+        CoordType *sdescriptors = &bdescriptors[istruct*natoms_pad*num_descriptors + ii*num_descriptors];
         int silist = bilist[istruct*natoms_pad + ii];
         int snumneigh = bnumneigh[istruct*natoms_pad + ii];
         int *sfirstneigh = &bfirstneigh[istruct*natoms_pad*umax_num_neigh_atoms + ii*umax_num_neigh_atoms];
