@@ -29,7 +29,7 @@ class NepTest(unittest.TestCase):
         print("NepTest (TestCase) is setting up...\n")
         # 0.
         self.torch_float_dtype: torch._C.dtype = torch.float64
-        self.device: torch._C.device = torch.device("cuda")
+        self.device: torch._C.device = torch.device("cpu")
 
         # 1. 
         self.n_radial_basis: int = 4
@@ -112,9 +112,9 @@ class NepTest(unittest.TestCase):
         nn.init.normal_(self.type_bias_tensor, mean=0.0, std=1.0)
 
         # q_scaler_tensor
-        self.q_scaler_tensor: torch.Tensor = torch.ones(self.num_descriptors,
-                                                        dtype=self.torch_float_dtype,
-                                                        device=self.device) - 0.11
+        self.q_scaler_tensor: torch.Tensor = 2.0 - torch.randn(self.num_descriptors,
+                                                               dtype=self.torch_float_dtype,
+                                                               device=self.device)
 
     
     def tearDown(self):
