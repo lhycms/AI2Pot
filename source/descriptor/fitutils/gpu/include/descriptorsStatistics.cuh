@@ -305,7 +305,7 @@ void find_all_type_descriptors_maxmin_kernel(
     int bid = blockIdx.x;
     int tid = threadIdx.x;
 
-    __shared__ CoordType s_max_min[1024];
+    __shared__ CoordType s_max_min[2048];
     CoordType* s_max = s_max_min;
     CoordType* s_min = s_max_min + blockDim.x;
 
@@ -324,7 +324,7 @@ void find_all_type_descriptors_maxmin_kernel(
     __syncthreads();
 
 
-    for (int offset=blockDim.x>>2; offset>=32; offset>>=1) {
+    for (int offset=blockDim.x>>1; offset>=32; offset>>=1) {
         if (tid < offset) {
             s_max[tid] = (s_max[tid] > s_max[tid+offset]) ? s_max[tid] : s_max[tid+offset];
             s_min[tid] = (s_min[tid] < s_min[tid+offset]) ? s_min[tid] : s_min[tid+offset];
@@ -362,7 +362,7 @@ void find_all_type_descriptors_maxmin_launcher(
     int block_size_x = 1024;
     dim3 grid_size(grid_size_x);
     dim3 block_size(block_size_x);
-    int sh_mem = sizeof(CoordType) * 2 * 1024;
+    //int sh_mem = sizeof(CoordType) * 2 * 1024;
 
     CoordType *d_descriptors_max;
     CoordType *d_descriptors_min;
@@ -376,7 +376,7 @@ void find_all_type_descriptors_maxmin_launcher(
     CHECK_CUDA_API( cudaMemcpy(d_binum, h_binum, sizeof(int)*batch_size, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_bdescriptors, h_bdescriptors, sizeof(CoordType)*batch_size*natoms_pad*descriptor_dim, cudaMemcpyHostToDevice) );
 
-    find_all_type_descriptors_maxmin_kernel KERNEL_ARG3(grid_size, block_size, sh_mem) (
+    find_all_type_descriptors_maxmin_kernel KERNEL_ARG2(grid_size, block_size) (
         d_descriptors_max,
         d_descriptors_min,
         batch_size,
