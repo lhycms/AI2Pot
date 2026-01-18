@@ -30,7 +30,7 @@ namespace mtpr {
 template <typename CoordType>
 class LinearMtpGramAndCross {
 public:
-    static void accumulate_structure_efv_components(
+    static void find_structure_efv_components(
         CoordType *energy_components,
         CoordType *force_components,
         CoordType *virial_components,
@@ -60,7 +60,7 @@ public:
         CoordType rmax,
         CoordType rmin);
 
-    static void find_lin_matrix_lin_vector(
+    static void accumulate_lin_matrix_lin_vector(
         CoordType *lin_matrix,
         CoordType *lin_vector,
         CoordType e_weight,
@@ -69,9 +69,9 @@ public:
         CoordType *betot_dft,
         CoordType (*bforce_dft)[3],
         CoordType *bvirial_dft,
-        CoordType *benergy_components,
-        CoordType *bforce_components,
-        CoordType *bvirial_components,
+        CoordType *energy_components,
+        CoordType *force_components,
+        CoordType *virial_components,
         int alpha_scalar_moments,
         int nmus,
         int batch_size,
@@ -119,7 +119,7 @@ public:
 
 
 template <typename CoordType>
-void LinearMtpGramAndCross<CoordType>::accumulate_structure_efv_components(
+void LinearMtpGramAndCross<CoordType>::find_structure_efv_components(
     CoordType *energy_components,
     CoordType *force_components,
     CoordType *virial_components,
@@ -370,7 +370,7 @@ void LinearMtpGramAndCross<CoordType>::accumulate_structure_efv_components(
 
 
 template <typename CoordType>
-void LinearMtpGramAndCross<CoordType>::find_lin_matrix_lin_vector(
+void LinearMtpGramAndCross<CoordType>::accumulate_lin_matrix_lin_vector(
     CoordType *lin_matrix,
     CoordType *lin_vector,
     CoordType e_weight,
@@ -379,9 +379,9 @@ void LinearMtpGramAndCross<CoordType>::find_lin_matrix_lin_vector(
     CoordType *betot_dft,
     CoordType (*bforce_dft)[3],
     CoordType *bvirial_dft,
-    CoordType *benergy_components,
-    CoordType *bforce_components,
-    CoordType *bvirial_components,
+    CoordType *energy_components,
+    CoordType *force_components,
+    CoordType *virial_components,
     int alpha_scalar_moments,
     int nmus,
     int batch_size,
@@ -391,18 +391,16 @@ void LinearMtpGramAndCross<CoordType>::find_lin_matrix_lin_vector(
     int ntypes)
 {
     int num_parameters = alpha_scalar_moments + ntypes;
-    memset(lin_matrix, 0, sizeof(CoordType)*num_parameters*num_parameters);
-    memset(lin_vector, 0, sizeof(CoordType)*num_parameters);
 
     for (int bb=0; bb<batch_size; bb++) {
         // 1. energy term
         for (int k1=0; k1<num_parameters; k1++) {
             for (int k2=k1; k2<num_parameters; k2++) {
                 lin_matrix[k1*num_parameters + k2] += e_weight 
-                                                      * benergy_components[bb*num_parameters + k1]
-                                                      * benergy_components[bb*num_parameters + k2];
+                                                      * energy_components[k1]
+                                                      * energy_components[k2];
             }
-            lin_vector[k1] += e_weight * betot_dft[bb] * benergy_components[bb*num_parameters + k1];
+            lin_vector[k1] += e_weight * betot_dft[bb] * energy_components[k1];
         }
 
         // 2. force term
@@ -412,12 +410,12 @@ void LinearMtpGramAndCross<CoordType>::find_lin_matrix_lin_vector(
                 for (int k1=0; k1<num_parameters; k1++) {
                     for (int k2=k1; k2<num_parameters; k2++) {
                         lin_matrix[k1*num_parameters + k2] += f_weight 
-                                                              * bforce_components[(bb*natoms_pad*3+center_idx*3+aa)*num_parameters + k1]
-                                                              * bforce_components[(bb*natoms_pad*3+center_idx*3+aa)*num_parameters + k2];
+                                                              * force_components[(center_idx*3+aa)*num_parameters + k1]
+                                                              * force_components[(center_idx*3+aa)*num_parameters + k2];
                     }
                     lin_vector[k1] += f_weight 
                                       * bforce_dft[bb*natoms_pad + center_idx][aa]
-                                      * bforce_components[(bb*natoms_pad*3+center_idx*3+aa)*num_parameters + k1];
+                                      * force_components[(center_idx*3+aa)*num_parameters + k1];
                 }
             }
         }
@@ -428,12 +426,12 @@ void LinearMtpGramAndCross<CoordType>::find_lin_matrix_lin_vector(
                 for (int k1=0; k1<num_parameters; k1++) {
                     for (int k2=k1; k2<num_parameters; k2++) {
                         lin_matrix[k1*num_parameters + k2] += v_weight
-                                                              * bvirial_components[(bb*3*3+alpha*3+beta)*num_parameters + k1]
-                                                              * bvirial_components[(bb*3*3+alpha*3+beta)*num_parameters + k2];
+                                                              * virial_components[(alpha*3+beta)*num_parameters + k1]
+                                                              * virial_components[(alpha*3+beta)*num_parameters + k2];
                     }
                     lin_vector[k1] += v_weight
                                       * bvirial_dft[bb*3*3 + alpha*3 + beta]
-                                      * bvirial_components[(bb*3*3+alpha*3+beta)*num_parameters + k1];
+                                      * virial_components[(alpha*3+beta)*num_parameters + k1];
                 }
             }
         }
@@ -488,21 +486,19 @@ void LinearMtpGramAndCross<CoordType>::find_lin_matrix_lin_vector_launcher(
     memset(lin_matrix, 0, sizeof(CoordType)*num_parameters*num_parameters);
     memset(lin_vector, 0, sizeof(CoordType)*num_parameters);
     
-    CoordType *benergy_components;
-    CoordType *bforce_components;
-    CoordType *bvirial_components;
-    benergy_components = (CoordType*)malloc(sizeof(CoordType)*batch_size*num_parameters);
-    bforce_components = (CoordType*)malloc(sizeof(CoordType)*batch_size*natoms_pad*3*num_parameters);
-    bvirial_components = (CoordType*)malloc(sizeof(CoordType)*batch_size*3*3*num_parameters);
-    memset(benergy_components, 0, sizeof(CoordType)*batch_size*num_parameters);
-    memset(bforce_components, 0, sizeof(CoordType)*batch_size*natoms_pad*3*num_parameters);
-    memset(bvirial_components, 0, sizeof(CoordType)*batch_size*3*3*num_parameters);
+    CoordType *energy_components;
+    CoordType *force_components;
+    CoordType *virial_components;
+    energy_components = (CoordType*)malloc(sizeof(CoordType)*num_parameters);
+    force_components = (CoordType*)malloc(sizeof(CoordType)*natoms_pad*3*num_parameters);
+    virial_components = (CoordType*)malloc(sizeof(CoordType)*3*3*num_parameters);
 
     // Step 1. 
     for (int bb=0; bb<batch_size; bb++) {
-        CoordType *energy_components = &benergy_components[bb*num_parameters];
-        CoordType *force_components = &bforce_components[bb*natoms_pad*3*num_parameters];
-        CoordType *virial_components = &bvirial_components[bb*3*3*num_parameters];
+        memset(energy_components, 0, sizeof(CoordType)*num_parameters);
+        memset(force_components, 0, sizeof(CoordType)*natoms_pad*3*num_parameters);
+        memset(virial_components, 0, sizeof(CoordType)*3*3*num_parameters);
+
         int inum = binum[bb];
         int *ilist = &bilist[bb*natoms_pad];
         int *numneigh = &bnumneigh[bb*natoms_pad];
@@ -510,7 +506,7 @@ void LinearMtpGramAndCross<CoordType>::find_lin_matrix_lin_vector_launcher(
         CoordType (*rcs)[3] = &brcs[bb*natoms_pad*umax_num_neigh_atoms];
         int *types = &btypes[bb*natoms_pad];
 
-        accumulate_structure_efv_components(
+        find_structure_efv_components(
             energy_components,
             force_components,
             virial_components,
@@ -539,33 +535,33 @@ void LinearMtpGramAndCross<CoordType>::find_lin_matrix_lin_vector_launcher(
             nghost,
             rmax,
             rmin);
+
+        // Step 2.
+        accumulate_lin_matrix_lin_vector(
+            lin_matrix,
+            lin_vector,
+            e_weight,
+            f_weight,
+            v_weight,
+            betot_dft,
+            bforce_dft,
+            bvirial_dft,
+            energy_components,
+            force_components,
+            virial_components,
+            alpha_scalar_moments,
+            nmus,
+            batch_size,
+            natoms_pad,
+            binum,
+            bilist,
+            ntypes);
     }
-    
-    // Step 2. 
-    find_lin_matrix_lin_vector(
-        lin_matrix,
-        lin_vector,
-        e_weight,
-        f_weight,
-        v_weight,
-        betot_dft,
-        bforce_dft,
-        bvirial_dft,
-        benergy_components,
-        bforce_components,
-        bvirial_components,
-        alpha_scalar_moments,
-        nmus,
-        batch_size,
-        natoms_pad,
-        binum,
-        bilist,
-        ntypes);
 
     // Step . Free
-    free(benergy_components);
-    free(bforce_components);
-    free(bvirial_components);
+    free(energy_components);
+    free(force_components);
+    free(virial_components);
 }
 
 

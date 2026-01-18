@@ -294,7 +294,7 @@ TEST_F(LinearMtpGramAndCrossTest, accumulate_efv_components) {
     int fc_center_idx = 0;
     int fc_a = 0; 
 
-    ai2pot::mtpr::LinearMtpGramAndCross<real>::accumulate_structure_efv_components(
+    ai2pot::mtpr::LinearMtpGramAndCross<real>::find_structure_efv_components(
         energy_components,
         force_components,
         virial_components,
