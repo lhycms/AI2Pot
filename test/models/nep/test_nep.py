@@ -82,7 +82,7 @@ class NepTest(unittest.TestCase):
         print("NepTest (TestCase) is tearing down...\n")
     
 
-    def est_predict_ef_loss(self):
+    def test_predict_ef_loss(self):
         times_list: List[float] = []
         for ii in range(110):
             t1 = time.time()
@@ -101,7 +101,7 @@ class NepTest(unittest.TestCase):
         print("1. Loss = ", ef_loss)
 
 
-    def test_predict_ef(self):
+    def est_predict_ef(self):
         times_list: List[float] = []
         for ii in range(110):
             t1 = time.time()

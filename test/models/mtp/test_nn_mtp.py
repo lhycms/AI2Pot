@@ -82,7 +82,7 @@ class NNMtpTest(unittest.TestCase):
         print("1. Loss = ", loss)
 
 
-    def est_predict_ef_loss(self):
+    def test_predict_ef_loss(self):
         times_list: List[float] = []
         for ii in range(110):
             t1 = time.time()
@@ -118,7 +118,7 @@ class NNMtpTest(unittest.TestCase):
         print("3. Virial.shape = \n", v)
     
 
-    def test_predict_ef(self):
+    def est_predict_ef(self):
         times_list: List[float] = []
         for ii in range(110):
             t1 = time.time()

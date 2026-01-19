@@ -359,6 +359,9 @@ void find_ef_atom(
 
     // Step 3.3. NN Force
     for (int jj=0; jj<snumneigh; jj++) {
+        CoordType tmp_force_ij[3] = {0.0};
+        CoordType tmp_force_ji[3] = {0.0};
+        
         neigh_idx = sfirstneigh[jj];
         type_outer = types[neigh_idx];
         for (int aa=0; aa<3; aa++)
@@ -433,13 +436,20 @@ void find_ef_atom(
                                                     + A * B_ders[aa] * C
                                                     + A * B * C_ders[aa]);
                             CoordType e_site_ders_ija = e_sites_der2mom[idx_Sinlm] * mom_der2xyz;
-                            atomicAdd(&force[center_idx][aa], e_site_ders_ija);
-                            atomicAdd(&force[neigh_idx][aa], -e_site_ders_ija);
+                            tmp_force_ij[aa] += e_site_ders_ija;
+                            tmp_force_ji[aa] += -e_site_ders_ija;
                         }
                     }
                 }
             }
         }
+
+        atomicAdd(&force[center_idx][0], tmp_force_ij[0]);
+        atomicAdd(&force[center_idx][1], tmp_force_ij[1]);
+        atomicAdd(&force[center_idx][2], tmp_force_ij[2]);
+        atomicAdd(&force[neigh_idx][0], tmp_force_ji[0]);
+        atomicAdd(&force[neigh_idx][1], tmp_force_ji[1]);
+        atomicAdd(&force[neigh_idx][2], tmp_force_ji[2]);
     }
 }
 
