@@ -516,6 +516,7 @@ void NNMtp<CoordType>::find_efv(
                                                        * val1;
         }
 
+
         for (int jj=0; jj<numneigh[ii]; jj++) {
             neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
             neigh_vec[0] = rcs[ii*umax_num_neigh_atoms+jj][0];

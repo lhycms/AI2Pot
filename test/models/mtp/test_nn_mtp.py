@@ -27,9 +27,9 @@ class NNMtpTest(unittest.TestCase):
         self.rmax: float = 5.0
         self.rmin: float = 0.0
         self.umax_num_neigh_atoms = 200
-        self.device: torch._C.device = torch.device("cpu")
+        self.device: torch._C.device = torch.device("cuda")
         self.torch_float_dtype: torch._C.dtype = torch.float32
-        self.nn_mtp: NNMtp = NNMtp(mtp_level=14,
+        self.nn_mtp: NNMtp = NNMtp(mtp_level=16,
                                    type_map=self.type_map,
                                    chebyshev_size=self.chebyshev_size,
                                    num_neurons=self.num_neurons,
@@ -41,17 +41,17 @@ class NNMtpTest(unittest.TestCase):
         self.nn_mtp.to(self.torch_float_dtype)
         self.mlff_input: MlffInput = MlffInput(type_map=self.type_map,
                                                rcut=self.rmax,
-                                               umax_num_neighs=self.umax_num_neigh_atoms,
+                                               umax_num_neigh_atoms=self.umax_num_neigh_atoms,
                                                dtype=self.torch_float_dtype,
                                                device=self.device)
         self.mlff_to_loss_input: MlffToLossInput = MlffToLossInput(type_map=self.type_map,
                                                                    rcut=self.rmax,
-                                                                   umax_num_neighs=self.umax_num_neigh_atoms,
+                                                                   umax_num_neigh_atoms=self.umax_num_neigh_atoms,
                                                                    dtype=self.torch_float_dtype,
                                                                    device=self.device)
         self.mlff_to_ef_loss_input: MlffToEFLossInput = MlffToEFLossInput(type_map=self.type_map,
                                                                           rcut=self.rmax,
-                                                                          umax_num_neighs=self.umax_num_neigh_atoms,
+                                                                          umax_num_neigh_atoms=self.umax_num_neigh_atoms,
                                                                           dtype=self.torch_float_dtype,
                                                                           device=self.device)
         self.structure: Structure = Structure.from_file(ReNbSSe_POSCAR_PATH)
@@ -118,7 +118,7 @@ class NNMtpTest(unittest.TestCase):
         print("3. Virial.shape = \n", v)
     
 
-    def est_predict_ef(self):
+    def test_predict_ef(self):
         times_list: List[float] = []
         for ii in range(110):
             t1 = time.time()
@@ -147,7 +147,7 @@ class NNMtpTest(unittest.TestCase):
         print("\t1. Esites.shape = ", e_sites.shape)
 
 
-    def test_predict_descriptors(self):
+    def est_predict_descriptors(self):
         times_list: List[float] = []
         for ii in range(110):
             t1 = time.time()

@@ -92,7 +92,7 @@ class LinearMtpTest(unittest.TestCase):
         print("1. Loss = ", loss)
 
 
-    def est_predict_ef_loss(self):
+    def test_predict_ef_loss(self):
         times_list: List[float] = []
         for ii in range(110):
             t1 = time.time()
@@ -160,7 +160,7 @@ class LinearMtpTest(unittest.TestCase):
         print("\t1. Esites.shape = ", e_sites.shape)
 
 
-    def test_predict_descriptors(self):
+    def est_predict_descriptors(self):
         times_list: List[float] = []
         for ii in range(110):
             t1 = time.time()

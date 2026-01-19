@@ -16,6 +16,10 @@ from ai2pot.models.mtp.nn_mtp import (
     NNMtp
 )
 
+from ai2pot.models.nep.nep import (
+    Nep
+)
+
 from ai2pot.models.potential_submodules import (
     FittingNet,
     ForceVirialSrModule,

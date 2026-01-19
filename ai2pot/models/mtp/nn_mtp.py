@@ -47,6 +47,8 @@ class NNMtp(nn.Module):
                  zbl_cks_list: Optional[List[float]] = None,
                  zbl_dks_list: Optional[List[float]] = None):
         super(NNMtp, self).__init__()
+        assert(mtp_level <= 28)
+
         self.mtp_level: int = mtp_level
         self.register_buffer(name="type_map_tensor", tensor=torch.tensor(type_map, dtype=torch.int32))
         self.ntypes: int = len(type_map)
@@ -92,6 +94,12 @@ class NNMtp(nn.Module):
             type_bias_tensor: torch.Tensor = torch.Tensor(self.ntypes)
             nn.init.normal_(type_bias_tensor, mean=0.0, std=1.0)
             self.register_parameter(name="type_bias_tensor", param=nn.Parameter(data=type_bias_tensor))
+
+        q_shifter_tensor: torch.Tensor = torch.zeros(self.num_descriptors, dtype=torch.float32)
+        self.register_buffer("_q_shifter_tensor", tensor=q_shifter_tensor)
+        q_scaler_tensor: torch.Tensor = torch.ones(self.num_descriptors, dtype=torch.float32)
+        self.register_buffer("_q_scaler_tensor", tensor=q_scaler_tensor)
+        
 
 
     def _init_zbl_params(self,
@@ -214,6 +222,8 @@ class NNMtp(nn.Module):
             nghost,
             self.rmax,
             self.rmin,
+            self._q_shifter_tensor,
+            self._q_scaler_tensor,
             self.zbl_rmax,
             self.zbl_rmin,
             self.zbl_cks_tensor,
@@ -250,6 +260,8 @@ class NNMtp(nn.Module):
             bnghost_tensor[0].item(),
             self.rmax,
             self.rmin,
+            self._q_shifter_tensor,
+            self._q_scaler_tensor,
             self.zbl_rmax,
             self.zbl_rmax,
             self.zbl_cks_tensor,
@@ -286,6 +298,8 @@ class NNMtp(nn.Module):
             bnghost_tensor[0].item(),
             self.rmax,
             self.rmin,
+            self._q_shifter_tensor,
+            self._q_scaler_tensor,
             self.zbl_rmax,
             self.zbl_rmax,
             self.zbl_cks_tensor,

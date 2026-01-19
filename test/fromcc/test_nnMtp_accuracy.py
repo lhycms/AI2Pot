@@ -31,7 +31,7 @@ class NNMtpTest(unittest.TestCase):
         print("NNMtpTest (TestCase) is setting up...\n")
         # 0.
         self.torch_float_dtype: torch._C.dtype = torch.float64
-        self.device: torch._C.device = torch.device("cuda")
+        self.device: torch._C.device = torch.device("cpu")
         
         # 1. 
         self.mtp_level: int = 12
@@ -97,6 +97,7 @@ class NNMtpTest(unittest.TestCase):
         self.alpha_index_basic_tensor: torch.Tensor = mtp_param_info[1].to(self.device)
         self.alpha_index_times_tensor: torch.Tensor = mtp_param_info[2].to(self.device)
         self.alpha_moment_mapping_tensor: torch.Tensor = mtp_param_info[3].to(self.device)
+        self.alpha_scalar_moments: int = self.alpha_moment_mapping_tensor.size(0)
         self.nmus: int = mtp_param_info[6].item()
         
         # 3. coeffs, linear coeffs, type bias``
@@ -116,13 +117,20 @@ class NNMtpTest(unittest.TestCase):
                                                           dtype=self.torch_float_dtype,
                                                           device=self.device)
         nn.init.normal_(self.type_bias_tensor, mean=0.0, std=1.0)
-        
+
+        # q_shifter_tensor, q_scaler_tensor
+        self.q_shifter_tensor: torch.Tensor = torch.randn(self.alpha_scalar_moments,
+                                                          dtype=self.torch_float_dtype,
+                                                          device=self.device)
+        self.q_scaler_tensor: torch.Tensor = torch.randn(self.alpha_scalar_moments,
+                                                        dtype=self.torch_float_dtype,
+                                                        device=self.device)
     
     def tearDown(self):
         print("NNMtpTest (TestCase) is tearing down...\n")
     
     
-    def test_nnMtpToEFLoss(self):
+    def est_nnMtpToEFLoss(self):
         # 1. Parameters
         e_weight: float = 1.0
         f_weight: float = 0.1
@@ -163,6 +171,8 @@ class NNMtpTest(unittest.TestCase):
                                  input_info[12].item(),
                                  self.rmax,
                                  self.rmin,
+                                 self.q_shifter_tensor,
+                                 self.q_scaler_tensor,
                                  self.zbl_rmax,
                                  self.zbl_rmin,
                                  self.zbl_cks_tensor,
@@ -179,7 +189,7 @@ class NNMtpTest(unittest.TestCase):
     def est_nnMtpToLoss(self):
         # 1. Parameters
         e_weight: float = 1.0
-        f_weight: float = 1.0
+        f_weight: float = 10.0
         v_weight: float = 0.1
         self.coeffs_tensor.requires_grad_(True)
         self.w0_tensor.requires_grad_(True)

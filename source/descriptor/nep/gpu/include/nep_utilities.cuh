@@ -27,7 +27,7 @@
 #define L_MAX_PLUS_ONE 5
 #define MAX_NUM_RADIAL_BASIS 20
 #define MAX_NUM_ANGULAR_BASIS 12
-#define MAX_NUM_SINLM 288   // (4*4 + 2*4) * 12
+#define MAX_NUM_SINLM 288   // (3 + 5 + 7 + 9) * 12
 #define MAX_NUM_DESCRIPTORS 68  // 20 + 12*4
 
 
@@ -84,7 +84,7 @@ namespace nep {
 
 class NepIndex {
 public:
-    static __host__ __device__
+    static __host__ __device__ __forceinline__
     int get_num_descriptors(
         int n_radial_basis,
         int n_angular_basis,
@@ -96,7 +96,7 @@ public:
     }
 
 
-    static __host__ __device__
+    static __host__ __device__ __forceinline__
     int get_num_Sinlm(
         int n_angular_basis,
         int l_max)
@@ -107,7 +107,7 @@ public:
     }
 
 
-    static __host__ __device__
+    static __host__ __device__ __forceinline__
     int get_Clm_index(
         int l,
         int mp)
@@ -116,7 +116,7 @@ public:
     }
 
 
-    static __host__ __device__
+    static __host__ __device__ __forceinline__
     int get_Sinlm_index(
         int l_max,
         int mu,
@@ -126,7 +126,7 @@ public:
         return mu*(l_max*l_max + 2*l_max) + (l*l - 1) + mp;
     }
 
-    static __host__ __device__
+    static __host__ __device__ __forceinline__
     int get_qinl_index(
         int l_max,
         int mu,
@@ -137,10 +137,11 @@ public:
 };  // class : NepIndex
 
 
+
 template <typename CoordType>
 class Blm {
 public:
-    static __host__ __device__
+    static __host__ __device__ __forceinline__
     void find_blm_val(
         CoordType *blm_ptr,
         int l,
@@ -248,7 +249,7 @@ public:
     }
 
 
-    static __host__ __device__
+    static __host__ __device__ __forceinline__
     void find_blm_der2xyz(
         CoordType *blm_der2xyz,
         int l,
@@ -430,18 +431,18 @@ template <typename CoordType>
 class TanhActivationFunc
 {
 public:
-    static __host__ __device__
+    static __host__ __device__ __forceinline__
     void find_val(CoordType &val, CoordType hidden_val);
 
-    static __host__ __device__
+    static __host__ __device__ __forceinline__
     void find_der(CoordType &der, CoordType hidden_val);
 
-    static __host__ __device__
+    static __host__ __device__ __forceinline__
     void find_der2der(CoordType &der2der, CoordType hidden_val);
 };  // class : TanhActivationFunc
 
 template <typename CoordType>
-__host__ __device__
+__host__ __device__ __forceinline__
 void TanhActivationFunc<CoordType>::find_val(CoordType &val, CoordType hidden_val)
 {
     val = (std::exp(hidden_val) - std::exp(-hidden_val))
@@ -449,7 +450,7 @@ void TanhActivationFunc<CoordType>::find_val(CoordType &val, CoordType hidden_va
 }
 
 template <typename CoordType>
-__host__ __device__
+__host__ __device__ __forceinline__
 void TanhActivationFunc<CoordType>::find_der(CoordType &der, CoordType hidden_val)
 {
     CoordType val = (std::exp(hidden_val) - std::exp(-hidden_val))
@@ -458,7 +459,7 @@ void TanhActivationFunc<CoordType>::find_der(CoordType &der, CoordType hidden_va
 }
 
 template <typename CoordType>
-__host__ __device__
+__host__ __device__ __forceinline__
 void TanhActivationFunc<CoordType>::find_der2der(CoordType &der2der, CoordType hidden_val)
 {
     CoordType val = (std::exp(hidden_val) - std::exp(-hidden_val))

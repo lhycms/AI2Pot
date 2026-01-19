@@ -29,11 +29,11 @@ class NepTest(unittest.TestCase):
         print("NepTest (TestCase) is setting up...\n")
         # 0.
         self.torch_float_dtype: torch._C.dtype = torch.float64
-        self.device: torch._C.device = torch.device("cpu")
+        self.device: torch._C.device = torch.device("cuda")
 
         # 1. 
-        self.n_radial_basis: int = 4
-        self.n_angular_basis: int = 2
+        self.n_radial_basis: int = 1
+        self.n_angular_basis: int = 1
         self.l_max: int = 4
         self.chebyshev_size: int = 4
         self.num_neurons: int = 30
@@ -154,8 +154,8 @@ class NepTest(unittest.TestCase):
 
     def test_nepToEFLoss(self):
         # 1. Parameters
-        e_weight: float = 2.0
-        f_weight: float = 2.0
+        e_weight: float = 10.0
+        f_weight: float = 10.0
         self.coeffs_tensor.requires_grad_(True)
         self.w0_tensor.requires_grad_(True)
         self.w1_tensor.requires_grad_(True)
@@ -198,7 +198,7 @@ class NepTest(unittest.TestCase):
         print("-------------------------------------------------")
 
 
-    def test_nepToEFLoss_print(self):
+    def est_nepToEFLoss_print(self):
         # 1. Parameters
         e_weight: float = 2.0
         f_weight: float = 2.0
