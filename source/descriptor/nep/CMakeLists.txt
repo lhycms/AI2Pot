@@ -55,7 +55,11 @@ if (BUILD_TEST)
     target_link_libraries(test_Blm PRIVATE gtest gtest_main)
     gtest_discover_tests(test_Blm)
 
-    add_executable(test_nep_basis ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_basis.cc)
+    add_executable(test_nep_basis_rq ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_basis.cc)
+    target_link_libraries(test_nep_basis_rq PRIVATE gtest gtest_main)
+    gtest_discover_tests(test_nep_basis_rq)
+
+    add_executable(test_nep_basis ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nepBasis.cc)
     target_link_libraries(test_nep_basis PRIVATE gtest gtest_main)
     gtest_discover_tests(test_nep_basis)
 

@@ -29,7 +29,7 @@ class NepTest(unittest.TestCase):
         print("NepTest (TestCase) is setting up...\n")
         # 0.
         self.torch_float_dtype: torch._C.dtype = torch.float64
-        self.device: torch._C.device = torch.device("cuda")
+        self.device: torch._C.device = torch.device("cpu")
 
         # 1. 
         self.n_radial_basis: int = 1

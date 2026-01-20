@@ -27,7 +27,7 @@ class NNMtpTest(unittest.TestCase):
         self.rmax: float = 5.0
         self.rmin: float = 0.0
         self.umax_num_neigh_atoms = 200
-        self.device: torch._C.device = torch.device("cuda")
+        self.device: torch._C.device = torch.device("cpu")
         self.torch_float_dtype: torch._C.dtype = torch.float32
         self.nn_mtp: NNMtp = NNMtp(mtp_level=16,
                                    type_map=self.type_map,

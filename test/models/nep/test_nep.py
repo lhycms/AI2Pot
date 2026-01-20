@@ -38,7 +38,7 @@ class NepTest(unittest.TestCase):
         self.zbl_cks_list: Optional[List[float]] = None
         self.zbl_dks_list: Optional[List[float]] = None
 
-        self.device: torch._C.device = torch.device("cuda")
+        self.device: torch._C.device = torch.device("cpu")
         self.torch_float_dtype: torch._C.dtype = torch.float32
         self.nep: Nep = Nep(type_map=self.type_map,
                             energy_shifts=self.energy_shifts,
@@ -122,3 +122,4 @@ class NepTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+    

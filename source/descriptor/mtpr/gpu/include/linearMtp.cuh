@@ -386,9 +386,9 @@ void find_efv_atom(
         for (int aa=0; aa<3; aa++)
             NeighbVect[aa] = srcs[jj][aa];
         
-        distance_ij = std::sqrt( std::pow(NeighbVect[0], 2)
-                                 + std::pow(NeighbVect[1], 2)
-                                 + std::pow(NeighbVect[2], 2) );
+        distance_ij = std::sqrt( NeighbVect[0]*NeighbVect[0]
+                                 + NeighbVect[1]*NeighbVect[1]
+                                 + NeighbVect[2]*NeighbVect[2] );
         if (distance_ij > rmax)
             continue;
         distance_ij_inv = 1.0 / distance_ij;
@@ -463,14 +463,17 @@ void find_efv_atom(
 
     // Step 3.2. Force and Virial.
     for (int jj=0; jj<snumneigh; jj++) {
+        CoordType tmp_force_ij[3] = {0.0};
+        CoordType tmp_force_ji[3] = {0.0};
+
         neigh_idx = sfirstneigh[jj];
         type_outer = types[neigh_idx];
         Zj = type_map[type_outer];
         for (int aa=0; aa<3; aa++)
             NeighbVect[aa] = srcs[jj][aa];
-        distance_ij = std::sqrt( std::pow(NeighbVect[0], 2)
-                                 + std::pow(NeighbVect[1], 2)
-                                 + std::pow(NeighbVect[2], 2) );
+        distance_ij = std::sqrt( NeighbVect[0]*NeighbVect[0]
+                                 + NeighbVect[1]*NeighbVect[1]
+                                 + NeighbVect[2]*NeighbVect[2] );
         if (distance_ij > rmax)
             continue;
         distance_ij_inv = 1.0 / distance_ij;
@@ -538,8 +541,8 @@ void find_efv_atom(
                     CoordType mom_der2xyz = coeffs[idx] 
                                             * (A_ders[aa]*B*C + A*B_ders[aa]*C + A*B*C_ders[aa]);
                     CoordType e_site_ders_ija = e_site_der2mom[i] * mom_der2xyz;
-                    atomicAdd(&force[center_idx][aa], e_site_ders_ija);
-                    atomicAdd(&force[neigh_idx][aa], -e_site_ders_ija);
+                    tmp_force_ij[aa] += e_site_ders_ija;
+                    tmp_force_ji[aa] -= e_site_ders_ija;
 
                     for (int bb=0; bb<3; bb++)
                         //atomicAdd(&virial[aa*3 + bb], -e_site_ders_ija * NeighbVect[bb]);
@@ -547,6 +550,12 @@ void find_efv_atom(
                  }
             }
         }
+        atomicAdd(&force[center_idx][0], tmp_force_ij[0]);
+        atomicAdd(&force[center_idx][1], tmp_force_ij[1]);
+        atomicAdd(&force[center_idx][2], tmp_force_ij[2]);
+        atomicAdd(&force[neigh_idx][0], tmp_force_ji[0]);
+        atomicAdd(&force[neigh_idx][1], tmp_force_ji[1]);
+        atomicAdd(&force[neigh_idx][2], tmp_force_ji[2]);
     }
 }
 
@@ -877,9 +886,9 @@ void find_ef_atom(CoordType *etot_ptr,
         for (int aa=0; aa<3; aa++)
             NeighbVect[aa] = srcs[jj][aa];
         
-        distance_ij = std::sqrt( std::pow(NeighbVect[0], 2)
-                                 + std::pow(NeighbVect[1], 2)
-                                 + std::pow(NeighbVect[2], 2) );
+        distance_ij = std::sqrt( NeighbVect[0]*NeighbVect[0]
+                                 + NeighbVect[1]*NeighbVect[1]
+                                 + NeighbVect[2]*NeighbVect[2] );
         if (distance_ij > rmax)
             continue;
         distance_ij_inv = 1.0 / distance_ij;
@@ -958,9 +967,9 @@ void find_ef_atom(CoordType *etot_ptr,
         Zj = type_map[type_outer];
         for (int aa=0; aa<3; aa++)
             NeighbVect[aa] = srcs[jj][aa];
-        distance_ij = std::sqrt( std::pow(NeighbVect[0], 2)
-                                 + std::pow(NeighbVect[1], 2)
-                                 + std::pow(NeighbVect[2], 2) );
+        distance_ij = std::sqrt( NeighbVect[0]*NeighbVect[0]
+                                 + NeighbVect[1]*NeighbVect[1]
+                                 + NeighbVect[2]*NeighbVect[2] );
         if (distance_ij > rmax)
             continue;
         distance_ij_inv = 1.0 / distance_ij;
@@ -1327,9 +1336,9 @@ void find_descriptors_atom(
         for (int aa=0; aa<3; aa++)
             neigh_vec[aa] = srcs[jj][aa];
 
-        distance_ij = std::sqrt( std::pow(neigh_vec[0], 2)
-                                 + std::pow(neigh_vec[1], 2)
-                                 + std::pow(neigh_vec[2], 2) );
+        distance_ij = std::sqrt( neigh_vec[0]*neigh_vec[0]
+                                 + neigh_vec[1]*neigh_vec[1]
+                                 + neigh_vec[2]*neigh_vec[2] );
         if (distance_ij > rmax)
             continue;
         distance_ij_inv = 1.0 / distance_ij;
