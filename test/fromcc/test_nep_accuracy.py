@@ -20,7 +20,7 @@ PbTe_EXTXYZ_PATH = os.path.join(TEST_FILES_DIR, "XYZ", "11_NEP_potential_PbTe", 
 
 
 #torch.use_deterministic_algorithms(True)
-torch.set_num_threads(1)
+torch.set_num_threads(2)
 torch.manual_seed(21433)
 
 
@@ -29,7 +29,7 @@ class NepTest(unittest.TestCase):
         print("NepTest (TestCase) is setting up...\n")
         # 0.
         self.torch_float_dtype: torch._C.dtype = torch.float64
-        self.device: torch._C.device = torch.device("cpu")
+        self.device: torch._C.device = torch.device("cuda")
 
         # 1. 
         self.n_radial_basis: int = 1
