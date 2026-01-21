@@ -478,6 +478,7 @@ printf("\n\n");
 
 TEST_F(NepTest, find_bdescriptors)
 {
+    int center_idx = 5;
     ai2pot::nep::find_descriptors_launcher(
         bdescriptors,
         chebyshev_size,
@@ -499,6 +500,10 @@ TEST_F(NepTest, find_bdescriptors)
         nghost,
         rmax,
         rmin);
+
+for (int k=0; k<num_descriptors; k++)
+    printf("%.6f, ", bdescriptors[center_idx*num_descriptors + k]);
+printf("\n");
 }
 
 

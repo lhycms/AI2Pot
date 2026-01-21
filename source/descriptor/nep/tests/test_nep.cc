@@ -453,6 +453,7 @@ printf("\n\n");
 
 
 TEST_F(NepTest, find_descriptors) {
+    int center_idx = 5;
     ai2pot::nep::Nep<double>::find_descriptors(
         descriptors,
         chebyshev_size,
@@ -472,6 +473,10 @@ TEST_F(NepTest, find_descriptors) {
         nghost,
         rmax,
         rmin);
+    
+    for (int k=0; k<num_descriptors; k++)
+        printf("%.6f, ", descriptors[center_idx*num_descriptors + k]);
+    printf("\n");
 }
 
 int main(int argc, char **argv)  {

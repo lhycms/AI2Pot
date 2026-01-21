@@ -210,6 +210,7 @@ class Nep(nn.Module):
             self.zbl_rmin,
             self.zbl_cks_tensor,
             self.zbl_dks_tensor)
+        
         return betot_tensor, bforce_tensor
     
 

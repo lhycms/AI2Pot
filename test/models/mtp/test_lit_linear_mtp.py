@@ -38,7 +38,7 @@ class LitLinearMtpTest(unittest.TestCase):
         type_map: torch.Tensor = ExtxyzDataset.get_type_map(filename=PbTe_EXTXYZ_PATH)
 
         self.lit_potential_to_loss: LitLinearMtp = LitLinearMtp(mtp_level=mtp_level,
-                                                                type_map_tensor=type_map,
+                                                                type_map=type_map,
                                                                 chebyshev_size=chebyshev_size,
                                                                 rmax=rmax,
                                                                 rmin=rmin,

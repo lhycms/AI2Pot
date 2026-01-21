@@ -38,7 +38,7 @@ class NepTest(unittest.TestCase):
         self.zbl_cks_list: Optional[List[float]] = None
         self.zbl_dks_list: Optional[List[float]] = None
 
-        self.device: torch._C.device = torch.device("cpu")
+        self.device: torch._C.device = torch.device("cuda")
         self.torch_float_dtype: torch._C.dtype = torch.float32
         self.nep: Nep = Nep(type_map=self.type_map,
                             energy_shifts=self.energy_shifts,
@@ -116,8 +116,18 @@ class NepTest(unittest.TestCase):
         print("2. Force.shape = \n", f[0][5])
 
 
-    def test_predict_descriptors(self):
-        pass
+    def est_predict_descriptors(self):
+        times_list: List[float] = []
+        for ii in range(110):
+            t1 = time.time()
+            descriptors = self.nep.predict_descriptors(*self.mlff_input.analyse_pymatgen(structure=self.structure))
+            t2 = time.time()
+            if (ii>9):
+                times_list.append(t2-t1)
+                
+        print("0.1. Average time cost by nep.predict_descriptors() = ", np.sum(times_list) / 100)
+        print("0.2. std time cost by nep.predict_descriptors() = ", np.std(times_list) / 100)
+        print("\t1. descriptors = ", descriptors)
 
 
 if __name__ == "__main__":

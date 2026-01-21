@@ -23,6 +23,7 @@ import lightning as L
 
 from ai2pot.models.mtp.linear_mtp import LinearMtp
 from ai2pot.models.mtp.nn_mtp import NNMtp
+from ai2pot.models.nep.nep import Nep
 from ai2pot.models.potential_loss import (ERmse,
                                           FRmse,
                                           VRmse)
@@ -593,5 +594,202 @@ class LitNNMtp(L.LightningModule):
                     'interval': 'step',
                     'frequency': 1
                 },
+        }
+
+
+class LitNep(L.LightningModule):
+    def __init__(self,
+                 type_map: List[int],
+                 energy_shifts: Optional[List[float]] = None,
+                 umax_num_neigh_atoms: int = 200,
+                 fit_virial: bool = False,
+                 n_radial_basis: int = 6,
+                 n_angular_basis: int = 4,
+                 l_max: int = 4,
+                 chebyshev_size: int = 8,
+                 num_neurons: int = 30,
+                 rmax: float = 5.0,
+                 rmin: float = 0.0,
+                 zbl_rmax: float = 2.0,
+                 zbl_rmin: float = 1.0,
+                 zbl_cks_list: Optional[List[float]] = None,
+                 zbl_dks_list: Optional[List[float]] = None,
+                 torch_float_dtype: torch._C.dtype = torch.float32,
+                 lr_start: float = 1e-3,
+                 lr_end: float = 1e-3,
+                 e_wgt_start: float = 1.0,
+                 e_wgt_end: float = 1.0,
+                 f_wgt_start: float = 0.1,
+                 f_wgt_end: float = 0.1,
+                 v_wgt_start: float = 0.01,
+                 v_wgt_end: float = 0.01,
+                 lr_decay_step: int = 5000):
+        super(LitNep, self).__init__()
+        self.save_hyperparameters()
+
+        self.model: nn.Module = Nep(type_map=type_map,
+                                    energy_shifts=energy_shifts,
+                                    umax_num_neigh_atoms=umax_num_neigh_atoms,
+                                    fit_virial=fit_virial,
+                                    n_radial_basis=n_radial_basis,
+                                    n_angular_basis=n_angular_basis,
+                                    l_max=l_max,
+                                    chebyshev_size=chebyshev_size,
+                                    num_neurons=num_neurons,
+                                    rmax=rmax,
+                                    rmin=rmin,
+                                    zbl_rmax=zbl_rmax,
+                                    zbl_rmin=zbl_rmin,
+                                    zbl_cks_list=zbl_cks_list,
+                                    zbl_dks_list=zbl_dks_list)
+
+        self.torch_float_dtype: torch._C.dtype = torch_float_dtype
+
+        self.lr_start: float = lr_start
+        self.lr_end: float = lr_end
+        self.e_wgt_start: float= e_wgt_start
+        self.e_wgt_end: float = e_wgt_end
+        self.f_wgt_start: float = f_wgt_start
+        self.f_wgt_end: float = f_wgt_end
+        self.v_wgt_start: float = v_wgt_start
+        self.v_wgt_end: float = v_wgt_end
+        self.lr_decay_step: int = lr_decay_step
+    
+
+    def get_efv_wgts(self):
+        lr_current: float = self.optimizers().param_groups[0]["lr"]
+        rate: float = lr_current / self.lr_start
+        e_wgt: float = self.e_wgt_start * rate + self.e_wgt_end * (1 - rate)
+        f_wgt: float = self.f_wgt_start * rate + self.f_wgt_end * (1 - rate)
+        v_wgt: float = self.v_wgt_start * rate + self.v_wgt_end * (1 - rate)
+        return [e_wgt, f_wgt, v_wgt]
+
+
+    def training_step(self, batch_data, batch_idx):
+        e_wgt, f_wgt, v_wgt = self.get_efv_wgts()
+        if (self.model.fit_virial):
+            pass
+        else:
+            binum, bilist, bnumneigh, bfirstneigh, brcs, btypes, bnghost, betot_dft_tensor, bforce_dft_tensor = batch_data
+            bmse_tensor: torch.Tensor = self.model(e_wgt,
+                                                   f_wgt,
+                                                   betot_dft_tensor,
+                                                   bforce_dft_tensor,
+                                                   binum,
+                                                   bilist,
+                                                   bnumneigh,
+                                                   bfirstneigh,
+                                                   brcs,
+                                                   btypes,
+                                                   bnghost[0].item())
+        
+        mean_bmse_tensor: torch.Tensor = bmse_tensor.mean()
+
+        ### Log ###
+        self.log("train_mse", mean_bmse_tensor,
+                 on_epoch=True,
+                 on_step=True,
+                 prog_bar=True,
+                 sync_dist=True)
+        current_lr: float = self.optimizers().param_groups[0]["lr"]
+        self.log("lr", 
+                 current_lr,
+                 on_step=True,
+                 on_epoch=False,
+                 prog_bar=False,
+                 sync_dist=True)
+        self.log("e_wgt",
+                 e_wgt,
+                 on_step=True,
+                 on_epoch=False,
+                 prog_bar=False,
+                 sync_dist=True)
+        self.log("f_wgt",
+                 f_wgt,
+                 on_step=True,
+                 on_epoch=False,
+                 prog_bar=False,
+                 sync_dist=True) 
+        self.log("v_wgt",
+                 v_wgt,
+                 on_step=True,
+                 on_epoch=False,
+                 prog_bar=False,
+                 sync_dist=True)
+        ### Log ###
+
+        return mean_bmse_tensor
+
+
+    def validation_step(self, batch_date, batch_idx):
+        e_wgt, f_wgt, v_wgt = self.get_efv_wgts()
+        if (self.model.fit_virial):
+            pass
+        else:
+            binum, bilist, bnumneigh, bfirstneigh, brcs, btypes, bnghost, betot_dft_tensor, bforce_dft_tensor = batch_date
+            bmse_tensor: torch.Tensor = self.model(e_wgt,
+                                                   f_wgt,
+                                                   betot_dft_tensor,
+                                                   bforce_dft_tensor,
+                                                   binum,
+                                                   bilist,
+                                                   bnumneigh,
+                                                   bfirstneigh,
+                                                   brcs,
+                                                   btypes,
+                                                   bnghost[0].item())
+        
+        mean_bmse_tensor: torch.Tensor = bmse_tensor.mean()
+        self.log("valid_mse", mean_bmse_tensor,
+                 on_epoch=True,
+                 on_step=True,
+                 prog_bar=True,
+                 sync_dist=True)
+        return mean_bmse_tensor
+
+
+    def test_step(self, batch_data, batch_idx):
+        e_wgt, f_wgt, v_wgt = self.get_efv_wgts()
+        if (self.model.fit_virial):
+            pass
+        else:
+            binum, bilist, bnumneigh, bfirstneigh, brcs, btypes, bnghost, betot_dft_tensor, bforce_dft_tensor, bvirial_dft_tensor = batch_data
+            bmse_tensor: torch.Tensor = self.model(e_wgt,
+                                                   f_wgt,
+                                                   v_wgt,
+                                                   betot_dft_tensor,
+                                                   bforce_dft_tensor,
+                                                   binum,
+                                                   bilist,
+                                                   bnumneigh,
+                                                   bfirstneigh,
+                                                   brcs,
+                                                   btypes,
+                                                   bnghost[0].item())
+        
+        mean_bmse_tensor: torch.Tensor = bmse_tensor.mean()
+        self.log("test_mse", mean_bmse_tensor,
+                 on_epoch=True,
+                 on_step=True,
+                 prog_bar=True,
+                 sync_dist=True)
+        return mean_bmse_tensor
+
+
+    def configure_optimizers(self):
+        optimizer: torch.optim.Optimizer = torch.optim.AdamW(params=self.model.parameters(),
+                                                             lr=self.lr_start)
+        
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer=optimizer,
+                                                               T_max=self.lr_decay_step,
+                                                               eta_min=self.lr_end)
+        
+        return {
+            'optimizer': optimizer,
+            'lr_scheduler': {
+                'scheduler': scheduler,
+                'interval': 'step',
+                'frequency': 1
+            }
         }
     
