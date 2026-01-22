@@ -33,6 +33,7 @@ void find_ef_torch_launcher(
     int num_neurons,
     CoordType *d_coeffs,
     CoordType *d_w0,
+    CoordType *d_b0,
     CoordType *d_w1,
     CoordType *d_type_bias,
     int batch_size,

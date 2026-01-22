@@ -92,6 +92,8 @@ protected:
 
         free(binum);
         free(bilist);
+        free(betot_ml);
+        free(betot_dft);
         free(bforce_ml);
         free(bforce_dft);
         free(bvirial_ml);

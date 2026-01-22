@@ -59,6 +59,7 @@ public:
     static void find_ef_loss_backward(
         CoordType *loss_der2coeffs,
         CoordType *loss_der2w0,
+        CoordType *loss_der2b0,
         CoordType *loss_der2w1,
         CoordType *loss_der2type_bias,
         CoordType e_weight,
@@ -74,6 +75,7 @@ public:
         int num_neurons,
         CoordType *coeffs,
         CoordType *w0,
+        CoordType *b0,
         CoordType *w1,
         CoordType *type_bias,
         int inum,
@@ -170,6 +172,7 @@ template <typename CoordType>
 void NepLoss<CoordType>::find_ef_loss_backward(
     CoordType *loss_der2coeffs,
     CoordType *loss_der2w0,
+    CoordType *loss_der2b0,
     CoordType *loss_der2w1,
     CoordType *loss_der2type_bias,
     CoordType e_weight,
@@ -185,6 +188,7 @@ void NepLoss<CoordType>::find_ef_loss_backward(
     int num_neurons,
     CoordType *coeffs,
     CoordType *w0,
+    CoordType *b0,
     CoordType *w1,
     CoordType *type_bias,
     int inum,
@@ -348,6 +352,7 @@ void NepLoss<CoordType>::find_ef_loss_backward(
             CoordType activated_hidden_der = 0.0;
             for (int k=0; k<num_descriptors; k++)
                 hidden_val += type_central_w0[p*num_descriptors+k] * dod_vals[k] / q_scaler[k];
+            hidden_val += b0[p];
             TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
 
             for (int k=0; k<num_descriptors; k++)
@@ -471,13 +476,14 @@ void NepLoss<CoordType>::find_ef_loss_backward(
             }
         }
 
-        // Step 4.2. der2w0
+        // Step 4.2. der2w0 && der2b0
         for (int p=0; p<num_neurons; p++) {
             CoordType hidden_val = 0.0;
             CoordType activated_hidden_der = 0.0;
             CoordType activated_hidden_der2der = 0.0;
             for (int k=0; k<num_descriptors; k++)
                 hidden_val += type_central_w0[p*num_descriptors+k] * dod_vals[k] / q_scaler[k];
+            hidden_val += b0[p];
             TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
             TanhActivationFunc<CoordType>::find_der2der(activated_hidden_der2der, hidden_val);
             for (int k=0; k<num_descriptors; k++) {
@@ -501,6 +507,15 @@ void NepLoss<CoordType>::find_ef_loss_backward(
                 loss_der2w0[type_central*num_neurons*num_descriptors + p*num_descriptors + k] += tmpe_loss_der2w0
                                                                                                  + tmpf_loss_der2w0;
             }
+
+            CoordType tmpe_loss_der2b0 = 2*e_weight/inum*(etot_ml-etot_dft)
+                                         * type_central_w1[p]
+                                         * activated_hidden_der;
+            CoordType tmpf_loss_der2b0 = 0;
+            #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
+            #pragma omp atomic
+            #endif
+            loss_der2b0[type_central*num_neurons + p] += tmpe_loss_der2b0 + tmpf_loss_der2b0;
         }
 
         // Step 4.3. der2w1
@@ -512,6 +527,7 @@ void NepLoss<CoordType>::find_ef_loss_backward(
             CoordType activated_hidden_der = 0.0;
             for (int k=0; k<num_descriptors; k++)
                 hidden_val += type_central_w0[p*num_descriptors+k] * dod_vals[k] / q_scaler[k];
+            hidden_val += b0[p];
             TanhActivationFunc<CoordType>::find_val(activated_hidden_val, hidden_val);
             TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
             tmpe_loss_der2w1 = 2*e_weight/inum*(etot_ml-etot_dft)

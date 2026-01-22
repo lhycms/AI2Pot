@@ -114,6 +114,7 @@ __host__
 void find_ef_loss_backward_torch_launcher(
     CoordType *d_bloss_der2coeffs,
     CoordType *d_bloss_der2w0,
+    CoordType *d_bloss_der2b0,
     CoordType *d_bloss_der2w1,
     CoordType *d_bloss_der2type_bias,
     CoordType e_weight,
@@ -129,6 +130,7 @@ void find_ef_loss_backward_torch_launcher(
     int num_neurons,
     CoordType *d_coeffs,
     CoordType *d_w0,
+    CoordType *d_b0,
     CoordType *d_w1,
     CoordType *d_type_bias,
     int batch_size,
@@ -155,6 +157,7 @@ void find_ef_loss_backward_torch_launcher(
     find_ef_loss_backward_kernel KERNEL_ARG2(grid_size, block_size) (
         d_bloss_der2coeffs,
         d_bloss_der2w0,
+        d_bloss_der2b0,
         d_bloss_der2w1,
         d_bloss_der2type_bias,
         e_weight,
@@ -170,6 +173,7 @@ void find_ef_loss_backward_torch_launcher(
         num_neurons,
         d_coeffs,
         d_w0,
+        d_b0,
         d_w1,
         d_type_bias,
         batch_size,

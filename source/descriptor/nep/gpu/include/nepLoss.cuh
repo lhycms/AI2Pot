@@ -106,6 +106,7 @@ static __device__
 void find_ef_loss_backward_atom(
     CoordType *loss_der2coeffs,
     CoordType *loss_der2w0,
+    CoordType *loss_der2b0,
     CoordType *loss_der2w1,
     CoordType *loss_der2type_bias,
     CoordType e_weight,
@@ -121,6 +122,7 @@ void find_ef_loss_backward_atom(
     int num_neurons,
     CoordType *coeffs,
     CoordType *w0,
+    CoordType *b0,
     CoordType *w1,
     CoordType *type_bias,
     int inum,
@@ -143,6 +145,7 @@ static __global__
 void find_ef_loss_backward_kernel(
     CoordType *bloss_der2coeffs,
     CoordType *bloss_der2w0,
+    CoordType *bloss_der2b0,
     CoordType *bloss_der2w1,
     CoordType *bloss_der2type_bias,
     CoordType e_weight,
@@ -158,6 +161,7 @@ void find_ef_loss_backward_kernel(
     int num_neurons,
     CoordType *coeffs,
     CoordType *w0,
+    CoordType *b0,
     CoordType *w1,
     CoordType *type_bias,
     int batch_size,
@@ -182,6 +186,7 @@ static __host__
 void find_ef_loss_backward_launcher(
     CoordType *h_bloss_der2coeffs,
     CoordType *h_bloss_der2w0,
+    CoordType *h_bloss_der2b0,
     CoordType *h_bloss_der2w1,
     CoordType *h_bloss_der2type_bias,
     CoordType e_weight,
@@ -197,6 +202,7 @@ void find_ef_loss_backward_launcher(
     int num_neurons,
     CoordType *h_coeffs,
     CoordType *h_w0,
+    CoordType *h_b0,
     CoordType *h_w1,
     CoordType *h_type_bias,
     int batch_size,
@@ -488,6 +494,7 @@ __device__
 void find_ef_loss_backward_atom(
     CoordType *loss_der2coeffs,
     CoordType *loss_der2w0,
+    CoordType *loss_der2b0,
     CoordType *loss_der2w1,
     CoordType *loss_der2type_bias,
     CoordType e_weight,
@@ -503,6 +510,7 @@ void find_ef_loss_backward_atom(
     int num_neurons,
     CoordType *coeffs,
     CoordType *w0,
+    CoordType *b0,
     CoordType *w1,
     CoordType *type_bias,
     int inum,
@@ -836,6 +844,7 @@ __global__
 void find_ef_loss_backward_kernel(
     CoordType *bloss_der2coeffs,
     CoordType *bloss_der2w0,
+    CoordType *bloss_der2b0,
     CoordType *bloss_der2w1,
     CoordType *bloss_der2type_bias,
     CoordType e_weight,
@@ -851,6 +860,7 @@ void find_ef_loss_backward_kernel(
     int num_neurons,
     CoordType *coeffs,
     CoordType *w0,
+    CoordType *b0,
     CoordType *w1,
     CoordType *type_bias,
     int batch_size,
@@ -879,6 +889,7 @@ void find_ef_loss_backward_kernel(
 
     CoordType *loss_der2coeffs = &bloss_der2coeffs[istruct*num_coeffs + 0];
     CoordType *loss_der2w0 = &bloss_der2w0[istruct*ntypes*num_neurons*num_descriptors+ 0];
+    CoordType *loss_der2b0 = &bloss_der2b0[istruct*ntypes*num_neurons + 0];
     CoordType *loss_der2w1 = &bloss_der2w1[istruct*ntypes*num_neurons + 0];
     CoordType *loss_der2type_bias = &bloss_der2type_bias[istruct*ntypes + 0];
     CoordType etot_ml = betot_ml[istruct];
@@ -900,6 +911,7 @@ void find_ef_loss_backward_kernel(
         find_ef_loss_backward_atom<CoordType>(
             loss_der2coeffs,
             loss_der2w0,
+            loss_der2b0,
             loss_der2w1,
             loss_der2type_bias,
             e_weight,
@@ -915,6 +927,7 @@ void find_ef_loss_backward_kernel(
             num_neurons,
             coeffs,
             w0,
+            b0,
             w1,
             type_bias,
             inum,
@@ -939,6 +952,7 @@ __host__
 void find_ef_loss_backward_launcher(
     CoordType *h_bloss_der2coeffs,
     CoordType *h_bloss_der2w0,
+    CoordType *h_bloss_der2b0,
     CoordType *h_bloss_der2w1,
     CoordType *h_bloss_der2type_bias,
     CoordType e_weight,
@@ -954,6 +968,7 @@ void find_ef_loss_backward_launcher(
     int num_neurons,
     CoordType *h_coeffs,
     CoordType *h_w0,
+    CoordType *h_b0,
     CoordType *h_w1,
     CoordType *h_type_bias,
     int batch_size,
@@ -981,6 +996,7 @@ void find_ef_loss_backward_launcher(
     int num_descriptors = NepIndex::get_num_descriptors(n_radial_basis, n_angular_basis, l_max);
     CoordType *d_bloss_der2coeffs;
     CoordType *d_bloss_der2w0;
+    CoordType *d_bloss_der2b0;
     CoordType *d_bloss_der2w1;
     CoordType *d_bloss_der2type_bias;
     CoordType *d_betot_ml;
@@ -989,6 +1005,7 @@ void find_ef_loss_backward_launcher(
     CoordType (*d_bforce_dft)[3];
     CoordType *d_coeffs;
     CoordType *d_w0;
+    CoordType *d_b0;
     CoordType *d_w1;
     CoordType *d_type_bias;
     int *d_binum;
@@ -1004,6 +1021,8 @@ void find_ef_loss_backward_launcher(
     CHECK_CUDA_API( cudaMemset(d_bloss_der2coeffs, 0.0, sizeof(CoordType)*batch_size*num_coeffs) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_bloss_der2w0, sizeof(CoordType)*batch_size*ntypes*num_neurons*num_descriptors) );
     CHECK_CUDA_API( cudaMemset(d_bloss_der2w0, 0.0, sizeof(CoordType)*batch_size*ntypes*num_neurons*num_descriptors) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bloss_der2b0, sizeof(CoordType)*batch_size*ntypes*num_neurons) );
+    CHECK_CUDA_API( cudaMemset(d_bloss_der2b0, 0.0, sizeof(CoordType)*batch_size*ntypes*num_neurons) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_bloss_der2w1, sizeof(CoordType)*batch_size*ntypes*num_neurons) );
     CHECK_CUDA_API( cudaMemset(d_bloss_der2w1, 0.0, sizeof(CoordType)*batch_size*ntypes*num_neurons) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_bloss_der2type_bias, sizeof(CoordType)*batch_size*ntypes) );
@@ -1015,6 +1034,7 @@ void find_ef_loss_backward_launcher(
     CHECK_CUDA_API( cudaMalloc((void**)&d_bforce_dft, sizeof(CoordType)*batch_size*natoms_pad*3) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_coeffs, sizeof(CoordType) * num_coeffs) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_w0, sizeof(CoordType) * ntypes * num_neurons * num_descriptors) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_b0, sizeof(CoordType) * ntypes * num_neurons) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_w1, sizeof(CoordType) * ntypes * num_neurons) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_type_bias, sizeof(CoordType) * ntypes) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_binum, sizeof(int)*batch_size) );
@@ -1033,6 +1053,7 @@ void find_ef_loss_backward_launcher(
     CHECK_CUDA_API( cudaMemcpy(d_bforce_dft, h_bforce_dft, sizeof(CoordType)*batch_size*natoms_pad*3, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_coeffs, h_coeffs, sizeof(CoordType)*num_coeffs, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_w0, h_w0, sizeof(CoordType)*ntypes*num_neurons*num_descriptors, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_b0, h_b0, sizeof(CoordType)*ntypes*num_neurons, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_w1, h_w1, sizeof(CoordType)*ntypes*num_neurons, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_type_bias, h_type_bias, sizeof(CoordType)*ntypes, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_binum, h_binum, sizeof(int)*batch_size, cudaMemcpyHostToDevice) );
@@ -1049,6 +1070,7 @@ void find_ef_loss_backward_launcher(
     find_ef_loss_backward_kernel KERNEL_ARG2(grid_size, block_size) (
         d_bloss_der2coeffs,
         d_bloss_der2w0,
+        d_bloss_der2b0,
         d_bloss_der2w1,
         d_bloss_der2type_bias,
         e_weight,
@@ -1064,6 +1086,7 @@ void find_ef_loss_backward_launcher(
         num_neurons,
         d_coeffs,
         d_w0,
+        d_b0,
         d_w1,
         d_type_bias,
         batch_size,
@@ -1088,12 +1111,14 @@ void find_ef_loss_backward_launcher(
 
     CHECK_CUDA_API( cudaMemcpy(h_bloss_der2coeffs, d_bloss_der2coeffs, sizeof(CoordType)*batch_size*num_coeffs, cudaMemcpyDeviceToHost) );
     CHECK_CUDA_API( cudaMemcpy(h_bloss_der2w0, d_bloss_der2w0, sizeof(CoordType)*batch_size*ntypes*num_neurons*num_descriptors, cudaMemcpyDeviceToHost) );
+    CHECK_CUDA_API( cudaMemcpy(h_bloss_der2b0, d_bloss_der2b0, sizeof(CoordType)*batch_size*ntypes*num_neurons, cudaMemcpyDeviceToHost) );
     CHECK_CUDA_API( cudaMemcpy(h_bloss_der2w1, d_bloss_der2w1, sizeof(CoordType)*batch_size*ntypes*num_neurons, cudaMemcpyDeviceToHost) );
     CHECK_CUDA_API( cudaMemcpy(h_bloss_der2type_bias, d_bloss_der2type_bias, sizeof(CoordType)*batch_size*ntypes, cudaMemcpyDeviceToHost) );
 
     // Step . Free
     CHECK_CUDA_API( cudaFree(d_bloss_der2coeffs) );
     CHECK_CUDA_API( cudaFree(d_bloss_der2w0) );
+    CHECK_CUDA_API( cudaFree(d_bloss_der2b0) );
     CHECK_CUDA_API( cudaFree(d_bloss_der2w1) );
     CHECK_CUDA_API( cudaFree(d_bloss_der2type_bias) );
     CHECK_CUDA_API( cudaFree(d_betot_ml) );

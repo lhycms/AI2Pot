@@ -69,6 +69,7 @@ template <typename CoordType>
 static void find_ef_loss_backward_cpu_launcher(
     CoordType *bloss_der2coeffs,
     CoordType *bloss_der2w0,
+    CoordType *bloss_der2b0,
     CoordType *bloss_der2w1,
     CoordType *bloss_der2type_bias,
     CoordType e_weight,
@@ -84,6 +85,7 @@ static void find_ef_loss_backward_cpu_launcher(
     int num_neurons,
     CoordType *coeffs,
     CoordType *w0,
+    CoordType *b0,
     CoordType *w1,
     CoordType *type_bias,
     int batch_size,
@@ -107,6 +109,7 @@ static void find_ef_loss_backward_cpu_launcher(
     for (int bb=0; bb<batch_size; bb++) {
         CoordType *loss_der2coeffs = &bloss_der2coeffs[bb*num_coeffs];
         CoordType *loss_der2w0 = &bloss_der2w0[bb*ntypes*num_neurons*num_descriptors];
+        CoordType *loss_der2b0 = &bloss_der2b0[bb*ntypes*num_neurons];
         CoordType *loss_der2w1 = &bloss_der2w1[bb*ntypes*num_neurons];
         CoordType *loss_der2type_bias = &bloss_der2type_bias[bb*ntypes];
 
@@ -125,6 +128,7 @@ static void find_ef_loss_backward_cpu_launcher(
         NepLoss<CoordType>::find_ef_loss_backward(
             loss_der2coeffs,
             loss_der2w0,
+            loss_der2b0,
             loss_der2w1,
             loss_der2type_bias,
             e_weight,
@@ -140,6 +144,7 @@ static void find_ef_loss_backward_cpu_launcher(
             num_neurons,
             coeffs,
             w0,
+            b0,
             w1,
             type_bias,
             inum,

@@ -27,6 +27,7 @@ protected:
 
     real *coeffs;
     real *w0;
+    real *b0;
     real *w1;
     real *type_bias;
     real rmax;
@@ -66,6 +67,7 @@ protected:
     // Loss derivatives
     real *bloss_der2coeffs;
     real *bloss_der2w0;
+    real *bloss_der2b0;
     real *bloss_der2w1;
     real *bloss_der2type_bias;
 
@@ -79,6 +81,9 @@ protected:
 
     // Descriptors
     real *bdescriptors;
+
+    // q factors
+    real *q_scaler;
 
     static void SetUpTestSuite() {
         std::cout << "NepCPULauncher (TestSuite) is setting up...\n";
@@ -103,6 +108,9 @@ protected:
         w0 = (real*)malloc(sizeof(real) * ntypes * num_neurons * num_descriptors);
         for (int ii=0; ii<ntypes * num_neurons * num_descriptors; ii++)
             w0[ii] = 0.1 + 0.001 * ii;
+        b0 = (real*)malloc(sizeof(real)*ntypes*num_neurons);
+        for (int ii=0; ii<ntypes*num_neurons; ii++)
+            b0[ii] = 0.1 + 0.001 * ii;
         w1 = (real*)malloc(sizeof(real) * ntypes * num_neurons);
         for (int ii=0; ii<ntypes * num_neurons; ii++)
             w1[ii] = 0.1 + 0.001 * ii;
@@ -229,6 +237,8 @@ protected:
         memset(bloss_der2coeffs, 0, sizeof(real) * batch_size * ntypes * ntypes * (n_radial_basis+n_angular_basis) * chebyshev_size);
         bloss_der2w0 = (real*)malloc(sizeof(real) * batch_size * ntypes * num_neurons * num_descriptors);
         memset(bloss_der2w0, 0, sizeof(real) * batch_size * ntypes * num_neurons * num_descriptors);
+        bloss_der2b0 = (real*)malloc(sizeof(real) * batch_size * ntypes * num_neurons);
+        memset(bloss_der2b0, 0, sizeof(real) * batch_size * ntypes * num_neurons);
         bloss_der2w1 = (real*)malloc(sizeof(real) * batch_size * ntypes * num_neurons);
         memset(bloss_der2w1, 0, sizeof(real) * batch_size * ntypes * num_neurons);
         bloss_der2type_bias = (real*)malloc(sizeof(real) * batch_size * ntypes);
@@ -248,6 +258,12 @@ protected:
         // Descriptors
         bdescriptors = (real*)malloc(sizeof(real) * batch_size * natoms_pad * num_descriptors);
         memset(bdescriptors, 0, sizeof(real) * batch_size * natoms_pad * num_descriptors);
+
+        // 
+        q_scaler = (real*)malloc(sizeof(real) * num_descriptors);
+        for (int ii=0; ii<num_descriptors; ii++) {
+            q_scaler[ii] = 0.67 + 0.05 * ii;
+        }
     }
 
     void TearDown() override {
@@ -260,6 +276,7 @@ protected:
     
         free(coeffs);
         free(w0);
+        free(b0);
         free(w1);
         free(type_bias);
 
@@ -272,6 +289,7 @@ protected:
 
         free(bloss_der2coeffs);
         free(bloss_der2w0);
+        free(bloss_der2b0);
         free(bloss_der2w1);
         free(bloss_der2type_bias);
         free(betot_dft);
@@ -279,6 +297,7 @@ protected:
         free(bvirial_dft);
 
         free(bdescriptors);
+        free(q_scaler);
     }
 };  // class : NepCPULauncher
 
@@ -297,6 +316,7 @@ TEST_F(NepCPULauncher, find_ef_cpu_launcher) {
         num_neurons,
         coeffs,
         w0,
+        b0,
         w1,
         type_bias,
         batch_size,
@@ -313,7 +333,7 @@ TEST_F(NepCPULauncher, find_ef_cpu_launcher) {
         nghost,
         rmax,
         rmin,
-        nullptr);
+        q_scaler);
 
 printf("1.1. energy = %.15lf\n", betot[0]);
 printf("1.2. force[%d][%d] calculated by custom code = %.15lf\n", center_idx_modify, direction1_idx_modify, bforce[center_idx_modify][direction1_idx_modify]);
@@ -335,6 +355,7 @@ TEST_F(NepCPULauncher, find_ef_loss_backward_cpu_launcher)
         num_neurons,
         coeffs,
         w0,
+        b0,
         w1,
         type_bias,
         batch_size,
@@ -351,11 +372,12 @@ TEST_F(NepCPULauncher, find_ef_loss_backward_cpu_launcher)
         nghost,
         rmax,
         rmin,
-        nullptr);
+        q_scaler);
 
     ai2pot::nep::find_ef_loss_backward_cpu_launcher<real>(
         bloss_der2coeffs,
         bloss_der2w0,
+        bloss_der2b0,
         bloss_der2w1,
         bloss_der2type_bias,
         e_weight,
@@ -371,6 +393,7 @@ TEST_F(NepCPULauncher, find_ef_loss_backward_cpu_launcher)
         num_neurons,
         coeffs,
         w0,
+        b0,
         w1,
         type_bias,
         batch_size,
@@ -387,7 +410,7 @@ TEST_F(NepCPULauncher, find_ef_loss_backward_cpu_launcher)
         nghost,
         rmax,
         rmin,
-        nullptr);
+        q_scaler);
 
 printf("***+++ %d\n", ntypes*ntypes*(n_radial_basis+n_angular_basis)*chebyshev_size);
 printf("1. bloss_der2coeffs:\n");

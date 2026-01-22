@@ -41,6 +41,7 @@ public:
         int num_neurons,
         CoordType *coeffs,
         CoordType *w0,
+        CoordType *b0,
         CoordType *w1,
         CoordType *type_bias,
         int inum,
@@ -91,6 +92,7 @@ void Nep<CoordType>::find_ef(
     int num_neurons,
     CoordType *coeffs,
     CoordType *w0,
+    CoordType *b0,
     CoordType *w1,
     CoordType *type_bias,
     int inum,
@@ -148,6 +150,7 @@ void Nep<CoordType>::find_ef(
         center_idx = ilist[ii];
         type_central = types[center_idx];
         CoordType *type_central_w0 = &w0[type_central*num_neurons*num_descriptors];
+        CoordType *type_central_b0 = &b0[type_central*num_neurons];
         CoordType *type_central_w1 = &w1[type_central*num_neurons];
         memset(mom_vals, 0, sizeof(CoordType) * num_Sinlm);
         memset(dod_vals, 0, sizeof(CoordType) * num_descriptors);
@@ -183,9 +186,9 @@ void Nep<CoordType>::find_ef(
         {
             CoordType hidden_val = 0;
             CoordType activated_hidden_val = 0;
-            for (int k=0; k<num_descriptors; k++) {
+            for (int k=0; k<num_descriptors; k++)
                 hidden_val += type_central_w0[p*num_descriptors + k] * dod_vals[k] / q_scaler[k];
-            }
+            hidden_val += type_central_b0[p];
             TanhActivationFunc<CoordType>::find_val(activated_hidden_val, hidden_val);
             e_site += type_central_w1[p] * activated_hidden_val;
         }
@@ -201,6 +204,7 @@ void Nep<CoordType>::find_ef(
             CoordType activated_hidden_der = 0;
             for (int k=0; k<num_descriptors; k++)
                 hidden_val += type_central_w0[p*num_descriptors + k] * dod_vals[k] / q_scaler[k];
+            hidden_val += type_central_b0[p];
             TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
             for (int k=0; k<num_descriptors; k++)
                 e_sites_der2dod[k] += type_central_w1[p]

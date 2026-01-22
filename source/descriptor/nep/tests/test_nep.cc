@@ -62,6 +62,7 @@ protected:
     int num_neurons;
     double *coeffs;
     double *w0;
+    double *b0;
     double *w1;
     double *type_bias;
 
@@ -76,6 +77,7 @@ protected:
     // Loss derivatives
     double *loss_der2coeffs;
     double *loss_der2w0;
+    double *loss_der2b0;
     double *loss_der2w1;
     double *loss_der2type_bias;
 
@@ -209,6 +211,9 @@ protected:
         w0 = (double*)malloc(sizeof(double) * ntypes * num_neurons * num_descriptors);
         for (int ii=0; ii<ntypes * num_neurons * num_descriptors; ii++)
             w0[ii] = 0.1 + 0.001 * ii;
+        b0 = (double*)malloc(sizeof(double)* ntypes * num_neurons);
+        for (int ii=0; ii<ntypes * num_neurons; ii++)
+            b0[ii] = 0.1 + 0.001 * ii;
         w1 = (double*)malloc(sizeof(double) * ntypes * num_neurons);
         for (int ii=0; ii<ntypes * num_neurons; ii++)
             w1[ii] = 0.1 + 0.001 * ii;
@@ -232,6 +237,8 @@ protected:
         memset(loss_der2coeffs, 0, sizeof(double) * ntypes * ntypes * (n_radial_basis+n_angular_basis) * chebyshev_size);
         loss_der2w0 = (double*)malloc(sizeof(double) * ntypes * num_neurons * num_descriptors);
         memset(loss_der2w0, 0, sizeof(double) * ntypes * num_neurons * num_descriptors);
+        loss_der2b0 = (double*)malloc(sizeof(double) * ntypes * num_neurons);
+        memset(loss_der2b0, 0, sizeof(double) * ntypes * num_neurons);
         loss_der2w1 = (double*)malloc(sizeof(double) * ntypes * num_neurons);
         memset(loss_der2w1, 0, sizeof(double) * ntypes * num_neurons);
         loss_der2type_bias = (double*)malloc(sizeof(double) * ntypes);
@@ -260,6 +267,7 @@ protected:
         free(virial_);
         free(coeffs);
         free(w0);
+        free(b0);
         free(w1);
         free(type_bias);
 
@@ -270,6 +278,7 @@ protected:
         // Loss derivatives
         free(loss_der2coeffs);
         free(loss_der2w0);
+        free(loss_der2b0);
         free(loss_der2w1);
         free(loss_der2type_bias);
 
@@ -297,6 +306,7 @@ TEST_F(NepTest, find_ef_accuracy) {
         num_neurons,
         coeffs,
         w0,
+        b0,
         w1,
         type_bias,
         inum,
@@ -342,6 +352,7 @@ TEST_F(NepTest, find_ef_accuracy) {
         num_neurons,
         coeffs,
         w0,
+        b0,
         w1,
         type_bias,
         inum,
@@ -380,6 +391,7 @@ TEST_F(NepTest, find_ef_loss_backward) {
         num_neurons,
         coeffs,
         w0,
+        b0,
         w1,
         type_bias,
         inum,
@@ -399,6 +411,7 @@ TEST_F(NepTest, find_ef_loss_backward) {
     ai2pot::nep::NepLoss<double>::find_ef_loss_backward(
         loss_der2coeffs,
         loss_der2w0,
+        loss_der2b0,
         loss_der2w1,
         loss_der2type_bias,
         e_weight,
@@ -414,6 +427,7 @@ TEST_F(NepTest, find_ef_loss_backward) {
         num_neurons,
         coeffs,
         w0,
+        b0,
         w1,
         type_bias,
         inum,

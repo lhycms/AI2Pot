@@ -39,6 +39,7 @@ void find_ef_atom(
     int num_neurons,
     CoordType *coeffs,
     CoordType *w0,
+    CoordType *b0,
     CoordType *w1,
     CoordType *type_bias,
     int silist,
@@ -67,6 +68,7 @@ void find_ef_kernel(
     int num_neurons,
     CoordType *coeffs,
     CoordType *w0,
+    CoordType *b0,
     CoordType *w1,
     CoordType *type_bias,
     int batch_size,
@@ -96,10 +98,11 @@ void find_ef_launcher(
     int n_angular_basis,
     int l_max,
     int num_neurons,
-    CoordType *coeffs,
-    CoordType *w0,
-    CoordType *w1,
-    CoordType *type_bias,
+    CoordType *h_coeffs,
+    CoordType *h_w0,
+    CoordType *h_b0,
+    CoordType *h_w1,
+    CoordType *h_type_bias,
     int batch_size,
     int natoms_pad,
     int *h_binum,
@@ -205,6 +208,7 @@ void find_ef_atom(
     int num_neurons,
     CoordType *coeffs,
     CoordType *w0,
+    CoordType *b0,
     CoordType *w1,
     CoordType *type_bias,
     int silist,
@@ -242,6 +246,7 @@ void find_ef_atom(
     center_idx = silist;
     type_central = types[center_idx];
     CoordType *type_central_w0 = &w0[type_central * num_neurons * num_descriptors];
+    CoordType *type_central_b0 = &b0[type_central * num_neurons];
     CoordType *type_central_w1 = &w1[type_central * num_neurons];
 
     // Step 2. forward
@@ -322,6 +327,7 @@ void find_ef_atom(
         CoordType activated_hidden_val = 0.0;
         for (int k=0; k<num_descriptors; k++)
             hidden_val += type_central_w0[p*num_descriptors + k] * dod_vals[k] / q_scaler[k];
+        hidden_val += type_central_b0[p];
         TanhActivationFunc<CoordType>::find_val(activated_hidden_val, hidden_val);
         e_site += type_central_w1[p] * activated_hidden_val;
     }
@@ -334,6 +340,7 @@ void find_ef_atom(
         CoordType activated_hidden_der = 0.0;
         for (int k=0; k<num_descriptors; k++)
             hidden_val += type_central_w0[p*num_descriptors + k] * dod_vals[k] / q_scaler[k];
+        hidden_val += type_central_b0[p];
         TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
 
         for (int k=0; k<num_descriptors; k++)
@@ -466,6 +473,7 @@ void find_ef_kernel(
     int num_neurons,
     CoordType *coeffs,
     CoordType *w0,
+    CoordType *b0,
     CoordType *w1,
     CoordType *type_bias,
     int batch_size,
@@ -511,6 +519,7 @@ void find_ef_kernel(
             num_neurons,
             coeffs,
             w0,
+            b0,
             w1,
             type_bias,
             silist,
@@ -541,6 +550,7 @@ void find_ef_launcher(
     int num_neurons,
     CoordType *h_coeffs,
     CoordType *h_w0,
+    CoordType *h_b0,
     CoordType *h_w1,
     CoordType *h_type_bias,
     int batch_size,
@@ -571,6 +581,7 @@ void find_ef_launcher(
     CoordType (*d_bforce)[3];
     CoordType *d_coeffs;
     CoordType *d_w0;
+    CoordType *d_b0;
     CoordType *d_w1;
     CoordType *d_type_bias;
     int *d_binum;
@@ -589,6 +600,7 @@ void find_ef_launcher(
 
     CHECK_CUDA_API( cudaMalloc((void**)&d_coeffs, sizeof(CoordType)*num_coeffs) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_w0, sizeof(CoordType)*ntypes*num_neurons*num_descriptors) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_b0, sizeof(CoordType)*ntypes*num_neurons) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_w1, sizeof(CoordType)*ntypes*num_neurons) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_type_bias, sizeof(CoordType)*ntypes) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_binum, sizeof(int)*batch_size) );
@@ -603,6 +615,7 @@ void find_ef_launcher(
     // 
     CHECK_CUDA_API( cudaMemcpy(d_coeffs, h_coeffs, sizeof(CoordType)*num_coeffs, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_w0, h_w0, sizeof(CoordType)*ntypes*num_neurons*num_descriptors, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_b0, h_b0, sizeof(CoordType)*ntypes*num_neurons, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_w1, h_w1, sizeof(CoordType)*ntypes*num_neurons, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_type_bias, h_type_bias, sizeof(CoordType)*ntypes, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_binum, h_binum, sizeof(int)*batch_size, cudaMemcpyHostToDevice) );
@@ -626,6 +639,7 @@ void find_ef_launcher(
         num_neurons,
         d_coeffs,
         d_w0,
+        d_b0,
         d_w1,
         d_type_bias,
         batch_size,
@@ -657,6 +671,7 @@ void find_ef_launcher(
     CHECK_CUDA_API( cudaFree(d_bforce) );
     CHECK_CUDA_API( cudaFree(d_coeffs) );
     CHECK_CUDA_API( cudaFree(d_w0) );
+    CHECK_CUDA_API( cudaFree(d_b0) );
     CHECK_CUDA_API( cudaFree(d_w1) );
     CHECK_CUDA_API( cudaFree(d_type_bias) );
     CHECK_CUDA_API( cudaFree(d_binum) );

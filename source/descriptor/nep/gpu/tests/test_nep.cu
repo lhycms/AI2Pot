@@ -32,6 +32,7 @@ protected:
     
     real *coeffs;
     real *w0;
+    real *b0;
     real *w1;
     real *type_bias;
     real *q_scaler;
@@ -75,6 +76,7 @@ protected:
     real v_weight;
     real *bloss_der2coeffs;
     real *bloss_der2w0;
+    real *bloss_der2b0;
     real *bloss_der2w1;
     real *bloss_der2type_bias;
 
@@ -109,6 +111,9 @@ protected:
         w0 = (real*)malloc(sizeof(real) * ntypes * num_neurons * num_descriptors);
         for (int ii=0; ii<ntypes * num_neurons * num_descriptors; ii++)
             w0[ii] = 0.1 + 0.001 * ii;
+        b0 = (real*)malloc(sizeof(real)*ntypes*num_neurons);
+        for (int ii=0; ii<ntypes*num_neurons; ii++)
+            b0[ii] = 0.1 + 0.001 * ii;
         w1 = (real*)malloc(sizeof(real) * ntypes * num_neurons);
         for (int ii=0; ii<ntypes * num_neurons; ii++)
             w1[ii] = 0.1 + 0.001 * ii;
@@ -240,6 +245,8 @@ protected:
         memset(bloss_der2coeffs, 0, sizeof(real)*batch_size*num_coeffs);
         bloss_der2w0 = (real*)malloc(sizeof(real)*batch_size*ntypes*num_neurons*num_descriptors);
         memset(bloss_der2w0, 0, sizeof(real)*batch_size*ntypes*num_neurons*num_descriptors);
+        bloss_der2b0 = (real*)malloc(sizeof(real)*batch_size*ntypes*num_neurons);
+        memset(bloss_der2b0, 0, sizeof(real)*batch_size*ntypes*num_neurons);
         bloss_der2w1 = (real*)malloc(sizeof(real)*batch_size*ntypes*num_neurons);
         memset(bloss_der2w1, 0, sizeof(real)*batch_size*ntypes*num_neurons);
         bloss_der2type_bias = (real*)malloc(sizeof(real)*batch_size*ntypes);
@@ -260,6 +267,7 @@ protected:
         // Parameters
         free(coeffs);
         free(w0);
+        free(b0);
         free(w1);
         free(type_bias);
         free(q_scaler);
@@ -283,6 +291,7 @@ protected:
         // Loss
         free(bloss_der2coeffs);   
         free(bloss_der2w0);
+        free(bloss_der2b0);
         free(bloss_der2w1);
         free(bloss_der2type_bias);
         free(betot_dft);
@@ -308,6 +317,7 @@ TEST_F(NepTest, find_ef_accuracy) {
         num_neurons,
         coeffs,
         w0,
+        b0,
         w1,
         type_bias,
         batch_size,
@@ -356,6 +366,7 @@ TEST_F(NepTest, find_ef_accuracy) {
         num_neurons,
         coeffs,
         w0,
+        b0,
         w1,
         type_bias,
         batch_size,
@@ -401,6 +412,7 @@ TEST_F(NepTest, find_ef_loss_backward_launcher)
         num_neurons,
         coeffs,
         w0,
+        b0,
         w1,
         type_bias,
         batch_size,
@@ -422,6 +434,7 @@ TEST_F(NepTest, find_ef_loss_backward_launcher)
     ai2pot::nep::find_ef_loss_backward_launcher<real>(
         bloss_der2coeffs,
         bloss_der2w0,
+        bloss_der2b0,
         bloss_der2w1,
         bloss_der2type_bias,
         e_weight,
@@ -437,6 +450,7 @@ TEST_F(NepTest, find_ef_loss_backward_launcher)
         num_neurons,
         coeffs,
         w0,
+        b0,
         w1,
         type_bias,
         batch_size,

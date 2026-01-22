@@ -83,6 +83,7 @@ template void ai2pot::nep::find_loss_torch_launcher<double>(
 template void ai2pot::nep::find_ef_loss_backward_torch_launcher<float>(
     float *d_bloss_der2coeffs,
     float *d_bloss_der2w0,
+    float *d_bloss_der2b0,
     float *d_bloss_der2w1,
     float *d_bloss_der2type_bias,
     float e_weight,
@@ -98,6 +99,7 @@ template void ai2pot::nep::find_ef_loss_backward_torch_launcher<float>(
     int num_neurons,
     float *d_coeffs,
     float *d_w0,
+    float *d_b0,
     float *d_w1,
     float *d_type_bias,
     int batch_size,
@@ -119,6 +121,7 @@ template void ai2pot::nep::find_ef_loss_backward_torch_launcher<float>(
 template void ai2pot::nep::find_ef_loss_backward_torch_launcher<double>(
     double *d_bloss_der2coeffs,
     double *d_bloss_der2w0,
+    double *d_bloss_der2b0,
     double *d_bloss_der2w1,
     double *d_bloss_der2type_bias,
     double e_weight,
@@ -134,6 +137,7 @@ template void ai2pot::nep::find_ef_loss_backward_torch_launcher<double>(
     int num_neurons,
     double *d_coeffs,
     double *d_w0,
+    double *d_b0,
     double *d_w1,
     double *d_type_bias,
     int batch_size,

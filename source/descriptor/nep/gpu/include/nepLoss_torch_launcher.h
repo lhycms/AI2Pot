@@ -61,6 +61,7 @@ template <typename CoordType>
 void find_ef_loss_backward_torch_launcher(
     CoordType *d_bloss_der2coeffs,
     CoordType *d_bloss_der2w0,
+    CoordType *d_bloss_der2b0,
     CoordType *d_bloss_der2w1,
     CoordType *d_bloss_der2type_bias,
     CoordType e_weight,
@@ -76,6 +77,7 @@ void find_ef_loss_backward_torch_launcher(
     int num_neurons,
     CoordType *d_coeffs,
     CoordType *d_w0,
+    CoordType *d_b0,
     CoordType *d_w1,
     CoordType *d_type_bias,
     int batch_size,
