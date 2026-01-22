@@ -1191,7 +1191,7 @@ torch::autograd::variable_list NepToEFLossFunction::backward(
     at::Tensor type_bias_tensor = ctx->get_saved_variables()[12];
     at::Tensor binum_tensor = ctx->get_saved_variables()[13];
     at::Tensor bilist_tensor = ctx->get_saved_variables()[14];
-    at::Tensor bnumneigh_tensor = ctx->get_saved_variables()[1];
+    at::Tensor bnumneigh_tensor = ctx->get_saved_variables()[15];
     at::Tensor bfirstneigh_tensor = ctx->get_saved_variables()[16];
     at::Tensor brcs_tensor = ctx->get_saved_variables()[17];
     at::Tensor btypes_tensor = ctx->get_saved_variables()[18];
@@ -1232,6 +1232,7 @@ torch::autograd::variable_list NepToEFLossFunction::backward(
     // 3. 
     at::Tensor bloss_der2coeffs_tensor = at::zeros({batch_size, num_coeffs}, float_options);
     at::Tensor bloss_der2w0_tensor = at::zeros({batch_size, ntypes*num_neurons*num_descriptors}, float_options);
+    at::Tensor bloss_der2b0_tensor = at::zeros({batch_size, ntypes*num_neurons}, float_options);
     at::Tensor bloss_der2w1_tensor = at::zeros({batch_size, ntypes*num_neurons}, float_options);
     at::Tensor bloss_der2type_bias_tensor = at::zeros({batch_size, ntypes}, float_options);
     at::Tensor betot_tensor = at::zeros({batch_size}, float_options);
@@ -1241,6 +1242,7 @@ torch::autograd::variable_list NepToEFLossFunction::backward(
     if (brcs_tensor.scalar_type() == torch::kFloat32) {
         float *bloss_der2coeffs = bloss_der2coeffs_tensor.data_ptr<float>();
         float *bloss_der2w0 = bloss_der2w0_tensor.data_ptr<float>();
+        float *bloss_der2b0 = bloss_der2b0_tensor.data_ptr<float>();
         float *bloss_der2w1 = bloss_der2w1_tensor.data_ptr<float>();
         float *bloss_der2type_bias = bloss_der2type_bias_tensor.data_ptr<float>();
         float *betot = betot_tensor.data_ptr<float>();
@@ -1329,6 +1331,7 @@ torch::autograd::variable_list NepToEFLossFunction::backward(
             find_ef_loss_backward_cpu_launcher<float>(
                 bloss_der2coeffs,
                 bloss_der2w0,
+                bloss_der2b0,
                 bloss_der2w1,
                 bloss_der2type_bias,
                 e_weight,
@@ -1456,6 +1459,7 @@ torch::autograd::variable_list NepToEFLossFunction::backward(
     } else {
         double *bloss_der2coeffs = bloss_der2coeffs_tensor.data_ptr<double>();
         double *bloss_der2w0 = bloss_der2w0_tensor.data_ptr<double>();
+        double *bloss_der2b0 = bloss_der2b0_tensor.data_ptr<double>();
         double *bloss_der2w1 = bloss_der2w1_tensor.data_ptr<double>();
         double *bloss_der2type_bias = bloss_der2type_bias_tensor.data_ptr<double>();
         double *betot = betot_tensor.data_ptr<double>();
@@ -1544,6 +1548,7 @@ torch::autograd::variable_list NepToEFLossFunction::backward(
             find_ef_loss_backward_cpu_launcher<double>(
                 bloss_der2coeffs,
                 bloss_der2w0,
+                bloss_der2b0,
                 bloss_der2w1,
                 bloss_der2type_bias,
                 e_weight,

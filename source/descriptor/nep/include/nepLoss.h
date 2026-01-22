@@ -488,6 +488,36 @@ void NepLoss<CoordType>::find_ef_loss_backward(
             hidden_val += type_central_b0[p];
             TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
             TanhActivationFunc<CoordType>::find_der2der(activated_hidden_der2der, hidden_val);
+
+            
+            // New code
+            CoordType dloss_combination_dod_sum = 0.0;
+            for (int k=0; k<num_descriptors; k++)
+                dloss_combination_dod_sum += dloss_combination_dod[k] 
+                                             * type_central_w0[p*num_descriptors + k]
+                                             / q_scaler[k];
+            for (int k=0; k<num_descriptors; k++) {
+                CoordType tmpe_loss_der2w0 = 2*e_weight/inum*(etot_ml-etot_dft)
+                                             * type_central_w1[p]
+                                             * activated_hidden_der
+                                             * dod_vals[k]
+                                             / q_scaler[k];
+                CoordType tmpf_loss_der2w0_p1 = activated_hidden_der2der
+                                                * dod_vals[k]
+                                                * dloss_combination_dod_sum;
+                CoordType tmpf_loss_der2w0_p2 = activated_hidden_der
+                                                * dloss_combination_dod[k];                    
+                CoordType tmpf_loss_der2w0 = type_central_w1[p] / q_scaler[k]
+                                             * (tmpf_loss_der2w0_p1 + tmpf_loss_der2w0_p2);
+    
+                #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
+                #pragma omp atomic
+                #endif
+                loss_der2w0[type_central*num_neurons*num_descriptors + p*num_descriptors + k] += tmpe_loss_der2w0
+                                                                                                 + tmpf_loss_der2w0;
+            }
+            /*
+            // Old code: Wrong
             for (int k=0; k<num_descriptors; k++) {
                 CoordType tmpe_loss_der2w0 = 2*e_weight/inum*(etot_ml-etot_dft)
                                              * type_central_w1[p]
@@ -509,6 +539,7 @@ void NepLoss<CoordType>::find_ef_loss_backward(
                 loss_der2w0[type_central*num_neurons*num_descriptors + p*num_descriptors + k] += tmpe_loss_der2w0
                                                                                                  + tmpf_loss_der2w0;
             }
+            */
 
             CoordType tmpe_loss_der2b0 = 2*e_weight/inum*(etot_ml-etot_dft)
                                          * type_central_w1[p]
