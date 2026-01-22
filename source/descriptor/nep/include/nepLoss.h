@@ -489,7 +489,6 @@ void NepLoss<CoordType>::find_ef_loss_backward(
             TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
             TanhActivationFunc<CoordType>::find_der2der(activated_hidden_der2der, hidden_val);
 
-            
             // New code
             CoordType dloss_combination_dod_sum = 0.0;
             for (int k=0; k<num_descriptors; k++)

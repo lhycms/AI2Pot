@@ -454,12 +454,17 @@ for (int ii=0; ii<ntypes*num_neurons*num_descriptors; ii++)
     printf("%.15f, ", loss_der2w0[ii]);
 printf("\n\n");
 
-printf("3. loss_der2w1:\n");
+printf("3. loss_der2b0:\n");
+for (int ii=0; ii<ntypes*num_neurons; ii++)
+    printf("%.15f, ", loss_der2b0[ii]);
+printf("\n\n");
+
+printf("4. loss_der2w1:\n");
 for (int ii=0; ii<ntypes*num_neurons; ii++)
     printf("%.15f, ", loss_der2w1[ii]);
 printf("\n\n");
 
-printf("4. loss_der2type_bias:\n");
+printf("5. loss_der2type_bias:\n");
 for (int ii=0; ii<ntypes; ii++)
     printf("%.15f, ", loss_der2type_bias[ii]);
 printf("\n\n");

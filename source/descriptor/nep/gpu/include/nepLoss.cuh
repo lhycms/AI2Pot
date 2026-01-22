@@ -549,6 +549,7 @@ void find_ef_loss_backward_atom(
     center_idx = silist;
     type_central = types[center_idx];
     CoordType *type_central_w0 = &w0[type_central*num_neurons*num_descriptors];
+    CoordType *type_central_b0 = &b0[type_central*num_neurons];
     CoordType *type_central_w1 = &w1[type_central*num_neurons];
 
     // Step 2. Calculate descriptors
@@ -656,6 +657,7 @@ void find_ef_loss_backward_atom(
         CoordType activated_hidden_der = 0.0;
         for (int k=0; k<num_descriptors; k++)
             hidden_val += type_central_w0[p*num_descriptors+k] * dod_vals[k] / q_scaler[k];
+        hidden_val += type_central_b0[p];
         TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
 
         for (int k=0; k<num_descriptors; k++)
@@ -790,8 +792,35 @@ void find_ef_loss_backward_atom(
         CoordType activated_hidden_der2der = 0.0;
         for (int k=0; k<num_descriptors; k++)
             hidden_val += type_central_w0[p*num_descriptors+k] * dod_vals[k] / q_scaler[k];
+        hidden_val += type_central_b0[p];
         TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
         TanhActivationFunc<CoordType>::find_der2der(activated_hidden_der2der, hidden_val);
+
+        // New code
+        CoordType dloss_combination_dod_sum = 0.0;
+        for (int k=0; k<num_descriptors; k++)
+            dloss_combination_dod_sum += dloss_combination_dod[k]
+                                         * type_central_w0[p*num_descriptors + k]
+                                         / q_scaler[k];
+        for (int k=0; k<num_descriptors; k++) {
+            CoordType tmpe_loss_der2w0 = 2*e_weight/inum*(etot_ml-etot_dft)
+                                         * type_central_w1[p]
+                                         * activated_hidden_der
+                                         * dod_vals[k]
+                                         / q_scaler[k];
+            CoordType tmpf_loss_der2w0_p1 = activated_hidden_der2der
+                                            * dod_vals[k]
+                                            * dloss_combination_dod_sum;
+            CoordType tmpf_loss_der2w0_p2 = activated_hidden_der
+                                            * dloss_combination_dod[k];
+            CoordType tmpf_loss_der2w0 = type_central_w1[p] / q_scaler[k]
+                                         * (tmpf_loss_der2w0_p1 + tmpf_loss_der2w0_p2);
+
+            atomicAdd(&loss_der2w0[type_central*num_neurons*num_descriptors + p*num_descriptors + k],
+                      tmpe_loss_der2w0 + tmpf_loss_der2w0);
+        }
+        /*
+        // Old code : Wrong
         for (int k=0; k<num_descriptors; k++) {
             CoordType tmpe_loss_der2w0 = 2*e_weight/inum*(etot_ml-etot_dft)
                                          * type_central_w1[p]
@@ -809,6 +838,7 @@ void find_ef_loss_backward_atom(
             atomicAdd(&loss_der2w0[type_central*num_neurons*num_descriptors + p*num_descriptors + k],
                       tmpe_loss_der2w0 + tmpf_loss_der2w0);
         }
+        */
     }
 
     // Step 4.3. loss_der2w1
@@ -820,6 +850,7 @@ void find_ef_loss_backward_atom(
         CoordType activated_hidden_der = 0.0;
         for (int k=0; k<num_descriptors; k++)
             hidden_val += type_central_w0[p*num_descriptors+k] * dod_vals[k] / q_scaler[k];
+        hidden_val += type_central_b0[p];
         TanhActivationFunc<CoordType>::find_val(activated_hidden_val, hidden_val);
         TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
         tmpe_loss_der2w1 = 2*e_weight/inum*(etot_ml-etot_dft)
