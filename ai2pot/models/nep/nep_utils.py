@@ -142,7 +142,7 @@ class Nep4Extxyz(object):
         ax1.set_xlabel("DFT energy (eV/atom)",
                        fontsize=16,
                        fontweight="bold")
-        ax1.set_ylabel("NNMtp energy (eV/atom)",
+        ax1.set_ylabel("NEP energy (eV/atom)",
                        fontsize=16,
                        fontweight="bold")
         
@@ -164,7 +164,7 @@ class Nep4Extxyz(object):
         ax2.set_xlabel("DFT force (eV/Å)",
                        fontsize=16,
                        fontweight="bold")
-        ax2.set_ylabel("NNMtp force (eV/Å)",
+        ax2.set_ylabel("NEP force (eV/Å)",
                        fontsize=16,
                        fontweight="bold")
 
@@ -247,9 +247,9 @@ class Nep4Extxyz(object):
                 
                 # 3. append
                 binum_list.append(binum)
-                e_dft_list.append(e_dft / binum)
+                e_dft_list.append(e_dft)
                 f_dft_list.append(f_dft)
-                e_ml_list.append(e_ml / binum)
+                e_ml_list.append(e_ml)
                 f_ml_list.append(f_ml)
         
         binum_tensor = torch.cat(binum_list, dim=0)

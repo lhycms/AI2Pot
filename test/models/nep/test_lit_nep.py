@@ -31,7 +31,7 @@ class LitNepTest(unittest.TestCase):
 
         # Nep hyperparameters
         rmax_radial: float = 6.0
-        rmax_angular: float = 4.0
+        rmax_angular: float = 6.0
         n_radial_basis: int = 6 + 1
         n_angular_basis: int = 4 + 1
         l_max: int = 4
@@ -39,7 +39,7 @@ class LitNepTest(unittest.TestCase):
         num_neurons: int = 30
 
 
-        max_epochs: int = 1
+        max_epochs: int = 200
         # Lr hyperparameters
         lr_start: float = 1e-2
         lr_end: float = 5e-4
