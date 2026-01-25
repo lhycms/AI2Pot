@@ -54,8 +54,8 @@ public:
         int *type_map,
         int umax_num_neigh_atoms,
         int nghost,
-        CoordType rmax,
-        CoordType rmin,
+        CoordType rmax_radial,
+        CoordType rmax_angular,
         CoordType *q_scaler);
 
 
@@ -76,8 +76,8 @@ public:
         int *type_map,
         int umax_num_neigh_atoms,
         int nghost,
-        CoordType rmax,
-        CoordType rmin);
+        CoordType rmax_radial,
+        CoordType rmax_angular);
 };  // class : Nep
 
 
@@ -105,8 +105,8 @@ void Nep<CoordType>::find_ef(
     int *type_map,
     int umax_num_neigh_atoms,
     int nghost,
-    CoordType rmax,
-    CoordType rmin,
+    CoordType rmax_radial,
+    CoordType rmax_angular,
     CoordType *q_scaler)
 {
     // Step 1. 
@@ -177,8 +177,8 @@ void Nep<CoordType>::find_ef(
             types,
             ntypes,
             umax_num_neigh_atoms,
-            rmax,
-            rmin);
+            rmax_radial,
+            rmax_angular);
 
         // Nep Energy
         e_site = type_bias[type_central];
@@ -241,7 +241,7 @@ void Nep<CoordType>::find_ef(
             distance_ij = std::sqrt( neigh_vec[0] * neigh_vec[0]
                                      + neigh_vec[1] * neigh_vec[1]
                                      + neigh_vec[2] * neigh_vec[2] );
-            if (distance_ij > rmax)
+            if (distance_ij > rmax_radial)
                 continue;
             
             for (int aa=0; aa<3; aa++) {
@@ -307,8 +307,8 @@ void Nep<CoordType>::find_descriptors(
     int *type_map,
     int umax_num_neigh_atoms,
     int nghost,
-    CoordType rmax,
-    CoordType rmin)
+    CoordType rmax_radial,
+    CoordType rmax_angular)
 {
     // Step 1. 
     CoordType *mom_vals;
@@ -353,8 +353,8 @@ void Nep<CoordType>::find_descriptors(
             types,
             ntypes,
             umax_num_neigh_atoms,
-            rmax,
-            rmin);
+            rmax_radial,
+            rmax_angular);
 
         for (int k=0; k<num_descriptors; k++)
             descriptors[ii*num_descriptors + k] = dod_vals[k];

@@ -36,8 +36,8 @@ protected:
     real *w1;
     real *type_bias;
     real *q_scaler;
-    real rmax;
-    real rmin;
+    real rmax_radial;
+    real rmax_angular;
 
     // Structure && Nblist
     int num_atoms;
@@ -126,9 +126,9 @@ protected:
 
         // Structure && Nblist
         num_atoms = 12;
-        rmax = 5.0;
-        rmin = 0.0;
-        rcut = rmax;
+        rmax_radial = 5.0;
+        rmax_angular = 4.0;
+        rcut = rmax_radial;
         basis_vectors[0][0] = 3.1903157348;
         basis_vectors[0][1] = 5.5257885468;
         basis_vectors[0][2] = 0.0000000000;
@@ -332,8 +332,8 @@ TEST_F(NepTest, find_ef_accuracy) {
         type_map,
         umax_num_neigh_atoms,
         nghost,
-        rmax,
-        rmin,
+        rmax_radial,
+        rmax_angular,
         q_scaler);
 
     // *** delta
@@ -381,8 +381,8 @@ TEST_F(NepTest, find_ef_accuracy) {
         type_map,
         umax_num_neigh_atoms,
         nghost,
-        rmax,
-        rmin,
+        rmax_radial,
+        rmax_angular,
         q_scaler);
 
 printf("1.1. energy = %.15lf\n", betot[0]);
@@ -427,8 +427,8 @@ TEST_F(NepTest, find_ef_loss_backward_launcher)
         type_map,
         umax_num_neigh_atoms,
         nghost,
-        rmax,
-        rmin,
+        rmax_radial,
+        rmax_angular,
         q_scaler);
     
     ai2pot::nep::find_ef_loss_backward_launcher<real>(
@@ -465,8 +465,8 @@ TEST_F(NepTest, find_ef_loss_backward_launcher)
         type_map,
         umax_num_neigh_atoms,
         nghost,
-        rmax,
-        rmin,
+        rmax_radial,
+        rmax_angular,
         q_scaler);
 printf("1. loss_der2coeffs:\n");
 for (int ii=0; ii<ntypes*ntypes*(n_radial_basis+n_angular_basis)*chebyshev_size; ii++)
@@ -517,8 +517,8 @@ TEST_F(NepTest, find_bdescriptors)
         type_map,
         umax_num_neigh_atoms,
         nghost,
-        rmax,
-        rmin);
+        rmax_radial,
+        rmax_angular);
 
 for (int k=0; k<num_descriptors; k++)
     printf("%.6f, ", bdescriptors[center_idx*num_descriptors + k]);

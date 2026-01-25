@@ -100,8 +100,8 @@ static void find_ef_loss_backward_cpu_launcher(
     int *type_map,
     int umax_num_neigh_atoms,
     int nghost,
-    CoordType rmax,
-    CoordType rmin,
+    CoordType rmax_radial,
+    CoordType rmax_angular,
     CoordType *q_scaler)
 {
     int num_descriptors = NepIndex::get_num_descriptors(n_radial_basis, n_angular_basis, l_max);
@@ -157,8 +157,8 @@ static void find_ef_loss_backward_cpu_launcher(
             type_map,
             umax_num_neigh_atoms,
             nghost,
-            rmax,
-            rmin,
+            rmax_radial,
+            rmax_angular,
             q_scaler);
     }
 }

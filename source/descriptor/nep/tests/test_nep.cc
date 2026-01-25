@@ -52,8 +52,8 @@ protected:
     double (*forces_)[3];
     double *virial;
     double *virial_;
-    double rmax;
-    double rmin;
+    double rmax_radial;
+    double rmax_angular;
     int chebyshev_size;
     int n_radial_basis;
     int n_angular_basis;
@@ -202,8 +202,8 @@ protected:
         l_max = 3;
         num_descriptors = ai2pot::nep::NepIndex::get_num_descriptors(n_radial_basis, n_angular_basis, l_max);
 
-        rmax = 5.0;
-        rmin = 0.0;
+        rmax_radial = 5.0;
+        rmax_angular = 4.0;
 
         coeffs = (double*)malloc(sizeof(double) * ntypes * ntypes * (n_radial_basis+n_angular_basis) * chebyshev_size);
         for (int ii=0; ii<ntypes * ntypes * (n_radial_basis+n_angular_basis) * chebyshev_size; ii++)
@@ -319,8 +319,8 @@ TEST_F(NepTest, find_ef_accuracy) {
         type_map,
         umax_num_neigh_atoms,
         nghost,
-        rmax,
-        rmin,
+        rmax_radial,
+        rmax_angular,
         q_scaler);
 
     // *** delta
@@ -365,8 +365,8 @@ TEST_F(NepTest, find_ef_accuracy) {
         type_map,
         umax_num_neigh_atoms,
         nghost,
-        rmax,
-        rmin,
+        rmax_radial,
+        rmax_angular,
         q_scaler);
 
 printf("1.1. energy = %.15lf\n", etot);
@@ -404,8 +404,8 @@ TEST_F(NepTest, find_ef_loss_backward) {
         type_map,
         umax_num_neigh_atoms,
         nghost,
-        rmax,
-        rmin,
+        rmax_radial,
+        rmax_angular,
         q_scaler);
 
     ai2pot::nep::NepLoss<double>::find_ef_loss_backward(
@@ -440,8 +440,8 @@ TEST_F(NepTest, find_ef_loss_backward) {
         type_map,
         umax_num_neigh_atoms,
         nghost,
-        rmax,
-        rmin,
+        rmax_radial,
+        rmax_angular,
         q_scaler);
 
 printf("1. loss_der2coeffs:\n");
@@ -490,8 +490,8 @@ TEST_F(NepTest, find_descriptors) {
         type_map,
         umax_num_neigh_atoms,
         nghost,
-        rmax,
-        rmin);
+        rmax_radial,
+        rmax_angular);
     
     for (int k=0; k<num_descriptors; k++)
         printf("%.6f, ", descriptors[center_idx*num_descriptors + k]);

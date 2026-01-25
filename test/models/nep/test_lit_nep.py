@@ -30,8 +30,8 @@ class LitNepTest(unittest.TestCase):
         fit_virial: bool = False
 
         # Nep hyperparameters
-        rmax: float = 6.0
-        rmin: float = 0.0
+        rmax_radial: float = 6.0
+        rmax_angular: float = 4.0
         n_radial_basis: int = 6 + 1
         n_angular_basis: int = 4 + 1
         l_max: int = 4
@@ -39,7 +39,7 @@ class LitNepTest(unittest.TestCase):
         num_neurons: int = 30
 
 
-        max_epochs: int = 200
+        max_epochs: int = 1
         # Lr hyperparameters
         lr_start: float = 1e-2
         lr_end: float = 5e-4
@@ -60,8 +60,8 @@ class LitNepTest(unittest.TestCase):
                                       l_max=l_max,
                                       chebyshev_size=chebyshev_size,
                                       num_neurons=num_neurons,
-                                      rmax=rmax,
-                                      rmin=rmin,
+                                      rmax_radial=rmax_radial,
+                                      rmax_angular=rmax_angular,
                                       lr_start=lr_start,
                                       lr_end=lr_end,
                                       e_wgt_start=e_wgt_start,
@@ -73,7 +73,7 @@ class LitNepTest(unittest.TestCase):
                                       lr_decay_step=lr_decay_step)
 
         ### DataModule hyperparameters
-        rcut: float = rmax
+        rcut: float = rmax_radial
         pbc_xyz=[True, True, True]
         sort=False
         torch_float_dtype=torch.float32

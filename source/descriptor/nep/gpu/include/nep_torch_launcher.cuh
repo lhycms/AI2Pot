@@ -56,8 +56,8 @@ void find_ef_torch_launcher(
     int *d_type_map,
     int umax_num_neigh_atoms,
     int nghost,
-    CoordType rmax,
-    CoordType rmin,
+    CoordType rmax_radial,
+    CoordType rmax_angular,
     CoordType *d_q_scaler)
 {
     int block_size_x = 64;
@@ -91,8 +91,8 @@ void find_ef_torch_launcher(
         d_type_map,
         umax_num_neigh_atoms,
         nghost,
-        rmax,
-        rmin,
+        rmax_radial,
+        rmax_angular,
         d_q_scaler);
     CHECK_CUDA_KERNEL;
 }
@@ -119,8 +119,8 @@ void find_descriptor_torch_launcher(
     int *d_type_map,
     int umax_num_neigh_atoms,
     int nghost,
-    CoordType rmax,
-    CoordType rmin)
+    CoordType rmax_radial,
+    CoordType rmax_angular)
 {
     int block_size_x = 64;
     int grid_size_x = (batch_size * natoms_pad - 1) / block_size_x + 1;
@@ -147,8 +147,8 @@ void find_descriptor_torch_launcher(
         d_type_map,
         umax_num_neigh_atoms,
         nghost,
-        rmax,
-        rmin);
+        rmax_radial,
+        rmax_angular);
     CHECK_CUDA_KERNEL;   
 }
 

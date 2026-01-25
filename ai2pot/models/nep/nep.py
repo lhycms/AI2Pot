@@ -37,8 +37,8 @@ class Nep(nn.Module):
                  l_max: int = 4,
                  chebyshev_size: int = 8,
                  num_neurons: int = 30,
-                 rmax: float = 5.0,
-                 rmin: float = 0.0,
+                 rmax_radial: float = 5.0,
+                 rmax_angular: float = 0.0,
                  zbl_rmax: float = 2.0,
                  zbl_rmin: float = 1.0,
                  zbl_cks_list: Optional[List[float]] = None,
@@ -58,8 +58,8 @@ class Nep(nn.Module):
         self.l_max: int = l_max
         self.chebyshev_size: int = chebyshev_size
         self.num_neurons: int = num_neurons
-        self.rmax: float = rmax
-        self.rmin: float = rmin
+        self.rmax_radial: float = rmax_radial
+        self.rmax_angular: float = rmax_angular
         self.zbl_rmax: float = zbl_rmax
         self.zbl_rmin: float = zbl_rmin
         self._init_zbl_params(zbl_cks_list=zbl_cks_list,
@@ -180,8 +180,8 @@ class Nep(nn.Module):
             btypes_tensor,
             self.type_map_tensor,
             nghost,
-            self.rmax,
-            self.rmin,
+            self.rmax_radial,
+            self.rmax_angular,
             self._q_scaler_tensor,
             self.zbl_rmax,
             self.zbl_rmin,
@@ -217,8 +217,8 @@ class Nep(nn.Module):
             btypes_tensor,
             self.type_map_tensor,
             bnghost_tensor[0].item(),
-            self.rmax,
-            self.rmin,
+            self.rmax_radial,
+            self.rmax_angular,
             self._q_scaler_tensor,
             self.zbl_rmax,
             self.zbl_rmin,
@@ -250,8 +250,8 @@ class Nep(nn.Module):
             btypes_tensor,
             self.type_map_tensor,
             bnghost_tensor[0].item(),
-            self.rmax,
-            self.rmin)[0]
+            self.rmax_radial,
+            self.rmax_angular)[0]
         
         return bdescriptors_tensor
     

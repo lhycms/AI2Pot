@@ -135,8 +135,8 @@ void find_ef_loss_backward_atom(
     int *type_map,
     int umax_num_neigh_atoms,
     int nghost,
-    CoordType rmax,
-    CoordType rmin,
+    CoordType rmax_radial,
+    CoordType rmax_angular,
     CoordType *q_scaler);
 
 
@@ -176,8 +176,8 @@ void find_ef_loss_backward_kernel(
     int *type_map,
     int umax_num_neigh_atoms,
     int nghost,
-    CoordType rmax,
-    CoordType rmin,
+    CoordType rmax_radial,
+    CoordType rmax_angular,
     CoordType *q_scaler);
 
 
@@ -217,8 +217,8 @@ void find_ef_loss_backward_launcher(
     int *h_type_map,
     int umax_num_neigh_atoms,
     int nghost,
-    CoordType rmax,
-    CoordType rmin,
+    CoordType rmax_radial,
+    CoordType rmax_angular,
     CoordType *h_q_scaler);
 
 
@@ -523,8 +523,8 @@ void find_ef_loss_backward_atom(
     int *type_map,
     int umax_num_neigh_atoms,
     int nghost,
-    CoordType rmax,
-    CoordType rmin,
+    CoordType rmax_radial,
+    CoordType rmax_angular,
     CoordType *q_scaler)
 {
     // Step 1.
@@ -561,16 +561,22 @@ void find_ef_loss_backward_atom(
         distance_ij = std::sqrt( std::pow(neigh_vec[0], 2)
                                  + std::pow(neigh_vec[1], 2)
                                  + std::pow(neigh_vec[2], 2) );
-        if (distance_ij > rmax)
+        if (distance_ij > rmax_radial)
             continue;
         distance_ij_inv = 1.0 / distance_ij;
-        CoordType rq_chebyshev_vals[MAX_CHEBYSHEV_SIZE] = {0.0};
-        CoordType rq_chebyshev_der2r[MAX_CHEBYSHEV_SIZE] = {0.0};
-        find_rq_chebyshev<CoordType>(rq_chebyshev_vals,
-                                     rq_chebyshev_der2r,
+        CoordType rq_chebyshev_vals_radial[MAX_CHEBYSHEV_SIZE] = {0.0};
+        CoordType rq_chebyshev_der2r_radial[MAX_CHEBYSHEV_SIZE] = {0.0};
+        CoordType rq_chebyshev_vals_angular[MAX_CHEBYSHEV_SIZE] = {0.0};
+        CoordType rq_chebyshev_der2r_angular[MAX_CHEBYSHEV_SIZE] = {0.0};
+        find_rq_chebyshev<CoordType>(rq_chebyshev_vals_radial,
+                                     rq_chebyshev_der2r_radial,
                                      chebyshev_size,
-                                     rmax,
-                                     rmin,
+                                     rmax_radial,
+                                     distance_ij);
+        find_rq_chebyshev<CoordType>(rq_chebyshev_vals_angular,
+                                     rq_chebyshev_der2r_angular,
+                                     chebyshev_size,
+                                     rmax_angular,
                                      distance_ij);
         
         auto_dist_powers_[0] = 1.0;
@@ -582,14 +588,14 @@ void find_ef_loss_backward_atom(
             for (int xi=0; xi<chebyshev_size; xi++) {
                 int idx = (type_central*ntypes+type_outer)*(n_radial_basis+n_angular_basis)*chebyshev_size
                           + mu*chebyshev_size + xi;
-                dod_vals[mu] += coeffs[idx] * rq_chebyshev_vals[xi];
+                dod_vals[mu] += coeffs[idx] * rq_chebyshev_vals_radial[xi];
                 for (int aa=0; aa<3; aa++) {
                     dloss_combination_dod[mu] += 2*f_weight/(3*inum)
                                                  * (force_ml[center_idx][aa] - force_dft[center_idx][aa])
-                                                 * coeffs[idx] * rq_chebyshev_der2r[xi] * neigh_vec[aa] * distance_ij_inv;
+                                                 * coeffs[idx] * rq_chebyshev_der2r_radial[xi] * neigh_vec[aa] * distance_ij_inv;
                     dloss_combination_dod[mu] -= 2*f_weight/(3*inum)
                                                  * (force_ml[neigh_idx][aa] - force_dft[neigh_idx][aa])
-                                                 * coeffs[idx] * rq_chebyshev_der2r[xi] * neigh_vec[aa] * distance_ij_inv;
+                                                 * coeffs[idx] * rq_chebyshev_der2r_radial[xi] * neigh_vec[aa] * distance_ij_inv;
                 }
             }
         }
@@ -612,10 +618,10 @@ void find_ef_loss_backward_atom(
                         int idx = (type_central*ntypes+type_outer)*(n_radial_basis+n_angular_basis)*chebyshev_size
                                   + (n_radial_basis+mu)*chebyshev_size + xi;
 
-                        CoordType A = rq_chebyshev_vals[xi];
+                        CoordType A = rq_chebyshev_vals_angular[xi];
                         CoordType A_ders[3] = {0.0};
                         for (int aa=0; aa<3; aa++)
-                            A_ders[aa] = rq_chebyshev_der2r[xi] * neigh_vec[aa] * distance_ij_inv;
+                            A_ders[aa] = rq_chebyshev_der2r_angular[xi] * neigh_vec[aa] * distance_ij_inv;
                         
                         mom_vals[idx_Sinlm] += coeffs[idx] * A * B * C;
 
@@ -702,16 +708,22 @@ void find_ef_loss_backward_atom(
         distance_ij = std::sqrt( std::pow(neigh_vec[0], 2)
                                  + std::pow(neigh_vec[1], 2)
                                  + std::pow(neigh_vec[2], 2));
-        if (distance_ij > rmax)
+        if (distance_ij > rmax_radial)
             continue;
         distance_ij_inv = 1.0 / distance_ij;
-        CoordType rq_chebyshev_vals[MAX_CHEBYSHEV_SIZE] = {0.0};
-        CoordType rq_chebyshev_der2r[MAX_CHEBYSHEV_SIZE] = {0.0};
-        find_rq_chebyshev<CoordType>(rq_chebyshev_vals,
-                                     rq_chebyshev_der2r,
+        CoordType rq_chebyshev_vals_radial[MAX_CHEBYSHEV_SIZE] = {0.0};
+        CoordType rq_chebyshev_der2r_radial[MAX_CHEBYSHEV_SIZE] = {0.0};
+        CoordType rq_chebyshev_vals_angular[MAX_CHEBYSHEV_SIZE] = {0.0};
+        CoordType rq_chebyshev_der2r_angular[MAX_CHEBYSHEV_SIZE] = {0.0};
+        find_rq_chebyshev<CoordType>(rq_chebyshev_vals_radial,
+                                     rq_chebyshev_der2r_radial,
                                      chebyshev_size,
-                                     rmax,
-                                     rmin,
+                                     rmax_radial,
+                                     distance_ij);
+        find_rq_chebyshev<CoordType>(rq_chebyshev_vals_angular,
+                                     rq_chebyshev_der2r_angular,
+                                     chebyshev_size,
+                                     rmax_angular,
                                      distance_ij);
         auto_dist_powers_[0] = 1.0;
         for (int k=1; k<=l_max; k++)
@@ -726,12 +738,12 @@ void find_ef_loss_backward_atom(
                 CoordType tmpe_loss_der2coeff = 0.0;
                 tmpe_loss_der2coeff = 2*e_weight/inum*(etot_ml - etot_dft)
                                       * e_sites_der2dod[mu]
-                                      * rq_chebyshev_vals[xi];
+                                      * rq_chebyshev_vals_radial[xi];
                 
                 CoordType tmpf_loss_der2coeff = 0.0;
                 for (int aa=0; aa<3; aa++) {
                     CoordType tmp_prefix = 0.0;
-                    CoordType tmp_deriv = rq_chebyshev_der2r[xi] * neigh_vec[aa] * distance_ij_inv;
+                    CoordType tmp_deriv = rq_chebyshev_der2r_radial[xi] * neigh_vec[aa] * distance_ij_inv;
 
                     tmp_prefix += 2*f_weight/(3*inum)
                                   * (force_ml[center_idx][aa] - force_dft[center_idx][aa]);
@@ -766,10 +778,10 @@ void find_ef_loss_backward_atom(
                         int idx = (type_central*ntypes+type_outer)*(n_radial_basis+n_angular_basis)*chebyshev_size
                                   + (n_radial_basis+mu)*chebyshev_size + xi;
                         
-                        CoordType A = rq_chebyshev_vals[xi];
+                        CoordType A = rq_chebyshev_vals_angular[xi];
                         CoordType A_ders[3] = {0.0};
                         for (int aa=0; aa<3; aa++)
-                            A_ders[aa] = rq_chebyshev_der2r[xi] * neigh_vec[aa] * distance_ij_inv;
+                            A_ders[aa] = rq_chebyshev_der2r_angular[xi] * neigh_vec[aa] * distance_ij_inv;
                         
                         CoordType tmpe_loss_der2coeff = 0.0;
                         tmpe_loss_der2coeff = 2*e_weight/inum*(etot_ml-etot_dft)
@@ -926,8 +938,8 @@ void find_ef_loss_backward_kernel(
     int *type_map,
     int umax_num_neigh_atoms,
     int nghost,
-    CoordType rmax,
-    CoordType rmin,
+    CoordType rmax_radial,
+    CoordType rmax_angular,
     CoordType *q_scaler)
 {
     int nx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -991,8 +1003,8 @@ void find_ef_loss_backward_kernel(
             type_map,
             umax_num_neigh_atoms,
             nghost,
-            rmax,
-            rmin,
+            rmax_radial,
+            rmax_angular,
             q_scaler);
     }
 }
@@ -1034,8 +1046,8 @@ void find_ef_loss_backward_launcher(
     int *h_type_map,
     int umax_num_neigh_atoms,
     int nghost,
-    CoordType rmax,
-    CoordType rmin,
+    CoordType rmax_radial,
+    CoordType rmax_angular,
     CoordType *h_q_scaler)
 {
     int block_size_x = 64;
@@ -1152,8 +1164,8 @@ void find_ef_loss_backward_launcher(
         d_type_map,
         umax_num_neigh_atoms,
         nghost,
-        rmax,
-        rmin,
+        rmax_radial,
+        rmax_angular,
         d_q_scaler);
     CHECK_CUDA_KERNEL;
     auto t2 = std::chrono::high_resolution_clock::now();

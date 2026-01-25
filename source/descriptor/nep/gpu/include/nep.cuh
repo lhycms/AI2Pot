@@ -51,8 +51,8 @@ void find_ef_atom(
     int *type_map,
     int umax_num_neigh_atoms,
     int nghost,
-    CoordType rmax,
-    CoordType rmin,
+    CoordType rmax_radial,
+    CoordType rmax_angular,
     CoordType *q_scaler);
 
 
@@ -83,8 +83,8 @@ void find_ef_kernel(
     int *type_map,
     int umax_num_neigh_atoms,
     int nghost,
-    CoordType rmax,
-    CoordType rmin,
+    CoordType rmax_radial,
+    CoordType rmax_angular,
     CoordType *q_scaler);
 
 
@@ -115,8 +115,8 @@ void find_ef_launcher(
     int *h_type_map,
     int umax_num_neigh_atoms,
     int nghost,
-    CoordType rmax,
-    CoordType rmin,
+    CoordType rmax_radial,
+    CoordType rmax_angular,
     CoordType *h_q_scaler);
 
 
@@ -138,8 +138,8 @@ void find_descriptors_atom(
     int *type_map,
     int umax_num_neigh_atoms,
     int nghost,
-    CoordType rmax,
-    CoordType rmin);
+    CoordType rmax_radial,
+    CoordType rmax_angular);
 
 
 template <typename CoordType>
@@ -163,8 +163,8 @@ void find_descriptors_kernel(
     int *type_map,
     int umax_num_neigh_atoms,
     int nghost,
-    CoordType rmax,
-    CoordType rmin);
+    CoordType rmax_radial,
+    CoordType rmax_angular);
 
 
 template <typename CoordType>
@@ -188,8 +188,8 @@ void find_descriptors_launcher(
     int *h_type_map,
     int umax_num_neigh_atoms,
     int nghost,
-    CoordType rmax,
-    CoordType rmin);
+    CoordType rmax_radial,
+    CoordType rmax_angular);
 
 
 
@@ -220,8 +220,8 @@ void find_ef_atom(
     int *type_map,
     int umax_num_neigh_atoms,
     int nghost,
-    CoordType rmax,
-    CoordType rmin,
+    CoordType rmax_radial,
+    CoordType rmax_angular,
     CoordType *q_scaler)
 {
     // Step 1. temp array
@@ -259,17 +259,24 @@ void find_ef_atom(
         distance_ij = std::sqrt( std::pow(neigh_vec[0], 2)
                                  + std::pow(neigh_vec[1], 2)
                                  + std::pow(neigh_vec[2], 2) );
-        if (distance_ij > rmax)
+        if (distance_ij > rmax_radial)
             continue;
         distance_ij_inv = 1.0 / distance_ij;
-        CoordType rq_chebyshev_vals[MAX_CHEBYSHEV_SIZE] = {0.};
-        CoordType rq_chebyshev_ders2r[MAX_CHEBYSHEV_SIZE] = {0.};
+        CoordType rq_chebyshev_vals_radial[MAX_CHEBYSHEV_SIZE] = {0.};
+        CoordType rq_chebyshev_ders2r_radial[MAX_CHEBYSHEV_SIZE] = {0.};
+        CoordType rq_chebyshev_vals_angular[MAX_CHEBYSHEV_SIZE] = {0.};
+        CoordType rq_chebyshev_ders2r_angular[MAX_CHEBYSHEV_SIZE] = {0.};
         find_rq_chebyshev<CoordType>(
-            rq_chebyshev_vals,
-            rq_chebyshev_ders2r,
+            rq_chebyshev_vals_radial,
+            rq_chebyshev_ders2r_radial,
             chebyshev_size,
-            rmax,
-            rmin,
+            rmax_radial,
+            distance_ij);
+        find_rq_chebyshev<CoordType>(
+            rq_chebyshev_vals_angular,
+            rq_chebyshev_ders2r_angular,
+            chebyshev_size,
+            rmax_angular,
             distance_ij);
         
         auto_dist_powers_[0] = 1.0;
@@ -277,15 +284,17 @@ void find_ef_atom(
             auto_dist_powers_[k] = auto_dist_powers_[k-1] * distance_ij;
 
         // Step 2.1. Radial forward
+        if (distance_ij <= rmax_radial)
         for (int mu=0; mu<n_radial_basis; mu++) {
             for (int xi=0; xi<chebyshev_size; xi++) {
                 int idx = (type_central*ntypes+type_outer)*(n_radial_basis+n_angular_basis)*chebyshev_size
                           + mu*chebyshev_size + xi;
-                dod_vals[mu] += coeffs[idx] * rq_chebyshev_vals[xi];
+                dod_vals[mu] += coeffs[idx] * rq_chebyshev_vals_radial[xi];
             }
         }
 
         // Step 2.2. Angular forward: basic
+        if (distance_ij <= rmax_angular)
         for (int mu=0; mu<n_angular_basis; mu++) {
             for (int l=1; l<=l_max; l++) {
                 CoordType C = 1/auto_dist_powers_[l];
@@ -299,7 +308,7 @@ void find_ef_atom(
                         int idx = (type_central*ntypes+type_outer)*(n_radial_basis+n_angular_basis)*chebyshev_size
                                   + (n_radial_basis+mu)*chebyshev_size + xi;
 
-                        CoordType A = rq_chebyshev_vals[xi];
+                        CoordType A = rq_chebyshev_vals_angular[xi];
                         mom_vals[idx_Sinlm] += coeffs[idx] * A * B * C;
                     }
                 }
@@ -383,17 +392,24 @@ void find_ef_atom(
         distance_ij = std::sqrt( std::pow(neigh_vec[0], 2)
                                  + std::pow(neigh_vec[1], 2)
                                  + std::pow(neigh_vec[2], 2) );
-        if (distance_ij > rmax)
+        if (distance_ij > rmax_radial)
             continue;
         distance_ij_inv = 1.0 / distance_ij;
-        CoordType rq_chebyshev_vals[MAX_CHEBYSHEV_SIZE] = {0.};
-        CoordType rq_chebyshev_ders2r[MAX_CHEBYSHEV_SIZE] = {0.};
+        CoordType rq_chebyshev_vals_radial[MAX_CHEBYSHEV_SIZE] = {0.};
+        CoordType rq_chebyshev_ders2r_radial[MAX_CHEBYSHEV_SIZE] = {0.};
+        CoordType rq_chebyshev_vals_angular[MAX_CHEBYSHEV_SIZE] = {0.};
+        CoordType rq_chebyshev_ders2r_angular[MAX_CHEBYSHEV_SIZE] = {0.};
         find_rq_chebyshev<CoordType>(
-            rq_chebyshev_vals,
-            rq_chebyshev_ders2r,
+            rq_chebyshev_vals_radial,
+            rq_chebyshev_ders2r_radial,
             chebyshev_size,
-            rmax,
-            rmin,
+            rmax_radial,
+            distance_ij);
+        find_rq_chebyshev<CoordType>(
+            rq_chebyshev_vals_angular,
+            rq_chebyshev_ders2r_angular,
+            chebyshev_size,
+            rmax_angular,
             distance_ij);
         
         auto_dist_powers_[0] = 1.0;
@@ -401,12 +417,13 @@ void find_ef_atom(
             auto_dist_powers_[k] = auto_dist_powers_[k-1] * distance_ij;
 
         // Step 3.3.1. Raidal contribution
+        if (distance_ij <= rmax_radial)
         for (int mu=0; mu<n_radial_basis; mu++) {
             for (int xi=0; xi<chebyshev_size; xi++) {
                 int idx = (type_central*ntypes+type_outer)*(n_radial_basis+n_angular_basis)*chebyshev_size
                             + mu*chebyshev_size + xi;
 
-                CoordType prefix_mom_der2xyz = coeffs[idx] * rq_chebyshev_ders2r[xi] * distance_ij_inv;
+                CoordType prefix_mom_der2xyz = coeffs[idx] * rq_chebyshev_ders2r_radial[xi] * distance_ij_inv;
                 for (int aa=0; aa<3; aa++) {
                     CoordType mom_der2xyz = prefix_mom_der2xyz * neigh_vec[aa];
                     CoordType e_site_ders_ija = e_sites_der2dod[mu] * mom_der2xyz;
@@ -417,6 +434,7 @@ void find_ef_atom(
         }
 
         // Step 3.3.2. Angular contribution
+        if (distance_ij <= rmax_angular)
         for (int mu=0; mu<n_angular_basis; mu++) {
             for (int l=1; l<=l_max; l++) {
                 for (int mp=0; mp<2*l+1; mp++) {
@@ -437,12 +455,12 @@ void find_ef_atom(
                     for (int xi=0; xi<chebyshev_size; xi++) {
                         int idx = (type_central*ntypes+type_outer)*(n_radial_basis+n_angular_basis)*chebyshev_size
                                     + (n_radial_basis+mu)*chebyshev_size + xi;
-                        CoordType A = rq_chebyshev_vals[xi];
+                        CoordType A = rq_chebyshev_vals_angular[xi];
 
                         CoordType A_ders[3] = {0.0};
-                        A_ders[0] = rq_chebyshev_ders2r[xi] * neigh_vec[0] * distance_ij_inv;
-                        A_ders[1] = rq_chebyshev_ders2r[xi] * neigh_vec[1] * distance_ij_inv;
-                        A_ders[2] = rq_chebyshev_ders2r[xi] * neigh_vec[2] * distance_ij_inv;   
+                        A_ders[0] = rq_chebyshev_ders2r_angular[xi] * neigh_vec[0] * distance_ij_inv;
+                        A_ders[1] = rq_chebyshev_ders2r_angular[xi] * neigh_vec[1] * distance_ij_inv;
+                        A_ders[2] = rq_chebyshev_ders2r_angular[xi] * neigh_vec[2] * distance_ij_inv;   
                         
                         for (int aa=0; aa<3; aa++) {
                             CoordType mom_der2xyz = coeffs[idx] *
@@ -495,8 +513,8 @@ void find_ef_kernel(
     int *type_map,
     int umax_num_neigh_atoms,
     int nghost,
-    CoordType rmax,
-    CoordType rmin,
+    CoordType rmax_radial,
+    CoordType rmax_angular,
     CoordType *q_scaler)
 {
     int nx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -538,8 +556,8 @@ void find_ef_kernel(
             type_map,
             umax_num_neigh_atoms,
             nghost,
-            rmax,
-            rmin,
+            rmax_radial,
+            rmax_angular,
             q_scaler);
     }
 }
@@ -572,8 +590,8 @@ void find_ef_launcher(
     int *h_type_map,
     int umax_num_neigh_atoms,
     int nghost,
-    CoordType rmax,
-    CoordType rmin,
+    CoordType rmax_radial,
+    CoordType rmax_angular,
     CoordType *h_q_scaler)
 {
     int block_size_x = 64;
@@ -661,8 +679,8 @@ void find_ef_launcher(
         d_type_map,
         umax_num_neigh_atoms,
         nghost,
-        rmax,
-        rmin,
+        rmax_radial,
+        rmax_angular,
         d_q_scaler);
     CHECK_CUDA_KERNEL;
     auto t2 = std::chrono::high_resolution_clock::now();
@@ -710,8 +728,8 @@ void find_descriptors_atom(
     int *type_map,
     int umax_num_neigh_atoms,
     int nghost,
-    CoordType rmax,
-    CoordType rmin)
+    CoordType rmax_radial,
+    CoordType rmax_angular)
 {
     // Step 1. Init temp array
     CoordType mom_vals[MAX_NUM_SINLM] = {0.0};
@@ -740,17 +758,24 @@ void find_descriptors_atom(
         distance_ij = std::sqrt( std::pow(neigh_vec[0], 2)
                                  + std::pow(neigh_vec[1], 2)
                                  + std::pow(neigh_vec[2], 2) );
-        if (distance_ij > rmax)
+        if (distance_ij > rmax_radial)
             continue;
         distance_ij_inv = 1.0 / distance_ij;
-        CoordType rq_chebyshev_vals[MAX_CHEBYSHEV_SIZE] = {0.0};
-        CoordType rq_chebyshev_der2r[MAX_CHEBYSHEV_SIZE] = {0.0};
+        CoordType rq_chebyshev_vals_radial[MAX_CHEBYSHEV_SIZE] = {0.0};
+        CoordType rq_chebyshev_der2r_radial[MAX_CHEBYSHEV_SIZE] = {0.0};
+        CoordType rq_chebyshev_vals_angular[MAX_CHEBYSHEV_SIZE] = {0.0};
+        CoordType rq_chebyshev_der2r_angular[MAX_CHEBYSHEV_SIZE] = {0.0};
         find_rq_chebyshev<CoordType>(
-            rq_chebyshev_vals,
-            rq_chebyshev_der2r,
+            rq_chebyshev_vals_radial,
+            rq_chebyshev_der2r_radial,
             chebyshev_size,
-            rmax,
-            rmin,
+            rmax_radial,
+            distance_ij);
+        find_rq_chebyshev<CoordType>(
+            rq_chebyshev_vals_angular,
+            rq_chebyshev_der2r_angular,
+            chebyshev_size,
+            rmax_angular,
             distance_ij);
         
         auto_dist_powers_[0] = 1.0;
@@ -758,15 +783,17 @@ void find_descriptors_atom(
             auto_dist_powers_[k] = auto_dist_powers_[k-1] * distance_ij;
         
         // Step 2.1. 
+        if (distance_ij <= rmax_radial)
         for (int mu=0; mu<n_radial_basis; mu++) {
             for (int xi=0; xi<chebyshev_size; xi++) {
                 int idx = (type_central*ntypes+type_outer)*(n_radial_basis+n_angular_basis)*chebyshev_size
                           + mu*chebyshev_size + xi;
-                dod_vals[mu] += coeffs[idx] * rq_chebyshev_vals[xi];
+                dod_vals[mu] += coeffs[idx] * rq_chebyshev_vals_radial[xi];
             }
         }
 
         // Step 2.2.
+        if (distance_ij <= rmax_angular)
         for (int mu=0; mu<n_angular_basis; mu++) {
             for (int l=1; l<=l_max; l++) {
                 for (int mp=0; mp<2*l+1; mp++) {
@@ -778,7 +805,7 @@ void find_descriptors_atom(
                     for (int xi=0; xi<chebyshev_size; xi++) {
                         int idx = (type_central*ntypes+type_outer)*(n_radial_basis+n_angular_basis)*chebyshev_size
                                    + (n_radial_basis+mu)*chebyshev_size + xi;
-                        CoordType A = rq_chebyshev_vals[xi];
+                        CoordType A = rq_chebyshev_vals_angular[xi];
                         mom_vals[idx_Sinlm] += coeffs[idx] * A * B * C;
                     }
                 }
@@ -827,8 +854,8 @@ void find_descriptors_kernel(
     int *type_map,
     int umax_num_neigh_atoms,
     int nghost,
-    CoordType rmax,
-    CoordType rmin)
+    CoordType rmax_radial,
+    CoordType rmax_angular)
 {
     int nx = blockIdx.x * blockDim.x + threadIdx.x;
     int istruct = nx / natoms_pad;
@@ -863,8 +890,8 @@ void find_descriptors_kernel(
             type_map,
             umax_num_neigh_atoms,
             nghost,
-            rmax,
-            rmin);
+            rmax_radial,
+            rmax_angular);
     }
 }
 
@@ -890,8 +917,8 @@ void find_descriptors_launcher(
     int *h_type_map,
     int umax_num_neigh_atoms,
     int nghost,
-    CoordType rmax,
-    CoordType rmin)
+    CoordType rmax_radial,
+    CoordType rmax_angular)
 {
     int block_size_x = 64;
     int grid_size_x = (batch_size * natoms_pad - 1) / block_size_x + 1;
@@ -951,8 +978,8 @@ void find_descriptors_launcher(
         d_type_map,
         umax_num_neigh_atoms,
         nghost,
-        rmax,
-        rmin);
+        rmax_radial,
+        rmax_angular);
     CHECK_CUDA_KERNEL;
 
     // 

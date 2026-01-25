@@ -33,7 +33,6 @@ static __host__ __device__
 void find_switch_func(CoordType &val,
                       CoordType &der2r,
                       CoordType rmax,
-                      CoordType rmin,
                       CoordType distance_ij);
 
 
@@ -43,7 +42,6 @@ void find_rb_chebyshev(CoordType *vals,
                        CoordType *ders2r,
                        int chebyshev_size,
                        CoordType rmax,
-                       CoordType rmin,
                        CoordType distance);
 
 
@@ -53,7 +51,6 @@ void find_rq_chebyshev(CoordType *vals,
                        CoordType *ders2r,
                        int chebyshev_size,
                        CoordType rmax,
-                       CoordType rmin,
                        CoordType distance_ij);
 
 
@@ -62,7 +59,6 @@ static __host__ __device__
 void find_switch_func(CoordType& val,
                       CoordType& der2r,
                       CoordType rmax,
-                      CoordType rmin,
                       CoordType distance_ij)
 {
     CoordType uu = M_PI * distance_ij / rmax;
@@ -83,7 +79,6 @@ void find_rb_chebyshev(CoordType *vals,
                        CoordType *ders2r,
                        int chebyshev_size,
                        CoordType rmax,
-                       CoordType rmin,
                        CoordType distance_ij)
 {
     CoordType T_vals[MAX_CHEBYSHEV_SIZE] = {0.};
@@ -127,7 +122,6 @@ void find_rq_chebyshev(CoordType *vals,
                        CoordType *ders2r,
                        int chebyshev_size,
                        CoordType rmax,
-                       CoordType rmin,
                        CoordType distance_ij)
 {
     CoordType rb_chebyshev_vals[MAX_CHEBYSHEV_SIZE] = {0.0};
@@ -138,12 +132,10 @@ void find_rq_chebyshev(CoordType *vals,
                       rb_chebyshev_ders2r,
                       chebyshev_size,
                       rmax,
-                      rmin,
                       distance_ij);
     find_switch_func(switch_func_val,
                      switch_func_der2r,
                      rmax,
-                     rmin,
                      distance_ij);
     for (int ii=0; ii<chebyshev_size; ii++) {
         vals[ii] = switch_func_val * rb_chebyshev_vals[ii];

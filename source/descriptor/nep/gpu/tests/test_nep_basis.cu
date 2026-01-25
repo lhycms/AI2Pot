@@ -14,8 +14,8 @@ class NepBasisTest : public ::testing::Test
 {
 protected:
     double distance_ij;
-    double rmax;
-    double rmin;
+    double rmax_radial;
+    double rmax_angular;
     double *switch_func_val_ptr;
     double *switch_func_der2r_ptr;
 
@@ -34,8 +34,8 @@ protected:
     }
 
     void SetUp() override {
-        rmax = 5.0;
-        rmin = 2.0;
+        rmax_radial = 5.0;
+        rmax_angular = 5.0;
 
         switch_func_val_ptr = (double*)malloc(sizeof(double));
         memset(switch_func_val_ptr, 0, sizeof(double));
@@ -72,8 +72,7 @@ TEST_F(NepBasisTest, switch_func_test) {
     ai2pot::nep::find_switch_func(
         *switch_func_val_ptr,
         *switch_func_der2r_ptr,
-        rmax,
-        rmin,
+        rmax_radial,
         distance_ij);
 printf("NepBasisTest.switch_func_test:\n");
 printf("\t1. switch_func_val = %g\n", *switch_func_val_ptr);
@@ -88,8 +87,7 @@ TEST_F(NepBasisTest, rb_chebyshev_test) {
         rb_chebyshev_vals,
         rb_chebyshev_ders2r,
         chebyshev_size,
-        rmax,
-        rmin,
+        rmax_radial,
         distance_ij);
 
 printf("NepBasisTest.rb_chebyshev_test:\n");
@@ -111,8 +109,7 @@ TEST_F(NepBasisTest, rq_chebyshev_test) {
         rq_chebyshev_vals,
         rq_chebyshev_ders2r,
         chebyshev_size,
-        rmax,
-        rmin,
+        rmax_radial,
         distance_ij);
 
 printf("NepBasisTest.rq_chebyshev_test:\n");

@@ -48,8 +48,8 @@ void find_ef_torch_launcher(
     int *d_type_map,
     int umax_num_neigh_atoms,
     int nghost,
-    CoordType rmax,
-    CoordType rmin,
+    CoordType rmax_radial,
+    CoordType rmax_angular,
     CoordType *d_q_scaler);
 
 
@@ -74,8 +74,8 @@ void find_descriptor_torch_launcher(
     int *d_type_map,
     int umax_num_neigh_atoms,
     int nghost,
-    CoordType rmax,
-    CoordType rmin);
+    CoordType rmax_radial,
+    CoordType rmax_angular);
 
 };  // namespace : nep
 };  // namespace : ai2pot

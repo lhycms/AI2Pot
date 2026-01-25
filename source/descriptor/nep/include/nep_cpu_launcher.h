@@ -49,8 +49,8 @@ static void find_ef_cpu_launcher(
     int *type_map,
     int umax_num_neigh_atoms,
     int nghost,
-    CoordType rmax,
-    CoordType rmin,
+    CoordType rmax_radial,
+    CoordType rmax_angular,
     CoordType *q_scaler);
 
 
@@ -74,8 +74,8 @@ static void find_descriptors_cpu_launcher(
     int *type_map,
     int umax_num_neigh_atoms,
     int nghost,
-    CoordType rmax,
-    CoordType rmin);
+    CoordType rmax_radial,
+    CoordType rmax_angular);
 
 
 
@@ -106,8 +106,8 @@ void find_ef_cpu_launcher(
     int *type_map,
     int umax_num_neigh_atoms,
     int nghost,
-    CoordType rmax,
-    CoordType rmin,
+    CoordType rmax_radial,
+    CoordType rmax_angular,
     CoordType *q_scaler)
 {
     for (int bb=0; bb<batch_size; bb++) {
@@ -143,8 +143,8 @@ void find_ef_cpu_launcher(
             type_map,
             umax_num_neigh_atoms,
             nghost,
-            rmax,
-            rmin,
+            rmax_radial,
+            rmax_angular,
             q_scaler);
     }
 }
@@ -170,8 +170,8 @@ void find_descriptors_cpu_launcher(
     int *type_map,
     int umax_num_neigh_atoms,
     int nghost,
-    CoordType rmax,
-    CoordType rmin)
+    CoordType rmax_radial,
+    CoordType rmax_angular)
 {
     int num_descriptors = NepIndex::get_num_descriptors(n_radial_basis, n_angular_basis, l_max);
 
@@ -201,8 +201,8 @@ void find_descriptors_cpu_launcher(
             type_map,
             umax_num_neigh_atoms,
             nghost,
-            rmax,
-            rmin);
+            rmax_radial,
+            rmax_angular);
     }
 }
 

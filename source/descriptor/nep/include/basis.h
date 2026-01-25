@@ -30,7 +30,7 @@ class SwitchFunction {
 public:
     SwitchFunction() {};
 
-    SwitchFunction(CoordType rmax, CoordType rmin);
+    SwitchFunction(CoordType rmax);
 
     CoordType val(CoordType distance_ij);
 
@@ -39,7 +39,6 @@ public:
 
 private:
     CoordType _rmax = 0;
-    CoordType _rmin = 0;
 };  // class : SwitchFunction
 
 
@@ -50,8 +49,7 @@ public:
 
     RB_Chebyshev(
         int size,
-        CoordType rmax,
-        CoordType rmin);
+        CoordType rmax);
 
     RB_Chebyshev(const RB_Chebyshev& rhs);
 
@@ -69,8 +67,6 @@ public:
 
     const CoordType rmax() const;
 
-    const CoordType rmin() const;
-
     const CoordType* vals() const;
 
     const CoordType* ders2uu() const;
@@ -82,7 +78,6 @@ public:
 private:
     int _size = 0;
     CoordType _rmax = 0;
-    CoordType _rmin = 0;
     CoordType* _T_vals = nullptr;
     CoordType* _T_ders2uu = nullptr;
     CoordType* _vals = nullptr;
@@ -98,8 +93,7 @@ public:
 
     RQ_Chebyshev(
         int size,
-        CoordType rmax,
-        CoordType rmin);
+        CoordType rmax);
 
     RQ_Chebyshev(const RQ_Chebyshev& rhs);
 
@@ -117,8 +111,6 @@ public:
 
     const CoordType rmax() const;
 
-    const CoordType rmin() const;
-
     const CoordType* vals() const;
 
     const CoordType* ders2r() const;
@@ -128,7 +120,6 @@ public:
 private:
     int _size = 0;
     CoordType _rmax = 0;
-    CoordType _rmin = 0;
     SwitchFunction<CoordType> _switch_func;
     RB_Chebyshev<CoordType>* _rb_ptr = nullptr;
     CoordType* _vals = nullptr;
@@ -137,10 +128,9 @@ private:
 
 
 template <typename CoordType>
-SwitchFunction<CoordType>::SwitchFunction(CoordType rmax, CoordType rmin)
+SwitchFunction<CoordType>::SwitchFunction(CoordType rmax)
 {
     this->_rmax = rmax;
-    this->_rmin = rmin;
 }
 
 template <typename CoordType>
@@ -173,7 +163,6 @@ RB_Chebyshev<CoordType>::RB_Chebyshev()
 {
     this->_size = 0;
     this->_rmax = 0;
-    this->_rmin = 0;
     this->_T_vals = nullptr;
     this->_T_ders2uu = nullptr;
     this->_vals = nullptr;
@@ -184,12 +173,10 @@ RB_Chebyshev<CoordType>::RB_Chebyshev()
 template <typename CoordType>
 RB_Chebyshev<CoordType>::RB_Chebyshev(
     int size,
-    CoordType rmax,
-    CoordType rmin)
+    CoordType rmax)
 {
     this->_size = size;
     this->_rmax = rmax;
-    this->_rmin = rmin;
     this->_T_vals = (CoordType*)malloc(sizeof(CoordType) * this->_size);
     this->_T_ders2uu = (CoordType*)malloc(sizeof(CoordType) * this->_size);
     this->_vals = (CoordType*)malloc(sizeof(CoordType) * this->_size);
@@ -205,7 +192,6 @@ RB_Chebyshev<CoordType>::RB_Chebyshev(const RB_Chebyshev& rhs)
 {
     this->_size = rhs._size;
     this->_rmax = rhs._rmax;
-    this->_rmin = rhs._rmin;
     
     if (this->_size != 0) {
         this->_T_vals = (CoordType*)malloc(sizeof(CoordType) * this->_size);
@@ -227,7 +213,6 @@ RB_Chebyshev<CoordType>::RB_Chebyshev(RB_Chebyshev&& rhs)
     if (this != &rhs) {
         this->_size = rhs._size;
         this->_rmax = rhs._rmax;
-        this->_rmin = rhs._rmin;
         this->_T_vals = rhs._T_vals;
         this->_T_ders2uu = rhs._T_ders2uu;
         this->_vals = rhs._vals;
@@ -236,7 +221,6 @@ RB_Chebyshev<CoordType>::RB_Chebyshev(RB_Chebyshev&& rhs)
 
         rhs._size = 0;
         rhs._rmax = 0.0;
-        rhs._rmin = 0.0;
         rhs._T_vals = nullptr;
         rhs._T_ders2uu = nullptr;
         rhs._vals = nullptr;
@@ -256,12 +240,10 @@ RB_Chebyshev<CoordType>& RB_Chebyshev<CoordType>::operator=(const RB_Chebyshev& 
         free(this->_ders2r);
         this->_size = 0;
         this->_rmax = 0.0;
-        this->_rmin = 0.0;
     }
 
     this->_size = rhs._size;
     this->_rmax = rhs._rmax;
-    this->_rmin = rhs._rmin;
     if (this->_size != 0) {
         this->_T_vals = (CoordType*)malloc(sizeof(CoordType) * this->_size);
         this->_T_ders2uu = (CoordType*)malloc(sizeof(CoordType) * this->_size);
@@ -292,12 +274,10 @@ RB_Chebyshev<CoordType>& RB_Chebyshev<CoordType>::operator=(RB_Chebyshev&& rhs)
             free(this->_ders2r);
             this->_size = 0;
             this->_rmax = 0.0;
-            this->_rmin = 0.0;
         }
 
         this->_size = rhs._size;
         this->_rmax = rhs._rmax;
-        this->_rmin = rhs._rmin;
         this->_T_vals = rhs._T_vals;
         this->_T_ders2uu = rhs._T_ders2uu;
         this->_vals = rhs._vals;
@@ -306,7 +286,6 @@ RB_Chebyshev<CoordType>& RB_Chebyshev<CoordType>::operator=(RB_Chebyshev&& rhs)
 
         rhs._size = 0;
         rhs._rmax = 0.0;
-        rhs._rmin = 0.0;
         rhs._T_vals = nullptr;
         rhs._T_ders2uu = nullptr;
         rhs._vals = nullptr;
@@ -375,12 +354,6 @@ const CoordType RB_Chebyshev<CoordType>::rmax() const
 }
 
 template <typename CoordType>
-const CoordType RB_Chebyshev<CoordType>::rmin() const
-{
-    return this->_rmin;
-}
-
-template <typename CoordType>
 const CoordType* RB_Chebyshev<CoordType>::vals() const
 {
     return this->_vals;
@@ -422,7 +395,6 @@ RQ_Chebyshev<CoordType>::RQ_Chebyshev()
 {
     this->_size = 0;
     this->_rmax = 0;
-    this->_rmin = 0;
     this->_rb_ptr = nullptr;
     this->_vals = nullptr;
     this->_ders2r = nullptr;
@@ -431,14 +403,12 @@ RQ_Chebyshev<CoordType>::RQ_Chebyshev()
 template <typename CoordType>
 RQ_Chebyshev<CoordType>::RQ_Chebyshev(
     int size,
-    CoordType rmax,
-    CoordType rmin)
+    CoordType rmax)
 {
     this->_size = size;
     this->_rmax = rmax;
-    this->_rmin = rmin;
-    this->_switch_func = SwitchFunction<CoordType>(rmax, rmin);
-    this->_rb_ptr = new RB_Chebyshev<CoordType>(size, rmax, rmin);
+    this->_switch_func = SwitchFunction<CoordType>(rmax);
+    this->_rb_ptr = new RB_Chebyshev<CoordType>(size, rmax);
     this->_vals = (CoordType*)malloc(sizeof(CoordType) * this->_size);
     //memset(this->_vals, 0, sizeof(CoordType) * this->_size);
     this->_ders2r = (CoordType*)malloc(sizeof(CoordType) * this->_size);
@@ -450,7 +420,6 @@ RQ_Chebyshev<CoordType>::RQ_Chebyshev(const RQ_Chebyshev& rhs)
 {
     this->_size = rhs._size;
     this->_rmax = rhs._rmax;
-    this->_rmin = rhs._rmin;
     this->_switch_func = rhs._switch_func;
     this->_rb_ptr = new RB_Chebyshev<CoordType>();
     *(this->_rb_ptr) = *(rhs._rb_ptr);
@@ -473,7 +442,6 @@ RQ_Chebyshev<CoordType>::RQ_Chebyshev(RQ_Chebyshev&& rhs)
     if (this != &rhs) {
         this->_size = rhs._size;
         this->_rmax = rhs._rmax;
-        this->_rmin = rhs._rmin;
         this->_switch_func = rhs._switch_func;
         this->_rb_ptr = rhs._rb_ptr;
         this->_vals = rhs._vals;
@@ -481,7 +449,6 @@ RQ_Chebyshev<CoordType>::RQ_Chebyshev(RQ_Chebyshev&& rhs)
 
         rhs._size = 0;
         rhs._rmax = 0;
-        rhs._rmin = 0;
         rhs._rb_ptr = nullptr;
         rhs._vals = nullptr;
         rhs._ders2r = nullptr;
@@ -497,12 +464,10 @@ RQ_Chebyshev<CoordType>& RQ_Chebyshev<CoordType>::operator=(const RQ_Chebyshev& 
         free(this->_ders2r);
         this->_size = 0;
         this->_rmax = 0;
-        this->_rmin = 0;
     }
 
     this->_size = rhs._size;
     this->_rmax = rhs._rmax;
-    this->_rmin = rhs._rmin;
     this->_switch_func = rhs._switch_func;
     this->_rb_ptr = new RB_Chebyshev<CoordType>();
     *(this->_rb_ptr) = *(rhs._rb_ptr);
@@ -531,12 +496,10 @@ RQ_Chebyshev<CoordType>& RQ_Chebyshev<CoordType>::operator=(RQ_Chebyshev&& rhs)
             free(this->_ders2r);
             this->_size = 0;
             this->_rmax = 0;
-            this->_rmin = 0;
         } 
 
         this->_size = rhs._size;
         this->_rmax = rhs._rmax;
-        this->_rmin = rhs._rmin;
         this->_switch_func = rhs._switch_func;
         this->_rb_ptr = rhs._rb_ptr;
         this->_vals = rhs._vals;
@@ -544,7 +507,6 @@ RQ_Chebyshev<CoordType>& RQ_Chebyshev<CoordType>::operator=(RQ_Chebyshev&& rhs)
 
         rhs._size = 0;
         rhs._rmax = 0;
-        rhs._rmin = 0;
         rhs._rb_ptr = nullptr;
         rhs._vals = nullptr;
         rhs._ders2r = nullptr;
@@ -587,11 +549,6 @@ const CoordType RQ_Chebyshev<CoordType>::rmax() const
     return this->_rmax;
 }
 
-template <typename CoordType>
-const CoordType RQ_Chebyshev<CoordType>::rmin() const
-{
-    return this->_rmin;
-}
 
 template <typename CoordType>
 const CoordType* RQ_Chebyshev<CoordType>::vals() const

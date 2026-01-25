@@ -29,7 +29,7 @@ class NepTest(unittest.TestCase):
         print("NepTest (TestCase) is setting up...\n")
         # 0.
         self.torch_float_dtype: torch._C.dtype = torch.float64
-        self.device: torch._C.device = torch.device("cuda")
+        self.device: torch._C.device = torch.device("cpu")
 
         # 1. 
         self.n_radial_basis: int = 4
@@ -37,8 +37,8 @@ class NepTest(unittest.TestCase):
         self.l_max: int = 4
         self.chebyshev_size: int = 4
         self.num_neurons: int = 30
-        self.rmax: float = 5.0
-        self.rmin: float = 0.0
+        self.rmax_radial: float = 5.0
+        self.rmax_angular: float = 4.0
         self.umax_num_neigh_atoms: int = 200
         self.fit_virial: bool = False
         
@@ -83,12 +83,12 @@ class NepTest(unittest.TestCase):
 
         # 3. 
         self.mlff_to_loss_input: MlffToEFLossInput = MlffToEFLossInput(type_map=self.type_map_tensor.numpy().tolist(),
-                                                                       rcut=self.rmax,
+                                                                       rcut=self.rmax_radial,
                                                                        umax_num_neigh_atoms=self.umax_num_neigh_atoms,
                                                                        dtype=self.torch_float_dtype,
                                                                        device=self.device)
         self.mlff_input: MlffInput = MlffInput(type_map=self.type_map_tensor.numpy().tolist(),
-                                                rcut=self.rmax,
+                                                rcut=self.rmax_radial,
                                                 umax_num_neigh_atoms=self.umax_num_neigh_atoms,
                                                 dtype=self.torch_float_dtype,
                                                 device=self.device)
@@ -144,8 +144,8 @@ class NepTest(unittest.TestCase):
                          input_info[5],
                          self.type_map_tensor,
                          input_info[6],
-                         self.rmax,
-                         self.rmin,
+                         self.rmax_radial,
+                         self.rmax_angular,
                          self.q_scaler_tensor,
                          self.zbl_rmax,
                          self.zbl_rmin,
@@ -193,8 +193,8 @@ class NepTest(unittest.TestCase):
                                  input_info[9],
                                  self.type_map_tensor,
                                  input_info[10].item(),
-                                 self.rmax,
-                                 self.rmin,
+                                 self.rmax_radial,
+                                 self.rmax_angular,
                                  self.q_scaler_tensor,
                                  self.zbl_rmax,
                                  self.zbl_rmin,
@@ -241,8 +241,8 @@ class NepTest(unittest.TestCase):
                             input_info[9],
                             self.type_map_tensor,
                             input_info[10].item(),
-                            self.rmax,
-                            self.rmin,
+                            self.rmax_radial,
+                            self.rmax_angular,
                             self.q_scaler_tensor,
                             self.zbl_rmax,
                             self.zbl_rmin,
@@ -276,8 +276,8 @@ class NepTest(unittest.TestCase):
                                                                input_info[5],
                                                                self.type_map_tensor,
                                                                input_info[6].item(),
-                                                               self.rmax,
-                                                               self.rmin)
+                                                               self.rmax_radial,
+                                                               self.rmax_angular)
         print("-------------------------------------------------")
         print("* bdescriptor_tensor: ")
         print("-------------------------------------------------")

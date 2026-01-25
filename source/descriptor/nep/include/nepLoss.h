@@ -88,8 +88,8 @@ public:
         int *type_map,
         int umax_num_neigh_atoms,
         int nghost,
-        CoordType rmax,
-        CoordType rmin,
+        CoordType rmax_radial,
+        CoordType rmax_angular,
         CoordType *q_scaler);
 };  // namespace : NepLoss
 
@@ -201,8 +201,8 @@ void NepLoss<CoordType>::find_ef_loss_backward(
     int *type_map,
     int umax_num_neigh_atoms,
     int nghost,
-    CoordType rmax,
-    CoordType rmin,
+    CoordType rmax_radial,
+    CoordType rmax_angular,
     CoordType *q_scaler)
 {
     // Step 1. 
@@ -237,7 +237,8 @@ void NepLoss<CoordType>::find_ef_loss_backward(
     int type_outer;
     CoordType neigh_vec[3];
     CoordType distance_ij;
-    RQ_Chebyshev<CoordType> *p_RadialBasis = new RQ_Chebyshev<CoordType>(chebyshev_size, rmax, rmin);
+    RQ_Chebyshev<CoordType> *p_RadialBasis_radial = new RQ_Chebyshev<CoordType>(chebyshev_size, rmax_radial);
+    RQ_Chebyshev<CoordType> *p_RadialBasis_angular = new RQ_Chebyshev<CoordType>(chebyshev_size, rmax_angular);
     CoordType *auto_dist_powers_ = (CoordType*)malloc(sizeof(CoordType) * (l_max+1));
 
     #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
@@ -267,32 +268,35 @@ void NepLoss<CoordType>::find_ef_loss_backward(
             distance_ij = std::sqrt(std::pow(neigh_vec[0], 2)
                                     + std::pow(neigh_vec[1], 2)
                                     + std::pow(neigh_vec[2], 2));
-            if (distance_ij > rmax)
+            if (distance_ij > rmax_radial)
                 continue;
-            p_RadialBasis->build(distance_ij);
+            p_RadialBasis_radial->build(distance_ij);
+            p_RadialBasis_angular->build(distance_ij);
             auto_dist_powers_[0] = 1.0;
             for (int k=1; k<=l_max; k++)
                 auto_dist_powers_[k] = auto_dist_powers_[k-1] * distance_ij;
             
 
             // Step 2.1. Radial forward
+            if (distance_ij <= rmax_radial)
             for (int mu=0; mu<n_radial_basis; mu++) {
                 for (int xi=0; xi<chebyshev_size; xi++) {
                     int idx = (type_central*ntypes+type_outer)*(n_radial_basis+n_angular_basis)*chebyshev_size
                               + mu*chebyshev_size + xi;
-                    dod_vals[mu] += coeffs[idx] * p_RadialBasis->vals()[xi];
+                    dod_vals[mu] += coeffs[idx] * p_RadialBasis_radial->vals()[xi];
                     for (int aa=0; aa<3; aa++) {
                         dloss_combination_dod[mu] += 2*f_weight/(3*inum)
                                                      * (force_ml[center_idx][aa] - force_dft[center_idx][aa])
-                                                     * coeffs[idx] * p_RadialBasis->ders2r()[xi] * neigh_vec[aa] / distance_ij;
+                                                     * coeffs[idx] * p_RadialBasis_radial->ders2r()[xi] * neigh_vec[aa] / distance_ij;
                         dloss_combination_dod[mu] -= 2*f_weight/(3*inum)
                                                      * (force_ml[neigh_idx][aa] - force_dft[neigh_idx][aa])
-                                                     * coeffs[idx] * p_RadialBasis->ders2r()[xi] * neigh_vec[aa] / distance_ij;
+                                                     * coeffs[idx] * p_RadialBasis_radial->ders2r()[xi] * neigh_vec[aa] / distance_ij;
                     }
                 }
             }
 
             // Step 2.2. Angular forward: basic
+            if (distance_ij <= rmax_angular)
             for (int mu=0; mu<n_angular_basis; mu++) {
                 for (int l=1; l<=l_max; l++) {
                     for (int mp=0; mp<2*l+1; mp++) {
@@ -301,7 +305,7 @@ void NepLoss<CoordType>::find_ef_loss_backward(
                                       + (mu+n_radial_basis)*chebyshev_size + xi;
                             int idx_Sinlm = NepIndex::get_Sinlm_index(l_max, mu, l, mp);
 
-                            CoordType A = p_RadialBasis->vals()[xi];
+                            CoordType A = p_RadialBasis_angular->vals()[xi];
                             CoordType B = 0.0;
                             Blm<CoordType>::find_blm_val(&B, l, mp, neigh_vec, distance_ij);
                             CoordType C = 1/auto_dist_powers_[l];
@@ -310,7 +314,7 @@ void NepLoss<CoordType>::find_ef_loss_backward(
                             CoordType C_ders[3] = {0.0};
                             Blm<CoordType>::find_blm_der2xyz(B_ders, l, mp, neigh_vec, distance_ij);
                             for (int aa=0; aa<3; aa++) {
-                                A_ders[aa] = p_RadialBasis->ders2r()[xi] * neigh_vec[aa] / distance_ij;
+                                A_ders[aa] = p_RadialBasis_angular->ders2r()[xi] * neigh_vec[aa] / distance_ij;
                                 C_ders[aa] = -l / (auto_dist_powers_[l] * distance_ij) * (neigh_vec[aa] / distance_ij);
                             }
                             mom_vals[idx_Sinlm] += coeffs[idx] * A * B * C;
@@ -398,14 +402,16 @@ void NepLoss<CoordType>::find_ef_loss_backward(
             distance_ij = std::sqrt(std::pow(neigh_vec[0], 2)
                                     + std::pow(neigh_vec[1], 2)
                                     + std::pow(neigh_vec[2], 2));
-            if (distance_ij > rmax)
+            if (distance_ij > rmax_radial)
                 continue;
-            p_RadialBasis->build(distance_ij);
+            p_RadialBasis_radial->build(distance_ij);
+            p_RadialBasis_angular->build(distance_ij);
             auto_dist_powers_[0] = 1.0;
             for (int k=1; k<=l_max; k++)
                 auto_dist_powers_[k] = auto_dist_powers_[k-1] * distance_ij;
             
             // 4.1.1. loss_der2coeffs -- Radial
+            if (distance_ij <= rmax_radial)
             for (int mu=0; mu<n_radial_basis; mu++) {
                 for (int xi=0; xi<chebyshev_size; xi++) {
                     int idx = (type_central*ntypes+type_outer)*(n_radial_basis+n_angular_basis)*chebyshev_size
@@ -414,12 +420,12 @@ void NepLoss<CoordType>::find_ef_loss_backward(
                     CoordType tmpe_loss_der2coeff = 0.0;
                     tmpe_loss_der2coeff = 2*e_weight/inum*(etot_ml - etot_dft)
                                           * e_sites_der2dod[mu]
-                                          * p_RadialBasis->vals()[xi];
+                                          * p_RadialBasis_radial->vals()[xi];
                     
                     CoordType tmpf_loss_der2coeff = 0.0;
                     for (int aa=0; aa<3; aa++) {
                         CoordType tmp_prefix = 0.0;
-                        CoordType tmp_deriv = p_RadialBasis->ders2r()[xi] * neigh_vec[aa] / distance_ij;
+                        CoordType tmp_deriv = p_RadialBasis_radial->ders2r()[xi] * neigh_vec[aa] / distance_ij;
 
                         tmp_prefix += 2*f_weight/(3*inum)
                                       * (force_ml[center_idx][aa] - force_dft[center_idx][aa]);
@@ -436,6 +442,7 @@ void NepLoss<CoordType>::find_ef_loss_backward(
             }
 
             // 4.1.2. loss_der2coeffs -- Angular
+            if (distance_ij <= rmax_angular)
             for (int mu=0; mu<n_angular_basis; mu++) {
                 for (int l=1; l<=l_max; l++) {
                     for (int mp=0; mp<2*l+1; mp++) {
@@ -446,7 +453,7 @@ void NepLoss<CoordType>::find_ef_loss_backward(
                             int idx_Sinlm = NepIndex::get_Sinlm_index(l_max, mu, l, mp);
                             int idx_qinl = NepIndex::get_qinl_index(l_max, mu, l);
 
-                            CoordType A = p_RadialBasis->vals()[xi];
+                            CoordType A = p_RadialBasis_angular->vals()[xi];
                             CoordType B = 0.0;
                             Blm<CoordType>::find_blm_val(&B, l, mp, neigh_vec, distance_ij);
                             CoordType C = 1/auto_dist_powers_[l];
@@ -455,7 +462,7 @@ void NepLoss<CoordType>::find_ef_loss_backward(
                             CoordType B_ders[3] = {0.0};
                             CoordType C_ders[3] = {0.0};
                             for (int aa=0; aa<3; aa++) {
-                                A_ders[aa] = p_RadialBasis->ders2r()[xi] * neigh_vec[aa] / distance_ij;
+                                A_ders[aa] = p_RadialBasis_angular->ders2r()[xi] * neigh_vec[aa] / distance_ij;
                                 C_ders[aa] = -l / (auto_dist_powers_[l]*distance_ij)
                                              * (neigh_vec[aa] / distance_ij);
                             }
@@ -605,7 +612,8 @@ void NepLoss<CoordType>::find_ef_loss_backward(
     free(e_sites_der2dod);
     free(dloss_combination_mom);
     free(dloss_combination_dod);
-    delete p_RadialBasis;
+    delete p_RadialBasis_radial;
+    delete p_RadialBasis_angular;
     free(auto_dist_powers_);
     #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
     }

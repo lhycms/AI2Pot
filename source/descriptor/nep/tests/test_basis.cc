@@ -25,7 +25,6 @@ class RQ_ChebyshevTest : public ::testing::Test
 protected:
     int size;
     double rmax;
-    double rmin;
     double distance_ij;
     double delta;
 
@@ -40,7 +39,6 @@ protected:
     void SetUp() override {
         size = 8;
         rmax = 5.0;
-        rmin = 2.0;
         distance_ij = 3.14;
         delta = 1e-3;
     }
@@ -52,9 +50,9 @@ protected:
 TEST_F(RQ_ChebyshevTest, der_accuracy) {
     ai2pot::nep::RQ_Chebyshev<double> *p_RadialBasis_1;
     ai2pot::nep::RQ_Chebyshev<double> *p_RadialBasis_2;
-    p_RadialBasis_1 = new ai2pot::nep::RQ_Chebyshev<double>(size, rmax, rmin);
+    p_RadialBasis_1 = new ai2pot::nep::RQ_Chebyshev<double>(size, rmax);
     p_RadialBasis_1->build(distance_ij);
-    p_RadialBasis_2 = new ai2pot::nep::RQ_Chebyshev<double>(size, rmax, rmin);
+    p_RadialBasis_2 = new ai2pot::nep::RQ_Chebyshev<double>(size, rmax);
     p_RadialBasis_2->build(distance_ij+delta);
     
 printf("0. Value of RQ_Chebyshev:\n");

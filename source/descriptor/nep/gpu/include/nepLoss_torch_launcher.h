@@ -92,8 +92,8 @@ void find_ef_loss_backward_torch_launcher(
     int *d_type_map,
     int umax_num_neigh_atoms,
     int nghost,
-    CoordType rmax,
-    CoordType rmin,
+    CoordType rmax_radial,
+    CoordType rmax_angular,
     CoordType *d_q_scaler);
 
 

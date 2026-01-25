@@ -44,8 +44,8 @@ template void ai2pot::nep::find_ef_torch_launcher<float>(
     int *d_type_map,
     int umax_num_neigh_atoms,
     int nghost,
-    float rmax,
-    float rmin,
+    float rmax_radial,
+    float rmax_angular,
     float *d_q_scaler);
 
 template void ai2pot::nep::find_ef_torch_launcher<double>(
@@ -73,8 +73,8 @@ template void ai2pot::nep::find_ef_torch_launcher<double>(
     int *d_type_map,
     int umax_num_neigh_atoms,
     int nghost,
-    double rmax,
-    double rmin,
+    double rmax_radial,
+    double rmax_angular,
     double *d_q_scaler);
 
 
@@ -98,8 +98,8 @@ template void ai2pot::nep::find_descriptor_torch_launcher<float>(
     int *d_type_map,
     int umax_num_neigh_atoms,
     int nghost,
-    float rmax,
-    float rmin);
+    float rmax_radial,
+    float rmax_angular);
 
 template void ai2pot::nep::find_descriptor_torch_launcher<double>(
     double *d_bdescriptors,
@@ -120,5 +120,5 @@ template void ai2pot::nep::find_descriptor_torch_launcher<double>(
     int *d_type_map,
     int umax_num_neigh_atoms,
     int nghost,
-    double rmax,
-    double rmin);
+    double rmax_radial,
+    double rmax_angular);

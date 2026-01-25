@@ -41,8 +41,8 @@ TORCH_LIBRARY(nep, m) {
            const at::Tensor& btypes_tensor,
            const at::Tensor& type_map_tensor,
            int64_t nghost,
-           double rmax,
-           double rmin,
+           double rmax_radial,
+           double rmax_angular,
            const at::Tensor& q_scaler_tensor,
            double zbl_rmax,
            double zbl_rmin,
@@ -67,8 +67,8 @@ TORCH_LIBRARY(nep, m) {
                 btypes_tensor,
                 type_map_tensor,
                 (int)nghost,
-                rmax,
-                rmin,
+                rmax_radial,
+                rmax_angular,
                 q_scaler_tensor,
                 zbl_rmax,
                 zbl_rmin,
@@ -100,8 +100,8 @@ TORCH_LIBRARY(nep, m) {
            const at::Tensor& btypes_tensor,
            const at::Tensor& type_map_tensor,
            int64_t nghost,
-           double rmax,
-           double rmin,
+           double rmax_radial,
+           double rmax_angular,
            const at::Tensor& q_scaler_tensor,
            double zbl_rmax,
            double zbl_rmin,
@@ -136,8 +136,8 @@ TORCH_LIBRARY(nep, m) {
                 btypes_tensor,
                 type_map_tensor,
                 (int)nghost,
-                rmax,
-                rmin,
+                rmax_radial,
+                rmax_angular,
                 q_scaler_tensor,
                 zbl_rmax,
                 zbl_rmin,
@@ -162,8 +162,8 @@ TORCH_LIBRARY(nep, m) {
            const at::Tensor& btypes_tensor,
            const at::Tensor& type_map_tensor,
            int64_t nghost,
-           double rmax,
-           double rmin)
+           double rmax_radial,
+           double rmax_angular)
         {
             return ai2pot::nep::NepToDescriptorsOp(
                 (int)chebyshev_size,
@@ -179,8 +179,8 @@ TORCH_LIBRARY(nep, m) {
                 btypes_tensor,
                 type_map_tensor,
                 (int)nghost,
-                rmax,
-                rmin);
+                rmax_radial,
+                rmax_angular);
         }
     );
 };

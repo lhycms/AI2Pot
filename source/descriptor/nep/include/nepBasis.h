@@ -48,8 +48,8 @@ public:
         int *types,
         int ntypes,
         int umax_num_neigh_atoms,
-        CoordType rmax,
-        CoordType rmin);
+        CoordType rmax_radial,
+        CoordType rmax_angular);
 };  // class : NepBasis
 
 
@@ -71,8 +71,8 @@ void MomsDodsValDer<CoordType>::find_val_der(
     int *types,
     int ntypes,
     int umax_num_neigh_atoms,
-    CoordType rmax,
-    CoordType rmin)
+    CoordType rmax_radial,
+    CoordType rmax_angular)
 {
     int num_descriptors = NepIndex::get_num_descriptors(n_radial_basis, n_angular_basis, l_max);
     int num_Sinlm = NepIndex::get_num_Sinlm(n_angular_basis, l_max);
@@ -91,7 +91,8 @@ void MomsDodsValDer<CoordType>::find_val_der(
 
     CoordType *auto_dist_powers_;
     auto_dist_powers_ = (CoordType*)malloc(sizeof(CoordType) * (l_max+1));
-    RQ_Chebyshev<CoordType> *p_RadialBasis = new RQ_Chebyshev<CoordType>(chebyshev_size, rmax, rmin);
+    RQ_Chebyshev<CoordType> *p_RadialBasis_radial = new RQ_Chebyshev<CoordType>(chebyshev_size, rmax_radial);
+    RQ_Chebyshev<CoordType> *p_RadialBasis_angular = new RQ_Chebyshev<CoordType>(chebyshev_size, rmax_angular);
 
     // Step 2.
     type_central = types[silist];
@@ -102,26 +103,28 @@ void MomsDodsValDer<CoordType>::find_val_der(
         distance_ij = std::sqrt( neigh_vec[0]*neigh_vec[0]
                                  + neigh_vec[1]*neigh_vec[1]
                                  + neigh_vec[2]*neigh_vec[2] );
-        if (distance_ij > rmax)
+        if (distance_ij > rmax_radial)
             continue;
         distance_ij_inv = 1.0 / distance_ij;
-        p_RadialBasis->build(distance_ij);
+        p_RadialBasis_radial->build(distance_ij);
+        p_RadialBasis_angular->build(distance_ij);
 
         auto_dist_powers_[0] = 1.0;
         for (int k=1; k<=l_max; k++)
             auto_dist_powers_[k] = auto_dist_powers_[k-1] * distance_ij;
         
         // Step 2.1. Radial forward
+        if (distance_ij <= rmax_radial)
         for (int mu=0; mu<n_radial_basis; mu++) {
             for (int xi=0; xi<chebyshev_size; xi++) {
                 int idx = (type_central*ntypes+type_outer)*(n_radial_basis+n_angular_basis)*chebyshev_size
                           + mu*chebyshev_size + xi;
-                dod_vals[mu] += coeffs[idx] * p_RadialBasis->vals()[xi];
+                dod_vals[mu] += coeffs[idx] * p_RadialBasis_radial->vals()[xi];
 
                 CoordType A_ders[3] = {0.0};
-                A_ders[0] = p_RadialBasis->ders2r()[xi] * neigh_vec[0] * distance_ij_inv;
-                A_ders[1] = p_RadialBasis->ders2r()[xi] * neigh_vec[1] * distance_ij_inv;
-                A_ders[2] = p_RadialBasis->ders2r()[xi] * neigh_vec[2] * distance_ij_inv;
+                A_ders[0] = p_RadialBasis_radial->ders2r()[xi] * neigh_vec[0] * distance_ij_inv;
+                A_ders[1] = p_RadialBasis_radial->ders2r()[xi] * neigh_vec[1] * distance_ij_inv;
+                A_ders[2] = p_RadialBasis_radial->ders2r()[xi] * neigh_vec[2] * distance_ij_inv;
 
                 for (int aa=0; aa<3; aa++)
                     dod_ders[mu*umax_num_neigh_atoms + jj][aa] += coeffs[idx] * A_ders[aa];
@@ -129,6 +132,7 @@ void MomsDodsValDer<CoordType>::find_val_der(
         }
 
         // Step 2.2. Angular forward: basic
+        if (distance_ij <= rmax_angular)
         for (int mu=0; mu<n_angular_basis; mu++) {
             for (int l=1; l<=l_max; l++) {
                 CoordType C_ders[3] = {0.0};
@@ -150,11 +154,11 @@ void MomsDodsValDer<CoordType>::find_val_der(
                         int idx = (type_central*ntypes+type_outer)*(n_radial_basis+n_angular_basis)*chebyshev_size
                                   + (n_radial_basis+mu)*chebyshev_size + xi;
 
-                        CoordType A = p_RadialBasis->vals()[xi];
+                        CoordType A = p_RadialBasis_angular->vals()[xi];
                         CoordType A_ders[3] = {0.0};
-                        A_ders[0] = p_RadialBasis->ders2r()[xi] * neigh_vec[0] * distance_ij_inv;
-                        A_ders[1] = p_RadialBasis->ders2r()[xi] * neigh_vec[1] * distance_ij_inv;
-                        A_ders[2] = p_RadialBasis->ders2r()[xi] * neigh_vec[2] * distance_ij_inv;
+                        A_ders[0] = p_RadialBasis_angular->ders2r()[xi] * neigh_vec[0] * distance_ij_inv;
+                        A_ders[1] = p_RadialBasis_angular->ders2r()[xi] * neigh_vec[1] * distance_ij_inv;
+                        A_ders[2] = p_RadialBasis_angular->ders2r()[xi] * neigh_vec[2] * distance_ij_inv;
                         mom_vals[idx_Sinlm] += coeffs[idx] * A * B * C;
 
                         for (int aa=0; aa<3; aa++)
@@ -187,7 +191,8 @@ void MomsDodsValDer<CoordType>::find_val_der(
     }
 
     free(auto_dist_powers_);
-    delete p_RadialBasis;
+    delete p_RadialBasis_radial;
+    delete p_RadialBasis_angular;
 }
 
 };  // namespace : nep

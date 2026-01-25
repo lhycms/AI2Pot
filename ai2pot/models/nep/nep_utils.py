@@ -52,7 +52,7 @@ class Nep4Extxyz(object):
         self.nep: Nep = self.lit_nep.model.to(torch_float_dtype)
         extxyz_datamodule: ExtxyzDataModule = ExtxyzDataModule(testset_path=self.testset_path,
                                                             batch_size=1,
-                                                            rcut=self.nep.rmax,
+                                                            rcut=self.nep.rmax_radial,
                                                             umax_num_neigh_atoms=self.nep.umax_num_neigh_atoms,
                                                             pbc_xyz=[True, True, True],
                                                             sort=False,
@@ -60,27 +60,42 @@ class Nep4Extxyz(object):
                                                             has_virial=self.has_virial)
         extxyz_datamodule.setup("test")
         self.test_dataloader: DataLoader = extxyz_datamodule.test_dataloader()
+        
     
     def calculate_ef_diagonal(self):
         e_dft_list: List[torch.Tensor] = []
         f_dft_list: List[torch.Tensor] = []
         e_ml_list: List[torch.Tensor] = []
         f_ml_list: List[torch.Tensor] = []
-        for batch_idx, batch_data in enumerate(self.test_dataloader):
-            # 1. dft
-            binum = batch_data[0]
-            e_dft = batch_data[7]
-            f_dft = batch_data[8]
+        
+        if (self.nep.fit_virial):
+            pass
+        else:
+            for batch_idx, batch_data in enumerate(self.test_dataloader):
+                input_tensors: List[torch.Tensor] = batch_data
+                binum = input_tensors[0].to(self.lit_nep.device)
+                bilist = input_tensors[1].to(self.lit_nep.device)
+                bnumneigh = input_tensors[2].to(self.lit_nep.device)
+                bfirstneigh = input_tensors[3].to(self.lit_nep.device)
+                brcs = input_tensors[4].to(self.lit_nep.device)
+                btypes = input_tensors[5].to(self.lit_nep.device)
+                bnghost = input_tensors[6].to(self.lit_nep.device)
+                e_dft = input_tensors[7].to(self.lit_nep.device)
+                f_dft = input_tensors[8].to(self.lit_nep.device)
 
-            # 2. ml
-            input_data = batch_data[:7]
-            e_ml, f_ml = self.nep.predict_ef(*input_data)
-            
-            # 3. append
-            e_dft_list.append(e_dft / binum)
-            f_dft_list.append(f_dft)
-            e_ml_list.append(e_ml / binum)
-            f_ml_list.append(f_ml)
+                e_ml, f_ml = self.nep.predict_ef(binum,
+                                                 bilist,
+                                                 bnumneigh,
+                                                 bfirstneigh,
+                                                 brcs,
+                                                 btypes,
+                                                 bnghost)
+                
+                # 3. append
+                e_dft_list.append(e_dft / binum)
+                f_dft_list.append(f_dft)
+                e_ml_list.append(e_ml / binum)
+                f_ml_list.append(f_ml)
 
         e_ml_tensor = torch.cat(e_ml_list, dim=0)
         f_ml_tensor = torch.cat(f_ml_list, dim=0)
@@ -92,10 +107,10 @@ class Nep4Extxyz(object):
 
     def plot_ef_diagonal(self, save: bool = True):
         e_ml_tensor, e_dft_tensor, f_ml_tensor, f_dft_tensor = self.calculate_ef_diagonal()
-        e_ml_array: np.ndarray = e_ml_tensor.detach().numpy()
-        e_dft_array: np.ndarray = e_dft_tensor.detach().numpy()
-        f_ml_array: np.ndarray = f_ml_tensor.detach().numpy().flatten()
-        f_dft_array: np.ndarray = f_dft_tensor.detach().numpy().flatten()
+        e_ml_array: np.ndarray = e_ml_tensor.to("cpu").detach().numpy()
+        e_dft_array: np.ndarray = e_dft_tensor.to("cpu").detach().numpy()
+        f_ml_array: np.ndarray = f_ml_tensor.to("cpu").detach().numpy().flatten()
+        f_dft_array: np.ndarray = f_dft_tensor.to("cpu").detach().numpy().flatten()
         
         ### Plot
         #plt.rcParams["font.family"] = "Times New Roman"
@@ -206,21 +221,36 @@ class Nep4Extxyz(object):
         f_dft_list: List[torch.Tensor] = []
         e_ml_list: List[torch.Tensor] = []
         f_ml_list: List[torch.Tensor] = []
-        for batch_idx, batch_data in enumerate(self.test_dataloader):
-            # 1. dft
-            binum_list.append(batch_data[0])
-            e_dft = batch_data[7]
-            f_dft = batch_data[8]
 
-            # 2. ml
-            input_data = batch_data[:7]
-            e_ml, f_ml = self.nep.predict_ef(*input_data)
-            
-            # 3. append
-            e_dft_list.append(e_dft)
-            f_dft_list.append(f_dft)
-            e_ml_list.append(e_ml)
-            f_ml_list.append(f_ml)
+        if (self.nep.fit_virial):
+            pass
+        else:
+            for batch_idx, batch_data in enumerate(self.test_dataloader):
+                input_tensors: List[torch.Tensor] = batch_data
+                binum = input_tensors[0].to(self.lit_nep.device)
+                bilist = input_tensors[1].to(self.lit_nep.device)
+                bnumneigh = input_tensors[2].to(self.lit_nep.device)
+                bfirstneigh = input_tensors[3].to(self.lit_nep.device)
+                brcs = input_tensors[4].to(self.lit_nep.device)
+                btypes = input_tensors[5].to(self.lit_nep.device)
+                bnghost = input_tensors[6].to(self.lit_nep.device)
+                e_dft = input_tensors[7].to(self.lit_nep.device)
+                f_dft = input_tensors[8].to(self.lit_nep.device)
+
+                e_ml, f_ml = self.nep.predict_ef(binum,
+                                                 bilist,
+                                                 bnumneigh,
+                                                 bfirstneigh,
+                                                 brcs,
+                                                 btypes,
+                                                 bnghost)
+                
+                # 3. append
+                binum_list.append(binum)
+                e_dft_list.append(e_dft / binum)
+                f_dft_list.append(f_dft)
+                e_ml_list.append(e_ml / binum)
+                f_ml_list.append(f_ml)
         
         binum_tensor = torch.cat(binum_list, dim=0)
         e_dft_tensor = torch.cat(e_dft_list, dim=0)

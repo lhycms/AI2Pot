@@ -59,8 +59,8 @@ extern template void find_ef_torch_launcher<float>(
     int *d_type_map,
     int umax_num_neigh_atoms,
     int nghost,
-    float rmax,
-    float rmin,
+    float rmax_radial,
+    float rmax_angular,
     float *d_q_scaler);
 
 extern template void find_ef_torch_launcher<double>(
@@ -88,8 +88,8 @@ extern template void find_ef_torch_launcher<double>(
     int *d_type_map,
     int umax_num_neigh_atoms,
     int nghost,
-    double rmax,
-    double rmin,
+    double rmax_radial,
+    double rmax_angular,
     double *d_q_scaler);
 
 
@@ -116,8 +116,8 @@ extern template void find_descriptor_torch_launcher<float>(
     int *d_type_map,
     int umax_num_neigh_atoms,
     int nghost,
-    float rmax,
-    float rmin);
+    float rmax_radial,
+    float rmax_angular);
 
 extern template void find_descriptor_torch_launcher<double>(
     double *d_bdescriptors,
@@ -138,8 +138,8 @@ extern template void find_descriptor_torch_launcher<double>(
     int *d_type_map,
     int umax_num_neigh_atoms,
     int nghost,
-    double rmax,
-    double rmin);
+    double rmax_radial,
+    double rmax_angular);
 
 
 
@@ -241,8 +241,8 @@ extern template void find_ef_loss_backward_torch_launcher<float>(
     int *d_type_map,
     int umax_num_neigh_atoms,
     int nghost,
-    float rmax,
-    float rmin,
+    float rmax_radial,
+    float rmax_angular,
     float *d_q_scaler);
 
 extern template void find_ef_loss_backward_torch_launcher<double>(
@@ -279,8 +279,8 @@ extern template void find_ef_loss_backward_torch_launcher<double>(
     int *d_type_map,
     int umax_num_neigh_atoms,
     int nghost,
-    double rmax,
-    double rmin,
+    double rmax_radial,
+    double rmax_angular,
     double *d_q_scaler);
 
 };  // namespace : nep
@@ -407,8 +407,8 @@ torch::autograd::variable_list NepToEFFunction::forward(
     const at::Tensor& btypes_tensor,
     const at::Tensor& type_map_tensor,
     int nghost,
-    double rmax,
-    double rmin,
+    double rmax_radial,
+    double rmax_angular,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
     double zbl_rmin,
@@ -520,8 +520,8 @@ torch::autograd::variable_list NepToEFFunction::forward(
                 type_map,
                 umax_num_neigh_atoms,
                 nghost,
-                rmax,
-                rmin,
+                rmax_radial,
+                rmax_angular,
                 q_scaler);
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
@@ -571,8 +571,8 @@ torch::autograd::variable_list NepToEFFunction::forward(
                 type_map,
                 umax_num_neigh_atoms,
                 nghost,
-                (float)rmax,
-                (float)rmin,
+                (float)rmax_radial,
+                (float)rmax_angular,
                 q_scaler);
             #endif
         }
@@ -653,8 +653,8 @@ torch::autograd::variable_list NepToEFFunction::forward(
                 type_map,
                 umax_num_neigh_atoms,
                 nghost,
-                rmax,
-                rmin,
+                rmax_radial,
+                rmax_angular,
                 q_scaler);
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
@@ -704,8 +704,8 @@ torch::autograd::variable_list NepToEFFunction::forward(
                 type_map,
                 umax_num_neigh_atoms,
                 nghost,
-                rmax,
-                rmin,
+                rmax_radial,
+                rmax_angular,
                 q_scaler);
             #endif
         }
@@ -765,8 +765,8 @@ torch::autograd::variable_list NepToEFLossFunction::forward(
     const at::Tensor& btypes_tensor,
     const at::Tensor& type_map_tensor,
     int nghost,
-    double rmax,
-    double rmin,
+    double rmax_radial,
+    double rmax_angular,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
     double zbl_rmin,
@@ -883,8 +883,8 @@ torch::autograd::variable_list NepToEFLossFunction::forward(
                 type_map,
                 umax_num_neigh_atoms,
                 nghost,
-                rmax,
-                rmin,
+                rmax_radial,
+                rmax_angular,
                 q_scaler);
             
             find_ef_loss_cpu_launcher<float>(
@@ -947,8 +947,8 @@ torch::autograd::variable_list NepToEFLossFunction::forward(
                 type_map,
                 umax_num_neigh_atoms,
                 nghost,
-                (float)rmax,
-                (float)rmin,
+                (float)rmax_radial,
+                (float)rmax_angular,
                 q_scaler);
             
             find_ef_loss_torch_launcher(
@@ -1046,8 +1046,8 @@ torch::autograd::variable_list NepToEFLossFunction::forward(
                 type_map,
                 umax_num_neigh_atoms,
                 nghost,
-                rmax,
-                rmin,
+                rmax_radial,
+                rmax_angular,
                 q_scaler);
             
             find_ef_loss_cpu_launcher<double>(
@@ -1110,8 +1110,8 @@ torch::autograd::variable_list NepToEFLossFunction::forward(
                 type_map,
                 umax_num_neigh_atoms,
                 nghost,
-                rmax,
-                rmin,
+                rmax_radial,
+                rmax_angular,
                 q_scaler);
             
             find_ef_loss_torch_launcher(
@@ -1155,8 +1155,8 @@ torch::autograd::variable_list NepToEFLossFunction::forward(
         btypes_tensor,
         type_map_tensor,
         torch::tensor(nghost, int_options),
-        torch::tensor(rmax, float_options),
-        torch::tensor(rmin, float_options),
+        torch::tensor(rmax_radial, float_options),
+        torch::tensor(rmax_angular, float_options),
         q_scaler_tensor,
         torch::tensor(zbl_rmax, float_options),
         torch::tensor(zbl_rmin, float_options),
@@ -1197,8 +1197,8 @@ torch::autograd::variable_list NepToEFLossFunction::backward(
     at::Tensor btypes_tensor = ctx->get_saved_variables()[18];
     at::Tensor type_map_tensor = ctx->get_saved_variables()[19];
     int nghost = ctx->get_saved_variables()[20].item<int>();
-    double rmax = ctx->get_saved_variables()[21].item<double>();
-    double rmin = ctx->get_saved_variables()[22].item<double>();
+    double rmax_radial = ctx->get_saved_variables()[21].item<double>();
+    double rmax_angular = ctx->get_saved_variables()[22].item<double>();
     at::Tensor q_scaler_tensor = ctx->get_saved_variables()[23];
     double zbl_rmax = ctx->get_saved_variables()[24].item<double>();
     double zbl_rmin = ctx->get_saved_variables()[25].item<double>();
@@ -1324,8 +1324,8 @@ torch::autograd::variable_list NepToEFLossFunction::backward(
                 type_map,
                 umax_num_neigh_atoms,
                 nghost,
-                rmax,
-                rmin,
+                rmax_radial,
+                rmax_angular,
                 q_scaler);
 
             find_ef_loss_backward_cpu_launcher<float>(
@@ -1362,8 +1362,8 @@ torch::autograd::variable_list NepToEFLossFunction::backward(
                 type_map,
                 umax_num_neigh_atoms,
                 nghost,
-                rmax,
-                rmin,
+                rmax_radial,
+                rmax_angular,
                 q_scaler);
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
@@ -1413,8 +1413,8 @@ torch::autograd::variable_list NepToEFLossFunction::backward(
                 type_map,
                 umax_num_neigh_atoms,
                 nghost,
-                (float)rmax,
-                (float)rmin,
+                (float)rmax_radial,
+                (float)rmax_angular,
                 q_scaler);
             
             find_ef_loss_backward_torch_launcher(
@@ -1451,8 +1451,8 @@ torch::autograd::variable_list NepToEFLossFunction::backward(
                 type_map,
                 umax_num_neigh_atoms,
                 nghost,
-                (float)rmax,
-                (float)rmin,
+                (float)rmax_radial,
+                (float)rmax_angular,
                 q_scaler);
             #endif
         }
@@ -1541,8 +1541,8 @@ torch::autograd::variable_list NepToEFLossFunction::backward(
                 type_map,
                 umax_num_neigh_atoms,
                 nghost,
-                rmax,
-                rmin,
+                rmax_radial,
+                rmax_angular,
                 q_scaler);
 
             find_ef_loss_backward_cpu_launcher<double>(
@@ -1579,8 +1579,8 @@ torch::autograd::variable_list NepToEFLossFunction::backward(
                 type_map,
                 umax_num_neigh_atoms,
                 nghost,
-                rmax,
-                rmin,
+                rmax_radial,
+                rmax_angular,
                 q_scaler);
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
@@ -1630,8 +1630,8 @@ torch::autograd::variable_list NepToEFLossFunction::backward(
                 type_map,
                 umax_num_neigh_atoms,
                 nghost,
-                rmax,
-                rmin,
+                rmax_radial,
+                rmax_angular,
                 q_scaler);
             
             find_ef_loss_backward_torch_launcher(
@@ -1668,8 +1668,8 @@ torch::autograd::variable_list NepToEFLossFunction::backward(
                 type_map,
                 umax_num_neigh_atoms,
                 nghost,
-                rmax,
-                rmin,
+                rmax_radial,
+                rmax_angular,
                 q_scaler);
             #endif
         }
@@ -1722,8 +1722,8 @@ torch::autograd::variable_list NepToDescriptorsFunction::forward(
     const at::Tensor& btypes_tensor,
     const at::Tensor& type_map_tensor,
     int nghost,
-    double rmax,
-    double rmin)
+    double rmax_radial,
+    double rmax_angular)
 {
     // 1. 
     int batch_size = bfirstneigh_tensor.size(0);
@@ -1776,8 +1776,8 @@ torch::autograd::variable_list NepToDescriptorsFunction::forward(
                 type_map,
                 umax_num_neigh_atoms,
                 nghost,
-                rmax,
-                rmin);
+                rmax_radial,
+                rmax_angular);
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
             find_descriptor_torch_launcher(
@@ -1799,8 +1799,8 @@ torch::autograd::variable_list NepToDescriptorsFunction::forward(
                 type_map,
                 umax_num_neigh_atoms,
                 nghost,
-                (float)rmax,
-                (float)rmin);
+                (float)rmax_radial,
+                (float)rmax_angular);
             #endif
         }
     } else {
@@ -1828,8 +1828,8 @@ torch::autograd::variable_list NepToDescriptorsFunction::forward(
                 type_map,
                 umax_num_neigh_atoms,
                 nghost,
-                rmax,
-                rmin);
+                rmax_radial,
+                rmax_angular);
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
             find_descriptor_torch_launcher(
@@ -1851,8 +1851,8 @@ torch::autograd::variable_list NepToDescriptorsFunction::forward(
                 type_map,
                 umax_num_neigh_atoms,
                 nghost,
-                rmax,
-                rmin);
+                rmax_radial,
+                rmax_angular);
             #endif
         }
     }
@@ -1902,8 +1902,8 @@ torch::autograd::variable_list NepToEFOp(
     const at::Tensor& btypes_tensor,
     const at::Tensor& type_map_tensor,
     int nghost,
-    double rmax,
-    double rmin,
+    double rmax_radial,
+    double rmax_angular,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
     double zbl_rmin,
@@ -1928,8 +1928,8 @@ torch::autograd::variable_list NepToEFOp(
         btypes_tensor,
         type_map_tensor,
         nghost,
-        rmax,
-        rmin,
+        rmax_radial,
+        rmax_angular,
         q_scaler_tensor,
         zbl_rmax,
         zbl_rmin,
@@ -1960,8 +1960,8 @@ torch::autograd::variable_list NepToEFLossOp(
     const at::Tensor& btypes_tensor,
     const at::Tensor& type_map_tensor,
     int nghost,
-    double rmax,
-    double rmin,
+    double rmax_radial,
+    double rmax_angular,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
     double zbl_rmin,
@@ -1990,8 +1990,8 @@ torch::autograd::variable_list NepToEFLossOp(
         btypes_tensor,
         type_map_tensor,
         nghost,
-        rmax,
-        rmin,
+        rmax_radial,
+        rmax_angular,
         q_scaler_tensor,
         zbl_rmax,
         zbl_rmin,
@@ -2014,8 +2014,8 @@ torch::autograd::variable_list NepToDescriptorsOp(
     const at::Tensor& btypes_tensor,
     const at::Tensor& type_map_tensor,
     int nghost,
-    double rmax,
-    double rmin)
+    double rmax_radial,
+    double rmax_angular)
 {
     return NepToDescriptorsFunction::apply(
         chebyshev_size,
@@ -2031,8 +2031,8 @@ torch::autograd::variable_list NepToDescriptorsOp(
         btypes_tensor,
         type_map_tensor,
         nghost,
-        rmax,
-        rmin);
+        rmax_radial,
+        rmax_angular);
 }
 
 

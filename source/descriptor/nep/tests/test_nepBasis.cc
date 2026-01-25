@@ -46,8 +46,8 @@ protected:
     int nghost;
 
     // NEP parameters
-    double rmax;
-    double rmin;
+    double rmax_radial;
+    double rmax_angular;
     int n_radial_basis;
     int n_angular_basis;
     int l_max;
@@ -165,8 +165,8 @@ protected:
             umax_num_neigh_atoms);
 
         // NEP parameters
-        rmax = 5.0;
-        rmin = 0.0;
+        rmax_radial = 5.0;
+        rmax_angular = 5.0;
         n_radial_basis = 6;
         n_angular_basis = 4;
         l_max = 3;
@@ -234,8 +234,8 @@ TEST_F(MomsDodsValDerTest, find_val_der) {
         types,
         ntypes,
         umax_num_neigh_atoms,
-        rmax,
-        rmin);
+        rmax_radial,
+        rmax_angular);
     
     rcs[center_idx_modify*umax_num_neigh_atoms*3 + neigh_idx_modify*3 + direction_idx_modify] += delta;
     ai2pot::nep::MomsDodsValDer<double>::find_val_der(
@@ -255,8 +255,8 @@ TEST_F(MomsDodsValDerTest, find_val_der) {
         types,
         ntypes,
         umax_num_neigh_atoms,
-        rmax,
-        rmin);
+        rmax_radial,
+        rmax_angular);
 
 for (int i=0; i<num_descriptors; i++)
     printf("%.*lf, ", 15, dod_vals[i]);
