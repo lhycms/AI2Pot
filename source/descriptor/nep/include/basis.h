@@ -36,7 +36,6 @@ public:
 
     CoordType der2r(CoordType distance_ij);
 
-    CoordType der2r_der2r(CoordType distance_ij);
 
 private:
     CoordType _rmax = 0;
@@ -78,21 +77,17 @@ public:
     
     const CoordType* ders2r() const;
 
-    const CoordType* ders2uu_ders2uu() const;
-
-    const CoordType* ders2r_ders2r() const;
-
     void show() const;
 
 private:
     int _size = 0;
     CoordType _rmax = 0;
     CoordType _rmin = 0;
+    CoordType* _T_vals = nullptr;
+    CoordType* _T_ders2uu = nullptr;
     CoordType* _vals = nullptr;
     CoordType* _ders2uu = nullptr;
     CoordType* _ders2r = nullptr;
-    CoordType* _ders2uu_ders2uu = nullptr;
-    CoordType* _ders2r_ders2r = nullptr;
 };  // class : RB_ChebyShev
 
 
@@ -128,8 +123,6 @@ public:
 
     const CoordType* ders2r() const;
 
-    const CoordType* ders2r_ders2r() const;
-
     void show() const;
 
 private:
@@ -140,7 +133,6 @@ private:
     RB_Chebyshev<CoordType>* _rb_ptr = nullptr;
     CoordType* _vals = nullptr;
     CoordType* _ders2r = nullptr;
-    CoordType* _ders2r_ders2r = nullptr;
 };  // class : RQ_Chebyshev
 
 
@@ -154,12 +146,10 @@ SwitchFunction<CoordType>::SwitchFunction(CoordType rmax, CoordType rmin)
 template <typename CoordType>
 CoordType SwitchFunction<CoordType>::val(CoordType distance_ij)
 {
-    CoordType uu = (distance_ij - this->_rmin) / (this->_rmax - this->_rmin);
+    CoordType uu = M_PI * distance_ij / this->_rmax;
     
-    if (distance_ij < this->_rmin) {
-        return 0;
-    } else if ( (distance_ij>=this->_rmin) && (distance_ij<this->_rmax) ) {
-        return std::pow(uu, 3) * (-6*std::pow(uu, 2) + 15*uu - 10) + 1;
+    if (distance_ij <= this->_rmax) {
+        return 0.5 * (1 + std::cos(uu));
     } else {
         return 0;
     }
@@ -168,27 +158,10 @@ CoordType SwitchFunction<CoordType>::val(CoordType distance_ij)
 template <typename CoordType>
 CoordType SwitchFunction<CoordType>::der2r(CoordType distance_ij)
 {
-    CoordType uu = (distance_ij - this->_rmin) / (this->_rmax - this->_rmin);
+    CoordType uu = M_PI * distance_ij / this->_rmax;
 
-    if (distance_ij < this->_rmin) {
-        return 0;
-    } else if ( (distance_ij>=this->_rmin) && (distance_ij<this->_rmax) ) {
-        return 1 / (this->_rmax - this->_rmin) * (-30*std::pow(uu, 4) + 60*std::pow(uu, 3) - 30*std::pow(uu, 2));
-    } else {
-        return 0;
-    }
-}
-
-
-template <typename CoordType>
-CoordType SwitchFunction<CoordType>::der2r_der2r(CoordType distance_ij)
-{
-    CoordType uu = (distance_ij - this->_rmin) / (this->_rmax - this->_rmin);
-
-    if (distance_ij < this->_rmin) {
-        return 0;
-    } else if ( (distance_ij>=this->_rmin) && (distance_ij<this->_rmax) ) {
-        return 1 / std::pow(this->_rmax - this->_rmin, 2) * (-120 * std::pow(uu, 3) + 180*std::pow(uu, 2) - 60*uu);
+    if (distance_ij <= this->_rmax) {
+        return -0.5 * std::sin(uu) * M_PI / this->_rmax;
     } else {
         return 0;
     }
@@ -201,11 +174,11 @@ RB_Chebyshev<CoordType>::RB_Chebyshev()
     this->_size = 0;
     this->_rmax = 0;
     this->_rmin = 0;
+    this->_T_vals = nullptr;
+    this->_T_ders2uu = nullptr;
     this->_vals = nullptr;
     this->_ders2uu = nullptr;
     this->_ders2r = nullptr;
-    this->_ders2uu_ders2uu = nullptr;
-    this->_ders2r_ders2r = nullptr;
 }
 
 template <typename CoordType>
@@ -217,16 +190,14 @@ RB_Chebyshev<CoordType>::RB_Chebyshev(
     this->_size = size;
     this->_rmax = rmax;
     this->_rmin = rmin;
+    this->_T_vals = (CoordType*)malloc(sizeof(CoordType) * this->_size);
+    this->_T_ders2uu = (CoordType*)malloc(sizeof(CoordType) * this->_size);
     this->_vals = (CoordType*)malloc(sizeof(CoordType) * this->_size);
     //memset(this->_vals, 0, sizeof(CoordType) * this->_size);
     this->_ders2uu = (CoordType*)malloc(sizeof(CoordType) * this->_size);
     //memset(this->_ders2uu, 0, sizeof(CoordType) * this->_size);
     this->_ders2r = (CoordType*)malloc(sizeof(CoordType) * this->_size);
     //memset(this->_ders2r, 0, sizeof(CoordType) * this->_size);
-    this->_ders2uu_ders2uu = (CoordType*)malloc(sizeof(CoordType) * this->_size);
-    //memset(this->_ders2uu_ders2uu, 0, sizeof(CoordType) * this->_size);
-    this->_ders2r_ders2r = (CoordType*)malloc(sizeof(CoordType) * this->_size);
-    //memset(this->_ders2r_ders2r, 0, sizeof(CoordType) * this->_size);
 }
 
 template <typename CoordType>
@@ -237,17 +208,15 @@ RB_Chebyshev<CoordType>::RB_Chebyshev(const RB_Chebyshev& rhs)
     this->_rmin = rhs._rmin;
     
     if (this->_size != 0) {
+        this->_T_vals = (CoordType*)malloc(sizeof(CoordType) * this->_size);
+        this->_T_ders2uu = (CoordType*)malloc(sizeof(CoordType) * this->_size);
         this->_vals = (CoordType*)malloc(sizeof(CoordType) * this->_size);
         this->_ders2uu = (CoordType*)malloc(sizeof(CoordType) * this->_size);
         this->_ders2r = (CoordType*)malloc(sizeof(CoordType) * this->_size);
-        this->_ders2uu_ders2uu = (CoordType*)malloc(sizeof(CoordType) * this->_size);
-        this->_ders2r_ders2r = (CoordType*)malloc(sizeof(CoordType) * this->_size);
         for (int ii=0; ii<this->_size; ii++) {
             this->_vals[ii] = rhs._vals[ii];
             this->_ders2uu[ii] = rhs._ders2uu[ii];
             this->_ders2r[ii] = rhs._ders2r[ii];
-            this->_ders2uu_ders2uu[ii] = rhs._ders2uu_ders2uu[ii];
-            this->_ders2r_ders2r[ii] = rhs._ders2r_ders2r[ii];
         }
     }
 }
@@ -259,20 +228,20 @@ RB_Chebyshev<CoordType>::RB_Chebyshev(RB_Chebyshev&& rhs)
         this->_size = rhs._size;
         this->_rmax = rhs._rmax;
         this->_rmin = rhs._rmin;
+        this->_T_vals = rhs._T_vals;
+        this->_T_ders2uu = rhs._T_ders2uu;
         this->_vals = rhs._vals;
         this->_ders2uu = rhs._ders2uu;
         this->_ders2r = rhs._ders2r;
-        this->_ders2uu_ders2uu = rhs._ders2uu_ders2uu;
-        this->_ders2r_ders2r = rhs._ders2r_ders2r;
 
         rhs._size = 0;
         rhs._rmax = 0.0;
         rhs._rmin = 0.0;
+        rhs._T_vals = nullptr;
+        rhs._T_ders2uu = nullptr;
         rhs._vals = nullptr;
         rhs._ders2uu = nullptr;
         rhs._ders2r = nullptr;
-        rhs._ders2uu_ders2uu = nullptr;
-        rhs._ders2r_ders2r = nullptr;
     }
 }
 
@@ -280,11 +249,11 @@ template <typename CoordType>
 RB_Chebyshev<CoordType>& RB_Chebyshev<CoordType>::operator=(const RB_Chebyshev& rhs)
 {
     if (this->_size != 0) {
+        free(this->_T_vals);
+        free(this->_T_ders2uu);
         free(this->_vals);
         free(this->_ders2uu);
         free(this->_ders2r);
-        free(this->_ders2uu_ders2uu);
-        free(this->_ders2r_ders2r);
         this->_size = 0;
         this->_rmax = 0.0;
         this->_rmin = 0.0;
@@ -294,18 +263,18 @@ RB_Chebyshev<CoordType>& RB_Chebyshev<CoordType>::operator=(const RB_Chebyshev& 
     this->_rmax = rhs._rmax;
     this->_rmin = rhs._rmin;
     if (this->_size != 0) {
+        this->_T_vals = (CoordType*)malloc(sizeof(CoordType) * this->_size);
+        this->_T_ders2uu = (CoordType*)malloc(sizeof(CoordType) * this->_size);
         this->_vals = (CoordType*)malloc(sizeof(CoordType) * this->_size);
         this->_ders2uu = (CoordType*)malloc(sizeof(CoordType) * this->_size);
         this->_ders2r = (CoordType*)malloc(sizeof(CoordType) * this->_size);
-        this->_ders2uu_ders2uu = (CoordType*)malloc(sizeof(CoordType) * this->_size);
-        this->_ders2r_ders2r = (CoordType*)malloc(sizeof(CoordType) * this->_size);
 
         for (int ii=0; ii<this->_size; ii++) {
+            this->_T_vals[ii] = rhs._T_vals[ii];
+            this->_T_ders2uu[ii] = rhs._T_ders2uu[ii];
             this->_vals[ii] = rhs._vals[ii];
             this->_ders2uu[ii] = rhs._ders2uu[ii];
             this->_ders2r[ii] = rhs._ders2r[ii];
-            this->_ders2uu_ders2uu[ii] = rhs._ders2uu_ders2uu[ii];
-            this->_ders2r_ders2r[ii] = rhs._ders2r_ders2r[ii];
         }
     }
     return *this;
@@ -316,11 +285,11 @@ RB_Chebyshev<CoordType>& RB_Chebyshev<CoordType>::operator=(RB_Chebyshev&& rhs)
 {
     if (this != &rhs) {
         if (this->_size != 0) {
+            free(this->_T_vals);
+            free(this->_T_ders2uu);
             free(this->_vals);
             free(this->_ders2uu);
             free(this->_ders2r);
-            free(this->_ders2uu_ders2uu);
-            free(this->_ders2r_ders2r);
             this->_size = 0;
             this->_rmax = 0.0;
             this->_rmin = 0.0;
@@ -329,20 +298,20 @@ RB_Chebyshev<CoordType>& RB_Chebyshev<CoordType>::operator=(RB_Chebyshev&& rhs)
         this->_size = rhs._size;
         this->_rmax = rhs._rmax;
         this->_rmin = rhs._rmin;
+        this->_T_vals = rhs._T_vals;
+        this->_T_ders2uu = rhs._T_ders2uu;
         this->_vals = rhs._vals;
         this->_ders2uu = rhs._ders2uu;
         this->_ders2r = rhs._ders2r;
-        this->_ders2uu_ders2uu = rhs._ders2uu_ders2uu;
-        this->_ders2r_ders2r = rhs._ders2r_ders2r;
 
         rhs._size = 0;
         rhs._rmax = 0.0;
         rhs._rmin = 0.0;
+        rhs._T_vals = nullptr;
+        rhs._T_ders2uu = nullptr;
         rhs._vals = nullptr;
         rhs._ders2uu = nullptr;
         rhs._ders2r = nullptr;
-        rhs._ders2uu_ders2uu = nullptr;
-        rhs._ders2r_ders2r = nullptr;
     }
 
     return *this;
@@ -352,29 +321,33 @@ template <typename CoordType>
 void RB_Chebyshev<CoordType>::build(CoordType distance_ij)
 {   
     //assert( (distance_ij >= this->_rmin) && (distance_ij <= this->_rmax) );
-    CoordType uu = (2*distance_ij - (this->_rmax + this->_rmin)) / (this->_rmax - this->_rmin);
-    CoordType uu_coeff = 2 / (this->_rmax - this->_rmin);
-    CoordType uu_coeff_sq = 4 / std::pow(this->_rmax - this->_rmin, 2);
+    CoordType uu = 2*std::pow(distance_ij/this->_rmax-1, 2) - 1;
+    CoordType uu_coeff = 4.0/this->_rmax * (distance_ij/this->_rmax - 1);
     
     for (int ii=0; ii<this->_size; ii++) {
         if (ii == 0) {
-            this->_vals[ii] = 1;
-            this->_ders2uu[ii] = 0;
-            this->_ders2r[ii] = this->_ders2uu[ii] * uu_coeff;
-            this->_ders2uu_ders2uu[ii] = 0;
-            this->_ders2r_ders2r[ii] = this->_ders2uu_ders2uu[ii] * uu_coeff_sq;
+            this->_T_vals[ii] = 1.0;
+            this->_T_ders2uu[ii] = 0.0;
+
+            this->_vals[ii] = (this->_T_vals[ii] + 1) * 0.5;
+            this->_ders2uu[ii] = this->_T_ders2uu[ii] * 0.5;
+            this->_ders2r[ii] = uu_coeff * this->_ders2uu[ii];
         } else if (ii == 1) {
-            this->_vals[ii] = uu;
-            this->_ders2uu[ii] = 1;
-            this->_ders2r[ii] = this->_ders2uu[ii] * uu_coeff;
-            this->_ders2uu_ders2uu[ii] = 0;
-            this->_ders2r_ders2r[ii] = this->_ders2uu_ders2uu[ii] * uu_coeff_sq;
+            this->_T_vals[ii] = uu;
+            this->_T_ders2uu[ii] = 1.0;
+
+            this->_vals[ii] = (this->_T_vals[ii] + 1) / 2;
+            this->_ders2uu[ii] = this->_T_ders2uu[ii] * 0.5;
+            this->_ders2r[ii] = uu_coeff * this->_ders2uu[ii];
         } else {
-            this->_vals[ii] = 2*uu*this->_vals[ii-1] - this->_vals[ii-2];
-            this->_ders2uu[ii] = 2*this->_vals[ii-1] + 2*uu*this->_ders2uu[ii-1] - this->_ders2uu[ii-2];
-            this->_ders2r[ii] = this->_ders2uu[ii] * uu_coeff;
-            this->_ders2uu_ders2uu[ii] = 4*this->_ders2uu[ii-1] + 2*uu*this->_ders2uu_ders2uu[ii-1] - this->_ders2uu_ders2uu[ii-2];
-            this->_ders2r_ders2r[ii] = this->_ders2uu_ders2uu[ii] * uu_coeff_sq;
+            this->_T_vals[ii] = 2*uu*this->_T_vals[ii-1] - this->_T_vals[ii-2];
+            this->_T_ders2uu[ii] = 2*this->_T_vals[ii-1] 
+                                   + 2*uu*this->_T_ders2uu[ii-1] 
+                                   - this->_T_ders2uu[ii-2];
+            
+            this->_vals[ii] = (this->_T_vals[ii] + 1) / 2;
+            this->_ders2uu[ii] = this->_T_ders2uu[ii] * 0.5;
+            this->_ders2r[ii] = uu_coeff * this->_ders2uu[ii];
         }
     }
 }
@@ -382,11 +355,11 @@ void RB_Chebyshev<CoordType>::build(CoordType distance_ij)
 template <typename CoordType>
 RB_Chebyshev<CoordType>::~RB_Chebyshev()
 {
+    free(this->_T_vals);
+    free(this->_T_ders2uu);
     free(this->_vals);
     free(this->_ders2uu);
     free(this->_ders2r);
-    free(this->_ders2uu_ders2uu);
-    free(this->_ders2r_ders2r);
 }
 
 template <typename CoordType>
@@ -426,18 +399,6 @@ const CoordType* RB_Chebyshev<CoordType>::ders2r() const
 }
 
 template <typename CoordType>
-const CoordType* RB_Chebyshev<CoordType>::ders2uu_ders2uu() const
-{
-    return this->_ders2uu_ders2uu;
-}
-
-template <typename CoordType>
-const CoordType* RB_Chebyshev<CoordType>::ders2r_ders2r() const
-{
-    return this->_ders2r_ders2r;
-}
-
-template <typename CoordType>
 void RB_Chebyshev<CoordType>::show() const 
 {
     printf("1. Radial basis vals :\n\t");
@@ -454,16 +415,6 @@ void RB_Chebyshev<CoordType>::show() const
     for (int ii=0; ii<this->_size; ii++)
         printf("%10lf, ", this->_ders2r[ii]);
     printf("\n");
-
-    printf("4. Radial basis ders2uu_ders2uu : \n\t");
-    for (int ii=0; ii<this->_size; ii++)
-        printf("%10lf, ", this->_ders2uu_ders2uu[ii]);
-    printf("\n");
-
-    printf("5. Radial basis ders2r_ders2r : \n\t");
-    for (int ii=0; ii<this->_size; ii++)
-        printf("%10lf, ", this->_ders2r_ders2r[ii]);
-    printf("\n");  
 }
 
 template <typename CoordType>
@@ -475,7 +426,6 @@ RQ_Chebyshev<CoordType>::RQ_Chebyshev()
     this->_rb_ptr = nullptr;
     this->_vals = nullptr;
     this->_ders2r = nullptr;
-    this->_ders2r_ders2r = nullptr;
 }
 
 template <typename CoordType>
@@ -493,8 +443,6 @@ RQ_Chebyshev<CoordType>::RQ_Chebyshev(
     //memset(this->_vals, 0, sizeof(CoordType) * this->_size);
     this->_ders2r = (CoordType*)malloc(sizeof(CoordType) * this->_size);
     //memset(this->_ders2r, 0, sizeof(CoordType) * this->_size);
-    this->_ders2r_ders2r = (CoordType*)malloc(sizeof(CoordType) * this->_size);
-    //memset(this->_ders2r_ders2r, 0, sizeof(CoordType) * this->_size);
 }
 
 template <typename CoordType>
@@ -509,16 +457,13 @@ RQ_Chebyshev<CoordType>::RQ_Chebyshev(const RQ_Chebyshev& rhs)
     if (this->_size != 0) {
         this->_vals = (CoordType*)malloc(sizeof(CoordType) * this->_size);
         this->_ders2r = (CoordType*)malloc(sizeof(CoordType) * this->_size);
-        this->_ders2r_ders2r = (CoordType*)malloc(sizeof(CoordType) * this->_size);
         for (int ii=0; ii<this->_size; ii++) {
             this->_vals[ii] = rhs._vals[ii];
             this->_ders2r[ii] = rhs._ders2r[ii];
-            this->_ders2r_ders2r[ii] = rhs._ders2r_ders2r[ii];
         }
     } else {
         this->_vals = nullptr;
         this->_ders2r = nullptr;
-        this->_ders2r_ders2r = nullptr;
     }
 }
 
@@ -533,7 +478,6 @@ RQ_Chebyshev<CoordType>::RQ_Chebyshev(RQ_Chebyshev&& rhs)
         this->_rb_ptr = rhs._rb_ptr;
         this->_vals = rhs._vals;
         this->_ders2r = rhs._ders2r;
-        this->_ders2r_ders2r = rhs._ders2r_ders2r;
 
         rhs._size = 0;
         rhs._rmax = 0;
@@ -541,7 +485,6 @@ RQ_Chebyshev<CoordType>::RQ_Chebyshev(RQ_Chebyshev&& rhs)
         rhs._rb_ptr = nullptr;
         rhs._vals = nullptr;
         rhs._ders2r = nullptr;
-        rhs._ders2r_ders2r = nullptr;
     }
 }
 
@@ -552,7 +495,6 @@ RQ_Chebyshev<CoordType>& RQ_Chebyshev<CoordType>::operator=(const RQ_Chebyshev& 
         delete this->_rb_ptr;
         free(this->_vals);
         free(this->_ders2r);
-        free(this->_ders2r_ders2r);
         this->_size = 0;
         this->_rmax = 0;
         this->_rmin = 0;
@@ -567,16 +509,13 @@ RQ_Chebyshev<CoordType>& RQ_Chebyshev<CoordType>::operator=(const RQ_Chebyshev& 
     if (rhs._size != 0) {
         this->_vals = (CoordType*)malloc(sizeof(CoordType) * this->_size);
         this->_ders2r = (CoordType*)malloc(sizeof(CoordType) * this->_size);
-        this->_ders2r_ders2r = (CoordType*)malloc(sizeof(CoordType) * this->_size);
         for (int ii=0; ii<this->_size; ii++) {
             this->_vals[ii] = rhs._vals[ii];
             this->_ders2r[ii] = rhs._ders2r[ii];
-            this->_ders2r_ders2r[ii] = rhs._ders2r_ders2r[ii];
         }
     } else {
         this->_vals = nullptr;
         this->_ders2r = nullptr;
-        this->_ders2r_ders2r = nullptr;
     }
 
     return *this;
@@ -590,7 +529,6 @@ RQ_Chebyshev<CoordType>& RQ_Chebyshev<CoordType>::operator=(RQ_Chebyshev&& rhs)
             delete this->_rb_ptr;
             free(this->_vals);
             free(this->_ders2r);
-            free(this->_ders2r_ders2r);
             this->_size = 0;
             this->_rmax = 0;
             this->_rmin = 0;
@@ -603,7 +541,6 @@ RQ_Chebyshev<CoordType>& RQ_Chebyshev<CoordType>::operator=(RQ_Chebyshev&& rhs)
         this->_rb_ptr = rhs._rb_ptr;
         this->_vals = rhs._vals;
         this->_ders2r = rhs._ders2r;
-        this->_ders2r_ders2r = rhs._ders2r_ders2r;
 
         rhs._size = 0;
         rhs._rmax = 0;
@@ -611,7 +548,6 @@ RQ_Chebyshev<CoordType>& RQ_Chebyshev<CoordType>::operator=(RQ_Chebyshev&& rhs)
         rhs._rb_ptr = nullptr;
         rhs._vals = nullptr;
         rhs._ders2r = nullptr;
-        rhs._ders2r_ders2r = nullptr;
     }
 
     return *this;
@@ -628,11 +564,6 @@ void RQ_Chebyshev<CoordType>::build(CoordType distance_ij)
         this->_ders2r[ii] = (
             this->_switch_func.der2r(distance_ij) * this->_rb_ptr->vals()[ii] 
             + this->_switch_func.val(distance_ij) * this->_rb_ptr->ders2r()[ii]);
-        this->_ders2r_ders2r[ii] = (
-            this->_switch_func.der2r_der2r(distance_ij) * this->_rb_ptr->vals()[ii]
-            + this->_switch_func.der2r(distance_ij) * this->_rb_ptr->ders2r()[ii]
-            + this->_switch_func.der2r(distance_ij) * this->_rb_ptr->ders2r()[ii]
-            + this->_switch_func.val(distance_ij) * this->_rb_ptr->ders2r_ders2r()[ii]);
     }
 }
 
@@ -642,7 +573,6 @@ RQ_Chebyshev<CoordType>::~RQ_Chebyshev()
     delete this->_rb_ptr;
     free(this->_vals);
     free(this->_ders2r);
-    free(this->_ders2r_ders2r);
 }
 
 template <typename CoordType>
@@ -673,12 +603,6 @@ template <typename CoordType>
 const CoordType* RQ_Chebyshev<CoordType>::ders2r() const
 {
     return this->_ders2r;
-}
-
-template <typename CoordType>
-const CoordType* RQ_Chebyshev<CoordType>::ders2r_ders2r() const
-{
-    return this->_ders2r_ders2r;
 }
 
 template <typename CoordType>

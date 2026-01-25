@@ -20,8 +20,8 @@ PbTe_EXTXYZ_PATH = os.path.join(TEST_FILES_DIR, "XYZ", "11_NEP_potential_PbTe", 
 
 
 #torch.use_deterministic_algorithms(True)
-torch.set_num_threads(2)
-torch.manual_seed(21433)
+torch.set_num_threads(1)
+torch.manual_seed(2143)
 
 
 class NepTest(unittest.TestCase):
@@ -32,8 +32,8 @@ class NepTest(unittest.TestCase):
         self.device: torch._C.device = torch.device("cuda")
 
         # 1. 
-        self.n_radial_basis: int = 1
-        self.n_angular_basis: int = 1
+        self.n_radial_basis: int = 4
+        self.n_angular_basis: int = 4
         self.l_max: int = 4
         self.chebyshev_size: int = 4
         self.num_neurons: int = 30
@@ -102,6 +102,10 @@ class NepTest(unittest.TestCase):
                                                    dtype=self.torch_float_dtype,
                                                    device=self.device)
         nn.init.normal_(self.w0_tensor, mean=0.0, std=0.1)
+        self.b0_tensor: torch.Tensor = torch.zeros(self.ntypes * self.num_neurons,
+                                                   dtype=self.torch_float_dtype,
+                                                   device=self.device)
+        nn.init.normal_(self.b0_tensor, mean=0.0, std=0.1)
         self.w1_tensor: torch.Tensor = torch.zeros(self.ntypes * self.num_neurons,
                                                    dtype=self.torch_float_dtype,
                                                    device=self.device)
@@ -129,6 +133,7 @@ class NepTest(unittest.TestCase):
                          self.l_max,
                          self.coeffs_tensor,
                          self.w0_tensor,
+                         self.b0_tensor,
                          self.w1_tensor,
                          self.type_bias_tensor,
                          input_info[0],
@@ -154,10 +159,11 @@ class NepTest(unittest.TestCase):
 
     def test_nepToEFLoss(self):
         # 1. Parameters
-        e_weight: float = 10.0
-        f_weight: float = 10.0
+        e_weight: float = 2.0
+        f_weight: float = 2.0
         self.coeffs_tensor.requires_grad_(True)
         self.w0_tensor.requires_grad_(True)
+        self.b0_tensor.requires_grad_(True)
         self.w1_tensor.requires_grad_(True)
         self.type_bias_tensor.requires_grad_(True)
         
@@ -176,6 +182,7 @@ class NepTest(unittest.TestCase):
                                  self.l_max,
                                  self.coeffs_tensor,
                                  self.w0_tensor,
+                                 self.b0_tensor,
                                  self.w1_tensor,
                                  self.type_bias_tensor,
                                  input_info[4],
@@ -198,12 +205,14 @@ class NepTest(unittest.TestCase):
         print("-------------------------------------------------")
 
 
-    def est_nepToEFLoss_print(self):
+    def test_nepToEFLoss_print(self):
         # 1. Parameters
         e_weight: float = 2.0
         f_weight: float = 2.0
         self.coeffs_tensor.requires_grad_(True)
         self.w0_tensor.requires_grad_(True)
+        self.b0_tensor.requires_grad_(True)
+        self.b0_tensor.requires_grad_(True)
         self.w1_tensor.requires_grad_(True)
         self.type_bias_tensor.requires_grad_(True)
         
@@ -221,6 +230,7 @@ class NepTest(unittest.TestCase):
                             self.l_max,
                             self.coeffs_tensor,
                             self.w0_tensor,
+                            self.b0_tensor,
                             self.w1_tensor,
                             self.type_bias_tensor,
                             input_info[4],
@@ -241,12 +251,14 @@ class NepTest(unittest.TestCase):
         loss.backward()
         print("1. self.coeffs_tensor.grad:")
         print(self.coeffs_tensor.grad)
-        print("2. self.w0_tensor.grad:")
-        print(self.w0_tensor.grad)
-        print("3. self.w1_tensor.grad:")
-        print(self.w1_tensor.grad)
-        print("4. self.type_bias_tensor.grad:")
-        print(self.type_bias_tensor.grad)
+        #print("2. self.w0_tensor.grad:")
+        #print(self.w0_tensor.grad)
+        print("3. self.b0_tensor.grad:")
+        print(self.b0_tensor.grad)
+        #print("4. self.w1_tensor.grad:")
+        #print(self.w1_tensor.grad)
+        #print("5. self.type_bias_tensor.grad:")
+        #print(self.type_bias_tensor.grad)
 
 
     def est_nepToDescriptors(self):

@@ -339,10 +339,17 @@ void NepLoss<CoordType>::find_ef_loss_backward(
                     int idx_Sinlm = NepIndex::get_Sinlm_index(l_max, mu, l, mp);
                     int idx_Clm = NepIndex::get_Clm_index(l, mp);
                     int idx_qinl = NepIndex::get_qinl_index(l_max, mu, l);
-                    dod_vals[n_radial_basis+idx_qinl] += (CoordType)C3B[idx_Clm] * std::pow(mom_vals[idx_Sinlm], 2);
 
-                    dloss_combination_dod[n_radial_basis + idx_qinl] += dloss_combination_mom[idx_Sinlm]
-                                                                        * 2 * (CoordType)C3B[idx_Clm] * mom_vals[idx_Sinlm];
+                    if (mp == 0) {
+                        dod_vals[n_radial_basis+idx_qinl] += (CoordType)C3B[idx_Clm] * std::pow(mom_vals[idx_Sinlm], 2);
+                        dloss_combination_dod[n_radial_basis + idx_qinl] += dloss_combination_mom[idx_Sinlm]
+                                                                            * 2 * (CoordType)C3B[idx_Clm] * mom_vals[idx_Sinlm];
+                    }
+                    else {
+                        dod_vals[n_radial_basis+idx_qinl] += 2 * (CoordType)C3B[idx_Clm] * std::pow(mom_vals[idx_Sinlm], 2);
+                        dloss_combination_dod[n_radial_basis + idx_qinl] += 2 * dloss_combination_mom[idx_Sinlm]
+                                                                            * 2 * (CoordType)C3B[idx_Clm] * mom_vals[idx_Sinlm]; 
+                    }
                 }
             }
         }
@@ -372,8 +379,12 @@ void NepLoss<CoordType>::find_ef_loss_backward(
                     int idx_Sinlm = NepIndex::get_Sinlm_index(l_max, mu, l, mp);
                     int idx_qinl = NepIndex::get_qinl_index(l_max, mu, l);
 
-                    e_sites_der2mom[idx_Sinlm] = e_sites_der2dod[n_radial_basis + idx_qinl]
-                                                 * 2 * (CoordType)C3B[idx_Clm] * mom_vals[idx_Sinlm];
+                    if (mp == 0)
+                        e_sites_der2mom[idx_Sinlm] = e_sites_der2dod[n_radial_basis + idx_qinl]
+                                                     * 2 * (CoordType)C3B[idx_Clm] * mom_vals[idx_Sinlm];
+                    else
+                        e_sites_der2mom[idx_Sinlm] = 2 * e_sites_der2dod[n_radial_basis + idx_qinl]
+                                                     * 2 * (CoordType)C3B[idx_Clm] * mom_vals[idx_Sinlm];
                 }
             }
         }
@@ -543,11 +554,13 @@ void NepLoss<CoordType>::find_ef_loss_backward(
             CoordType tmpe_loss_der2b0 = 2*e_weight/inum*(etot_ml-etot_dft)
                                          * type_central_w1[p]
                                          * activated_hidden_der;
-            CoordType tmpf_loss_der2b0 = 0;
+            CoordType tmpf_loss_der2b0 = type_central_w1[p]
+                                         * activated_hidden_der2der
+                                         * dloss_combination_dod_sum;
             #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
             #pragma omp atomic
             #endif
-            loss_der2b0[type_central*num_neurons + p] += tmpe_loss_der2b0 + tmpf_loss_der2b0;
+            loss_der2b0[type_central*num_neurons + p] += (tmpe_loss_der2b0 + tmpf_loss_der2b0);
         }
 
         // Step 4.3. der2w1

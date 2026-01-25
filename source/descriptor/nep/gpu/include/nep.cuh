@@ -315,7 +315,10 @@ void find_ef_atom(
             for (int mp=0; mp<2*l+1; mp++) {
                 int idx_Sinlm = NepIndex::get_Sinlm_index(l_max, mu, l, mp);
                 int idx_Clm = NepIndex::get_Clm_index(l, mp);
-                dod_vals[n_radial_basis+idx_qinl] += (CoordType)C3B[idx_Clm] * std::pow(mom_vals[idx_Sinlm], 2);
+                if (mp == 0)
+                    dod_vals[n_radial_basis+idx_qinl] += (CoordType)C3B[idx_Clm] * std::pow(mom_vals[idx_Sinlm], 2);
+                else
+                    dod_vals[n_radial_basis+idx_qinl] += 2 * (CoordType)C3B[idx_Clm] * std::pow(mom_vals[idx_Sinlm], 2);
             }
         }
     }
@@ -358,8 +361,12 @@ void find_ef_atom(
                 int idx_Sinlm = NepIndex::get_Sinlm_index(l_max, mu, l, mp);
                 int idx_qinl = NepIndex::get_qinl_index(l_max, mu, l);
 
-                e_sites_der2mom[idx_Sinlm] = e_sites_der2dod[n_radial_basis + idx_qinl]
-                                             * 2 * (CoordType)C3B[idx_Clm] * mom_vals[idx_Sinlm];
+                if (mp == 0)
+                    e_sites_der2mom[idx_Sinlm] = e_sites_der2dod[n_radial_basis + idx_qinl]
+                                                 * 2 * (CoordType)C3B[idx_Clm] * mom_vals[idx_Sinlm];
+                else
+                    e_sites_der2mom[idx_Sinlm] = 2 * e_sites_der2dod[n_radial_basis + idx_qinl]
+                                                 * 2 * (CoordType)C3B[idx_Clm] * mom_vals[idx_Sinlm];
             }
         }
     }
@@ -785,7 +792,11 @@ void find_descriptors_atom(
                 int idx_qinl = NepIndex::get_qinl_index(l_max, mu, l);
                 int idx_Sinlm = NepIndex::get_Sinlm_index(l_max, mu, l, mp);
                 int idx_Clm = NepIndex::get_Clm_index(l, mp);
-                dod_vals[n_radial_basis+idx_qinl] += (CoordType)C3B[idx_Clm] * std::pow(mom_vals[idx_Sinlm], 2);
+                
+                if (mp == 0)
+                    dod_vals[n_radial_basis+idx_qinl] += (CoordType)C3B[idx_Clm] * std::pow(mom_vals[idx_Sinlm], 2);
+                else
+                    dod_vals[n_radial_basis+idx_qinl] += 2 * (CoordType)C3B[idx_Clm] * std::pow(mom_vals[idx_Sinlm], 2);
             }
         }
     }

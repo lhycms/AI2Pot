@@ -65,14 +65,11 @@ void find_switch_func(CoordType& val,
                       CoordType rmin,
                       CoordType distance_ij)
 {
-    CoordType uu = (distance_ij - rmin) / (rmax - rmin);
+    CoordType uu = M_PI * distance_ij / rmax;
 
-    if (distance_ij < rmin) {
-        val = 0;
-        der2r = 0;
-    } else if ((distance_ij >= rmin) && (distance_ij <= rmax)) {
-        val = std::pow(uu, 3) * (-6*std::pow(uu, 2) + 15*uu -10) + 1;
-        der2r = 1 / (rmax - rmin) * (-30*std::pow(uu, 4) + 60*std::pow(uu, 3) - 30*std::pow(uu, 2));;
+    if (distance_ij <= rmax) {
+        val = 0.5 * (1 + std::cos(uu));
+        der2r = -0.5 * std::sin(uu) * M_PI / rmax;
     } else {
         val = 0;
         der2r = 0;
@@ -89,23 +86,36 @@ void find_rb_chebyshev(CoordType *vals,
                        CoordType rmin,
                        CoordType distance_ij)
 {
+    CoordType T_vals[MAX_CHEBYSHEV_SIZE] = {0.};
+    CoordType T_ders2uu[MAX_CHEBYSHEV_SIZE] = {0.};
     CoordType ders2uu[MAX_CHEBYSHEV_SIZE] = {0.};
-    CoordType uu = (2*distance_ij - (rmax + rmin)) / (rmax - rmin);
-    CoordType uu_coeff = 2 / (rmax - rmin);
+    CoordType uu = 2*std::pow(distance_ij/rmax-1, 2) - 1;
+    CoordType uu_coeff = 4.0/rmax * (distance_ij/rmax - 1);
 
     for (int ii=0; ii<chebyshev_size; ii++) {
         if (ii == 0) {
-            vals[ii] = 1;
-            ders2uu[ii] = 0;
-            ders2r[ii] = ders2uu[ii] * uu_coeff;
+            T_vals[ii] = 1.0;
+            T_ders2uu[ii] = 0.0;
+
+            vals[ii] = (T_vals[ii] + 1) * 0.5;
+            ders2uu[ii] = T_ders2uu[ii] * 0.5;
+            ders2r[ii] = uu_coeff * ders2uu[ii];
         } else if (ii == 1)  {
-            vals[ii] = uu;
-            ders2uu[ii] = 1;
-            ders2r[ii] = ders2uu[ii] * uu_coeff;
+            T_vals[ii] = uu;
+            T_ders2uu[ii] = 1.0;
+
+            vals[ii] = (T_vals[ii] + 1) / 2;
+            ders2uu[ii] = T_ders2uu[ii] * 0.5;
+            ders2r[ii] = uu_coeff * ders2uu[ii];
         } else {
-            vals[ii] = 2*uu*vals[ii-1] - vals[ii-2];
-            ders2uu[ii] = 2*vals[ii-1] + 2*uu*ders2uu[ii-1] - ders2uu[ii-2];
-            ders2r[ii] = ders2uu[ii] * uu_coeff;
+            T_vals[ii]= 2*uu*T_vals[ii-1] - T_vals[ii-2];
+            T_ders2uu[ii] = 2*T_vals[ii-1] 
+                            + 2*uu*T_ders2uu[ii-1] 
+                            - T_ders2uu[ii-2];
+
+            vals[ii] = (T_vals[ii] + 1) / 2;
+            ders2uu[ii] = T_ders2uu[ii] * 0.5;
+            ders2r[ii] = uu_coeff * ders2uu[ii];
         }
     }
 }

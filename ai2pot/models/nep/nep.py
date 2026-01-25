@@ -75,6 +75,10 @@ class Nep(nn.Module):
         w0_tensor: torch.Tensor = torch.Tensor(self.ntypes*self.num_descriptors*self.num_neurons)
         nn.init.normal_(w0_tensor, mean=0.0, std=0.1)
         self.register_parameter(name="w0_tensor", param=nn.Parameter(data=w0_tensor))
+        
+        b0_tensor: torch.Tensor = torch.Tensor(self.ntypes*self.num_neurons)
+        nn.init.normal_(b0_tensor, mean=0.0, std=0.1)
+        self.register_parameter(name="b0_tensor", param=nn.Parameter(data=b0_tensor))
 
         w1_tensor: torch.Tensor = torch.Tensor(self.ntypes*self.num_neurons)
         nn.init.normal_(w1_tensor, mean=0.0, std=0.1)
@@ -82,7 +86,7 @@ class Nep(nn.Module):
 
         if energy_shifts is not None:
             assert(len(energy_shifts) == self.ntypes)
-            type_bias_tensor: torch.Tensor = torch.tensor(energy_shifts)
+            type_bias_tensor: torch.Tensor = torch.tensor(energy_shifts, dtype=torch.float32)
             self.register_parameter(name="type_bias_tensor", param=nn.Parameter(data=type_bias_tensor))
         else:
             type_bias_tensor: torch.Tensor = torch.Tensor(self.ntypes)
@@ -124,6 +128,14 @@ class Nep(nn.Module):
 
     def get_num_descriptors(self):
         return self.num_descriptors
+    
+    
+    def init_one(self):
+        with torch.no_grad():
+            self.coeffs_tensor.fill_(1.0)
+            #self.w0_tensor.fill_(1.0)
+            #self.w1_tensor.fill_(1.0)
+            #self.type_bias_tensor.fill_(1.0)
 
 
     def forward(self, *args, **kwargs):
@@ -157,6 +169,7 @@ class Nep(nn.Module):
             self.l_max,
             self.coeffs_tensor,
             self.w0_tensor,
+            self.b0_tensor,
             self.w1_tensor,
             self.type_bias_tensor,
             binum_tensor,
@@ -193,6 +206,7 @@ class Nep(nn.Module):
             self.l_max,
             self.coeffs_tensor,
             self.w0_tensor,
+            self.b0_tensor,
             self.w1_tensor,
             self.type_bias_tensor,
             binum_tensor,

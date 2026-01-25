@@ -1686,7 +1686,7 @@ torch::autograd::variable_list NepToEFLossFunction::backward(
         at::Tensor(),
         torch::matmul(bgrad_output_tensor, bloss_der2coeffs_tensor),
         torch::matmul(bgrad_output_tensor, bloss_der2w0_tensor),
-        at::Tensor(),
+        torch::matmul(bgrad_output_tensor, bloss_der2b0_tensor),
         torch::matmul(bgrad_output_tensor, bloss_der2w1_tensor),
         torch::matmul(bgrad_output_tensor, bloss_der2type_bias_tensor),
         at::Tensor(),

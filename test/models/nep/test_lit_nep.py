@@ -9,45 +9,50 @@ import lightning as L
 from ai2pot.data import ExtxyzDataset, ExtxyzDataModule
 from ai2pot.models.nep.nep import Nep
 from ai2pot.models.potential_train import LitNep
-from ai2pot.utils.usepot import MlffInput
+from ai2pot.utils.prepot import ExtxyzShifter
+from ai2pot.models.nep.nep_train_utils import NepDescriptorNormCallback
+
 
 
 TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")
-PbTe_EXTXYZ_PATH = os.path.join(TEST_FILES_DIR, "XYZ", "11_NEP_potential_PbTe", "train_m.xyz")
+PbTe_EXTXYZ_PATH = os.path.join(TEST_FILES_DIR, "XYZ", "11_NEP_potential_PbTe", "train_m.xyz")  #"/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/Li_battery/train.xyz"
 
 
 class LitNepTest(unittest.TestCase):
     def setUp(self):
         print("LitNep (TestCase) is setting up...\n")
 
+        extxyz_shifter: ExtxyzShifter = ExtxyzShifter(extxyz_path=PbTe_EXTXYZ_PATH)
+        energy_shifts: List[float] = extxyz_shifter.types_energy_shifts
+
         type_map: List[int] = ExtxyzDataset.get_type_map(filename=PbTe_EXTXYZ_PATH)
-        
         umax_num_neigh_atoms: int = 200
         fit_virial: bool = False
 
         # Nep hyperparameters
-        n_radial_basis: int = 6
-        n_angular_basis: int = 4
-        l_max: int = 4
-        chebyshev_size: int = 8
-        num_neurons: int = 30
-        rmax: float = 5.0
+        rmax: float = 6.0
         rmin: float = 0.0
+        n_radial_basis: int = 6 + 1
+        n_angular_basis: int = 4 + 1
+        l_max: int = 4
+        chebyshev_size: int = 8 + 1
+        num_neurons: int = 30
 
 
+        max_epochs: int = 200
         # Lr hyperparameters
-        lr_start: float = 1e-3
-        lr_end: float = 1e-3
+        lr_start: float = 1e-2
+        lr_end: float = 5e-4
         e_wgt_start: float = 1.0
         e_wgt_end: float = 1.0
-        f_wgt_start: float = 0.1
-        f_wgt_end: float = 0.1
+        f_wgt_start: float = 1.0
+        f_wgt_end: float = 1.0
         v_wgt_start: float = 0.01
         v_wgt_end: float = 0.01
-        lr_decay_step: int = 5000
+        lr_decay_step: int = max_epochs * 25
 
         self.lit_nep: LitNep = LitNep(type_map=type_map,
-                                      energy_shifts=None,
+                                      energy_shifts=energy_shifts,
                                       umax_num_neigh_atoms=umax_num_neigh_atoms,
                                       fit_virial=fit_virial,
                                       n_radial_basis=n_radial_basis,
@@ -83,12 +88,16 @@ class LitNepTest(unittest.TestCase):
                                                                sort=sort,
                                                                torch_float_dtype=torch_float_dtype,
                                                                has_virial=fit_virial)
+
+        ### NepDescriptorNormCallback initialization
+        self.nep_descriptor_norm_callback: NepDescriptorNormCallback = NepDescriptorNormCallback()
     
-        self.trainer: L.Trainer = L.Trainer(max_epochs=200,
-                                            accelerator="cpu",
+        self.trainer: L.Trainer = L.Trainer(max_epochs=max_epochs,
+                                            accelerator="cuda",
                                             devices=1,
                                             limit_val_batches=0,
-                                            log_every_n_steps=1)
+                                            log_every_n_steps=1,
+                                            callbacks=[self.nep_descriptor_norm_callback])
 
 
     def tearDown(self):
