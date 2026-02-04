@@ -163,6 +163,43 @@ static void find_ef_loss_backward_cpu_launcher(
     }
 }
 
+
+template <typename CoordType>
+static void rescale_f_cpu_launcher(
+    CoordType (*bforce_ml)[3],
+    int batch_size,
+    int natoms_pad,
+    int *binum,
+    CoordType force_scaler)
+{
+    for (int bb=0; bb<batch_size; bb++) {
+        CoordType (*force_ml)[3] = &bforce_ml[bb*natoms_pad];
+        int inum = binum[bb];
+
+        NepLoss<CoordType>::rescale_f(force_ml, inum, force_scaler);
+    }
+}
+
+
+template <typename CoordType>
+static void rescale_fv_cpu_launcher(
+    CoordType (*bforce_ml)[3],
+    CoordType *bvirial_ml,
+    int batch_size,
+    int natoms_pad,
+    int *binum,
+    CoordType force_scaler)
+{
+    for (int bb=0; bb<batch_size; bb++) {
+        CoordType (*force_ml)[3] = &bforce_ml[bb*natoms_pad];
+        CoordType *virial_ml = &bvirial_ml[bb*9];
+        int inum = binum[bb];
+
+        NepLoss<CoordType>::rescale_fv(force_ml, virial_ml, inum, force_scaler);
+    }
+}
+
+
 };  // namespace : nep
 };  // namespace : ai2pot
 

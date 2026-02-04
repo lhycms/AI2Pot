@@ -37,6 +37,8 @@ protected:
     double *virial_ml;
     double *virial_dft;
 
+    double force_scaler;
+
 
     static void SetUpTestSuite() {
         std::cout << "NepLossTest (TestSuite) is setting up...\n";
@@ -75,6 +77,8 @@ protected:
                 virial_dft[aa*3 + bb] = 1.00 + (aa+bb)*0.01;
             }
         }
+
+        force_scaler = 8;
     }
 
     void TearDown() override {
@@ -117,6 +121,41 @@ TEST_F(NepLossTest, find_loss) {
                                             virial_dft);
 printf("1. Loss = %.15f\n", loss);
 }
+
+
+TEST_F(NepLossTest, rescale_f) {
+    int center_idx = 1;
+    int direction_idx = 2;
+printf("1, Rescale force:\n");
+printf("\t1.1. Force before rescale = %.10f\n", force_ml[center_idx][direction_idx]);
+
+    ai2pot::nep::NepLoss<double>::rescale_f(
+        force_ml,
+        inum,
+        force_scaler);
+
+printf("\t1.2. Force after rescale = %.10f\n", force_ml[center_idx][direction_idx]);
+}
+
+
+TEST_F(NepLossTest, rescale_fv) {
+    int center_idx = 1;
+    int direction_idx1 = 2;
+    int direction_idx2 = 0;
+printf("1, Rescale force:\n");
+printf("\t1.1. Force before rescale = %.10f\n", force_ml[center_idx][direction_idx1]);
+printf("\t1.1. Virial before rescale = %.10f\n", virial_ml[direction_idx1*3 + direction_idx2]);
+
+    ai2pot::nep::NepLoss<double>::rescale_fv(
+        force_ml,
+        virial_ml,
+        inum,
+        force_scaler);
+
+printf("\t1.2. Force before rescale = %.10f\n", force_ml[center_idx][direction_idx1]);
+printf("\t1.2. Virial before rescale = %.10f\n", virial_ml[direction_idx1*3 + direction_idx2]);
+}
+
 
 
 int main(int argc, char **argv) {

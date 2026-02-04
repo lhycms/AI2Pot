@@ -115,7 +115,7 @@ template void ai2pot::nep::find_ef_loss_backward_torch_launcher<float>(
     int umax_num_neigh_atoms,
     int nghost,
     float rmax_radial,
-    float rmax_radial,
+    float rmax_angular,
     float *d_q_scaler);
 
 template void ai2pot::nep::find_ef_loss_backward_torch_launcher<double>(

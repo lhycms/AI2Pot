@@ -40,6 +40,8 @@ protected:
     double *bvirial_ml;
     double *bvirial_dft;
 
+    double force_scaler;
+
 
     static void SetUpTestSuite() {
         std::cout << "NepLossTest (TestSuite) is setting up...\n";
@@ -85,6 +87,8 @@ protected:
                 bvirial_dft[aa*3 + bb] = 1.00 + (aa+bb)*0.01;
             }
         }
+
+        force_scaler = 8.0;
     }
 
     void TearDown() override {
@@ -118,6 +122,39 @@ TEST_F(NepLossTest, find_ef_loss) {
 
 printf("1. EF Loss = %.15f\n", bloss[0]);
 }
+
+
+TEST_F(NepLossTest, rescale_f_cpu_launcher) {
+    ai2pot::nep::rescale_f_cpu_launcher(
+        bforce_ml,
+        batch_size,
+        natoms_pad,
+        binum,
+        force_scaler);
+
+printf("1. Force after rescale:\n");
+for (int ii=0; ii<natoms_pad; ii++)
+    printf("\t[%.10f, %.10f, %.10f]\n", bforce_ml[ii][0], bforce_ml[ii][1], bforce_ml[ii][2]);
+}
+
+
+TEST_F(NepLossTest, rescale_fv_cpu_launcher) {
+    ai2pot::nep::rescale_fv_cpu_launcher(
+        bforce_ml,
+        bvirial_ml,
+        batch_size,
+        natoms_pad,
+        binum,
+        force_scaler);
+
+printf("1.1. Force after rescale:\n");
+for (int ii=0; ii<natoms_pad; ii++)
+    printf("\t[%.10f, %.10f, %.10f]\n", bforce_ml[ii][0], bforce_ml[ii][1], bforce_ml[ii][2]);
+printf("1.2. Virial after rescale:\n");
+for (int a=0; a<3; a++)
+    printf("\t[%.10f, %.10f, %.10f]\n", bvirial_ml[a*3 + 0], bvirial_ml[a*3 + 1], bvirial_ml[a*3 + 2]);
+}
+
 
 
 int main(int argc, char **argv) {
