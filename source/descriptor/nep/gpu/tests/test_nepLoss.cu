@@ -132,33 +132,44 @@ printf("1. Loss = %.15f\n", bloss[0]);
 TEST_F(NepLossTest, rescale_f) {
     ai2pot::nep::rescale_f_launcher<double>(
         bforce_ml,
+        bforce_dft,
         batch_size,
         natoms_pad,
         binum,
         force_scaler);
 
-printf("1. Force after rescale:\n");
-for (int ii=0; ii<binum[0]; ii++)
+printf("1.1. force_ml after rescale:\n");
+for (int ii=0; ii<natoms_pad; ii++)
     printf("\t[%.10f, %.10f, %.10f]\n", bforce_ml[ii][0], bforce_ml[ii][1], bforce_ml[ii][2]);
+printf("1.2. force_dft after rescale:\n");
+for (int ii=0; ii<natoms_pad; ii++)
+    printf("\t[%.10f, %.10f, %.10f]\n", bforce_dft[ii][0], bforce_dft[ii][1], bforce_dft[ii][2]);
 }
 
 
 TEST_F(NepLossTest, rescale_fv) {
     ai2pot::nep::rescale_fv_launcher<double>(
         bforce_ml,
+        bforce_dft,
         bvirial_ml,
+        bvirial_dft,
         batch_size,
         natoms_pad,
         binum,
         force_scaler);
 
-printf("1.1. Force after rescale:\n");
-for (int ii=0; ii<binum[0]; ii++)
+printf("1.1. force_ml after rescale:\n");
+for (int ii=0; ii<natoms_pad; ii++)
     printf("\t[%.10f, %.10f, %.10f]\n", bforce_ml[ii][0], bforce_ml[ii][1], bforce_ml[ii][2]);
-printf("1.2. Virial after rescale:\n");
-for (int aa=0; aa<3; aa++) {
-    printf("\t[%.10f, %.10f, %.10f]\n", bvirial_ml[aa*3+0], bvirial_ml[aa*3+1], bvirial_ml[aa*3+2]);
-}
+printf("1.2. force_ml after rescale:\n");
+for (int ii=0; ii<natoms_pad; ii++)
+    printf("\t[%.10f, %.10f, %.10f]\n", bforce_dft[ii][0], bforce_dft[ii][1], bforce_dft[ii][2]);
+printf("2.1. virial_ml after rescale:\n");
+for (int a=0; a<3; a++)
+    printf("\t[%.10f, %.10f, %.10f]\n", bvirial_ml[a*3 + 0], bvirial_ml[a*3 + 1], bvirial_ml[a*3 + 2]);
+printf("2.2. virial_dft after rescale:\n");
+for (int a=0; a<3; a++)
+    printf("\t[%.10f, %.10f, %.10f]\n", bvirial_dft[a*3 + 0], bvirial_dft[a*3 + 1], bvirial_dft[a*3 + 2]);
 }
 
 

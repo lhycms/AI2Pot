@@ -226,6 +226,7 @@ template <typename CoordType>
 static __global__ 
 void rescale_f_kernel(
     CoordType (*bforce_ml)[3],
+    CoordType (*bforce_dft)[3],
     int batch_size,
     int natoms_pad,
     int *binum,
@@ -236,6 +237,7 @@ template <typename CoordType>
 static __host__ 
 void rescale_f_launcher(
     CoordType (*h_bforce_ml)[3],
+    CoordType (*h_bforce_dft)[3],
     int batch_size,
     int natoms_pad,
     int *h_binum,
@@ -246,7 +248,9 @@ template <typename CoordType>
 static __global__ 
 void rescale_fv_kernel(
     CoordType (*bforce_ml)[3],
+    CoordType (*bforce_dft)[3],
     CoordType *bvirial_ml,
+    CoordType *bvirial_dft,
     int batch_size,
     int natoms_pad,
     int *binum,
@@ -257,7 +261,9 @@ template <typename CoordType>
 static __host__ 
 void rescale_fv_launcher(
     CoordType (*h_bforce_ml)[3],
+    CoordType (*h_bforce_dft)[3],
     CoordType *h_bvirial_ml,
+    CoordType *h_bvirial_dft,
     int batch_size,
     int natoms_pad,
     int *h_binum,
@@ -1249,6 +1255,7 @@ template <typename CoordType>
 __global__ 
 void rescale_f_kernel(
     CoordType (*bforce_ml)[3],
+    CoordType (*bforce_dft)[3],
     int batch_size,
     int natoms_pad,
     int *binum,
@@ -1261,9 +1268,12 @@ void rescale_f_kernel(
         return;
     int ii = nx % natoms_pad;
 
-    if (ii < binum[istruct])
-        for (int aa=0; aa<3; aa++)
+    if (ii < binum[istruct]) {
+        for (int aa=0; aa<3; aa++) {
             bforce_ml[istruct*natoms_pad + ii][aa] = bforce_ml[istruct*natoms_pad + ii][aa] / force_scaler;
+            bforce_dft[istruct*natoms_pad + ii][aa] = bforce_dft[istruct*natoms_pad + ii][aa] / force_scaler;
+        }
+    }
 }
 
 
@@ -1271,6 +1281,7 @@ template <typename CoordType>
 __host__
 void rescale_f_launcher(
     CoordType (*h_bforce_ml)[3],
+    CoordType (*h_bforce_dft)[3],
     int batch_size,
     int natoms_pad,
     int *h_binum,
@@ -1282,16 +1293,20 @@ void rescale_f_launcher(
     dim3 block_size(block_size_x);
 
     CoordType (*d_bforce_ml)[3];
+    CoordType (*d_bforce_dft)[3];
     int *d_binum;
 
     CHECK_CUDA_API( cudaMalloc((void**)&d_bforce_ml, sizeof(CoordType)*batch_size*natoms_pad*3) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bforce_dft, sizeof(CoordType)*batch_size*natoms_pad*3) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_binum, sizeof(int)*batch_size) );
     
     CHECK_CUDA_API( cudaMemcpy(d_bforce_ml, h_bforce_ml, sizeof(CoordType)*batch_size*natoms_pad*3, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_bforce_dft, h_bforce_dft, sizeof(CoordType)*batch_size*natoms_pad*3, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_binum, h_binum, sizeof(int)*batch_size, cudaMemcpyHostToDevice) );
 
     rescale_f_kernel KERNEL_ARG2(grid_size, block_size) (
         d_bforce_ml,
+        d_bforce_dft,
         batch_size,
         natoms_pad,
         d_binum,
@@ -1299,8 +1314,10 @@ void rescale_f_launcher(
     CHECK_CUDA_KERNEL;
 
     CHECK_CUDA_API( cudaMemcpy(h_bforce_ml, d_bforce_ml, sizeof(CoordType)*batch_size*natoms_pad*3, cudaMemcpyDeviceToHost) );
+    CHECK_CUDA_API( cudaMemcpy(h_bforce_dft, d_bforce_dft, sizeof(CoordType)*batch_size*natoms_pad*3, cudaMemcpyDeviceToHost) );
 
     CHECK_CUDA_API( cudaFree(d_bforce_ml) );
+    CHECK_CUDA_API( cudaFree(d_bforce_dft) );
     CHECK_CUDA_API( cudaFree(d_binum) );
 }
 
@@ -1309,7 +1326,9 @@ template <typename CoordType>
 __global__
 void rescale_fv_kernel(
     CoordType (*bforce_ml)[3],
+    CoordType (*bforce_dft)[3],
     CoordType *bvirial_ml,
+    CoordType *bvirial_dft,
     int batch_size,
     int natoms_pad,
     int *binum,
@@ -1322,13 +1341,18 @@ void rescale_fv_kernel(
     int ii = nx % natoms_pad;
 
     if (ii < binum[istruct]) {
-        for (int aa=0; aa<3; aa++)
+        for (int aa=0; aa<3; aa++) {
             bforce_ml[istruct*natoms_pad + ii][aa] = bforce_ml[istruct*natoms_pad + ii][aa] / force_scaler;
+            bforce_dft[istruct*natoms_pad + ii][aa] = bforce_dft[istruct*natoms_pad + ii][aa] / force_scaler;
+        }
         
         if (ii == 0) {
-            for (int aa=0; aa<3; aa++)
-                for (int bb=0; bb<3; bb++)
+            for (int aa=0; aa<3; aa++) {
+                for (int bb=0; bb<3; bb++) {
                     bvirial_ml[istruct*9 + aa*3 + bb] = bvirial_ml[istruct*9 + aa*3 + bb] / force_scaler;
+                    bvirial_dft[istruct*9 + aa*3 + bb] = bvirial_dft[istruct*9 + aa*3 + bb] / force_scaler;
+                }
+            }
         }
     }
 }
@@ -1338,7 +1362,9 @@ template <typename CoordType>
 __host__
 void rescale_fv_launcher(
     CoordType (*h_bforce_ml)[3],
+    CoordType (*h_bforce_dft)[3],
     CoordType *h_bvirial_ml,
+    CoordType *h_bvirial_dft,
     int batch_size,
     int natoms_pad,
     int *h_binum,
@@ -1350,20 +1376,28 @@ void rescale_fv_launcher(
     dim3 block_size(block_size_x);
 
     CoordType (*d_bforce_ml)[3];
+    CoordType (*d_bforce_dft)[3];
     CoordType *d_bvirial_ml;
+    CoordType *d_bvirial_dft;
     int *d_binum;
 
     CHECK_CUDA_API( cudaMalloc((void**)&d_bforce_ml, sizeof(CoordType)*batch_size*natoms_pad*3) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bforce_dft, sizeof(CoordType)*batch_size*natoms_pad*3) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_bvirial_ml, sizeof(CoordType)*batch_size*9) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bvirial_dft, sizeof(CoordType)*batch_size*9) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_binum, sizeof(int)*batch_size) );
 
     CHECK_CUDA_API( cudaMemcpy(d_bforce_ml, h_bforce_ml, sizeof(CoordType)*batch_size*natoms_pad*3, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_bforce_dft, h_bforce_dft, sizeof(CoordType)*batch_size*natoms_pad*3, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_bvirial_ml, h_bvirial_ml, sizeof(CoordType)*batch_size*9, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_bvirial_dft, h_bvirial_dft, sizeof(CoordType)*batch_size*9, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_binum, h_binum, sizeof(int)*batch_size, cudaMemcpyHostToDevice) );
 
     rescale_fv_kernel KERNEL_ARG2(grid_size, block_size) (
         d_bforce_ml,
+        d_bforce_dft,
         d_bvirial_ml,
+        d_bvirial_dft,
         batch_size,
         natoms_pad,
         d_binum,
@@ -1371,10 +1405,14 @@ void rescale_fv_launcher(
     CHECK_CUDA_KERNEL;
 
     CHECK_CUDA_API( cudaMemcpy(h_bforce_ml, d_bforce_ml, sizeof(CoordType)*batch_size*natoms_pad*3, cudaMemcpyDeviceToHost) );
+    CHECK_CUDA_API( cudaMemcpy(h_bforce_dft, d_bforce_dft, sizeof(CoordType)*batch_size*natoms_pad*3, cudaMemcpyDeviceToHost) );
     CHECK_CUDA_API( cudaMemcpy(h_bvirial_ml, d_bvirial_ml, sizeof(CoordType)*batch_size*9, cudaMemcpyDeviceToHost) );
+    CHECK_CUDA_API( cudaMemcpy(h_bvirial_dft, d_bvirial_dft, sizeof(CoordType)*batch_size*9, cudaMemcpyDeviceToHost) );
 
     CHECK_CUDA_API( cudaFree(d_bforce_ml) );
+    CHECK_CUDA_API( cudaFree(d_bforce_dft) );
     CHECK_CUDA_API( cudaFree(d_bvirial_ml) );
+    CHECK_CUDA_API( cudaFree(d_bvirial_dft) );
     CHECK_CUDA_API( cudaFree(d_binum) );
 }
 

@@ -283,6 +283,49 @@ extern template void find_ef_loss_backward_torch_launcher<double>(
     double rmax_angular,
     double *d_q_scaler);
 
+
+// 2.4. find_loss_backward_torch_launcher()
+
+
+// 2.5. rescale_f
+extern template void ai2pot::nep::rescale_f_torch_launcher<float>(
+    float (*d_bforce_ml)[3],
+    float (*d_bforce_dft)[3],
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    float force_scaler);
+
+extern template void ai2pot::nep::rescale_f_torch_launcher<double>(
+    double (*d_bforce_ml)[3],
+    double (*d_bforce_dft)[3],
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    double force_scaler);
+
+
+// 2.6. rescale_fv
+extern template void ai2pot::nep::rescale_fv_torch_launcher<float>(
+    float (*d_bforce_ml)[3],
+    float (*d_bforce_dft)[3],
+    float *d_bvirial_ml,
+    float *d_bvirial_dft,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    float force_scaler);
+
+extern template void ai2pot::nep::rescale_fv_torch_launcher<double>(
+    double (*d_bforce_ml)[3],
+    double (*d_bforce_dft)[3],
+    double *d_bvirial_ml,
+    double *d_bvirial_dft,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    double force_scaler);
+
 };  // namespace : nep
 };  // namespace : ai2pot
 

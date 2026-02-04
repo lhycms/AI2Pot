@@ -131,6 +131,7 @@ printf("\t1.1. Force before rescale = %.10f\n", force_ml[center_idx][direction_i
 
     ai2pot::nep::NepLoss<double>::rescale_f(
         force_ml,
+        force_dft,
         inum,
         force_scaler);
 
@@ -148,7 +149,9 @@ printf("\t1.1. Virial before rescale = %.10f\n", virial_ml[direction_idx1*3 + di
 
     ai2pot::nep::NepLoss<double>::rescale_fv(
         force_ml,
+        force_dft,
         virial_ml,
+        virial_dft,
         inum,
         force_scaler);
 
