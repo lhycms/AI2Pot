@@ -811,6 +811,7 @@ torch::autograd::variable_list NepToEFLossFunction::forward(
     double rmax_radial,
     double rmax_angular,
     const at::Tensor& q_scaler_tensor,
+    double force_scaler,
     double zbl_rmax,
     double zbl_rmin,
     const at::Tensor& zbl_cks_tensor,
@@ -930,6 +931,14 @@ torch::autograd::variable_list NepToEFLossFunction::forward(
                 rmax_angular,
                 q_scaler);
             
+            rescale_f_cpu_launcher<float>(
+                bforce,
+                bforce_dft,
+                batch_size,
+                natoms_pad,
+                binum,
+                (float)force_scaler);
+            
             find_ef_loss_cpu_launcher<float>(
                 bloss,
                 batch_size,
@@ -993,6 +1002,14 @@ torch::autograd::variable_list NepToEFLossFunction::forward(
                 (float)rmax_radial,
                 (float)rmax_angular,
                 q_scaler);
+
+            rescale_f_torch_launcher<float>(
+                bforce,
+                bforce_dft,
+                batch_size,
+                natoms_pad,
+                binum,
+                force_scaler);
             
             find_ef_loss_torch_launcher(
                 bloss,
@@ -1092,6 +1109,14 @@ torch::autograd::variable_list NepToEFLossFunction::forward(
                 rmax_radial,
                 rmax_angular,
                 q_scaler);
+
+            rescale_f_cpu_launcher<double>(
+                bforce,
+                bforce_dft,
+                batch_size,
+                natoms_pad,
+                binum,
+                force_scaler);
             
             find_ef_loss_cpu_launcher<double>(
                 bloss,
@@ -1157,6 +1182,14 @@ torch::autograd::variable_list NepToEFLossFunction::forward(
                 rmax_angular,
                 q_scaler);
             
+            rescale_f_torch_launcher<double>(
+                bforce,
+                bforce_dft,
+                batch_size,
+                natoms_pad,
+                binum,
+                force_scaler);
+            
             find_ef_loss_torch_launcher(
                 bloss,
                 batch_size,
@@ -1201,6 +1234,7 @@ torch::autograd::variable_list NepToEFLossFunction::forward(
         torch::tensor(rmax_radial, float_options),
         torch::tensor(rmax_angular, float_options),
         q_scaler_tensor,
+        torch::tensor(force_scaler, float_options),
         torch::tensor(zbl_rmax, float_options),
         torch::tensor(zbl_rmin, float_options),
         zbl_cks_tensor,
@@ -1243,10 +1277,11 @@ torch::autograd::variable_list NepToEFLossFunction::backward(
     double rmax_radial = ctx->get_saved_variables()[21].item<double>();
     double rmax_angular = ctx->get_saved_variables()[22].item<double>();
     at::Tensor q_scaler_tensor = ctx->get_saved_variables()[23];
-    double zbl_rmax = ctx->get_saved_variables()[24].item<double>();
-    double zbl_rmin = ctx->get_saved_variables()[25].item<double>();
-    at::Tensor zbl_cks_tensor = ctx->get_saved_variables()[26];
-    at::Tensor zbl_dks_tensor = ctx->get_saved_variables()[27];
+    double force_scaler = ctx->get_saved_variables()[24].item<double>();
+    double zbl_rmax = ctx->get_saved_variables()[25].item<double>();
+    double zbl_rmin = ctx->get_saved_variables()[26].item<double>();
+    at::Tensor zbl_cks_tensor = ctx->get_saved_variables()[27];
+    at::Tensor zbl_dks_tensor = ctx->get_saved_variables()[28];
 
     // 1.
     int batch_size = bfirstneigh_tensor.size(0);
@@ -1370,6 +1405,14 @@ torch::autograd::variable_list NepToEFLossFunction::backward(
                 rmax_radial,
                 rmax_angular,
                 q_scaler);
+            
+            rescale_f_cpu_launcher<float>(
+                bforce,
+                bforce_dft,
+                batch_size,
+                natoms_pad,
+                binum,
+                (float)force_scaler);
 
             find_ef_loss_backward_cpu_launcher<float>(
                 bloss_der2coeffs,
@@ -1459,6 +1502,14 @@ torch::autograd::variable_list NepToEFLossFunction::backward(
                 (float)rmax_radial,
                 (float)rmax_angular,
                 q_scaler);
+            
+            rescale_f_torch_launcher<float>(
+                bforce,
+                bforce_dft,
+                batch_size,
+                natoms_pad,
+                binum,
+                (float)force_scaler);
             
             find_ef_loss_backward_torch_launcher(
                 bloss_der2coeffs,
@@ -1588,6 +1639,14 @@ torch::autograd::variable_list NepToEFLossFunction::backward(
                 rmax_angular,
                 q_scaler);
 
+            rescale_f_cpu_launcher<double>(
+                bforce,
+                bforce_dft,
+                batch_size,
+                natoms_pad,
+                binum,
+                force_scaler);
+
             find_ef_loss_backward_cpu_launcher<double>(
                 bloss_der2coeffs,
                 bloss_der2w0,
@@ -1677,6 +1736,14 @@ torch::autograd::variable_list NepToEFLossFunction::backward(
                 rmax_angular,
                 q_scaler);
             
+            rescale_f_torch_launcher<double>(
+                bforce,
+                bforce_dft,
+                batch_size,
+                natoms_pad,
+                binum,
+                force_scaler);
+            
             find_ef_loss_backward_torch_launcher(
                 bloss_der2coeffs,
                 bloss_der2w0,
@@ -1732,6 +1799,7 @@ torch::autograd::variable_list NepToEFLossFunction::backward(
         torch::matmul(bgrad_output_tensor, bloss_der2b0_tensor),
         torch::matmul(bgrad_output_tensor, bloss_der2w1_tensor),
         torch::matmul(bgrad_output_tensor, bloss_der2type_bias_tensor),
+        at::Tensor(),
         at::Tensor(),
         at::Tensor(),
         at::Tensor(),
@@ -2006,6 +2074,7 @@ torch::autograd::variable_list NepToEFLossOp(
     double rmax_radial,
     double rmax_angular,
     const at::Tensor& q_scaler_tensor,
+    double force_scaler,
     double zbl_rmax,
     double zbl_rmin,
     const at::Tensor& zbl_cks_tensor,
@@ -2036,6 +2105,7 @@ torch::autograd::variable_list NepToEFLossOp(
         rmax_radial,
         rmax_angular,
         q_scaler_tensor,
+        force_scaler,
         zbl_rmax,
         zbl_rmin,
         zbl_cks_tensor,

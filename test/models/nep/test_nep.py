@@ -32,14 +32,15 @@ class NepTest(unittest.TestCase):
         self.chebyshev_size: int = 8
         self.num_neurons: int = 30
         self.rmax: float = 5.0
-        self.rmin: float = 0.0
+        self.rmax_radial: float = self.rmax
+        self.rmax_angular: float = 4.0
         self.zbl_rmax: float = 2.0
         self.zbl_rmin: float = 1.0
         self.zbl_cks_list: Optional[List[float]] = None
         self.zbl_dks_list: Optional[List[float]] = None
 
         self.device: torch._C.device = torch.device("cpu")
-        self.torch_float_dtype: torch._C.dtype = torch.float32
+        self.torch_float_dtype: torch._C.dtype = torch.float64
         self.nep: Nep = Nep(type_map=self.type_map,
                             energy_shifts=self.energy_shifts,
                             umax_num_neigh_atoms=self.umax_num_neigh_atoms,
@@ -49,10 +50,10 @@ class NepTest(unittest.TestCase):
                             l_max=self.l_max,
                             chebyshev_size=self.chebyshev_size,
                             num_neurons=self.num_neurons,
-                            rmax=self.rmax,
-                            rmin=self.rmin,
+                            rmax_radial=self.rmax_radial,
+                            rmax_angular=self.rmax_angular,
                             zbl_rmax=self.zbl_rmax,
-                            zbl_rmin=self.rmin,
+                            zbl_rmin=self.zbl_rmin,
                             zbl_cks_list=self.zbl_cks_list,
                             zbl_dks_list=self.zbl_dks_list)
         self.nep.to(self.device)
@@ -113,7 +114,7 @@ class NepTest(unittest.TestCase):
         print("0.1. Average time cost by nep.predict_ef() = ", np.sum(times_list) / 100)
         print("0.2. std time cost by nep.predict_ef() = ", np.std(times_list) / 100)
         print("1. Energy = ", e)
-        print("2. Force.shape = \n", f[0][5])
+        print("2. Force[0][5] = \n", f[0][5])
 
 
     def test_predict_descriptors(self):

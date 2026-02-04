@@ -119,6 +119,7 @@ class NepTest(unittest.TestCase):
         self.q_scaler_tensor: torch.Tensor = 2.0 - torch.randn(self.num_descriptors,
                                                                dtype=self.torch_float_dtype,
                                                                device=self.device)
+        self.force_scaler: float = 5.23
 
     
     def tearDown(self):
@@ -196,6 +197,7 @@ class NepTest(unittest.TestCase):
                                  self.rmax_radial,
                                  self.rmax_angular,
                                  self.q_scaler_tensor,
+                                 self.force_scaler,
                                  self.zbl_rmax,
                                  self.zbl_rmin,
                                  self.zbl_cks_tensor,
@@ -244,6 +246,7 @@ class NepTest(unittest.TestCase):
                             self.rmax_radial,
                             self.rmax_angular,
                             self.q_scaler_tensor,
+                            self.force_scaler,
                             self.zbl_rmax,
                             self.zbl_rmin,
                             self.zbl_cks_tensor,
