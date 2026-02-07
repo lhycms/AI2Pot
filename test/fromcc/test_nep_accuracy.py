@@ -16,12 +16,13 @@ from ai2pot.fromcc import (
 
 TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")
 ReNbSSe_POSCAR_PATH = os.path.join(os.path.join(TEST_FILES_DIR, "POSCARs", "POSCAR"))
+MoS2_POSCAR_PATH = os.path.join(TEST_FILES_DIR, "POSCARs", "MoS2", "POSCAR_perturbed0.2")
 PbTe_EXTXYZ_PATH = os.path.join(TEST_FILES_DIR, "XYZ", "11_NEP_potential_PbTe", "train_m.xyz")
 
 
 #torch.use_deterministic_algorithms(True)
 torch.set_num_threads(1)
-torch.manual_seed(2143)
+torch.manual_seed(21432)
 
 
 class NepTest(unittest.TestCase):
@@ -32,22 +33,23 @@ class NepTest(unittest.TestCase):
         self.device: torch._C.device = torch.device("cpu")
 
         # 1. 
-        self.n_radial_basis: int = 4
-        self.n_angular_basis: int = 4
+        self.n_radial_basis: int = 1
+        self.n_angular_basis: int = 0
         self.l_max: int = 4
         self.chebyshev_size: int = 4
         self.num_neurons: int = 30
-        self.rmax_radial: float = 5.0
-        self.rmax_angular: float = 4.0
+        self.rmax_radial: float = 6.0
+        self.rmax_angular: float = 6.0
         self.umax_num_neigh_atoms: int = 200
         self.fit_virial: bool = False
         
         self.num_descriptors: int = self.n_radial_basis + self.n_angular_basis * self.l_max
 
-        """
-        self.ntypes: int = 4
-        self.type_map_tensor: torch.Tensor = torch.tensor(data=[16, 34, 41, 75], dtype=torch.int32)
-        self.structure: Structure = Structure.from_file(ReNbSSe_POSCAR_PATH)
+
+        self.ntypes: int = 2
+        #self.type_map_tensor: torch.Tensor = torch.tensor(data=[16, 34, 41, 75], dtype=torch.int32)
+        self.type_map_tensor: torch.Tensor = torch.tensor(data=[42, 16], dtype=torch.int32)
+        self.structure: Structure = Structure.from_file(MoS2_POSCAR_PATH)
         """
         self.ntypes: int = 2
         self.type_map_tensor: torch.Tensor = torch.tensor(data=[1, 8], dtype=torch.int32)
@@ -58,6 +60,7 @@ class NepTest(unittest.TestCase):
                                                       [3.0, 0.0, 0]
                                                       ],
                                               coords_are_cartesian=True)
+        """
         print(self.structure)
 
         # 2. ZBL
@@ -101,15 +104,15 @@ class NepTest(unittest.TestCase):
         self.w0_tensor: torch.Tensor = torch.zeros(self.ntypes * self.num_neurons * self.num_descriptors,
                                                    dtype=self.torch_float_dtype,
                                                    device=self.device)
-        nn.init.normal_(self.w0_tensor, mean=0.0, std=0.1)
+        nn.init.normal_(self.w0_tensor, mean=0.0, std=0.5)
         self.b0_tensor: torch.Tensor = torch.zeros(self.ntypes * self.num_neurons,
                                                    dtype=self.torch_float_dtype,
                                                    device=self.device)
-        nn.init.normal_(self.b0_tensor, mean=0.0, std=0.1)
+        nn.init.normal_(self.b0_tensor, mean=0.0, std=0.5)
         self.w1_tensor: torch.Tensor = torch.zeros(self.ntypes * self.num_neurons,
                                                    dtype=self.torch_float_dtype,
                                                    device=self.device)
-        nn.init.normal_(self.w1_tensor, mean=0.0, std=0.1)
+        nn.init.normal_(self.w1_tensor, mean=0.0, std=0.5)
         self.type_bias_tensor: torch.Tensor = torch.zeros(self.ntypes,
                                                           dtype=self.torch_float_dtype,
                                                           device=self.device)
@@ -119,14 +122,14 @@ class NepTest(unittest.TestCase):
         self.q_scaler_tensor: torch.Tensor = 2.0 - torch.randn(self.num_descriptors,
                                                                dtype=self.torch_float_dtype,
                                                                device=self.device)
-        self.force_scaler: float = 5.23
+        self.force_scaler: float = 1.0
 
     
     def tearDown(self):
         print("NepTest (TestCase) is tearing down...\n")
 
 
-    def est_nepToEF(self):
+    def test_nepToEF(self):
         input_info: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(self.structure)
         e, f = nepToEFOp(self.chebyshev_size,
                          self.n_radial_basis,
@@ -154,15 +157,15 @@ class NepTest(unittest.TestCase):
                          self.zbl_dks_tensor)
         e: torch.Tensor
         f: torch.Tensor
-        print(e)
-        print(f)
+        #print(e)
+        print("force = ", f)
 
 
     def test_nepToEFLoss(self):
         # 1. Parameters
-        e_weight: float = 2.0
-        f_weight: float = 2.0
-        self.coeffs_tensor.requires_grad_(True)
+        e_weight: float = 0.0
+        f_weight: float = 1e1
+        self.coeffs_tensor.requires_grad_(False)
         self.w0_tensor.requires_grad_(True)
         self.b0_tensor.requires_grad_(True)
         self.w1_tensor.requires_grad_(True)
@@ -201,7 +204,8 @@ class NepTest(unittest.TestCase):
                                  self.zbl_rmax,
                                  self.zbl_rmin,
                                  self.zbl_cks_tensor,
-                                 self.zbl_dks_tensor))
+                                 self.zbl_dks_tensor),
+                            eps=1e-8)
         print("-------------------------------------------------")
         print("* NepToEFLossOp Gradient pass check: ", test)
         print("-------------------------------------------------")
@@ -210,7 +214,7 @@ class NepTest(unittest.TestCase):
     def test_nepToEFLoss_print(self):
         # 1. Parameters
         e_weight: float = 2.0
-        f_weight: float = 2.0
+        f_weight: float = 0.0
         self.coeffs_tensor.requires_grad_(True)
         self.w0_tensor.requires_grad_(True)
         self.b0_tensor.requires_grad_(True)
@@ -252,12 +256,14 @@ class NepTest(unittest.TestCase):
                             self.zbl_cks_tensor,
                             self.zbl_dks_tensor)[0].sum()
         loss.backward()
+        print("0. loss = ")
+        print(loss.item())
         print("1. self.coeffs_tensor.grad:")
         print(self.coeffs_tensor.grad)
         #print("2. self.w0_tensor.grad:")
         #print(self.w0_tensor.grad)
-        print("3. self.b0_tensor.grad:")
-        print(self.b0_tensor.grad)
+        #print("3. self.b0_tensor.grad:")
+        #print(self.b0_tensor.grad)
         #print("4. self.w1_tensor.grad:")
         #print(self.w1_tensor.grad)
         #print("5. self.type_bias_tensor.grad:")

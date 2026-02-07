@@ -12,7 +12,7 @@ from ai2pot.fromcc import (
 
 TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")
 ReNbSSe_POSCAR_PATH = os.path.join(os.path.join(TEST_FILES_DIR, "POSCARs", "POSCAR"))
-PbTe_EXTXYZ_PATH = os.path.join(TEST_FILES_DIR, "XYZ", "11_NEP_potential_PbTe", "train_m.xyz")
+PbTe_EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/Li_battery/train.xyz"#os.path.join(TEST_FILES_DIR, "XYZ", "11_NEP_potential_PbTe", "train_m.xyz")
 
 #torch.use_deterministic_algorithms(True)
 torch.set_num_threads(16)
@@ -65,6 +65,7 @@ class TargetStatisticsOpTest(unittest.TestCase):
         print("\t2.2. ei_mean = ", ei_mean.item())
         print("\t2.3. ei_std = ", torch.sqrt(ei_M2/(batch_size-1)).item())
         print("\t2.4. force_std = ", torch.sqrt(force_M2/(3*natoms_in_batch-1)).item())
+        
 
 
 if __name__ == "__main__":

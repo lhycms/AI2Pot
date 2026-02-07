@@ -24,6 +24,7 @@ EXTXYZ_PATH: str = os.path.join(TEST_FILES_DIR,
                                 "XYZ",
                                 "11_NEP_potential_PbTe",
                                 "train_m.xyz")
+EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/Li_battery/train.xyz"
 
 torch.set_num_threads(16)
 
@@ -33,7 +34,7 @@ torch.set_num_threads(16)
 class Nep4ExtxyzTest(unittest.TestCase):
     def setUp(self):
         print("Nep4ExtxyzTest (TestCase) is setting up...")
-        self.checkpoint_path: str = "/data/home/liuhanyu/mycode/AI2Pot/lightning_logs/version_1/checkpoints/epoch=199-step=5000.ckpt"
+        self.checkpoint_path: str = "/data/home/liuhanyu/mycode/AI2Pot/lightning_logs/version_0/checkpoints/epoch=199-step=5000.ckpt"
         self.testset_path: str = EXTXYZ_PATH
         self.map_location: str = "cpu"        
         self.torch_float_dtype: torch._C.dtype = torch.float32

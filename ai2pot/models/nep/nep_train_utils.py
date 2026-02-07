@@ -81,3 +81,17 @@ class NepDescriptorNormCallback(L.Callback):
         pl_module.model.register_buffer("_q_scaler_tensor", tensor=q_scaler_tensor)
         print("🚀🚀🚀 Performing nep descriptor normalization before training --- End!")
     
+
+    def on_after_backward(self,
+                          trainer: L.Trainer,
+                          pl_module: L.LightningModule):
+        total_norm = 0.0
+        for p in pl_module.model.parameters():
+            if p.grad is not None:
+                total_norm += p.grad.data.norm(2).item() ** 2
+        total_norm = total_norm ** 0.5
+
+        self.log("grad_norm", total_norm,
+                on_step=True,
+                on_epoch=False,
+                prog_bar=True)
