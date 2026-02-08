@@ -253,6 +253,7 @@ void LinearMtpLoss<CoordType>::find_loss_backward(
     CoordType *mom_vals;
     CoordType *e_site_der2mom;
     CoordType *dloss_combination;
+    CoordType *de22m0m1_dloss_combinations;
     int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
 
     int max_alpha_index_basic = 0;
@@ -271,12 +272,13 @@ void LinearMtpLoss<CoordType>::find_loss_backward(
 
     // Step 3.
 #ifdef USE_OPENMP
-#pragma omp parallel private(mom_vals, e_site_der2mom, dloss_combination, auto_dist_powers_, auto_coords_powers_, p_RadialBasis)
+#pragma omp parallel private(mom_vals, e_site_der2mom, dloss_combination, de22m0m1_dloss_combinations, auto_dist_powers_, auto_coords_powers_, p_RadialBasis)
 {
 #endif
     mom_vals = (CoordType*)malloc(sizeof(CoordType) * alpha_moments_count);
     e_site_der2mom = (CoordType*)malloc(sizeof(CoordType) * alpha_moments_count);
     dloss_combination = (CoordType*)malloc(sizeof(CoordType) * alpha_moments_count);
+    de22m0m1_dloss_combinations = (CoordType*)malloc(sizeof(CoordType) * alpha_moments_count);
     auto_dist_powers_ = (CoordType*)malloc(sizeof(CoordType) * max_alpha_index_basic);
     auto_coords_powers_ = (CoordType (*)[3])malloc(sizeof(CoordType) * max_alpha_index_basic * 3);
     p_RadialBasis = new RQ_Chebyshev<CoordType>(chebyshev_size, rmax, rmin);
@@ -296,6 +298,7 @@ void LinearMtpLoss<CoordType>::find_loss_backward(
         memset(mom_vals, 0, sizeof(CoordType) * alpha_moments_count);
         memset(e_site_der2mom, 0, sizeof(CoordType) * alpha_moments_count);
         memset(dloss_combination, 0, sizeof(CoordType) * alpha_moments_count);
+        memset(de22m0m1_dloss_combinations, 0, sizeof(CoordType) * alpha_moments_count);
         center_idx = ilist[ii];
         type_central = types[center_idx];
 
@@ -410,6 +413,27 @@ void LinearMtpLoss<CoordType>::find_loss_backward(
                                                        * val2 * val0;
         }
 
+        // New code
+        for (int i=0; i<alpha_index_times_count; i++) {
+            CoordType val2 = alpha_index_times[i][2];
+            de22m0m1_dloss_combinations[alpha_index_times[i][1]] += val2 * e_site_der2mom[alpha_index_times[i][3]]
+                                                                    * dloss_combination[alpha_index_times[i][0]];
+            de22m0m1_dloss_combinations[alpha_index_times[i][0]] += val2 * e_site_der2mom[alpha_index_times[i][3]]
+                                                                    * dloss_combination[alpha_index_times[i][1]];
+        }
+
+        for (int i=alpha_index_times_count-1; i>=0; i--) {
+            CoordType val0 = mom_vals[alpha_index_times[i][0]];
+            CoordType val1 = mom_vals[alpha_index_times[i][1]];
+            CoordType val2 = alpha_index_times[i][2];
+
+            de22m0m1_dloss_combinations[alpha_index_times[i][0]] += de22m0m1_dloss_combinations[alpha_index_times[i][3]]
+                                                                    * val2 * val1;
+            de22m0m1_dloss_combinations[alpha_index_times[i][1]] += de22m0m1_dloss_combinations[alpha_index_times[i][3]]
+                                                                    * val2 * val0;
+        }
+        // New code
+
         // Step 4.3. Loss derivative w.r.t. coeffs
         for (int jj=0; jj<numneigh[ii]; jj++) 
         {
@@ -482,7 +506,7 @@ void LinearMtpLoss<CoordType>::find_loss_backward(
                                           * e_site_der2mom[i]
                                           * A * B * C;
                     
-                    CoordType tmpf_loss_der2coeff = 0.0;
+                    CoordType tmpf_loss_der2coeff = de22m0m1_dloss_combinations[i] * A * B * C;
                     for (int aa=0; aa<3; aa++) 
                     {
                         CoordType tmp_prefix = 0.0;
@@ -501,12 +525,12 @@ void LinearMtpLoss<CoordType>::find_loss_backward(
                                           * (virial_ml[aa*3+bb] - virial_dft[aa*3+bb])
                                           * NeighbVect[bb];
                         }
-                        tmpf_loss_der2coeff += tmp_prefix * tmp_deriv;
+                        tmpf_loss_der2coeff += tmp_prefix * e_site_der2mom[i] * tmp_deriv;
                     }
                     #ifdef USE_OPENMP
                     #pragma omp atomic
                     #endif
-                    loss_der2coeffs[idx] += (tmpe_loss_der2coeff + tmpf_loss_der2coeff * e_site_der2mom[i]);
+                    loss_der2coeffs[idx] += (tmpe_loss_der2coeff + tmpf_loss_der2coeff);
                 }
             }
         }
@@ -534,6 +558,7 @@ void LinearMtpLoss<CoordType>::find_loss_backward(
     free(mom_vals);
     free(e_site_der2mom);
     free(dloss_combination);
+    free(de22m0m1_dloss_combinations);
     free(auto_dist_powers_);
     free(auto_coords_powers_);
     delete p_RadialBasis;

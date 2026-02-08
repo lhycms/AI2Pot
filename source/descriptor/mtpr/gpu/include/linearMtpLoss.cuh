@@ -666,6 +666,7 @@ void find_loss_backward_atom(
     CoordType mom_vals[MAX_ALPHA_MOMENTS_COUNT] = {0.0};
     CoordType e_site_der2mom[MAX_ALPHA_MOMENTS_COUNT] = {0.0};
     CoordType dloss_combination[MAX_ALPHA_MOMENTS_COUNT] = {0.0};
+    CoordType de22m0m1_dloss_combinations[MAX_ALPHA_MOMENTS_COUNT] = {0.0};
 
     int center_idx;
     int type_central;
@@ -802,6 +803,27 @@ void find_loss_backward_atom(
         e_site_der2mom[alpha_index_times[i][1]] += e_site_der2mom[alpha_index_times[i][3]]
                                                    * val2 * val0;
     }
+
+    // New code
+    for (int i=0; i<alpha_index_times_count; i++) {
+        CoordType val2 = alpha_index_times[i][2];
+        de22m0m1_dloss_combinations[alpha_index_times[i][1]] += val2 * e_site_der2mom[alpha_index_times[i][3]]
+                                                                * dloss_combination[alpha_index_times[i][0]];
+        de22m0m1_dloss_combinations[alpha_index_times[i][0]] += val2 * e_site_der2mom[alpha_index_times[i][3]]
+                                                                * dloss_combination[alpha_index_times[i][1]];
+    }
+    
+    for (int i=alpha_index_times_count-1; i>=0; i--) {
+        CoordType val0 = mom_vals[alpha_index_times[i][0]];
+        CoordType val1 = mom_vals[alpha_index_times[i][1]];
+        CoordType val2 = alpha_index_times[i][2];
+
+        de22m0m1_dloss_combinations[alpha_index_times[i][0]] += de22m0m1_dloss_combinations[alpha_index_times[i][3]]
+                                                                * val2 * val1;
+        de22m0m1_dloss_combinations[alpha_index_times[i][1]] += de22m0m1_dloss_combinations[alpha_index_times[i][3]]
+                                                                * val2 * val0;
+    }
+    // New code
     
     // 2.3. loss derivative w.r.t. coeffs
     for (int jj=0; jj<snumneigh; jj++)
@@ -880,7 +902,7 @@ void find_loss_backward_atom(
                                                 * e_site_der2mom[i]
                                                 * A * B * C;
 
-                CoordType tmpf_loss_der2coeff = 0;
+                CoordType tmpf_loss_der2coeff = de22m0m1_dloss_combinations[i] * A * B * C;
                 for (int aa=0; aa<3; aa++) 
                 {
                     CoordType tmp_prefix = 0;
@@ -1283,6 +1305,7 @@ void find_ef_loss_backward_atom(
     CoordType mom_vals[MAX_ALPHA_MOMENTS_COUNT] = {0.0};
     CoordType e_site_der2mom[MAX_ALPHA_MOMENTS_COUNT] = {0.0};
     CoordType dloss_combination[MAX_ALPHA_MOMENTS_COUNT] = {0.0};
+    CoordType de22m0m1_dloss_combinations[MAX_ALPHA_MOMENTS_COUNT] = {0.0};
 
     int center_idx;
     int type_central;
@@ -1413,6 +1436,28 @@ void find_ef_loss_backward_atom(
         e_site_der2mom[alpha_index_times[i][1]] += e_site_der2mom[alpha_index_times[i][3]]
                                                    * val2 * val0;
     }
+
+    // New code
+    for (int i=0; i<alpha_index_times_count; i++) {
+        CoordType val2 = alpha_index_times[i][2];
+        de22m0m1_dloss_combinations[alpha_index_times[i][1]] += val2 * e_site_der2mom[alpha_index_times[i][3]]
+                                                                * dloss_combination[alpha_index_times[i][0]];
+        de22m0m1_dloss_combinations[alpha_index_times[i][0]] += val2 * e_site_der2mom[alpha_index_times[i][3]]
+                                                                * dloss_combination[alpha_index_times[i][1]];
+    }
+
+    for (int i=alpha_index_times_count-1; i>=0; i--) {
+        CoordType val0 = mom_vals[alpha_index_times[i][0]];
+        CoordType val1 = mom_vals[alpha_index_times[i][1]];
+        CoordType val2 = alpha_index_times[i][2];
+
+        de22m0m1_dloss_combinations[alpha_index_times[i][0]] += de22m0m1_dloss_combinations[alpha_index_times[i][3]]
+                                                                * val2 * val1;
+        de22m0m1_dloss_combinations[alpha_index_times[i][1]] += de22m0m1_dloss_combinations[alpha_index_times[i][3]]
+                                                                * val2 * val0;
+    }
+    // New code
+
     
     // 2.3. loss derivative w.r.t. coeffs
     for (int jj=0; jj<snumneigh; jj++)
@@ -1491,7 +1536,7 @@ void find_ef_loss_backward_atom(
                                                 * e_site_der2mom[i]
                                                 * A * B * C;
 
-                CoordType tmpf_loss_der2coeff = 0;
+                CoordType tmpf_loss_der2coeff = de22m0m1_dloss_combinations[i] * A * B * C;
                 for (int aa=0; aa<3; aa++) 
                 {
                     CoordType tmp_prefix = 0;
