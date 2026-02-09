@@ -487,13 +487,53 @@ void NepLoss<CoordType>::find_ef_loss_backward(
             if (distance_ij <= rmax_angular)
             for (int mu=0; mu<n_angular_basis; mu++) {
                 for (int l=1; l<=l_max; l++) {
+                    int idx_qinl = NepIndex::get_qinl_index(l_max, mu, l);
+
                     for (int mp=0; mp<2*l+1; mp++) {
+                        int idx_Clm = NepIndex::get_Clm_index(l, mp);
+                        int idx_Sinlm = NepIndex::get_Sinlm_index(l_max, mu, l, mp);
+
+                        CoordType factor_outer = (mp == 0) ? 2.0 : 4.0;
+                        CoordType dq2m_outer = factor_outer * (CoordType)C3B[idx_Clm] * mom_vals[idx_Sinlm];
+
+                        // New code
+                        CoordType de22m0m1_dloss_combination = 0.0;
+                        for (int mu1=0; mu1<n_radial_basis; mu1++) {
+                            for (int p=0; p<num_neurons; p++) {
+                                CoordType de22d0d1 = type_central_w1[p]
+                                           * activated_hidden_der2ders[p]
+                                           * type_central_w0[p*num_descriptors + n_radial_basis + idx_qinl] / q_scaler[n_radial_basis + idx_qinl]
+                                           * type_central_w0[p*num_descriptors + mu1] / q_scaler[mu1];
+                                de22m0m1_dloss_combination += de22d0d1 * dq2m_outer * dloss_combination_dod[mu1];
+                            }
+                        }
+
+                        for (int mu1=0; mu1<n_angular_basis; mu1++) {
+                            for (int l1=1; l1<=l_max; l1++) {
+                                int idx_qinl1 = NepIndex::get_qinl_index(l_max, mu1, l1);
+                                
+                                CoordType de22d0d1 = 0.0;
+                                for (int p=0; p<num_neurons; p++) {
+                                    de22d0d1 = type_central_w1[p]
+                                                * activated_hidden_der2ders[p]
+                                                * type_central_w0[p*num_descriptors + n_radial_basis + idx_qinl1] / q_scaler[n_radial_basis + idx_qinl1]
+                                                * type_central_w0[p*num_descriptors + n_radial_basis + idx_qinl] / q_scaler[n_radial_basis + idx_qinl];
+
+                                    for (int mp1=0; mp1<2*l1+1; mp1++) {
+                                        int idx_Clm1 = NepIndex::get_Clm_index(l1, mp1);
+                                        int idx_Sinlm1 = NepIndex::get_Sinlm_index(l_max, mu1, l1, mp1);
+                                        CoordType factor_inner = (mp1 == 0) ? 2.0 : 4.0;
+                                        CoordType dq2m_inner = factor_inner * (CoordType)C3B[idx_Clm1] * mom_vals[idx_Sinlm1];
+                                        de22m0m1_dloss_combination += de22d0d1 * dq2m_outer * dq2m_inner * dloss_combination_mom[idx_Sinlm1];
+                                    }
+                                }
+                            }
+                        }
+                        // New code
+
                         for (int xi=0; xi<chebyshev_size; xi++) {
                             int idx = (type_central*ntypes+type_outer)*(n_radial_basis+n_angular_basis)*chebyshev_size
                                       + (mu+n_radial_basis)*chebyshev_size + xi;
-                            int idx_Clm = NepIndex::get_Clm_index(l, mp);
-                            int idx_Sinlm = NepIndex::get_Sinlm_index(l_max, mu, l, mp);
-                            int idx_qinl = NepIndex::get_qinl_index(l_max, mu, l);
 
                             CoordType A = p_RadialBasis_angular->vals()[xi];
                             CoordType B = 0.0;
@@ -514,7 +554,8 @@ void NepLoss<CoordType>::find_ef_loss_backward(
                             tmpe_loss_der2coeff = 2*e_weight/inum*(etot_ml-etot_dft)
                                                   * e_sites_der2mom[idx_Sinlm]
                                                   * A * B * C;
-                            CoordType tmpf_loss_der2coeff = 0.0;
+                            CoordType tmpf_loss_der2coeff = de22m0m1_dloss_combination * A * B * C
+                                                            + factor_outer * (CoordType)C3B[idx_Clm] * e_sites_der2dod[n_radial_basis + idx_qinl] * dloss_combination_mom[idx_Sinlm] * A * B * C;
                             for (int aa=0; aa<3; aa++) {
                                 CoordType tmp_prefix = 0.0;
                                 CoordType tmp_deriv = (A_ders[aa] * B * C
@@ -525,11 +566,9 @@ void NepLoss<CoordType>::find_ef_loss_backward(
                                               * (force_ml[center_idx][aa] - force_dft[center_idx][aa]);
                                 tmp_prefix -= 2*f_weight/(3*inum)
                                               * (force_ml[neigh_idx][aa] - force_dft[neigh_idx][aa]);
-                                CoordType tmpf_loss_der2coeff_p1 = e_sites_der2mom[idx_Sinlm] 
-                                                                   * tmp_deriv;
-                                //CoordType tmpf_loss_der2coeff_p2 = coeffs[idx] * tmp_deriv 
-                                //                                   * ;
-                                tmpf_loss_der2coeff += tmpf_loss_der2coeff_p1;
+                                tmpf_loss_der2coeff += tmp_prefix
+                                                       * e_sites_der2mom[idx_Sinlm] 
+                                                       * tmp_deriv;
                             }
                             #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
                             #pragma omp atomic
