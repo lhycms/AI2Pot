@@ -409,8 +409,7 @@ void TanhActivationFunc<CoordType>::find_val(
     CoordType &val,
     CoordType hidden_val)
 {
-    val = (std::exp(hidden_val) - std::exp(-hidden_val)) 
-          / (std::exp(hidden_val) + std::exp(-hidden_val));
+    val = std::tanh(hidden_val);
 }
 
 
@@ -419,8 +418,7 @@ void TanhActivationFunc<CoordType>::find_der(
     CoordType &der,
     CoordType hidden_val)
 {
-    CoordType val = (std::exp(hidden_val) - std::exp(-hidden_val)) 
-                    / (std::exp(hidden_val) + std::exp(-hidden_val));
+    CoordType val = std::tanh(hidden_val);
     der = 1 - std::pow(val, 2);
 }
 
@@ -430,8 +428,7 @@ void TanhActivationFunc<CoordType>::find_der2der(
     CoordType &der2der,
     CoordType hidden_val)
 {
-    CoordType val = (std::exp(hidden_val) - std::exp(-hidden_val))
-                    / (std::exp(hidden_val) + std::exp(-hidden_val));
+    CoordType val = std::tanh(hidden_val);
     der2der = -2*val + 2*std::pow(val, 3);
 }
 
