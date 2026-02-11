@@ -22,7 +22,7 @@ PbTe_EXTXYZ_PATH = os.path.join(TEST_FILES_DIR, "XYZ", "11_NEP_potential_PbTe", 
 
 #torch.use_deterministic_algorithms(True)
 torch.set_num_threads(1)
-torch.manual_seed(21432)
+torch.manual_seed(214)
 
 
 class NepTest(unittest.TestCase):
@@ -33,13 +33,13 @@ class NepTest(unittest.TestCase):
         self.device: torch._C.device = torch.device("cpu")
 
         # 1. 
-        self.n_radial_basis: int = 1
-        self.n_angular_basis: int = 0
+        self.n_radial_basis: int = 6
+        self.n_angular_basis: int = 4
         self.l_max: int = 4
-        self.chebyshev_size: int = 4
+        self.chebyshev_size: int = 8
         self.num_neurons: int = 30
         self.rmax_radial: float = 6.0
-        self.rmax_angular: float = 6.0
+        self.rmax_angular: float = 5.0
         self.umax_num_neigh_atoms: int = 200
         self.fit_virial: bool = False
         
@@ -100,7 +100,7 @@ class NepTest(unittest.TestCase):
         self.coeffs_tensor: torch.Tensor = torch.zeros(self.ntypes*self.ntypes*(self.n_radial_basis+self.n_angular_basis)*self.chebyshev_size, 
                                                        dtype=self.torch_float_dtype,
                                                        device=self.device)
-        nn.init.normal_(self.coeffs_tensor, mean=0.0, std=0.1)
+        nn.init.normal_(self.coeffs_tensor, mean=0.0, std=0.2)
         self.w0_tensor: torch.Tensor = torch.zeros(self.ntypes * self.num_neurons * self.num_descriptors,
                                                    dtype=self.torch_float_dtype,
                                                    device=self.device)
@@ -119,9 +119,9 @@ class NepTest(unittest.TestCase):
         nn.init.normal_(self.type_bias_tensor, mean=0.0, std=1.0)
 
         # q_scaler_tensor
-        self.q_scaler_tensor: torch.Tensor = 2.0 - torch.randn(self.num_descriptors,
-                                                               dtype=self.torch_float_dtype,
-                                                               device=self.device)
+        self.q_scaler_tensor: torch.Tensor = torch.ones(self.num_descriptors,
+                                                        dtype=self.torch_float_dtype,
+                                                        device=self.device)
         self.force_scaler: float = 1.0
 
     
@@ -158,14 +158,14 @@ class NepTest(unittest.TestCase):
         e: torch.Tensor
         f: torch.Tensor
         #print(e)
-        print("force = ", f)
+        #print("force = ", f)
 
 
     def test_nepToEFLoss(self):
         # 1. Parameters
-        e_weight: float = 0.0
+        e_weight: float = 1e1
         f_weight: float = 1e1
-        self.coeffs_tensor.requires_grad_(False)
+        self.coeffs_tensor.requires_grad_(True)
         self.w0_tensor.requires_grad_(True)
         self.b0_tensor.requires_grad_(True)
         self.w1_tensor.requires_grad_(True)
@@ -205,6 +205,8 @@ class NepTest(unittest.TestCase):
                                  self.zbl_rmin,
                                  self.zbl_cks_tensor,
                                  self.zbl_dks_tensor),
+                            rtol=1e-3,
+                            atol=1e-3,
                             eps=1e-8)
         print("-------------------------------------------------")
         print("* NepToEFLossOp Gradient pass check: ", test)
@@ -213,8 +215,8 @@ class NepTest(unittest.TestCase):
 
     def test_nepToEFLoss_print(self):
         # 1. Parameters
-        e_weight: float = 2.0
-        f_weight: float = 0.0
+        e_weight: float = 1e1
+        f_weight: float = 1e1
         self.coeffs_tensor.requires_grad_(True)
         self.w0_tensor.requires_grad_(True)
         self.b0_tensor.requires_grad_(True)

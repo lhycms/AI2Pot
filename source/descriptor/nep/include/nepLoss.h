@@ -555,7 +555,6 @@ void NepLoss<CoordType>::find_ef_loss_backward(
                     for (int mp=0; mp<2*l+1; mp++) {
                         int idx_Clm = NepIndex::get_Clm_index(l, mp);
                         int idx_Sinlm = NepIndex::get_Sinlm_index(l_max, mu, l, mp);
-
                         CoordType Clm_prefix = (mp == 0) ? 1.0 : 2.0;
 
                         for (int xi=0; xi<chebyshev_size; xi++) {

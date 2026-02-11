@@ -29,6 +29,7 @@
 #define MAX_NUM_ANGULAR_BASIS 12
 #define MAX_NUM_SINLM 288   // (3 + 5 + 7 + 9) * 12
 #define MAX_NUM_DESCRIPTORS 68  // 20 + 12*4
+#define MAX_NUM_NEURONS 120
 
 
 // 3 + 5 + 7 + 9

@@ -33,7 +33,7 @@ class LitNepTest(unittest.TestCase):
         rmax_radial: float = 6.0
         rmax_angular: float = 6.0
         n_radial_basis: int = 6 + 1
-        n_angular_basis: int = 0#4 + 1
+        n_angular_basis: int = 4 + 1
         l_max: int = 4
         chebyshev_size: int = 8 + 1
         num_neurons: int = 30
@@ -95,7 +95,7 @@ class LitNepTest(unittest.TestCase):
         self.nep_descriptor_norm_callback: NepDescriptorNormCallback = NepDescriptorNormCallback()
     
         self.trainer: L.Trainer = L.Trainer(max_epochs=max_epochs,
-                                            accelerator="cpu",
+                                            accelerator="cuda",
                                             devices=1,
                                             limit_val_batches=0,
                                             log_every_n_steps=1,
