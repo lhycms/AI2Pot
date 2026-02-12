@@ -30,7 +30,7 @@ class NepTest(unittest.TestCase):
         print("NepTest (TestCase) is setting up...\n")
         # 0.
         self.torch_float_dtype: torch._C.dtype = torch.float64
-        self.device: torch._C.device = torch.device("cpu")
+        self.device: torch._C.device = torch.device("cuda")
 
         # 1. 
         self.n_radial_basis: int = 6
@@ -39,7 +39,7 @@ class NepTest(unittest.TestCase):
         self.chebyshev_size: int = 8
         self.num_neurons: int = 30
         self.rmax_radial: float = 6.0
-        self.rmax_angular: float = 5.0
+        self.rmax_angular: float = 6.0
         self.umax_num_neigh_atoms: int = 200
         self.fit_virial: bool = False
         
@@ -122,7 +122,6 @@ class NepTest(unittest.TestCase):
         self.q_scaler_tensor: torch.Tensor = torch.ones(self.num_descriptors,
                                                         dtype=self.torch_float_dtype,
                                                         device=self.device)
-        self.force_scaler: float = 1.0
 
     
     def tearDown(self):
@@ -200,7 +199,6 @@ class NepTest(unittest.TestCase):
                                  self.rmax_radial,
                                  self.rmax_angular,
                                  self.q_scaler_tensor,
-                                 self.force_scaler,
                                  self.zbl_rmax,
                                  self.zbl_rmin,
                                  self.zbl_cks_tensor,
@@ -252,7 +250,6 @@ class NepTest(unittest.TestCase):
                             self.rmax_radial,
                             self.rmax_angular,
                             self.q_scaler_tensor,
-                            self.force_scaler,
                             self.zbl_rmax,
                             self.zbl_rmin,
                             self.zbl_cks_tensor,

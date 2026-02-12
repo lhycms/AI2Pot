@@ -197,60 +197,6 @@ void find_ef_loss_backward_torch_launcher(
 // 4. find_loss_backward
 
 
-// 5. rescale_f
-template <typename CoordType>
-__host__
-void rescale_f_torch_launcher(
-    CoordType (*d_bforce_ml)[3],
-    CoordType (*d_bforce_dft)[3],
-    int batch_size,
-    int natoms_pad,
-    int *d_binum,
-    CoordType force_scaler)
-{
-    int block_size_x = 256;
-    int grid_size_x = (batch_size*natoms_pad - 1) / block_size_x + 1;
-    dim3 grid_size(grid_size_x);
-    dim3 block_size(block_size_x);
-
-    rescale_f_kernel KERNEL_ARG2(grid_size, block_size) (
-        d_bforce_ml,
-        d_bforce_dft,
-        batch_size,
-        natoms_pad,
-        d_binum,
-        force_scaler);
-}
-
-// 6. rescale_fv
-template <typename CoordType>
-__host__
-void rescale_fv_torch_launcher(
-    CoordType (*d_bforce_ml)[3],
-    CoordType (*d_bforce_dft)[3],
-    CoordType *d_bvirial_ml,
-    CoordType *d_bvirial_dft,
-    int batch_size,
-    int natoms_pad,
-    int *d_binum,
-    CoordType force_scaler)
-{
-    int block_size_x = 256;
-    int grid_size_x = (batch_size*natoms_pad - 1) / block_size_x + 1;
-    dim3 grid_size(grid_size_x);
-    dim3 block_size(block_size_x);
-
-    rescale_fv_kernel KERNEL_ARG2(grid_size, block_size) (
-        d_bforce_ml,
-        d_bforce_dft,
-        d_bvirial_ml,
-        d_bvirial_dft,
-        batch_size,
-        natoms_pad,
-        d_binum,
-        force_scaler);
-}
-
 
 };  // namespace : nep
 };  // namespace : ai2pot

@@ -37,7 +37,7 @@ class Nep4ExtxyzTest(unittest.TestCase):
         self.checkpoint_path: str = "/data/home/liuhanyu/mycode/AI2Pot/lightning_logs/version_0/checkpoints/epoch=199-step=5000.ckpt"
         self.testset_path: str = EXTXYZ_PATH
         self.map_location: str = "cpu"        
-        self.torch_float_dtype: torch._C.dtype = torch.float32
+        self.torch_float_dtype: torch._C.dtype = torch.float64
         self.nep_extxyz: Nep4Extxyz = Nep4Extxyz(checkpoint_path=self.checkpoint_path,
                                                  testset_path=self.testset_path,
                                                  map_location=self.map_location,

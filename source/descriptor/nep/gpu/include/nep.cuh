@@ -256,9 +256,9 @@ void find_ef_atom(
         for (int aa=0; aa<3; aa++)
             neigh_vec[aa] = srcs[jj][aa];
         
-        distance_ij = std::sqrt( std::pow(neigh_vec[0], 2)
-                                 + std::pow(neigh_vec[1], 2)
-                                 + std::pow(neigh_vec[2], 2) );
+        distance_ij = std::sqrt( neigh_vec[0] * neigh_vec[0]
+                                 + neigh_vec[1] * neigh_vec[1]
+                                 + neigh_vec[2] * neigh_vec[2] );
         if (distance_ij > rmax_radial)
             continue;
         distance_ij_inv = 1.0 / distance_ij;
@@ -325,9 +325,9 @@ void find_ef_atom(
                 int idx_Sinlm = NepIndex::get_Sinlm_index(l_max, mu, l, mp);
                 int idx_Clm = NepIndex::get_Clm_index(l, mp);
                 if (mp == 0)
-                    dod_vals[n_radial_basis+idx_qinl] += (CoordType)C3B[idx_Clm] * std::pow(mom_vals[idx_Sinlm], 2);
+                    dod_vals[n_radial_basis+idx_qinl] += (CoordType)C3B[idx_Clm] * mom_vals[idx_Sinlm] * mom_vals[idx_Sinlm];
                 else
-                    dod_vals[n_radial_basis+idx_qinl] += 2 * (CoordType)C3B[idx_Clm] * std::pow(mom_vals[idx_Sinlm], 2);
+                    dod_vals[n_radial_basis+idx_qinl] += 2 * (CoordType)C3B[idx_Clm] * mom_vals[idx_Sinlm] * mom_vals[idx_Sinlm];
             }
         }
     }
@@ -389,9 +389,9 @@ void find_ef_atom(
         type_outer = types[neigh_idx];
         for (int aa=0; aa<3; aa++)
             neigh_vec[aa] = srcs[jj][aa];
-        distance_ij = std::sqrt( std::pow(neigh_vec[0], 2)
-                                 + std::pow(neigh_vec[1], 2)
-                                 + std::pow(neigh_vec[2], 2) );
+        distance_ij = std::sqrt( neigh_vec[0] * neigh_vec[0]
+                                 + neigh_vec[1] * neigh_vec[1]
+                                 + neigh_vec[2] * neigh_vec[2] );
         if (distance_ij > rmax_radial)
             continue;
         distance_ij_inv = 1.0 / distance_ij;
@@ -427,8 +427,10 @@ void find_ef_atom(
                 for (int aa=0; aa<3; aa++) {
                     CoordType mom_der2xyz = prefix_mom_der2xyz * neigh_vec[aa];
                     CoordType e_site_ders_ija = e_sites_der2dod[mu] * mom_der2xyz;
-                    atomicAdd(&force[center_idx][aa], e_site_ders_ija);
-                    atomicAdd(&force[neigh_idx][aa], -e_site_ders_ija);
+                    tmp_force_ij[aa] += e_site_ders_ija;
+                    tmp_force_ji[aa] += -e_site_ders_ija;
+                    //atomicAdd(&force[center_idx][aa], e_site_ders_ija);
+                    //atomicAdd(&force[neigh_idx][aa], -e_site_ders_ija);
                 }
             }
         }
@@ -755,9 +757,9 @@ void find_descriptors_atom(
         for (int aa=0; aa<3; aa++)
             neigh_vec[aa] = srcs[jj][aa];
         
-        distance_ij = std::sqrt( std::pow(neigh_vec[0], 2)
-                                 + std::pow(neigh_vec[1], 2)
-                                 + std::pow(neigh_vec[2], 2) );
+        distance_ij = std::sqrt( neigh_vec[0] * neigh_vec[0]
+                                 + neigh_vec[1] * neigh_vec[1]
+                                 + neigh_vec[2] * neigh_vec[2] );
         if (distance_ij > rmax_radial)
             continue;
         distance_ij_inv = 1.0 / distance_ij;
@@ -821,9 +823,9 @@ void find_descriptors_atom(
                 int idx_Clm = NepIndex::get_Clm_index(l, mp);
                 
                 if (mp == 0)
-                    dod_vals[n_radial_basis+idx_qinl] += (CoordType)C3B[idx_Clm] * std::pow(mom_vals[idx_Sinlm], 2);
+                    dod_vals[n_radial_basis+idx_qinl] += (CoordType)C3B[idx_Clm] * mom_vals[idx_Sinlm] * mom_vals[idx_Sinlm];
                 else
-                    dod_vals[n_radial_basis+idx_qinl] += 2 * (CoordType)C3B[idx_Clm] * std::pow(mom_vals[idx_Sinlm], 2);
+                    dod_vals[n_radial_basis+idx_qinl] += 2 * (CoordType)C3B[idx_Clm] * mom_vals[idx_Sinlm] * mom_vals[idx_Sinlm];
             }
         }
     }

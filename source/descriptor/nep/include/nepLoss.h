@@ -91,22 +91,6 @@ public:
         CoordType rmax_radial,
         CoordType rmax_angular,
         CoordType *q_scaler);
-    
-
-    static void rescale_f(
-        CoordType (*force_ml)[3],
-        CoordType (*force_dft)[3],
-        int inum,
-        CoordType force_scaler);
-    
-
-    static void rescale_fv(
-        CoordType (*force_ml)[3],
-        CoordType (*force_dft)[3],
-        CoordType *virial_ml,
-        CoordType *virial_dft,
-        int inum,
-        CoordType force_scaler);
 };  // namespace : NepLoss
 
 
@@ -721,46 +705,6 @@ void NepLoss<CoordType>::find_ef_loss_backward(
     #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
     }
     #endif
-}
-
-
-template <typename CoordType>
-void NepLoss<CoordType>::rescale_f(
-    CoordType (*force_ml)[3],
-    CoordType (*force_dft)[3],
-    int inum,
-    CoordType force_scaler)
-{
-    for (int ii=0; ii<inum; ii++) {
-        for (int aa=0; aa<3; aa++) {
-            force_ml[ii][aa] = force_ml[ii][aa] / force_scaler;
-            force_dft[ii][aa] = force_dft[ii][aa] / force_scaler;
-        }
-    }
-}
-
-template <typename CoordType>
-void NepLoss<CoordType>::rescale_fv(
-    CoordType (*force_ml)[3],
-    CoordType (*force_dft)[3],
-    CoordType *virial_ml,
-    CoordType *virial_dft,
-    int inum,
-    CoordType force_scaler)
-{
-    for (int ii=0; ii<inum; ii++) {
-        for (int aa=0; aa<3; aa++) {
-            force_ml[ii][aa] = force_ml[ii][aa] / force_scaler;
-            force_dft[ii][aa] = force_dft[ii][aa] / force_scaler;
-        }
-    }
-    
-    for (int aa=0; aa<3; aa++) {
-        for (int bb=0; bb<3; bb++) {
-            virial_ml[aa*3+bb] = virial_ml[aa*3+bb] / force_scaler;
-            virial_dft[aa*3+bb] = virial_dft[aa*3+bb] / force_scaler;
-        }
-    }
 }
 
 

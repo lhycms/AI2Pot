@@ -96,9 +96,6 @@ class Nep(nn.Module):
         q_scaler_tensor: torch.Tensor = torch.ones(self.num_descriptors, dtype=torch.float32)
         self.register_buffer("_q_scaler_tensor", tensor=q_scaler_tensor)
 
-        self.force_scaler: float = 1.0
-    
-
     @property
     def q_scaler_tensor(self):
         return self._q_scaler_tensor
@@ -185,7 +182,6 @@ class Nep(nn.Module):
             self.rmax_radial,
             self.rmax_angular,
             self._q_scaler_tensor,
-            self.force_scaler,
             self.zbl_rmax,
             self.zbl_rmin,
             self.zbl_cks_tensor,

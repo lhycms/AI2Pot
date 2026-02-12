@@ -32,7 +32,6 @@ from sklearn.manifold import TSNE
 from ai2pot.data.mlffdatamodule import ExtxyzDataModule
 from ai2pot.models.potential_train import LitNep
 from ai2pot.models.nep.nep import Nep
-from ai2pot.utils.usepot import MlffInput
 
 
 
@@ -51,13 +50,13 @@ class Nep4Extxyz(object):
         # model and data
         self.nep: Nep = self.lit_nep.model.to(torch_float_dtype)
         extxyz_datamodule: ExtxyzDataModule = ExtxyzDataModule(testset_path=self.testset_path,
-                                                            batch_size=1,
-                                                            rcut=self.nep.rmax_radial,
-                                                            umax_num_neigh_atoms=self.nep.umax_num_neigh_atoms,
-                                                            pbc_xyz=[True, True, True],
-                                                            sort=False,
-                                                            torch_float_dtype=torch_float_dtype,
-                                                            has_virial=self.has_virial)
+                                                               batch_size=1,
+                                                               rcut=self.nep.rmax_radial,
+                                                               umax_num_neigh_atoms=self.nep.umax_num_neigh_atoms,
+                                                               pbc_xyz=[True, True, True],
+                                                               sort=False,
+                                                               torch_float_dtype=torch_float_dtype,
+                                                               has_virial=self.has_virial)
         extxyz_datamodule.setup("test")
         self.test_dataloader: DataLoader = extxyz_datamodule.test_dataloader()
         
@@ -142,7 +141,7 @@ class Nep4Extxyz(object):
         ax1.set_xlabel("DFT energy (eV/atom)",
                        fontsize=16,
                        fontweight="bold")
-        ax1.set_ylabel("NEP energy (eV/atom)",
+        ax1.set_ylabel("MLP energy (eV/atom)",
                        fontsize=16,
                        fontweight="bold")
         
