@@ -116,39 +116,39 @@ class LitPotential(L.LightningModule):
 
 class LitLinearMtp(L.LightningModule):
     def __init__(self,
-                 mtp_level: int,
                  type_map: List[int],
                  energy_shifts: Optional[List[float]] = None,
+                 umax_num_neigh_atoms: int = 200,
+                 fit_virial: bool = False,
+                 mtp_level: int = 16,
                  chebyshev_size: int = 8,
                  rmax: float = 5.0,
                  rmin: float = 0.0,
-                 umax_num_neigh_atoms: int = 200,
-                 fit_virial: bool = False,
-                 zbl_rmax: float = 2.0,
-                 zbl_rmin: float = 1.0,
+                 zbl_rmax: float = 0.0,
+                 zbl_rmin: float = 0.0,
                  zbl_cks_list: Optional[List[float]] = None,
                  zbl_dks_list: Optional[List[float]] = None,
                  torch_float_dtype: torch._C.dtype = torch.float32,
                  lr_start: float = 1e-1,
                  lr_end: float = 1e-4,
-                 e_wgt_start: float = 0.02,
+                 e_wgt_start: float = 1.0,
                  e_wgt_end: float = 1.0,
-                 f_wgt_start: float = 1000.0,
+                 f_wgt_start: float = 0.1,
                  f_wgt_end: float = 0.1,
-                 v_wgt_start: float = 0.0,
-                 v_wgt_end: float = 0.0,
+                 v_wgt_start: float = 0.01,
+                 v_wgt_end: float = 0.01,
                  lr_decay_step: int = 5000):
         super(LitLinearMtp, self).__init__()
         self.save_hyperparameters()
         
-        self.model: nn.Module = LinearMtp(mtp_level=mtp_level,
-                                          type_map=type_map,
+        self.model: nn.Module = LinearMtp(type_map=type_map,
                                           energy_shifts=energy_shifts,
+                                          umax_num_neigh_atoms=umax_num_neigh_atoms,
+                                          fit_virial=fit_virial,
+                                          mtp_level=mtp_level,
                                           chebyshev_size=chebyshev_size,
                                           rmax=rmax,
                                           rmin=rmin,
-                                          umax_num_neigh_atoms=umax_num_neigh_atoms,
-                                          fit_virial=fit_virial,
                                           zbl_rmax=zbl_rmax,
                                           zbl_rmin=zbl_rmin,
                                           zbl_cks_list=zbl_cks_list,
@@ -158,7 +158,7 @@ class LitLinearMtp(L.LightningModule):
 
         self.lr_start: float = lr_start
         self.lr_end: float = lr_end
-        self.e_wgt_start: float = e_wgt_start
+        self.e_wgt_start: float= e_wgt_start
         self.e_wgt_end: float = e_wgt_end
         self.f_wgt_start: float = f_wgt_start
         self.f_wgt_end: float = f_wgt_end
@@ -207,13 +207,13 @@ class LitLinearMtp(L.LightningModule):
                                                    btypes,
                                                    bnghost[0].item())
         mean_bmse_tensor: torch.Tensor = bmse_tensor.mean()
+
+        ### Log ###
         self.log("train_mse", mean_bmse_tensor,
                  on_epoch=True,
                  on_step=True,
                  prog_bar=True,
                  sync_dist=True)
-        
-        # log : lr, e_weight, f_weight, v_weight
         current_lr: float = self.optimizers().param_groups[0]["lr"]
         self.log("lr", 
                  current_lr,
@@ -238,7 +238,9 @@ class LitLinearMtp(L.LightningModule):
                  on_step=True,
                  on_epoch=False,
                  prog_bar=False,
-                 sync_dist=True) 
+                 sync_dist=True)
+        ### Log ###
+
         return mean_bmse_tensor
 
 
@@ -327,24 +329,17 @@ class LitLinearMtp(L.LightningModule):
         optimizer: torch.optim.Optimizer = torch.optim.AdamW(params=self.model.parameters(),
                                                              lr=self.lr_start)
         
-
-        #work like DeepMD
-        def lr_lambda(step: int):
-            lr_currrent: float = self.lr_start * (self.lr_end / self.lr_start) ** (step / self.lr_decay_step)
-            return max(lr_currrent, self.lr_end) / self.lr_start
-
-        scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
-
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer=optimizer,
+                                                               T_max=self.lr_decay_step,
+                                                               eta_min=self.lr_end)
+        
         return {
-                'optimizer': optimizer,
-                'lr_scheduler': {
-                    'scheduler': scheduler,
-                    'interval': 'step',
-                    'frequency': 1
-                },
-                # gradient clip
-                'gradient_clip_val': 1.0,
-                'gradient_clip_algorithm': 'norm'
+            'optimizer': optimizer,
+            'lr_scheduler': {
+                'scheduler': scheduler,
+                'interval': 'step',
+                'frequency': 1
+            }
         }
 
 
@@ -610,13 +605,13 @@ class LitNep(L.LightningModule):
                  num_neurons: int = 30,
                  rmax_radial: float = 5.0,
                  rmax_angular: float = 0.0,
-                 zbl_rmax: float = 2.0,
-                 zbl_rmin: float = 1.0,
+                 zbl_rmax: float = 0.0,
+                 zbl_rmin: float = 0.0,
                  zbl_cks_list: Optional[List[float]] = None,
                  zbl_dks_list: Optional[List[float]] = None,
                  torch_float_dtype: torch._C.dtype = torch.float32,
                  lr_start: float = 1e-3,
-                 lr_end: float = 1e-3,
+                 lr_end: float = 5e-4,
                  e_wgt_start: float = 1.0,
                  e_wgt_end: float = 1.0,
                  f_wgt_start: float = 0.1,

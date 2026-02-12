@@ -62,7 +62,6 @@ extern template void ai2pot::mtpr::find_efv_torch_launcher<float>(
     int nghost,
     float rmax,
     float rmin,
-    float *d_q_shifter,
     float *d_q_scaler);
 
 extern template void ai2pot::mtpr::find_efv_torch_launcher<double>(
@@ -95,7 +94,6 @@ extern template void ai2pot::mtpr::find_efv_torch_launcher<double>(
     int nghost,
     double rmax,
     double rmin,
-    double *d_q_shifter,
     double *d_q_scaler);
 
 
@@ -129,7 +127,6 @@ extern template void ai2pot::mtpr::find_ef_torch_launcher<float>(
     int nghost,
     float rmax,
     float rmin,
-    float *d_q_shifter,
     float *d_q_scaler);
 
 extern template void ai2pot::mtpr::find_ef_torch_launcher<double>(
@@ -161,7 +158,6 @@ extern template void ai2pot::mtpr::find_ef_torch_launcher<double>(
     int nghost,
     double rmax,
     double rmin,
-    double *d_q_shifter,
     double *d_q_scaler);
 
 
@@ -326,7 +322,6 @@ extern template void ai2pot::mtpr::find_loss_backward_torch_launcher<float>(
     int nghost,
     float rmax,
     float rmin,
-    float *d_q_shifter,
     float *d_q_scaler);
 
 
@@ -369,7 +364,6 @@ extern template void ai2pot::mtpr::find_loss_backward_torch_launcher<double>(
     int nghost,
     double rmax,
     double rmin,
-    double *d_q_shifter,
     double *d_q_scaler);
 
 
@@ -410,7 +404,6 @@ extern template void ai2pot::mtpr::find_ef_loss_backward_torch_launcher<float>(
     int nghost,
     float rmax,
     float rmin,
-    float *d_q_shifter,
     float *d_q_scaler);
 
 extern template void ai2pot::mtpr::find_ef_loss_backward_torch_launcher<double>(
@@ -449,7 +442,6 @@ extern template void ai2pot::mtpr::find_ef_loss_backward_torch_launcher<double>(
     int nghost,
     double rmax,
     double rmin,
-    double *d_q_shifter,
     double *d_q_scaler);
 
 };  // namespace : mtpr
@@ -584,7 +576,6 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
     int nghost,
     double rmax,
     double rmin,
-    const at::Tensor& q_shifter_tensor,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
     double zbl_rmin,
@@ -624,7 +615,6 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
         float *coeffs = coeffs_tensor.data_ptr<float>();
         float *linear_coeffs = linear_coeffs_tensor.data_ptr<float>();
         float *type_bias = type_bias_tensor.data_ptr<float>();
-        float *q_shifter = q_shifter_tensor.data_ptr<float>();
         float *q_scaler = q_scaler_tensor.data_ptr<float>();
         float *zbl_cks = zbl_cks_tensor.data_ptr<float>();
         float *zbl_dks = zbl_dks_tensor.data_ptr<float>();
@@ -699,7 +689,6 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                     nghost,
                     rmax,
                     rmin,
-                    q_shifter,
                     q_scaler);
 
                 LinearMtpLoss<float>::find_loss(
@@ -784,7 +773,6 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                 nghost,
                 (float)rmax,
                 (float)rmin,
-                q_shifter,
                 q_scaler);
             
             find_loss_torch_launcher(
@@ -815,7 +803,6 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
         double *coeffs = coeffs_tensor.data_ptr<double>();
         double *linear_coeffs = linear_coeffs_tensor.data_ptr<double>();
         double *type_bias = type_bias_tensor.data_ptr<double>();
-        double *q_shifter = q_shifter_tensor.data_ptr<double>();
         double *q_scaler = q_scaler_tensor.data_ptr<double>();
         double *zbl_cks = zbl_cks_tensor.data_ptr<double>();
         double *zbl_dks = zbl_dks_tensor.data_ptr<double>();
@@ -890,7 +877,6 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                     nghost,
                     rmax,
                     rmin,
-                    q_shifter,
                     q_scaler);
 
                 LinearMtpLoss<double>::find_loss(
@@ -975,7 +961,6 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                 nghost,
                 rmax,
                 rmin,
-                q_shifter,
                 q_scaler);
             
             find_loss_torch_launcher(
@@ -1025,7 +1010,6 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                             at::tensor(nghost, int_options),
                             at::tensor(rmax, float_options),
                             at::tensor(rmin, float_options),
-                            q_shifter_tensor,
                             q_scaler_tensor,
                             at::tensor(zbl_rmax, float_options),
                             at::tensor(zbl_rmin, float_options),
@@ -1074,12 +1058,11 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
     int nghost = ctx->get_saved_variables()[22].item<int>();
     double rmax = ctx->get_saved_variables()[23].item<double>();
     double rmin = ctx->get_saved_variables()[24].item<double>();
-    at::Tensor q_shifter_tensor = ctx->get_saved_variables()[25];
-    at::Tensor q_scaler_tensor = ctx->get_saved_variables()[26];
-    double zbl_rmax = ctx->get_saved_variables()[27].item<double>();
-    double zbl_rmin = ctx->get_saved_variables()[28].item<double>();
-    at::Tensor zbl_cks_tensor = ctx->get_saved_variables()[29];
-    at::Tensor zbl_dks_tensor = ctx->get_saved_variables()[30];
+    at::Tensor q_scaler_tensor = ctx->get_saved_variables()[25];
+    double zbl_rmax = ctx->get_saved_variables()[26].item<double>();
+    double zbl_rmin = ctx->get_saved_variables()[27].item<double>();
+    at::Tensor zbl_cks_tensor = ctx->get_saved_variables()[28];
+    at::Tensor zbl_dks_tensor = ctx->get_saved_variables()[29];
     int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
     int num_linear_coeffs = (int)linear_coeffs_tensor.size(0);
 
@@ -1120,7 +1103,6 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
         float *coeffs = coeffs_tensor.data_ptr<float>();
         float *linear_coeffs = linear_coeffs_tensor.data_ptr<float>();
         float *type_bias = type_bias_tensor.data_ptr<float>();
-        float *q_shifter = q_shifter_tensor.data_ptr<float>();
         float *q_scaler = q_scaler_tensor.data_ptr<float>();
         float* zbl_cks = zbl_cks_tensor.data_ptr<float>();
         float* zbl_dks = zbl_dks_tensor.data_ptr<float>();
@@ -1197,7 +1179,6 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
                     nghost,
                     rmax,
                     rmin,
-                    q_shifter,
                     q_scaler);
 
                 LinearMtpLoss<float>::find_loss_backward(
@@ -1237,7 +1218,6 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
                     nghost,
                     (float)rmax,
                     (float)rmin,
-                    q_shifter,
                     q_scaler); 
             }
         } else {
@@ -1310,7 +1290,6 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
                 nghost,
                 (float)rmax,
                 (float)rmin,
-                q_shifter,
                 q_scaler);
             
             find_loss_backward_torch_launcher(
@@ -1352,7 +1331,6 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
                 nghost,
                 (float)rmax,
                 (float)rmin,
-                q_shifter,
                 q_scaler);
             #endif
         }
@@ -1370,7 +1348,6 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
         double *coeffs = coeffs_tensor.data_ptr<double>();
         double *linear_coeffs = linear_coeffs_tensor.data_ptr<double>();
         double *type_bias = type_bias_tensor.data_ptr<double>();
-        double *q_shifter = q_shifter_tensor.data_ptr<double>();
         double *q_scaler = q_scaler_tensor.data_ptr<double>();
         double* zbl_cks = zbl_cks_tensor.data_ptr<double>();
         double* zbl_dks = zbl_dks_tensor.data_ptr<double>();
@@ -1447,7 +1424,6 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
                     nghost,
                     rmax,
                     rmin,
-                    q_shifter,
                     q_scaler);
 
                 LinearMtpLoss<double>::find_loss_backward(
@@ -1487,7 +1463,6 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
                     nghost,
                     rmax,
                     rmin,
-                    q_shifter,
                     q_scaler);
             }
         } else {
@@ -1560,7 +1535,6 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
                 nghost,
                 rmax,
                 rmin,
-                q_shifter,
                 q_scaler);
             
             find_loss_backward_torch_launcher(
@@ -1602,7 +1576,6 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
                 nghost,
                 rmax,
                 rmin,
-                q_shifter,
                 q_scaler);
             #endif
         }
@@ -1673,7 +1646,6 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
     int nghost,
     double rmax,
     double rmin,
-    const at::Tensor& q_shifter_tensor,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
     double zbl_rmin,
@@ -1712,7 +1684,6 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
         float *coeffs = coeffs_tensor.data_ptr<float>();
         float *linear_coeffs = linear_coeffs_tensor.data_ptr<float>();
         float *type_bias = type_bias_tensor.data_ptr<float>();
-        float *q_shifter = q_shifter_tensor.data_ptr<float>();
         float *q_scaler = q_scaler_tensor.data_ptr<float>();
         float *zbl_cks = zbl_cks_tensor.data_ptr<float>();
         float *zbl_dks = zbl_dks_tensor.data_ptr<float>();
@@ -1783,7 +1754,6 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
                     nghost,
                     rmax,
                     rmin,
-                    q_shifter,
                     q_scaler);
 
                 LinearMtpLoss<float>::find_ef_loss(
@@ -1861,7 +1831,6 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
                 nghost,
                 (float)rmax,
                 (float)rmin,
-                q_shifter,
                 q_scaler);
             
             find_ef_loss_torch_launcher(
@@ -1889,7 +1858,6 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
         double *coeffs = coeffs_tensor.data_ptr<double>();
         double *linear_coeffs = linear_coeffs_tensor.data_ptr<double>();
         double *type_bias = type_bias_tensor.data_ptr<double>();
-        double *q_shifter = q_shifter_tensor.data_ptr<double>();
         double *q_scaler = q_scaler_tensor.data_ptr<double>();
         double* zbl_cks = zbl_cks_tensor.data_ptr<double>();
         double* zbl_dks = zbl_dks_tensor.data_ptr<double>();
@@ -1960,7 +1928,6 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
                     nghost,
                     rmax,
                     rmin,
-                    q_shifter,
                     q_scaler);
 
                 LinearMtpLoss<double>::find_ef_loss(
@@ -2038,7 +2005,6 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
                 nghost,
                 rmax,
                 rmin,
-                q_shifter,
                 q_scaler);
 
             find_ef_loss_torch_launcher(
@@ -2083,7 +2049,6 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
                             at::tensor(nghost, int_options),
                             at::tensor(rmax, float_options),
                             at::tensor(rmin, float_options),
-                            q_shifter_tensor,
                             q_scaler_tensor,
                             at::tensor(zbl_rmax, float_options),
                             at::tensor(zbl_rmin, float_options),
@@ -2129,12 +2094,11 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
     int nghost = ctx->get_saved_variables()[20].item<int>();
     double rmax = ctx->get_saved_variables()[21].item<double>();
     double rmin = ctx->get_saved_variables()[22].item<double>();
-    at::Tensor q_shifter_tensor = ctx->get_saved_variables()[23];
-    at::Tensor q_scaler_tensor = ctx->get_saved_variables()[24];
-    double zbl_rmax = ctx->get_saved_variables()[25].item<double>();
-    double zbl_rmin = ctx->get_saved_variables()[26].item<double>();
-    at::Tensor zbl_cks_tensor = ctx->get_saved_variables()[27];
-    at::Tensor zbl_dks_tensor = ctx->get_saved_variables()[28];
+    at::Tensor q_scaler_tensor = ctx->get_saved_variables()[23];
+    double zbl_rmax = ctx->get_saved_variables()[24].item<double>();
+    double zbl_rmin = ctx->get_saved_variables()[25].item<double>();
+    at::Tensor zbl_cks_tensor = ctx->get_saved_variables()[26];
+    at::Tensor zbl_dks_tensor = ctx->get_saved_variables()[27];
     int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
     int num_linear_coeffs = (int)linear_coeffs_tensor.size(0);
 
@@ -2173,7 +2137,6 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
         float *coeffs = coeffs_tensor.data_ptr<float>();
         float *linear_coeffs = linear_coeffs_tensor.data_ptr<float>();
         float *type_bias = type_bias_tensor.data_ptr<float>();
-        float *q_shifter = q_shifter_tensor.data_ptr<float>();
         float *q_scaler = q_scaler_tensor.data_ptr<float>();
         float* zbl_cks = zbl_cks_tensor.data_ptr<float>();
         float* zbl_dks = zbl_dks_tensor.data_ptr<float>();
@@ -2246,7 +2209,6 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
                     nghost,
                     rmax,
                     rmin,
-                    q_shifter,
                     q_scaler);
 
                 LinearMtpLoss<float>::find_ef_loss_backward(
@@ -2283,7 +2245,6 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
                     nghost,
                     (float)rmax,
                     (float)rmin,
-                    q_shifter,
                     q_scaler); 
             }
         } else {
@@ -2352,7 +2313,6 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
                 nghost,
                 (float)rmax,
                 (float)rmin,
-                q_shifter,
                 q_scaler);
             
             find_ef_loss_backward_torch_launcher(
@@ -2391,7 +2351,6 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
                 nghost,
                 (float)rmax,
                 (float)rmin,
-                q_shifter,
                 q_scaler);
             #endif
         }
@@ -2408,7 +2367,6 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
         double *coeffs = coeffs_tensor.data_ptr<double>();
         double *linear_coeffs = linear_coeffs_tensor.data_ptr<double>();
         double *type_bias = type_bias_tensor.data_ptr<double>();
-        double *q_shifter = q_shifter_tensor.data_ptr<double>();
         double *q_scaler = q_scaler_tensor.data_ptr<double>();
         double* zbl_cks = zbl_cks_tensor.data_ptr<double>();
         double* zbl_dks = zbl_dks_tensor.data_ptr<double>();
@@ -2481,7 +2439,6 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
                     nghost,
                     rmax,
                     rmin,
-                    q_shifter,
                     q_scaler);
 
                 LinearMtpLoss<double>::find_ef_loss_backward(
@@ -2518,7 +2475,6 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
                     nghost,
                     rmax,
                     rmin,
-                    q_shifter,
                     q_scaler); 
             }
         } else {
@@ -2587,7 +2543,6 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
                 nghost,
                 rmax,
                 rmin,
-                q_shifter,
                 q_scaler);
             
             find_ef_loss_backward_torch_launcher(
@@ -2626,7 +2581,6 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
                 nghost,
                 rmax,
                 rmin,
-                q_shifter,
                 q_scaler);
             #endif
         }
@@ -2690,7 +2644,6 @@ torch::autograd::variable_list LinearMtpToEFVFunction::forward(
     int nghost,
     double rmax,
     double rmin,
-    const at::Tensor& q_shifter_tensor,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
     double zbl_rmin,
@@ -2733,7 +2686,6 @@ torch::autograd::variable_list LinearMtpToEFVFunction::forward(
         float* coeffs = coeffs_tensor.data_ptr<float>();
         float* linear_coeffs = linear_coeffs_tensor.data_ptr<float>();
         float* type_bias = type_bias_tensor.data_ptr<float>();
-        float* q_shifter = q_shifter_tensor.data_ptr<float>();
         float* q_scaler = q_scaler_tensor.data_ptr<float>();
         float* zbl_cks = zbl_cks_tensor.data_ptr<float>();
         float* zbl_dks = zbl_dks_tensor.data_ptr<float>();
@@ -2804,7 +2756,6 @@ torch::autograd::variable_list LinearMtpToEFVFunction::forward(
                     nghost,
                     rmax,
                     rmin,
-                    q_shifter,
                     q_scaler);
             }
         } else {
@@ -2871,7 +2822,6 @@ torch::autograd::variable_list LinearMtpToEFVFunction::forward(
                 nghost,
                 (float)rmax,
                 (float)rmin,
-                q_shifter,
                 q_scaler);
             #endif
         }
@@ -2889,7 +2839,6 @@ torch::autograd::variable_list LinearMtpToEFVFunction::forward(
         int (*alpha_index_basic)[4] = (int (*)[4])alpha_index_basic_tensor.data_ptr<int>();
         int (*alpha_index_times)[4] = (int (*)[4])alpha_index_times_tensor.data_ptr<int>();
         int *alpha_moment_mapping = alpha_moment_mapping_tensor.data_ptr<int>();
-        double *q_shifter = q_shifter_tensor.data_ptr<double>();
         double *q_scaler = q_scaler_tensor.data_ptr<double>();
         double *zbl_cks = zbl_cks_tensor.data_ptr<double>();
         double *zbl_dks = zbl_dks_tensor.data_ptr<double>();
@@ -2960,7 +2909,6 @@ torch::autograd::variable_list LinearMtpToEFVFunction::forward(
                     nghost,
                     rmax,
                     rmin,
-                    q_shifter,
                     q_scaler);
             }
         } else {
@@ -3027,44 +2975,10 @@ torch::autograd::variable_list LinearMtpToEFVFunction::forward(
                 nghost,
                 rmax,
                 rmin,
-                q_shifter,
                 q_scaler);
             #endif
         }
     }
-
-    float_options = c10::TensorOptions()
-                    .dtype(torch::kFloat64)
-                    .device(brcs_tensor.device());
-    ctx->save_for_backward({
-        at::tensor(chebyshev_size, float_options),
-        coeffs_tensor,
-        linear_coeffs_tensor,
-        type_bias_tensor,
-        at::tensor(alpha_moments_count, float_options),
-        alpha_index_basic_tensor,
-        alpha_index_times_tensor,
-        alpha_moment_mapping_tensor,
-        at::tensor(nmus, int_options),
-        binum_tensor,
-        bilist_tensor,
-        bnumneigh_tensor,
-        bfirstneigh_tensor,
-        brcs_tensor,
-        btypes_tensor,
-        type_map_tensor,
-        at::tensor(nghost, int_options),
-        at::tensor(rmax, float_options),
-        at::tensor(rmin, float_options),
-        q_shifter_tensor,
-        q_scaler_tensor,
-        at::tensor(zbl_rmax, float_options),
-        at::tensor(zbl_rmin, float_options),
-        zbl_cks_tensor,
-        zbl_dks_tensor});
-
-    if (brcs_tensor.requires_grad())
-        betot_tensor.requires_grad_(true);
 
     return {betot_tensor, bforce_tensor, bvirial_tensor};
 }
@@ -3075,7 +2989,6 @@ torch::autograd::variable_list LinearMtpToEFVFunction::backward(
     torch::autograd::variable_list bgrad_outputs_tensor)
 {
     return {at::Tensor(),
-            at::Tensor(),
             at::Tensor(),
             at::Tensor(),
             at::Tensor(),
@@ -3123,7 +3036,6 @@ torch::autograd::variable_list LinearMtpToEFFunction::forward(
     int nghost,
     double rmax,
     double rmin,
-    const at::Tensor& q_shifter_tensor,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
     double zbl_rmin,
@@ -3165,7 +3077,6 @@ torch::autograd::variable_list LinearMtpToEFFunction::forward(
         float* coeffs = coeffs_tensor.data_ptr<float>();
         float* linear_coeffs = linear_coeffs_tensor.data_ptr<float>();
         float* type_bias = type_bias_tensor.data_ptr<float>();
-        float* q_shifter = q_shifter_tensor.data_ptr<float>();
         float* q_scaler = q_scaler_tensor.data_ptr<float>();
         float* zbl_cks = zbl_cks_tensor.data_ptr<float>();
         float* zbl_dks = zbl_dks_tensor.data_ptr<float>();
@@ -3233,7 +3144,6 @@ torch::autograd::variable_list LinearMtpToEFFunction::forward(
                     nghost,
                     rmax,
                     rmin,
-                    q_shifter,
                     q_scaler);
             }
         } else {
@@ -3297,7 +3207,6 @@ torch::autograd::variable_list LinearMtpToEFFunction::forward(
                 nghost,
                 (float)rmax,
                 (float)rmin,
-                q_shifter,
                 q_scaler);
             #endif
         }
@@ -3314,7 +3223,6 @@ torch::autograd::variable_list LinearMtpToEFFunction::forward(
         int (*alpha_index_basic)[4] = (int (*)[4])alpha_index_basic_tensor.data_ptr<int>();
         int (*alpha_index_times)[4] = (int (*)[4])alpha_index_times_tensor.data_ptr<int>();
         int *alpha_moment_mapping = alpha_moment_mapping_tensor.data_ptr<int>();
-        double *q_shifter = q_shifter_tensor.data_ptr<double>();
         double *q_scaler = q_scaler_tensor.data_ptr<double>();
         double *zbl_cks = zbl_cks_tensor.data_ptr<double>();
         double *zbl_dks = zbl_dks_tensor.data_ptr<double>();
@@ -3383,7 +3291,6 @@ torch::autograd::variable_list LinearMtpToEFFunction::forward(
                     nghost,
                     rmax,
                     rmin,
-                    q_shifter,
                     q_scaler); 
             }
         } else {
@@ -3447,44 +3354,11 @@ torch::autograd::variable_list LinearMtpToEFFunction::forward(
                 nghost,
                 rmax,
                 rmin,
-                q_shifter,
                 q_scaler);
             #endif
         }
     }
 
-    float_options = c10::TensorOptions()
-                    .dtype(torch::kFloat64)
-                    .device(brcs_tensor.device());
-    ctx->save_for_backward({
-        at::tensor(chebyshev_size, float_options),
-        coeffs_tensor,
-        linear_coeffs_tensor,
-        type_bias_tensor,
-        at::tensor(alpha_moments_count, float_options),
-        alpha_index_basic_tensor,
-        alpha_index_times_tensor,
-        alpha_moment_mapping_tensor,
-        at::tensor(nmus, int_options),
-        binum_tensor,
-        bilist_tensor,
-        bnumneigh_tensor,
-        bfirstneigh_tensor,
-        brcs_tensor,
-        btypes_tensor,
-        type_map_tensor,
-        at::tensor(nghost, int_options),
-        at::tensor(rmax, float_options),
-        at::tensor(rmin, float_options),
-        q_shifter_tensor,
-        q_scaler_tensor,
-        at::tensor(zbl_rmax, float_options),
-        at::tensor(zbl_rmin, float_options),
-        zbl_cks_tensor,
-        zbl_dks_tensor});
-
-    if (brcs_tensor.requires_grad())
-        betot_tensor.requires_grad_(true);
 
     return {betot_tensor, bforce_tensor};
 }
@@ -3495,7 +3369,6 @@ torch::autograd::variable_list LinearMtpToEFFunction::backward(
     torch::autograd::variable_list bgrad_outputs_tensor)
 {
     return {at::Tensor(),
-            at::Tensor(),
             at::Tensor(),
             at::Tensor(),
             at::Tensor(),
@@ -3542,7 +3415,6 @@ torch::autograd::variable_list LinearMtpToEsitesFunction::forward(
     int nghost,
     double rmax,
     double rmin,
-    const at::Tensor& q_shifter_tensor,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
     double zbl_rmin,
@@ -3580,7 +3452,6 @@ torch::autograd::variable_list LinearMtpToEsitesFunction::forward(
         int (*alpha_index_basic)[4] = (int (*)[4])alpha_index_basic_tensor.data_ptr<int>();
         int (*alpha_index_times)[4] = (int (*)[4])alpha_index_times_tensor.data_ptr<int>();
         int *alpha_moment_mapping = (int*)alpha_moment_mapping_tensor.data_ptr<int>();
-        float *q_shifter = q_shifter_tensor.data_ptr<float>();
         float *q_scaler = q_scaler_tensor.data_ptr<float>();
         float *zbl_cks = zbl_cks_tensor.data_ptr<float>();
         float *zbl_dks = zbl_dks_tensor.data_ptr<float>();
@@ -3645,7 +3516,6 @@ torch::autograd::variable_list LinearMtpToEsitesFunction::forward(
                 nghost,
                 rmax,
                 rmin,
-                q_shifter,
                 q_scaler);
         }
     } else {
@@ -3659,7 +3529,6 @@ torch::autograd::variable_list LinearMtpToEsitesFunction::forward(
         int (*alpha_index_basic)[4] = (int (*)[4])alpha_index_basic_tensor.data_ptr<int>();
         int (*alpha_index_times)[4] = (int (*)[4])alpha_index_times_tensor.data_ptr<int>();
         int *alpha_moment_mapping = (int*)alpha_moment_mapping_tensor.data_ptr<int>();
-        double *q_shifter = q_shifter_tensor.data_ptr<double>();
         double *q_scaler = q_scaler_tensor.data_ptr<double>();
         double *zbl_cks = zbl_cks_tensor.data_ptr<double>();
         double *zbl_dks = zbl_dks_tensor.data_ptr<double>();
@@ -3724,7 +3593,6 @@ torch::autograd::variable_list LinearMtpToEsitesFunction::forward(
                 nghost,
                 rmax,
                 rmin,
-                q_shifter,
                 q_scaler);
         }
     }
@@ -3752,7 +3620,6 @@ torch::autograd::variable_list LinearMtpToEsitesFunction::forward(
         torch::tensor(nghost, int_options),
         torch::tensor(rmax, float_options),
         torch::tensor(rmin, float_options),
-        q_shifter_tensor,
         q_scaler_tensor,
         torch::tensor(zbl_rmax, float_options),
         torch::tensor(zbl_rmin, float_options),
@@ -3791,12 +3658,11 @@ torch::autograd::variable_list LinearMtpToEsitesFunction::backward(
     int nghost = ctx->get_saved_variables()[16].item<int>();
     double rmax = ctx->get_saved_variables()[17].item<double>();
     double rmin = ctx->get_saved_variables()[18].item<double>();
-    at::Tensor q_shifter_tensor = ctx->get_saved_variables()[19];
-    at::Tensor q_scaler_tensor = ctx->get_saved_variables()[20];
-    double zbl_rmax = ctx->get_saved_variables()[21].item<double>();
-    double zbl_rmin = ctx->get_saved_variables()[22].item<double>();
-    at::Tensor zbl_cks_tensor = ctx->get_saved_variables()[23];
-    at::Tensor zbl_dks_tensor = ctx->get_saved_variables()[24];
+    at::Tensor q_scaler_tensor = ctx->get_saved_variables()[19];
+    double zbl_rmax = ctx->get_saved_variables()[20].item<double>();
+    double zbl_rmin = ctx->get_saved_variables()[21].item<double>();
+    at::Tensor zbl_cks_tensor = ctx->get_saved_variables()[22];
+    at::Tensor zbl_dks_tensor = ctx->get_saved_variables()[23];
     
     // 2. 
     int batch_size = binum_tensor.size(0);
@@ -3835,7 +3701,6 @@ torch::autograd::variable_list LinearMtpToEsitesFunction::backward(
         float *coeffs = (float*)coeffs_tensor.data_ptr<float>();
         float *linear_coeffs = (float*)linear_coeffs_tensor.data_ptr<float>();
         float *type_bias = (float*)type_bias_tensor.data_ptr<float>();
-        float *q_shifter = q_shifter_tensor.data_ptr<float>();
         float *q_scaler = q_scaler_tensor.data_ptr<float>();
 
         for (int bb=0; bb<batch_size; bb++) {
@@ -3889,7 +3754,6 @@ torch::autograd::variable_list LinearMtpToEsitesFunction::backward(
         double *coeffs = (double*)coeffs_tensor.data_ptr<double>();
         double *linear_coeffs = (double*)linear_coeffs_tensor.data_ptr<double>();
         double *type_bias = (double*)type_bias_tensor.data_ptr<double>();
-        double *q_shifter = q_shifter_tensor.data_ptr<double>();
         double *q_scaler = q_scaler_tensor.data_ptr<double>();
         
         for (int bb=0; bb<batch_size; bb++) {
@@ -4249,7 +4113,6 @@ torch::autograd::variable_list LinearMtpToLossOp(
     int nghost,
     double rmax,
     double rmin,
-    const at::Tensor& q_shifter_tensor,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
     double zbl_rmin,
@@ -4282,7 +4145,6 @@ torch::autograd::variable_list LinearMtpToLossOp(
         nghost,
         rmax,
         rmin,
-        q_shifter_tensor,
         q_scaler_tensor,
         zbl_rmax,
         zbl_rmin,
@@ -4315,7 +4177,6 @@ torch::autograd::variable_list LinearMtpToEFLossOp(
     int nghost,
     double rmax,
     double rmin,
-    const at::Tensor& q_shifter_tensor,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
     double zbl_rmin,
@@ -4346,7 +4207,6 @@ torch::autograd::variable_list LinearMtpToEFLossOp(
         nghost,
         rmax,
         rmin,
-        q_shifter_tensor,
         q_scaler_tensor,
         zbl_rmax,
         zbl_rmin,
@@ -4375,7 +4235,6 @@ torch::autograd::variable_list LinearMtpToEFVOp(
     int nghost,
     double rmax,
     double rmin,
-    const at::Tensor& q_shifter_tensor,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
     double zbl_rmin,
@@ -4402,7 +4261,6 @@ torch::autograd::variable_list LinearMtpToEFVOp(
         nghost,
         rmax,
         rmin,
-        q_shifter_tensor,
         q_scaler_tensor,
         zbl_rmax,
         zbl_rmin,
@@ -4431,7 +4289,6 @@ torch::autograd::variable_list LinearMtpToEFOp(
     int nghost,
     double rmax,
     double rmin,
-    const at::Tensor& q_shifter_tensor,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
     double zbl_rmin,
@@ -4458,7 +4315,6 @@ torch::autograd::variable_list LinearMtpToEFOp(
         nghost,
         rmax,
         rmin,
-        q_shifter_tensor,
         q_scaler_tensor,
         zbl_rmax,
         zbl_rmin,
@@ -4487,7 +4343,6 @@ torch::autograd::variable_list LinearMtpToEsitesOp(
     int nghost,
     double rmax,
     double rmin,
-    const at::Tensor& q_shifter_tensor,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
     double zbl_rmin,
@@ -4514,7 +4369,6 @@ torch::autograd::variable_list LinearMtpToEsitesOp(
         nghost,
         rmax,
         rmin,
-        q_shifter_tensor,
         q_scaler_tensor,
         zbl_rmax,
         zbl_rmin,

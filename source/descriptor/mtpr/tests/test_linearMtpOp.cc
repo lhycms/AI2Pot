@@ -85,7 +85,6 @@ protected:
     double *zbl_cks;
     double *zbl_dks;
 
-    at::Tensor q_shifter_tensor;
     at::Tensor q_scaler_tensor;
 
     static void SetUpTestSuite() {
@@ -297,7 +296,6 @@ protected:
             }
         }
 
-        q_shifter_tensor = at::zeros({mtp_param.alpha_scalar_moments()}, float_options);
         q_scaler_tensor = at::ones({mtp_param.alpha_scalar_moments()}, float_options);
     }
 
@@ -334,7 +332,6 @@ TEST_F(LinearMtpOpTest, LinearMtpToLoss_apply) {
         nghost,
         rmax,
         rmin,
-        q_shifter_tensor,
         q_scaler_tensor,
         zbl_rmax,
         zbl_rmin,
@@ -373,7 +370,6 @@ TEST_F(LinearMtpOpTest, ef_apply) {
         nghost,
         rmax,
         rmin,
-        q_shifter_tensor,
         q_scaler_tensor,
         zbl_rmax,
         zbl_rmin,

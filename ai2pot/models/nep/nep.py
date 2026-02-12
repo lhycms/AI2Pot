@@ -39,8 +39,8 @@ class Nep(nn.Module):
                  num_neurons: int = 30,
                  rmax_radial: float = 5.0,
                  rmax_angular: float = 0.0,
-                 zbl_rmax: float = 2.0,
-                 zbl_rmin: float = 1.0,
+                 zbl_rmax: float = 0.0,
+                 zbl_rmin: float = 0.0,
                  zbl_cks_list: Optional[List[float]] = None,
                  zbl_dks_list: Optional[List[float]] = None):
         super(Nep, self).__init__()

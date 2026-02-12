@@ -32,18 +32,17 @@ from ai2pot.fromcc import (mtpParamOp,
 
 class LinearMtp(nn.Module):
     def __init__(self,
-                 mtp_level: int,
                  type_map: List[int],
                  energy_shifts: Optional[List[float]] = None,
+                 umax_num_neigh_atoms: int = 200,
+                 fit_virial: bool = False,
+                 mtp_level: int = 16,
                  chebyshev_size: int = 8,
                  rmax: float = 5.0,
                  rmin: float = 0.0,
-                 umax_num_neigh_atoms: int = 200,
-                 q_shifter: Optional[List[float]] = None,
                  q_scaler: Optional[List[float]] = None,
-                 fit_virial: bool = False,
-                 zbl_rmax: float = 2.0,
-                 zbl_rmin: float = 1.0,
+                 zbl_rmax: float = 0.0,
+                 zbl_rmin: float = 0.0,
                  zbl_cks_list: Optional[List[float]] = None,
                  zbl_dks_list: Optional[List[float]] = None):
         super(LinearMtp, self).__init__()
@@ -79,8 +78,8 @@ class LinearMtp(nn.Module):
         nn.init.normal_(linear_coeffs_tensor, mean=0.0, std=0.1)
         self.register_parameter(name="linear_coeffs_tensor", param=nn.Parameter(data=linear_coeffs_tensor))
 
-        self._init_q_factor(q_shifter=q_shifter,
-                            q_scaler=q_scaler)
+        q_scaler_tensor: torch.Tensor = torch.ones(self.num_descriptors, dtype=torch.float32)
+        self.register_buffer("_q_scaler_tensor", tensor=q_scaler_tensor)
         
         if energy_shifts is not None:
             assert(len(energy_shifts) == self.ntypes)
@@ -92,21 +91,14 @@ class LinearMtp(nn.Module):
             self.register_parameter(name="type_bias_tensor", param=nn.Parameter(data=type_bias_tensor))
 
 
-    def _init_q_factor(self,
-                       q_shifter: List[float],
-                       q_scaler: List[float]):
-        if (q_shifter is None) or (q_scaler is None):
-            q_shifter_tensor: torch.Tensor = torch.zeros(self.num_descriptors, dtype=torch.float32)
-            q_scaler_tensor: torch.Tensor = torch.ones(self.num_descriptors, dtype=torch.float32)
-            self.register_buffer("q_shifter_tensor", tensor=q_shifter_tensor)
-            self.register_buffer("q_scaler_tensor", tensor=q_scaler_tensor)
-        else:
-            q_shifter_tensor: torch.Tensor = torch.tensor(q_shifter, dtype=torch.float32)
-            q_scaler_tensor: torch.Tensor = torch.tensor(q_scaler, dtype=torch.float32)
-            assert(q_shifter_tensor.size() == self.num_descriptors)
-            assert(q_scaler_tensor.size() == self.num_descriptors)
-            self.register_buffer("q_shifter_tensor", tensor=q_shifter_tensor)
-            self.register_buffer("q_scaler_tensor", tensor=q_scaler_tensor)
+    @property
+    def q_scaler_tensor(self):
+        return self._q_scaler_tensor
+
+
+    @q_scaler_tensor.setter
+    def q_scaler_tensor(self, tensor: torch.Tensor):
+        self._q_scaler_tensor = tensor
 
 
     def _init_zbl_params(self, 
@@ -183,7 +175,6 @@ class LinearMtp(nn.Module):
                                                       nghost,
                                                       self.rmax,
                                                       self.rmin,
-                                                      self.q_shifter_tensor,
                                                       self.q_scaler_tensor,
                                                       self.zbl_rmax,
                                                       self.zbl_rmin,
@@ -227,7 +218,6 @@ class LinearMtp(nn.Module):
                                                         nghost,
                                                         self.rmax,
                                                         self.rmin,
-                                                        self.q_shifter_tensor,
                                                         self.q_scaler_tensor,
                                                         self.zbl_rmax,
                                                         self.zbl_rmin,
@@ -263,7 +253,6 @@ class LinearMtp(nn.Module):
                                                                        bnghost_tensor[0].item(),
                                                                        self.rmax,
                                                                        self.rmin,
-                                                                       self.q_shifter_tensor,
                                                                        self.q_scaler_tensor,
                                                                        self.zbl_rmax,
                                                                        self.zbl_rmax,
@@ -299,7 +288,6 @@ class LinearMtp(nn.Module):
                                                       bnghost_tensor[0].item(),
                                                       self.rmax,
                                                       self.rmin,
-                                                      self.q_shifter_tensor,
                                                       self.q_scaler_tensor,
                                                       self.zbl_rmax,
                                                       self.zbl_rmax,
@@ -336,7 +324,6 @@ class LinearMtp(nn.Module):
                                                             bnghost_tensor[0].item(),
                                                             self.rmax,
                                                             self.rmin,
-                                                            self.q_shifter_tensor,
                                                             self.q_scaler_tensor,
                                                             self.zbl_rmax,
                                                             self.zbl_rmax,

@@ -72,7 +72,6 @@ protected:
     real (*bforce_dft)[3];
     real *bvirial_dft;
 
-    real *q_shifter;
     real *q_scaler;
 
 
@@ -246,14 +245,11 @@ protected:
         bdescriptors = (real*)malloc(sizeof(real) * batch_size * natoms_pad * mtp_param.alpha_scalar_moments());
         memset(bdescriptors, 0, sizeof(real) * batch_size * natoms_pad * mtp_param.alpha_scalar_moments());
 
-        q_shifter = (real*)malloc(sizeof(real) * mtp_param.alpha_scalar_moments());
         q_scaler = (real*)malloc(sizeof(real) * mtp_param.alpha_scalar_moments());
         for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++) {
-            q_shifter[ii] = 0.1 + 0.01 * ii;
             q_scaler[ii] = 0.67 + 0.05 * ii;
         }
         //for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++) {
-        //    q_shifter[ii] = 0.0;
         //    q_scaler[ii] = 1.0;
         //}
     }
@@ -284,7 +280,6 @@ protected:
         free(bforce_dft);
         free(bvirial_dft);
         free(bdescriptors);
-        free(q_shifter);
         free(q_scaler);
     }
 };  // class : LinearMtpTest
@@ -327,7 +322,6 @@ TEST_F(LinearMtpTest, find_efv_launcher)
         nghost,
         rmax,
         rmin,
-        q_shifter,
         q_scaler);
 
     // *** delta
@@ -379,7 +373,6 @@ TEST_F(LinearMtpTest, find_efv_launcher)
         nghost,
         rmax,
         rmin,
-        q_shifter,
         q_scaler);
 
 
@@ -431,7 +424,6 @@ TEST_F(LinearMtpTest, find_ef_launcher)
         nghost,
         rmax,
         rmin,
-        q_shifter,
         q_scaler);
 
     // *** delta
@@ -482,7 +474,6 @@ TEST_F(LinearMtpTest, find_ef_launcher)
         nghost,
         rmax,
         rmin,
-        q_shifter,
         q_scaler);
 
 printf("1.1. energy = %.15lf\n", betot[0]);
@@ -534,7 +525,6 @@ TEST_F(LinearMtpTest, find_loss_backward_launcher)
         nghost,
         rmax,
         rmin,
-        q_shifter,
         q_scaler);
 
     ai2pot::mtpr::find_loss_backward_launcher<real>(
@@ -576,7 +566,6 @@ TEST_F(LinearMtpTest, find_loss_backward_launcher)
         nghost,
         rmax,
         rmin,
-        q_shifter,
         q_scaler);
 
 printf("1. loss_der2coeffs:\n");
@@ -630,7 +619,6 @@ TEST_F(LinearMtpTest, find_ef_loss_backward_launcer)
         nghost,
         rmax,
         rmin,
-        q_shifter,
         q_scaler);
 
     ai2pot::mtpr::find_ef_loss_backward_launcher<real>(
@@ -669,7 +657,6 @@ TEST_F(LinearMtpTest, find_ef_loss_backward_launcer)
         nghost,
         rmax,
         rmin,
-        q_shifter,
         q_scaler);
 
 printf("1. loss_der2coeffs:\n");

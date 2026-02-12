@@ -47,7 +47,6 @@ template void ai2pot::mtpr::find_efv_torch_launcher<float>(
     int nghost,
     float rmax,
     float rmin,
-    float *d_q_shifter,
     float *d_q_scaler);
 
 
@@ -81,7 +80,6 @@ template void ai2pot::mtpr::find_efv_torch_launcher<double>(
     int nghost,
     double rmax,
     double rmin,
-    double *d_q_shifter,
     double *d_q_scaler);
 
 
@@ -115,7 +113,6 @@ template void ai2pot::mtpr::find_ef_torch_launcher<float>(
     int nghost,
     float rmax,
     float rmin,
-    float *d_q_shifter,
     float *d_q_scaler);
 
 
@@ -148,7 +145,6 @@ template void ai2pot::mtpr::find_ef_torch_launcher<double>(
     int nghost,
     double rmax,
     double rmin,
-    double *d_q_shifter,
     double *d_q_scaler);
 
 

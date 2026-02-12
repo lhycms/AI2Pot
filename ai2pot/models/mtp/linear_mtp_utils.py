@@ -296,7 +296,7 @@ class LinearMtp4Extxyz(object):
     def __init__(self,
                  checkpoint_path: str,
                  testset_path: str,
-                 map_location: str = "cpu",
+                 map_location: str = "cuda",
                  torch_float_dtype: torch._C.dtype = torch.float32):
         self.checkpoint_path: str = checkpoint_path
         self.testset_path: str = testset_path
@@ -306,14 +306,16 @@ class LinearMtp4Extxyz(object):
 
         # model and data
         self.linear_mtp: LinearMtp = self.lit_linear_mtp.model.to(torch_float_dtype)
-        self.test_dataloader: DataLoader = ExtxyzDataModule(testset_path=self.testset_path,
-                                                            batch_size=1,
-                                                            rcut=self.linear_mtp.rmax,
-                                                            umax_num_neigh_atoms=self.linear_mtp.umax_num_neigh_atoms,
-                                                            pbc_xyz=[True, True, True],
-                                                            sort=False,
-                                                            torch_float_dtype=torch_float_dtype,
-                                                            has_virial=self.has_virial).test_dataloader()
+        extxyz_datamodule: ExtxyzDataModule = ExtxyzDataModule(testset_path=self.testset_path,
+                                                               batch_size=1,
+                                                               rcut=self.linear_mtp.rmax,
+                                                               umax_num_neigh_atoms=self.linear_mtp.umax_num_neigh_atoms,
+                                                               pbc_xyz=[True, True, True],
+                                                               sort=False,
+                                                               torch_float_dtype=torch_float_dtype,
+                                                               has_virial=self.has_virial)
+        extxyz_datamodule.setup("test")
+        self.test_dataloader: DataLoader = extxyz_datamodule.test_dataloader()
     
     def calculate_ef_diagonal(self):
         e_dft_list: List[torch.Tensor] = []

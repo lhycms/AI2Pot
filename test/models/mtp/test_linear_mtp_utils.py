@@ -26,15 +26,16 @@ EXTXYZ_PATH: str = os.path.join(TEST_FILES_DIR,
                                 "XYZ",
                                 "11_NEP_potential_PbTe",
                                 "train_m.xyz")
+#EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/Li_battery/train.xyz"
 
 torch.set_num_threads(16)
 
 
-
+"""
 class LinearMtpCalculatorTest(unittest.TestCase):
     def setUp(self):
         print("LinearMtpCalculator (TestSuite) is setting up...")
-        self.checkpoint_path: str = CHECK_POINT_PATH
+        self.checkpoint_path: str = "/data/home/liuhanyu/mycode/AI2Pot/lightning_logs/version_2/checkpoints/epoch=199-step=5000.ckpt"
         self.map_location: str = "cpu"
         self.torch_float_dtype: torch._C.dtype = torch.float32
         
@@ -75,7 +76,7 @@ class LinearMtpCalculatorTest(unittest.TestCase):
         coeffs_gradients: np.ndarray = self.linear_mtp_calculator.predict_atoms_coeffs_gradients(atoms=self.atoms)
         print("\t1. coeffs_gradients.shape = ", coeffs_gradients.shape)
 
-"""
+
 class LinearMtpActiveDRTest(unittest.TestCase):
     def setUp(self):
         print("LinearMtpActiveDRTest (TestCase) is setting up...")
@@ -118,13 +119,8 @@ class LinearMtpActiveDRTest(unittest.TestCase):
 class LinearMtp4ExtxyzTest(unittest.TestCase):
     def setUp(self):
         print("LinearMtp4ExtxyzTest (TestSuite) is setting up...")
-        self.checkpoint_path: str = CHECK_POINT_PATH
-        self.testset_path: str = os.path.join(TEST_FILES_DIR,
-                                              "test",
-                                              "test_data",
-                                              "XYZ",
-                                              "11_NEP_potential_PbTe",
-                                              "train_m.xyz")
+        self.checkpoint_path: str = "/data/home/liuhanyu/mycode/AI2Pot/lightning_logs/version_3/checkpoints/epoch=199-step=5000.ckpt"
+        self.testset_path: str = EXTXYZ_PATH
         self.map_location: str = "cpu"        
         self.torch_float_dtype: torch._C.dtype = torch.float32
         self.linear_mtp_extxyz: LinearMtp4Extxyz = LinearMtp4Extxyz(checkpoint_path=self.checkpoint_path,

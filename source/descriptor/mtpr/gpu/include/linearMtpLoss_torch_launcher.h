@@ -93,7 +93,6 @@ void find_loss_backward_torch_launcher(
     int nghost,
     CoordType rmax,
     CoordType rmin,
-    CoordType *d_q_shifter,
     CoordType *d_q_scaler);
 
 
@@ -134,7 +133,6 @@ void find_ef_loss_backward_torch_launcher(
     int nghost,
     CoordType rmax,
     CoordType rmin,
-    CoordType *d_q_shifter,
     CoordType *d_q_scaler);
 
 

@@ -103,7 +103,6 @@ protected:
     real *e_sites_der2linear_coeffs;
     real *e_sites_der2type_bias;
 
-    real *q_shifter;
     real *q_scaler;
 
     static void SetUpTestSuite() {
@@ -314,14 +313,11 @@ protected:
         e_sites_der2type_bias = (real*)malloc(sizeof(real) * inum * ntypes);
         memset(e_sites_der2type_bias, 0.0, sizeof(real) * inum * ntypes);
 
-        q_shifter = (real*)malloc(sizeof(real) * mtp_param.alpha_scalar_moments());
         q_scaler = (real*)malloc(sizeof(real) * mtp_param.alpha_scalar_moments());
         for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++) {
-            q_shifter[ii] = 0.1 + 0.01 * ii;
             q_scaler[ii] = 0.67 + 0.05 * ii;
         }
         //for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++) {
-        //    q_shifter[ii] = 0.0;
         //    q_scaler[ii] = 1.0;
         //}
     }
@@ -360,7 +356,6 @@ protected:
         free(e_sites_der2linear_coeffs);
         free(e_sites_der2type_bias);
 
-        free(q_shifter);
         free(q_scaler);
     }
 };
@@ -442,7 +437,6 @@ TEST_F(LinearMtpTest, find_e) {
         nghost,
         rmax,
         rmin,
-        q_shifter,
         q_scaler);
 
     real etot = 0;
@@ -519,7 +513,6 @@ TEST_F(LinearMtpTest, efv_force_accuracy) {
         nghost,
         rmax,
         rmin,
-        q_shifter,
         q_scaler);
 
     // *** delta
@@ -569,7 +562,6 @@ TEST_F(LinearMtpTest, efv_force_accuracy) {
         nghost,
         rmax,
         rmin,
-        q_shifter,
         q_scaler);
 
 printf("1.1. energy = %.15lf\n", etot);
@@ -617,7 +609,6 @@ TEST_F(LinearMtpTest, ef_force_accuracy) {
         nghost,
         rmax,
         rmin,
-        q_shifter,
         q_scaler);
 
     // *** delta
@@ -666,7 +657,6 @@ TEST_F(LinearMtpTest, ef_force_accuracy) {
         nghost,
         rmax,
         rmin,
-        q_shifter,
         q_scaler);
 
 printf("1.1. energy = %.15lf\n", etot);
@@ -714,7 +704,6 @@ TEST_F(LinearMtpTest, find_loss_backward) {
         nghost,
         rmax,
         rmin,
-        q_shifter,
         q_scaler);
     
     ai2pot::mtpr::LinearMtpLoss<real>::find_loss_backward(
@@ -754,7 +743,6 @@ TEST_F(LinearMtpTest, find_loss_backward) {
         nghost,
         rmax,
         rmin,
-        q_shifter,
         q_scaler);
 
 printf("1. loss_der2coeffs:\n");
@@ -806,7 +794,6 @@ TEST_F(LinearMtpTest, find_ef_loss_backward) {
         nghost,
         rmax,
         rmin,
-        q_shifter,
         q_scaler);
 
     ai2pot::mtpr::LinearMtpLoss<real>::find_ef_loss_backward(
@@ -843,7 +830,6 @@ TEST_F(LinearMtpTest, find_ef_loss_backward) {
         nghost,
         rmax,
         rmin,
-        q_shifter,
         q_scaler);
 
 printf("1. loss_der2coeffs:\n");

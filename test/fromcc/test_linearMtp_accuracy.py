@@ -173,10 +173,7 @@ class LinearMtpTest(unittest.TestCase):
                                                           device=self.device)
         nn.init.normal_(self.type_bias_tensor, mean=0.0, std=0.5)
         
-        # q_shifter_tensor, q_scaler_tensor
-        self.q_shifter_tensor: torch.Tensor = torch.zeros(self.alpha_scalar_moments,
-                                                          dtype=self.torch_float_dtype,
-                                                          device=self.device)
+        # q_scaler_tensor
         self.q_scaler_tensor: torch.Tensor = torch.ones(self.alpha_scalar_moments,
                                                         dtype=self.torch_float_dtype,
                                                         device=self.device)
@@ -186,7 +183,7 @@ class LinearMtpTest(unittest.TestCase):
         print("LinearMtpTest (TestCase) is tearing down...\n")
     
     
-    def test_linearMtpToLoss(self):
+    def test_linearMtpToEFLoss(self):
         # 1. Parameters
         e_weight: float = 1e1
         f_weight: float = 1e1
@@ -225,7 +222,6 @@ class LinearMtpTest(unittest.TestCase):
                                  input_info[12].item(),
                                  self.rmax,
                                  self.rmin,
-                                 self.q_shifter_tensor,
                                  self.q_scaler_tensor,
                                  self.zbl_rmax,
                                  self.zbl_rmin,
@@ -271,7 +267,6 @@ class LinearMtpTest(unittest.TestCase):
                                  input_info[6].item(),
                                  self.rmax,
                                  self.rmin,
-                                 self.q_shifter_tensor,
                                  self.q_scaler_tensor,
                                  self.zbl_rmax,
                                  self.zbl_rmin,

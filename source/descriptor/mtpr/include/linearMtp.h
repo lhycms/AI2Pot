@@ -62,7 +62,6 @@ public:
         int nghost,
         CoordType rmax,
         CoordType rmin,
-        CoordType *q_shifter,
         CoordType *q_scaler);
 
 
@@ -93,7 +92,6 @@ public:
         int nghost,
         CoordType rmax,
         CoordType rmin,
-        CoordType *q_shifter,
         CoordType *q_scaler);
 
     static void find_e_sites(
@@ -122,7 +120,6 @@ public:
         int nghost,
         CoordType rmax,
         CoordType rmin,
-        CoordType *q_shifter,
         CoordType *q_scaler);
 
 
@@ -213,7 +210,6 @@ void LinearMtp<CoordType>::find_efv(
     int nghost,
     CoordType rmax,
     CoordType rmin,
-    CoordType *q_shifter,
     CoordType *q_scaler)
 {
     // Step 1.
@@ -278,7 +274,8 @@ void LinearMtp<CoordType>::find_efv(
         e_site = type_bias[type_central];
         for (int i=0; i<alpha_scalar_moments; i++)
             e_site += linear_coeffs[i] 
-                      * (mom_vals[alpha_moment_mapping[i]] - q_shifter[i]) / q_scaler[i];
+                      * mom_vals[alpha_moment_mapping[i]] 
+                      / q_scaler[i];
         #ifdef USE_OPENMP
         #pragma omp atomic
         #endif
@@ -376,7 +373,6 @@ void LinearMtp<CoordType>::find_ef(
     int nghost,
     CoordType rmax,
     CoordType rmin,
-    CoordType *q_shifter,
     CoordType *q_scaler)
 {
     // Step 1.
@@ -440,7 +436,8 @@ void LinearMtp<CoordType>::find_ef(
         e_site = type_bias[type_central];
         for (int i=0; i<alpha_scalar_moments; i++)
             e_site += linear_coeffs[i] 
-                      * (mom_vals[alpha_moment_mapping[i]] - q_shifter[i]) / q_scaler[i];
+                      * mom_vals[alpha_moment_mapping[i]]
+                      / q_scaler[i];
         #ifdef USE_OPENMP
         #pragma omp atomic 
         #endif
@@ -531,7 +528,6 @@ void LinearMtp<CoordType>::find_e_sites(
     int nghost,
     CoordType rmax,
     CoordType rmin,
-    CoordType *q_shifter,
     CoordType *q_scaler)
 {
     // Step 1.
@@ -590,7 +586,9 @@ void LinearMtp<CoordType>::find_e_sites(
         // Linear Energy
         e_sites[ii] = type_bias[type_central];
         for (int i=0; i<alpha_scalar_moments; i++)
-            e_sites[ii] += linear_coeffs[i] * (mom_vals[alpha_moment_mapping[i]] - q_shifter[i]) / q_scaler[i];
+            e_sites[ii] += linear_coeffs[i] 
+                           * mom_vals[alpha_moment_mapping[i]]
+                           / q_scaler[i];
     }
 
     // Step . Free
