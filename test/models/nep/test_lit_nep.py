@@ -13,6 +13,9 @@ from ai2pot.utils.prepot import ExtxyzShifter
 from ai2pot.models.nep.nep_train_utils import NepDescriptorNormCallback
 
 
+torch.manual_seed(2143)
+torch.set_num_threads(16)
+
 
 TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")
 PbTe_EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/Li_battery/train.xyz"#os.path.join(TEST_FILES_DIR, "XYZ", "11_NEP_potential_PbTe", "train_m.xyz")
@@ -39,7 +42,7 @@ class LitNepTest(unittest.TestCase):
         num_neurons: int = 30
 
 
-        max_epochs: int = 200
+        max_epochs: int = 500
         # Lr hyperparameters
         lr_start: float = 1e-2
         lr_end: float = 5e-4

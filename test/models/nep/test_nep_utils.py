@@ -34,10 +34,10 @@ torch.set_num_threads(16)
 class Nep4ExtxyzTest(unittest.TestCase):
     def setUp(self):
         print("Nep4ExtxyzTest (TestCase) is setting up...")
-        self.checkpoint_path: str = "/data/home/liuhanyu/mycode/AI2Pot/lightning_logs/version_0/checkpoints/epoch=199-step=5000.ckpt"
+        self.checkpoint_path: str = "/data/home/liuhanyu/mycode/AI2Pot/lightning_logs/version_1/checkpoints/epoch=499-step=12500.ckpt"
         self.testset_path: str = EXTXYZ_PATH
-        self.map_location: str = "cpu"        
-        self.torch_float_dtype: torch._C.dtype = torch.float64
+        self.map_location: str = "cuda"        
+        self.torch_float_dtype: torch._C.dtype = torch.float32
         self.nep_extxyz: Nep4Extxyz = Nep4Extxyz(checkpoint_path=self.checkpoint_path,
                                                  testset_path=self.testset_path,
                                                  map_location=self.map_location,

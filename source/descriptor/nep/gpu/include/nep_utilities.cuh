@@ -393,7 +393,7 @@ public:
                                          + 12*distance_ij*distance_ij*rc[1];
                         //blm_der2xyz[2] = 80*std::pow(rc[2], 3) 
                         //                 - 48*std::pow(distance_ij, 2)*rc[2];
-                        blm_der2xyz[2] = 80*rc[2]*rc[2]
+                        blm_der2xyz[2] = 80*rc[2]*rc[2]*rc[2]
                                          - 48*distance_ij*distance_ij*rc[2];
                         break;
                     case 1:
