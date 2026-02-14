@@ -203,8 +203,8 @@ class NepTest(unittest.TestCase):
                                  self.zbl_rmin,
                                  self.zbl_cks_tensor,
                                  self.zbl_dks_tensor),
-                            rtol=1e-3,
-                            atol=1e-3,
+                            rtol=1e-4,
+                            atol=1e-4,
                             eps=1e-8)
         print("-------------------------------------------------")
         print("* NepToEFLossOp Gradient pass check: ", test)

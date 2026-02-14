@@ -24,7 +24,7 @@ EXTXYZ_PATH: str = os.path.join(TEST_FILES_DIR,
                                 "XYZ",
                                 "11_NEP_potential_PbTe",
                                 "train_m.xyz")
-#EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/Li_battery/train.xyz"
+EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/Li_battery/train.xyz"
 
 torch.set_num_threads(16)
 

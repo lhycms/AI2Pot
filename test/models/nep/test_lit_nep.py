@@ -18,7 +18,7 @@ torch.set_num_threads(16)
 
 
 TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")
-PbTe_EXTXYZ_PATH = os.path.join(TEST_FILES_DIR, "XYZ", "11_NEP_potential_PbTe", "train_m.xyz")#"/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/Li_battery/train.xyz"
+PbTe_EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/Li_battery/train.xyz"#os.path.join(TEST_FILES_DIR, "XYZ", "11_NEP_potential_PbTe", "train_m.xyz")
 
 
 class LitNepTest(unittest.TestCase):
@@ -33,13 +33,13 @@ class LitNepTest(unittest.TestCase):
         fit_virial: bool = False
 
         # Nep hyperparameters
-        rmax_radial: float = 8.0
+        rmax_radial: float = 6.0
         rmax_angular: float = 6.0
-        n_radial_basis: int = 9 + 1
-        n_angular_basis: int = 7 + 1
+        n_radial_basis: int = 6 + 1
+        n_angular_basis: int = 4 + 1
         l_max: int = 4
         chebyshev_size: int = 8 + 1
-        num_neurons: int = 100
+        num_neurons: int = 30
 
 
         max_epochs: int = 200
