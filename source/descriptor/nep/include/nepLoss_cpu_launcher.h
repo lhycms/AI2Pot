@@ -183,13 +183,15 @@ static void find_ef_rmse_cpu_launcher(
     int num_f = 0;
 
     for (int bb=0; bb<batch_size; bb++) {
-        e_mse += (betot_ml[bb] - betot_dft[bb]) * (betot_ml[bb] - betot_dft[bb]);
+        CoordType tmp_e_diff = (betot_ml[bb] - betot_dft[bb]) / binum[bb];
+        e_mse += tmp_e_diff * tmp_e_diff;
         num_e += 1;
 
         for (int ii=0; ii<binum[bb]; ii++) {
+            int center_idx = bilist[bb*natoms_pad + ii];
             for (int aa=0; aa<3; aa++) {
-                f_mse += (bforce_ml[bb*natoms_pad + ii][aa] - bforce_dft[bb*natoms_pad + ii][aa])
-                         * (bforce_ml[bb*natoms_pad + ii][aa] - bforce_dft[bb*natoms_pad + ii][aa]);
+                CoordType tmp_f_diff = bforce_ml[bb*natoms_pad + center_idx][aa] - bforce_dft[bb*natoms_pad + center_idx][aa];
+                f_mse += tmp_f_diff * tmp_f_diff;
             }
             num_f += 3;
         }
@@ -224,21 +226,23 @@ static void find_efv_rmse_cpu_launcher(
     int num_v = 0;
 
     for (int bb=0; bb<batch_size; bb++) {
-        e_mse += (betot_ml[bb] - betot_dft[bb]) * (betot_ml[bb] - betot_dft[bb]);
+        CoordType tmp_e_diff = (betot_ml[bb] - betot_dft[bb]) / binum[bb];
+        e_mse += tmp_e_diff * tmp_e_diff;
         num_e += 1;
 
         for (int ii=0; ii<binum[bb]; ii++) {
+            int center_idx = bilist[bb*natoms_pad + ii];
             for (int aa=0; aa<3; aa++) {
-                f_mse += (bforce_ml[bb*natoms_pad + ii][aa] - bforce_dft[bb*natoms_pad + ii][aa])
-                         * (bforce_ml[bb*natoms_pad + ii][aa] - bforce_dft[bb*natoms_pad + ii][aa]);
+                CoordType tmp_f_diff = bforce_ml[bb*natoms_pad + center_idx][aa] - bforce_dft[bb*natoms_pad + center_idx][aa];
+                f_mse += tmp_f_diff * tmp_f_diff;
             }
             num_f += 3;
         }
 
         for (int a=0; a<3; a++) {
             for (int b=0; b<3; b++) {
-                v_mse += (bvirial_ml[bb*9 + a*3+b] - bvirial_dft[bb*9 + a*3+b])
-                         * (bvirial_ml[bb*9 + a*3+b] - bvirial_dft[bb*9 + a*3+b]);
+                CoordType tmp_v_diff = bvirial_ml[bb*9 + a*3+b] - bvirial_dft[bb*9 + a*3+b];
+                v_mse += tmp_v_diff * tmp_v_diff;
             }
         }
         num_v += 9;

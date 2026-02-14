@@ -100,6 +100,40 @@ void find_ef_loss_backward_torch_launcher(
 // 4. find_loss_backward
 
 
+// 5.1. find_num_real_atoms_in_batch
+void find_num_real_atoms_in_batch_torch_launcher(
+    int *d_num_real_atoms_in_batch_ptr,
+    int batch_size,
+    int *d_binum);
+
+// 5.2. find_e_se
+template <typename CoordType>
+void find_e_se_torch_launcher(
+    CoordType *d_e_se_ptr,
+    int batch_size,
+    int *d_binum,
+    CoordType *d_betot_ml,
+    CoordType *d_betot_dft);
+
+// 5.3. find_f_se
+template <typename CoordType>
+void find_f_se_torch_launcher(
+    CoordType *d_f_se_ptr,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    CoordType (*d_bforce_ml)[3],
+    CoordType (*d_bforce_dft)[3]);
+
+// 5.4. find_v_se
+template <typename CoordType>
+void find_v_se_torch_launcher(
+    CoordType *d_v_se_ptr,
+    int batch_size,
+    CoordType *d_bvirial_ml,
+    CoordType *d_bvirial_dft);
+
 
 };  // namespace : nep
 };  // namespace : ai2pot

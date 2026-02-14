@@ -287,6 +287,60 @@ extern template void find_ef_loss_backward_torch_launcher<double>(
 // 2.4. find_loss_backward_torch_launcher()
 
 
+// 2.5.1. find_num_real_atoms_in_batch
+extern void find_num_real_atoms_in_batch_torch_launcher(
+    int *d_num_real_atoms_in_batch_ptr,
+    int batch_size,
+    int *d_binum);
+
+// 2.5.2. find_e_se
+extern template void find_e_se_torch_launcher(
+    float *d_e_se_ptr,
+    int batch_size,
+    int *d_binum,
+    float *d_betot_ml,
+    float *d_betot_dft);
+
+extern template void find_e_se_torch_launcher(
+    double *d_e_se_ptr,
+    int batch_size,
+    int *d_binum,
+    double *d_betot_ml,
+    double *d_betot_dft);
+
+// 2.5.3. find_f_se
+extern template void find_f_se_torch_launcher(
+    float *d_f_se_ptr,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    float (*d_bforce_ml)[3],
+    float (*d_bforce_dft)[3]);
+
+extern template void find_f_se_torch_launcher(
+    double *d_f_se_ptr,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    double (*d_bforce_ml)[3],
+    double (*d_bforce_dft)[3]);
+
+// 2.5.4. find_v_se
+extern template void find_v_se_torch_launcher(
+    float *d_v_se_ptr,
+    int batch_size,
+    float *d_bvirial_ml,
+    float *d_bvirial_dft);
+
+extern template void find_v_se_torch_launcher(
+    double *d_v_se_ptr,
+    int batch_size,
+    double *d_bvirial_ml,
+    double *d_bvirial_dft);
+
+
 };  // namespace : nep
 };  // namespace : ai2pot
 
@@ -803,12 +857,18 @@ torch::autograd::variable_list NepToEFLossFunction::forward(
 
     // 3. 
     at::Tensor bloss_tensor = at::zeros({batch_size}, float_options);
+    at::Tensor num_real_atoms_in_batch_tensor = at::zeros({1}, int_options);
+    at::Tensor e_rmse_tensor = at::zeros({1}, float_options);
+    at::Tensor f_rmse_tensor = at::zeros({1}, float_options);
     at::Tensor betot_tensor = at::zeros({batch_size}, float_options);
     at::Tensor bforce_tensor = at::zeros({batch_size, natoms_pad, 3}, float_options);
 
     // 4. 
     if (brcs_tensor.scalar_type() == torch::kFloat32) {
         float *bloss = bloss_tensor.data_ptr<float>();
+        float *e_rmse_ptr = e_rmse_tensor.data_ptr<float>();
+        float *f_rmse_ptr = f_rmse_tensor.data_ptr<float>();
+        int *num_real_atoms_in_batch_ptr = num_real_atoms_in_batch_tensor.data_ptr<int>();
         float *betot = betot_tensor.data_ptr<float>();
         float (*bforce)[3] = (float (*)[3])bforce_tensor.data_ptr<float>();
 
@@ -904,6 +964,18 @@ torch::autograd::variable_list NepToEFLossFunction::forward(
                 betot_dft,
                 bforce,
                 bforce_dft);
+            
+            find_ef_rmse_cpu_launcher<float>(
+                *e_rmse_ptr,
+                *f_rmse_ptr,
+                batch_size,
+                natoms_pad,
+                binum,
+                bilist,
+                betot,
+                betot_dft,
+                bforce,
+                bforce_dft);
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
             if (zbl_rmax > 0)
@@ -968,10 +1040,34 @@ torch::autograd::variable_list NepToEFLossFunction::forward(
                 betot_dft,
                 bforce,
                 bforce_dft);
+            
+            find_num_real_atoms_in_batch_torch_launcher(
+                num_real_atoms_in_batch_ptr,
+                batch_size,
+                binum);
+            find_e_se_torch_launcher(
+                e_rmse_ptr,
+                batch_size,
+                binum,
+                betot,
+                betot_dft);
+            find_f_se_torch_launcher(
+                f_rmse_ptr,
+                batch_size,
+                natoms_pad,
+                binum,
+                bilist,
+                bforce,
+                bforce_dft);
+            e_rmse_tensor = torch::sqrt(e_rmse_tensor / batch_size);
+            f_rmse_tensor = torch::sqrt(f_rmse_tensor / (3*num_real_atoms_in_batch_tensor));
             #endif
         }
     } else {
         double *bloss = bloss_tensor.data_ptr<double>();
+        double *e_rmse_ptr = e_rmse_tensor.data_ptr<double>();
+        double *f_rmse_ptr = f_rmse_tensor.data_ptr<double>();
+        int *num_real_atoms_in_batch_ptr = num_real_atoms_in_batch_tensor.data_ptr<int>();
         double *betot = betot_tensor.data_ptr<double>();
         double (*bforce)[3] = (double (*)[3])bforce_tensor.data_ptr<double>();
 
@@ -1067,6 +1163,18 @@ torch::autograd::variable_list NepToEFLossFunction::forward(
                 betot_dft,
                 bforce,
                 bforce_dft);
+            
+            find_ef_rmse_cpu_launcher<double>(
+                *e_rmse_ptr,
+                *f_rmse_ptr,
+                batch_size,
+                natoms_pad,
+                binum,
+                bilist,
+                betot,
+                betot_dft,
+                bforce,
+                bforce_dft);
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
             if (zbl_rmax > 0)
@@ -1131,6 +1239,27 @@ torch::autograd::variable_list NepToEFLossFunction::forward(
                 betot_dft,
                 bforce,
                 bforce_dft);
+            
+            find_num_real_atoms_in_batch_torch_launcher(
+                num_real_atoms_in_batch_ptr,
+                batch_size,
+                binum);
+            find_e_se_torch_launcher(
+                e_rmse_ptr,
+                batch_size,
+                binum,
+                betot,
+                betot_dft);
+            find_f_se_torch_launcher(
+                f_rmse_ptr,
+                batch_size,
+                natoms_pad,
+                binum,
+                bilist,
+                bforce,
+                bforce_dft);
+            e_rmse_tensor = torch::sqrt(e_rmse_tensor / batch_size);
+            f_rmse_tensor = torch::sqrt(f_rmse_tensor / (3*num_real_atoms_in_batch_tensor));
             #endif
         }
     }
@@ -1168,7 +1297,9 @@ torch::autograd::variable_list NepToEFLossFunction::forward(
         zbl_cks_tensor,
         zbl_dks_tensor});
     
-    return {bloss_tensor};
+    return {bloss_tensor,
+            e_rmse_tensor,
+            f_rmse_tensor};
 }
 
 

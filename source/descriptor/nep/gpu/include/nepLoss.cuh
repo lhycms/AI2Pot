@@ -221,11 +221,24 @@ void find_ef_loss_backward_launcher(
     CoordType rmax_angular,
     CoordType *h_q_scaler);
 
+static __global__
+void find_num_real_atoms_in_batch_kernel(
+    int *num_real_atoms_in_batch_ptr,
+    int batch_size,
+    int *binum);
+
+static __host__
+void find_num_real_atoms_in_batch_launcher(
+    int *h_num_real_atoms_in_batch_ptr,
+    int batch_size,
+    int *h_binum);
+
 template <typename CoordType>
 static __global__
 void find_e_se_kernel(
     CoordType *e_se_ptr,
     int batch_size,
+    int *binum,
     CoordType *betot_ml,
     CoordType *betot_dft);
 
@@ -234,6 +247,7 @@ static __host__
 void find_e_se_launcher(
     CoordType *h_e_se_ptr,
     int batch_size,
+    int *h_binum,
     CoordType *h_betot_ml,
     CoordType *h_betot_dft);
 
@@ -1313,10 +1327,77 @@ void find_ef_loss_backward_launcher(
 }
 
 
+__global__ void find_num_real_atoms_in_batch_kernel(
+    int *num_real_atoms_in_batch_ptr,
+    int batch_size,
+    int *binum)
+{
+    int nx = blockIdx.x * blockDim.x + threadIdx.x;
+    int tid = threadIdx.x;
+
+    __shared__ int s_part_x[1024];
+
+    int local_sum = 0;
+    for (int ii=nx; ii<batch_size; ii+=gridDim.x*blockDim.x)
+        local_sum += binum[ii];
+    s_part_x[tid] = local_sum;
+    __syncthreads();
+
+    for (int offset=blockDim.x>>1; offset>=32; offset>>=1) {
+        if (tid < offset)
+            s_part_x[tid] += s_part_x[tid+offset];
+        __syncthreads();
+    }
+    for (int offset=16; offset>0; offset>>=1) {
+        if (tid < offset)
+            s_part_x[tid] += s_part_x[tid+offset];
+        __syncwarp();
+    }
+
+    if (tid == 0) {
+        atomicAdd(num_real_atoms_in_batch_ptr, s_part_x[0]);
+    }
+}
+
+
+__host__ void find_num_real_atoms_in_batch_launcher(
+    int *h_num_real_atoms_in_batch_ptr,
+    int batch_size,
+    int *h_binum)
+{
+    int block_size_x = 1024;
+    int grid_size_x = 32;
+    dim3 grid_size(grid_size_x);
+    dim3 block_size(block_size_x);
+
+    int *d_num_real_atoms_in_batch_ptr;
+    int *d_binum;
+    
+    CHECK_CUDA_API( cudaMalloc((void**)&d_num_real_atoms_in_batch_ptr, sizeof(int)) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_binum, sizeof(int) * batch_size) );
+
+    CHECK_CUDA_API( cudaMemset(d_num_real_atoms_in_batch_ptr, 0, sizeof(int)) );
+    CHECK_CUDA_API( cudaMemcpy(d_binum, h_binum, sizeof(int)*batch_size, cudaMemcpyHostToDevice) );
+
+    // Compute
+    find_num_real_atoms_in_batch_kernel KERNEL_ARG2(grid_size, block_size) (
+        d_num_real_atoms_in_batch_ptr,
+        batch_size,
+        d_binum);
+    CHECK_CUDA_KERNEL;
+
+    CHECK_CUDA_API( cudaMemcpy(h_num_real_atoms_in_batch_ptr, d_num_real_atoms_in_batch_ptr, sizeof(int), cudaMemcpyDeviceToHost) );
+
+    CHECK_CUDA_API( cudaFree(d_num_real_atoms_in_batch_ptr) );
+    CHECK_CUDA_API( cudaFree(d_binum) );
+}
+
+
 template <typename CoordType>
 __global__ void find_e_se_kernel(
     CoordType *e_se_ptr,
     int batch_size,
+    int *binum,
     CoordType *betot_ml,
     CoordType *betot_dft)
 {
@@ -1326,8 +1407,10 @@ __global__ void find_e_se_kernel(
     __shared__ CoordType s_part_x[1024];
     
     CoordType local_sum = 0.0;
-    for (int ii=nx; ii<batch_size; ii+=gridDim.x*blockDim.x)
-        local_sum += (betot_ml[ii] - betot_dft[ii]) * (betot_ml[ii] - betot_dft[ii]);
+    for (int ii=nx; ii<batch_size; ii+=gridDim.x*blockDim.x) {
+        CoordType tmp_e_diff = (betot_ml[ii] - betot_dft[ii]) / binum[ii];
+        local_sum += tmp_e_diff * tmp_e_diff;
+    }
     s_part_x[tid] = local_sum;
     __syncthreads();
 
@@ -1353,6 +1436,7 @@ __host__
 void find_e_se_launcher(
     CoordType *h_e_se_ptr,
     int batch_size,
+    int *h_binum,
     CoordType *h_betot_ml,
     CoordType *h_betot_dft)
 {
@@ -1362,13 +1446,17 @@ void find_e_se_launcher(
     dim3 block_size(block_size_x);
 
     CoordType *d_e_se_ptr;
+    int *d_binum;
     CoordType *d_betot_ml;
     CoordType *d_betot_dft;
     CHECK_CUDA_API( cudaMalloc((void**)&d_e_se_ptr, sizeof(CoordType)) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_binum, sizeof(int)*batch_size) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_betot_ml, sizeof(CoordType)*batch_size) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_betot_dft, sizeof(CoordType)*batch_size) );
     
     CHECK_CUDA_API( cudaMemset(d_e_se_ptr, 0, sizeof(CoordType)) );
+
+    CHECK_CUDA_API( cudaMemcpy(d_binum, h_binum, sizeof(int)*batch_size, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_betot_ml, h_betot_ml, sizeof(CoordType)*batch_size, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_betot_dft, h_betot_dft, sizeof(CoordType)*batch_size, cudaMemcpyHostToDevice) );
 
@@ -1376,6 +1464,7 @@ void find_e_se_launcher(
     find_e_se_kernel KERNEL_ARG2(grid_size, block_size) (
         d_e_se_ptr,
         batch_size,
+        d_binum,
         d_betot_ml,
         d_betot_dft);
     CHECK_CUDA_KERNEL;
@@ -1383,6 +1472,7 @@ void find_e_se_launcher(
     CHECK_CUDA_API( cudaMemcpy(h_e_se_ptr, d_e_se_ptr, sizeof(CoordType), cudaMemcpyDeviceToHost) );
 
     CHECK_CUDA_API( cudaFree(d_e_se_ptr) );
+    CHECK_CUDA_API( cudaFree(d_binum) );
     CHECK_CUDA_API( cudaFree(d_betot_ml) );
     CHECK_CUDA_API( cudaFree(d_betot_dft) );
 }
@@ -1407,10 +1497,11 @@ void find_f_se_kernel(
     for (int i=nx; i<batch_size*natoms_pad; i+=gridDim.x*blockDim.x) {
         int istruct = i / natoms_pad;
         int ii = i % natoms_pad;
+        int center_idx = bilist[istruct*natoms_pad + ii];
         if ((istruct < batch_size) && (ii < binum[istruct])) {
-            CoordType tmp_diff_x = (bforce_ml[istruct*natoms_pad + ii][0] - bforce_dft[istruct*natoms_pad + ii][0]);
-            CoordType tmp_diff_y = (bforce_ml[istruct*natoms_pad + ii][1] - bforce_dft[istruct*natoms_pad + ii][1]);
-            CoordType tmp_diff_z = (bforce_ml[istruct*natoms_pad + ii][2] - bforce_dft[istruct*natoms_pad + ii][2]);
+            CoordType tmp_diff_x = (bforce_ml[istruct*natoms_pad + center_idx][0] - bforce_dft[istruct*natoms_pad + center_idx][0]);
+            CoordType tmp_diff_y = (bforce_ml[istruct*natoms_pad + center_idx][1] - bforce_dft[istruct*natoms_pad + center_idx][1]);
+            CoordType tmp_diff_z = (bforce_ml[istruct*natoms_pad + center_idx][2] - bforce_dft[istruct*natoms_pad + center_idx][2]);
             local_sum += (tmp_diff_x * tmp_diff_x
                           + tmp_diff_y * tmp_diff_y
                           + tmp_diff_z * tmp_diff_z);

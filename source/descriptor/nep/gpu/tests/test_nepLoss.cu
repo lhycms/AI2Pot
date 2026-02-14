@@ -129,11 +129,23 @@ printf("1. Loss = %.15f\n", bloss[0]);
 }
 
 
+TEST_F(NepLossTest, find_num_real_atoms_in_batch_launcher) {
+    int num_real_atoms_in_batch = 0.0;
+    ai2pot::nep::find_num_real_atoms_in_batch_launcher(
+        &num_real_atoms_in_batch,
+        batch_size,
+        binum);
+
+printf("1. num_real_atoms_in_batch = %d\n", num_real_atoms_in_batch);
+}
+
+
 TEST_F(NepLossTest, find_e_se_launcher) {
     double e_se = 0.0;
     ai2pot::nep::find_e_se_launcher<double>(
         &e_se,
         batch_size,
+        binum,
         betot_ml,
         betot_dft);
 

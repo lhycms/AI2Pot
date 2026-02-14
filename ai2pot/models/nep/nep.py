@@ -157,7 +157,7 @@ class Nep(nn.Module):
                         brcs_tensor: torch.Tensor,
                         btypes_tensor: torch.Tensor,
                         nghost: int):
-        bmse_tensor: torch.Tensor = nepToEFLossOp(
+        bmse_tensor, e_rmse_tensor, f_rmse_tensor = nepToEFLossOp(
             e_weight,
             f_weight,
             betot_dft_tensor,
@@ -185,9 +185,12 @@ class Nep(nn.Module):
             self.zbl_rmax,
             self.zbl_rmin,
             self.zbl_cks_tensor,
-            self.zbl_dks_tensor)[0]
+            self.zbl_dks_tensor)
+        bmse_tensor: torch.Tensor
+        e_rmse_tensor: torch.Tensor
+        f_rmse_tensor: torch.Tensor
 
-        return bmse_tensor
+        return bmse_tensor, e_rmse_tensor, f_rmse_tensor
 
 
     def predict_ef(self,

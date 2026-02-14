@@ -666,26 +666,36 @@ class LitNep(L.LightningModule):
             pass
         else:
             binum, bilist, bnumneigh, bfirstneigh, brcs, btypes, bnghost, betot_dft_tensor, bforce_dft_tensor = batch_data
-            bmse_tensor: torch.Tensor = self.model(e_wgt,
-                                                   f_wgt,
-                                                   betot_dft_tensor,
-                                                   bforce_dft_tensor,
-                                                   binum,
-                                                   bilist,
-                                                   bnumneigh,
-                                                   bfirstneigh,
-                                                   brcs,
-                                                   btypes,
-                                                   bnghost[0].item())
-        
+            bmse_tensor, e_rmse_tensor, f_rmse_tensor = self.model(
+                e_wgt,
+                f_wgt,
+                betot_dft_tensor,
+                bforce_dft_tensor,
+                binum,
+                bilist,
+                bnumneigh,
+                bfirstneigh,
+                brcs,
+                btypes,
+                bnghost[0].item())
+            bmse_tensor: torch.Tensor
+            e_rmse_tensor: torch.Tensor
+            f_rmse_tensor: torch.Tensor
         mean_bmse_tensor: torch.Tensor = bmse_tensor.mean()
 
         ### Log ###
-        self.log("train_mse", mean_bmse_tensor,
+        self.log("e_rmse_train", e_rmse_tensor,
                  on_epoch=True,
                  on_step=True,
                  prog_bar=True,
                  sync_dist=True)
+        self.log("f_rmse_train", f_rmse_tensor,
+                 on_epoch=True,
+                 on_step=True,
+                 prog_bar=True,
+                 sync_dist=True)
+        if (self.model.fit_virial):
+            pass
         current_lr: float = self.optimizers().param_groups[0]["lr"]
         self.log("lr", 
                  current_lr,
