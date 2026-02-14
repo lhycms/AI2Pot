@@ -124,6 +124,53 @@ printf("1. EF Loss = %.15f\n", bloss[0]);
 }
 
 
+TEST_F(NepLossTest, find_ef_rmse_cpu_launcher) {
+    double e_rmse;
+    double f_rmse;
+
+    ai2pot::nep::find_ef_rmse_cpu_launcher(
+        e_rmse,
+        f_rmse,
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        betot_ml,
+        betot_dft,
+        bforce_ml,
+        bforce_dft);
+    
+printf("1. Energy RMSE = %.15f\n", e_rmse);
+printf("2. Force RMSE = %.15f\n", f_rmse);
+}
+
+
+TEST_F(NepLossTest, find_efv_rmse_cpu_launcher) {
+    double e_rmse;
+    double f_rmse;
+    double v_rmse;
+
+    ai2pot::nep::find_efv_rmse_cpu_launcher(
+        e_rmse,
+        f_rmse,
+        v_rmse,
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        betot_ml,
+        betot_dft,
+        bforce_ml,
+        bforce_dft,
+        bvirial_ml,
+        bvirial_dft);
+    
+printf("1. Energy RMSE = %.15f\n", e_rmse);
+printf("2. Force RMSE = %.15f\n", f_rmse);
+printf("3. Virial RMSE = %.15f\n", v_rmse);
+}
+
+
 
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
