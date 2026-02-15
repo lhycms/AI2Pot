@@ -111,6 +111,12 @@ if (BUILD_TEST)
         target_compile_definitions(test_linearMtp PRIVATE USE_OPENMP)
     endif()
 
+    add_executable(test_linearMtp_cpu_launcher ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_linearMtp_cpu_launcher.cc)
+    target_link_libraries(test_linearMtp_cpu_launcher PRIVATE mtpParam gtest gtest_main)
+    if (USE_OPENMP)
+        target_compile_definitions(test_linearMtp_cpu_launcher PRIVATE USE_OPENMP)
+    endif()
+
     add_executable(test_linearMtpLoss ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_linearMtpLoss.cc)
     target_link_libraries(test_linearMtpLoss PRIVATE gtest gtest_main)
 
