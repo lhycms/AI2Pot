@@ -446,6 +446,61 @@ extern template void ai2pot::mtpr::find_ef_loss_backward_torch_launcher<double>(
     double rmin,
     double *d_q_scaler);
 
+
+// 2.5.1. find_num_real_atoms_in_batch
+extern void find_num_real_atoms_in_batch_torch_launcher(
+    int *d_num_real_atoms_in_batch_ptr,
+    int batch_size,
+    int *d_binum);
+
+// 2.5.2. find_e_se
+extern template void find_e_se_torch_launcher(
+    float *d_e_se_ptr,
+    int batch_size,
+    int *d_binum,
+    float *d_betot_ml,
+    float *d_betot_dft);
+
+extern template void find_e_se_torch_launcher(
+    double *d_e_se_ptr,
+    int batch_size,
+    int *d_binum,
+    double *d_betot_ml,
+    double *d_betot_dft);
+
+// 2.5.3. find_f_se
+extern template void find_f_se_torch_launcher(
+    float *d_f_se_ptr,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    float (*d_bforce_ml)[3],
+    float (*d_bforce_dft)[3]);
+
+extern template void find_f_se_torch_launcher(
+    double *d_f_se_ptr,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    double (*d_bforce_ml)[3],
+    double (*d_bforce_dft)[3]);
+
+// 2.5.4. find_v_se
+extern template void find_v_se_torch_launcher(
+    float *d_v_se_ptr,
+    int batch_size,
+    float *d_bvirial_ml,
+    float *d_bvirial_dft);
+
+extern template void find_v_se_torch_launcher(
+    double *d_v_se_ptr,
+    int batch_size,
+    double *d_bvirial_ml,
+    double *d_bvirial_dft);
+
+
 };  // namespace : mtpr
 };  // namespace : ai2pot
 

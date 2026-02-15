@@ -129,6 +129,57 @@ printf("1. Loss = %.15f\n", bloss[0]);
 }
 
 
+TEST_F(LinearMtpLossTest, find_num_real_atoms_in_batch_launcher) {
+    int num_real_atoms_in_batch = 0.0;
+    ai2pot::mtpr::find_num_real_atoms_in_batch_launcher(
+        &num_real_atoms_in_batch,
+        batch_size,
+        binum);
+
+printf("1. num_real_atoms_in_batch = %d\n", num_real_atoms_in_batch);
+}
+
+
+TEST_F(LinearMtpLossTest, find_e_se_launcher) {
+    double e_se = 0.0;
+    ai2pot::mtpr::find_e_se_launcher<double>(
+        &e_se,
+        batch_size,
+        binum,
+        betot_ml,
+        betot_dft);
+
+printf("1. Energy RMSE = %.15f\n", std::sqrt(e_se / batch_size));
+}
+
+
+TEST_F(LinearMtpLossTest, find_f_se_launcher) {
+    double f_se = 0.0;
+    ai2pot::mtpr::find_f_se_launcher<double>(
+        &f_se,
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        bforce_ml,
+        bforce_dft);
+
+printf("1. Force RMSE = %.15f\n", std::sqrt(f_se/(12*3)));
+}
+
+
+TEST_F(LinearMtpLossTest, find_v_se_launcher) {
+    double v_se = 0.0;
+    ai2pot::mtpr::find_v_se_launcher<double>(
+        &v_se,
+        batch_size,
+        bvirial_ml,
+        bvirial_dft);
+
+printf("1. Virial RMSE = %.15f\n", std::sqrt(v_se/(batch_size*9)));
+}
+
+
 
 
 
