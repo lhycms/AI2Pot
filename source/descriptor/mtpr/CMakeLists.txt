@@ -120,6 +120,9 @@ if (BUILD_TEST)
     add_executable(test_linearMtpLoss ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_linearMtpLoss.cc)
     target_link_libraries(test_linearMtpLoss PRIVATE gtest gtest_main)
 
+    add_executable(test_linearMtpLoss_cpu_launcher ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_linearMtpLoss_cpu_launcher.cc)
+    target_link_libraries(test_linearMtpLoss_cpu_launcher PRIVATE gtest gtest_main)
+
     if (TORCH_OP)
         add_executable(test_mtpParamOp ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mtpParamOp.cc)
         target_link_libraries(test_mtpParamOp PRIVATE ${TORCH_LIBRARIES} mtpParamOp mtpParam gtest gtest_main)

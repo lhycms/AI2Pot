@@ -10,6 +10,7 @@
 #include "../include/mtpParam.h"
 #include "../include/linearMtp.h"
 #include "../include/linearMtp_cpu_launcher.h"
+#include "../include/linearMtpLoss_cpu_launcher.h"
 
 
 typedef double real;
@@ -224,7 +225,7 @@ protected:
         memset(bvirial, 0.0, sizeof(real)*batch_size*9);
 
         betot_ = (real *)malloc(sizeof(real) * batch_size);
-        memset(betot_, 0.0, batch_size);
+        memset(betot_, 0.0, sizeof(real) * batch_size);
         bforce_ = (real (*)[3])malloc(sizeof(real) * batch_size * (natoms_pad+nghost) * 3);
         memset(bforce_, 0.0, sizeof(real)*batch_size*(natoms_pad+nghost)*3);
         bvirial_ = (real*)malloc(sizeof(real) * batch_size * 9);
@@ -239,9 +240,9 @@ protected:
         memset(bloss_der2type_bias, 0, sizeof(real) * batch_size * ntypes);
 
         // Loss
-        e_weight = 0.1;
-        f_weight = 0.2;
-        v_weight = 0.3;
+        e_weight = 1.0;
+        f_weight = 1.0;
+        v_weight = 0.0;
         betot_dft = (real*)malloc(sizeof(real) * batch_size);
         memset(betot_dft, 0, sizeof(real)*batch_size);
         bforce_dft = (real (*)[3])malloc(sizeof(real) * batch_size * natoms_pad * 3);
@@ -410,6 +411,185 @@ TEST_F(LinearMtpCPULauncher, find_descriptors_cpu_launcher) {
         rmax,
         rmin);
 }
+
+
+TEST_F(LinearMtpCPULauncher, find_loss_backward_cpu_launcher) {
+    ai2pot::mtpr::find_efv_cpu_launcher<real>(
+        betot,
+        bforce,
+        bvirial,
+        chebyshev_size,
+        coeffs,
+        linear_coeffs,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        mtp_param.nmus(),
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        bnumneigh,
+        bfirstneigh,
+        (real (*)[3])brcs,
+        btypes,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin,
+        q_scaler);
+    
+    ai2pot::mtpr::find_loss_backward_cpu_launcher<real>(
+        bloss_der2coeffs,
+        bloss_der2linear_coeffs,
+        bloss_der2type_bias,
+        e_weight,
+        f_weight,
+        v_weight,
+        betot,
+        betot_dft,
+        bforce,
+        bforce_dft,
+        bvirial,
+        bvirial_dft,
+        chebyshev_size,
+        coeffs,
+        linear_coeffs,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        mtp_param.nmus(),
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        bnumneigh,
+        bfirstneigh,
+        (real (*)[3])brcs,
+        btypes,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin,
+        q_scaler);
+
+printf("1. bloss_der2coeffs:\n");
+for (int ii=0; ii<ntypes*ntypes*mtp_param.nmus()*chebyshev_size; ii++)
+    printf("%.15f, ", bloss_der2coeffs[ii]);
+printf("\n\n");
+
+printf("2. bloss_der2linear_coeffs:\n");
+for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++)
+    printf("%.15f, ", bloss_der2linear_coeffs[ii]);
+printf("\n\n");
+
+printf("3. bloss_der2type_bias:\n");
+for (int ii=0; ii<ntypes; ii++)
+    printf("%.15f, ", bloss_der2type_bias[ii]);
+printf("\n\n");
+}
+
+
+TEST_F(LinearMtpCPULauncher, find_ef_loss_backward_cpu_launcher) {
+    ai2pot::mtpr::find_ef_cpu_launcher<real>(
+        betot,
+        bforce,
+        chebyshev_size,
+        coeffs,
+        linear_coeffs,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        mtp_param.nmus(),
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        bnumneigh,
+        bfirstneigh,
+        (real (*)[3])brcs,
+        btypes,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin,
+        q_scaler);
+    
+    ai2pot::mtpr::find_ef_loss_backward_cpu_launcher<real>(
+        bloss_der2coeffs,
+        bloss_der2linear_coeffs,
+        bloss_der2type_bias,
+        e_weight,
+        f_weight,
+        betot,
+        betot_dft,
+        bforce,
+        bforce_dft,
+        chebyshev_size,
+        coeffs,
+        linear_coeffs,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        mtp_param.nmus(),
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        bnumneigh,
+        bfirstneigh,
+        (real (*)[3])brcs,
+        btypes,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin,
+        q_scaler);
+
+printf("1. bloss_der2coeffs:\n");
+for (int ii=0; ii<ntypes*ntypes*mtp_param.nmus()*chebyshev_size; ii++)
+    printf("%.15f, ", bloss_der2coeffs[ii]);
+printf("\n\n");
+
+printf("2. bloss_der2linear_coeffs:\n");
+for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++)
+    printf("%.15f, ", bloss_der2linear_coeffs[ii]);
+printf("\n\n");
+
+printf("3. bloss_der2type_bias:\n");
+for (int ii=0; ii<ntypes; ii++)
+    printf("%.15f, ", bloss_der2type_bias[ii]);
+printf("\n\n");
+}
+
 
 
 int main(int argc, char **argv) {

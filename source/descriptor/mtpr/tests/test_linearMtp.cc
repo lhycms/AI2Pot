@@ -135,7 +135,7 @@ protected:
 
         e_weight = 1.0;
         f_weight = 1.0;
-        v_weight = 0.1;
+        v_weight = 0.0;
 
         inum = 12;
         ntypes = 2;
