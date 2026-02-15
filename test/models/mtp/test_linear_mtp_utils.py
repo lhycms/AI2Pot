@@ -119,7 +119,7 @@ class LinearMtpActiveDRTest(unittest.TestCase):
 class LinearMtp4ExtxyzTest(unittest.TestCase):
     def setUp(self):
         print("LinearMtp4ExtxyzTest (TestSuite) is setting up...")
-        self.checkpoint_path: str = "/data/home/liuhanyu/mycode/AI2Pot/lightning_logs/version_6/checkpoints/epoch=199-step=5000.ckpt"
+        self.checkpoint_path: str = "/data/home/liuhanyu/mycode/AI2Pot/lightning_logs/version_1/checkpoints/epoch=199-step=5000.ckpt"
         self.testset_path: str = EXTXYZ_PATH
         self.map_location: str = "cpu"        
         self.torch_float_dtype: torch._C.dtype = torch.float32

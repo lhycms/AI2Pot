@@ -665,12 +665,20 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                                        .device(brcs_tensor.device());
 
     at::Tensor bloss_tensor = at::zeros({batch_size}, float_options);
+    at::Tensor num_real_atoms_in_batch_tensor = at::zeros({1}, int_options);
+    at::Tensor e_rmse_tensor = at::zeros({1}, float_options);
+    at::Tensor f_rmse_tensor = at::zeros({1}, float_options);
+    at::Tensor v_rmse_tensor = at::zeros({1}, float_options);
     at::Tensor betot_tensor = at::zeros({batch_size}, float_options);
     at::Tensor bforce_tensor = at::zeros({batch_size, natoms_pad, 3}, float_options);
     at::Tensor bvirial_tensor = at::zeros({batch_size, 9}, float_options);
 
     if (brcs_tensor.dtype() == torch::kFloat32) {
         float *bloss = bloss_tensor.data_ptr<float>();
+        float *e_rmse_ptr = e_rmse_tensor.data_ptr<float>();
+        float *f_rmse_ptr = f_rmse_tensor.data_ptr<float>();
+        float *v_rmse_ptr = v_rmse_tensor.data_ptr<float>();
+        int *num_real_atoms_in_batch_ptr = num_real_atoms_in_batch_tensor.data_ptr<int>();
         float *betot = betot_tensor.data_ptr<float>();
         float (*bforce)[3] = (float (*)[3])bforce_tensor.data_ptr<float>();
         float *bvirial = bvirial_tensor.data_ptr<float>();
@@ -772,6 +780,21 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                 bforce_dft,
                 bvirial,
                 bvirial_dft);
+            
+            find_efv_rmse_cpu_launcher<float>(
+                *e_rmse_ptr,
+                *f_rmse_ptr,
+                *v_rmse_ptr,
+                batch_size,
+                natoms_pad,
+                binum,
+                bilist,
+                betot,
+                betot_dft,
+                bforce,
+                bforce_dft,
+                bvirial,
+                bvirial_dft);
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
             if (zbl_rmax > 0.0)
@@ -843,10 +866,41 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                 bforce_dft,
                 bvirial,
                 bvirial_dft);
+            
+            find_num_real_atoms_in_batch_torch_launcher(
+                num_real_atoms_in_batch_ptr,
+                batch_size,
+                binum);
+            find_e_se_torch_launcher(
+                e_rmse_ptr,
+                batch_size,
+                binum,
+                betot,
+                betot_dft);
+            find_f_se_torch_launcher(
+                f_rmse_ptr,
+                batch_size,
+                natoms_pad,
+                binum,
+                bilist,
+                bforce,
+                bforce_dft);
+            find_v_se_torch_launcher(
+                v_rmse_ptr,
+                batch_size,
+                bvirial,
+                bvirial_dft);
+            e_rmse_tensor = torch::sqrt(e_rmse_tensor / batch_size);
+            f_rmse_tensor = torch::sqrt(f_rmse_tensor / (3*num_real_atoms_in_batch_tensor));
+            v_rmse_tensor = torch::sqrt(v_rmse_tensor / (9*batch_size));
             #endif
         }
     } else {
         double *bloss = bloss_tensor.data_ptr<double>();
+        double *e_rmse_ptr = e_rmse_tensor.data_ptr<double>();
+        double *f_rmse_ptr = f_rmse_tensor.data_ptr<double>();
+        double *v_rmse_ptr = v_rmse_tensor.data_ptr<double>();
+        int *num_real_atoms_in_batch_ptr = num_real_atoms_in_batch_tensor.data_ptr<int>();
         double *betot = betot_tensor.data_ptr<double>();
         double (*bforce)[3] = (double (*)[3])bforce_tensor.data_ptr<double>();
         double *bvirial = bvirial_tensor.data_ptr<double>();
@@ -948,6 +1002,21 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                 bforce_dft,
                 bvirial,
                 bvirial_dft);
+            
+            find_efv_rmse_cpu_launcher<double>(
+                *e_rmse_ptr,
+                *f_rmse_ptr,
+                *v_rmse_ptr,
+                batch_size,
+                natoms_pad,
+                binum,
+                bilist,
+                betot,
+                betot_dft,
+                bforce,
+                bforce_dft,
+                bvirial,
+                bvirial_dft);
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
             if (zbl_rmax > 0.0)
@@ -1019,6 +1088,33 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                 bforce_dft,
                 bvirial,
                 bvirial_dft);
+            
+            find_num_real_atoms_in_batch_torch_launcher(
+                num_real_atoms_in_batch_ptr,
+                batch_size,
+                binum);
+            find_e_se_torch_launcher(
+                e_rmse_ptr,
+                batch_size,
+                binum,
+                betot,
+                betot_dft);
+            find_f_se_torch_launcher(
+                f_rmse_ptr,
+                batch_size,
+                natoms_pad,
+                binum,
+                bilist,
+                bforce,
+                bforce_dft);
+            find_v_se_torch_launcher(
+                v_rmse_ptr,
+                batch_size,
+                bvirial,
+                bvirial_dft);
+            e_rmse_tensor = torch::sqrt(e_rmse_tensor / batch_size);
+            f_rmse_tensor = torch::sqrt(f_rmse_tensor / (3*num_real_atoms_in_batch_tensor));
+            v_rmse_tensor = torch::sqrt(v_rmse_tensor / (9*batch_size));
             #endif
         }
     }
@@ -1058,7 +1154,10 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                             zbl_dks_tensor
                             });
 
-    return {bloss_tensor};
+    return {bloss_tensor,
+            e_rmse_tensor,
+            f_rmse_tensor,
+            v_rmse_tensor};
 }
 
 
@@ -1693,11 +1792,17 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
                                        .device(brcs_tensor.device());
 
     at::Tensor bloss_tensor = at::zeros({batch_size}, float_options);
+    at::Tensor num_real_atoms_in_batch_tensor = at::zeros({1}, int_options);
+    at::Tensor e_rmse_tensor = at::zeros({1}, float_options);
+    at::Tensor f_rmse_tensor = at::zeros({1}, float_options);
     at::Tensor betot_tensor = at::zeros({batch_size}, float_options);
     at::Tensor bforce_tensor = at::zeros({batch_size, natoms_pad, 3}, float_options);
 
     if (brcs_tensor.dtype() == torch::kFloat32) {
         float *bloss = bloss_tensor.data_ptr<float>();
+        float *e_rmse_ptr = e_rmse_tensor.data_ptr<float>();
+        float *f_rmse_ptr = f_rmse_tensor.data_ptr<float>();
+        int *num_real_atoms_in_batch_ptr = num_real_atoms_in_batch_tensor.data_ptr<int>();
         float *betot = betot_tensor.data_ptr<float>();
         float (*bforce)[3] = (float (*)[3])bforce_tensor.data_ptr<float>();
         float *betot_dft = betot_dft_tensor.data_ptr<float>();
@@ -1793,6 +1898,18 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
                 betot_dft,
                 bforce,
                 bforce_dft);
+            
+            find_ef_rmse_cpu_launcher<float>(
+                *e_rmse_ptr,
+                *f_rmse_ptr,
+                batch_size,
+                natoms_pad,
+                binum,
+                bilist,
+                betot,
+                betot_dft,
+                bforce,
+                bforce_dft);
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
             if (zbl_rmax > 0.0)
@@ -1859,10 +1976,34 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
                 betot_dft,
                 bforce,
                 bforce_dft);
+            
+            find_num_real_atoms_in_batch_torch_launcher(
+                num_real_atoms_in_batch_ptr,
+                batch_size,
+                binum);
+            find_e_se_torch_launcher(
+                e_rmse_ptr,
+                batch_size,
+                binum,
+                betot,
+                betot_dft);
+            find_f_se_torch_launcher(
+                f_rmse_ptr,
+                batch_size,
+                natoms_pad,
+                binum,
+                bilist,
+                bforce,
+                bforce_dft);
+            e_rmse_tensor = torch::sqrt(e_rmse_tensor / batch_size);
+            f_rmse_tensor = torch::sqrt(f_rmse_tensor / (3*num_real_atoms_in_batch_tensor));
             #endif
         }
     } else {
         double *bloss = bloss_tensor.data_ptr<double>();
+        double *e_rmse_ptr = e_rmse_tensor.data_ptr<double>();
+        double *f_rmse_ptr = f_rmse_tensor.data_ptr<double>();
+        int *num_real_atoms_in_batch_ptr = num_real_atoms_in_batch_tensor.data_ptr<int>();
         double *betot = betot_tensor.data_ptr<double>();
         double (*bforce)[3] = (double (*)[3])bforce_tensor.data_ptr<double>();
         double *betot_dft = betot_dft_tensor.data_ptr<double>();
@@ -1958,6 +2099,18 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
                 betot_dft,
                 bforce,
                 bforce_dft);
+            
+            find_ef_rmse_cpu_launcher<double>(
+                *e_rmse_ptr,
+                *f_rmse_ptr,
+                batch_size,
+                natoms_pad,
+                binum,
+                bilist,
+                betot,
+                betot_dft,
+                bforce,
+                bforce_dft);
         } else {
             #if defined(USE_CUDA) or defined(__INTELLISENSE__)
             if (zbl_rmax > 0.0)
@@ -2024,6 +2177,27 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
                 betot_dft,
                 bforce,
                 bforce_dft);
+            
+            find_num_real_atoms_in_batch_torch_launcher(
+                num_real_atoms_in_batch_ptr,
+                batch_size,
+                binum);
+            find_e_se_torch_launcher(
+                e_rmse_ptr,
+                batch_size,
+                binum,
+                betot,
+                betot_dft);
+            find_f_se_torch_launcher(
+                f_rmse_ptr,
+                batch_size,
+                natoms_pad,
+                binum,
+                bilist,
+                bforce,
+                bforce_dft);
+            e_rmse_tensor = torch::sqrt(e_rmse_tensor / batch_size);
+            f_rmse_tensor = torch::sqrt(f_rmse_tensor / (3*num_real_atoms_in_batch_tensor));
             #endif
         }
     }
@@ -2061,7 +2235,9 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
                             zbl_dks_tensor
                             });
 
-    return {bloss_tensor};
+    return {bloss_tensor,
+            e_rmse_tensor,
+            f_rmse_tensor};
 }
 
 
