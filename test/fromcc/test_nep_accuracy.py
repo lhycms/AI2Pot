@@ -30,7 +30,7 @@ class NepTest(unittest.TestCase):
         print("NepTest (TestCase) is setting up...\n")
         # 0.
         self.torch_float_dtype: torch._C.dtype = torch.float64
-        self.device: torch._C.device = torch.device("cpu")
+        self.device: torch._C.device = torch.device("cuda")
 
         # 1. 
         self.n_radial_basis: int = 6
@@ -39,7 +39,7 @@ class NepTest(unittest.TestCase):
         self.chebyshev_size: int = 8
         self.num_neurons: int = 30
         self.rmax_radial: float = 6.0
-        self.rmax_angular: float = 6.0
+        self.rmax_angular: float = 5.0
         self.umax_num_neigh_atoms: int = 200
         self.fit_virial: bool = False
         
