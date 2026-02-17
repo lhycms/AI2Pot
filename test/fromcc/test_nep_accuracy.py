@@ -30,7 +30,7 @@ class NepTest(unittest.TestCase):
         print("NepTest (TestCase) is setting up...\n")
         # 0.
         self.torch_float_dtype: torch._C.dtype = torch.float64
-        self.device: torch._C.device = torch.device("cuda")
+        self.device: torch._C.device = torch.device("cpu")
 
         # 1. 
         self.n_radial_basis: int = 6
@@ -174,7 +174,11 @@ class NepTest(unittest.TestCase):
         input_info: List[torch.Tensor] = self.mlff_to_loss_input.analyse_pymatgen(self.structure,
                                                                                   e_weight=e_weight,
                                                                                   f_weight=f_weight)
-        test = gradcheck(func=nepToEFLossOp,
+
+        def nepToEFLossOp1(*args, **kwargs):
+            return nepToEFLossOp(*args, **kwargs)[0]
+        
+        test = gradcheck(func=nepToEFLossOp1,
                          inputs=(e_weight,
                                  f_weight,
                                  input_info[2],

@@ -198,7 +198,10 @@ class LinearMtpTest(unittest.TestCase):
                                                                                   f_weight=f_weight,
                                                                                   v_weight=v_weight)
 
-        test = gradcheck(func=linearMtpToEFLossOp,
+        def linearMtpToEFLossOp1(*args, **kwargs):
+            return linearMtpToEFLossOp(*args, **kwargs)[0]
+
+        test = gradcheck(func=linearMtpToEFLossOp1,
                          inputs=(e_weight,
                                  f_weight,
                                  input_info[3],

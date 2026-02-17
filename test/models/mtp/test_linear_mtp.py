@@ -12,7 +12,7 @@ from ai2pot.models.mtp.linear_mtp import LinearMtp
 
 TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")
 ReNbSSe_POSCAR_PATH = os.path.join(TEST_FILES_DIR, "POSCARs", "POSCAR")
-torch.manual_seed(16)
+torch.manual_seed(8769)
 torch.set_num_threads(16)
 
 print("Number of omp threads = ", torch.get_num_threads())
