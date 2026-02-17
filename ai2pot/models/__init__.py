@@ -26,14 +26,9 @@ from ai2pot.models.potential_submodules import (
     Descriptor2EtotModule
 )
 
-from ai2pot.models.potential_loss import (
-    ERmse,
-    FRmse,
-    VRmse
-)
 
 from ai2pot.models.potential_train import (
-    LitPotential,
     LitLinearMtp,
-    LitNNMtp
+    LitNNMtp,
+    LitNep
 )
