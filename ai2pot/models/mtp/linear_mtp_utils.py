@@ -17,25 +17,27 @@
 
 
 from typing import List, Optional
-import numpy as np
 import matplotlib.pyplot as plt
 
 from ase.calculators.calculator import (Calculator, 
                                         all_changes)
 from ase import Atoms
+import numpy as np
 import torch
 from torch.utils.data import DataLoader
+import lightning as L
 
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 
 from ai2pot.data.mlffdatamodule import ExtxyzDataModule
+from ai2pot.utils.usepot import MlffInput
 from ai2pot.models.potential_train import LitLinearMtp
 from ai2pot.models.mtp.linear_mtp import LinearMtp
-from ai2pot.utils.usepot import MlffInput
+from ai2pot.models.potential_utils import PotentialCalculatorBase
 
 
-class LinearMtpCalculator(Calculator):
+class LinearMtpCalculator(PotentialCalculatorBase):
     implemented_properties = ['energy', 
                               'e_sites',
                               'forces',
@@ -47,70 +49,35 @@ class LinearMtpCalculator(Calculator):
                  map_location: str = "cpu",
                  torch_float_dtype: torch._C.dtype = torch.float32,
                  **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(
+            checkpoint_path=checkpoint_path,
+            map_location=map_location,
+            torch_float_dtype=torch_float_dtype,
+            **kwargs)
         self.checkpoint_path: str = checkpoint_path
-        self.lit_linear_mtp: LitLinearMtp = LitLinearMtp.load_from_checkpoint(checkpoint_path=self.checkpoint_path,
-                                                                              map_location=map_location)
-        self.has_virial: bool = self.lit_linear_mtp.model.fit_virial
         self.torch_float_dtype: torch._C.dtype = torch_float_dtype
+        self.lit_module: LitLinearMtp = LitLinearMtp.load_from_checkpoint(checkpoint_path=self.checkpoint_path,
+                                                                          map_location=map_location)
+        self.has_virial: bool = self.lit_module.model.fit_virial
 
         # model and data
-        self.linear_mtp: LinearMtp = self.lit_linear_mtp.model.to(torch_float_dtype)
-        self.mlff_input: MlffInput = MlffInput(type_map=self.linear_mtp.type_map_tensor.numpy().tolist(),
-                                               rcut=self.linear_mtp.rmax,
-                                               umax_num_neigh_atoms=self.linear_mtp.umax_num_neigh_atoms,
-                                               pbc_xyz=[True, True, True],
-                                               sort=False,
-                                               dtype=self.torch_float_dtype,
-                                               device=torch.device(map_location))
-
-
-    def calculate(self,
-                  atoms: Atoms,
-                  properties: Optional[List[str]] = None,
-                  system_changes: List[str] = all_changes):
-        super().calculate(atoms, properties, system_changes)
-        if ("energy" in properties) or ("forces" in properties):
-            if (self.has_virial == False):
-                e, f = self.predict_atoms_ef(atoms = atoms)
-                self.results["energy"] = e
-                self.results["forces"] = f
-            else:
-                pass
-        
-        if ("e_sites" in properties):
-            self.results["e_sites"] = self.predict_atoms_e_sites(atoms=atoms)
-
-        if ("descriptors" in properties):
-            self.results["descriptors"] = self.predict_atoms_descriptors(atoms=atoms)
-
-        if ("coeffs_gradients" in properties):
-            self.results["coeffs_gradients"] = self.predict_atoms_coeffs_gradients(atoms=atoms)
-
-    
-    def predict_atoms_ef(self, atoms: Atoms):
-        e, f = self.linear_mtp.predict_ef(*self.mlff_input.analyse_ase(atoms=atoms))
-        e: float = e.item()
-        f: np.ndarray = f.squeeze(dim=0).detach().numpy()
-        return e, f
-    
-
-    def predict_atoms_e_sites(self, atoms: Atoms):
-        e_sites_tensor: torch.Tensor = self.linear_mtp.predict_e_sites(*self.mlff_input.analyse_ase(atoms=atoms))
-        return e_sites_tensor.squeeze(dim=0).detach().numpy()
-
-
-    def predict_atoms_descriptors(self, atoms: Atoms):
-        descriptors: np.ndarray = self.linear_mtp.predict_descriptors(*self.mlff_input.analyse_ase(atoms=atoms)).squeeze(dim=0).detach().numpy()
-        return descriptors
+        self.model: LinearMtp = self.lit_module.model.to(torch_float_dtype)
+        self.mlff_input: MlffInput = MlffInput(
+            type_map=self.model.type_map_tensor.numpy().tolist(),
+            rcut=self.model.rmax,
+            umax_num_neigh_atoms=self.model.umax_num_neigh_atoms,
+            pbc_xyz=[True, True, True],
+            sort=False,
+            dtype=self.torch_float_dtype,
+            device=torch.device(map_location))
     
 
     def predict_atoms_coeffs_gradients(self, atoms: Atoms):
         e_sites: torch.Tensor = self.linear_mtp.predict_e_sites(*self.mlff_input.analyse_ase(atoms=atoms))    
         e_sites.sum().backward()
-        coeffs_grad: np.ndarray = self.linear_mtp.coeffs_tensor.grad.detach().numpy()
-        linear_coeffs_grad: np.ndarray = self.linear_mtp.linear_coeffs_tensor.grad.detach().numpy()
-        type_bias_grad: np.ndarray = self.linear_mtp.type_bias_tensor.grad.detach().numpy()
+        coeffs_grad: np.ndarray = self.model.coeffs_tensor.grad.detach().numpy()
+        linear_coeffs_grad: np.ndarray = self.model.linear_coeffs_tensor.grad.detach().numpy()
+        type_bias_grad: np.ndarray = self.model.type_bias_tensor.grad.detach().numpy()
         return np.concatenate([coeffs_grad, linear_coeffs_grad, type_bias_grad])
 
     

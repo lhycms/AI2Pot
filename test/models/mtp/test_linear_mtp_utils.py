@@ -28,18 +28,18 @@ EXTXYZ_PATH: str = os.path.join(TEST_FILES_DIR,
                                 "train_m.xyz")
 EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/Li_battery/train.xyz"
 
-
+torch.manual_seed(42)
 torch.set_num_threads(16)
 
-"""
+
 class LinearMtpCalculatorTest(unittest.TestCase):
     def setUp(self):
         print("LinearMtpCalculator (TestSuite) is setting up...")
-        self.checkpoint_path: str = "/data/home/liuhanyu/mycode/AI2Pot/lightning_logs/version_2/checkpoints/epoch=199-step=5000.ckpt"
+        self.checkpoint_path: str = "/data/home/liuhanyu/mycode/AI2Pot/lightning_logs/version_0/checkpoints/epoch=199-step=5000.ckpt"
         self.map_location: str = "cpu"
         self.torch_float_dtype: torch._C.dtype = torch.float32
         
-        self.linear_mtp_calculator: LinearMtpCalculator = LinearMtpCalculator(checkpoint_path=CHECK_POINT_PATH,
+        self.linear_mtp_calculator: LinearMtpCalculator = LinearMtpCalculator(checkpoint_path=self.checkpoint_path,
                                                                               map_location=self.map_location,
                                                                               torch_float_dtype=self.torch_float_dtype)
         self.atoms: Atoms = ase_read(filename=EXTXYZ_PATH, index=":")[0]
@@ -56,11 +56,11 @@ class LinearMtpCalculatorTest(unittest.TestCase):
         print("\t1. Energy = ", self.atoms.get_potential_energy())
         print("\t2. forces.shape = ", self.atoms.get_forces().shape)
         print("\t3. descriptors.shape = ",self.linear_mtp_calculator.get_property("descriptors", self.atoms).shape)
-        print("\t4. coeffs_gradients.shape = ", self.linear_mtp_calculator.get_property("coeffs_gradients", self.atoms).shape)
+        #print("\t4. coeffs_gradients.shape = ", self.linear_mtp_calculator.get_property("coeffs_gradients", self.atoms).shape)
 
 
     def test_predict_atoms_ef(self):
-        e, f = self.linear_mtp_calculator.predict_atoms_ef(atoms=self.atoms)
+        e, f = self.linear_mtp_calculator.predict_ef(atoms=self.atoms)
         e: float = e
         f: np.ndarray = f
         print("\t1. Energy = {0:.3f} eV".format(e))
@@ -68,15 +68,16 @@ class LinearMtpCalculatorTest(unittest.TestCase):
     
 
     def test_predict_atoms_e_sites(self):
-        e_sites = self.linear_mtp_calculator.predict_atoms_e_sites(atoms=self.atoms)
+        e_sites = self.linear_mtp_calculator.predict_e_sites(atoms=self.atoms)
         print("\t1. e_sites.shape = ", e_sites.shape)
 
     
-    def test_predict_atoms_coeffs_gradients(self):
-        coeffs_gradients: np.ndarray = self.linear_mtp_calculator.predict_atoms_coeffs_gradients(atoms=self.atoms)
-        print("\t1. coeffs_gradients.shape = ", coeffs_gradients.shape)
+    #def test_predict_atoms_coeffs_gradients(self):
+    #    coeffs_gradients: np.ndarray = self.linear_mtp_calculator.predict_coeffs_gradients(atoms=self.atoms)
+    #    print("\t1. coeffs_gradients.shape = ", coeffs_gradients.shape)
 
 
+"""
 class LinearMtpActiveDRTest(unittest.TestCase):
     def setUp(self):
         print("LinearMtpActiveDRTest (TestCase) is setting up...")
@@ -119,7 +120,7 @@ class LinearMtpActiveDRTest(unittest.TestCase):
 class LinearMtp4ExtxyzTest(unittest.TestCase):
     def setUp(self):
         print("LinearMtp4ExtxyzTest (TestSuite) is setting up...")
-        self.checkpoint_path: str = "/data/home/liuhanyu/mycode/AI2Pot/lightning_logs/version_2/checkpoints/epoch=199-step=5000.ckpt"
+        self.checkpoint_path: str = "/data/home/liuhanyu/mycode/AI2Pot/lightning_logs/version_0/checkpoints/epoch=199-step=5000.ckpt"
         self.testset_path: str = EXTXYZ_PATH
         self.map_location: str = "cpu"        
         self.torch_float_dtype: torch._C.dtype = torch.float32

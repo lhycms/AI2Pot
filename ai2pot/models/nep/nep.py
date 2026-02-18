@@ -60,6 +60,7 @@ class Nep(nn.Module):
         self.num_neurons: int = num_neurons
         self.rmax_radial: float = rmax_radial
         self.rmax_angular: float = rmax_angular
+        self.rmax: float = self.rmax_radial
         self.zbl_rmax: float = zbl_rmax
         self.zbl_rmin: float = zbl_rmin
         self._init_zbl_params(zbl_cks_list=zbl_cks_list,
