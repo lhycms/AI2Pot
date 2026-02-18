@@ -7,7 +7,9 @@ import torch
 from ase import Atoms
 from ase.io import read as ase_read
 
-from ai2pot.models.nep.nep_utils import (Nep4Extxyz)
+from ai2pot.models.nep.nep_utils import (
+    NepCalculator,
+    Nep4Extxyz)
 
 
 
@@ -29,6 +31,40 @@ EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/Li_battery/t
 torch.set_num_threads(16)
 
 
+class NepCalculatorTest(unittest.TestCase):
+    def setUp(self):
+        print("NepCalculator (TestSuite) is setting up...")
+        self.checkpoint_path: str = "/data/home/liuhanyu/mycode/AI2Pot/lightning_logs/version_1/checkpoints/epoch=199-step=5000.ckpt"
+        self.map_location: str = "cpu"
+        self.torch_float_dtype: torch._C.dtype = torch.float32
+        
+        self.nep_calculator: NepCalculator = NepCalculator(checkpoint_path=self.checkpoint_path,
+                                                                  map_location=self.map_location,
+                                                                  torch_float_dtype=self.torch_float_dtype)
+        self.atoms: Atoms = ase_read(filename=EXTXYZ_PATH, index=":")[0]
+        self.atoms.calc = self.nep_calculator
+
+
+    def tearDown(self):
+        print("NepCalculator (TestSuite) is tearing down...")
+
+
+    def test_calculate(self):
+        print("Calculator Summary:")
+        print("-------------------")
+        print("\t1. Energy = ", self.atoms.get_potential_energy())
+        print("\t2. forces.shape = ", self.atoms.get_forces().shape)
+        print("\t3. descriptors.shape = ",self.nep_calculator.get_property("descriptors", self.atoms).shape)
+        #print("\t4. coeffs_gradients.shape = ", self.nep_calculator.get_property("coeffs_gradients", self.atoms).shape)
+
+
+    def test_predict_atoms_ef(self):
+        e, f = self.nep_calculator.predict_ef(atoms=self.atoms)
+        e: float = e
+        f: np.ndarray = f
+        print("\t1. Energy = {0:.3f} eV".format(e))
+        print("\t2. Force.shape = ", f.shape)
+    
 
 
 class Nep4ExtxyzTest(unittest.TestCase):
