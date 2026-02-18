@@ -34,7 +34,7 @@ torch.set_num_threads(16)
 class Nep4ExtxyzTest(unittest.TestCase):
     def setUp(self):
         print("Nep4ExtxyzTest (TestCase) is setting up...")
-        self.checkpoint_path: str = "/data/home/liuhanyu/mycode/AI2Pot/lightning_logs/version_2/checkpoints/epoch=199-step=5000.ckpt"
+        self.checkpoint_path: str = "/data/home/liuhanyu/mycode/AI2Pot/lightning_logs/version_1/checkpoints/epoch=199-step=5000.ckpt"
         self.testset_path: str = EXTXYZ_PATH
         self.map_location: str = "cuda"        
         self.torch_float_dtype: torch._C.dtype = torch.float32
@@ -49,9 +49,9 @@ class Nep4ExtxyzTest(unittest.TestCase):
     
     def test_plot_ef_diagonal(self):
         print("=== q_scaler ===")
-        print(1.0 / self.nep_extxyz.nep.q_scaler_tensor)
+        print(1.0 / self.nep_extxyz.model.q_scaler_tensor)
         print("=== q_scaler ===")
-        print(1.0 / self.nep_extxyz.nep.q_scaler_tensor[0].item())
+        print(1.0 / self.nep_extxyz.model.q_scaler_tensor[0].item())
         self.nep_extxyz.plot_ef_diagonal(save=True)
 
 
