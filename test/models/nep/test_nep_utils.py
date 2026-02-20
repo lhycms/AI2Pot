@@ -26,8 +26,8 @@ EXTXYZ_PATH: str = os.path.join(TEST_FILES_DIR,
                                 "XYZ",
                                 "11_NEP_potential_PbTe",
                                 "train_m.xyz")
-#EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/Li_battery/train.xyz"
-EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/C/train.xyz"
+EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/Li_battery/train.xyz"
+#EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/C/train.xyz"
 
 torch.set_num_threads(16)
 
@@ -72,14 +72,15 @@ class NepCalculatorTest(unittest.TestCase):
 class Nep4ExtxyzTest(unittest.TestCase):
     def setUp(self):
         print("Nep4ExtxyzTest (TestCase) is setting up...")
-        self.checkpoint_path: str = "/data/home/liuhanyu/mycode/AI2Pot/lightning_logs/lightning_logs/version_9/checkpoints/epoch=199-step=30400.ckpt"
-        self.testset_path: str = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/C/train.xyz"
+        self.checkpoint_path: str = "/data/home/liuhanyu/mycode/AI2Pot/lightning_logs/lightning_logs/version_19/checkpoints/epoch=999-step=25000.ckpt"
+        self.testset_path: str = EXTXYZ_PATH
         self.map_location: str = "cuda"        
         self.torch_float_dtype: torch._C.dtype = torch.float32
         self.nep_extxyz: Nep4Extxyz = Nep4Extxyz(checkpoint_path=self.checkpoint_path,
                                                  testset_path=self.testset_path,
                                                  map_location=self.map_location,
                                                  torch_float_dtype=self.torch_float_dtype)
+        print(self.nep_extxyz.model.coeffs_tensor)
 
     def tearDown(self):
         print("Nep4ExtxyzTest (TestCase) is tearing down...")

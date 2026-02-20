@@ -41,11 +41,11 @@ class LitPotentialBase(L.LightningModule):
             lr_start: float = 1e-3,
             lr_end: float = 1e-5,
             e_wgt_start: float = 1.0,
-            e_wgt_end: float = 1.0,
-            f_wgt_start: float = 1.0,
-            f_wgt_end: float = 1.0,
-            v_wgt_start: float = 0.1,
-            v_wgt_end: float = 0.1,
+            e_wgt_end: float = 10.0,
+            f_wgt_start: float = 100.0,
+            f_wgt_end: float = 10.0,
+            v_wgt_start: float = 0.0,
+            v_wgt_end: float = 0.0,
             warmup_steps_ratio: float = 0.05,
             max_clip_norm: float = 10.0):
         super(LitPotentialBase, self).__init__()
@@ -349,7 +349,7 @@ class LitPotentialBase(L.LightningModule):
     def configure_optimizers(self):
         optimizer: torch.optim.Optimizer = torch.optim.Adam(params=self.model.parameters(),
                                                             lr=self.lr_start,
-                                                            betas = (0.9, 0.999),
+                                                            betas=(0.9, 0.999),
                                                             eps=1e-8,
                                                             weight_decay=0.0)
         
@@ -454,7 +454,7 @@ class LitNep(LitPotentialBase):
             l_max: int = 4,
             chebyshev_size: int = 8,
             num_neurons: int = 30,
-            rmax_radial: float = 6.0,
+            rmax_radial: float = 8.0,
             rmax_angular: float = 4.0,
             zbl_rmax: float = 0.0,
             zbl_rmin: float = 0.0,

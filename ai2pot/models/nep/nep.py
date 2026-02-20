@@ -37,7 +37,7 @@ class Nep(nn.Module):
                  l_max: int = 4,
                  chebyshev_size: int = 8,
                  num_neurons: int = 30,
-                 rmax_radial: float = 6.0,
+                 rmax_radial: float = 8.0,
                  rmax_angular: float = 4.0,
                  zbl_rmax: float = 0.0,
                  zbl_rmin: float = 0.0,

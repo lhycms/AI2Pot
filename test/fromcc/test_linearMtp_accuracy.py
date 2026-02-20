@@ -12,6 +12,7 @@ from ai2pot.data.mlffdataset import ExtxyzDataset
 from ai2pot.fromcc import (
     linearMtpToEFLossOp,
     linearMtpToLossOp,
+    linearMtpToEFOp,
     linearMtpToEsitesOp,
     mtpParamOp,
     linearMtpToDescriptorsOp
@@ -163,11 +164,11 @@ class LinearMtpTest(unittest.TestCase):
         self.coeffs_tensor: torch.Tensor = torch.zeros(self.ntypes*self.ntypes*self.nmus*self.chebyshev_size, 
                                                        dtype=self.torch_float_dtype,
                                                        device=self.device)
-        nn.init.normal_(self.coeffs_tensor, mean=0.0, std=0.1)
+        nn.init.normal_(self.coeffs_tensor, mean=0.0, std=0.5)
         self.linear_coeffs_tensor: torch.Tensor = torch.zeros(self.alpha_moment_mapping_tensor.size(0),
                                                               dtype=self.torch_float_dtype,
                                                               device=self.device)
-        nn.init.normal_(self.linear_coeffs_tensor, mean=0.0, std=0.1)
+        nn.init.normal_(self.linear_coeffs_tensor, mean=0.0, std=0.5)
         self.type_bias_tensor: torch.Tensor = torch.zeros(self.ntypes,
                                                           dtype=self.torch_float_dtype,
                                                           device=self.device)
@@ -181,7 +182,38 @@ class LinearMtpTest(unittest.TestCase):
     
     def tearDown(self):
         print("LinearMtpTest (TestCase) is tearing down...\n")
-    
+
+
+    def test_nepToEF(self):
+        input_info: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(self.structure)
+        e, f = linearMtpToEFOp(self.chebyshev_size,
+                                self.coeffs_tensor,
+                                self.linear_coeffs_tensor,
+                                self.type_bias_tensor,
+                                self.alpha_moments_count,
+                                self.alpha_index_basic_tensor,
+                                self.alpha_index_times_tensor,
+                                self.alpha_moment_mapping_tensor,
+                                self.nmus,
+                                input_info[0],
+                                input_info[1],
+                                input_info[2],
+                                input_info[3],
+                                input_info[4],
+                                input_info[5],
+                                self.type_map_tensor,
+                                input_info[6],
+                                self.rmax,
+                                self.rmin,
+                                self.q_scaler_tensor,
+                                self.zbl_rmax,
+                                self.zbl_rmin,
+                                self.zbl_cks_tensor,
+                                self.zbl_dks_tensor)
+        e: torch.Tensor
+        f: torch.Tensor
+        print(f)
+
     
     def test_linearMtpToEFLoss(self):
         # 1. Parameters
@@ -197,6 +229,8 @@ class LinearMtpTest(unittest.TestCase):
                                                                                   e_weight=e_weight,
                                                                                   f_weight=f_weight,
                                                                                   v_weight=v_weight)
+
+
 
         def linearMtpToEFLossOp1(*args, **kwargs):
             return linearMtpToEFLossOp(*args, **kwargs)[0]
