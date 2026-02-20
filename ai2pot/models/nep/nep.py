@@ -32,7 +32,7 @@ class Nep(nn.Module):
                  energy_shifts: Optional[List[float]] = None,
                  umax_num_neigh_atoms: int = 200,
                  fit_virial: bool = False,
-                 n_radial_basis: int = 6,
+                 n_radial_basis: int = 4,
                  n_angular_basis: int = 4,
                  l_max: int = 4,
                  chebyshev_size: int = 8,
