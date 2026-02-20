@@ -43,16 +43,16 @@ class LitLinearMtpTest(unittest.TestCase):
         rmin: float = 0.0
         
         # Lr hyperparameters
-        max_epochs: int = 200
+        max_epochs: int = 1000
         lr_start: float = 1e-3
-        lr_end: float = 1e-5
+        lr_end: float = 1e-7
         e_wgt_start: float = 1.0
-        e_wgt_end: float = 1.0
-        f_wgt_start: float = 1.0
-        f_wgt_end: float = 1.0
+        e_wgt_end: float = 10.0
+        f_wgt_start: float = 100.0
+        f_wgt_end: float = 10.0
         v_wgt_start: float = 0.00
         v_wgt_end: float = 0.00
-        warmup_steps_ratio: float = 0.005
+        warmup_steps_ratio: float = 0.001
 
         ### LitghtingModule hyperparameters
         self.lit_linear_mtp: LitLinearMtp = LitLinearMtp(
