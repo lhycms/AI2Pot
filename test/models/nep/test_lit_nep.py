@@ -5,6 +5,7 @@ from pymatgen.core import Structure
 
 import torch
 import lightning as L
+from lightning.pytorch.loggers import CSVLogger
 
 from ai2pot.data import ExtxyzDataset, ExtxyzDataModule
 from ai2pot.models.nep.nep import Nep
@@ -14,9 +15,11 @@ from ai2pot.models.nep.nep_train_utils import NepDescriptorNormCallback
 
 
 TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")
-PbTe_EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/Li_battery/train.xyz"#os.path.join(TEST_FILES_DIR, "XYZ", "11_NEP_potential_PbTe", "train_m.xyz")
+PbTe_EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/C/train.xyz"
+# "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/C/train.xyz"
+# "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/Li_battery/train.xyz"
+# os.path.join(TEST_FILES_DIR, "XYZ", "11_NEP_potential_PbTe", "train_m.xyz")
 
-torch.manual_seed(4231)
 torch.set_num_threads(16)
 
 
@@ -44,15 +47,16 @@ class LitNepTest(unittest.TestCase):
 
         # Lr hyperparameters
         max_epochs: int = 200
-        lr_start: float = 1e-2
-        lr_end: float = 5e-4
+        lr_start: float = 1e-3
+        lr_end: float = 1e-5
         e_wgt_start: float = 1.0
         e_wgt_end: float = 1.0
         f_wgt_start: float = 1.0
         f_wgt_end: float = 1.0
         v_wgt_start: float = 0.00
         v_wgt_end: float = 0.00
-        lr_decay_step: int = max_epochs * 25
+        warmup_steps_ratio: float = 0.005
+        lr_decay_step: int = max_epochs * 136
 
         ### LitghtingModule hyperparameters
         self.lit_nep: LitNep = LitNep(
@@ -77,6 +81,7 @@ class LitNepTest(unittest.TestCase):
             f_wgt_end=f_wgt_end,
             v_wgt_start=v_wgt_start,
             v_wgt_end=v_wgt_end,
+            warmup_steps_ratio=warmup_steps_ratio,
             lr_decay_step=lr_decay_step).to(torch_float_dtype)
 
         ### DataModule hyperparameters
@@ -98,12 +103,14 @@ class LitNepTest(unittest.TestCase):
             has_virial=fit_virial)
 
         ### Trainer hyperparameters
+        csv_logger: CSVLogger = CSVLogger(save_dir="lightning_logs")
         self.nep_descriptor_norm_callback: NepDescriptorNormCallback = NepDescriptorNormCallback()
         self.trainer: L.Trainer = L.Trainer(max_epochs=max_epochs,
                                             accelerator=accelerator,
                                             devices=1,
                                             limit_val_batches=0,
                                             log_every_n_steps=1,
+                                            logger=csv_logger,
                                             callbacks=[self.nep_descriptor_norm_callback])
 
 

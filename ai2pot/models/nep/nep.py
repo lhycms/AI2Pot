@@ -69,30 +69,37 @@ class Nep(nn.Module):
         self.num_descriptors: int = n_radial_basis + n_angular_basis * l_max
         self.num_coeffs: int = self.ntypes * self.ntypes * (self.n_radial_basis+self.n_angular_basis) * self.chebyshev_size
 
+        ### Init ###
         coeffs_tensor: torch.Tensor = torch.Tensor(self.num_coeffs)
-        nn.init.normal_(coeffs_tensor, mean=0.0, std=0.1)
+        r1: torch.Tensor = 0.1 * torch.randn(self.num_coeffs, device=coeffs_tensor.device)
+        r2: torch.Tensor = torch.rand(self.num_coeffs, device=coeffs_tensor.device) - 0.5
+        coeffs_tensor.copy_(r1 + r2)
         self.register_parameter(name="coeffs_tensor", param=nn.Parameter(data=coeffs_tensor))
 
         w0_tensor: torch.Tensor = torch.Tensor(self.ntypes*self.num_descriptors*self.num_neurons)
-        nn.init.normal_(w0_tensor, mean=0.0, std=0.1)
+        init_w0_std: torch.Tensor = (2.0 / (self.num_descriptors + self.num_neurons)) ** 0.5
+        nn.init.normal_(w0_tensor, mean=0.0, std=init_w0_std)
         self.register_parameter(name="w0_tensor", param=nn.Parameter(data=w0_tensor))
         
         b0_tensor: torch.Tensor = torch.Tensor(self.ntypes*self.num_neurons)
-        nn.init.normal_(b0_tensor, mean=0.0, std=0.1)
+        nn.init.normal_(b0_tensor, mean=0.0, std=0.01)
         self.register_parameter(name="b0_tensor", param=nn.Parameter(data=b0_tensor))
 
         w1_tensor: torch.Tensor = torch.Tensor(self.ntypes*self.num_neurons)
-        nn.init.normal_(w1_tensor, mean=0.0, std=0.1)
+        init_w1_std: torch.Tensor = (2.0 / (self.num_neurons + 1)) ** 0.5
+        nn.init.normal_(w1_tensor, mean=0.0, std=init_w1_std)
         self.register_parameter(name="w1_tensor", param=nn.Parameter(data=w1_tensor))
 
         if energy_shifts is not None:
             assert(len(energy_shifts) == self.ntypes)
             type_bias_tensor: torch.Tensor = torch.tensor(energy_shifts, dtype=torch.float32)
-            self.register_parameter(name="type_bias_tensor", param=nn.Parameter(data=type_bias_tensor))
+            noise: torch = torch.randn_like(type_bias_tensor) * 0.01
+            self.register_parameter(name="type_bias_tensor", param=nn.Parameter(data=(type_bias_tensor+noise)))
         else:
             type_bias_tensor: torch.Tensor = torch.Tensor(self.ntypes)
             nn.init.normal_(type_bias_tensor, mean=0.0, std=1.0)
             self.register_parameter(name="type_bias_tensor", param=nn.Parameter(data=type_bias_tensor))
+        ### Init ###
     
         q_scaler_tensor: torch.Tensor = torch.ones(self.num_descriptors, dtype=torch.float32)
         self.register_buffer("_q_scaler_tensor", tensor=q_scaler_tensor)

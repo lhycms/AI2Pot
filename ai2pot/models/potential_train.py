@@ -20,6 +20,7 @@ from typing import List, Optional
 import torch
 import torch.nn as nn
 import lightning as L
+from torch.optim.optimizer import Optimizer
 
 from ai2pot.models.mtp.linear_mtp import LinearMtp
 from ai2pot.models.mtp.nn_mtp import NNMtp
@@ -45,7 +46,9 @@ class LitPotentialBase(L.LightningModule):
             f_wgt_end: float = 1.0,
             v_wgt_start: float = 0.1,
             v_wgt_end: float = 0.1,
-            lr_decay_step: int = 5000):
+            warmup_steps_ratio: float = 0.05,
+            lr_decay_step: int = 5000,
+            max_clip_norm: float = 10.0):
         super(LitPotentialBase, self).__init__()
 
         self.type_map: List[int] = type_map
@@ -67,7 +70,11 @@ class LitPotentialBase(L.LightningModule):
         self.f_wgt_end: float = f_wgt_end
         self.v_wgt_start: float = v_wgt_start
         self.v_wgt_end: float = v_wgt_end
+        self.warmup_steps_ratio: float = warmup_steps_ratio
         self.lr_decay_step: int = lr_decay_step
+
+        self.register_buffer("avg_grad_norm_tensor", torch.tensor(-1.0))
+        self.register_buffer("max_clip_norm_tensor", torch.tensor(max_clip_norm))
 
         self.save_hyperparameters()
 
@@ -123,42 +130,42 @@ class LitPotentialBase(L.LightningModule):
         mean_bmse_tensor: torch.Tensor = bmse_tensor.mean()
 
         ### Log ###
-        self.log("e_rmse_train", e_rmse_tensor,
+        self.log("train/e_rmse", e_rmse_tensor,
                  on_epoch=True,
                  on_step=True,
                  prog_bar=True,
                  sync_dist=True)
-        self.log("f_rmse_train", f_rmse_tensor,
+        self.log("train/f_rmse", f_rmse_tensor,
                  on_epoch=True,
                  on_step=True,
                  prog_bar=True,
                  sync_dist=True)
         if (self.model.fit_virial):
-            self.log("v_rmse_train", v_rmse_tensor,
+            self.log("train/v_rmse", v_rmse_tensor,
                  on_epoch=True,
                  on_step=True,
                  prog_bar=True,
                  sync_dist=True)
         current_lr: float = self.optimizers().param_groups[0]["lr"]
-        self.log("lr", 
+        self.log("train/lr", 
                  current_lr,
                  on_step=True,
                  on_epoch=False,
                  prog_bar=False,
                  sync_dist=True)
-        self.log("e_wgt",
+        self.log("train/e_wgt",
                  e_wgt,
                  on_step=True,
                  on_epoch=False,
                  prog_bar=False,
                  sync_dist=True)
-        self.log("f_wgt",
+        self.log("train/f_wgt",
                  f_wgt,
                  on_step=True,
                  on_epoch=False,
                  prog_bar=False,
                  sync_dist=True) 
-        self.log("v_wgt",
+        self.log("train/v_wgt",
                  v_wgt,
                  on_step=True,
                  on_epoch=False,
@@ -211,18 +218,18 @@ class LitPotentialBase(L.LightningModule):
         mean_bmse_tensor: torch.Tensor = bmse_tensor.mean()
 
         ### Log ###
-        self.log("e_rmse_valid", e_rmse_tensor,
+        self.log("valid/e_rmse", e_rmse_tensor,
                  on_epoch=True,
                  on_step=True,
                  prog_bar=True,
                  sync_dist=True)
-        self.log("f_rmse_valid", f_rmse_tensor,
+        self.log("valid/f_rmse", f_rmse_tensor,
                  on_epoch=True,
                  on_step=True,
                  prog_bar=True,
                  sync_dist=True)
         if (self.model.fit_virial):
-            self.log("v_rmse_valid", v_rmse_tensor,
+            self.log("valid/v_rmse", v_rmse_tensor,
                  on_epoch=True,
                  on_step=True,
                  prog_bar=True,
@@ -274,18 +281,18 @@ class LitPotentialBase(L.LightningModule):
         mean_bmse_tensor: torch.Tensor = bmse_tensor.mean()
 
         ### Log ###
-        self.log("e_rmse_test", e_rmse_tensor,
+        self.log("test/e_rmse", e_rmse_tensor,
                  on_epoch=True,
                  on_step=True,
                  prog_bar=True,
                  sync_dist=True)
-        self.log("f_rmse_test", f_rmse_tensor,
+        self.log("test/f_rmse", f_rmse_tensor,
                  on_epoch=True,
                  on_step=True,
                  prog_bar=True,
                  sync_dist=True)
         if (self.model.fit_virial):
-            self.log("v_rmse_test", v_rmse_tensor,
+            self.log("test/v_rmse", v_rmse_tensor,
                  on_epoch=True,
                  on_step=True,
                  prog_bar=True,
@@ -295,13 +302,77 @@ class LitPotentialBase(L.LightningModule):
         return mean_bmse_tensor
     
 
-    def configure_optimizers(self):
-        optimizer: torch.optim.Optimizer = torch.optim.AdamW(params=self.model.parameters(),
-                                                             lr=self.lr_start)
+    def configure_gradient_clipping(
+            self, 
+            optimizer: Optimizer, 
+            gradient_clip_val: int | float | None = None, 
+            gradient_clip_algorithm: str | None = None) -> None:
+        # 1. Calculate gradients of parameters
+        current_grad_norm_tensor: torch.Tensor = torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=1e10)
+        if current_grad_norm_tensor.isnan() or current_grad_norm_tensor.isinf():
+            return
         
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer=optimizer,
-                                                               T_max=self.lr_decay_step,
-                                                               eta_min=self.lr_end)
+        # 2. EMA
+        ema_decay: float = 0.9
+        if (self.avg_grad_norm_tensor < 0):
+            self.avg_grad_norm_tensor.copy_(current_grad_norm_tensor)
+        else:
+            new_ema: torch.Tensor = ema_decay * self.avg_grad_norm_tensor + (1-ema_decay) * current_grad_norm_tensor
+            self.avg_grad_norm_tensor.copy_(new_ema)
+        
+        # 3. Threshold (self.max_clip_norm_tensor or self.avg_grad_norm_tensor)
+        dynamic_threshold = torch.min(self.avg_grad_norm_tensor, self.max_clip_norm_tensor)
+        
+        # 4. Clip
+        torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=dynamic_threshold)
+        
+        ### Log ###
+        self.log("grad/raw_norm",
+                 value=current_grad_norm_tensor,
+                 on_step=True,
+                 on_epoch=True,
+                 prog_bar=False,
+                 sync_dist=True)
+        self.log("grad/avg_norm",
+                 value=self.avg_grad_norm_tensor,
+                 on_step=True,
+                 on_epoch=True,
+                 prog_bar=False,
+                 sync_dist=True)
+        self.log("grad/clip_threshold",
+                 value=dynamic_threshold,
+                 on_step=True,
+                 on_epoch=True,
+                 prog_bar=False,
+                 sync_dist=True)
+        ### Log ###
+        
+
+    def configure_optimizers(self):
+        optimizer: torch.optim.Optimizer = torch.optim.Adam(params=self.model.parameters(),
+                                                            lr=self.lr_start,
+                                                            betas = (0.9, 0.999),
+                                                            eps=1e-8,
+                                                            weight_decay=0.0)
+        
+        # Warmup
+        total_steps: int = self.trainer.estimated_stepping_batches
+        warmup_steps: int = int(total_steps * self.warmup_steps_ratio)
+        warmup_scheduler = torch.optim.lr_scheduler.LinearLR(optimizer=optimizer,
+                                                             start_factor=1e-4,
+                                                             total_iters=warmup_steps)
+
+        # Main
+        main_steps: int = total_steps - warmup_steps
+        main_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer=optimizer,
+                                                                    T_max=main_steps,
+                                                                    eta_min=self.lr_end)
+        
+        # Combination
+        scheduler = torch.optim.lr_scheduler.SequentialLR(
+            optimizer=optimizer,
+            schedulers=[warmup_scheduler, main_scheduler],
+            milestones=[warmup_steps])
         
         return {
             'optimizer': optimizer,
@@ -336,6 +407,7 @@ class LitLinearMtp(LitPotentialBase):
             f_wgt_end: float = 1.0,
             v_wgt_start: float = 0.1,
             v_wgt_end: float = 0.1,
+            warmup_steps_ratio: float = 0.005,
             lr_decay_step: int = 5000):
         super().__init__(
             type_map=type_map,
@@ -354,6 +426,7 @@ class LitLinearMtp(LitPotentialBase):
             f_wgt_end=f_wgt_end,
             v_wgt_start=v_wgt_start,
             v_wgt_end=v_wgt_end,
+            warmup_steps_ratio=warmup_steps_ratio,
             lr_decay_step=lr_decay_step)
         
         self.model: nn.Module = LinearMtp(
@@ -399,8 +472,9 @@ class LitNep(LitPotentialBase):
             f_wgt_end: float = 1.0,
             v_wgt_start: float = 0.1,
             v_wgt_end: float = 0.1,
+            warmup_steps_ratio: float = 0.005,
             lr_decay_step: int = 5000):
-        super(LitNep, self).__init__(
+        super().__init__(
             type_map=type_map,
             energy_shifts=energy_shifts,
             umax_num_neigh_atoms=umax_num_neigh_atoms,
@@ -417,6 +491,7 @@ class LitNep(LitPotentialBase):
             f_wgt_end=f_wgt_end,
             v_wgt_start=v_wgt_start,
             v_wgt_end=v_wgt_end,
+            warmup_steps_ratio=warmup_steps_ratio,
             lr_decay_step=lr_decay_step)
 
         self.model: nn.Module = Nep(

@@ -100,19 +100,19 @@ class NepTest(unittest.TestCase):
         self.coeffs_tensor: torch.Tensor = torch.zeros(self.ntypes*self.ntypes*(self.n_radial_basis+self.n_angular_basis)*self.chebyshev_size, 
                                                        dtype=self.torch_float_dtype,
                                                        device=self.device)
-        nn.init.normal_(self.coeffs_tensor, mean=0.0, std=0.2)
+        nn.init.normal_(self.coeffs_tensor, mean=0.0, std=0.1)
         self.w0_tensor: torch.Tensor = torch.zeros(self.ntypes * self.num_neurons * self.num_descriptors,
                                                    dtype=self.torch_float_dtype,
                                                    device=self.device)
-        nn.init.normal_(self.w0_tensor, mean=0.0, std=0.5)
+        nn.init.normal_(self.w0_tensor, mean=0.0, std=0.1)
         self.b0_tensor: torch.Tensor = torch.zeros(self.ntypes * self.num_neurons,
                                                    dtype=self.torch_float_dtype,
                                                    device=self.device)
-        nn.init.normal_(self.b0_tensor, mean=0.0, std=0.5)
+        nn.init.normal_(self.b0_tensor, mean=0.0, std=0.1)
         self.w1_tensor: torch.Tensor = torch.zeros(self.ntypes * self.num_neurons,
                                                    dtype=self.torch_float_dtype,
                                                    device=self.device)
-        nn.init.normal_(self.w1_tensor, mean=0.0, std=0.5)
+        nn.init.normal_(self.w1_tensor, mean=0.0, std=0.1)
         self.type_bias_tensor: torch.Tensor = torch.zeros(self.ntypes,
                                                           dtype=self.torch_float_dtype,
                                                           device=self.device)
@@ -207,9 +207,10 @@ class NepTest(unittest.TestCase):
                                  self.zbl_rmin,
                                  self.zbl_cks_tensor,
                                  self.zbl_dks_tensor),
+                            eps=1e-6,
                             rtol=1e-4,
-                            atol=1e-4,
-                            eps=1e-8)
+                            atol=1e-5,
+                            nondet_tol=1e-6)
         print("-------------------------------------------------")
         print("* NepToEFLossOp Gradient pass check: ", test)
         print("-------------------------------------------------")
