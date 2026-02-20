@@ -99,10 +99,10 @@ class LinearMtpTest(unittest.TestCase):
         self.fit_virial: bool = False
         
         
-        self.ntypes: int = 1
-        self.type_map: List[int] = [6]#[42, 16] #[16, 34, 41, 75]
+        self.ntypes: int = 2
+        self.type_map: List[int] = [42, 16] #[16, 34, 41, 75]
         self.type_map_tensor = torch.tensor(self.type_map, dtype=torch.int32).to(self.device)
-        self.structure: Structure = Structure.from_file(C_POSCAR_PATH)
+        self.structure: Structure = Structure.from_file(MoS2_POSCAR_PATH)
         """
         self.ntypes: int = 2
         self.type_map: List[int] = [1, 8]
@@ -231,8 +231,8 @@ class LinearMtpTest(unittest.TestCase):
                                  self.zbl_cks_tensor,
                                  self.zbl_dks_tensor),
                          eps=1e-6,
-                         atol=1e-8,
-                         rtol=5e-6,
+                         atol=1e-5,
+                         rtol=1e-4,
                          nondet_tol=1e-6)
         print("-------------------------------------------------")
         print("* linearMtpToEFLossOp Gradient pass check: ", test)

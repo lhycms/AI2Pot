@@ -53,7 +53,6 @@ class LitLinearMtpTest(unittest.TestCase):
         v_wgt_start: float = 0.00
         v_wgt_end: float = 0.00
         warmup_steps_ratio: float = 0.005
-        lr_decay_step: int = max_epochs * 25
 
         ### LitghtingModule hyperparameters
         self.lit_linear_mtp: LitLinearMtp = LitLinearMtp(
@@ -73,8 +72,7 @@ class LitLinearMtpTest(unittest.TestCase):
             f_wgt_end=f_wgt_end,
             v_wgt_start=v_wgt_start,
             v_wgt_end=v_wgt_end,
-            warmup_steps_ratio=warmup_steps_ratio,
-            lr_decay_step=lr_decay_step).to(torch_float_dtype)
+            warmup_steps_ratio=warmup_steps_ratio).to(torch_float_dtype)
         
         ### DataModule hyperparameters
         rcut: float = rmax

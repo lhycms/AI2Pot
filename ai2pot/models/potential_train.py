@@ -47,7 +47,6 @@ class LitPotentialBase(L.LightningModule):
             v_wgt_start: float = 0.1,
             v_wgt_end: float = 0.1,
             warmup_steps_ratio: float = 0.05,
-            lr_decay_step: int = 5000,
             max_clip_norm: float = 10.0):
         super(LitPotentialBase, self).__init__()
 
@@ -71,7 +70,6 @@ class LitPotentialBase(L.LightningModule):
         self.v_wgt_start: float = v_wgt_start
         self.v_wgt_end: float = v_wgt_end
         self.warmup_steps_ratio: float = warmup_steps_ratio
-        self.lr_decay_step: int = lr_decay_step
 
         self.register_buffer("avg_grad_norm_tensor", torch.tensor(-1.0))
         self.register_buffer("max_clip_norm_tensor", torch.tensor(max_clip_norm))
@@ -407,8 +405,7 @@ class LitLinearMtp(LitPotentialBase):
             f_wgt_end: float = 1.0,
             v_wgt_start: float = 0.1,
             v_wgt_end: float = 0.1,
-            warmup_steps_ratio: float = 0.005,
-            lr_decay_step: int = 5000):
+            warmup_steps_ratio: float = 0.005):
         super().__init__(
             type_map=type_map,
             energy_shifts=energy_shifts,
@@ -426,8 +423,7 @@ class LitLinearMtp(LitPotentialBase):
             f_wgt_end=f_wgt_end,
             v_wgt_start=v_wgt_start,
             v_wgt_end=v_wgt_end,
-            warmup_steps_ratio=warmup_steps_ratio,
-            lr_decay_step=lr_decay_step)
+            warmup_steps_ratio=warmup_steps_ratio)
         
         self.model: nn.Module = LinearMtp(
             type_map=type_map,
@@ -472,8 +468,7 @@ class LitNep(LitPotentialBase):
             f_wgt_end: float = 1.0,
             v_wgt_start: float = 0.1,
             v_wgt_end: float = 0.1,
-            warmup_steps_ratio: float = 0.005,
-            lr_decay_step: int = 5000):
+            warmup_steps_ratio: float = 0.005):
         super().__init__(
             type_map=type_map,
             energy_shifts=energy_shifts,
@@ -491,8 +486,7 @@ class LitNep(LitPotentialBase):
             f_wgt_end=f_wgt_end,
             v_wgt_start=v_wgt_start,
             v_wgt_end=v_wgt_end,
-            warmup_steps_ratio=warmup_steps_ratio,
-            lr_decay_step=lr_decay_step)
+            warmup_steps_ratio=warmup_steps_ratio)
 
         self.model: nn.Module = Nep(
             type_map=type_map,
@@ -537,8 +531,7 @@ class LitNNMtp(LitPotentialBase):
             f_wgt_start: float = 1000.0,
             f_wgt_end: float = 0.1,
             v_wgt_start: float = 0.0,
-            v_wgt_end: float = 0.0,
-            lr_decay_step: int = 5000):
+            v_wgt_end: float = 0.0):
         super().__init__()
         self.save_hyperparameters()
         
@@ -564,4 +557,3 @@ class LitNNMtp(LitPotentialBase):
         self.f_wgt_end: float = f_wgt_end
         self.v_wgt_start: float = v_wgt_start
         self.v_wgt_end: float = v_wgt_end
-        self.lr_decay_step: int = lr_decay_step
