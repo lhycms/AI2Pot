@@ -39,14 +39,14 @@ class LitPotentialBase(L.LightningModule):
             zbl_cks_list: Optional[List[float]] = None,
             zbl_dks_list: Optional[List[float]] = None,
             lr_start: float = 1e-3,
-            lr_end: float = 1e-7,
-            e_wgt_start: float = 1.0,
-            e_wgt_end: float = 10.0,
-            f_wgt_start: float = 100.0,
-            f_wgt_end: float = 10.0,
+            lr_end: float = 1e-5,
+            e_wgt_start: float = 0.02,
+            e_wgt_end: float = 1.0,
+            f_wgt_start: float = 1000.0,
+            f_wgt_end: float = 1.0,
             v_wgt_start: float = 0.0,
             v_wgt_end: float = 0.0,
-            warmup_steps_ratio: float = 0.05,
+            warmup_steps_ratio: float = 0.0025,
             max_clip_norm: float = 10.0):
         super(LitPotentialBase, self).__init__()
 
@@ -299,7 +299,7 @@ class LitPotentialBase(L.LightningModule):
 
         return mean_bmse_tensor
     
-
+    
     def configure_gradient_clipping(
             self, 
             optimizer: Optimizer, 
@@ -308,7 +308,7 @@ class LitPotentialBase(L.LightningModule):
         # 1. Calculate gradients of parameters
         current_grad_norm_tensor: torch.Tensor = torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=1e10)
         if current_grad_norm_tensor.isnan() or current_grad_norm_tensor.isinf():
-            return
+            raise ValueError(f"Gradient norm error: {current_grad_norm_tensor}")
         
         # 2. EMA
         ema_decay: float = 0.9
@@ -344,7 +344,7 @@ class LitPotentialBase(L.LightningModule):
                  prog_bar=False,
                  sync_dist=True)
         ### Log ###
-        
+
 
     def configure_optimizers(self):
         optimizer: torch.optim.Optimizer = torch.optim.Adam(params=self.model.parameters(),
@@ -352,6 +352,7 @@ class LitPotentialBase(L.LightningModule):
                                                             betas=(0.9, 0.999),
                                                             eps=1e-8,
                                                             weight_decay=0.0)
+
         
         # Warmup
         total_steps: int = self.trainer.estimated_stepping_batches
@@ -405,7 +406,8 @@ class LitLinearMtp(LitPotentialBase):
             f_wgt_end: float = 10.0,
             v_wgt_start: float = 0.0,
             v_wgt_end: float = 0.0,
-            warmup_steps_ratio: float = 0.005):
+            warmup_steps_ratio: float = 0.005,
+            max_clip_norm: float = 10.0):
         super().__init__(
             type_map=type_map,
             energy_shifts=energy_shifts,
@@ -423,7 +425,8 @@ class LitLinearMtp(LitPotentialBase):
             f_wgt_end=f_wgt_end,
             v_wgt_start=v_wgt_start,
             v_wgt_end=v_wgt_end,
-            warmup_steps_ratio=warmup_steps_ratio)
+            warmup_steps_ratio=warmup_steps_ratio,
+            max_clip_norm=max_clip_norm)
         
         self.model: nn.Module = LinearMtp(
             type_map=type_map,
@@ -468,7 +471,8 @@ class LitNep(LitPotentialBase):
             f_wgt_end: float = 10.0,
             v_wgt_start: float = 0.0,
             v_wgt_end: float = 0.0,
-            warmup_steps_ratio: float = 0.005):
+            warmup_steps_ratio: float = 0.005,
+            max_clip_norm: float = 10.0):
         super().__init__(
             type_map=type_map,
             energy_shifts=energy_shifts,
@@ -486,7 +490,8 @@ class LitNep(LitPotentialBase):
             f_wgt_end=f_wgt_end,
             v_wgt_start=v_wgt_start,
             v_wgt_end=v_wgt_end,
-            warmup_steps_ratio=warmup_steps_ratio)
+            warmup_steps_ratio=warmup_steps_ratio,
+            max_clip_norm=max_clip_norm)
 
         self.model: nn.Module = Nep(
             type_map=type_map,

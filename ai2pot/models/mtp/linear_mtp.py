@@ -47,7 +47,9 @@ class LinearMtp(nn.Module):
                  zbl_dks_list: Optional[List[float]] = None):
         super(LinearMtp, self).__init__()
         self.mtp_level: int = mtp_level
-        self.register_buffer(name="type_map_tensor", tensor=torch.tensor(type_map, dtype=torch.int32))
+        self.register_buffer(
+            name="type_map_tensor", 
+            tensor=torch.as_tensor(type_map, dtype=torch.int32))
         self.ntypes: int = len(type_map)
         self.chebyshev_size: int = chebyshev_size
         self.rmax: float = rmax
@@ -70,35 +72,31 @@ class LinearMtp(nn.Module):
         self.num_descriptors: int = self.alpha_moment_mapping_tensor.size()[0]
         self.num_coeffs: int = self.ntypes * self.ntypes * self.nmus * self.chebyshev_size
         
+        ### Init ###
         coeffs_tensor: torch.Tensor = torch.Tensor(self.ntypes*self.ntypes*self.nmus*self.chebyshev_size)
-        nn.init.normal_(coeffs_tensor, mean=0.0, std=0.1)
+        r1: torch.Tensor = 0.1 * torch.randn(self.num_coeffs, device=coeffs_tensor.device)
+        r2: torch.Tensor = torch.rand(self.num_coeffs, device=coeffs_tensor.device)
+        coeffs_tensor.copy_(r1 + r2)
         self.register_parameter(name="coeffs_tensor", param=nn.Parameter(data=coeffs_tensor))
         
         linear_coeffs_tensor: torch.Tensor = torch.Tensor(self.num_descriptors)
-        nn.init.normal_(linear_coeffs_tensor, mean=0.0, std=0.1)
+        init_linear_coeffs_std: torch.Tensor = (2.0 / (self.num_descriptors + 1)) ** 0.5
+        nn.init.normal_(linear_coeffs_tensor, mean=0.0, std=init_linear_coeffs_std)
         self.register_parameter(name="linear_coeffs_tensor", param=nn.Parameter(data=linear_coeffs_tensor))
-
-        q_scaler_tensor: torch.Tensor = torch.ones(self.num_descriptors, dtype=torch.float32)
-        self.register_buffer("_q_scaler_tensor", tensor=q_scaler_tensor)
         
         if energy_shifts is not None:
             assert(len(energy_shifts) == self.ntypes)
-            type_bias_tensor = torch.tensor(energy_shifts)
-            self.register_parameter(name="type_bias_tensor", param=nn.Parameter(data=type_bias_tensor))
+            type_bias_tensor = torch.tensor(energy_shifts, dtype=torch.float32)
+            noise: torch.Tensor = torch.randn_like(type_bias_tensor) * 0.01
+            self.register_parameter(name="type_bias_tensor", param=nn.Parameter(data=type_bias_tensor+noise))
         else:
-            type_bias_tensor: torch.Tensor = torch.Tensor(self.ntypes)
+            type_bias_tensor: torch.Tensor = torch.Tensor(self.ntypes, dtype=torch.float32)
             nn.init.normal_(type_bias_tensor, mean=0.0, std=0.1)
             self.register_parameter(name="type_bias_tensor", param=nn.Parameter(data=type_bias_tensor))
-
-
-    @property
-    def q_scaler_tensor(self):
-        return self._q_scaler_tensor
-
-
-    @q_scaler_tensor.setter
-    def q_scaler_tensor(self, tensor: torch.Tensor):
-        self._q_scaler_tensor = tensor
+        ### Init ###
+    
+        q_scaler_tensor: torch.Tensor = torch.ones(self.num_descriptors, dtype=torch.float32)
+        self.register_buffer("q_scaler_tensor", tensor=q_scaler_tensor)
 
 
     def _init_zbl_params(self, 

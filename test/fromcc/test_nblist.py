@@ -12,20 +12,18 @@ ReNbSSe_POSCAR_DIR = os.path.join(TEST_FILES_DIR, "POSCARs")
 class NblistTest(unittest.TestCase):
     def setUp(self) -> None:
         print("NblistTest is setting up...\n")
+        #
         structure_file: str = os.path.join(ReNbSSe_POSCAR_DIR, "POSCAR")
-        self.structure: Structure = Structure.from_file(structure_file)
+        self.structure: Structure = Structure.from_file("/data/home/liuhanyu/mycode/AI2Pot/test/test_data/POSCARs/C/POSCAR")
+        # /data/home/liuhanyu/mycode/AI2Pot/test/test_data/POSCARs/C/POSCAR
+        #structure_file
         self.cell: np.ndarray = self.structure.lattice.matrix
         self.atom_types: np.ndarray = [str(ii) for ii in self.structure.species]
-        element_map = {
-                'Re': 0,
-                'Nb': 1,
-                'S': 2,
-                'Se': 3
-        }
+        element_map = {'C': 0}#{'Re': 0, 'Nb': 1, 'S': 2, 'Se': 3}
         self.atom_types = np.array([element_map[el] for el in self.atom_types])
         self.coords: np.ndarray = self.structure.frac_coords
-        self.rcut: float = 3.2
-        self.umax_num_neigh_atoms: int = 100
+        self.rcut: float = 7.0
+        self.umax_num_neigh_atoms: int = 200
         self.is_cart_coord: bool = False
         self.pbc_xyz = [True, True, True]
         self.sort: bool = True
@@ -39,7 +37,7 @@ class NblistTest(unittest.TestCase):
                                      self.is_cart_coord,
                                      self.pbc_xyz,
                                      self.sort)
-        print(info[2])
+        print(info[4])
     
     def tearDown(self) -> None:
         print("NblistTest is tearing down...\n")

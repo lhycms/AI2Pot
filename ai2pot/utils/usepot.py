@@ -128,10 +128,10 @@ class MlffToLossInput(object):
         num_atoms = len(structure.species)
         betot_dft_tensor: torch.Tensor = torch.zeros(size=(1,),
                                                      dtype=self.torch_float_dtype, 
-                                                     device=self.device) + 100
+                                                     device=self.device) + 100.0
         bforce_dft_tensor: torch.Tensor = torch.zeros(size=(1, num_atoms, 3), 
                                                       dtype=self.torch_float_dtype, 
-                                                      device=self.device) + 100
+                                                      device=self.device) + 10.0
         bvirial_dft_tensor: torch.Tensor = torch.zeros(size=(1, 3, 3),
                                                        dtype=self.torch_float_dtype, 
                                                        device=self.device)

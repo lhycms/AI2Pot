@@ -36,7 +36,6 @@ class NepDescriptorNormCallback(L.Callback):
         datamodule: ExtxyzDataModule = trainer.datamodule
         nep: Nep = pl_module.model
         nep_stat: Nep = copy.deepcopy(nep)
-        nep_stat.init_one()
         if datamodule is None:
             raise RuntimeError("No ExtxyzDataModule found!")
         trainset: ExtxyzDataset = datamodule.trainset_dataset
@@ -45,7 +44,7 @@ class NepDescriptorNormCallback(L.Callback):
                                               shuffle=False)
         num_descriptors: int = nep.get_num_descriptors()
         device: torch._C.device = pl_module.device
-        torch_float_dtype: torch.float32 = pl_module.dtype
+        torch_float_dtype: torch._C.dtype = pl_module.dtype
 
         max_descriptor_tensor: torch.Tensor = torch.zeros(num_descriptors, 
                                                           dtype=torch_float_dtype,
@@ -78,6 +77,6 @@ class NepDescriptorNormCallback(L.Callback):
                 min_descriptor_tensor = torch.min(min_descriptor_tensor, tmp_min_descriptor_tensor)
 
         q_scaler_tensor: torch.Tensor = max_descriptor_tensor - min_descriptor_tensor
-        pl_module.model.register_buffer("_q_scaler_tensor", tensor=q_scaler_tensor)
+        pl_module.model.q_scaler_tensor.copy_(q_scaler_tensor)
         print("🚀🚀🚀 Performing nep descriptor normalization before training --- End!")
         

@@ -48,7 +48,9 @@ class Nep(nn.Module):
         assert(n_angular_basis <= 12)
         assert(l_max <= 4)
 
-        self.register_buffer(name="type_map_tensor", tensor=torch.tensor(type_map, dtype=torch.int32))
+        self.register_buffer(
+            name="type_map_tensor",
+            tensor=torch.as_tensor(type_map, dtype=torch.int32))
         self.ntypes: int = len(type_map)
         self.umax_num_neigh_atoms: int = umax_num_neigh_atoms
         self.fit_virial: bool = fit_virial
@@ -93,7 +95,7 @@ class Nep(nn.Module):
         if energy_shifts is not None:
             assert(len(energy_shifts) == self.ntypes)
             type_bias_tensor: torch.Tensor = torch.tensor(energy_shifts, dtype=torch.float32)
-            noise: torch = torch.randn_like(type_bias_tensor) * 0.01
+            noise: torch.Tensor = torch.randn_like(type_bias_tensor) * 0.01
             self.register_parameter(name="type_bias_tensor", param=nn.Parameter(data=(type_bias_tensor+noise)))
         else:
             type_bias_tensor: torch.Tensor = torch.Tensor(self.ntypes)
@@ -102,16 +104,7 @@ class Nep(nn.Module):
         ### Init ###
     
         q_scaler_tensor: torch.Tensor = torch.ones(self.num_descriptors, dtype=torch.float32)
-        self.register_buffer("_q_scaler_tensor", tensor=q_scaler_tensor)
-
-    @property
-    def q_scaler_tensor(self):
-        return self._q_scaler_tensor
-
-
-    @q_scaler_tensor.setter
-    def q_scaler_tensor(self, tensor: torch.Tensor):
-        self._q_scaler_tensor = tensor
+        self.register_buffer("q_scaler_tensor", tensor=q_scaler_tensor)
 
 
     def _init_zbl_params(self,
@@ -136,14 +129,6 @@ class Nep(nn.Module):
     def get_num_descriptors(self):
         return self.num_descriptors
     
-    
-    def init_one(self):
-        with torch.no_grad():
-            self.coeffs_tensor.fill_(1.0)
-            #self.w0_tensor.fill_(1.0)
-            #self.w1_tensor.fill_(1.0)
-            #self.type_bias_tensor.fill_(1.0)
-
 
     def forward(self, *args, **kwargs):
         if (self.fit_virial):
@@ -189,7 +174,7 @@ class Nep(nn.Module):
             nghost,
             self.rmax_radial,
             self.rmax_angular,
-            self._q_scaler_tensor,
+            self.q_scaler_tensor,
             self.zbl_rmax,
             self.zbl_rmin,
             self.zbl_cks_tensor,
@@ -229,7 +214,7 @@ class Nep(nn.Module):
             bnghost_tensor[0].item(),
             self.rmax_radial,
             self.rmax_angular,
-            self._q_scaler_tensor,
+            self.q_scaler_tensor,
             self.zbl_rmax,
             self.zbl_rmin,
             self.zbl_cks_tensor,

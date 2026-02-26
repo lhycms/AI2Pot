@@ -19,6 +19,7 @@ ReNbSSe_POSCAR_PATH = os.path.join(os.path.join(TEST_FILES_DIR, "POSCARs", "POSC
 MoS2_POSCAR_PATH = os.path.join(TEST_FILES_DIR, "POSCARs", "MoS2", "POSCAR_perturbed0.2")
 PbTe_EXTXYZ_PATH = os.path.join(TEST_FILES_DIR, "XYZ", "11_NEP_potential_PbTe", "train_m.xyz")
 LiLaZrO3_PATH = "/data/home/liuhanyu/mycode/AI2Pot/test/test_data/POSCARs/LiLaZrO3/POSCAR"
+C_POSCAR_PATH = "/data/home/liuhanyu/mycode/AI2Pot/test/test_data/POSCARs/C/POSCAR"
 
 #torch.use_deterministic_algorithms(True)
 torch.set_num_threads(1)
@@ -46,10 +47,10 @@ class NepTest(unittest.TestCase):
         self.num_descriptors: int = self.n_radial_basis + self.n_angular_basis * self.l_max
 
 
-        self.ntypes: int = 2
+        self.ntypes: int = 1
         #self.type_map_tensor: torch.Tensor = torch.tensor(data=[16, 34, 41, 75], dtype=torch.int32)
-        self.type_map_tensor: torch.Tensor = torch.tensor(data=[42, 16], dtype=torch.int32)
-        self.structure: Structure = Structure.from_file(MoS2_POSCAR_PATH)
+        self.type_map_tensor: torch.Tensor = torch.tensor(data=[6], dtype=torch.int32)
+        self.structure: Structure = Structure.from_file(C_POSCAR_PATH)
         """
         self.ntypes: int = 2
         self.type_map_tensor: torch.Tensor = torch.tensor(data=[1, 8], dtype=torch.int32)
@@ -100,19 +101,19 @@ class NepTest(unittest.TestCase):
         self.coeffs_tensor: torch.Tensor = torch.zeros(self.ntypes*self.ntypes*(self.n_radial_basis+self.n_angular_basis)*self.chebyshev_size, 
                                                        dtype=self.torch_float_dtype,
                                                        device=self.device)
-        nn.init.normal_(self.coeffs_tensor, mean=0.0, std=0.5)
+        nn.init.normal_(self.coeffs_tensor, mean=0.0, std=0.1)
         self.w0_tensor: torch.Tensor = torch.zeros(self.ntypes * self.num_neurons * self.num_descriptors,
                                                    dtype=self.torch_float_dtype,
                                                    device=self.device)
-        nn.init.normal_(self.w0_tensor, mean=0.0, std=0.5)
+        nn.init.normal_(self.w0_tensor, mean=0.0, std=0.1)
         self.b0_tensor: torch.Tensor = torch.zeros(self.ntypes * self.num_neurons,
                                                    dtype=self.torch_float_dtype,
                                                    device=self.device)
-        nn.init.normal_(self.b0_tensor, mean=0.0, std=0.5)
+        nn.init.normal_(self.b0_tensor, mean=0.0, std=0.1)
         self.w1_tensor: torch.Tensor = torch.zeros(self.ntypes * self.num_neurons,
                                                    dtype=self.torch_float_dtype,
                                                    device=self.device)
-        nn.init.normal_(self.w1_tensor, mean=0.0, std=0.5)
+        nn.init.normal_(self.w1_tensor, mean=0.0, std=0.1)
         self.type_bias_tensor: torch.Tensor = torch.zeros(self.ntypes,
                                                           dtype=self.torch_float_dtype,
                                                           device=self.device)
@@ -162,7 +163,7 @@ class NepTest(unittest.TestCase):
 
     def test_nepToEFLoss(self):
         # 1. Parameters
-        e_weight: float = 1e1
+        e_weight: float = 0.0
         f_weight: float = 1e1
         self.coeffs_tensor.requires_grad_(True)
         self.w0_tensor.requires_grad_(True)

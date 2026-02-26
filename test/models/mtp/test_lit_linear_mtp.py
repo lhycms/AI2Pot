@@ -12,6 +12,7 @@ from ai2pot.models.mtp.linear_mtp import LinearMtp
 from ai2pot.models.potential_train import LitLinearMtp
 from ai2pot.utils.prepot import ExtxyzShifter
 from ai2pot.utils.usepot import MlffInput
+from ai2pot.models.mtp.linear_mtp_train_utils import LinearMtpDescriptorNormCallback
 
 
 TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")
@@ -43,16 +44,17 @@ class LitLinearMtpTest(unittest.TestCase):
         rmin: float = 0.0
         
         # Lr hyperparameters
-        max_epochs: int = 1000
+        max_epochs: int = 200
         lr_start: float = 1e-3
-        lr_end: float = 1e-7
+        lr_end: float = 1e-5
         e_wgt_start: float = 1.0
-        e_wgt_end: float = 10.0
-        f_wgt_start: float = 100.0
-        f_wgt_end: float = 10.0
+        e_wgt_end: float = 1.0
+        f_wgt_start: float = 1.0
+        f_wgt_end: float = 1.0
         v_wgt_start: float = 0.00
         v_wgt_end: float = 0.00
-        warmup_steps_ratio: float = 0.001
+        warmup_steps_ratio: float = 0.005
+        max_clip_norm: float = 10
 
         ### LitghtingModule hyperparameters
         self.lit_linear_mtp: LitLinearMtp = LitLinearMtp(
@@ -72,7 +74,8 @@ class LitLinearMtpTest(unittest.TestCase):
             f_wgt_end=f_wgt_end,
             v_wgt_start=v_wgt_start,
             v_wgt_end=v_wgt_end,
-            warmup_steps_ratio=warmup_steps_ratio).to(torch_float_dtype)
+            warmup_steps_ratio=warmup_steps_ratio,
+            max_clip_norm=max_clip_norm).to(torch_float_dtype)
         
         ### DataModule hyperparameters
         rcut: float = rmax
@@ -93,13 +96,15 @@ class LitLinearMtpTest(unittest.TestCase):
         
         ### Trainer hyperparameters
         csv_logger: CSVLogger = CSVLogger(save_dir="lightning_logs")
+        self.linear_mtp_descriptor_norm_callback: LinearMtpDescriptorNormCallback = LinearMtpDescriptorNormCallback()
         self.trainer: L.Trainer = L.Trainer(
             max_epochs=max_epochs,
             accelerator=accelerator,
             devices=1,
             limit_val_batches=0,
             logger=csv_logger,
-            log_every_n_steps=1)
+            log_every_n_steps=1,
+            callbacks=[self.linear_mtp_descriptor_norm_callback])
 
     
     def tearDown(self):

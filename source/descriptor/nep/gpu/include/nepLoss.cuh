@@ -337,7 +337,7 @@ void find_loss_kernel(
         atomicAdd(loss_ptr, f_loss);
     }
 
-    if (nx == 0) {
+    if (ii == 0) {
         CoordType v_loss = 0.0;
         for (int aa=0; aa<3; aa++)
             for (int bb=0; bb<3; bb++)
@@ -476,7 +476,7 @@ void find_ef_loss_kernel(
         atomicAdd(loss_ptr, f_loss);
     }
 
-    if (nx == 0) {
+    if (ii == 0) {
         CoordType e_loss = 0.0;
         e_loss = e_weight / inum * std::pow(etot_ml - etot_dft, 2);
         atomicAdd(loss_ptr, e_loss);

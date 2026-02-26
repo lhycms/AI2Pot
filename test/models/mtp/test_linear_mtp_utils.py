@@ -122,7 +122,7 @@ class LinearMtpActiveDRTest(unittest.TestCase):
 class LinearMtp4ExtxyzTest(unittest.TestCase):
     def setUp(self):
         print("LinearMtp4ExtxyzTest (TestSuite) is setting up...")
-        self.checkpoint_path: str = "/data/home/liuhanyu/mycode/AI2Pot/lightning_logs/lightning_logs/version_1/checkpoints/epoch=999-step=25000.ckpt"
+        self.checkpoint_path: str = "/data/home/liuhanyu/mycode/AI2Pot/lightning_logs/lightning_logs/version_13/checkpoints/epoch=199-step=5000.ckpt"
         self.testset_path: str = EXTXYZ_PATH
         self.map_location: str = "cuda"        
         self.torch_float_dtype: torch._C.dtype = torch.float32
@@ -136,6 +136,9 @@ class LinearMtp4ExtxyzTest(unittest.TestCase):
 
     
     def test_plot_ef_diagonal(self):
+        print("=== q_scaler ===")
+        print(1.0 / self.linear_mtp_extxyz.model.q_scaler_tensor)
+        print("=== q_scaler ===")
         self.linear_mtp_extxyz.plot_ef_diagonal(save=True)
 
 
