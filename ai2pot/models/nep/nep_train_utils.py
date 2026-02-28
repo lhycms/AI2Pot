@@ -78,5 +78,6 @@ class NepDescriptorNormCallback(L.Callback):
 
         q_scaler_tensor: torch.Tensor = max_descriptor_tensor - min_descriptor_tensor
         pl_module.model.q_scaler_tensor.copy_(q_scaler_tensor)
+        print("\t * q_scaler = ", q_scaler_tensor)
         print("🚀🚀🚀 Performing nep descriptor normalization before training --- End!")
         
