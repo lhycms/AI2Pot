@@ -55,7 +55,6 @@ class LitNepTest(unittest.TestCase):
         f_wgt_end: float = 2.0
         v_wgt_start: float = 0.00
         v_wgt_end: float = 0.00
-        warmup_steps_ratio: float = 0.0025
         max_clip_norm = 10
 
         ### LitghtingModule hyperparameters
@@ -81,7 +80,6 @@ class LitNepTest(unittest.TestCase):
             f_wgt_end=f_wgt_end,
             v_wgt_start=v_wgt_start,
             v_wgt_end=v_wgt_end,
-            warmup_steps_ratio=warmup_steps_ratio,
             max_clip_norm=max_clip_norm).to(torch_float_dtype)
 
         ### DataModule hyperparameters

@@ -39,14 +39,13 @@ class LitPotentialBase(L.LightningModule):
             zbl_cks_list: Optional[List[float]] = None,
             zbl_dks_list: Optional[List[float]] = None,
             lr_start: float = 1e-3,
-            lr_end: float = 1e-5,
-            e_wgt_start: float = 0.02,
+            lr_end: float = 1e-7,
+            e_wgt_start: float = 1.0,
             e_wgt_end: float = 1.0,
-            f_wgt_start: float = 1000.0,
+            f_wgt_start: float = 2.0,
             f_wgt_end: float = 1.0,
             v_wgt_start: float = 0.0,
             v_wgt_end: float = 0.0,
-            warmup_steps_ratio: float = 0.0025,
             max_clip_norm: float = 10.0):
         super(LitPotentialBase, self).__init__()
 
@@ -69,7 +68,6 @@ class LitPotentialBase(L.LightningModule):
         self.f_wgt_end: float = f_wgt_end
         self.v_wgt_start: float = v_wgt_start
         self.v_wgt_end: float = v_wgt_end
-        self.warmup_steps_ratio: float = warmup_steps_ratio
 
         self.register_buffer("avg_grad_norm_tensor", torch.tensor(-1.0))
         self.register_buffer("max_clip_norm_tensor", torch.tensor(max_clip_norm))
@@ -356,13 +354,13 @@ class LitPotentialBase(L.LightningModule):
         
         # Warmup
         total_steps: int = self.trainer.estimated_stepping_batches
-        warmup_steps: int = int(total_steps * self.warmup_steps_ratio)
+        warmup_steps: int = self.trainer.num_training_batches
         warmup_scheduler = torch.optim.lr_scheduler.LinearLR(optimizer=optimizer,
                                                              start_factor=1e-4,
                                                              total_iters=warmup_steps)
 
         # Main
-        main_steps: int = total_steps - warmup_steps
+        main_steps: int = max(total_steps - warmup_steps, 1)
         main_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer=optimizer,
                                                                     T_max=main_steps,
                                                                     eta_min=self.lr_end)
@@ -401,12 +399,11 @@ class LitLinearMtp(LitPotentialBase):
             lr_start: float = 1e-3,
             lr_end: float = 1e-7,
             e_wgt_start: float = 1.0,
-            e_wgt_end: float = 10.0,
-            f_wgt_start: float = 100.0,
-            f_wgt_end: float = 10.0,
+            e_wgt_end: float = 1.0,
+            f_wgt_start: float = 2.0,
+            f_wgt_end: float = 1.0,
             v_wgt_start: float = 0.0,
             v_wgt_end: float = 0.0,
-            warmup_steps_ratio: float = 0.005,
             max_clip_norm: float = 10.0):
         super().__init__(
             type_map=type_map,
@@ -425,7 +422,6 @@ class LitLinearMtp(LitPotentialBase):
             f_wgt_end=f_wgt_end,
             v_wgt_start=v_wgt_start,
             v_wgt_end=v_wgt_end,
-            warmup_steps_ratio=warmup_steps_ratio,
             max_clip_norm=max_clip_norm)
         
         self.model: nn.Module = LinearMtp(
@@ -466,12 +462,11 @@ class LitNep(LitPotentialBase):
             lr_start: float = 1e-3,
             lr_end: float = 1e-7,
             e_wgt_start: float = 1.0,
-            e_wgt_end: float = 10.0,
-            f_wgt_start: float = 100.0,
-            f_wgt_end: float = 10.0,
+            e_wgt_end: float = 1.0,
+            f_wgt_start: float = 2.0,
+            f_wgt_end: float = 1.0,
             v_wgt_start: float = 0.0,
             v_wgt_end: float = 0.0,
-            warmup_steps_ratio: float = 0.005,
             max_clip_norm: float = 10.0):
         super().__init__(
             type_map=type_map,
@@ -490,7 +485,6 @@ class LitNep(LitPotentialBase):
             f_wgt_end=f_wgt_end,
             v_wgt_start=v_wgt_start,
             v_wgt_end=v_wgt_end,
-            warmup_steps_ratio=warmup_steps_ratio,
             max_clip_norm=max_clip_norm)
 
         self.model: nn.Module = Nep(
