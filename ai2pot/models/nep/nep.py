@@ -92,15 +92,9 @@ class Nep(nn.Module):
         nn.init.normal_(w1_tensor, mean=0.0, std=init_w1_std)
         self.register_parameter(name="w1_tensor", param=nn.Parameter(data=w1_tensor))
 
-        if energy_shifts is not None:
-            assert(len(energy_shifts) == self.ntypes)
-            type_bias_tensor: torch.Tensor = torch.tensor(energy_shifts, dtype=torch.float32)
-            noise: torch.Tensor = torch.randn_like(type_bias_tensor) * 0.01
-            self.register_parameter(name="type_bias_tensor", param=nn.Parameter(data=(type_bias_tensor+noise)))
-        else:
-            type_bias_tensor: torch.Tensor = torch.Tensor(self.ntypes)
-            nn.init.normal_(type_bias_tensor, mean=0.0, std=1.0)
-            self.register_parameter(name="type_bias_tensor", param=nn.Parameter(data=type_bias_tensor))
+        type_bias_tensor: torch.Tensor = torch.Tensor(self.ntypes)
+        nn.init.normal_(type_bias_tensor, mean=0.0, std=1.0)
+        self.register_parameter(name="type_bias_tensor", param=nn.Parameter(data=type_bias_tensor))
         ### Init ###
     
         q_scaler_tensor: torch.Tensor = torch.zeros(self.num_descriptors, dtype=torch.float32) + 100.0

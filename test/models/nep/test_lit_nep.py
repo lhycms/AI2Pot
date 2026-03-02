@@ -12,6 +12,7 @@ from ai2pot.models.nep.nep import Nep
 from ai2pot.models.potential_train import LitNep
 from ai2pot.utils.prepot import ExtxyzShifter
 from ai2pot.models.nep.nep_train_utils import NepDescriptorNormCallback
+from ai2pot.models.potential_train_utils import EnergyShiftCallback
 
 
 TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")
@@ -102,13 +103,15 @@ class LitNepTest(unittest.TestCase):
         ### Trainer hyperparameters
         csv_logger: CSVLogger = CSVLogger(save_dir="lightning_logs")
         self.nep_descriptor_norm_callback: NepDescriptorNormCallback = NepDescriptorNormCallback()
+        self.energy_shift_callback: EnergyShiftCallback = EnergyShiftCallback()
         self.trainer: L.Trainer = L.Trainer(max_epochs=max_epochs,
                                             accelerator=accelerator,
                                             devices=1,
                                             limit_val_batches=0,
                                             log_every_n_steps=1,
                                             logger=csv_logger,
-                                            callbacks=[self.nep_descriptor_norm_callback])
+                                            callbacks=[self.nep_descriptor_norm_callback,
+                                                       self.energy_shift_callback])
 
 
     def tearDown(self):

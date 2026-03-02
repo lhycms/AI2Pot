@@ -17,3 +17,5 @@
 
 
 from ai2pot.models.nep.nep import Nep
+from ai2pot.models.nep.nep_train_utils import (
+    NepDescriptorNormCallback)

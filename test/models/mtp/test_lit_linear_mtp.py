@@ -13,6 +13,7 @@ from ai2pot.models.potential_train import LitLinearMtp
 from ai2pot.utils.prepot import ExtxyzShifter
 from ai2pot.utils.usepot import MlffInput
 from ai2pot.models.mtp.linear_mtp_train_utils import LinearMtpDescriptorNormCallback
+from ai2pot.models.potential_train_utils import EnergyShiftCallback
 
 
 TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")
@@ -95,6 +96,7 @@ class LitLinearMtpTest(unittest.TestCase):
         ### Trainer hyperparameters
         csv_logger: CSVLogger = CSVLogger(save_dir="lightning_logs")
         self.linear_mtp_descriptor_norm_callback: LinearMtpDescriptorNormCallback = LinearMtpDescriptorNormCallback()
+        self.energy_shift_callback: EnergyShiftCallback = EnergyShiftCallback()
         self.trainer: L.Trainer = L.Trainer(
             max_epochs=max_epochs,
             accelerator=accelerator,
@@ -102,7 +104,8 @@ class LitLinearMtpTest(unittest.TestCase):
             limit_val_batches=0,
             logger=csv_logger,
             log_every_n_steps=1,
-            callbacks=[self.linear_mtp_descriptor_norm_callback])
+            callbacks=[self.linear_mtp_descriptor_norm_callback,
+                       self.energy_shift_callback])
 
     
     def tearDown(self):

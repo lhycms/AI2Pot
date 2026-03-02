@@ -15,9 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with AI2Pot.  If not, see <http://www.gnu.org/licenses/>.
 
-
-from ai2pot.utils.prepot import (LsShifter,
-                                 MsShifter)
 from ai2pot.utils.usepot import (MlffInput,
                                  MlffToLossInput,
                                  MlffToEFLossInput)

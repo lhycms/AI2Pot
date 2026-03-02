@@ -84,15 +84,9 @@ class LinearMtp(nn.Module):
         nn.init.normal_(linear_coeffs_tensor, mean=0.0, std=init_linear_coeffs_std)
         self.register_parameter(name="linear_coeffs_tensor", param=nn.Parameter(data=linear_coeffs_tensor))
         
-        if energy_shifts is not None:
-            assert(len(energy_shifts) == self.ntypes)
-            type_bias_tensor = torch.tensor(energy_shifts, dtype=torch.float32)
-            noise: torch.Tensor = torch.randn_like(type_bias_tensor) * 0.01
-            self.register_parameter(name="type_bias_tensor", param=nn.Parameter(data=type_bias_tensor+noise))
-        else:
-            type_bias_tensor: torch.Tensor = torch.Tensor(self.ntypes, dtype=torch.float32)
-            nn.init.normal_(type_bias_tensor, mean=0.0, std=0.1)
-            self.register_parameter(name="type_bias_tensor", param=nn.Parameter(data=type_bias_tensor))
+        type_bias_tensor: torch.Tensor = torch.Tensor(self.ntypes)
+        nn.init.normal_(type_bias_tensor, mean=0.0, std=1.0)
+        self.register_parameter(name="type_bias_tensor", param=nn.Parameter(data=type_bias_tensor))
         ### Init ###
     
         q_scaler_tensor: torch.Tensor = torch.zeros(self.num_descriptors, dtype=torch.float32) + 100.0
