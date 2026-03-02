@@ -2,7 +2,12 @@
 Copyright (2025) Hanyu Liu. This is AI2Pot software package. This software is distributed under the GNU General Public License (GPL) version 3.
 
 # What is AI2Pot
-Ab Initio and Artificial Intelligence POTential framework, applied in materials and molecular systems, with the ability to predict scalars and tensors.
+AI2Pot (Ab Initio and Artificial Intelligence POTential) is a machine learning interatomic potential framework for materials modeling.
+
+The framework emphasizes:
+- High-performance C++/CUDA operators
+- PyTorch-based training pipeline
+- Interoperability with pymatgen, ASE, and LAMMPS
 
 # Installation
 ```shell
