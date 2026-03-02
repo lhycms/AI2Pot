@@ -72,8 +72,8 @@ class Nep(nn.Module):
 
         ### Init ###
         coeffs_tensor: torch.Tensor = torch.Tensor(self.num_coeffs)
-        r1: torch.Tensor = 0.1 * torch.randn(self.num_coeffs, device=coeffs_tensor.device)
-        r2: torch.Tensor = torch.rand(self.num_coeffs, device=coeffs_tensor.device) - 0.5
+        r1: torch.Tensor = 0.1 * torch.randn(self.num_coeffs)
+        r2: torch.Tensor = torch.rand(self.num_coeffs) - 0.5
         coeffs_tensor.copy_(r1 + r2)
         self.register_parameter(name="coeffs_tensor", param=nn.Parameter(data=coeffs_tensor))
 

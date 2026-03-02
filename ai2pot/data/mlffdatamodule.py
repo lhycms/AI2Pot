@@ -39,7 +39,6 @@ class ExtxyzDataModule(LightningDataModule):
                  torch_float_dtype: torch._C.dtype = torch.float32,
                  has_virial: bool = False):
         super(ExtxyzDataModule, self).__init__()
-        self.save_hyperparameters()
         
         self.trainset_path: str = trainset_path
         self.validset_path: str = validset_path
@@ -52,6 +51,8 @@ class ExtxyzDataModule(LightningDataModule):
         self.sort: bool = sort
         self.torch_float_dtype: torch._C.dtype = torch_float_dtype
         self.has_virial: bool = has_virial
+
+        self.save_hyperparameters(ignore=['torch_float_dtype'])
 
 
     def setup(self, stage: Optional[str] = None):

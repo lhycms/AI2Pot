@@ -80,7 +80,7 @@ class DescriptorNormCallbackBase(L.Callback):
 
         q_scaler_tensor: torch.Tensor = max_descriptor_tensor - min_descriptor_tensor
         pl_module.model.q_scaler_tensor.copy_(q_scaler_tensor)
-        print("\t * q_scaler = ", q_scaler_tensor)
+        print("\t * Number of descriptor = ", q_scaler_tensor.size(0))
         print("🚀🚀🚀 Performing descriptor normalization before training --- End!")
 
 
