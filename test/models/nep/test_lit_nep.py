@@ -1,16 +1,13 @@
 from typing import List
 import unittest
 import os
-from pymatgen.core import Structure
 
 import torch
 import lightning as L
 from lightning.pytorch.loggers import CSVLogger
 
 from ai2pot.data import ExtxyzDataset, ExtxyzDataModule
-from ai2pot.models.nep.nep import Nep
 from ai2pot.models.potential_train import LitNep
-from ai2pot.utils.prepot import ExtxyzShifter
 from ai2pot.models.nep.nep_train_utils import NepDescriptorNormCallback
 from ai2pot.models.potential_train_utils import EnergyShiftCallback
 
@@ -29,9 +26,6 @@ class LitNepTest(unittest.TestCase):
         print("LitNep (TestCase) is setting up...\n")
         accelerator: str = "cuda"
         torch_float_dtype: torch._C.dtype = torch.float32
-
-        extxyz_shifter: ExtxyzShifter = ExtxyzShifter(extxyz_path=PbTe_EXTXYZ_PATH)
-        energy_shifts: List[float] = extxyz_shifter.types_energy_shifts
 
         type_map: List[int] = ExtxyzDataset.get_type_map(filename=PbTe_EXTXYZ_PATH)
         umax_num_neigh_atoms: int = 200
@@ -53,7 +47,7 @@ class LitNepTest(unittest.TestCase):
         e_wgt_start: float = 1.0
         e_wgt_end: float = 1.0
         f_wgt_start: float = 2.0
-        f_wgt_end: float = 2.0
+        f_wgt_end: float = 1.0
         v_wgt_start: float = 0.00
         v_wgt_end: float = 0.00
         max_clip_norm = 10
@@ -61,7 +55,6 @@ class LitNepTest(unittest.TestCase):
         ### LitghtingModule hyperparameters
         self.lit_nep: LitNep = LitNep(
             type_map=type_map,
-            energy_shifts=energy_shifts,
             umax_num_neigh_atoms=umax_num_neigh_atoms,
             fit_virial=fit_virial,
             n_radial_basis=n_radial_basis,

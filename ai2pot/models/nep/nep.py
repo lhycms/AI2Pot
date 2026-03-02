@@ -29,7 +29,6 @@ from ai2pot.fromcc import (nepToEFLossOp,
 class Nep(nn.Module):
     def __init__(self,
                  type_map: List[int],
-                 energy_shifts: Optional[List[float]] = None,
                  umax_num_neigh_atoms: int = 200,
                  fit_virial: bool = False,
                  n_radial_basis: int = 4,

@@ -32,8 +32,6 @@ class LitLinearMtpTest(unittest.TestCase):
         accelerator: str = "cuda"
         torch_float_dtype: torch._C.dtype = torch.float32
 
-        extxyz_shifter: ExtxyzShifter = ExtxyzShifter(extxyz_path=PbTe_EXTXYZ_PATH)
-        energy_shifts: List[float] = extxyz_shifter.types_energy_shifts
         type_map: List[int] = ExtxyzDataset.get_type_map(filename=PbTe_EXTXYZ_PATH)
         umax_num_neigh_atoms: int = 200
         fit_virial: bool = False
@@ -47,7 +45,7 @@ class LitLinearMtpTest(unittest.TestCase):
         # Lr hyperparameters
         max_epochs: int = 200
         lr_start: float = 1e-3
-        lr_end: float = 1e-5
+        lr_end: float = 1e-7
         e_wgt_start: float = 1.0
         e_wgt_end: float = 1.0
         f_wgt_start: float = 1.0
@@ -59,7 +57,6 @@ class LitLinearMtpTest(unittest.TestCase):
         ### LitghtingModule hyperparameters
         self.lit_linear_mtp: LitLinearMtp = LitLinearMtp(
             type_map=type_map,
-            energy_shifts=energy_shifts,
             umax_num_neigh_atoms=umax_num_neigh_atoms,
             fit_virial=fit_virial,
             mtp_level=mtp_level,

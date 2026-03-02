@@ -31,7 +31,6 @@ class LitPotentialBase(L.LightningModule):
     def __init__(
             self,
             type_map: List[int],
-            energy_shifts: Optional[List[float]] = None,
             umax_num_neigh_atoms: int = 200,
             fit_virial: bool = False,
             zbl_rmax: float = 0.0,
@@ -50,7 +49,6 @@ class LitPotentialBase(L.LightningModule):
         super(LitPotentialBase, self).__init__()
 
         self.type_map: List[int] = type_map
-        self.energy_shifts: List[int] = energy_shifts
         self.umax_num_neigh_atoms: int = umax_num_neigh_atoms
         self.fit_virial: bool = fit_virial
         self.zbl_rmax: float = zbl_rmax
@@ -385,7 +383,6 @@ class LitLinearMtp(LitPotentialBase):
     def __init__(
             self,
             type_map: List[int],
-            energy_shifts: Optional[List[float]] = None,
             umax_num_neigh_atoms: int = 200,
             fit_virial: bool = False,
             mtp_level: int = 16,
@@ -407,7 +404,6 @@ class LitLinearMtp(LitPotentialBase):
             max_clip_norm: float = 10.0):
         super().__init__(
             type_map=type_map,
-            energy_shifts=energy_shifts,
             umax_num_neigh_atoms=umax_num_neigh_atoms,
             fit_virial=fit_virial,
             zbl_rmax=zbl_rmax,
@@ -426,7 +422,6 @@ class LitLinearMtp(LitPotentialBase):
         
         self.model: nn.Module = LinearMtp(
             type_map=type_map,
-            energy_shifts=energy_shifts,
             umax_num_neigh_atoms=umax_num_neigh_atoms,
             fit_virial=fit_virial,
             mtp_level=mtp_level,
@@ -445,7 +440,6 @@ class LitNep(LitPotentialBase):
     def __init__(
             self,
             type_map: List[int],
-            energy_shifts: Optional[List[float]] = None,
             umax_num_neigh_atoms: int = 200,
             fit_virial: bool = False,
             n_radial_basis: int = 4,
@@ -470,7 +464,6 @@ class LitNep(LitPotentialBase):
             max_clip_norm: float = 10.0):
         super().__init__(
             type_map=type_map,
-            energy_shifts=energy_shifts,
             umax_num_neigh_atoms=umax_num_neigh_atoms,
             fit_virial=fit_virial,
             zbl_rmax=zbl_rmax,
@@ -489,7 +482,6 @@ class LitNep(LitPotentialBase):
 
         self.model: nn.Module = Nep(
             type_map=type_map,
-            energy_shifts=energy_shifts,
             umax_num_neigh_atoms=umax_num_neigh_atoms,
             fit_virial=fit_virial,
             n_radial_basis=n_radial_basis,
