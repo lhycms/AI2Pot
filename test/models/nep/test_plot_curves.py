@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
-df = pd.read_csv("/data/home/liuhanyu/mycode/AI2Pot/lightning_logs/lightning_logs/version_33/metrics.csv")
+df = pd.read_csv("/data/home/liuhanyu/mycode/AI2Pot/lightning_logs/lightning_logs/version_41/metrics.csv")
 print(df)
 #plt.plot([*range(len(df.loc[:, "grad/raw_norm_step"].tolist()))], 
 #         df.loc[:, "grad/raw_norm_step"].tolist(),

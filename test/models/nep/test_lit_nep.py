@@ -42,7 +42,7 @@ class LitNepTest(unittest.TestCase):
         num_neurons: int = 30
 
         # Lr hyperparameters
-        max_epochs: int = 1000
+        max_epochs: int = 200
         lr_start: float = 1e-3
         lr_end: float = 1e-7
         e_wgt_start: float = 1.0
@@ -104,8 +104,10 @@ class LitNepTest(unittest.TestCase):
                                             limit_val_batches=0,
                                             log_every_n_steps=1,
                                             logger=csv_logger,
-                                            callbacks=[self.nep_descriptor_norm_callback,
-                                                       self.energy_shift_callback])
+                                            callbacks=[
+                                                self.nep_descriptor_norm_callback,
+                                                #self.energy_shift_callback
+                                                ])
 
 
     def tearDown(self):

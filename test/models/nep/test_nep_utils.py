@@ -72,7 +72,7 @@ class NepCalculatorTest(unittest.TestCase):
 class Nep4ExtxyzTest(unittest.TestCase):
     def setUp(self):
         print("Nep4ExtxyzTest (TestCase) is setting up...")
-        self.checkpoint_path: str = "/data/home/liuhanyu/mycode/AI2Pot/lightning_logs/lightning_logs/version_37/checkpoints/epoch=1-step=50.ckpt"
+        self.checkpoint_path: str = "/data/home/liuhanyu/mycode/AI2Pot/lightning_logs/lightning_logs/version_39/checkpoints/epoch=199-step=5000.ckpt"
         self.testset_path: str = EXTXYZ_PATH
         self.map_location: str = "cuda"        
         self.torch_float_dtype: torch._C.dtype = torch.float32

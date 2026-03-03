@@ -22,7 +22,7 @@ PbTe_EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/Li_batt
 # "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/Li_battery/train.xyz"
 # os.path.join(TEST_FILES_DIR, "XYZ", "11_NEP_potential_PbTe", "train_m.xyz")
 
-#torch.manual_seed(4)
+torch.manual_seed(42)
 torch.set_num_threads(16)
 
 
@@ -48,8 +48,8 @@ class LitLinearMtpTest(unittest.TestCase):
         lr_end: float = 1e-7
         e_wgt_start: float = 1.0
         e_wgt_end: float = 1.0
-        f_wgt_start: float = 1.0
-        f_wgt_end: float = 1.0
+        f_wgt_start: float = 2.0
+        f_wgt_end: float = 2.0
         v_wgt_start: float = 0.00
         v_wgt_end: float = 0.00
         max_clip_norm: float = 10
@@ -101,8 +101,10 @@ class LitLinearMtpTest(unittest.TestCase):
             limit_val_batches=0,
             logger=csv_logger,
             log_every_n_steps=1,
-            callbacks=[self.linear_mtp_descriptor_norm_callback,
-                       self.energy_shift_callback])
+            callbacks=[
+                self.linear_mtp_descriptor_norm_callback,
+                self.energy_shift_callback
+                ])
 
     
     def tearDown(self):
