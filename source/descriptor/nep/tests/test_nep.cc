@@ -380,6 +380,107 @@ for (int ii=0; ii<inum; ii++)
 }
 
 
+TEST_F(NepTest, find_efv_accuracy) {
+    int center_idx_modify = 1;
+    int direction1_idx_modify = 2;
+    double delta = 1e-7;
+
+    ai2pot::nep::Nep<double>::find_efv(
+        etot,
+        forces,
+        virial,
+        chebyshev_size,
+        n_radial_basis,
+        n_angular_basis,
+        l_max,
+        num_neurons,
+        coeffs,
+        w0,
+        b0,
+        w1,
+        type_bias,
+        inum,
+        ilist,
+        numneigh,
+        firstneigh,
+        (double (*)[3])rcs,
+        types,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax_radial,
+        rmax_angular,
+        q_scaler);
+
+    // *** delta
+    double cart_coords[12][3] = {0};
+    for (int ii=0; ii<inum; ii++)
+        for (int aa=0; aa<3; aa++)
+            cart_coords[ii][aa] = structure.get_cart_coords()[ii][aa];
+    cart_coords[center_idx_modify][direction1_idx_modify] += delta;
+    structure = ai2pot::Structure<double>(num_atoms, basis_vectors, atomic_numbers, cart_coords, true);
+    nblist = ai2pot::NeighborList<double>(structure, rcut, pbc_xyz, true);
+    nblist.find_info4mlff(
+            inum,
+            ilist,
+            numneigh,
+            firstneigh,
+            rcs,
+            types,
+            nghost,
+            umax_num_neigh_atoms);
+    // *** delta
+
+    ai2pot::nep::Nep<double>::find_efv(
+        etot_,
+        forces_,
+        virial_,
+        chebyshev_size,
+        n_radial_basis,
+        n_angular_basis,
+        l_max,
+        num_neurons,
+        coeffs,
+        w0,
+        b0,
+        w1,
+        type_bias,
+        inum,
+        ilist,
+        numneigh,
+        firstneigh,
+        (double (*)[3])rcs,
+        types,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax_radial,
+        rmax_angular,
+        q_scaler);
+
+printf("1.1. energy = %.15lf\n", etot);
+printf("1.1. force[%d][%d] calculated by custom code = %.15lf\n", center_idx_modify, direction1_idx_modify, forces[center_idx_modify][direction1_idx_modify]);
+printf("1.2. energy = %.15lf\n", etot_);
+printf("1.2. force[%d][%d] calculated by finite difference method = %.15lf\n", center_idx_modify, direction1_idx_modify, -(etot_ - etot) / delta);
+printf("1.3. virial:\n\t[");
+for (int aa=0; aa<3; aa++)
+    for (int bb=0; bb<3; bb++)
+        printf("%.8lf, ", virial[aa*3+bb]);
+printf("]\n");
+printf("2.1. energy = %.15lf\n", etot);
+printf("2.2. force=\n");
+for (int ii=0; ii<inum; ii++)
+    printf("\t\t%3d: [%.15f, %.15f, %.15f]\n", ii, forces[ii][0], forces[ii][1], forces[ii][2]);
+printf("2.3. virial:\n\t[");
+for (int aa=0; aa<3; aa++)
+    for (int bb=0; bb<3; bb++)
+        printf("%.8lf, ", virial_[aa*3+bb]);
+printf("]\n");
+}
+
+
 TEST_F(NepTest, find_ef_loss_backward) {
     ai2pot::nep::Nep<double>::find_ef(
         etot,
