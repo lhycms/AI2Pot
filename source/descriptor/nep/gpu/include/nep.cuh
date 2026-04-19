@@ -122,6 +122,69 @@ void find_ef_launcher(
 
 template <typename CoordType>
 static __host__ __device__
+void find_efv_atom(
+    CoordType *etot_ptr,
+    CoordType (*force)[3],
+    CoordType *virial,
+    int chebyshev_size,
+    int n_radial_basis,
+    int n_angular_basis,
+    int l_max,
+    int num_neurons,
+    CoordType *coeffs,
+    CoordType *w0,
+    CoordType *b0,
+    CoordType *w1,
+    CoordType *type_bias,
+    int silist,
+    int snumneigh,
+    int *sfirstneigh,
+    CoordType (*srcs)[3],
+    int *types,
+    int ntypes,
+    int *type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    CoordType rmax_radial,
+    CoordType rmax_angular,
+    CoordType *q_scaler,
+    CoordType *s_local_virial);
+
+template <typename CoordType>
+static __global__
+void find_efv_kernel(
+    CoordType *betot_ptr,
+    CoordType (*bforce)[3],
+    CoordType *bvirial,
+    int chebyshev_size,
+    int n_radial_basis,
+    int n_angular_basis,
+    int l_max,
+    int num_neurons,
+    CoordType *coeffs,
+    CoordType *w0,
+    CoordType *b0,
+    CoordType *w1,
+    CoordType *type_bias,
+    int batch_size,
+    int natoms_pad,
+    int *binum,
+    int *bilist,
+    int *bnumneigh,
+    int *bfirstneigh,
+    CoordType (*brcs)[3],
+    int *btypes,
+    int ntypes,
+    int *type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    CoordType rmax_radial,
+    CoordType rmax_angular,
+    CoordType *q_scaler);
+
+
+template <typename CoordType>
+static __host__ __device__
 void find_descriptors_atom(
     CoordType *sbdescriptors,
     int chebyshev_size,
@@ -709,6 +772,305 @@ void find_ef_launcher(
     CHECK_CUDA_API( cudaFree(d_btypes) );
     CHECK_CUDA_API( cudaFree(d_type_map) );
     CHECK_CUDA_API( cudaFree(d_q_scaler) );
+}
+
+
+template <typename CoordType>
+__host__ __device__
+void find_efv_atom(
+    CoordType *etot_ptr,
+    CoordType (*force)[3],
+    CoordType *virial,
+    int chebyshev_size,
+    int n_radial_basis,
+    int n_angular_basis,
+    int l_max,
+    int num_neurons,
+    CoordType *coeffs,
+    CoordType *w0,
+    CoordType *b0,
+    CoordType *w1,
+    CoordType *type_bias,
+    int silist,
+    int snumneigh,
+    int *sfirstneigh,
+    CoordType (*srcs)[3],
+    int *types,
+    int ntypes,
+    int *type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    CoordType rmax_radial,
+    CoordType rmax_angular,
+    CoordType *q_scaler,
+    CoordType *s_local_virial)
+{
+    // Step 1. temp array
+    CoordType mom_vals[MAX_NUM_SINLM] = {0.};
+    CoordType e_sites_der2mom[MAX_NUM_SINLM] = {0.};
+    CoordType dod_vals[MAX_NUM_DESCRIPTORS] = {0.};
+    CoordType e_sites_der2dod[MAX_NUM_DESCRIPTORS] = {0.};
+    CoordType auto_dist_powers_[L_MAX_PLUS_ONE] {0.};
+
+    //int num_coeffs = ntypes * ntypes * (n_radial_basis + n_angular_basis) * chebyshev_size;
+    int num_descriptors = NepIndex::get_num_descriptors(n_radial_basis, n_angular_basis, l_max);
+    int num_Sinlm = NepIndex::get_num_Sinlm(n_angular_basis, l_max);
+
+    int center_idx;
+    int type_central;
+    int neigh_idx;
+    int type_outer;
+    CoordType neigh_vec[3];
+    CoordType distance_ij;
+    CoordType distance_ij_inv;
+
+    center_idx = silist;
+    type_central = types[center_idx];
+    CoordType *type_central_w0 = &w0[type_central * num_neurons * num_descriptors];
+    CoordType *type_central_b0 = &b0[type_central * num_neurons];
+    CoordType *type_central_w1 = &w1[type_central * num_neurons];
+
+    // Step 2. forward
+    for (int jj=0; jj<snumneigh; jj++) {
+        neigh_idx = sfirstneigh[jj];
+        type_outer = types[neigh_idx];
+        for (int aa=0; aa<3; aa++)
+            neigh_vec[aa] = srcs[jj][aa];
+        
+        distance_ij = std::sqrt( neigh_vec[0] * neigh_vec[0]
+                                 + neigh_vec[1] * neigh_vec[1]
+                                 + neigh_vec[2] * neigh_vec[2] );
+        if (distance_ij > rmax_radial)
+            continue;
+        distance_ij_inv = 1.0 / distance_ij;
+        CoordType rq_chebyshev_vals_radial[MAX_CHEBYSHEV_SIZE] = {0.};
+        CoordType rq_chebyshev_ders2r_radial[MAX_CHEBYSHEV_SIZE] = {0.};
+        CoordType rq_chebyshev_vals_angular[MAX_CHEBYSHEV_SIZE] = {0.};
+        CoordType rq_chebyshev_ders2r_angular[MAX_CHEBYSHEV_SIZE] = {0.};
+        find_rq_chebyshev<CoordType>(
+            rq_chebyshev_vals_radial,
+            rq_chebyshev_ders2r_radial,
+            chebyshev_size,
+            rmax_radial,
+            distance_ij);
+        find_rq_chebyshev<CoordType>(
+            rq_chebyshev_vals_angular,
+            rq_chebyshev_ders2r_angular,
+            chebyshev_size,
+            rmax_angular,
+            distance_ij);
+        
+        auto_dist_powers_[0] = 1.0;
+        for (int k=1; k<=l_max; k++)
+            auto_dist_powers_[k] = auto_dist_powers_[k-1] * distance_ij;
+        
+        // Step 2.1. Radial forward
+        if (distance_ij <= rmax_radial)
+        for (int mu=0; mu<n_radial_basis; mu++) {
+            for (int xi=0; xi<chebyshev_size; xi++) {
+                int idx = (type_central*ntypes+type_outer)*(n_radial_basis+n_angular_basis)*chebyshev_size
+                          + mu*chebyshev_size + xi;
+                dod_vals[mu] += coeffs[idx] * rq_chebyshev_vals_radial[xi];
+            }
+        }
+
+        // Step 2.2. Angular forward: basic
+        if (distance_ij <= rmax_angular)
+        for (int mu=0; mu<n_angular_basis; mu++) {
+            for (int l=1; l<=l_max; l++) {
+                CoordType C = 1/auto_dist_powers_[l];
+
+                for (int mp=0; mp<2*l+1; mp++) {
+                    int idx_Sinlm = NepIndex::get_Sinlm_index(l_max, mu, l, mp);
+                    CoordType B = 0.0;
+                    Blm<CoordType>::find_blm_val(&B, l, mp, neigh_vec, distance_ij);
+
+                    for (int xi=0; xi<chebyshev_size; xi++) {
+                        int idx = (type_central*ntypes+type_outer)*(n_radial_basis+n_angular_basis)*chebyshev_size
+                                  + (n_radial_basis+mu)*chebyshev_size + xi;
+                        
+                        CoordType A = rq_chebyshev_vals_angular[xi];
+                        mom_vals[idx_Sinlm] += coeffs[idx] * A * B * C;
+                    }
+                }
+            }
+        }
+    }
+
+    // Step 2.3. Angular forward: times
+    for (int mu=0; mu<n_angular_basis; mu++) {
+        for (int l=1; l<=l_max; l++) {
+            int idx_qinl = NepIndex::get_qinl_index(l_max, mu, l);
+
+            for (int mp=0; mp<2*l+1; mp++) {
+                int idx_Sinlm = NepIndex::get_Sinlm_index(l_max, mu, l, mp);
+                int idx_Clm = NepIndex::get_Clm_index(l, mp);
+                if (mp == 0)
+                    dod_vals[n_radial_basis+idx_qinl] += (CoordType)C3B[idx_Clm] * mom_vals[idx_Sinlm] * mom_vals[idx_Sinlm];
+                else
+                    dod_vals[n_radial_basis+idx_qinl] += 2 * (CoordType)C3B[idx_Clm] * mom_vals[idx_Sinlm] * mom_vals[idx_Sinlm];
+            }
+        }
+    }
+
+    // Step 2.4. Ei
+    CoordType e_site = type_bias[type_central];
+    for (int p=0; p<num_neurons; p++) {
+        CoordType hidden_val = 0.0;
+        CoordType activated_hidden_val = 0.0;
+        for (int k=0; k<num_descriptors; k++)
+            hidden_val += type_central_w0[p*num_descriptors + k] * dod_vals[k] / q_scaler[k];
+        hidden_val += type_central_b0[p];
+        TanhActivationFunc<CoordType>::find_val(activated_hidden_val, hidden_val);
+        e_site += type_central_w1[p] * activated_hidden_val;
+    }
+    atomicAdd(etot_ptr, e_site);
+
+
+    // Step 3. Backward (Force)
+    // Step 3.1. RA basic
+    for (int p=0; p<num_neurons; p++) {
+        CoordType hidden_val = 0.0;
+        CoordType activated_hidden_der = 0.0;
+        for (int k=0; k<num_descriptors; k++)
+            hidden_val += type_central_w0[p*num_descriptors + k] * dod_vals[k] / q_scaler[k];
+        hidden_val += type_central_b0[p];
+        TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
+
+        for (int k=0; k<num_descriptors; k++)
+            e_sites_der2dod[k] += type_central_w1[p]
+                                  * activated_hidden_der
+                                  * type_central_w0[p*num_descriptors + k]
+                                  / q_scaler[k];
+    }
+
+    // Step 3.2. Angular_times
+    for (int mu=0; mu<n_angular_basis; mu++) {
+        for (int l=1; l<=l_max; l++) {
+            for (int mp=0; mp<2*l+1; mp++) {
+                int idx_Clm = NepIndex::get_Clm_index(l, mp);
+                int idx_Sinlm = NepIndex::get_Sinlm_index(l_max, mu, l, mp);
+                int idx_qinl = NepIndex::get_qinl_index(l_max, mu, l);
+
+                if (mp == 0)
+                    e_sites_der2mom[idx_Sinlm] = e_sites_der2dod[n_radial_basis + idx_qinl]
+                                                 * 2 * (CoordType)C3B[idx_Clm] * mom_vals[idx_Sinlm];
+                else
+                    e_sites_der2mom[idx_Sinlm] = 2 * e_sites_der2dod[n_radial_basis + idx_qinl]
+                                                 * 2 * (CoordType)C3B[idx_Clm] * mom_vals[idx_Sinlm];
+            }
+        }
+    }
+
+    // Step 3.3. NN Force
+    for (int jj=0; jj<snumneigh; jj++) {
+        CoordType tmp_force_ij[3] = {0.0};
+        CoordType tmp_force_ji[3] = {0.0};
+
+        neigh_idx = sfirstneigh[jj];
+        type_outer = types[neigh_idx];
+        for (int aa=0; aa<3; aa++)
+            neigh_vec[aa] = srcs[jj][aa];
+        distance_ij = std::sqrt( neigh_vec[0] * neigh_vec[0] 
+                                 + neigh_vec[1] * neigh_vec[1]
+                                 + neigh_vec[2] * neigh_vec[2] );
+        if (distance_ij > rmax_radial)
+            continue;
+        distance_ij_inv = 1.0 / distance_ij;
+        CoordType rq_chebyshev_vals_radial[MAX_CHEBYSHEV_SIZE] = {0.};
+        CoordType rq_chebyshev_ders2r_radial[MAX_CHEBYSHEV_SIZE] = {0.};
+        CoordType rq_chebyshev_vals_angular[MAX_CHEBYSHEV_SIZE] = {0.};
+        CoordType rq_chebyshev_ders2r_angular[MAX_CHEBYSHEV_SIZE] = {0.};
+        find_rq_chebyshev<CoordType>(
+            rq_chebyshev_vals_radial,
+            rq_chebyshev_ders2r_radial,
+            chebyshev_size,
+            rmax_radial,
+            distance_ij);
+        find_rq_chebyshev<CoordType>(
+            rq_chebyshev_vals_angular,
+            rq_chebyshev_ders2r_angular,
+            chebyshev_size,
+            rmax_angular,
+            distance_ij);
+        
+        auto_dist_powers_[0] = 1.0;
+        for (int k=1; k<=l_max; k++)
+            auto_dist_powers_[k] = auto_dist_powers_[k-1] * distance_ij;
+        
+        // Step 3.3.1. Radial contribution
+        if (distance_ij <= rmax_radial)
+        for (int mu=0; mu<n_radial_basis; mu++) {
+            for (int xi=0; xi<chebyshev_size; xi++) {
+                int idx = (type_central*ntypes+type_outer)*(n_radial_basis+n_angular_basis)*chebyshev_size
+                          + mu*chebyshev_size + xi;
+                
+                CoordType prefix_mom_der2xyz = coeffs[idx] * rq_chebyshev_ders2r_radial[xi] * distance_ij_inv;
+                for (int aa=0; aa<3; aa++) {
+                    CoordType mom_der2xyz = prefix_mom_der2xyz * neigh_vec[aa];
+                    CoordType e_site_ders_ija = e_sites_der2dod[mu] * mom_der2xyz;
+                    tmp_force_ij[aa] += e_site_ders_ija;
+                    tmp_force_ji[aa] += -e_site_ders_ija;
+
+                    for (int bb=0; bb<3; bb++)
+                        s_local_virial[aa*3 + bb] -= e_site_ders_ija * neigh_vec[bb];
+                }
+            }
+        }
+
+        // Step 3.3.2. Angular contribution
+        if (distance_ij <= rmax_angular)
+        for (int mu=0; mu<n_angular_basis; mu++) {
+            for (int l=1; l<=l_max; l++) {
+                for (int mp=0; mp<2*l+1; mp++) {
+                    int idx_Sinlm = NepIndex::get_Sinlm_index(l_max, mu, l, mp);
+                    CoordType B = 0.0;
+                    Blm<CoordType>::find_blm_val(&B, l, mp, neigh_vec, distance_ij);
+                    CoordType C = 1.0/auto_dist_powers_[l];
+                    CoordType B_ders[3] = {0.0};
+                    CoordType C_ders[3] = {0.0};
+                    Blm<CoordType>::find_blm_der2xyz(B_ders, l, mp, neigh_vec, distance_ij);
+                    C_ders[0] = -l / (auto_dist_powers_[l]*distance_ij)
+                                    * (neigh_vec[0] * distance_ij_inv);
+                    C_ders[1] = -l / (auto_dist_powers_[l]*distance_ij)
+                                    * (neigh_vec[1] * distance_ij_inv);
+                    C_ders[2] = -l / (auto_dist_powers_[l]*distance_ij)
+                                    * (neigh_vec[2] * distance_ij_inv);
+                    
+                    for (int xi=0; xi<chebyshev_size; xi++) {
+                        int idx = (type_central*ntypes+type_outer)*(n_radial_basis+n_angular_basis)*chebyshev_size
+                                  + (n_radial_basis+mu)*chebyshev_size + xi;
+                        CoordType A = rq_chebyshev_vals_angular[xi];
+
+                        CoordType A_ders[3] = {0.0};
+                        A_ders[0] = rq_chebyshev_ders2r_angular[xi] * neigh_vec[0] * distance_ij_inv;
+                        A_ders[1] = rq_chebyshev_ders2r_angular[xi] * neigh_vec[1] * distance_ij_inv;
+                        A_ders[2] = rq_chebyshev_ders2r_angular[xi] * neigh_vec[2] * distance_ij_inv;
+
+                        for (int aa=0; aa<3; aa++) {
+                            CoordType mom_der2xyz = coeffs[idx] * 
+                                                    (A_ders[aa] * B * C
+                                                     + A * B_ders[aa] * C
+                                                     + A * B * C_ders[aa]);
+                            CoordType e_site_ders_ija = e_sites_der2mom[idx_Sinlm] * mom_der2xyz;
+                            tmp_force_ij[aa] += e_site_ders_ija;
+                            tmp_force_ji[aa] += -e_site_ders_ija;
+
+                            for (int bb=0; bb<3; bb++)
+                                s_local_virial[aa*3 + bb] -= e_site_ders_ija * neigh_vec[bb];
+                        }
+                    }
+                }
+            }
+        }
+
+        atomicAdd(&force[center_idx][0], tmp_force_ij[0]);
+        atomicAdd(&force[center_idx][1], tmp_force_ij[1]);
+        atomicAdd(&force[center_idx][2], tmp_force_ij[2]);
+        atomicAdd(&force[neigh_idx][0], tmp_force_ji[0]);
+        atomicAdd(&force[neigh_idx][1], tmp_force_ji[1]);
+        atomicAdd(&force[neigh_idx][2], tmp_force_ji[2]);
+    }
 }
 
 
