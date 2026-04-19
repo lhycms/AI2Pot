@@ -182,6 +182,38 @@ void find_efv_kernel(
     CoordType rmax_angular,
     CoordType *q_scaler);
 
+template <typename CoordType>
+static __host__
+void find_efv_launcher(
+    CoordType *h_betot_ptr,
+    CoordType (*h_bforce)[3],
+    CoordType *h_bvirial,
+    int chebyshev_size,
+    int n_radial_basis,
+    int n_angular_basis,
+    int l_max,
+    int num_neurons,
+    CoordType *h_coeffs,
+    CoordType *h_w0,
+    CoordType *h_b0,
+    CoordType *h_w1,
+    CoordType *h_type_bias,
+    int batch_size,
+    int natoms_pad,
+    int *h_binum,
+    int *h_bilist,
+    int *h_bnumneigh,
+    int *h_bfirstneigh,
+    CoordType (*h_brcs)[3],
+    int *h_btypes,
+    int ntypes,
+    int *h_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    CoordType rmax_radial,
+    CoordType rmax_angular,
+    CoordType *h_q_scaler);
+
 
 template <typename CoordType>
 static __host__ __device__
@@ -1071,6 +1103,248 @@ void find_efv_atom(
         atomicAdd(&force[neigh_idx][1], tmp_force_ji[1]);
         atomicAdd(&force[neigh_idx][2], tmp_force_ji[2]);
     }
+}
+
+
+template <typename CoordType>
+__global__
+void find_efv_kernel(
+    CoordType *betot_ptr,
+    CoordType (*bforce)[3],
+    CoordType *bvirial,
+    int chebyshev_size,
+    int n_radial_basis,
+    int n_angular_basis,
+    int l_max,
+    int num_neurons,
+    CoordType *coeffs,
+    CoordType *w0,
+    CoordType *b0,
+    CoordType *w1,
+    CoordType *type_bias,
+    int batch_size,
+    int natoms_pad,
+    int *binum,
+    int *bilist,
+    int *bnumneigh,
+    int *bfirstneigh,
+    CoordType (*brcs)[3],
+    int *btypes,
+    int ntypes,
+    int *type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    CoordType rmax_radial,
+    CoordType rmax_angular,
+    CoordType *q_scaler)
+{
+    CoordType s_local_virial[9];
+    int nx = blockIdx.x * blockDim.x + threadIdx.x;
+    int istruct = nx / natoms_pad;
+    if (istruct >= batch_size)
+        return;
+    int ii = nx % natoms_pad;
+
+    for (int v=0; v<9; v++)
+        s_local_virial[v] = 0.0;
+
+    CoordType *etot_ptr = &betot_ptr[istruct];
+    CoordType (*force)[3] = &bforce[istruct*(natoms_pad+nghost)];
+    CoordType *virial = &bvirial[istruct*9];
+    int inum = binum[istruct];
+    int *types = &btypes[istruct*(natoms_pad+nghost)];
+
+    if (ii < inum) {
+        int silist = bilist[istruct*natoms_pad + ii];
+        int snumneigh = bnumneigh[istruct*natoms_pad + ii];
+        int *sfirstneigh = &bfirstneigh[istruct*natoms_pad*umax_num_neigh_atoms + ii*umax_num_neigh_atoms];
+        CoordType (*srcs)[3] = &brcs[istruct*natoms_pad*umax_num_neigh_atoms + ii*umax_num_neigh_atoms];
+
+        find_efv_atom<CoordType>(
+            etot_ptr,
+            force,
+            virial,
+            chebyshev_size,
+            n_radial_basis,
+            n_angular_basis,
+            l_max,
+            num_neurons,
+            coeffs,
+            w0,
+            b0,
+            w1,
+            type_bias,
+            silist,
+            snumneigh,
+            sfirstneigh,
+            srcs,
+            types,
+            ntypes,
+            type_map,
+            umax_num_neigh_atoms,
+            nghost,
+            rmax_radial,
+            rmax_angular,
+            q_scaler,
+            s_local_virial);
+        
+        for (int v=0; v<9; v++)
+            atomicAdd(&virial[v], s_local_virial[v]);
+    }
+}
+
+
+template <typename CoordType>
+__host__
+void find_efv_launcher(
+    CoordType *h_betot_ptr,
+    CoordType (*h_bforce)[3],
+    CoordType *h_bvirial,
+    int chebyshev_size,
+    int n_radial_basis,
+    int n_angular_basis,
+    int l_max,
+    int num_neurons,
+    CoordType *h_coeffs,
+    CoordType *h_w0,
+    CoordType *h_b0,
+    CoordType *h_w1,
+    CoordType *h_type_bias,
+    int batch_size,
+    int natoms_pad,
+    int *h_binum,
+    int *h_bilist,
+    int *h_bnumneigh,
+    int *h_bfirstneigh,
+    CoordType (*h_brcs)[3],
+    int *h_btypes,
+    int ntypes,
+    int *h_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    CoordType rmax_radial,
+    CoordType rmax_angular,
+    CoordType *h_q_scaler)
+{
+    int block_size_x = 64;
+    int grid_size_x = (batch_size*natoms_pad - 1) / block_size_x + 1;
+    dim3 grid_size(grid_size_x);
+    dim3 block_size(block_size_x);
+
+    int num_descriptors = NepIndex::get_num_descriptors(n_radial_basis, n_angular_basis, l_max);
+    int num_coeffs = ntypes * ntypes * (n_radial_basis+n_angular_basis) * chebyshev_size;
+
+    CoordType *d_betot_ptr;
+    CoordType (*d_bforce)[3];
+    CoordType *d_bvirial;
+    CoordType *d_coeffs;
+    CoordType *d_w0;
+    CoordType *d_b0;
+    CoordType *d_w1;
+    CoordType *d_type_bias;
+    int *d_binum;
+    int *d_bilist;
+    int *d_bnumneigh;
+    int *d_bfirstneigh;
+    CoordType (*d_brcs)[3];
+    int *d_btypes;
+    int *d_type_map;
+    CoordType *d_q_scaler;
+
+    CHECK_CUDA_API( cudaMalloc((void**)&d_betot_ptr, sizeof(CoordType)*batch_size) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bforce, sizeof(CoordType)*batch_size*(natoms_pad+nghost)*3) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bvirial, sizeof(CoordType)*batch_size*9) );
+    CHECK_CUDA_API( cudaMemset(d_betot_ptr, 0, sizeof(CoordType)*batch_size) );
+    CHECK_CUDA_API( cudaMemset(d_bforce, 0, sizeof(CoordType)*batch_size*(natoms_pad+nghost)*3) );
+    CHECK_CUDA_API( cudaMemset(d_bvirial, 0, sizeof(CoordType)*batch_size*9) );
+
+    CHECK_CUDA_API( cudaMalloc((void**)&d_coeffs, sizeof(CoordType)*num_coeffs) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_w0, sizeof(CoordType)*ntypes*num_neurons*num_descriptors) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_b0, sizeof(CoordType)*ntypes*num_neurons) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_w1, sizeof(CoordType)*ntypes*num_neurons) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_type_bias, sizeof(CoordType)*ntypes) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_binum, sizeof(int)*batch_size) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bilist, sizeof(int)*batch_size*natoms_pad) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bnumneigh, sizeof(int)*batch_size*natoms_pad) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bfirstneigh, sizeof(int)*batch_size*natoms_pad*umax_num_neigh_atoms) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_brcs, sizeof(CoordType)*batch_size*natoms_pad*umax_num_neigh_atoms*3) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_btypes, sizeof(int)*batch_size*(natoms_pad+nghost)) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_type_map, sizeof(int)*ntypes) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_q_scaler, sizeof(CoordType)*num_descriptors) );
+
+    //
+    CHECK_CUDA_API( cudaMemcpy(d_coeffs, h_coeffs, sizeof(CoordType)*num_coeffs, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_w0, h_w0, sizeof(CoordType)*ntypes*num_neurons*num_descriptors, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_b0, h_b0, sizeof(CoordType)*ntypes*num_neurons, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_w1, h_w1, sizeof(CoordType)*ntypes*num_neurons, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_type_bias, h_type_bias, sizeof(CoordType)*ntypes, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_binum, h_binum, sizeof(int)*batch_size, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_bilist, h_bilist, sizeof(int)*batch_size*natoms_pad, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_bnumneigh, h_bnumneigh, sizeof(int)*batch_size*natoms_pad, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_bfirstneigh, h_bfirstneigh, sizeof(int)*batch_size*natoms_pad*umax_num_neigh_atoms, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_brcs, h_brcs, sizeof(CoordType)*batch_size*natoms_pad*umax_num_neigh_atoms*3, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_btypes, h_btypes, sizeof(int)*batch_size*(natoms_pad+nghost), cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_type_map, h_type_map, sizeof(int)*ntypes, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_q_scaler, h_q_scaler, sizeof(CoordType)*num_descriptors, cudaMemcpyHostToDevice) );
+
+    // Compute
+    auto t1 = std::chrono::high_resolution_clock::now();
+    find_efv_kernel KERNEL_ARG2(grid_size, block_size) (
+        d_betot_ptr,
+        d_bforce,
+        d_bvirial,
+        chebyshev_size,
+        n_radial_basis,
+        n_angular_basis,
+        l_max,
+        num_neurons,
+        d_coeffs,
+        d_w0,
+        d_b0,
+        d_w1,
+        d_type_bias,
+        batch_size,
+        natoms_pad,
+        d_binum,
+        d_bilist,
+        d_bnumneigh,
+        d_bfirstneigh,
+        d_brcs,
+        d_btypes,
+        ntypes,
+        d_type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax_radial,
+        rmax_angular,
+        d_q_scaler);
+    CHECK_CUDA_KERNEL;
+    auto t2 = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
+    std::cout << "find_efv_kernel() cost time: " << duration.count() << " us.\n";
+
+    // 
+    CHECK_CUDA_API( cudaMemcpy(h_betot_ptr, d_betot_ptr, sizeof(CoordType)*batch_size, cudaMemcpyDeviceToHost) );
+    CHECK_CUDA_API( cudaMemcpy(h_bforce, d_bforce, sizeof(CoordType)*batch_size*(natoms_pad+nghost)*3, cudaMemcpyDeviceToHost) );
+    CHECK_CUDA_API( cudaMemcpy(h_bvirial, d_bvirial, sizeof(CoordType)*batch_size*9, cudaMemcpyDeviceToHost) );
+
+    // Step . Free
+    CHECK_CUDA_API( cudaFree(d_betot_ptr) );
+    CHECK_CUDA_API( cudaFree(d_bforce) );
+    CHECK_CUDA_API( cudaFree(d_bvirial) );
+    CHECK_CUDA_API( cudaFree(d_coeffs) );
+    CHECK_CUDA_API( cudaFree(d_w0) );
+    CHECK_CUDA_API( cudaFree(d_b0) );
+    CHECK_CUDA_API( cudaFree(d_w1) );
+    CHECK_CUDA_API( cudaFree(d_type_bias) );
+    CHECK_CUDA_API( cudaFree(d_binum) );
+    CHECK_CUDA_API( cudaFree(d_bilist) );
+    CHECK_CUDA_API( cudaFree(d_bnumneigh) );
+    CHECK_CUDA_API( cudaFree(d_bfirstneigh) );
+    CHECK_CUDA_API( cudaFree(d_brcs) );
+    CHECK_CUDA_API( cudaFree(d_btypes) );
+    CHECK_CUDA_API( cudaFree(d_type_map) );
+    CHECK_CUDA_API( cudaFree(d_q_scaler) );
 }
 
 
