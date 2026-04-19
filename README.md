@@ -22,7 +22,12 @@ pip install torch==2.4.0 --index-url https://download.pytorch.org/whl/cpu
 ## 2.2. GPU
 pip install torch==2.4.0 --index-url https://download.pytorch.org/whl/cu124
 
-# 2. 
+# 3. 
+# 3.1.
 export AI2POT_PATH=
+# 3.2
+# -DCMAKE_CXX_COMPILER=/data/app/gcc/11.3.0/bin/g++
+# -DCMAKE_C_COMPILER=/data/app/gcc/11.3.0/bin/gcc
+# -DCMAKE_CUDA_HOST_COMPILER=/data/app/gcc/11.3.0/bin/g++
 cmake -DBUILD_TEST=yes -DTORCH_OP=yes -DUSE_CUDA=yes -DMAX_MTP_LEVEL=16 -DUSE_OPENMP=yes ..
 ```
