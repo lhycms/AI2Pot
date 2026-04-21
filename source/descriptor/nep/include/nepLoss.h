@@ -92,7 +92,7 @@ public:
         CoordType rmax_angular,
         CoordType *q_scaler);
     
-    static void find_efv_loss_backward(
+    static void find_loss_backward(
         CoordType *loss_der2coeffs,
         CoordType *loss_der2w0,
         CoordType *loss_der2b0,
@@ -462,7 +462,7 @@ void NepLoss<CoordType>::find_ef_loss_backward(
         // New Code
         for (int p=0; p<num_neurons; p++) {
             for (int k=0; k<num_descriptors; k++) {
-                dloss_combination_dod_sum_radial[p] += dloss_combination_dod[k] 
+                dloss_combination_dod_sum_radial[p] += dloss_combination_dod[k]
                                                        * type_central_w0[p*num_descriptors + k]
                                                        / q_scaler[k];
             }
@@ -748,7 +748,7 @@ void NepLoss<CoordType>::find_ef_loss_backward(
 
 
 template <typename CoordType>
-void NepLoss<CoordType>::find_efv_loss_backward(
+void NepLoss<CoordType>::find_loss_backward(
     CoordType *loss_der2coeffs,
     CoordType *loss_der2w0,
     CoordType *loss_der2b0,
@@ -896,6 +896,12 @@ void NepLoss<CoordType>::find_efv_loss_backward(
                         dloss_combination_dod[mu] -= 2*f_weight/(3*inum)
                                                      * (force_ml[neigh_idx][aa] - force_dft[neigh_idx][aa])
                                                      * coeffs[idx] * p_RadialBasis_radial->ders2r()[xi] * neigh_vec[aa] / distance_ij;
+                        for (int bb=0; bb<3; bb++) {
+                            dloss_combination_dod[mu] -= 2*v_weight/(9*inum)
+                                                         * (virial_ml[aa*3+bb] - virial_dft[aa*3+bb])
+                                                         * neigh_vec[bb]
+                                                         * coeffs[idx] * p_RadialBasis_radial->ders2r()[xi] * neigh_vec[aa] / distance_ij;
+                        }
                     }
                 }
             }
@@ -919,10 +925,10 @@ void NepLoss<CoordType>::find_efv_loss_backward(
                             CoordType C_ders[3] = {0.0};
                             Blm<CoordType>::find_blm_der2xyz(B_ders, l, mp, neigh_vec, distance_ij);
                             for (int aa=0; aa<3; aa++) {
-                                A_ders[aa] = p_RadialBasis_angular->der2r()[xi] * neigh_vec[aa] / distance_ij;
+                                A_ders[aa] = p_RadialBasis_angular->ders2r()[xi] * neigh_vec[aa] / distance_ij;
                                 C_ders[aa] = -l / (auto_dist_powers_[l] * distance_ij) * (neigh_vec[aa] / distance_ij);
                             }
-                            mom_vals[idx_Sinlm] = coeffs[idx] * A * B * C;
+                            mom_vals[idx_Sinlm] += coeffs[idx] * A * B * C;
 
                             for (int aa=0; aa<3; aa++) {
                                 CoordType tmp_deriv = coeffs[idx] * (A_ders[aa] * B * C
@@ -934,6 +940,12 @@ void NepLoss<CoordType>::find_efv_loss_backward(
                                 dloss_combination_mom[idx_Sinlm] -= 2*f_weight/(3*inum)
                                                                     * (force_ml[neigh_idx][aa] - force_dft[neigh_idx][aa])
                                                                     * tmp_deriv;
+                                for (int bb=0; bb<3; bb++) {
+                                    dloss_combination_mom[idx_Sinlm] -= 2*v_weight/(9*inum)
+                                                                        * (virial_ml[aa*3+bb] - virial_dft[aa*3+bb])
+                                                                        * neigh_vec[bb]
+                                                                        * tmp_deriv;
+                                }
                             }
                         }
                     }
@@ -980,7 +992,7 @@ void NepLoss<CoordType>::find_efv_loss_backward(
             for (int k=0; k<num_descriptors; k++)
                 e_sites_der2dod[k] += type_central_w1[p]
                                       * activated_hidden_ders[p]
-                                      * type_central_w0[p*num_neurons + k]
+                                      * type_central_w0[p*num_descriptors + k]
                                       / q_scaler[k];
         }
 
@@ -1003,11 +1015,189 @@ void NepLoss<CoordType>::find_efv_loss_backward(
         }
 
         // New code
-        // ...
+        for (int p=0; p<num_neurons; p++) {
+            for (int k=0; k<num_descriptors; k++) {
+                dloss_combination_dod_sum_radial[p] += dloss_combination_dod[k]
+                                                       * type_central_w0[p*num_descriptors + k]
+                                                       / q_scaler[k];
+            }
+        }
+        for (int mu=0; mu<n_radial_basis; mu++) {
+            for (int p=0; p<num_neurons; p++) {
+                de22m0m1_dloss_combination_dod_sum_radial[mu] += type_central_w1[p]
+                                                                 * activated_hidden_der2ders[p]
+                                                                 * type_central_w0[p*num_descriptors + mu]
+                                                                 / q_scaler[mu]
+                                                                 * dloss_combination_dod_sum_radial[p];
+            }
+        }
+
+        for (int p=0; p<num_neurons; p++) {
+            for (int mu=0; mu<n_radial_basis; mu++) {
+                dloss_combination_mom_sum_angular[p] += dloss_combination_dod[mu]
+                                                        * type_central_w0[p*num_descriptors + mu]
+                                                        / q_scaler[mu];
+            }
+        }
+        for (int p=0; p<num_neurons; p++) {
+            for (int mu=0; mu<n_angular_basis; mu++) {
+                for (int l=1; l<=l_max; l++) {
+                    int idx_qinl = NepIndex::get_qinl_index(l_max, mu, l);
+                    for (int mp=0; mp<2*l+1; mp++) {
+                        int idx_Clm = NepIndex::get_Clm_index(l, mp);
+                        int idx_Sinlm = NepIndex::get_Sinlm_index(l_max, mu, l, mp);
+                        CoordType Clm_prefix = (mp == 0) ? 1.0 : 2.0;
+                        dloss_combination_mom_sum_angular[p] += dloss_combination_mom[idx_Sinlm]
+                                                                * type_central_w0[p*num_descriptors + n_radial_basis + idx_qinl]
+                                                                / q_scaler[n_radial_basis + idx_qinl]
+                                                                * Clm_prefix * 2 * (CoordType)C3B[idx_Clm] * mom_vals[idx_Sinlm];
+
+                    }
+                }
+            }
+        }
+        for (int mu=0; mu<n_angular_basis; mu++) {
+            for (int l=1; l<=l_max; l++) {
+                int idx_qinl = NepIndex::get_qinl_index(l_max, mu, l);
+                for (int mp=0; mp<2*l+1; mp++) {
+                    CoordType Clm_prefix = (mp == 0) ? 1.0 : 2.0;
+                    int idx_Clm = NepIndex::get_Clm_index(l, mp);
+                    int idx_Sinlm = NepIndex::get_Sinlm_index(l_max, mu, l, mp);
+                    for (int p=0; p<num_neurons; p++) {
+                        de22m0m1_dloss_combination_mom_sum_angular[idx_Sinlm] += type_central_w1[p]
+                                                                                 * activated_hidden_der2ders[p]
+                                                                                 * type_central_w0[p*num_descriptors + n_radial_basis + idx_qinl]
+                                                                                 / q_scaler[n_radial_basis + idx_qinl]
+                                                                                 * Clm_prefix * 2 * (CoordType)C3B[idx_Clm] * mom_vals[idx_Sinlm]
+                                                                                 * dloss_combination_mom_sum_angular[p];
+                    }
+                }
+            }
+        }
         // New code
 
 
         // Step 4.1. loss_der2coeffs
+        for (int jj=0; jj<numneigh[ii]; jj++) {
+            neigh_idx = firstneigh[ii*umax_num_neigh_atoms+jj];
+            type_outer = types[neigh_idx];
+            for (int aa=0; aa<3; aa++)
+                neigh_vec[aa] = rcs[ii*umax_num_neigh_atoms + jj][aa];
+            distance_ij = std::sqrt(std::pow(neigh_vec[0], 2)
+                                    + std::pow(neigh_vec[1], 2)
+                                    + std::pow(neigh_vec[2], 2));
+            if (distance_ij > rmax_radial)
+                continue;
+            p_RadialBasis_radial->build(distance_ij);
+            p_RadialBasis_angular->build(distance_ij);
+            auto_dist_powers_[0] = 1.0;
+            for (int k=1; k<=l_max; k++)
+                auto_dist_powers_[k] = auto_dist_powers_[k-1] * distance_ij;
+            
+            // 4.1.1. loss_der2coeffs -- Radial
+            if (distance_ij <= rmax_radial)
+            for (int mu=0; mu<n_radial_basis; mu++) {
+                for (int xi=0; xi<chebyshev_size; xi++) {
+                    int idx = (type_central*ntypes+type_outer)*(n_radial_basis+n_angular_basis)*chebyshev_size
+                              + mu*chebyshev_size + xi;
+                    
+                    CoordType tmpe_loss_der2coeff = 0.0;
+                    tmpe_loss_der2coeff = 2*e_weight/inum*(etot_ml - etot_dft)
+                                          * e_sites_der2dod[mu]
+                                          * p_RadialBasis_radial->vals()[xi];
+                    
+                    CoordType tmpf_loss_der2coeff = de22m0m1_dloss_combination_dod_sum_radial[mu] * p_RadialBasis_radial->vals()[xi];
+                    for (int aa=0; aa<3; aa++) {
+                        CoordType tmp_prefix = 0.0;
+                        CoordType tmp_deriv = p_RadialBasis_radial->ders2r()[xi] * neigh_vec[aa] / distance_ij;
+
+                        tmp_prefix = 2*f_weight/(3*inum)
+                                     * (force_ml[center_idx][aa] - force_dft[center_idx][aa]
+                                        - force_ml[neigh_idx][aa] + force_dft[neigh_idx][aa]);
+                        for (int bb=0; bb<3; bb++)
+                        {
+                            tmp_prefix -= 2*v_weight/(9*inum)
+                                          * (virial_ml[aa*3+bb] - virial_dft[aa*3+bb])
+                                          * neigh_vec[bb];
+                        }
+                        tmpf_loss_der2coeff += tmp_prefix * e_sites_der2dod[mu] * tmp_deriv;
+                    }
+
+                    #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
+                    #pragma omp atomic
+                    #endif
+                    loss_der2coeffs[idx] += (tmpe_loss_der2coeff
+                                             + tmpf_loss_der2coeff);
+                }
+            }
+
+            // 4.1.2. loss_der2coeffs -- Angular
+            if (distance_ij <= rmax_angular)
+            for (int mu=0; mu<n_angular_basis; mu++) {
+                for (int l=1; l<=l_max; l++) {
+                    int idx_qinl = NepIndex::get_qinl_index(l_max, mu, l);
+
+                    for (int mp=0; mp<2*l+1; mp++) {
+                        int idx_Clm = NepIndex::get_Clm_index(l, mp);
+                        int idx_Sinlm = NepIndex::get_Sinlm_index(l_max, mu, l, mp);
+                        CoordType Clm_prefix = (mp == 0) ? 1.0 : 2.0;
+
+                        for (int xi=0; xi<chebyshev_size; xi++) {
+                            int idx = (type_central*ntypes+type_outer)*(n_radial_basis+n_angular_basis)*chebyshev_size
+                                      + (mu+n_radial_basis)*chebyshev_size + xi;
+
+                            CoordType A = p_RadialBasis_angular->vals()[xi];
+                            CoordType B = 0.0;
+                            Blm<CoordType>::find_blm_val(&B, l, mp, neigh_vec, distance_ij);
+                            CoordType C = 1/auto_dist_powers_[l];
+
+                            CoordType A_ders[3] = {0.0};
+                            CoordType B_ders[3] = {0.0};
+                            CoordType C_ders[3] = {0.0};
+                            for (int aa=0; aa<3; aa++) {
+                                A_ders[aa] = p_RadialBasis_angular->ders2r()[xi] * neigh_vec[aa] / distance_ij;
+                                C_ders[aa] = -l / (auto_dist_powers_[l]*distance_ij)
+                                             * (neigh_vec[aa] / distance_ij);
+                            }
+                            Blm<CoordType>::find_blm_der2xyz(B_ders, l, mp, neigh_vec, distance_ij);
+
+                            CoordType tmpe_loss_der2coeff = 0.0;
+                            tmpe_loss_der2coeff = 2*e_weight/inum*(etot_ml-etot_dft)
+                                                  * e_sites_der2mom[idx_Sinlm]
+                                                  * A * B * C;
+                            CoordType tmpf_loss_der2coeff = (de22m0m1_dloss_combination_mom_sum_angular[idx_Sinlm]
+                                                            + Clm_prefix * 2 * (CoordType)C3B[idx_Clm] * e_sites_der2dod[n_radial_basis + idx_qinl] * dloss_combination_mom[idx_Sinlm])
+                                                            * A * B * C;
+                            for (int aa=0; aa<3; aa++) {
+                                CoordType tmp_prefix = 0.0;
+                                CoordType tmp_deriv = (A_ders[aa] * B * C
+                                                       + A * B_ders[aa] * C
+                                                       + A * B * C_ders[aa]);
+                                
+                                tmp_prefix += 2*f_weight/(3*inum)
+                                              * (force_ml[center_idx][aa] - force_dft[center_idx][aa]);
+                                tmp_prefix -= 2*f_weight/(3*inum)
+                                              * (force_ml[neigh_idx][aa] - force_dft[neigh_idx][aa]);
+                                for (int bb=0; bb<3; bb++)
+                                {
+                                    tmp_prefix -= 2*v_weight/(9*inum)
+                                                * (virial_ml[aa*3+bb] - virial_dft[aa*3+bb])
+                                                * neigh_vec[bb];
+                                }
+                                tmpf_loss_der2coeff += tmp_prefix
+                                                       * e_sites_der2mom[idx_Sinlm] 
+                                                       * tmp_deriv;
+                            }
+                            #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
+                            #pragma omp atomic
+                            #endif
+                            loss_der2coeffs[idx] += (tmpe_loss_der2coeff
+                                                     + tmpf_loss_der2coeff);
+                        }
+                    }
+                }
+            }
+        }
 
         // Step 4.2. der2w0 && der2b0
         for (int p=0; p<num_neurons; p++) {
