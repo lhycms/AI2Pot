@@ -46,8 +46,8 @@ public:
         const at::Tensor& btypes_tensor,
         const at::Tensor& type_map_tensor,
         int nghost,
-        double rmax,
-        double rmin,
+        double rmax_radial,
+        double rmax_angular,
         const at::Tensor& q_scaler_tensor,
         double zbl_rmax,
         double zbl_rmin,
@@ -122,8 +122,8 @@ public:
         const at::Tensor& btypes_tensor,
         const at::Tensor& type_map_tensor,
         int nghost,
-        double rmax,
-        double rmin,
+        double rmax_radial,
+        double rmax_angular,
         const at::Tensor& q_scaler_tensor,
         double zbl_rmax,
         double zbl_rmin,
@@ -154,8 +154,8 @@ public:
         const at::Tensor& btypes_tensor,
         const at::Tensor& type_map_tensor,
         int nghost,
-        double rmax,
-        double rmin);
+        double rmax_radial,
+        double rmax_angular);
 
     static torch::autograd::variable_list backward(
         torch::autograd::AutogradContext *ctx,
@@ -181,8 +181,8 @@ torch::autograd::variable_list NepToEFOp(
     const at::Tensor& btypes_tensor,
     const at::Tensor& type_map_tensor,
     int nghost,
-    double rmax,
-    double rmin,
+    double rmax_radial,
+    double rmax_angular,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
     double zbl_rmin,
@@ -208,8 +208,8 @@ torch::autograd::variable_list NepToEFVOp(
     const at::Tensor& btypes_tensor,
     const at::Tensor& type_map_tensor,
     int nghost,
-    double rmax,
-    double rmin,
+    double rmax_radial,
+    double rmax_angular,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
     double zbl_rmin,
@@ -239,8 +239,8 @@ torch::autograd::variable_list NepToEFLossOp(
     const at::Tensor& btypes_tensor,
     const at::Tensor& type_map_tensor,
     int nghost,
-    double rmax,
-    double rmin,
+    double rmax_radial,
+    double rmax_angular,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
     double zbl_rmin,
@@ -262,8 +262,8 @@ torch::autograd::variable_list NepToDescriptorsOp(
     const at::Tensor& btypes_tensor,
     const at::Tensor& type_map_tensor,
     int nghost,
-    double rmax,
-    double rmin);
+    double rmax_radial,
+    double rmax_angular);
 
 };  // namespace : nep
 };  // namespace : ai2pot
