@@ -136,6 +136,48 @@ public:
 };  // class : NepToEFLossFunction
 
 
+class NepToLossFunction : public torch::autograd::Function<NepToLossFunction>
+{
+public:
+    static torch::autograd::variable_list forward(
+        torch::autograd::AutogradContext *ctx,
+        double e_weight,
+        double f_weight,
+        double v_weight,
+        const at::Tensor& betot_dft_tensor,
+        const at::Tensor& bforce_dft_tensor,
+        const at::Tensor& bvirial_dft_tensor,
+        int chebyshev_size,
+        int n_radial_basis,
+        int n_angular_basis,
+        int l_max,
+        const at::Tensor& coeffs_tensor,
+        const at::Tensor& w0_tensor,
+        const at::Tensor& b0_tensor,
+        const at::Tensor& w1_tensor,
+        const at::Tensor& type_bias_tensor,
+        const at::Tensor& binum_tensor,
+        const at::Tensor& bilist_tensor,
+        const at::Tensor& bnumneigh_tensor,
+        const at::Tensor& bfirstneigh_tensor,
+        const at::Tensor& brcs_tensor,
+        const at::Tensor& btypes_tensor,
+        const at::Tensor& type_map_tensor,
+        int nghost,
+        double rmax_radial,
+        double rmax_angular,
+        const at::Tensor& q_scaler_tensor,
+        double zbl_rmax,
+        double zbl_rmin,
+        const at::Tensor& zbl_cks_tensor,
+        const at::Tensor& zbl_dks_tenosr);
+
+    static torch::autograd::variable_list backward(
+        torch::autograd::AutogradContext *ctx,
+        torch::autograd::variable_list bgrad_outputs_tensor);
+};  // class : NepToLossFunction
+
+
 class NepToDescriptorsFunction : public torch::autograd::Function<NepToDescriptorsFunction>
 {
 public:
