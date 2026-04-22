@@ -94,6 +94,65 @@ extern template void find_ef_torch_launcher<double>(
 
 
 // 1.2. find_efv_torch_launcher()
+extern template void ai2pot::nep::find_efv_torch_launcher<float>(
+    float *d_betot_ptr,
+    float (*d_bforce)[3],
+    float *d_bvirial,
+    int chebyshev_size,
+    int n_radial_basis,
+    int n_angular_basis,
+    int l_max,
+    int num_neurons,
+    float *d_coeffs,
+    float *d_w0,
+    float *d_b0,
+    float *d_w1,
+    float *d_type_bias,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    int *d_bnumneigh,
+    int *d_bfirstneigh,
+    float (*d_brcs)[3],
+    int *d_btypes,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    float rmax_raidal,
+    float rmax_angular,
+    float *d_q_scaler);
+
+extern template void ai2pot::nep::find_efv_torch_launcher<double>(
+    double *d_betot_ptr,
+    double (*d_bforce)[3],
+    double *d_bvirial,
+    int chebyshev_size,
+    int n_radial_basis,
+    int n_angular_basis,
+    int l_max,
+    int num_neurons,
+    double *d_coeffs,
+    double *d_w0,
+    double *d_b0,
+    double *d_w1,
+    double *d_type_bias,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    int *d_bnumneigh,
+    int *d_bfirstneigh,
+    double (*d_brcs)[3],
+    int *d_btypes,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    double rmax_radial,
+    double rmax_angular,
+    double *d_q_scaler);
 
 
 // 1.3. find_descriptors_torch_launcher()
@@ -799,6 +858,113 @@ torch::autograd::variable_list NepToEFFunction::backward(
         at::Tensor(),
         at::Tensor()};
 }
+
+
+/*
+torch::autograd::variable_list NepToEFVFunction::foward(
+    torch::autograd::AutogradContext *ctx,
+    int chebyshev_size,
+    int n_radial_basis,
+    int n_angular_basis,
+    int l_max,
+    const at::Tensor& coeffs_tensor,
+    const at::Tensor& w0_tensor,
+    const at::Tensor& b0_tensor,
+    const at::Tensor& w1_tensor,
+    const at::Tensor& type_bias_tensor,
+    const at::Tensor& binum_tensor,
+    const at::Tensor& bilist_tensor,
+    const at::Tensor& bnumneigh_tensor,
+    const at::Tensor& bfirstneigh_tensor,
+    const at::Tensor& brcs_tensor,
+    const at::Tensor& btypes_tensor,
+    const at::Tensor& type_map_tensor,
+    int nghost,
+    double rmax_radial,
+    double rmax_angular,
+    const at::Tensor& q_scaler_tensor,
+    double zbl_rmax,
+    double zbl_rmin,
+    const at::Tensor& zbl_cks_tensor,
+    const at::Tensor& zbl_dks_tensor)
+{
+    // 1.
+    int batch_size = bfirstneigh_tensor.size(0);
+    int natoms_pad = bfirstneigh_tensor.size(1);
+    int umax_num_neigh_atoms = bfirstneigh_tensor.size(2);
+    int ntypes = type_map_tensor.size(0);
+    int *type_map = type_map_tensor.data_ptr<int>();
+    int num_neurons = (int)(w1_tensor.size(0) / ntypes);
+    int num_descriptors = (int)(w0_tensor.size(0) / (ntypes*num_neurons));
+
+    int *binum = binum_tensor.data_ptr<int>();
+    int *bilist = bilist_tensor.data_ptr<int>();
+    int *bnumneigh = bnumneigh_tensor.data_ptr<int>();
+    int *bfirstneigh = bfirstneigh_tensor.data_ptr<int>();
+    int *btypes = btypes_tensor.data_ptr<int>();
+
+    // 2. 
+    c10::TensorOptions int_options = c10::TensorOptions()
+                                        .dtype(torch::kInt32)
+                                        .device(brcs_tensor.device());
+    c10::TensorOptions float_options = c10::TensorOptions()
+                                        .dtype(brcs_tensor.scalar_type())
+                                        .device(brcs_tensor.device());
+    
+    // 3.
+    at::Tensor betot_tensor = at::zeros({batch_size}, float_options);
+    at::Tensor bforce_tensor = at::zeros({batch_size, natoms_pad+nghost, 3}, float_options);
+
+    // 4. 
+    if (brcs_tensor.scalar_type() == torch::kFloat32) {
+        float *betot = betot_tensor.data_ptr<float>();
+        float (*bforce)[3] = (float (*)[3])bforce_tensor.data_ptr<float>();
+        float *bvirial = bvirial_tensor.data_ptr<float>();
+
+        float *coeffs = coeffs_tensor.data_ptr<float>();
+        float *w0 = w0_tensor.data_ptr<float>();
+        float *b0 = b0_tensor.data_ptr<float>();
+        float *w1 = w1_tensor.data_ptr<float>();
+        float *type_bias = type_bias_tensor.data_ptr<float>();
+
+        float (*brcs)[3] = (float (*)[3])brcs_tensor.data_ptr<float>();
+        float *q_scaler = q_scaler_tensor.data_ptr<float>();
+        float *zbl_cks = zbl_cks_tensor.data_ptr<float>();
+        float *zbl_dks = zbl_dks_tensor.data_ptr<float>();
+
+        if (brcs_tensor.device() == c10::kCPU) {
+            // TODO
+        } else {
+            #if defined(USE_CUDA) or defined(__INTELLISENSE__)
+            // TODO
+            #endif
+        }
+    } else {
+        double *betot = betot_tensor.data_ptr<double>();
+        double (*bforce)[3] = (double (*)[3])bforce_tensor.data_ptr<double>();
+        double *bvirial = bvirial_tensor.data_ptr<double>();
+
+        double *coeffs = coeffs_tensor.data_ptr<double>();
+        double *w0 = w0_tensor.data_ptr<double>();
+        double *b0 = b0_tensor.data_ptr<double>();
+        double *w1 = w1_tensor.data_ptr<double>();
+        double *type_bias = type_bias_tensor.data_ptr<double>();
+
+        double (*brcs)[3] = (double (*)[3])brcs_tensor.data_ptr<double>();
+        double *q_scaler = q_scaler_tensor.data_ptr<double>();
+        double *zbl_cks = zbl_cks_tensor.data_ptr<double>();
+        double *zbl_dks = zbl_dks_tensor.data_ptr<double>();
+
+        if (brcs_tensor.device() == c10::kCPU) {
+            // TODO
+        } else {
+            #if defined(USE_CUDA) or defined(__INTELLISENSE__)
+            // TODO
+            #endif
+        }
+    }
+}
+*/
 
 
 torch::autograd::variable_list NepToEFLossFunction::forward(

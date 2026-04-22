@@ -16,6 +16,67 @@
 #include "../include/nep_torch_launcher.cuh"
 
 // 1. find_efv
+template void ai2pot::nep::find_efv_torch_launcher<float>(
+    float *d_betot_ptr,
+    float (*d_bforce)[3],
+    float *d_bvirial,
+    int chebyshev_size,
+    int n_radial_basis,
+    int n_angular_basis,
+    int l_max,
+    int num_neurons,
+    float *d_coeffs,
+    float *d_w0,
+    float *d_b0,
+    float *d_w1,
+    float *d_type_bias,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    int *d_bnumneigh,
+    int *d_bfirstneigh,
+    float (*d_brcs)[3],
+    int *d_btypes,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    float rmax_raidal,
+    float rmax_angular,
+    float *d_q_scaler);
+
+template void ai2pot::nep::find_efv_torch_launcher<double>(
+    double *d_betot_ptr,
+    double (*d_bforce)[3],
+    double *d_bvirial,
+    int chebyshev_size,
+    int n_radial_basis,
+    int n_angular_basis,
+    int l_max,
+    int num_neurons,
+    double *d_coeffs,
+    double *d_w0,
+    double *d_b0,
+    double *d_w1,
+    double *d_type_bias,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    int *d_bnumneigh,
+    int *d_bfirstneigh,
+    double (*d_brcs)[3],
+    int *d_btypes,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    double rmax_radial,
+    double rmax_angular,
+    double *d_q_scaler);
+
+
 
 
 // 2. find_ef

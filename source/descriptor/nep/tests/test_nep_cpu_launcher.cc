@@ -19,6 +19,8 @@ class NepCPULauncher : public ::testing::Test
 protected:
     int n_radial_basis;
     int n_angular_basis;
+    real rmax_radial;
+    real rmax_angular;
     int chebyshev_size;
     int num_neurons;
     int ntypes;
@@ -101,6 +103,9 @@ protected:
         num_neurons = 30;
         ntypes = 2;
         num_descriptors = ai2pot::nep::NepIndex::get_num_descriptors(n_radial_basis, n_angular_basis, l_max);
+
+        rmax_radial = 5.0;
+        rmax_angular = 4.0;
 
         coeffs = (real*)malloc(sizeof(real) * ntypes * ntypes * (n_radial_basis+n_angular_basis) * chebyshev_size);
         for (int ii=0; ii<ntypes * ntypes * (n_radial_basis+n_angular_basis) * chebyshev_size; ii++)
@@ -331,8 +336,8 @@ TEST_F(NepCPULauncher, find_ef_cpu_launcher) {
         type_map,
         umax_num_neigh_atoms,
         nghost,
-        rmax,
-        rmin,
+        rmax_radial,
+        rmax_angular,
         q_scaler);
 
 printf("1.1. energy = %.15lf\n", betot[0]);
@@ -340,6 +345,53 @@ printf("1.2. force[%d][%d] calculated by custom code = %.15lf\n", center_idx_mod
 printf("1.3. force=\n");
 for (int ii=0; ii<natoms_pad; ii++)
     printf("\t\t%3d: [%.15f, %.15f, %.15f]\n", ii, bforce[ii][0], bforce[ii][1], bforce[ii][2]);
+}
+
+
+TEST_F(NepCPULauncher, find_efv_cpu_launcher) {
+    int center_idx_modify = 1;
+    int direction1_idx_modify = 2;
+
+    ai2pot::nep::find_efv_cpu_launcher<real>(
+        betot,
+        bforce,
+        bvirial,
+        chebyshev_size,
+        n_radial_basis,
+        n_angular_basis,
+        l_max,
+        num_neurons,
+        coeffs,
+        w0,
+        b0,
+        w1,
+        type_bias,
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        bnumneigh,
+        bfirstneigh,
+        (real (*)[3])brcs,
+        btypes,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax_radial,
+        rmax_angular,
+        q_scaler);
+
+printf("1.1. energy = %.15lf\n", betot[0]);
+printf("1.2. force[%d][%d] calculated by custom code = %.15lf\n", center_idx_modify, direction1_idx_modify, bforce[center_idx_modify][direction1_idx_modify]);
+printf("1.3. force=\n");
+for (int ii=0; ii<natoms_pad; ii++)
+    printf("\t\t%3d: [%.15f, %.15f, %.15f]\n", ii, bforce[ii][0], bforce[ii][1], bforce[ii][2]);
+printf("1.4. virial:\n\t[");
+for (int aa=0; aa<3; aa++)
+    for (int bb=0; bb<3; bb++)
+        printf("%.8lf, ", bvirial[aa*3+bb]);
+printf("]\n");
 }
 
 
@@ -370,8 +422,8 @@ TEST_F(NepCPULauncher, find_ef_loss_backward_cpu_launcher)
         type_map,
         umax_num_neigh_atoms,
         nghost,
-        rmax,
-        rmin,
+        rmax_radial,
+        rmax_angular,
         q_scaler);
 
     ai2pot::nep::find_ef_loss_backward_cpu_launcher<real>(
@@ -408,8 +460,8 @@ TEST_F(NepCPULauncher, find_ef_loss_backward_cpu_launcher)
         type_map,
         umax_num_neigh_atoms,
         nghost,
-        rmax,
-        rmin,
+        rmax_radial,
+        rmax_angular,
         q_scaler);
 
 printf("***+++ %d\n", ntypes*ntypes*(n_radial_basis+n_angular_basis)*chebyshev_size);
@@ -456,9 +508,8 @@ TEST_F(NepCPULauncher, find_descriptors_cpu_launcher)
         type_map,
         umax_num_neigh_atoms,
         nghost,
-        rmax,
-        rmin);
-
+        rmax_radial,
+        rmax_angular);
 }
 
 
