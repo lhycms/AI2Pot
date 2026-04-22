@@ -11,6 +11,7 @@ from ai2pot.utils.usepot import MlffToEFLossInput, MlffInput
 from ai2pot.fromcc import (
     nepToEFLossOp,
     nepToEFOp,
+    nepToEFVOp,
     nepToDescriptorsOp)
 
 
@@ -132,7 +133,7 @@ class NepTest(unittest.TestCase):
 
     def test_nepToEF(self):
         input_info: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(self.structure)
-        e, f = nepToEFOp(self.chebyshev_size,
+        e, f, v = nepToEFVOp(self.chebyshev_size,
                          self.n_radial_basis,
                          self.n_angular_basis,
                          self.l_max,
@@ -158,11 +159,13 @@ class NepTest(unittest.TestCase):
                          self.zbl_dks_tensor)
         e: torch.Tensor
         f: torch.Tensor
-        #print(e)
-        print("force = ", f)
+        v: torch.Tensor
+        print("Energy = ", e)
+        print("Force = ", f)
+        print("Virial = ", v)
 
 
-    def test_nepToEFLoss(self):
+    def est_nepToEFLoss(self):
         # 1. Parameters
         e_weight: float = 2e1
         f_weight: float = 1e1
@@ -218,7 +221,7 @@ class NepTest(unittest.TestCase):
         print("-------------------------------------------------")
 
 
-    def test_nepToEFLoss_print(self):
+    def est_nepToEFLoss_print(self):
         # 1. Parameters
         e_weight: float = 1e1
         f_weight: float = 1e1

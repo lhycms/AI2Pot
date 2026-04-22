@@ -83,6 +83,7 @@ nep_bind_so_path: str = os.path.join(nep_lib_dir, "libnep_bind.so")
 torch.ops.load_library(nep_bind_so_path)
 # name
 nepToEFOp = torch.ops.nep.nepToEFOp
+nepToEFVOp = torch.ops.nep.nepToEFVOp
 nepToEFLossOp = torch.ops.nep.nepToEFLossOp
 nepToDescriptorsOp = torch.ops.nep.nepToDescriptorsOp
 

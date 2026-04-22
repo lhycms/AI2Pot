@@ -82,8 +82,8 @@ public:
         const at::Tensor& btypes_tensor,
         const at::Tensor& type_map_tensor,
         int nghost,
-        double rmax,
-        double rmin,
+        double rmax_radial,
+        double rmax_angular,
         const at::Tensor& q_scaler_tensor,
         double zbl_rmax,
         double zbl_rmin,
@@ -164,6 +164,33 @@ public:
 
 
 torch::autograd::variable_list NepToEFOp(
+    int chebyshev_size,
+    int n_radial_basis,
+    int n_angular_basis,
+    int l_max,
+    const at::Tensor& coeffs_tensor,
+    const at::Tensor& w0_tensor,
+    const at::Tensor& b0_tensor,
+    const at::Tensor& w1_tensor,
+    const at::Tensor& type_bias_tensor,
+    const at::Tensor& binum_tensor,
+    const at::Tensor& bilist_tensor,
+    const at::Tensor& bnumneigh_tensor,
+    const at::Tensor& bfirstneigh_tensor,
+    const at::Tensor& brcs_tensor,
+    const at::Tensor& btypes_tensor,
+    const at::Tensor& type_map_tensor,
+    int nghost,
+    double rmax,
+    double rmin,
+    const at::Tensor& q_scaler_tensor,
+    double zbl_rmax,
+    double zbl_rmin,
+    const at::Tensor& zbl_cks_tensor,
+    const at::Tensor& zbl_dks_tensor);
+    
+
+torch::autograd::variable_list NepToEFVOp(
     int chebyshev_size,
     int n_radial_basis,
     int n_angular_basis,
