@@ -106,6 +106,27 @@ protected:
 };  // class : NepLossTest
 
 
+TEST_F(NepLossTest, find_loss) {
+    ai2pot::nep::find_loss_cpu_launcher(
+        bloss,
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        e_weight,
+        f_weight,
+        v_weight,
+        betot_ml,
+        betot_dft,
+        bforce_ml,
+        bforce_dft,
+        bvirial_ml,
+        bvirial_dft);
+
+printf("1. EFV Loss = %.15f\n", bloss[0]);
+}
+
+
 TEST_F(NepLossTest, find_ef_loss) {
     ai2pot::nep::find_ef_loss_cpu_launcher(
         bloss,

@@ -84,7 +84,7 @@ void find_loss_torch_launcher(
     CoordType *d_bvirial_dft)
 {
     int block_size_x = 64;
-    int grid_size_x = (batch_size*natoms_pad- 1) / block_size_x + 1;
+    int grid_size_x = (batch_size*natoms_pad - 1) / block_size_x + 1;
     dim3 grid_size(grid_size_x);
     dim3 block_size(block_size_x);
 
