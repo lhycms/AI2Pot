@@ -344,6 +344,87 @@ extern template void find_ef_loss_backward_torch_launcher<double>(
 
 
 // 2.4. find_loss_backward_torch_launcher()
+extern template void ai2pot::nep::find_loss_backward_torch_launcher<float>(
+    float *d_bloss_der2coeffs,
+    float *d_bloss_der2w0,
+    float *d_bloss_der2b0,
+    float *d_bloss_der2w1,
+    float *d_bloss_der2type_bias,
+    float e_weight,
+    float f_weight,
+    float v_weight,
+    float *d_betot_ml,
+    float *d_betot_dft,
+    float (*d_bforce_ml)[3],
+    float (*d_bforce_dft)[3],
+    float *d_bvirial_ml,
+    float *d_bvirial_dft,
+    int chebyshev_size,
+    int n_radial_basis,
+    int n_angular_basis,
+    int l_max,
+    int num_neurons,
+    float *d_coeffs,
+    float *d_w0,
+    float *d_b0,
+    float *d_w1,
+    float *d_type_bias,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    int *d_bnumneigh,
+    int *d_bfirstneigh,
+    float (*d_brcs)[3],
+    int *d_btypes,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    float rmax_radial,
+    float rmax_angular,
+    float *d_q_scaler);
+
+extern template void ai2pot::nep::find_loss_backward_torch_launcher<double>(
+    double *d_bloss_der2coeffs,
+    double *d_bloss_der2w0,
+    double *d_bloss_der2b0,
+    double *d_bloss_der2w1,
+    double *d_bloss_der2type_bias,
+    double e_weight,
+    double f_weight,
+    double v_weight,
+    double *d_betot_ml,
+    double *d_betot_dft,
+    double (*d_bforce_ml)[3],
+    double (*d_bforce_dft)[3],
+    double *d_bvirial_ml,
+    double *d_bvirial_dft,
+    int chebyshev_size,
+    int n_radial_basis,
+    int n_angular_basis,
+    int l_max,
+    int num_neurons,
+    double *d_coeffs,
+    double *d_w0,
+    double *d_b0,
+    double *d_w1,
+    double *d_type_bias,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    int *d_bnumneigh,
+    int *d_bfirstneigh,
+    double (*d_brcs)[3],
+    int *d_btypes,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    double rmax_radial,
+    double rmax_angular,
+    double *d_q_scaler);
 
 
 // 2.5.1. find_num_real_atoms_in_batch
@@ -2268,7 +2349,6 @@ torch::autograd::variable_list NepToEFLossFunction::backward(
         at::Tensor(),
         at::Tensor(),
         at::Tensor(),
-        at::Tensor(),
         at::Tensor()};
 }
 
@@ -2894,11 +2974,509 @@ torch::autograd::variable_list NepToLossFunction::backward(
                                         .device(brcs_tensor.device());
     
     // 3.
+    at::Tensor bloss_der2coeffs_tensor = at::zeros({batch_size, num_coeffs}, float_options);
+    at::Tensor bloss_der2w0_tensor = at::zeros({batch_size, ntypes*num_neurons*num_descriptors}, float_options);
+    at::Tensor bloss_der2b0_tensor = at::zeros({batch_size, ntypes*num_neurons}, float_options);
+    at::Tensor bloss_der2w1_tensor = at::zeros({batch_size, ntypes*num_neurons}, float_options);
+    at::Tensor bloss_der2type_bias_tensor = at::zeros({batch_size, ntypes}, float_options);
+    at::Tensor betot_tensor = at::zeros({batch_size}, float_options);
+    at::Tensor bforce_tensor = at::zeros({batch_size, natoms_pad, 3}, float_options);
+    at::Tensor bvirial_tensor = at::zeros({batch_size, 9}, float_options);
 
-    // 4. 
-    
+    // 4.
+    if (brcs_tensor.scalar_type() == torch::kFloat32) {
+        float *bloss_der2coeffs = bloss_der2coeffs_tensor.data_ptr<float>();
+        float *bloss_der2w0 = bloss_der2w0_tensor.data_ptr<float>();
+        float *bloss_der2b0 = bloss_der2b0_tensor.data_ptr<float>();
+        float *bloss_der2w1 = bloss_der2w1_tensor.data_ptr<float>();
+        float *bloss_der2type_bias = bloss_der2type_bias_tensor.data_ptr<float>();
+        float *betot = betot_tensor.data_ptr<float>();
+        float (*bforce)[3] = (float (*)[3])bforce_tensor.data_ptr<float>();
+        float *bvirial = bvirial_tensor.data_ptr<float>();
 
+        float *coeffs = coeffs_tensor.data_ptr<float>();
+        float *w0 = w0_tensor.data_ptr<float>();
+        float *b0 = b0_tensor.data_ptr<float>();
+        float *w1 = w1_tensor.data_ptr<float>();
+        float *type_bias = type_bias_tensor.data_ptr<float>();
 
+        float *betot_dft = betot_dft_tensor.data_ptr<float>();
+        float (*bforce_dft)[3] = (float (*)[3])bforce_dft_tensor.data_ptr<float>();
+        float *bvirial_dft = bvirial_dft_tensor.data_ptr<float>();
+
+        float (*brcs)[3] = (float (*)[3])brcs_tensor.data_ptr<float>();
+        float *q_scaler = q_scaler_tensor.data_ptr<float>();
+        float *zbl_cks = zbl_cks_tensor.data_ptr<float>();
+        float *zbl_dks = zbl_dks_tensor.data_ptr<float>();
+
+        if (brcs_tensor.device() == c10::kCPU) {
+            for (int bb=0; bb<batch_size; bb++) {
+                float *etot_ptr = &(betot_tensor.data_ptr<float>()[bb]);
+                float (*force)[3] = (float (*)[3])bforce_tensor[bb].data_ptr<float>();
+                float *virial = bvirial_tensor[bb].data_ptr<float>();
+                int inum = binum[bb];
+                int *ilist = (int*)bilist_tensor[bb].data_ptr<int>();
+                int *numneigh = (int*)bnumneigh_tensor[bb].data_ptr<int>();
+                int *firstneigh = (int*)bfirstneigh_tensor[bb].data_ptr<int>();
+                float (*rcs)[3] = (float (*)[3])brcs_tensor[bb].data_ptr<float>();
+                int *types = (int*)btypes_tensor[bb].data_ptr<int>();
+
+                if (zbl_rmax > 0.0) {
+                    ai2pot::correction::GroupZBL<float> gzbl(
+                        ntypes,
+                        type_map,
+                        type_map,
+                        zbl_rmax,
+                        zbl_rmin,
+                        zbl_cks,
+                        zbl_dks);
+                    
+                    gzbl.correct_efv(
+                        (*etot_ptr),
+                        (float*)force,
+                        virial,
+                        inum,
+                        ilist,
+                        numneigh,
+                        firstneigh,
+                        rcs,
+                        types,
+                        ntypes,
+                        type_map,
+                        umax_num_neigh_atoms,
+                        nghost);
+                }
+            }
+
+            find_efv_cpu_launcher<float>(
+                betot,
+                bforce,
+                bvirial,
+                chebyshev_size,
+                n_radial_basis,
+                n_angular_basis,
+                l_max,
+                num_neurons,
+                coeffs,
+                w0,
+                b0,
+                w1,
+                type_bias,
+                batch_size,
+                natoms_pad,
+                binum,
+                bilist,
+                bnumneigh,
+                bfirstneigh,
+                brcs,
+                btypes,
+                ntypes,
+                type_map,
+                umax_num_neigh_atoms,
+                nghost,
+                (float)rmax_radial,
+                (float)rmax_angular,
+                q_scaler);
+
+            find_loss_backward_cpu_launcher<float>(
+                bloss_der2coeffs,
+                bloss_der2w0,
+                bloss_der2b0,
+                bloss_der2w1,
+                bloss_der2type_bias,
+                e_weight,
+                f_weight,
+                v_weight,
+                betot,
+                betot_dft,
+                bforce,
+                bforce_dft,
+                bvirial,
+                bvirial_dft,
+                chebyshev_size,
+                n_radial_basis,
+                n_angular_basis,
+                l_max,
+                num_neurons,
+                coeffs,
+                w0,
+                b0,
+                w1,
+                type_bias,
+                batch_size,
+                natoms_pad,
+                binum,
+                bilist,
+                bnumneigh,
+                bfirstneigh,
+                brcs,
+                btypes,
+                ntypes,
+                type_map,
+                umax_num_neigh_atoms,
+                nghost,
+                rmax_radial,
+                rmax_angular,
+                q_scaler);
+        } else {
+            #if defined(USE_CUDA) or defined(__INTELLISENSE__)
+            if (zbl_rmax > 0)
+                ai2pot::correction::correct_zbl_efv_torch_launcher(
+                    betot,
+                    (float*)bforce,
+                    bvirial,
+                    (float)zbl_rmax,
+                    (float)zbl_rmin,
+                    zbl_cks,
+                    zbl_dks,
+                    batch_size,
+                    natoms_pad,
+                    binum,
+                    bilist,
+                    bnumneigh,
+                    bfirstneigh,
+                    brcs,
+                    btypes,
+                    ntypes,
+                    type_map,
+                    umax_num_neigh_atoms,
+                    nghost);
+
+            find_efv_torch_launcher(
+                betot,
+                bforce,
+                bvirial,
+                chebyshev_size,
+                n_radial_basis,
+                n_angular_basis,
+                l_max,
+                num_neurons,
+                coeffs,
+                w0,
+                b0,
+                w1,
+                type_bias,
+                batch_size,
+                natoms_pad,
+                binum,
+                bilist,
+                bnumneigh,
+                bfirstneigh,
+                brcs,
+                btypes,
+                ntypes,
+                type_map,
+                umax_num_neigh_atoms,
+                nghost,
+                (float)rmax_radial,
+                (float)rmax_angular,
+                q_scaler);
+            
+            find_loss_backward_torch_launcher(
+                bloss_der2coeffs,
+                bloss_der2w0,
+                bloss_der2b0,
+                bloss_der2w1,
+                bloss_der2type_bias,
+                (float)e_weight,
+                (float)f_weight,
+                (float)v_weight,
+                betot,
+                betot_dft,
+                bforce,
+                bforce_dft,
+                bvirial,
+                bvirial_dft,
+                chebyshev_size,
+                n_radial_basis,
+                n_angular_basis,
+                l_max,
+                num_neurons,
+                coeffs,
+                w0,
+                b0,
+                w1,
+                type_bias,
+                batch_size,
+                natoms_pad,
+                binum,
+                bilist,
+                bnumneigh,
+                bfirstneigh,
+                brcs,
+                btypes,
+                ntypes,
+                type_map,
+                umax_num_neigh_atoms,
+                nghost,
+                (float)rmax_radial,
+                (float)rmax_angular,
+                q_scaler);
+            #endif
+        }
+    } else {
+        double *bloss_der2coeffs = bloss_der2coeffs_tensor.data_ptr<double>();
+        double *bloss_der2w0 = bloss_der2w0_tensor.data_ptr<double>();
+        double *bloss_der2b0 = bloss_der2b0_tensor.data_ptr<double>();
+        double *bloss_der2w1 = bloss_der2w1_tensor.data_ptr<double>();
+        double *bloss_der2type_bias = bloss_der2type_bias_tensor.data_ptr<double>();
+        double *betot = betot_tensor.data_ptr<double>();
+        double (*bforce)[3] = (double (*)[3])bforce_tensor.data_ptr<double>();
+        double *bvirial = bvirial_tensor.data_ptr<double>();
+
+        double *coeffs = coeffs_tensor.data_ptr<double>();
+        double *w0 = w0_tensor.data_ptr<double>();
+        double *b0 = b0_tensor.data_ptr<double>();
+        double *w1 = w1_tensor.data_ptr<double>();
+        double *type_bias = type_bias_tensor.data_ptr<double>();
+
+        double *betot_dft = betot_dft_tensor.data_ptr<double>();
+        double (*bforce_dft)[3] = (double (*)[3])bforce_dft_tensor.data_ptr<double>();
+        double *bvirial_dft = bvirial_dft_tensor.data_ptr<double>();
+
+        double (*brcs)[3] = (double (*)[3])brcs_tensor.data_ptr<double>();
+        double *q_scaler = q_scaler_tensor.data_ptr<double>();
+        double *zbl_cks = zbl_cks_tensor.data_ptr<double>();
+        double *zbl_dks = zbl_dks_tensor.data_ptr<double>();
+
+        if (brcs_tensor.device() == c10::kCPU) {
+            for (int bb=0; bb<batch_size; bb++) {
+                double *etot_ptr = &(betot_tensor.data_ptr<double>()[bb]);
+                double (*force)[3] = (double (*)[3])bforce_tensor[bb].data_ptr<double>();
+                double *virial = bvirial_tensor[bb].data_ptr<double>();
+                int inum = binum[bb];
+                int *ilist = (int*)bilist_tensor[bb].data_ptr<int>();
+                int *numneigh = (int*)bnumneigh_tensor[bb].data_ptr<int>();
+                int *firstneigh = (int*)bfirstneigh_tensor[bb].data_ptr<int>();
+                double (*rcs)[3] = (double (*)[3])brcs_tensor[bb].data_ptr<double>();
+                int *types = (int*)btypes_tensor[bb].data_ptr<int>();
+
+                if (zbl_rmax > 0.0) {
+                    ai2pot::correction::GroupZBL<double> gzbl(
+                        ntypes,
+                        type_map,
+                        type_map,
+                        zbl_rmax,
+                        zbl_rmin,
+                        zbl_cks,
+                        zbl_dks);
+                    
+                    gzbl.correct_efv(
+                        (*etot_ptr),
+                        (double*)force,
+                        virial,
+                        inum,
+                        ilist,
+                        numneigh,
+                        firstneigh,
+                        rcs,
+                        types,
+                        ntypes,
+                        type_map,
+                        umax_num_neigh_atoms,
+                        nghost);
+                }
+            }
+
+            find_efv_cpu_launcher<double>(
+                betot,
+                bforce,
+                bvirial,
+                chebyshev_size,
+                n_radial_basis,
+                n_angular_basis,
+                l_max,
+                num_neurons,
+                coeffs,
+                w0,
+                b0,
+                w1,
+                type_bias,
+                batch_size,
+                natoms_pad,
+                binum,
+                bilist,
+                bnumneigh,
+                bfirstneigh,
+                brcs,
+                btypes,
+                ntypes,
+                type_map,
+                umax_num_neigh_atoms,
+                nghost,
+                (double)rmax_radial,
+                (double)rmax_angular,
+                q_scaler);
+
+            find_loss_backward_cpu_launcher<double>(
+                bloss_der2coeffs,
+                bloss_der2w0,
+                bloss_der2b0,
+                bloss_der2w1,
+                bloss_der2type_bias,
+                e_weight,
+                f_weight,
+                v_weight,
+                betot,
+                betot_dft,
+                bforce,
+                bforce_dft,
+                bvirial,
+                bvirial_dft,
+                chebyshev_size,
+                n_radial_basis,
+                n_angular_basis,
+                l_max,
+                num_neurons,
+                coeffs,
+                w0,
+                b0,
+                w1,
+                type_bias,
+                batch_size,
+                natoms_pad,
+                binum,
+                bilist,
+                bnumneigh,
+                bfirstneigh,
+                brcs,
+                btypes,
+                ntypes,
+                type_map,
+                umax_num_neigh_atoms,
+                nghost,
+                rmax_radial,
+                rmax_angular,
+                q_scaler);
+        } else {
+            #if defined(USE_CUDA) or defined(__INTELLISENSE__)
+            if (zbl_rmax > 0)
+                ai2pot::correction::correct_zbl_efv_torch_launcher(
+                    betot,
+                    (double*)bforce,
+                    bvirial,
+                    (double)zbl_rmax,
+                    (double)zbl_rmin,
+                    zbl_cks,
+                    zbl_dks,
+                    batch_size,
+                    natoms_pad,
+                    binum,
+                    bilist,
+                    bnumneigh,
+                    bfirstneigh,
+                    brcs,
+                    btypes,
+                    ntypes,
+                    type_map,
+                    umax_num_neigh_atoms,
+                    nghost);
+
+            find_efv_torch_launcher(
+                betot,
+                bforce,
+                bvirial,
+                chebyshev_size,
+                n_radial_basis,
+                n_angular_basis,
+                l_max,
+                num_neurons,
+                coeffs,
+                w0,
+                b0,
+                w1,
+                type_bias,
+                batch_size,
+                natoms_pad,
+                binum,
+                bilist,
+                bnumneigh,
+                bfirstneigh,
+                brcs,
+                btypes,
+                ntypes,
+                type_map,
+                umax_num_neigh_atoms,
+                nghost,
+                (double)rmax_radial,
+                (double)rmax_angular,
+                q_scaler);
+            
+            find_loss_backward_torch_launcher(
+                bloss_der2coeffs,
+                bloss_der2w0,
+                bloss_der2b0,
+                bloss_der2w1,
+                bloss_der2type_bias,
+                (double)e_weight,
+                (double)f_weight,
+                (double)v_weight,
+                betot,
+                betot_dft,
+                bforce,
+                bforce_dft,
+                bvirial,
+                bvirial_dft,
+                chebyshev_size,
+                n_radial_basis,
+                n_angular_basis,
+                l_max,
+                num_neurons,
+                coeffs,
+                w0,
+                b0,
+                w1,
+                type_bias,
+                batch_size,
+                natoms_pad,
+                binum,
+                bilist,
+                bnumneigh,
+                bfirstneigh,
+                brcs,
+                btypes,
+                ntypes,
+                type_map,
+                umax_num_neigh_atoms,
+                nghost,
+                (double)rmax_radial,
+                (double)rmax_angular,
+                q_scaler);
+            #endif
+        }
+    }
+
+    return {
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        torch::matmul(bgrad_output_tensor, bloss_der2coeffs_tensor),
+        torch::matmul(bgrad_output_tensor, bloss_der2w0_tensor),
+        torch::matmul(bgrad_output_tensor, bloss_der2b0_tensor),
+        torch::matmul(bgrad_output_tensor, bloss_der2w1_tensor),
+        torch::matmul(bgrad_output_tensor, bloss_der2type_bias_tensor),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor()};
 }
 
 
@@ -3222,6 +3800,72 @@ torch::autograd::variable_list NepToEFLossOp(
         f_weight,
         betot_dft_tensor,
         bforce_dft_tensor,
+        chebyshev_size,
+        n_radial_basis,
+        n_angular_basis,
+        l_max,
+        coeffs_tensor,
+        w0_tensor,
+        b0_tensor,
+        w1_tensor,
+        type_bias_tensor,
+        binum_tensor,
+        bilist_tensor,
+        bnumneigh_tensor,
+        bfirstneigh_tensor,
+        brcs_tensor,
+        btypes_tensor,
+        type_map_tensor,
+        nghost,
+        rmax_radial,
+        rmax_angular,
+        q_scaler_tensor,
+        zbl_rmax,
+        zbl_rmin,
+        zbl_cks_tensor,
+        zbl_dks_tensor);
+}
+
+
+torch::autograd::variable_list NepToLossOp(
+    double e_weight,
+    double f_weight,
+    double v_weight,
+    const at::Tensor& betot_dft_tensor,
+    const at::Tensor& bforce_dft_tensor,
+    const at::Tensor& bvirial_dft_tensor,
+    int chebyshev_size,
+    int n_radial_basis,
+    int n_angular_basis,
+    int l_max,
+    const at::Tensor& coeffs_tensor,
+    const at::Tensor& w0_tensor,
+    const at::Tensor& b0_tensor,
+    const at::Tensor& w1_tensor,
+    const at::Tensor& type_bias_tensor,
+    const at::Tensor& binum_tensor,
+    const at::Tensor& bilist_tensor,
+    const at::Tensor& bnumneigh_tensor,
+    const at::Tensor& bfirstneigh_tensor,
+    const at::Tensor& brcs_tensor,
+    const at::Tensor& btypes_tensor,
+    const at::Tensor& type_map_tensor,
+    int nghost,
+    double rmax_radial,
+    double rmax_angular,
+    const at::Tensor& q_scaler_tensor,
+    double zbl_rmax,
+    double zbl_rmin,
+    const at::Tensor& zbl_cks_tensor,
+    const at::Tensor& zbl_dks_tensor)
+{
+    return NepToLossFunction::apply(
+        e_weight,
+        f_weight,
+        v_weight,
+        betot_dft_tensor,
+        bforce_dft_tensor,
+        bvirial_dft_tensor,
         chebyshev_size,
         n_radial_basis,
         n_angular_basis,

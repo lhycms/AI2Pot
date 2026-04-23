@@ -7,9 +7,10 @@ import torch
 import torch.nn as nn
 from torch.autograd import gradcheck
 
-from ai2pot.utils.usepot import MlffToEFLossInput, MlffInput
+from ai2pot.utils.usepot import MlffToEFLossInput, MlffInput, MlffToLossInput
 from ai2pot.fromcc import (
     nepToEFLossOp,
+    nepToLossOp,
     nepToEFOp,
     nepToEFVOp,
     nepToDescriptorsOp)
@@ -88,7 +89,12 @@ class NepTest(unittest.TestCase):
                 self.zbl_dks_tensor[idx*4 + 3] = 0.20162
 
         # 3. 
-        self.mlff_to_loss_input: MlffToEFLossInput = MlffToEFLossInput(type_map=self.type_map_tensor.numpy().tolist(),
+        self.mlff_to_ef_loss_input: MlffToEFLossInput = MlffToEFLossInput(type_map=self.type_map_tensor.numpy().tolist(),
+                                                                       rcut=self.rmax_radial,
+                                                                       umax_num_neigh_atoms=self.umax_num_neigh_atoms,
+                                                                       dtype=self.torch_float_dtype,
+                                                                       device=self.device)
+        self.mlff_to_loss_input: MlffToLossInput = MlffToLossInput(type_map=self.type_map_tensor.numpy().tolist(),
                                                                        rcut=self.rmax_radial,
                                                                        umax_num_neigh_atoms=self.umax_num_neigh_atoms,
                                                                        dtype=self.torch_float_dtype,
@@ -133,7 +139,7 @@ class NepTest(unittest.TestCase):
 
     def test_nepToEF(self):
         input_info: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(self.structure)
-        e, f, v = nepToEFVOp(self.chebyshev_size,
+        e, f = nepToEFOp(self.chebyshev_size,
                          self.n_radial_basis,
                          self.n_angular_basis,
                          self.l_max,
@@ -159,16 +165,14 @@ class NepTest(unittest.TestCase):
                          self.zbl_dks_tensor)
         e: torch.Tensor
         f: torch.Tensor
-        v: torch.Tensor
         print("Energy = ", e)
         print("Force = ", f)
-        print("Virial = ", v)
 
 
-    def est_nepToEFLoss(self):
+    def test_nepToEFLoss(self):
         # 1. Parameters
         e_weight: float = 2e1
-        f_weight: float = 1e1
+        f_weight: float = 3e1
         self.coeffs_tensor.requires_grad_(True)
         self.w0_tensor.requires_grad_(True)
         self.b0_tensor.requires_grad_(True)
@@ -176,7 +180,7 @@ class NepTest(unittest.TestCase):
         self.type_bias_tensor.requires_grad_(True)
         
         # 2. Run
-        input_info: List[torch.Tensor] = self.mlff_to_loss_input.analyse_pymatgen(self.structure,
+        input_info: List[torch.Tensor] = self.mlff_to_ef_loss_input.analyse_pymatgen(self.structure,
                                                                                   e_weight=e_weight,
                                                                                   f_weight=f_weight)
 
@@ -221,7 +225,7 @@ class NepTest(unittest.TestCase):
         print("-------------------------------------------------")
 
 
-    def est_nepToEFLoss_print(self):
+    def test_nepToEFLoss_print(self):
         # 1. Parameters
         e_weight: float = 1e1
         f_weight: float = 1e1
@@ -233,7 +237,7 @@ class NepTest(unittest.TestCase):
         self.type_bias_tensor.requires_grad_(True)
         
         # 2. Run
-        input_info: List[torch.Tensor] = self.mlff_to_loss_input.analyse_pymatgen(self.structure,
+        input_info: List[torch.Tensor] = self.mlff_to_ef_loss_input.analyse_pymatgen(self.structure,
                                                                                   e_weight=e_weight,
                                                                                   f_weight=f_weight)
         loss = nepToEFLossOp(e_weight,
@@ -277,6 +281,66 @@ class NepTest(unittest.TestCase):
         #print(self.w1_tensor.grad)
         #print("5. self.type_bias_tensor.grad:")
         #print(self.type_bias_tensor.grad)
+
+
+    def test_nepToLoss(self):
+        # 1. Parameters
+        e_weight: float = 2e1
+        f_weight: float = 3e1
+        v_weight: float = 4e1
+        self.coeffs_tensor.requires_grad_(True)
+        self.w0_tensor.requires_grad_(True)
+        self.b0_tensor.requires_grad_(True)
+        self.w1_tensor.requires_grad_(True)
+        self.type_bias_tensor.requires_grad_(True)
+        
+        # 2. Run
+        input_info: List[torch.Tensor] = self.mlff_to_loss_input.analyse_pymatgen(self.structure,
+                                                                                  e_weight=e_weight,
+                                                                                  f_weight=f_weight,
+                                                                                  v_weight=v_weight)
+
+        def nepToLossOp1(*args, **kwargs):
+            return nepToLossOp(*args, **kwargs)[0]
+        
+        test = gradcheck(func=nepToLossOp1,
+                         inputs=(e_weight,
+                                 f_weight,
+                                 v_weight,
+                                 input_info[3],
+                                 input_info[4],
+                                 input_info[5],
+                                 self.chebyshev_size,
+                                 self.n_radial_basis,
+                                 self.n_angular_basis,
+                                 self.l_max,
+                                 self.coeffs_tensor,
+                                 self.w0_tensor,
+                                 self.b0_tensor,
+                                 self.w1_tensor,
+                                 self.type_bias_tensor,
+                                 input_info[6],
+                                 input_info[7],
+                                 input_info[8],
+                                 input_info[9],
+                                 input_info[10],
+                                 input_info[11],
+                                 self.type_map_tensor,
+                                 input_info[12].item(),
+                                 self.rmax_radial,
+                                 self.rmax_angular,
+                                 self.q_scaler_tensor,
+                                 self.zbl_rmax,
+                                 self.zbl_rmin,
+                                 self.zbl_cks_tensor,
+                                 self.zbl_dks_tensor),
+                            eps=1e-6,
+                            atol=1e-5,
+                            rtol=1e-4,
+                            nondet_tol=1e-6)
+        print("-------------------------------------------------")
+        print("* NepToLossOp Gradient pass check: ", test)
+        print("-------------------------------------------------")
 
 
     def est_nepToDescriptors(self):

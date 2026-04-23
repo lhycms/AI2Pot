@@ -85,6 +85,7 @@ torch.ops.load_library(nep_bind_so_path)
 nepToEFOp = torch.ops.nep.nepToEFOp
 nepToEFVOp = torch.ops.nep.nepToEFVOp
 nepToEFLossOp = torch.ops.nep.nepToEFLossOp
+nepToLossOp = torch.ops.nep.nepToLossOp
 nepToDescriptorsOp = torch.ops.nep.nepToDescriptorsOp
 
 ### Part 3. fvt

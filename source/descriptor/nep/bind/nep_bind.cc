@@ -201,6 +201,78 @@ TORCH_LIBRARY(nep, m) {
         }
     );
 
+    m.def(
+        "nepToLossOp",
+        [](double e_weight,
+           double f_weight,
+           double v_weight,
+           const at::Tensor& betot_dft_tensor,
+           const at::Tensor& bforce_dft_tensor,
+           const at::Tensor& bvirial_dft_tensor,
+           int64_t chebyshev_size,
+           int64_t n_radial_basis,
+           int64_t n_angular_basis,
+           int64_t l_max,
+           const at::Tensor& coeffs_tensor,
+           const at::Tensor& w0_tensor,
+           const at::Tensor& b0_tensor,
+           const at::Tensor& w1_tensor,
+           const at::Tensor& type_bias_tensor,
+           const at::Tensor& binum_tensor,
+           const at::Tensor& bilist_tensor,
+           const at::Tensor& bnumneigh_tensor,
+           const at::Tensor& bfirstneigh_tensor,
+           const at::Tensor& brcs_tensor,
+           const at::Tensor& btypes_tensor,
+           const at::Tensor& type_map_tensor,
+           int64_t nghost,
+           double rmax_radial,
+           double rmax_angular,
+           const at::Tensor& q_scaler_tensor,
+           double zbl_rmax,
+           double zbl_rmin,
+           const at::Tensor& zbl_cks_tensor,
+           const at::Tensor& zbl_dks_tensor)
+        {
+            assert(chebyshev_size < INT_MAX);
+            assert(n_radial_basis < INT_MAX);
+            assert(n_angular_basis < INT_MAX);
+            assert(l_max < INT_MAX);
+            assert(nghost < INT_MAX);
+
+            return ai2pot::nep::NepToLossOp(
+                e_weight,
+                f_weight,
+                v_weight,
+                betot_dft_tensor,
+                bforce_dft_tensor,
+                bvirial_dft_tensor,
+                (int)chebyshev_size,
+                (int)n_radial_basis,
+                (int)n_angular_basis,
+                (int)l_max,
+                coeffs_tensor,
+                w0_tensor,
+                b0_tensor,
+                w1_tensor,
+                type_bias_tensor,
+                binum_tensor,
+                bilist_tensor,
+                bnumneigh_tensor,
+                bfirstneigh_tensor,
+                brcs_tensor,
+                btypes_tensor,
+                type_map_tensor,
+                (int)nghost,
+                rmax_radial,
+                rmax_angular,
+                q_scaler_tensor,
+                zbl_rmax,
+                zbl_rmin,
+                zbl_cks_tensor,
+                zbl_dks_tensor);
+        }
+    );
 
     m.def(
         "nepToDescriptorsOp",

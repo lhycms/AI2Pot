@@ -98,6 +98,47 @@ void find_ef_loss_backward_torch_launcher(
 
 
 // 4. find_loss_backward
+template <typename CoordType>
+void find_loss_backward_torch_launcher(
+    CoordType *d_bloss_der2coeffs,
+    CoordType *d_bloss_der2w0,
+    CoordType *d_bloss_der2b0,
+    CoordType *d_bloss_der2w1,
+    CoordType *d_bloss_der2type_bias,
+    CoordType e_weight,
+    CoordType f_weight,
+    CoordType v_weight,
+    CoordType *d_betot_ml,
+    CoordType *d_betot_dft,
+    CoordType (*d_bforce_ml)[3],
+    CoordType (*d_bforce_dft)[3],
+    CoordType *d_bvirial_ml,
+    CoordType *d_bvirial_dft,
+    int chebyshev_size,
+    int n_radial_basis,
+    int n_angular_basis,
+    int l_max,
+    int num_neurons,
+    CoordType *d_coeffs,
+    CoordType *d_w0,
+    CoordType *d_b0,
+    CoordType *d_w1,
+    CoordType *d_type_bias,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    int *d_bnumneigh,
+    int *d_bfirstneigh,
+    CoordType (*d_brcs)[3],
+    int *d_btypes,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    CoordType rmax_radial,
+    CoordType rmax_angular,
+    CoordType *d_q_scaler);
 
 
 // 5.1. find_num_real_atoms_in_batch
