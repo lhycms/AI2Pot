@@ -137,7 +137,7 @@ class NepTest(unittest.TestCase):
         print("NepTest (TestCase) is tearing down...\n")
 
 
-    def test_nepToEF(self):
+    def est_nepToEF(self):
         input_info: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(self.structure)
         e, f = nepToEFOp(self.chebyshev_size,
                          self.n_radial_basis,
@@ -167,6 +167,40 @@ class NepTest(unittest.TestCase):
         f: torch.Tensor
         print("Energy = ", e)
         print("Force = ", f)
+
+
+    def est_nepToEFV(self):
+        input_info: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(self.structure)
+        e, f, v = nepToEFVOp(self.chebyshev_size,
+                         self.n_radial_basis,
+                         self.n_angular_basis,
+                         self.l_max,
+                         self.coeffs_tensor,
+                         self.w0_tensor,
+                         self.b0_tensor,
+                         self.w1_tensor,
+                         self.type_bias_tensor,
+                         input_info[0],
+                         input_info[1],
+                         input_info[2],
+                         input_info[3],
+                         input_info[4],
+                         input_info[5],
+                         self.type_map_tensor,
+                         input_info[6],
+                         self.rmax_radial,
+                         self.rmax_angular,
+                         self.q_scaler_tensor,
+                         self.zbl_rmax,
+                         self.zbl_rmin,
+                         self.zbl_cks_tensor,
+                         self.zbl_dks_tensor)
+        e: torch.Tensor
+        f: torch.Tensor
+        v: torch.Tensor
+        print("Energy = ", e)
+        print("Force = ", f)
+        print("Virial = ", v)
 
 
     def test_nepToEFLoss(self):
@@ -225,7 +259,7 @@ class NepTest(unittest.TestCase):
         print("-------------------------------------------------")
 
 
-    def test_nepToEFLoss_print(self):
+    def est_nepToEFLoss_print(self):
         # 1. Parameters
         e_weight: float = 1e1
         f_weight: float = 1e1

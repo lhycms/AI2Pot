@@ -22,7 +22,9 @@ import torch
 import torch.nn as nn
 
 from ai2pot.fromcc import (nepToEFLossOp,
+                           nepToLossOp,
                            nepToEFOp,
+                           nepToEFVOp,
                            nepToDescriptorsOp)
 
 
@@ -131,6 +133,59 @@ class Nep(nn.Module):
         return bmse_tensor
 
 
+    def predict_loss(self,
+                     e_weight: float,
+                     f_weight: float,
+                     v_weight: float,
+                     betot_dft_tensor: torch.Tensor,
+                     bforce_dft_tensor: torch.Tensor,
+                     bvirial_dft_tensor: torch.Tensor,
+                     binum_tensor: torch.Tensor,
+                     bilist_tensor: torch.Tensor,
+                     bnumneigh_tensor: torch.Tensor,
+                     bfirstneigh_tensor: torch.Tensor,
+                     brcs_tensor: torch.Tensor,
+                     btypes_tensor: torch.Tensor,
+                     bnghost_tensor: torch.Tensor):
+        bmse_tensor, e_rmse_tensor, f_rmse_tensor, v_rmse_tensor = nepToLossOp(
+            e_weight,
+            f_weight,
+            v_weight,
+            betot_dft_tensor,
+            bforce_dft_tensor,
+            bvirial_dft_tensor,
+            self.chebyshev_size,
+            self.n_radial_basis,
+            self.n_angular_basis,
+            self.l_max,
+            self.coeffs_tensor,
+            self.w0_tensor,
+            self.b0_tensor,
+            self.w1_tensor,
+            self.type_bias_tensor,
+            binum_tensor,
+            bilist_tensor,
+            bnumneigh_tensor,
+            bfirstneigh_tensor,
+            brcs_tensor,
+            btypes_tensor,
+            self.type_map_tensor,
+            bnghost_tensor[0].item(),
+            self.rmax_radial,
+            self.rmax_angular,
+            self.q_scaler_tensor,
+            self.zbl_rmax,
+            self.zbl_rmin,
+            self.zbl_cks_tensor,
+            self.zbl_dks_tensor)
+        bmse_tensor: torch.Tensor
+        e_rmse_tensor: torch.Tensor
+        f_rmse_tensor: torch.Tensor
+        v_rmse_tensor: torch.Tensor
+
+        return bmse_tensor, e_rmse_tensor, f_rmse_tensor, v_rmse_tensor
+
+
     def predict_ef_loss(self,
                         e_weight: float,
                         f_weight: float,
@@ -142,7 +197,7 @@ class Nep(nn.Module):
                         bfirstneigh_tensor: torch.Tensor,
                         brcs_tensor: torch.Tensor,
                         btypes_tensor: torch.Tensor,
-                        nghost: int):
+                        bnghost_tensor: torch.Tensor):
         bmse_tensor, e_rmse_tensor, f_rmse_tensor = nepToEFLossOp(
             e_weight,
             f_weight,
@@ -164,7 +219,7 @@ class Nep(nn.Module):
             brcs_tensor,
             btypes_tensor,
             self.type_map_tensor,
-            nghost,
+            bnghost_tensor[0].item(),
             self.rmax_radial,
             self.rmax_angular,
             self.q_scaler_tensor,
@@ -177,6 +232,46 @@ class Nep(nn.Module):
         f_rmse_tensor: torch.Tensor
 
         return bmse_tensor, e_rmse_tensor, f_rmse_tensor
+
+
+    def predict_efv(self,
+                    binum_tensor: torch.Tensor,
+                    bilist_tensor: torch.Tensor,
+                    bnumneigh_tensor: torch.Tensor,
+                    bfirstneigh_tensor: torch.Tensor,
+                    brcs_tensor: torch.Tensor,
+                    btypes_tensor: torch.Tensor,
+                    bnghost_tensor: torch.Tensor):
+        betot_tensor, bforce_tensor, bvirial_tensor = nepToEFVOp(
+            self.chebyshev_size,
+            self.n_radial_basis,
+            self.n_angular_basis,
+            self.l_max,
+            self.coeffs_tensor,
+            self.w0_tensor,
+            self.b0_tensor,
+            self.w1_tensor,
+            self.type_bias_tensor,
+            binum_tensor,
+            bilist_tensor,
+            bnumneigh_tensor,
+            bfirstneigh_tensor,
+            brcs_tensor,
+            btypes_tensor,
+            self.type_map_tensor,
+            bnghost_tensor[0].item(),
+            self.rmax_radial,
+            self.rmax_angular,
+            self.q_scaler_tensor,
+            self.zbl_rmax,
+            self.zbl_rmin,
+            self.zbl_cks_tensor,
+            self.zbl_dks_tensor)
+        betot_tensor: torch.Tensor
+        bforce_tensor: torch.Tensor
+        bvirial_tensor: torch.Tensor
+        
+        return betot_tensor, bforce_tensor, bvirial_tensor
 
 
     def predict_ef(self,

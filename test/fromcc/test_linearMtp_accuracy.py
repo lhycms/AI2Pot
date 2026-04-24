@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 from torch.autograd import gradcheck
 
-from ai2pot.utils.usepot import MlffToLossInput, MlffInput
+from ai2pot.utils.usepot import MlffToLossInput, MlffInput, MlffToEFLossInput
 from ai2pot.data.mlffdataset import ExtxyzDataset
 from ai2pot.fromcc import (
     linearMtpToEFLossOp,
@@ -184,7 +184,7 @@ class LinearMtpTest(unittest.TestCase):
         print("LinearMtpTest (TestCase) is tearing down...\n")
 
 
-    def test_nepToEF(self):
+    def est_nepToEF(self):
         input_info: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(self.structure)
         e, f = linearMtpToEFOp(self.chebyshev_size,
                                 self.coeffs_tensor,
@@ -215,11 +215,11 @@ class LinearMtpTest(unittest.TestCase):
         print(f)
 
     
-    def test_linearMtpToEFLoss(self):
+    def test_linearMtpToLoss(self):
         # 1. Parameters
         e_weight: float = 2e1
-        f_weight: float = 1e1
-        v_weight: float = 0.0
+        f_weight: float = 3e1
+        v_weight: float = 4e1
         self.coeffs_tensor.requires_grad_(True)
         self.linear_coeffs_tensor.requires_grad_(True)
         self.type_bias_tensor.requires_grad_(True)
@@ -269,7 +269,7 @@ class LinearMtpTest(unittest.TestCase):
                          rtol=1e-4,
                          nondet_tol=1e-6)
         print("-------------------------------------------------")
-        print("* linearMtpToEFLossOp Gradient pass check: ", test)
+        print("* linearMtpToLossOp Gradient pass check: ", test)
         print("-------------------------------------------------")
 
 

@@ -99,7 +99,7 @@ class LitPotentialBase(L.LightningModule):
                 bfirstneigh,
                 brcs,
                 btypes,
-                bnghost[0].item())
+                bnghost)
             bmse_tensor: torch.Tensor
             e_rmse_tensor: torch.Tensor
             f_rmse_tensor: torch.Tensor
@@ -117,7 +117,7 @@ class LitPotentialBase(L.LightningModule):
                 bfirstneigh,
                 brcs,
                 btypes,
-                bnghost[0].item())
+                bnghost)
             bmse_tensor: torch.Tensor
             e_rmse_tensor: torch.Tensor
             f_rmse_tensor: torch.Tensor      
@@ -187,7 +187,7 @@ class LitPotentialBase(L.LightningModule):
                 bfirstneigh,
                 brcs,
                 btypes,
-                bnghost[0].item())
+                bnghost)
             bmse_tensor: torch.Tensor
             e_rmse_tensor: torch.Tensor
             f_rmse_tensor: torch.Tensor
@@ -205,7 +205,7 @@ class LitPotentialBase(L.LightningModule):
                 bfirstneigh,
                 brcs,
                 btypes,
-                bnghost[0].item())
+                bnghost)
             bmse_tensor: torch.Tensor
             e_rmse_tensor: torch.Tensor
             f_rmse_tensor: torch.Tensor      
@@ -250,7 +250,7 @@ class LitPotentialBase(L.LightningModule):
                 bfirstneigh,
                 brcs,
                 btypes,
-                bnghost[0].item())
+                bnghost)
             bmse_tensor: torch.Tensor
             e_rmse_tensor: torch.Tensor
             f_rmse_tensor: torch.Tensor
@@ -268,7 +268,7 @@ class LitPotentialBase(L.LightningModule):
                 bfirstneigh,
                 brcs,
                 btypes,
-                bnghost[0].item())
+                bnghost)
             bmse_tensor: torch.Tensor
             e_rmse_tensor: torch.Tensor
             f_rmse_tensor: torch.Tensor      

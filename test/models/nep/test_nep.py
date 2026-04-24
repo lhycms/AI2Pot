@@ -23,7 +23,6 @@ class NepTest(unittest.TestCase):
         print("NepTest (TestCase) is setting up...\n")
         ### Hyperparameters for Nep
         self.type_map: List[int] = [75, 41, 16, 34]
-        self.energy_shifts: Optional[List[float]] = None
         self.umax_num_neigh_atoms: int = 200
         self.fit_virial: bool = False
         self.n_radial_basis: int = 6
@@ -42,7 +41,6 @@ class NepTest(unittest.TestCase):
         self.device: torch._C.device = torch.device("cpu")
         self.torch_float_dtype: torch._C.dtype = torch.float64
         self.nep: Nep = Nep(type_map=self.type_map,
-                            energy_shifts=self.energy_shifts,
                             umax_num_neigh_atoms=self.umax_num_neigh_atoms,
                             fit_virial=self.fit_virial,
                             n_radial_basis=self.n_radial_basis,
@@ -89,7 +87,7 @@ class NepTest(unittest.TestCase):
             t1 = time.time()
             ef_loss = self.nep.predict_ef_loss(*self.mlff_to_ef_loss_input.analyse_pymatgen(self.structure,
                                                                                          e_weight=1.0,
-                                                                                         f_weight=1.0))
+                                                                                         f_weight=1.0))[0]
             ef_loss.sum().backward()
             t2 = time.time()
             if (ii == 0):
@@ -99,7 +97,27 @@ class NepTest(unittest.TestCase):
                 times_list.append(t2-t1)
         print("0.1. Average time cost by nep.predict_ef_loss() = ", np.sum(times_list) / 100)
         print("0.2. std time cost by nep.predict_ef_loss() = ", np.std(times_list) / 100)
-        print("1. Loss = ", ef_loss)
+        print("1. EF Loss = ", ef_loss)
+
+
+    def test_predict_loss(self):
+        times_list: List[float] = []
+        for ii in range(110):
+            t1 = time.time()
+            efv_loss = self.nep.predict_loss(*self.mlff_to_loss_input.analyse_pymatgen(self.structure,
+                                                                                      e_weight=1.0,
+                                                                                      f_weight=1.0,
+                                                                                      v_weight=1.0))[0]
+            efv_loss.sum().backward()
+            t2 = time.time()
+            if (ii == 0):
+                print(self.nep.type_bias_tensor.grad)
+
+            if (ii>9):
+                times_list.append(t2-t1)
+        print("0.1. Average time cost by nep.predict_ef_loss() = ", np.sum(times_list) / 100)
+        print("0.2. std time cost by nep.predict_ef_loss() = ", np.std(times_list) / 100)
+        print("1. EFV Loss = ", efv_loss)
 
 
     def test_predict_ef(self):
@@ -117,6 +135,23 @@ class NepTest(unittest.TestCase):
         print("2. Force[0][5] = \n", f[0][5])
 
 
+    def test_predict_efv(self):
+        times_list: List[float] = []
+        for ii in range(110):
+            t1 = time.time()
+            e, f, v = self.nep.predict_efv(*self.mlff_input.analyse_pymatgen(structure=self.structure))
+            t2 = time.time()
+            if (ii>9):
+                times_list.append(t2-t1)
+
+        print("0.1. Average time cost by nep.predict_ef() = ", np.sum(times_list) / 100)
+        print("0.2. std time cost by nep.predict_ef() = ", np.std(times_list) / 100)
+        print("1. Energy = ", e)
+        print("2. Force[0][5] = \n", f[0][5])
+        print(v)
+        print("3. Virial = \n", v.reshape(3, 3))
+
+
     def test_predict_descriptors(self):
         times_list: List[float] = []
         for ii in range(110):
@@ -128,7 +163,7 @@ class NepTest(unittest.TestCase):
                 
         print("0.1. Average time cost by nep.predict_descriptors() = ", np.sum(times_list) / 100)
         print("0.2. std time cost by nep.predict_descriptors() = ", np.std(times_list) / 100)
-        #print("\t1. descriptors = ", descriptors)
+        print("\t1. Descriptors = ", descriptors)
 
 
 if __name__ == "__main__":

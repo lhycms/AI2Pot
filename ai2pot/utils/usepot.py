@@ -208,6 +208,7 @@ class MlffToEFLossInput(object):
                                             is_cart_coord=True,
                                             pbc_xyz=self.pbc_xyz,
                                             sort=self.sort)
+
         return [
             e_weight,
             f_weight,
