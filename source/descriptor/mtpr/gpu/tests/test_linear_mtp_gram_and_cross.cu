@@ -55,9 +55,9 @@ protected:
     ai2pot::NeighborList<real> neighbor_list;
 
 
-    real *betot_dft;
-    real (*bforce_dft)[3];
-    real *bvirial_dft;
+    real *betot_residual;
+    real (*bforce_residual)[3];
+    real *bvirial_residual;
 
     int num_parameters;
     real *benergy_components;
@@ -70,6 +70,8 @@ protected:
 
     real *lin_matrix;
     real *lin_vector;
+
+    real *q_scaler;
 
     static void SetUpTestSuite() {
         std::cout << "LinearMtpTest (TestSuite) is setting up...\n";
@@ -211,21 +213,21 @@ protected:
                 umax_num_neigh_atoms);
 
 
-        betot_dft = (real*)malloc(sizeof(real) * batch_size);
-        betot_dft[0] = 102;
-        bforce_dft = (real (*)[3])malloc(sizeof(real) * batch_size * natoms_pad * 3);
+        betot_residual = (real*)malloc(sizeof(real) * batch_size);
+        betot_residual[0] = 102;
+        bforce_residual = (real (*)[3])malloc(sizeof(real) * batch_size * natoms_pad * 3);
         for (int bb=0; bb<batch_size; bb++) {
             for (int ii=0; ii<natoms_pad; ii++) {
                 for (int aa=0; aa<3; aa++) {
-                    bforce_dft[bb*natoms_pad + ii][aa] = 1.02 + ii*0.01;
+                    bforce_residual[bb*natoms_pad + ii][aa] = 1.02 + ii*0.01;
                 }
             }
         }
-        bvirial_dft = (real*)malloc(sizeof(real) * batch_size * 9);
+        bvirial_residual = (real*)malloc(sizeof(real) * batch_size * 9);
         for (int b=0; b<batch_size; b++) {
             for (int aa=0; aa<3; aa++) {
                 for (int bb=0; bb<3; bb++) {
-                    bvirial_dft[b*9 + aa*3 + bb] = 1.00 + (aa+bb)*0.01;
+                    bvirial_residual[b*9 + aa*3 + bb] = 1.00 + (aa+bb)*0.01;
                 }
             }
         }
@@ -246,6 +248,11 @@ protected:
         lin_vector = (real*)malloc(sizeof(real)*num_parameters);
         memset(lin_matrix, 0, sizeof(real)*num_parameters*num_parameters);
         memset(lin_vector, 0, sizeof(real)*num_parameters);
+
+        q_scaler = (real*)malloc(sizeof(real)*mtp_param.alpha_scalar_moments());
+        for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++) {
+            q_scaler[ii] = 0.67 + 0.05 * ii;
+        }
     }
 
     void TearDown() override {
@@ -260,9 +267,9 @@ protected:
         free(linear_coeffs);
         free(type_bias);
 
-        free(betot_dft);
-        free(bforce_dft);
-        free(bvirial_dft);
+        free(betot_residual);
+        free(bforce_residual);
+        free(bvirial_residual);
 
         free(benergy_components);
         free(bforce_components);
@@ -270,6 +277,7 @@ protected:
 
         free(lin_matrix);
         free(lin_vector);
+        free(q_scaler);
     }
 };  // class : LinearMtpGramAndCrossTest
 
@@ -306,7 +314,8 @@ TEST_F(LinearMtpGramAndCrossTest, find_efv_components_launcher) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        q_scaler);
 
 for (int k=0; k<num_parameters; k++)
     printf("%.10lf, ", benergy_components[k]);
@@ -324,9 +333,9 @@ TEST_F(LinearMtpGramAndCrossTest, find_lin_matrix_lin_vector_launcher) {
         e_weight,
         f_weight,
         v_weight,
-        betot_dft,
-        bforce_dft,
-        bvirial_dft,
+        betot_residual,
+        bforce_residual,
+        bvirial_residual,
         chebyshev_size,
         coeffs,
         linear_coeffs,
@@ -351,11 +360,12 @@ TEST_F(LinearMtpGramAndCrossTest, find_lin_matrix_lin_vector_launcher) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        q_scaler);
 
 for (int k=0; k<num_parameters; k++)
     printf("%.10lf, ", lin_vector[k]);
-printf("\n");
+printf("\n\n");
 }
 
 

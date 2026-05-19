@@ -30,9 +30,9 @@ template void find_lin_matrix_lin_vector_torch_launcher<float>(
     float e_weight,
     float f_weight,
     float v_weight,
-    float *d_betot_dft,
-    float (*d_bforce_dft)[3],
-    float *d_bvirial_dft,
+    float *d_betot_residual,
+    float (*d_bforce_residual)[3],
+    float *d_bvirial_residual,
     int chebyshev_size,
     float *d_coeffs,
     float *d_linear_coeffs,
@@ -57,7 +57,8 @@ template void find_lin_matrix_lin_vector_torch_launcher<float>(
     int umax_num_neigh_atoms,
     int nghost,
     float rmax,
-    float rmin);
+    float rmin,
+    float *d_q_scaler);
 
 
 template void find_lin_matrix_lin_vector_torch_launcher<double>(
@@ -66,9 +67,9 @@ template void find_lin_matrix_lin_vector_torch_launcher<double>(
     double e_weight,
     double f_weight,
     double v_weight,
-    double *d_betot_dft,
-    double (*d_bforce_dft)[3],
-    double *d_bvirial_dft,
+    double *d_betot_residual,
+    double (*d_bforce_residual)[3],
+    double *d_bvirial_residual,
     int chebyshev_size,
     double *d_coeffs,
     double *d_linear_coeffs,
@@ -93,7 +94,8 @@ template void find_lin_matrix_lin_vector_torch_launcher<double>(
     int umax_num_neigh_atoms,
     int nghost,
     double rmax,
-    double rmin);
+    double rmin,
+    double *d_q_scaler);
 
 };  // namespace : mtpr
 };  // namespace : ai2pot

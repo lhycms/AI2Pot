@@ -44,9 +44,9 @@ protected:
     real rmin;
     int ntypes;
 
-    real *betot_dft;
-    real (*bforce_dft)[3];
-    real *bvirial_dft;
+    real *betot_residual;
+    real (*bforce_residual)[3];
+    real *bvirial_residual;
 
     std::vector<std::string> filenames;
     ai2pot::mtpr::MtpParam mtp_param;
@@ -80,6 +80,8 @@ protected:
     real e_weight;
     real f_weight;
     real v_weight;
+
+    real *q_scaler;
 
 
     static void SetUpTestSuite() {
@@ -243,23 +245,28 @@ protected:
         e_weight = 0.1;
         f_weight = 0.2;
         v_weight = 0.3;
-        betot_dft = (real*)malloc(sizeof(real) * batch_size);
-        betot_dft[0] = 102;
-        bforce_dft = (real (*)[3])malloc(sizeof(real) * batch_size * natoms_pad * 3);
+        betot_residual = (real*)malloc(sizeof(real) * batch_size);
+        betot_residual[0] = 102;
+        bforce_residual = (real (*)[3])malloc(sizeof(real) * batch_size * natoms_pad * 3);
         for (int bb=0; bb<batch_size; bb++) {
             for (int ii=0; ii<natoms_pad; ii++) {
                 for (int aa=0; aa<3; aa++) {
-                    bforce_dft[bb*natoms_pad + ii][aa] = 1.02 + ii*0.01;
+                    bforce_residual[bb*natoms_pad + ii][aa] = 1.02 + ii*0.01;
                 }
             }
         }
-        bvirial_dft = (real*)malloc(sizeof(real) * batch_size * 9);
+        bvirial_residual = (real*)malloc(sizeof(real) * batch_size * 9);
         for (int b=0; b<batch_size; b++) {
             for (int aa=0; aa<3; aa++) {
                 for (int bb=0; bb<3; bb++) {
-                    bvirial_dft[b*9 + aa*3 + bb] = 1.00 + (aa+bb)*0.01;
+                    bvirial_residual[b*9 + aa*3 + bb] = 1.00 + (aa+bb)*0.01;
                 }
             }
+        }
+
+        q_scaler = (real*)malloc(sizeof(real) * mtp_param.alpha_scalar_moments());
+        for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++) {
+            q_scaler[ii] = 0.67 + 0.05 * ii;
         }
     }
 
@@ -278,13 +285,15 @@ protected:
         free(bfirstneigh);
         free(brcs);
         free(btypes);
-        free(betot_dft);
-        free(bforce_dft);
-        free(bvirial_dft);
+        free(betot_residual);
+        free(bforce_residual);
+        free(bvirial_residual);
 
         free(energy_components);
         free(force_components);
         free(virial_components);
+
+        free(q_scaler);
     }
 };  // class : LinearMtpGramAndCrossTest
 
@@ -322,7 +331,8 @@ TEST_F(LinearMtpGramAndCrossTest, accumulate_efv_components) {
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        q_scaler);
     
 for (int k=0; k<num_parameters; k++)
     printf("%.10lf, ", energy_components[k]);
@@ -342,9 +352,9 @@ TEST_F(LinearMtpGramAndCrossTest, find_lin_matrix_lin_vector_launcher)
         e_weight,
         f_weight,
         v_weight,
-        betot_dft,
-        bforce_dft,
-        bvirial_dft,
+        betot_residual,
+        bforce_residual,
+        bvirial_residual,
         chebyshev_size,
         coeffs,
         linear_coeffs,
@@ -370,7 +380,8 @@ TEST_F(LinearMtpGramAndCrossTest, find_lin_matrix_lin_vector_launcher)
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        q_scaler);
     
 for (int k=0; k<num_parameters; k++)
     printf("%.10lf, ", lin_vector[k]);

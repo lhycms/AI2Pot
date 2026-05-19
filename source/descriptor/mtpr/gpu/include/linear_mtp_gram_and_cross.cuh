@@ -58,7 +58,8 @@ void accumulate_efv_components_atom(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin);
+    CoordType rmin,
+    CoordType *q_scaler);
 
 
 template <typename CoordType>
@@ -91,7 +92,8 @@ void find_efv_components_kernel(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin);
+    CoordType rmin,
+    CoordType *q_scaler);
 
 
 template <typename CoordType>
@@ -135,9 +137,9 @@ void find_lin_matrix_lin_vector_kernel(
     CoordType e_weight,
     CoordType f_weight,
     CoordType v_weight,
-    CoordType *betot_dft,
-    CoordType (*bforce_dft)[3],
-    CoordType *bvirial_dft,
+    CoordType *betot_residual,
+    CoordType (*bforce_residual)[3],
+    CoordType *bvirial_residual,
     CoordType *benergy_components,
     CoordType *bforce_components,
     CoordType *bvirial_components,
@@ -149,6 +151,11 @@ void find_lin_matrix_lin_vector_kernel(
     int *bilist,
     int ntypes);
 
+template <typename CoordType>
+static __global__
+void mirror_lin_matrix(
+    CoordType *lin_matrix,
+    int num_parameters);
 
 template <typename CoordType>
 static __host__
@@ -158,9 +165,9 @@ void find_lin_matrix_lin_vector_launcher(
     CoordType e_weight,
     CoordType f_weight,
     CoordType v_weight,
-    CoordType *h_betot_dft,
-    CoordType (*h_bforce_dft)[3],
-    CoordType *h_bvirial_dft,
+    CoordType *h_betot_residual,
+    CoordType (*h_bforce_residual)[3],
+    CoordType *h_bvirial_residual,
     int chebyshev_size,
     CoordType *h_coeffs,
     CoordType *h_linear_coeffs,
@@ -185,7 +192,8 @@ void find_lin_matrix_lin_vector_launcher(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin);
+    CoordType rmin,
+    CoordType *h_q_scaler);
 
 
 
@@ -219,7 +227,8 @@ void accumulate_efv_components_atom(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin)
+    CoordType rmin,
+    CoordType *q_scaler)
 {
     // Step 1. 
     CoordType mom_vals[MAX_ALPHA_MOMENTS_COUNT] = {0.};
@@ -300,7 +309,7 @@ void accumulate_efv_components_atom(
     // energy_components
     atomicAdd(&energy_components[alpha_scalar_moments+type_central], 1.0);
     for (int k=0; k<alpha_scalar_moments; k++)
-        atomicAdd(&energy_components[k], mom_vals[alpha_moment_mapping[k]]);
+        atomicAdd(&energy_components[k], mom_vals[alpha_moment_mapping[k]] / q_scaler[k]);
     
     // Step 2.2. force_components && virial_components
     for (int jj=0; jj<snumneigh; jj++) {
@@ -389,16 +398,16 @@ void accumulate_efv_components_atom(
             // force_components
             for (int k=0; k<alpha_scalar_moments; k++) {
                 atomicAdd(&force_components[center_idx*3*num_parameters + aa*num_parameters + k], 
-                          moms_der2xyz[alpha_moment_mapping[k]]);
+                          moms_der2xyz[alpha_moment_mapping[k]] / q_scaler[k]);
                 atomicAdd(&force_components[neigh_idx*3*num_parameters + aa*num_parameters + k],
-                          -moms_der2xyz[alpha_moment_mapping[k]]);
+                          -moms_der2xyz[alpha_moment_mapping[k]] / q_scaler[k]);
             }
 
             // virial_components
             for (int bb=0; bb<3; bb++) {
                 for (int k=0; k<alpha_scalar_moments; k++) {
                     atomicAdd(&virial_components[(aa*3+bb)*num_parameters + k],
-                              -moms_der2xyz[alpha_moment_mapping[k]] * neigh_vec[bb]);
+                              -(moms_der2xyz[alpha_moment_mapping[k]] / q_scaler[k]) * neigh_vec[bb]);
                 }
             }
         }
@@ -436,7 +445,8 @@ void find_efv_components_kernel(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin)
+    CoordType rmin,
+    CoordType *q_scaler)
 {
     int nx = blockIdx.x * blockDim.x + threadIdx.x;
     int istruct = nx / natoms_pad;
@@ -482,7 +492,8 @@ void find_efv_components_kernel(
             umax_num_neigh_atoms,
             nghost,
             rmax,
-            rmin);
+            rmin,
+            q_scaler);
     }
 }
 
@@ -517,7 +528,8 @@ void find_efv_components_launcher(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin)
+    CoordType rmin,
+    CoordType *h_q_scaler)
 {
     int block_size_x = 128;
     int grid_size_x = (batch_size * natoms_pad - 1) / block_size_x + 1;
@@ -565,12 +577,14 @@ void find_efv_components_launcher(
     int *d_bfirstneigh;
     CoordType (*d_brcs)[3];
     int *d_btypes;
+    CoordType *d_q_scaler;
     CHECK_CUDA_API( cudaMalloc((void**)&d_binum, sizeof(int)*batch_size) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_bilist, sizeof(int)*batch_size*natoms_pad) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_bnumneigh, sizeof(int)*batch_size*natoms_pad) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_bfirstneigh, sizeof(int)*batch_size*natoms_pad*umax_num_neigh_atoms) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_brcs, sizeof(CoordType)*batch_size*natoms_pad*umax_num_neigh_atoms*3) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_btypes, sizeof(int)*batch_size*natoms_pad) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_q_scaler, sizeof(CoordType)*alpha_scalar_moments) );
     //
     CHECK_CUDA_API( cudaMemcpy(d_binum, h_binum, sizeof(int)*batch_size, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_bilist, h_bilist, sizeof(int)*batch_size*natoms_pad, cudaMemcpyHostToDevice) );
@@ -578,6 +592,7 @@ void find_efv_components_launcher(
     CHECK_CUDA_API( cudaMemcpy(d_bfirstneigh, h_bfirstneigh, sizeof(int)*batch_size*natoms_pad*umax_num_neigh_atoms, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_brcs, h_brcs, sizeof(CoordType)*batch_size*natoms_pad*umax_num_neigh_atoms*3, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_btypes, h_btypes, sizeof(int)*batch_size*natoms_pad, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_q_scaler, h_q_scaler, sizeof(CoordType)*alpha_scalar_moments, cudaMemcpyHostToDevice) );
     
     // Step 2.
 
@@ -612,7 +627,8 @@ void find_efv_components_launcher(
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        d_q_scaler);
     CHECK_CUDA_KERNEL;
     auto t2 = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
@@ -641,6 +657,7 @@ void find_efv_components_launcher(
     CHECK_CUDA_API( cudaFree(d_bfirstneigh) );
     CHECK_CUDA_API( cudaFree(d_brcs) );
     CHECK_CUDA_API( cudaFree(d_btypes) );
+    CHECK_CUDA_API( cudaFree(d_q_scaler) );
 }
 
 
@@ -652,9 +669,9 @@ void find_lin_matrix_lin_vector_kernel(
     CoordType e_weight,
     CoordType f_weight,
     CoordType v_weight,
-    CoordType *betot_dft,
-    CoordType (*bforce_dft)[3],
-    CoordType *bvirial_dft,
+    CoordType *betot_residual,
+    CoordType (*bforce_residual)[3],
+    CoordType *bvirial_residual,
     CoordType *benergy_components,
     CoordType *bforce_components,
     CoordType *bvirial_components,
@@ -668,58 +685,77 @@ void find_lin_matrix_lin_vector_kernel(
 {
     int nx = blockIdx.x * blockDim.x + threadIdx.x;
     int num_parameters = alpha_scalar_moments + ntypes;
+    int istruct = nx / natoms_pad;
+    if (istruct >= batch_size)
+        return;
+    int ii = nx % natoms_pad;
 
-    if (nx == 0) {
-        for (int bb=0; bb<batch_size; bb++) {
-            // 1. energy term
+    if (ii<binum[istruct]) {
+        // 1. force term
+        int center_idx = bilist[istruct*natoms_pad + ii];
+        for (int aa=0; aa<3; aa++) {
             for (int k1=0; k1<num_parameters; k1++) {
                 for (int k2=k1; k2<num_parameters; k2++) {
-                    lin_matrix[k1*num_parameters + k2] += e_weight
-                                                          * benergy_components[bb*num_parameters + k1]
-                                                          * benergy_components[bb*num_parameters + k2];
+                    CoordType tmp = f_weight
+                                    * bforce_components[(istruct*natoms_pad*3+center_idx*3+aa)*num_parameters + k1]
+                                    * bforce_components[(istruct*natoms_pad*3+center_idx*3+aa)*num_parameters + k2];
+                    atomicAdd(&lin_matrix[k1*num_parameters + k2], tmp);
                 }
-                lin_vector[k1] += e_weight
-                                  * betot_dft[bb]
-                                  * benergy_components[bb*num_parameters + k1];
+                CoordType tmp = f_weight
+                                * bforce_residual[istruct*natoms_pad + center_idx][aa]
+                                * bforce_components[(istruct*natoms_pad*3+center_idx*3+aa)*num_parameters + k1];
+                atomicAdd(&lin_vector[k1], tmp);
             }
+        }
+    }
 
-            // 2. force term
-            for (int ii=0; ii<binum[bb]; ii++) {
-                int center_idx = bilist[bb*natoms_pad + ii];
-                for (int aa=0; aa<3; aa++) {
-                    for (int k1=0; k1<num_parameters; k1++) {
-                        for (int k2=k1; k2<num_parameters; k2++) {
-                            lin_matrix[k1*num_parameters + k2] += f_weight
-                                                                  * bforce_components[(bb*natoms_pad*3+center_idx*3+aa)*num_parameters + k1]
-                                                                  * bforce_components[(bb*natoms_pad*3+center_idx*3+aa)*num_parameters + k2];
-                        }
-                        lin_vector[k1] += f_weight
-                                          * bforce_dft[bb*natoms_pad + center_idx][aa]
-                                          * bforce_components[(bb*natoms_pad*3+center_idx*3+aa)*num_parameters + k1];
-                    }
-                }
+    if (ii == 0) {
+        // energy term
+        for (int k1=0; k1<num_parameters; k1++) {
+            for (int k2=k1; k2<num_parameters; k2++) {
+                CoordType tmp = e_weight
+                                * benergy_components[istruct*num_parameters + k1]
+                                * benergy_components[istruct*num_parameters + k2];
+                atomicAdd(&lin_matrix[k1*num_parameters + k2], tmp);
             }
+            CoordType tmp = e_weight
+                            * betot_residual[istruct]
+                            * benergy_components[istruct*num_parameters + k1];
+            atomicAdd(&lin_vector[k1], tmp);
+        }
 
-            // 3. virial term
-            for (int alpha=0; alpha<3; alpha++) {
-                for (int beta=0; beta<3; beta++) {
-                    for (int k1=0; k1<num_parameters; k1++) {
-                        for (int k2=k1; k2<num_parameters; k2++) {
-                            lin_matrix[k1*num_parameters + k2] += v_weight
-                                                                  * bvirial_components[(bb*3*3+alpha*3+beta)*num_parameters + k1]
-                                                                  * bvirial_components[(bb*3*3+alpha*3+beta)*num_parameters + k2];
-                        }
-                        lin_vector[k1] += v_weight
-                                          * bvirial_dft[bb*3*3 + alpha*3 + beta]
-                                          * bvirial_components[(bb*3*3+alpha*3+beta)*num_parameters + k1];
+        // virial term
+        for (int alpha=0; alpha<3; alpha++) {
+            for (int beta=0; beta<3; beta++) {
+                for (int k1=0; k1<num_parameters; k1++) {
+                    for (int k2=k1; k2<num_parameters; k2++) {
+                        CoordType tmp = v_weight
+                                        * bvirial_components[(istruct*3*3+alpha*3+beta)*num_parameters + k1]
+                                        * bvirial_components[(istruct*3*3+alpha*3+beta)*num_parameters + k2];
+                        atomicAdd(&lin_matrix[k1*num_parameters + k2], tmp);
                     }
+                    CoordType tmp = v_weight
+                                    * bvirial_residual[istruct*3*3 + alpha*3 + beta]
+                                    * bvirial_components[(istruct*3*3+alpha*3+beta)*num_parameters + k1];
+                    atomicAdd(&lin_vector[k1], tmp);
                 }
             }
         }
+    }
+}
 
-        for (int k1=0; k1<num_parameters; k1++)
-            for (int k2=k1+1; k2<num_parameters; k2++)
-                lin_matrix[k2*num_parameters + k1] = lin_matrix[k1*num_parameters + k2];
+
+template <typename CoordType>
+__global__
+void mirror_lin_matrix(
+    CoordType *lin_matrix,
+    int num_parameters)
+{
+    int k1 = blockIdx.x * blockDim.x + threadIdx.x;
+    int k2 = blockIdx.y * blockDim.y + threadIdx.y;
+
+    if ((k1<num_parameters) && (k2<num_parameters) && (k1>k2)) {
+        lin_matrix[k1 * num_parameters + k2] = lin_matrix[k2 * num_parameters + k1];
     }
 }
 
@@ -732,9 +768,9 @@ void find_lin_matrix_lin_vector_launcher(
     CoordType e_weight,
     CoordType f_weight,
     CoordType v_weight,
-    CoordType *h_betot_dft,
-    CoordType (*h_bforce_dft)[3],
-    CoordType *h_bvirial_dft,
+    CoordType *h_betot_residual,
+    CoordType (*h_bforce_residual)[3],
+    CoordType *h_bvirial_residual,
     int chebyshev_size,
     CoordType *h_coeffs,
     CoordType *h_linear_coeffs,
@@ -759,7 +795,8 @@ void find_lin_matrix_lin_vector_launcher(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin)
+    CoordType rmin,
+    CoordType *h_q_scaler)
 {
     int block_size_x = 128;
     int grid_size_x = (batch_size * natoms_pad - 1) / block_size_x + 1;
@@ -775,16 +812,16 @@ void find_lin_matrix_lin_vector_launcher(
     CHECK_CUDA_API( cudaMemset(d_lin_matrix, 0, sizeof(CoordType)*num_parameters*num_parameters) );
     CHECK_CUDA_API( cudaMemset(d_lin_vector, 0, sizeof(CoordType)*num_parameters) );
 
-    CoordType *d_betot_dft;
-    CoordType (*d_bforce_dft)[3];
-    CoordType *d_bvirial_dft;
-    CHECK_CUDA_API( cudaMalloc((void**)&d_betot_dft, sizeof(CoordType)*batch_size) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_bforce_dft, sizeof(CoordType)*batch_size*natoms_pad*3) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_bvirial_dft, sizeof(CoordType)*batch_size*3*3) );
+    CoordType *d_betot_residual;
+    CoordType (*d_bforce_residual)[3];
+    CoordType *d_bvirial_residual;
+    CHECK_CUDA_API( cudaMalloc((void**)&d_betot_residual, sizeof(CoordType)*batch_size) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bforce_residual, sizeof(CoordType)*batch_size*natoms_pad*3) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bvirial_residual, sizeof(CoordType)*batch_size*3*3) );
     // 
-    CHECK_CUDA_API( cudaMemcpy(d_betot_dft, h_betot_dft, sizeof(CoordType)*batch_size, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_bforce_dft, h_bforce_dft, sizeof(CoordType)*batch_size*natoms_pad*3, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_bvirial_dft, h_bvirial_dft, sizeof(CoordType)*batch_size*3*3, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_betot_residual, h_betot_residual, sizeof(CoordType)*batch_size, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_bforce_residual, h_bforce_residual, sizeof(CoordType)*batch_size*natoms_pad*3, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_bvirial_residual, h_bvirial_residual, sizeof(CoordType)*batch_size*3*3, cudaMemcpyHostToDevice) );
 
     CoordType *d_benergy_components;
     CoordType *d_bforce_components;
@@ -826,12 +863,14 @@ void find_lin_matrix_lin_vector_launcher(
     int *d_bfirstneigh;
     CoordType (*d_brcs)[3];
     int *d_btypes;
+    CoordType *d_q_scaler;
     CHECK_CUDA_API( cudaMalloc((void**)&d_binum, sizeof(int)*batch_size) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_bilist, sizeof(int)*batch_size*natoms_pad) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_bnumneigh, sizeof(int)*batch_size*natoms_pad) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_bfirstneigh, sizeof(int)*batch_size*natoms_pad*umax_num_neigh_atoms) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_brcs, sizeof(CoordType)*batch_size*natoms_pad*umax_num_neigh_atoms*3) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_btypes, sizeof(int)*batch_size*natoms_pad) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_q_scaler, sizeof(CoordType)*alpha_scalar_moments) );
     //
     CHECK_CUDA_API( cudaMemcpy(d_binum, h_binum, sizeof(int)*batch_size, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_bilist, h_bilist, sizeof(int)*batch_size*natoms_pad, cudaMemcpyHostToDevice) );
@@ -839,6 +878,7 @@ void find_lin_matrix_lin_vector_launcher(
     CHECK_CUDA_API( cudaMemcpy(d_bfirstneigh, h_bfirstneigh, sizeof(int)*batch_size*natoms_pad*umax_num_neigh_atoms, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_brcs, h_brcs, sizeof(CoordType)*batch_size*natoms_pad*umax_num_neigh_atoms*3, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_btypes, h_btypes, sizeof(int)*batch_size*natoms_pad, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_q_scaler, h_q_scaler, sizeof(CoordType)*alpha_scalar_moments, cudaMemcpyHostToDevice) );
     
     // Step 2.
 
@@ -873,17 +913,18 @@ void find_lin_matrix_lin_vector_launcher(
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        d_q_scaler);
     CHECK_CUDA_KERNEL;
-    find_lin_matrix_lin_vector_kernel<CoordType> KERNEL_ARG2(1, 1) (
+    find_lin_matrix_lin_vector_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (
         d_lin_matrix,
         d_lin_vector,
         e_weight,
         f_weight,
         v_weight,
-        d_betot_dft, //
-        d_bforce_dft,
-        d_bvirial_dft,
+        d_betot_residual, //
+        d_bforce_residual,
+        d_bvirial_residual,
         d_benergy_components,
         d_bforce_components,
         d_bvirial_components,
@@ -894,6 +935,15 @@ void find_lin_matrix_lin_vector_launcher(
         d_binum,
         d_bilist,
         ntypes);
+    CHECK_CUDA_KERNEL;
+
+    int mirror_block_size_x = 16;
+    int mirror_block_size_y = 16;
+    dim3 mirror_block_size(mirror_block_size_x, mirror_block_size_y);
+    int mirror_grid_size_x = (num_parameters - 1) / mirror_block_size_x + 1;
+    int mirror_grid_size_y = (num_parameters - 1) / mirror_block_size_y + 1;
+    dim3 mirror_grid_size(mirror_grid_size_x, mirror_grid_size_y);
+    mirror_lin_matrix<CoordType> KERNEL_ARG2(mirror_grid_size, mirror_block_size) (d_lin_matrix, num_parameters);
     CHECK_CUDA_KERNEL;
     auto t2 = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
@@ -906,9 +956,9 @@ void find_lin_matrix_lin_vector_launcher(
     CHECK_CUDA_API( cudaFree(d_lin_matrix) );
     CHECK_CUDA_API( cudaFree(d_lin_vector) );
 
-    CHECK_CUDA_API( cudaFree(d_betot_dft) );
-    CHECK_CUDA_API( cudaFree(d_bforce_dft) );
-    CHECK_CUDA_API( cudaFree(d_bvirial_dft) );
+    CHECK_CUDA_API( cudaFree(d_betot_residual) );
+    CHECK_CUDA_API( cudaFree(d_bforce_residual) );
+    CHECK_CUDA_API( cudaFree(d_bvirial_residual) );
 
     CHECK_CUDA_API( cudaFree(d_benergy_components) );
     CHECK_CUDA_API( cudaFree(d_bforce_components) );
@@ -928,6 +978,7 @@ void find_lin_matrix_lin_vector_launcher(
     CHECK_CUDA_API( cudaFree(d_bfirstneigh) );
     CHECK_CUDA_API( cudaFree(d_brcs) );
     CHECK_CUDA_API( cudaFree(d_btypes) );
+    CHECK_CUDA_API( cudaFree(d_q_scaler) );
 }
 
 

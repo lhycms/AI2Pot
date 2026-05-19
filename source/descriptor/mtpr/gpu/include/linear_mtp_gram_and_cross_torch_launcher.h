@@ -30,9 +30,9 @@ void find_lin_matrix_lin_vector_torch_launcher(
     CoordType e_weight,
     CoordType f_weight,
     CoordType v_weight,
-    CoordType *d_betot_dft,
-    CoordType (*d_bforce_dft)[3],
-    CoordType *d_bvirial_dft,
+    CoordType *d_betot_residual,
+    CoordType (*d_bforce_residual)[3],
+    CoordType *d_bvirial_residual,
     int chebyshev_size,
     CoordType *d_coeffs,
     CoordType *d_linear_coeffs,
@@ -57,7 +57,8 @@ void find_lin_matrix_lin_vector_torch_launcher(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin);
+    CoordType rmin,
+    CoordType *d_q_scaler);
 
 };  // namespace : mtpr
 };  // namespace : ai2pot

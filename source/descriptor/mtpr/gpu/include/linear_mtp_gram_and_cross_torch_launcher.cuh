@@ -35,9 +35,9 @@ void find_lin_matrix_lin_vector_torch_launcher(
     CoordType e_weight,
     CoordType f_weight,
     CoordType v_weight,
-    CoordType *d_betot_dft,
-    CoordType (*d_bforce_dft)[3],
-    CoordType *d_bvirial_dft,
+    CoordType *d_betot_residual,
+    CoordType (*d_bforce_residual)[3],
+    CoordType *d_bvirial_residual,
     int chebyshev_size,
     CoordType *d_coeffs,
     CoordType *d_linear_coeffs,
@@ -62,7 +62,8 @@ void find_lin_matrix_lin_vector_torch_launcher(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin)
+    CoordType rmin,
+    CoordType *d_q_scaler)
 {
     int block_size_x = 128;
     int grid_size_x = (batch_size * natoms_pad - 1) / block_size_x + 1;
@@ -110,17 +111,18 @@ void find_lin_matrix_lin_vector_torch_launcher(
         umax_num_neigh_atoms,
         nghost,
         rmax,
-        rmin);
+        rmin,
+        d_q_scaler);
     CHECK_CUDA_KERNEL;
-    find_lin_matrix_lin_vector_kernel KERNEL_ARG2(1, 1) (
+    find_lin_matrix_lin_vector_kernel KERNEL_ARG2(grid_size, block_size) (
         d_lin_matrix,
         d_lin_vector,
         e_weight,
         f_weight,
         v_weight,
-        d_betot_dft,
-        d_bforce_dft,
-        d_bvirial_dft,
+        d_betot_residual,
+        d_bforce_residual,
+        d_bvirial_residual,
         d_benergy_components,
         d_bforce_components,
         d_bvirial_components,
@@ -131,6 +133,14 @@ void find_lin_matrix_lin_vector_torch_launcher(
         d_binum,
         d_bilist,
         ntypes);
+    CHECK_CUDA_KERNEL;
+    int mirror_block_size_x = 16;
+    int mirror_block_size_y = 16;
+    dim3 mirror_block_size(mirror_block_size_x, mirror_block_size_y);
+    int mirror_grid_size_x = (num_parameters - 1) / mirror_block_size_x + 1;
+    int mirror_grid_size_y = (num_parameters - 1) / mirror_block_size_y + 1;
+    dim3 mirror_grid_size(mirror_grid_size_x, mirror_grid_size_y);
+    mirror_lin_matrix<CoordType> KERNEL_ARG2(mirror_grid_size, mirror_block_size) (d_lin_matrix, num_parameters);
     CHECK_CUDA_KERNEL;
 
     CHECK_CUDA_API( cudaFree(d_benergy_components) );
