@@ -14,11 +14,13 @@ obj_f = ase_read(extxyz_path, index=":")
 print("2. Force of obj_f[0] = ", obj_f[0].get_forces())
 
 # 3. get dipole -> Atoms.calc.results
+# 从 Calculator 结果中提取（标准情况）
 extxyz_path = os.path.join(TEST_FILES_DIR, "XYZ", "12_NEP_dipole_QM7B", "train_m.xyz")
 obj_d = ase_read(extxyz_path, index=":")
 print("3. Dipole of obj_d[0] = ", obj_d[0].calc.results)
 
 # 4. get pol -> Atoms.info
+# 如果未被识别为计算器属性，则从 info 字典中提取
 extxyz_path = os.path.join(TEST_FILES_DIR, "XYZ", "12_NEP_dipole_QM7B", "train_m.xyz")
 obj_p = ase_read(extxyz_path, index=":")
 print("4. Polarizalibity of obj_p[0] = ", obj_p[0].info)

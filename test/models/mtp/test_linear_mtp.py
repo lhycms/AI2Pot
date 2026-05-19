@@ -27,15 +27,17 @@ class LinearMtpTest(unittest.TestCase):
         self.umax_num_neigh_atoms = 200
         self.device: torch._C.device = torch.device("cuda")
         self.torch_float_dtype: torch._C.dtype = torch.float32
-        self.linear_mtp: LinearMtp = LinearMtp(mtp_level=16,
-                                               type_map=self.type_map,
+        self.linear_mtp: LinearMtp = LinearMtp(type_map=self.type_map,
+                                               umax_num_neigh_atoms=self.umax_num_neigh_atoms,
+                                               fit_virial=True,
+                                               mtp_level=16,
                                                chebyshev_size=self.chebyshev_size,
                                                rmax=self.rmax,
                                                rmin=self.rmin,
-                                               umax_num_neigh_atoms=self.umax_num_neigh_atoms,
-                                               q_shifter=None,
-                                               q_scaler=None,
-                                               fit_virial=True)
+                                               zbl_rmax=0.0,
+                                               zbl_rmin=0.0,
+                                               zbl_cks_list=None,
+                                               zbl_dks_list=None)
         self.linear_mtp.to(self.device)
         self.linear_mtp.to(self.torch_float_dtype)
         self.alpha_scalar_moments: int = self.linear_mtp.num_descriptors
@@ -71,14 +73,14 @@ class LinearMtpTest(unittest.TestCase):
         print("LinearMtpTest (TestSuite) is tearing down...\n")
     
 
-    def est_predict_loss(self):
+    def test_predict_loss(self):
         times_list: List[float] = []
         for ii in range(110):
             t1 = time.time()
             loss = self.linear_mtp.predict_loss(*self.mlff_to_loss_input.analyse_pymatgen(self.structure,
                                                                                           e_weight=1.0,
                                                                                           f_weight=1.0,
-                                                                                          v_weight=0.0))
+                                                                                          v_weight=0.0))[0]
             loss.sum().backward()
             t2 = time.time()
             if (ii == 0):
@@ -98,7 +100,7 @@ class LinearMtpTest(unittest.TestCase):
             t1 = time.time()
             ef_loss = self.linear_mtp.predict_ef_loss(*self.mlff_to_ef_loss_input.analyse_pymatgen(self.structure,
                                                                                                    e_weight=1.0,
-                                                                                                   f_weight=1.0))
+                                                                                                   f_weight=1.0))[0]
             ef_loss.sum().backward()
             t2 = time.time()
             if (ii == 0):

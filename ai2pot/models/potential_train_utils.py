@@ -30,6 +30,8 @@ from ai2pot.utils.prepot import MlffDatasetShifter
 
 
 class DescriptorNormCallbackBase(L.Callback):
+    BATCH_SIZE_HERE: int = 500
+    
     def on_fit_start(self,
                      trainer: L.Trainer,
                      pl_module: L.LightningModule):
@@ -42,7 +44,7 @@ class DescriptorNormCallbackBase(L.Callback):
             raise RuntimeError("No ExtxyzDataModule found!")
         trainset: ExtxyzDataset = datamodule.trainset_dataset
         train_loader: DataLoader = DataLoader(dataset=trainset,
-                                              batch_size=500,
+                                              batch_size=self.BATCH_SIZE_HERE,
                                               shuffle=False)
         num_descriptors: int = nep.get_num_descriptors()
         device: torch._C.device = pl_module.device
