@@ -19,6 +19,7 @@
 #include <cassert>
 
 #include "../include/schmidt_orth_op.h"
+#include "../include/linear_mtp_gram_and_cross_op.h"
 #include "../include/mtpParamOp.h"
 #include "../include/mtpBasisOp.h"
 #include "../include/linearMtpOp.h"
@@ -41,6 +42,78 @@ TORCH_LIBRARY(mtpr, m) {
                 (int)nmus,
                 (int)chebyshev_size,
                 coeffs_tensor);
+        }
+    );
+
+    m.def(
+        "LinMatrixLinVectorOp",
+        [](double e_weight,
+           double f_weight,
+           double v_weight,
+           const at::Tensor& betot_dft_tensor,
+           const at::Tensor& bforce_dft_tensor,
+           const at::Tensor& bvirial_dft_tensor,
+           int64_t chebyshev_size,
+           const at::Tensor& coeffs_tensor,
+           const at::Tensor& linear_coeffs_tensor,
+           const at::Tensor& type_bias_tensor,
+           int64_t alpha_moments_count,
+           const at::Tensor& alpha_index_basic_tensor,
+           const at::Tensor& alpha_index_times_tensor,
+           const at::Tensor& alpha_moment_mapping_tensor,
+           int64_t nmus,
+           const at::Tensor& binum_tensor,
+           const at::Tensor& bilist_tensor,
+           const at::Tensor& bnumneigh_tensor,
+           const at::Tensor& bfirstneigh_tensor,
+           const at::Tensor& brcs_tensor,
+           const at::Tensor& btypes_tensor,
+           const at::Tensor& type_map_tensor,
+           int64_t nghost,
+           double rmax,
+           double rmin,
+           const at::Tensor& q_scaler_tensor,
+           double zbl_rmax,
+           double zbl_rmin,
+           const at::Tensor& zbl_cks_tensor,
+           const at::Tensor& zbl_dks_tensor)
+        {
+            assert( chebyshev_size <= INT_MAX );
+            assert( alpha_moments_count <= INT_MAX );
+            assert( nmus <= INT_MAX );
+            assert( nghost <= INT_MAX );
+
+            return ai2pot::mtpr::LinMatrixLinVectorOp(
+                e_weight,
+                f_weight,
+                v_weight,
+                betot_dft_tensor,
+                bforce_dft_tensor,
+                bvirial_dft_tensor,
+                (int)chebyshev_size,
+                coeffs_tensor,
+                linear_coeffs_tensor,
+                type_bias_tensor,
+                (int)alpha_moments_count,
+                alpha_index_basic_tensor,
+                alpha_index_times_tensor,
+                alpha_moment_mapping_tensor,
+                (int)nmus,
+                binum_tensor,
+                bilist_tensor,
+                bnumneigh_tensor,
+                bfirstneigh_tensor,
+                brcs_tensor,
+                btypes_tensor,
+                type_map_tensor,
+                (int)nghost,
+                rmax,
+                rmin,
+                q_scaler_tensor,
+                zbl_rmax,
+                zbl_rmin,
+                zbl_cks_tensor,
+                zbl_dks_tensor);
         }
     );
 

@@ -36,6 +36,20 @@ if (TORCH_OP)
         target_link_libraries(schmidt_orth_op PRIVATE schmidt_orth_torch_launcher)
     endif()
 
+    
+    add_library(linear_mtp_gram_and_cross_op SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/linear_mtp_gram_and_cross_op.cc)
+    target_link_libraries(linear_mtp_gram_and_cross_op PRIVATE ${TORCH_LIBRARIES})
+    if (USE_OPENMP)
+        target_compile_definitions(linear_mtp_gram_and_cross_op PRIVATE USE_OPENMP)
+    endif()
+    if (USE_CUDA AND CUDA_FOUND)
+        target_compile_definitions(linear_mtp_gram_and_cross_op PRIVATE USE_CUDA)
+        target_link_libraries(linear_mtp_gram_and_cross_op PRIVATE linear_mtp_gram_and_cross_torch_launcher)
+    endif()
+    if (MAX_MTP_LEVEL)
+        target_compile_definitions(linear_mtp_gram_and_cross_op PRIVATE MAX_MTP_LEVEL=${MAX_MTP_LEVEL})
+    endif()
+
     add_library(mtpParamOp SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/mtpParamOp.cc)
     target_link_libraries(mtpParamOp PRIVATE mtpParam ${TORCH_LIBRARIES})
 
@@ -67,7 +81,13 @@ if (TORCH_OP)
 
     add_library(mtpr_bind SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bind/mtpr_bind.cc)
     target_include_directories(mtpr_bind PRIVATE ${PYTHON_INCLUDE_DIRS})
-    target_link_libraries(mtpr_bind PRIVATE schmidt_orth_op mtpParamOp mtpBasisOp linearMtpOp ${TORCH_LIBRARIES} ${PYTHON_LIBRARIES})
+    target_link_libraries(mtpr_bind PRIVATE schmidt_orth_op 
+                                            linear_mtp_gram_and_cross_op
+                                            mtpParamOp
+                                            mtpBasisOp
+                                            linearMtpOp
+                                            ${TORCH_LIBRARIES}
+                                            ${PYTHON_LIBRARIES})
     if (USE_OPENMP)
         target_compile_definitions(linearMtpOp PRIVATE USE_OPENMP)
     endif()

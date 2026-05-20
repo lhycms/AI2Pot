@@ -22,7 +22,7 @@
 namespace ai2pot {
 namespace mtpr {
 
-class LinMatrixLinVectorFunction : public torch::torch::autograd::Function<LinMatrixLinVectorFunction>
+class LinMatrixLinVectorFunction : public torch::autograd::Function<LinMatrixLinVectorFunction>
 {
 public:
     static torch::autograd::variable_list forward(
@@ -37,6 +37,7 @@ public:
         const at::Tensor& coeffs_tensor,
         const at::Tensor& linear_coeffs_tensor,
         const at::Tensor& type_bias_tensor,
+        int alpha_moments_count,
         const at::Tensor& alpha_index_basic_tensor,
         const at::Tensor& alpha_index_times_tensor,
         const at::Tensor& alpha_moment_mapping_tensor,
@@ -72,8 +73,9 @@ torch::autograd::variable_list LinMatrixLinVectorOp(
     const at::Tensor& bvirial_dft_tensor,
     int chebyshev_size,
     const at::Tensor& coeffs_tensor,
-    const at::Tenosr& linear_coeffs_tensor,
+    const at::Tensor& linear_coeffs_tensor,
     const at::Tensor& type_bias_tensor,
+    int alpha_moments_count,
     const at::Tensor& alpha_index_basic_tensor,
     const at::Tensor& alpha_index_times_tensor,
     const at::Tensor& alpha_moment_mapping_tensor,

@@ -437,6 +437,8 @@ void find_mtp_basis_val_der_cuda_launcher(
 {
     const int block_size_x = 256;
     const int grid_size_x = (inum - 1) / block_size_x + 1;
+    dim3 grid_size(grid_size_x);
+    dim3 block_size(block_size_x);
 
     double *d_mtp_basis_val;
     double *d_mtp_basis_der;
@@ -488,7 +490,7 @@ void find_mtp_basis_val_der_cuda_launcher(
     CHECK_CUDA_API( cudaMemcpy(d_relative_coords, relative_coords, sizeof(CoordType) * inum * umax_num_neigh_atoms * 3, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_types, types, sizeof(int) * inum, cudaMemcpyHostToDevice) );
 
-    find_mtp_basis_val_der_cuda_kernel<CoordType> KERNEL_ARG2(grid_size_x, block_size_x) (
+    find_mtp_basis_val_der_cuda_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (
         d_mtp_basis_val,
         (CoordType (*)[3])d_mtp_basis_der,
         d_mtp_basis_der2coeffs,

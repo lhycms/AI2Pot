@@ -126,7 +126,8 @@ void find_efv_components_launcher(
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
-    CoordType rmin);
+    CoordType rmin,
+    CoordType *h_q_scaler);
 
 
 template <typename CoordType>

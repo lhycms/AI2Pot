@@ -16,23 +16,14 @@
 #ifndef AI2POT_MTPR_LINEAR_MTP_GRAM_AND_CROSS_TORCH_LAUNCHER_H
 #define AI2POT_MTPR_LINEAR_MTP_GRAM_AND_CROSS_TORCH_LAUNCHER_H
 
-#include "./mtp_utilities.cuh"
-#include "./linear_mtp_gram_and_cross.cuh"
-
-
 namespace ai2pot {
 namespace mtpr {
 
 template <typename CoordType>
-void find_lin_matrix_lin_vector_torch_launcher(
-    CoordType *d_lin_matrix,
-    CoordType *d_lin_vector,
-    CoordType e_weight,
-    CoordType f_weight,
-    CoordType v_weight,
-    CoordType *d_betot_residual,
-    CoordType (*d_bforce_residual)[3],
-    CoordType *d_bvirial_residual,
+void find_efv_components_torch_launcher(
+    CoordType *d_benergy_components,
+    CoordType *d_bforce_components,
+    CoordType *d_bvirial_components,
     int chebyshev_size,
     CoordType *d_coeffs,
     CoordType *d_linear_coeffs,
@@ -59,6 +50,35 @@ void find_lin_matrix_lin_vector_torch_launcher(
     CoordType rmax,
     CoordType rmin,
     CoordType *d_q_scaler);
+
+
+template <typename CoordType>
+void find_lin_matrix_lin_vector_torch_launcher(
+    CoordType *d_lin_matrix,
+    CoordType *d_lin_vector,
+    CoordType e_weight,
+    CoordType f_weight,
+    CoordType v_weight,
+    CoordType *d_betot_residual,
+    CoordType (*d_bforce_residual)[3],
+    CoordType *d_bvirial_residual,
+    CoordType *d_benergy_components,
+    CoordType *d_bforce_components,
+    CoordType *d_bvirial_components,
+    int alpha_scalar_moments,
+    int nmus,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    int ntypes);
+
+
+template <typename CoordType>
+void mirror_lin_matrix_torch_launcher(
+    CoordType *d_lin_matrix,
+    int num_parameters);
+
 
 };  // namespace : mtpr
 };  // namespace : ai2pot
