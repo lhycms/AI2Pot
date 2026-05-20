@@ -151,15 +151,47 @@ void find_lin_matrix_lin_vector_kernel(
     int *bilist,
     int ntypes);
 
+
+template <typename CoordType>
+static
+void find_lin_matrix_lin_vector_launcher(
+    CoordType *h_lin_matrix,
+    CoordType *h_lin_vector,
+    CoordType e_weight,
+    CoordType f_weight,
+    CoordType v_weight,
+    CoordType *h_betot_residual,
+    CoordType (*h_bforce_residual)[3],
+    CoordType *h_bvirial_residual,
+    CoordType *h_benergy_components,
+    CoordType *h_bforce_components,
+    CoordType *h_bvirial_components,
+    int alpha_scalar_moments,
+    int nmus,
+    int batch_size,
+    int natoms_pad,
+    int *h_binum,
+    int *h_bilist,
+    int ntypes);
+
+
 template <typename CoordType>
 static __global__
-void mirror_lin_matrix(
+void mirror_lin_matrix_kernel(
     CoordType *lin_matrix,
     int num_parameters);
 
+
+template <typename CoordType>
+static
+void mirror_lin_matrix_launcher(
+    CoordType *h_lin_matrix,
+    int num_parameters);
+
+
 template <typename CoordType>
 static __host__
-void find_lin_matrix_lin_vector_launcher(
+void find_lin_matrix_lin_vector_series_launcher(
     CoordType *h_lin_matrix,
     CoordType *h_lin_vector,
     CoordType e_weight,
@@ -746,8 +778,115 @@ void find_lin_matrix_lin_vector_kernel(
 
 
 template <typename CoordType>
+void find_lin_matrix_lin_vector_launcher(
+    CoordType *h_lin_matrix,
+    CoordType *h_lin_vector,
+    CoordType e_weight,
+    CoordType f_weight,
+    CoordType v_weight,
+    CoordType *h_betot_residual,
+    CoordType (*h_bforce_residual)[3],
+    CoordType *h_bvirial_residual,
+    CoordType *h_benergy_components,
+    CoordType *h_bforce_components,
+    CoordType *h_bvirial_components,
+    int alpha_scalar_moments,
+    int nmus,
+    int batch_size,
+    int natoms_pad,
+    int *h_binum,
+    int *h_bilist,
+    int ntypes)
+{
+    int block_size_x = 128;
+    int grid_size_x = (batch_size * natoms_pad - 1) / block_size_x + 1;
+    dim3 grid_size(grid_size_x);
+    dim3 block_size(block_size_x);
+    int num_parameters = alpha_scalar_moments + ntypes;
+
+    CoordType *d_lin_matrix;
+    CoordType *d_lin_vector;
+    CHECK_CUDA_API( cudaMalloc((void**)&d_lin_matrix, sizeof(CoordType)*num_parameters*num_parameters) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_lin_vector, sizeof(CoordType)*num_parameters) );
+    // 
+    CHECK_CUDA_API( cudaMemset(d_lin_matrix, 0, sizeof(CoordType)*num_parameters*num_parameters) );
+    CHECK_CUDA_API( cudaMemset(d_lin_vector, 0, sizeof(CoordType)*num_parameters) );
+
+    CoordType *d_betot_residual;
+    CoordType (*d_bforce_residual)[3];
+    CoordType *d_bvirial_residual;
+    CHECK_CUDA_API( cudaMalloc((void**)&d_betot_residual, sizeof(CoordType)*batch_size) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bforce_residual, sizeof(CoordType)*batch_size*natoms_pad*3) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bvirial_residual, sizeof(CoordType)*batch_size*3*3) );
+    // 
+    CHECK_CUDA_API( cudaMemcpy(d_betot_residual, h_betot_residual, sizeof(CoordType)*batch_size, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_bforce_residual, h_bforce_residual, sizeof(CoordType)*batch_size*natoms_pad*3, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_bvirial_residual, h_bvirial_residual, sizeof(CoordType)*batch_size*3*3, cudaMemcpyHostToDevice) );
+
+    CoordType *d_benergy_components;
+    CoordType *d_bforce_components;
+    CoordType *d_bvirial_components;
+    CHECK_CUDA_API( cudaMalloc((void**)&d_benergy_components, sizeof(CoordType)*batch_size*num_parameters) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bforce_components, sizeof(CoordType)*batch_size*natoms_pad*3*num_parameters) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bvirial_components, sizeof(CoordType)*batch_size*3*3*num_parameters) );
+    //
+    CHECK_CUDA_API( cudaMemcpy(d_benergy_components, h_benergy_components, sizeof(CoordType)*batch_size*num_parameters, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_bforce_components, h_bforce_components, sizeof(CoordType)*batch_size*natoms_pad*3*num_parameters, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_bvirial_components, h_bvirial_components, sizeof(CoordType)*batch_size*3*3*num_parameters, cudaMemcpyHostToDevice) );
+
+    int *d_binum;
+    int *d_bilist;
+    CHECK_CUDA_API( cudaMalloc((void**)&d_binum, sizeof(int)*batch_size) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_bilist, sizeof(int)*batch_size*natoms_pad) );
+    //
+    CHECK_CUDA_API( cudaMemcpy(d_binum, h_binum, sizeof(int)*batch_size, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_bilist, h_bilist, sizeof(int)*batch_size*natoms_pad, cudaMemcpyHostToDevice) );
+
+    auto t1 = std::chrono::high_resolution_clock::now();
+    find_lin_matrix_lin_vector_kernel KERNEL_ARG2(grid_size, block_size) (
+        d_lin_matrix,
+        d_lin_vector,
+        e_weight,
+        f_weight,
+        v_weight,
+        d_betot_residual,
+        d_bforce_residual,
+        d_bvirial_residual,
+        d_benergy_components,
+        d_bforce_components,
+        d_bvirial_components,
+        alpha_scalar_moments,
+        nmus,
+        batch_size,
+        natoms_pad,
+        d_binum,
+        d_bilist,
+        ntypes);
+    CHECK_CUDA_KERNEL;
+    auto t2 = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
+    std::cout << "find_lin_matrix_lin_vector_kernel() cost time: " << duration.count() << " us." << std::endl;
+
+    // 
+    CHECK_CUDA_API( cudaMemcpy(h_lin_matrix, d_lin_matrix, sizeof(CoordType)*num_parameters*num_parameters, cudaMemcpyDeviceToHost) );
+    CHECK_CUDA_API( cudaMemcpy(h_lin_vector, d_lin_vector, sizeof(CoordType)*num_parameters, cudaMemcpyDeviceToHost) );
+
+    // Step . Free
+    CHECK_CUDA_API( cudaFree(d_lin_matrix) );
+    CHECK_CUDA_API( cudaFree(d_lin_vector) );
+    CHECK_CUDA_API( cudaFree(d_betot_residual) );
+    CHECK_CUDA_API( cudaFree(d_bforce_residual) );
+    CHECK_CUDA_API( cudaFree(d_bvirial_residual) );
+    CHECK_CUDA_API( cudaFree(d_benergy_components) );
+    CHECK_CUDA_API( cudaFree(d_bforce_components) );
+    CHECK_CUDA_API( cudaFree(d_bvirial_components) );
+}
+
+
+
+template <typename CoordType>
 __global__
-void mirror_lin_matrix(
+void mirror_lin_matrix_kernel(
     CoordType *lin_matrix,
     int num_parameters)
 {
@@ -761,8 +900,40 @@ void mirror_lin_matrix(
 
 
 template <typename CoordType>
+void mirror_lin_matrix_launcher(
+    CoordType *h_lin_matrix,
+    int num_parameters)
+{
+    int mirror_block_size_x = 16;
+    int mirror_block_size_y = 16;
+    int mirror_grid_size_x = (num_parameters - 1) / mirror_block_size_x + 1;
+    int mirror_grid_size_y = (num_parameters - 1) / mirror_block_size_y + 1;
+    dim3 mirror_grid_size(mirror_grid_size_x, mirror_grid_size_y);
+    dim3 mirror_block_size(mirror_block_size_x, mirror_block_size_y);
+
+    CoordType *d_lin_matrix;
+    CHECK_CUDA_API( cudaMalloc((void**)&d_lin_matrix, sizeof(CoordType)*num_parameters*num_parameters) );
+    //
+    CHECK_CUDA_API( cudaMemcpy(d_lin_matrix, h_lin_matrix, sizeof(CoordType)*num_parameters*num_parameters, cudaMemcpyHostToDevice) );
+
+    auto t1 = std::chrono::high_resolution_clock::now();
+    mirror_lin_matrix_kernel KERNEL_ARG2(mirror_grid_size, mirror_block_size) (
+        d_lin_matrix,
+        num_parameters);
+    CHECK_CUDA_KERNEL;
+    auto t2 = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
+    std::cout << "mirror_lin_matrix_kernel() cost time: " << duration.count() << " us." << std::endl;
+
+    CHECK_CUDA_API( cudaMemcpy(h_lin_matrix, d_lin_matrix, sizeof(CoordType)*num_parameters*num_parameters, cudaMemcpyDeviceToHost) );
+
+    CHECK_CUDA_API( cudaFree(d_lin_matrix) );
+}
+
+
+template <typename CoordType>
 __host__
-void find_lin_matrix_lin_vector_launcher(
+void find_lin_matrix_lin_vector_series_launcher(
     CoordType *h_lin_matrix,
     CoordType *h_lin_vector,
     CoordType e_weight,
@@ -943,11 +1114,11 @@ void find_lin_matrix_lin_vector_launcher(
     int mirror_grid_size_x = (num_parameters - 1) / mirror_block_size_x + 1;
     int mirror_grid_size_y = (num_parameters - 1) / mirror_block_size_y + 1;
     dim3 mirror_grid_size(mirror_grid_size_x, mirror_grid_size_y);
-    mirror_lin_matrix<CoordType> KERNEL_ARG2(mirror_grid_size, mirror_block_size) (d_lin_matrix, num_parameters);
+    mirror_lin_matrix_kernel<CoordType> KERNEL_ARG2(mirror_grid_size, mirror_block_size) (d_lin_matrix, num_parameters);
     CHECK_CUDA_KERNEL;
     auto t2 = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
-    std::cout << "find_lin_matrix_lin_vector_kernel() cost time: " << duration.count() << " us." << std::endl;
+    std::cout << "find_lin_matrix_lin_vector_series_kernel() cost time: " << duration.count() << " us." << std::endl;
 
     CHECK_CUDA_API( cudaMemcpy(h_lin_matrix, d_lin_matrix, sizeof(CoordType)*num_parameters*num_parameters, cudaMemcpyDeviceToHost) );
     CHECK_CUDA_API( cudaMemcpy(h_lin_vector, d_lin_vector, sizeof(CoordType)*num_parameters, cudaMemcpyDeviceToHost) );

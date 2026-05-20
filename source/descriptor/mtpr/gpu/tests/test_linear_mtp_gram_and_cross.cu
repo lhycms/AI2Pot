@@ -327,7 +327,74 @@ printf("\n\n");
 
 
 TEST_F(LinearMtpGramAndCrossTest, find_lin_matrix_lin_vector_launcher) {
+    ai2pot::mtpr::find_efv_components_launcher(
+        benergy_components,
+        bforce_components,
+        bvirial_components,
+        chebyshev_size,
+        coeffs,
+        linear_coeffs,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        mtp_param.nmus(),
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        bnumneigh,
+        bfirstneigh,
+        (real (*)[3])brcs,
+        btypes,
+        ntypes,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin,
+        q_scaler);
+
     ai2pot::mtpr::find_lin_matrix_lin_vector_launcher(
+        lin_matrix,
+        lin_vector,
+        e_weight,
+        f_weight,
+        v_weight,
+        betot_residual,
+        bforce_residual,
+        bvirial_residual,
+        benergy_components,
+        bforce_components,
+        bvirial_components,
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.nmus(),
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        ntypes);
+
+    ai2pot::mtpr::mirror_lin_matrix_launcher(
+        lin_matrix,
+        mtp_param.alpha_scalar_moments() + ntypes);
+
+printf("1. lin_matrix:\n");
+for (int k=0; k<num_parameters; k++)
+    printf("%.10lf, ", lin_matrix[k*num_parameters]);
+printf("\n\n");
+printf("2. lin_vector:\n");
+for (int k=0; k<num_parameters; k++)
+    printf("%.10lf, ", lin_vector[k]);
+printf("\n\n");
+}
+
+
+TEST_F(LinearMtpGramAndCrossTest, find_lin_matrix_lin_vector_series_launcher) {
+    ai2pot::mtpr::find_lin_matrix_lin_vector_series_launcher(
         lin_matrix,
         lin_vector,
         e_weight,
@@ -363,6 +430,11 @@ TEST_F(LinearMtpGramAndCrossTest, find_lin_matrix_lin_vector_launcher) {
         rmin,
         q_scaler);
 
+printf("1. lin_matrix:\n");
+for (int k=0; k<num_parameters; k++)
+    printf("%.10lf, ", lin_matrix[k*num_parameters]);
+printf("\n\n");
+printf("2. lin_vector:\n");
 for (int k=0; k<num_parameters; k++)
     printf("%.10lf, ", lin_vector[k]);
 printf("\n\n");

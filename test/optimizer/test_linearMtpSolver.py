@@ -19,19 +19,19 @@ class LinearMtpSolverTest(unittest.TestCase):
         self.rmax: float = 5.0
         self.rmin: float = 0.0
         self.umax_num_neigh_atoms: int = 200
-        self.device: torch._C.device = torch.device("cuda")
+        self.device: torch._C.device = torch.device("cpu")
         self.torch_float_dtype: torch._C.dtype = torch.float32
         self.linear_mtp: LinearMtp = LinearMtp(type_map=self.type_map,
                                                umax_num_neigh_atoms=self.umax_num_neigh_atoms,
                                                fit_virial=True,
-                                               mtp_level=16,
+                                               mtp_level=18,
                                                chebyshev_size=self.chebyshev_size,
                                                rmax=self.rmax,
                                                rmin=self.rmin,
                                                zbl_rmax=0.0,
                                                zbl_rmin=0.0,
                                                zbl_cks_list=None,
-                                               zbl_dks_list=None)
+                                               zbl_dks_list=None).to(device=self.device).to(self.torch_float_dtype)
 
         self.solver: LinearMtpSolver = LinearMtpSolver()
 

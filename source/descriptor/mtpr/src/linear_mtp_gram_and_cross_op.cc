@@ -219,10 +219,13 @@ torch::autograd::variable_list LinMatrixLinVectorFunction::forward(
     //
     at::Tensor lin_matrix_tensor = at::zeros({num_parameters, num_parameters}, float_options);
     at::Tensor lin_vector_tensor = at::zeros({num_parameters}, float_options);
+    at::Tensor betot_zbl_tensor = at::zeros({batch_size}, float_options);
+    at::Tensor bforce_zbl_tensor = at::zeros({batch_size, natoms_pad, 3}, float_options);
+    at::Tensor bvirial_zbl_tensor = at::zeros({batch_size, 9}, float_options);
     
     //
     if (brcs_tensor.scalar_type() == torch::kFloat32) {
-        // TODO 
+        // TODO
 
         if (brcs_tensor.device() == c10::kCPU) {
 
