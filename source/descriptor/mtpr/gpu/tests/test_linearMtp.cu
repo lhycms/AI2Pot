@@ -73,6 +73,7 @@ protected:
     real *bvirial_dft;
 
     real *q_scaler;
+    real scaling;
 
 
     static void SetUpTestSuite() {
@@ -252,6 +253,7 @@ protected:
         //for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++) {
         //    q_scaler[ii] = 1.0;
         //}
+        scaling = 1.0;
     }
 
     void TearDown() override {
@@ -297,6 +299,7 @@ TEST_F(LinearMtpTest, find_efv_launcher)
         bforce,
         bvirial,
         chebyshev_size,
+        scaling,
         coeffs,
         linear_coeffs,
         type_bias,
@@ -348,6 +351,7 @@ TEST_F(LinearMtpTest, find_efv_launcher)
         bforce_,
         bvirial_,
         chebyshev_size,
+        scaling,
         coeffs,
         linear_coeffs,
         type_bias,
@@ -399,6 +403,7 @@ TEST_F(LinearMtpTest, find_ef_launcher)
         betot,
         bforce,
         chebyshev_size,
+        scaling,
         coeffs,
         linear_coeffs,
         type_bias,
@@ -449,6 +454,7 @@ TEST_F(LinearMtpTest, find_ef_launcher)
         betot_,
         bforce_,
         chebyshev_size,
+        scaling,
         coeffs,
         linear_coeffs,
         type_bias,
@@ -500,6 +506,7 @@ TEST_F(LinearMtpTest, find_loss_backward_launcher)
         bforce,
         bvirial,
         chebyshev_size,
+        scaling,
         coeffs,
         linear_coeffs,
         type_bias,
@@ -541,6 +548,7 @@ TEST_F(LinearMtpTest, find_loss_backward_launcher)
         bvirial,
         bvirial_dft,
         chebyshev_size,
+        scaling,
         coeffs,
         linear_coeffs,
         type_bias,
@@ -594,6 +602,7 @@ TEST_F(LinearMtpTest, find_ef_loss_backward_launcer)
         betot,
         bforce,
         chebyshev_size,
+        scaling,
         coeffs,
         linear_coeffs,
         type_bias,
@@ -632,6 +641,7 @@ TEST_F(LinearMtpTest, find_ef_loss_backward_launcer)
         bforce,
         bforce_dft,
         chebyshev_size,
+        scaling,
         coeffs,
         linear_coeffs,
         type_bias,
@@ -681,6 +691,7 @@ TEST_F(LinearMtpTest, find_descriptors_launcher) {
     ai2pot::mtpr::find_descriptors_launcher(
         bdescriptors,
         chebyshev_size,
+        scaling,
         coeffs,
         mtp_param.alpha_moments_count(),
         mtp_param.alpha_index_basic_count(),

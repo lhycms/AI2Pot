@@ -54,6 +54,8 @@ protected:
     int* types;
     int nghost;
 
+    double scaling;
+
     ai2pot::Structure<double> structure;
     ai2pot::NeighborList<double> neighbor_list;
 
@@ -200,6 +202,8 @@ protected:
         mom_ders = (double (*)[3])malloc(sizeof(double) * mtp_param.alpha_index_basic_count() * umax_num_neigh_atoms * 3);
         mom_vals_ = (double*)malloc(sizeof(double) * mtp_param.alpha_moments_count());
         mom_ders_ = (double (*)[3])malloc(sizeof(double) * mtp_param.alpha_index_basic_count() * umax_num_neigh_atoms * 3);
+
+        scaling = 1.0;
     }
 
     void TearDown() override {
@@ -242,6 +246,7 @@ TEST_F(MtpBasisTest, find_val_der4rcs)
         calculate_der2xyz,
         calculate_der2coeffs,
         chebyshev_size,
+        scaling,
         coeffs,
         mtp_param.alpha_moments_count(),
         mtp_param.alpha_index_basic_count(),
@@ -272,6 +277,7 @@ TEST_F(MtpBasisTest, find_val_der4rcs)
         calculate_der2xyz,
         calculate_der2coeffs,
         chebyshev_size,
+        scaling,
         coeffs,
         mtp_param.alpha_moments_count(),
         mtp_param.alpha_index_basic_count(),
@@ -338,6 +344,7 @@ TEST_F(MtpBasisTest, find_val_der4coeffs)
         calculate_der2xyz,
         calculate_der2coeffs,
         chebyshev_size,
+        scaling,
         coeffs,
         mtp_param.alpha_moments_count(),
         mtp_param.alpha_index_basic_count(),
@@ -369,6 +376,7 @@ TEST_F(MtpBasisTest, find_val_der4coeffs)
         calculate_der2xyz,
         calculate_der2coeffs,
         chebyshev_size,
+        scaling,
         coeffs,
         mtp_param.alpha_moments_count(),
         mtp_param.alpha_index_basic_count(),
@@ -424,6 +432,7 @@ TEST_F(MtpBasisTest, MomsValDer)
         mom_vals,
         mom_ders,
         chebyshev_size,
+        scaling,
         coeffs,
         mtp_param.alpha_moments_count(),
         mtp_param.alpha_index_basic_count(),
@@ -446,6 +455,7 @@ TEST_F(MtpBasisTest, MomsValDer)
         mom_vals_,
         mom_ders_,
         chebyshev_size,
+        scaling,
         coeffs,
         mtp_param.alpha_moments_count(),
         mtp_param.alpha_index_basic_count(),

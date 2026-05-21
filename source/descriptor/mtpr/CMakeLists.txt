@@ -25,6 +25,7 @@ endif()
 # 5. compile
 add_library(mtpParam SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/mtpParam.cc)
 
+
 if (TORCH_OP)
     add_library(schmidt_orth_op SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/schmidt_orth_op.cc)
     target_link_libraries(schmidt_orth_op PRIVATE ${TORCH_LIBRARIES})

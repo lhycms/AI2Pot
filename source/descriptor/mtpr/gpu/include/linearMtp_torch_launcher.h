@@ -26,6 +26,7 @@ void find_efv_torch_launcher(
     CoordType (*d_force)[3],
     CoordType *d_virial,
     int chebyshev_size,
+    CoordType scaling,
     CoordType *d_coeffs,
     CoordType *d_linear_coeffs,
     CoordType *d_type_bias,
@@ -59,6 +60,7 @@ void find_ef_torch_launcher(
     CoordType *d_betot_ptr,
     CoordType (*d_bforce)[3],
     int chebyshev_size,
+    CoordType scaling,
     CoordType *d_coeffs,
     CoordType *d_linear_coeffs,
     CoordType *d_type_bias,
@@ -91,6 +93,7 @@ template <typename CoordType>
 void find_descriptors_torch_launcher(
     CoordType *d_bdescriptors,
     int chebyshev_size,
+    CoordType scaling,
     CoordType *d_coeffs,
     const int alpha_moments_count,
     const int alpha_index_basic_count,

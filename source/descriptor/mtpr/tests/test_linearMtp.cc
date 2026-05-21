@@ -104,6 +104,7 @@ protected:
     real *e_sites_der2type_bias;
 
     real *q_scaler;
+    real scaling;
 
     static void SetUpTestSuite() {
         std::cout << "MtpBasisTest (TestSuite) is setting up...\n";
@@ -320,6 +321,7 @@ protected:
         //for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++) {
         //    q_scaler[ii] = 1.0;
         //}
+        scaling = 1.0;
     }
 
     void TearDown() override {
@@ -369,6 +371,7 @@ TEST_F(LinearMtpTest, find_descriptors)
     ai2pot::mtpr::LinearMtp<real>::find_descriptors(
         all_descriptors,
         chebyshev_size,
+        scaling,
         coeffs,
         mtp_param.alpha_moments_count(),
         mtp_param.alpha_index_basic_count(),
@@ -414,6 +417,7 @@ TEST_F(LinearMtpTest, find_e) {
     ai2pot::mtpr::LinearMtp<real>::find_e_sites(
         e_sites,
         chebyshev_size,
+        scaling,
         coeffs,
         linear_coeffs,
         type_bias,
@@ -452,6 +456,7 @@ TEST_F(LinearMtpTest, find_e_sites_backward) {
         e_sites_der2linear_coeffs,
         e_sites_der2type_bias,
         chebyshev_size,
+        scaling,
         coeffs,
         linear_coeffs,
         type_bias,
@@ -490,6 +495,7 @@ TEST_F(LinearMtpTest, efv_force_accuracy) {
         force,
         virial,
         chebyshev_size,
+        scaling,
         coeffs,
         linear_coeffs,
         type_bias,
@@ -539,6 +545,7 @@ TEST_F(LinearMtpTest, efv_force_accuracy) {
         force_,
         virial_,
         chebyshev_size,
+        scaling,
         coeffs,
         linear_coeffs,
         type_bias,
@@ -586,6 +593,7 @@ TEST_F(LinearMtpTest, ef_force_accuracy) {
         etot,
         force,
         chebyshev_size,
+        scaling,
         coeffs,
         linear_coeffs,
         type_bias,
@@ -634,6 +642,7 @@ TEST_F(LinearMtpTest, ef_force_accuracy) {
         etot_,
         force_,
         chebyshev_size,
+        scaling,
         coeffs,
         linear_coeffs,
         type_bias,
@@ -681,6 +690,7 @@ TEST_F(LinearMtpTest, find_loss_backward) {
         force,
         virial,
         chebyshev_size,
+        scaling,
         coeffs,
         linear_coeffs,
         type_bias,
@@ -720,6 +730,7 @@ TEST_F(LinearMtpTest, find_loss_backward) {
         virial,
         virial_dft,
         chebyshev_size,
+        scaling,
         coeffs,
         linear_coeffs,
         type_bias,
@@ -771,6 +782,7 @@ TEST_F(LinearMtpTest, find_ef_loss_backward) {
         etot,
         force,
         chebyshev_size,
+        scaling,
         coeffs,
         linear_coeffs,
         type_bias,
@@ -807,6 +819,7 @@ TEST_F(LinearMtpTest, find_ef_loss_backward) {
         force,
         force_dft,
         chebyshev_size,
+        scaling,
         coeffs,
         linear_coeffs,
         type_bias,

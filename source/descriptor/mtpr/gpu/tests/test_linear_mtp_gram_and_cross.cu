@@ -72,6 +72,7 @@ protected:
     real *lin_vector;
 
     real *q_scaler;
+    real scaling;
 
     static void SetUpTestSuite() {
         std::cout << "LinearMtpTest (TestSuite) is setting up...\n";
@@ -253,6 +254,7 @@ protected:
         for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++) {
             q_scaler[ii] = 0.67 + 0.05 * ii;
         }
+        scaling = 1.0;
     }
 
     void TearDown() override {
@@ -291,6 +293,7 @@ TEST_F(LinearMtpGramAndCrossTest, find_efv_components_launcher) {
         bforce_components,
         bvirial_components,
         chebyshev_size,
+        scaling,
         coeffs,
         linear_coeffs,
         type_bias,
@@ -332,6 +335,7 @@ TEST_F(LinearMtpGramAndCrossTest, find_lin_matrix_lin_vector_launcher) {
         bforce_components,
         bvirial_components,
         chebyshev_size,
+        scaling,
         coeffs,
         linear_coeffs,
         type_bias,
@@ -404,6 +408,7 @@ TEST_F(LinearMtpGramAndCrossTest, find_lin_matrix_lin_vector_series_launcher) {
         bforce_residual,
         bvirial_residual,
         chebyshev_size,
+        scaling,
         coeffs,
         linear_coeffs,
         type_bias,

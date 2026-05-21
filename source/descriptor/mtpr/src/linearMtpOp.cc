@@ -39,6 +39,7 @@ extern template void ai2pot::mtpr::find_efv_torch_launcher<float>(
     float (*d_bforce)[3],
     float *d_virial,
     int chebyshev_size,
+    float scaling,
     float *d_coeffs,
     float *d_linear_coeffs,
     float *d_type_bias,
@@ -71,6 +72,7 @@ extern template void ai2pot::mtpr::find_efv_torch_launcher<double>(
     double (*d_bforce)[3],
     double *d_virial,
     int chebyshev_size,
+    double scaling,
     double *d_coeffs,
     double *d_linear_coeffs,
     double *d_type_bias,
@@ -104,6 +106,7 @@ extern template void ai2pot::mtpr::find_ef_torch_launcher<float>(
     float *d_betot_ptr,
     float (*d_bforce)[3],
     int chebyshev_size,
+    float scaling,
     float *d_coeffs,
     float *d_linear_coeffs,
     float *d_type_bias,
@@ -135,6 +138,7 @@ extern template void ai2pot::mtpr::find_ef_torch_launcher<double>(
     double *d_betot_ptr,
     double (*d_bforce)[3],
     int chebyshev_size,
+    double scaling,
     double *d_coeffs,
     double *d_linear_coeffs,
     double *d_type_bias,
@@ -167,6 +171,7 @@ extern template void ai2pot::mtpr::find_ef_torch_launcher<double>(
 extern template void ai2pot::mtpr::find_descriptors_torch_launcher<float>(
     float *d_bdescriptors,
     int chebyshev_size,
+    float scaling,
     float *d_coeffs,
     const int alpha_moments_count,
     const int alpha_index_basic_count,
@@ -195,6 +200,7 @@ extern template void ai2pot::mtpr::find_descriptors_torch_launcher<float>(
 extern template void ai2pot::mtpr::find_descriptors_torch_launcher<double>(
     double *d_bdescriptors,
     int chebyshev_size,
+    double scaling,
     double *d_coeffs,
     const int alpha_moments_count,
     const int alpha_index_basic_count,
@@ -299,6 +305,7 @@ extern template void ai2pot::mtpr::find_loss_backward_torch_launcher<float>(
     float *d_bvirial_ml,
     float *d_bvirial_dft,
     int chebyshev_size,
+    float scaling,
     float *d_coeffs,
     float *d_linear_coeffs,
     float *d_type_bias,
@@ -341,6 +348,7 @@ extern template void ai2pot::mtpr::find_loss_backward_torch_launcher<double>(
     double *d_bvirial_ml,
     double *d_bvirial_dft,
     int chebyshev_size,
+    double scaling,
     double *d_coeffs,
     double *d_linear_coeffs,
     double *d_type_bias,
@@ -381,6 +389,7 @@ extern template void ai2pot::mtpr::find_ef_loss_backward_torch_launcher<float>(
     float (*d_bforce_ml)[3],
     float (*d_bforce_dft)[3],
     int chebyshev_size,
+    float scaling,
     float *d_coeffs,
     float *d_linear_coeffs,
     float *d_type_bias,
@@ -419,6 +428,7 @@ extern template void ai2pot::mtpr::find_ef_loss_backward_torch_launcher<double>(
     double (*d_bforce_ml)[3],
     double (*d_bforce_dft)[3],
     int chebyshev_size,
+    double scaling,
     double *d_coeffs,
     double *d_linear_coeffs,
     double *d_type_bias,
@@ -615,6 +625,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
     const at::Tensor& bforce_dft_tensor,
     const at::Tensor& bvirial_dft_tensor,
     int chebyshev_size,
+    double scaling,
     const at::Tensor& coeffs_tensor,
     const at::Tensor& linear_coeffs_tensor,
     const at::Tensor& type_bias_tensor,
@@ -738,6 +749,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                 bforce,
                 bvirial,
                 chebyshev_size,
+                scaling,
                 coeffs,
                 linear_coeffs,
                 type_bias,
@@ -824,6 +836,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                 bforce,
                 bvirial,
                 chebyshev_size,
+                (float)scaling,
                 coeffs,
                 linear_coeffs,
                 type_bias,
@@ -960,6 +973,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                 bforce,
                 bvirial,
                 chebyshev_size,
+                scaling,
                 coeffs,
                 linear_coeffs,
                 type_bias,
@@ -1046,6 +1060,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                 bforce,
                 bvirial,
                 chebyshev_size,
+                scaling,
                 coeffs,
                 linear_coeffs,
                 type_bias,
@@ -1129,6 +1144,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::forward(
                             bforce_dft_tensor,
                             bvirial_dft_tensor,
                             at::tensor(chebyshev_size, int_options),
+                            at::tensor(scaling, float_options),
                             coeffs_tensor,
                             linear_coeffs_tensor,
                             type_bias_tensor,
@@ -1176,31 +1192,32 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
     at::Tensor bforce_dft_tensor = ctx->get_saved_variables()[4];
     at::Tensor bvirial_dft_tensor = ctx->get_saved_variables()[5];
     int chebyshev_size = ctx->get_saved_variables()[6].item<int>();
-    at::Tensor coeffs_tensor = ctx->get_saved_variables()[7];
-    at::Tensor linear_coeffs_tensor = ctx->get_saved_variables()[8];
-    at::Tensor type_bias_tensor = ctx->get_saved_variables()[9];
-    int alpha_moments_count = ctx->get_saved_variables()[10].item<int>();
-    at::Tensor alpha_index_basic_tensor = ctx->get_saved_variables()[11];
-    at::Tensor alpha_index_times_tensor = ctx->get_saved_variables()[12];
-    at::Tensor alpha_moment_mapping_tensor = ctx->get_saved_variables()[13];
-    int nmus = ctx->get_saved_variables()[14].item<int>();
-    at::Tensor binum_tensor = ctx->get_saved_variables()[15];
-    at::Tensor bilist_tensor = ctx->get_saved_variables()[16];
-    at::Tensor bnumneigh_tensor = ctx->get_saved_variables()[17];
-    at::Tensor bfirstneigh_tensor = ctx->get_saved_variables()[18];
-    at::Tensor brcs_tensor = ctx->get_saved_variables()[19];
-    at::Tensor btypes_tensor = ctx->get_saved_variables()[20];
-    at::Tensor type_map_tensor = ctx->get_saved_variables()[21];
+    double scaling = ctx->get_saved_variables()[7].item<double>();
+    at::Tensor coeffs_tensor = ctx->get_saved_variables()[8];
+    at::Tensor linear_coeffs_tensor = ctx->get_saved_variables()[9];
+    at::Tensor type_bias_tensor = ctx->get_saved_variables()[10];
+    int alpha_moments_count = ctx->get_saved_variables()[11].item<int>();
+    at::Tensor alpha_index_basic_tensor = ctx->get_saved_variables()[12];
+    at::Tensor alpha_index_times_tensor = ctx->get_saved_variables()[13];
+    at::Tensor alpha_moment_mapping_tensor = ctx->get_saved_variables()[14];
+    int nmus = ctx->get_saved_variables()[15].item<int>();
+    at::Tensor binum_tensor = ctx->get_saved_variables()[16];
+    at::Tensor bilist_tensor = ctx->get_saved_variables()[17];
+    at::Tensor bnumneigh_tensor = ctx->get_saved_variables()[18];
+    at::Tensor bfirstneigh_tensor = ctx->get_saved_variables()[19];
+    at::Tensor brcs_tensor = ctx->get_saved_variables()[20];
+    at::Tensor btypes_tensor = ctx->get_saved_variables()[21];
+    at::Tensor type_map_tensor = ctx->get_saved_variables()[22];
     int ntypes = type_map_tensor.size(0);
 
-    int nghost = ctx->get_saved_variables()[22].item<int>();
-    double rmax = ctx->get_saved_variables()[23].item<double>();
-    double rmin = ctx->get_saved_variables()[24].item<double>();
-    at::Tensor q_scaler_tensor = ctx->get_saved_variables()[25];
-    double zbl_rmax = ctx->get_saved_variables()[26].item<double>();
-    double zbl_rmin = ctx->get_saved_variables()[27].item<double>();
-    at::Tensor zbl_cks_tensor = ctx->get_saved_variables()[28];
-    at::Tensor zbl_dks_tensor = ctx->get_saved_variables()[29];
+    int nghost = ctx->get_saved_variables()[23].item<int>();
+    double rmax = ctx->get_saved_variables()[24].item<double>();
+    double rmin = ctx->get_saved_variables()[25].item<double>();
+    at::Tensor q_scaler_tensor = ctx->get_saved_variables()[26];
+    double zbl_rmax = ctx->get_saved_variables()[27].item<double>();
+    double zbl_rmin = ctx->get_saved_variables()[28].item<double>();
+    at::Tensor zbl_cks_tensor = ctx->get_saved_variables()[29];
+    at::Tensor zbl_dks_tensor = ctx->get_saved_variables()[30];
     int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
     int num_linear_coeffs = (int)linear_coeffs_tensor.size(0);
 
@@ -1300,6 +1317,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
                 bforce,
                 bvirial,
                 chebyshev_size,
+                scaling,
                 coeffs,
                 linear_coeffs,
                 type_bias,
@@ -1341,6 +1359,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
                 bvirial,
                 bvirial_dft,
                 chebyshev_size,
+                (float)scaling,
                 coeffs,
                 linear_coeffs,
                 type_bias,
@@ -1396,6 +1415,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
                 bforce,
                 bvirial,
                 chebyshev_size,
+                (float)scaling,
                 coeffs,
                 linear_coeffs,
                 type_bias,
@@ -1437,6 +1457,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
                 bvirial,
                 bvirial_dft,
                 chebyshev_size,
+                (float)scaling,
                 coeffs,
                 linear_coeffs,
                 type_bias,
@@ -1533,6 +1554,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
                 bforce,
                 bvirial,
                 chebyshev_size,
+                scaling,
                 coeffs,
                 linear_coeffs,
                 type_bias,
@@ -1574,6 +1596,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
                 bvirial,
                 bvirial_dft,
                 chebyshev_size,
+                scaling,
                 coeffs,
                 linear_coeffs,
                 type_bias,
@@ -1629,6 +1652,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
                 bforce,
                 bvirial,
                 chebyshev_size,
+                scaling,
                 coeffs,
                 linear_coeffs,
                 type_bias,
@@ -1670,6 +1694,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
                 bvirial,
                 bvirial_dft,
                 chebyshev_size,
+                scaling,
                 coeffs,
                 linear_coeffs,
                 type_bias,
@@ -1707,6 +1732,7 @@ torch::autograd::variable_list LinearMtpToLossFunction::backward(
             at::Tensor(), 
             at::Tensor(),
             at::Tensor(),
+            at::Tensor(),
             torch::matmul(bgrad_output_tensor, bloss_der2coeffs_tensor),
             torch::matmul(bgrad_output_tensor, bloss_der2linear_coeffs_tensor),
             torch::matmul(bgrad_output_tensor, bloss_der2type_bias_tensor),
@@ -1742,6 +1768,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
     const at::Tensor& betot_dft_tensor,
     const at::Tensor& bforce_dft_tensor,
     int chebyshev_size,
+    double scaling,
     const at::Tensor& coeffs_tensor,
     const at::Tensor& linear_coeffs_tensor,
     const at::Tensor& type_bias_tensor,
@@ -1859,6 +1886,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
                 betot,
                 bforce,
                 chebyshev_size,
+                scaling,
                 coeffs,
                 linear_coeffs,
                 type_bias,
@@ -1937,6 +1965,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
                 betot,
                 bforce,
                 chebyshev_size,
+                (float)scaling,
                 coeffs,
                 linear_coeffs,
                 type_bias,
@@ -2060,6 +2089,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
                 betot,
                 bforce,
                 chebyshev_size,
+                scaling,
                 coeffs,
                 linear_coeffs,
                 type_bias,
@@ -2138,6 +2168,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
                 betot,
                 bforce,
                 chebyshev_size,
+                scaling,
                 coeffs,
                 linear_coeffs,
                 type_bias,
@@ -2210,6 +2241,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::forward(
                             betot_dft_tensor, 
                             bforce_dft_tensor,
                             at::tensor(chebyshev_size, int_options),
+                            at::tensor(scaling, float_options),
                             coeffs_tensor,
                             linear_coeffs_tensor,
                             type_bias_tensor,
@@ -2254,30 +2286,31 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
     at::Tensor betot_dft_tensor = ctx->get_saved_variables()[2];
     at::Tensor bforce_dft_tensor = ctx->get_saved_variables()[3];
     int chebyshev_size = ctx->get_saved_variables()[4].item<int>();
-    at::Tensor coeffs_tensor = ctx->get_saved_variables()[5];
-    at::Tensor linear_coeffs_tensor = ctx->get_saved_variables()[6];
-    at::Tensor type_bias_tensor = ctx->get_saved_variables()[7];
-    int alpha_moments_count = ctx->get_saved_variables()[8].item<int>();
-    at::Tensor alpha_index_basic_tensor = ctx->get_saved_variables()[9];
-    at::Tensor alpha_index_times_tensor = ctx->get_saved_variables()[10];
-    at::Tensor alpha_moment_mapping_tensor = ctx->get_saved_variables()[11];
-    int nmus = ctx->get_saved_variables()[12].item<int>();
-    at::Tensor binum_tensor = ctx->get_saved_variables()[13];
-    at::Tensor bilist_tensor = ctx->get_saved_variables()[14];
-    at::Tensor bnumneigh_tensor = ctx->get_saved_variables()[15];
-    at::Tensor bfirstneigh_tensor = ctx->get_saved_variables()[16];
-    at::Tensor brcs_tensor = ctx->get_saved_variables()[17];
-    at::Tensor btypes_tensor = ctx->get_saved_variables()[18];
-    at::Tensor type_map_tensor = ctx->get_saved_variables()[19];
+    double scaling = ctx->get_saved_variables()[5].item<double>();
+    at::Tensor coeffs_tensor = ctx->get_saved_variables()[6];
+    at::Tensor linear_coeffs_tensor = ctx->get_saved_variables()[7];
+    at::Tensor type_bias_tensor = ctx->get_saved_variables()[8];
+    int alpha_moments_count = ctx->get_saved_variables()[9].item<int>();
+    at::Tensor alpha_index_basic_tensor = ctx->get_saved_variables()[10];
+    at::Tensor alpha_index_times_tensor = ctx->get_saved_variables()[11];
+    at::Tensor alpha_moment_mapping_tensor = ctx->get_saved_variables()[12];
+    int nmus = ctx->get_saved_variables()[13].item<int>();
+    at::Tensor binum_tensor = ctx->get_saved_variables()[14];
+    at::Tensor bilist_tensor = ctx->get_saved_variables()[15];
+    at::Tensor bnumneigh_tensor = ctx->get_saved_variables()[16];
+    at::Tensor bfirstneigh_tensor = ctx->get_saved_variables()[17];
+    at::Tensor brcs_tensor = ctx->get_saved_variables()[18];
+    at::Tensor btypes_tensor = ctx->get_saved_variables()[19];
+    at::Tensor type_map_tensor = ctx->get_saved_variables()[20];
     int ntypes = type_map_tensor.size(0);
-    int nghost = ctx->get_saved_variables()[20].item<int>();
-    double rmax = ctx->get_saved_variables()[21].item<double>();
-    double rmin = ctx->get_saved_variables()[22].item<double>();
-    at::Tensor q_scaler_tensor = ctx->get_saved_variables()[23];
-    double zbl_rmax = ctx->get_saved_variables()[24].item<double>();
-    double zbl_rmin = ctx->get_saved_variables()[25].item<double>();
-    at::Tensor zbl_cks_tensor = ctx->get_saved_variables()[26];
-    at::Tensor zbl_dks_tensor = ctx->get_saved_variables()[27];
+    int nghost = ctx->get_saved_variables()[21].item<int>();
+    double rmax = ctx->get_saved_variables()[22].item<double>();
+    double rmin = ctx->get_saved_variables()[23].item<double>();
+    at::Tensor q_scaler_tensor = ctx->get_saved_variables()[24];
+    double zbl_rmax = ctx->get_saved_variables()[25].item<double>();
+    double zbl_rmin = ctx->get_saved_variables()[26].item<double>();
+    at::Tensor zbl_cks_tensor = ctx->get_saved_variables()[27];
+    at::Tensor zbl_dks_tensor = ctx->get_saved_variables()[28];
     int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
     int num_linear_coeffs = (int)linear_coeffs_tensor.size(0);
 
@@ -2374,6 +2407,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
                 betot,
                 bforce,
                 chebyshev_size,
+                scaling,
                 coeffs,
                 linear_coeffs,
                 type_bias,
@@ -2412,6 +2446,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
                 bforce,
                 bforce_dft,
                 chebyshev_size,
+                scaling,
                 coeffs,
                 linear_coeffs,
                 type_bias,
@@ -2465,6 +2500,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
                 betot,
                 bforce,
                 chebyshev_size,
+                (float)scaling,
                 coeffs,
                 linear_coeffs,
                 type_bias,
@@ -2503,6 +2539,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
                 bforce,
                 bforce_dft,
                 chebyshev_size,
+                (float)scaling,
                 coeffs,
                 linear_coeffs,
                 type_bias,
@@ -2593,6 +2630,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
                 betot,
                 bforce,
                 chebyshev_size,
+                scaling,
                 coeffs,
                 linear_coeffs,
                 type_bias,
@@ -2631,6 +2669,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
                 bforce,
                 bforce_dft,
                 chebyshev_size,
+                scaling,
                 coeffs,
                 linear_coeffs,
                 type_bias,
@@ -2684,6 +2723,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
                 betot,
                 bforce,
                 chebyshev_size,
+                scaling,
                 coeffs,
                 linear_coeffs,
                 type_bias,
@@ -2722,6 +2762,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
                 bforce,
                 bforce_dft,
                 chebyshev_size,
+                scaling,
                 coeffs,
                 linear_coeffs,
                 type_bias,
@@ -2757,6 +2798,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
             at::Tensor(), 
             at::Tensor(),
             at::Tensor(),
+            at::Tensor(),
             torch::matmul(bgrad_output_tensor, bloss_der2coeffs_tensor),
             torch::matmul(bgrad_output_tensor, bloss_der2linear_coeffs_tensor),
             torch::matmul(bgrad_output_tensor, bloss_der2type_bias_tensor),
@@ -2788,6 +2830,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunction::backward(
 torch::autograd::variable_list LinearMtpToEFVFunction::forward(
     torch::autograd::AutogradContext *ctx,
     int chebyshev_size,
+    double scaling,
     const at::Tensor& coeffs_tensor,
     const at::Tensor& linear_coeffs_tensor,
     const at::Tensor& type_bias_tensor,
@@ -2902,6 +2945,7 @@ torch::autograd::variable_list LinearMtpToEFVFunction::forward(
                 bforce,
                 bvirial,
                 chebyshev_size,
+                scaling,
                 coeffs,
                 linear_coeffs,
                 type_bias,
@@ -2957,6 +3001,7 @@ torch::autograd::variable_list LinearMtpToEFVFunction::forward(
                 bforce,
                 bvirial,
                 chebyshev_size,
+                (float)scaling,
                 coeffs,
                 linear_coeffs,
                 type_bias,
@@ -3042,6 +3087,7 @@ torch::autograd::variable_list LinearMtpToEFVFunction::forward(
                 bforce,
                 bvirial,
                 chebyshev_size,
+                scaling,
                 coeffs,
                 linear_coeffs,
                 type_bias,
@@ -3097,6 +3143,7 @@ torch::autograd::variable_list LinearMtpToEFVFunction::forward(
                 bforce,
                 bvirial,
                 chebyshev_size,
+                scaling,
                 coeffs,
                 linear_coeffs,
                 type_bias,
@@ -3158,6 +3205,7 @@ torch::autograd::variable_list LinearMtpToEFVFunction::backward(
             at::Tensor(),
             at::Tensor(),
             at::Tensor(),
+            at::Tensor(),
             at::Tensor()};
 }
 
@@ -3165,6 +3213,7 @@ torch::autograd::variable_list LinearMtpToEFVFunction::backward(
 torch::autograd::variable_list LinearMtpToEFFunction::forward(
     torch::autograd::AutogradContext *ctx,
     int chebyshev_size,
+    double scaling,
     const at::Tensor& coeffs_tensor,
     const at::Tensor& linear_coeffs_tensor,
     const at::Tensor& type_bias_tensor,
@@ -3274,6 +3323,7 @@ torch::autograd::variable_list LinearMtpToEFFunction::forward(
                 betot,
                 bforce,
                 chebyshev_size,
+                scaling,
                 coeffs,
                 linear_coeffs,
                 type_bias,
@@ -3327,6 +3377,7 @@ torch::autograd::variable_list LinearMtpToEFFunction::forward(
                 betot,
                 bforce,
                 chebyshev_size,
+                (float)scaling,
                 coeffs,
                 linear_coeffs,
                 type_bias,
@@ -3409,6 +3460,7 @@ torch::autograd::variable_list LinearMtpToEFFunction::forward(
                 betot,
                 bforce,
                 chebyshev_size,
+                scaling,
                 coeffs,
                 linear_coeffs,
                 type_bias,
@@ -3462,6 +3514,7 @@ torch::autograd::variable_list LinearMtpToEFFunction::forward(
                 betot,
                 bforce,
                 chebyshev_size,
+                scaling,
                 coeffs,
                 linear_coeffs,
                 type_bias,
@@ -3523,6 +3576,8 @@ torch::autograd::variable_list LinearMtpToEFFunction::backward(
             at::Tensor(),
             at::Tensor(),
             at::Tensor(),
+            at::Tensor(),
+            at::Tensor(),
             at::Tensor()};
 }
 
@@ -3530,6 +3585,7 @@ torch::autograd::variable_list LinearMtpToEFFunction::backward(
 torch::autograd::variable_list LinearMtpToEsitesFunction::forward(
     torch::autograd::AutogradContext *ctx,
     int chebyshev_size,
+    double scaling,
     const at::Tensor& coeffs_tensor,
     const at::Tensor& linear_coeffs_tensor,
     const at::Tensor& type_bias_tensor,
@@ -3626,6 +3682,7 @@ torch::autograd::variable_list LinearMtpToEsitesFunction::forward(
             LinearMtp<float>::find_e_sites(
                 e_sites,
                 chebyshev_size,
+                scaling,
                 coeffs,
                 linear_coeffs,
                 type_bias,
@@ -3703,6 +3760,7 @@ torch::autograd::variable_list LinearMtpToEsitesFunction::forward(
             LinearMtp<double>::find_e_sites(
                 e_sites,
                 chebyshev_size,
+                scaling,
                 coeffs,
                 linear_coeffs,
                 type_bias,
@@ -3735,6 +3793,7 @@ torch::autograd::variable_list LinearMtpToEsitesFunction::forward(
                     .device(brcs_tensor.device());
     ctx->save_for_backward({
         torch::tensor(chebyshev_size, int_options),
+        torch::tensor(scaling, float_options),
         coeffs_tensor,
         linear_coeffs_tensor,
         type_bias_tensor,
@@ -3773,29 +3832,30 @@ torch::autograd::variable_list LinearMtpToEsitesFunction::backward(
         bgrad_output_tensor = bgrad_output_tensor.contiguous();
 
     int chebyshev_size = ctx->get_saved_variables()[0].item<int>();
-    at::Tensor coeffs_tensor = ctx->get_saved_variables()[1];
-    at::Tensor linear_coeffs_tensor = ctx->get_saved_variables()[2];
-    at::Tensor type_bias_tensor = ctx->get_saved_variables()[3];
-    int alpha_moments_count = ctx->get_saved_variables()[4].item<int>();
-    at::Tensor alpha_index_basic_tensor = ctx->get_saved_variables()[5];
-    at::Tensor alpha_index_times_tensor = ctx->get_saved_variables()[6];
-    at::Tensor alpha_moment_mapping_tensor = ctx->get_saved_variables()[7];
-    int nmus = ctx->get_saved_variables()[8].item<int>();
-    at::Tensor binum_tensor = ctx->get_saved_variables()[9];
-    at::Tensor bilist_tensor = ctx->get_saved_variables()[10];
-    at::Tensor bnumneigh_tensor = ctx->get_saved_variables()[11];
-    at::Tensor bfirstneigh_tensor = ctx->get_saved_variables()[12];
-    at::Tensor brcs_tensor = ctx->get_saved_variables()[13];
-    at::Tensor btypes_tensor = ctx->get_saved_variables()[14];
-    at::Tensor type_map_tensor = ctx->get_saved_variables()[15];
-    int nghost = ctx->get_saved_variables()[16].item<int>();
-    double rmax = ctx->get_saved_variables()[17].item<double>();
-    double rmin = ctx->get_saved_variables()[18].item<double>();
-    at::Tensor q_scaler_tensor = ctx->get_saved_variables()[19];
-    double zbl_rmax = ctx->get_saved_variables()[20].item<double>();
-    double zbl_rmin = ctx->get_saved_variables()[21].item<double>();
-    at::Tensor zbl_cks_tensor = ctx->get_saved_variables()[22];
-    at::Tensor zbl_dks_tensor = ctx->get_saved_variables()[23];
+    double scaling = ctx->get_saved_variables()[1].item<double>();
+    at::Tensor coeffs_tensor = ctx->get_saved_variables()[2];
+    at::Tensor linear_coeffs_tensor = ctx->get_saved_variables()[3];
+    at::Tensor type_bias_tensor = ctx->get_saved_variables()[4];
+    int alpha_moments_count = ctx->get_saved_variables()[5].item<int>();
+    at::Tensor alpha_index_basic_tensor = ctx->get_saved_variables()[6];
+    at::Tensor alpha_index_times_tensor = ctx->get_saved_variables()[7];
+    at::Tensor alpha_moment_mapping_tensor = ctx->get_saved_variables()[8];
+    int nmus = ctx->get_saved_variables()[9].item<int>();
+    at::Tensor binum_tensor = ctx->get_saved_variables()[10];
+    at::Tensor bilist_tensor = ctx->get_saved_variables()[11];
+    at::Tensor bnumneigh_tensor = ctx->get_saved_variables()[12];
+    at::Tensor bfirstneigh_tensor = ctx->get_saved_variables()[13];
+    at::Tensor brcs_tensor = ctx->get_saved_variables()[14];
+    at::Tensor btypes_tensor = ctx->get_saved_variables()[15];
+    at::Tensor type_map_tensor = ctx->get_saved_variables()[16];
+    int nghost = ctx->get_saved_variables()[17].item<int>();
+    double rmax = ctx->get_saved_variables()[18].item<double>();
+    double rmin = ctx->get_saved_variables()[19].item<double>();
+    at::Tensor q_scaler_tensor = ctx->get_saved_variables()[20];
+    double zbl_rmax = ctx->get_saved_variables()[21].item<double>();
+    double zbl_rmin = ctx->get_saved_variables()[22].item<double>();
+    at::Tensor zbl_cks_tensor = ctx->get_saved_variables()[23];
+    at::Tensor zbl_dks_tensor = ctx->get_saved_variables()[24];
     
     // 2. 
     int batch_size = binum_tensor.size(0);
@@ -3852,6 +3912,7 @@ torch::autograd::variable_list LinearMtpToEsitesFunction::backward(
                 e_sites_der2linear_coeffs,
                 e_sites_der2type_bias,
                 chebyshev_size,
+                scaling,
                 coeffs,
                 linear_coeffs,
                 type_bias,
@@ -3905,6 +3966,7 @@ torch::autograd::variable_list LinearMtpToEsitesFunction::backward(
                 e_sites_der2linear_coeffs,
                 e_sites_der2type_bias,
                 chebyshev_size,
+                scaling,
                 coeffs,
                 linear_coeffs,
                 type_bias,
@@ -3932,6 +3994,7 @@ torch::autograd::variable_list LinearMtpToEsitesFunction::backward(
         }
     }
     return {
+        at::Tensor(),
         at::Tensor(),
         (bgrad_output_tensor.unsqueeze(-1) * be_sites_der2coeffs_tensor).sum(torch::IntArrayRef({0, 1})),
         (bgrad_output_tensor.unsqueeze(-1) * be_sites_der2linear_coeffs_tensor).sum(torch::IntArrayRef({0, 1})),
@@ -3963,6 +4026,7 @@ torch::autograd::variable_list LinearMtpToEsitesFunction::backward(
 torch::autograd::variable_list LinearMtpToDescriptorsFunction::forward(
     torch::autograd::AutogradContext *ctx,
     int chebyshev_size,
+    double scaling,
     const at::Tensor& coeffs_tensor,
     int alpha_moments_count,
     const at::Tensor& alpha_index_basic_tensor,
@@ -4020,6 +4084,7 @@ torch::autograd::variable_list LinearMtpToDescriptorsFunction::forward(
             find_descriptors_cpu_launcher<float>(
                 bdescriptors,
                 chebyshev_size,
+                scaling,
                 coeffs,
                 alpha_moments_count,
                 alpha_index_basic_count,
@@ -4048,6 +4113,7 @@ torch::autograd::variable_list LinearMtpToDescriptorsFunction::forward(
             find_descriptors_torch_launcher<float>(
                 bdescriptors,
                 chebyshev_size,
+                scaling,
                 coeffs,
                 alpha_moments_count,
                 alpha_index_basic_count,
@@ -4082,6 +4148,7 @@ torch::autograd::variable_list LinearMtpToDescriptorsFunction::forward(
             find_descriptors_cpu_launcher<double>(
                 bdescriptors,
                 chebyshev_size,
+                scaling,
                 coeffs,
                 alpha_moments_count,
                 alpha_index_basic_count,
@@ -4110,6 +4177,7 @@ torch::autograd::variable_list LinearMtpToDescriptorsFunction::forward(
             find_descriptors_torch_launcher<double>(
                 bdescriptors,
                 chebyshev_size,
+                scaling,
                 coeffs,
                 alpha_moments_count,
                 alpha_index_basic_count,
@@ -4163,6 +4231,7 @@ torch::autograd::variable_list LinearMtpToDescriptorsFunction::backward(
         at::Tensor(),
         at::Tensor(),
         at::Tensor(),
+        at::Tensor(),
         at::Tensor()};
 }
 
@@ -4175,6 +4244,7 @@ torch::autograd::variable_list LinearMtpToLossOp(
     const at::Tensor& bforce_dft_tensor,
     const at::Tensor& bvirial_dft_tensor,
     int chebyshev_size,
+    double scaling,
     const at::Tensor& coeffs_tensor,
     const at::Tensor& linear_coeffs_tensor,
     const at::Tensor& type_bias_tensor,
@@ -4207,6 +4277,7 @@ torch::autograd::variable_list LinearMtpToLossOp(
         bforce_dft_tensor,
         bvirial_dft_tensor,
         chebyshev_size,
+        scaling,
         coeffs_tensor,
         linear_coeffs_tensor,
         type_bias_tensor,
@@ -4239,6 +4310,7 @@ torch::autograd::variable_list LinearMtpToEFLossOp(
     const at::Tensor& betot_dft_tensor,
     const at::Tensor& bforce_dft_tensor,
     int chebyshev_size,
+    double scaling,
     const at::Tensor& coeffs_tensor,
     const at::Tensor& linear_coeffs_tensor,
     const at::Tensor& type_bias_tensor,
@@ -4269,6 +4341,7 @@ torch::autograd::variable_list LinearMtpToEFLossOp(
         betot_dft_tensor,
         bforce_dft_tensor,
         chebyshev_size,
+        scaling,
         coeffs_tensor,
         linear_coeffs_tensor,
         type_bias_tensor,
@@ -4297,6 +4370,7 @@ torch::autograd::variable_list LinearMtpToEFLossOp(
 
 torch::autograd::variable_list LinearMtpToEFVOp(
     int chebyshev_size,
+    double scaling,
     const at::Tensor& coeffs_tensor,
     const at::Tensor& linear_coeffs_tensor,
     const at::Tensor& type_bias_tensor,
@@ -4323,6 +4397,7 @@ torch::autograd::variable_list LinearMtpToEFVOp(
 {
     return LinearMtpToEFVFunction::apply(
         chebyshev_size,
+        scaling,
         coeffs_tensor,
         linear_coeffs_tensor,
         type_bias_tensor,
@@ -4351,6 +4426,7 @@ torch::autograd::variable_list LinearMtpToEFVOp(
 
 torch::autograd::variable_list LinearMtpToEFOp(
     int chebyshev_size,
+    double scaling,
     const at::Tensor& coeffs_tensor,
     const at::Tensor& linear_coeffs_tensor,
     const at::Tensor& type_bias_tensor,
@@ -4377,6 +4453,7 @@ torch::autograd::variable_list LinearMtpToEFOp(
 {
     return LinearMtpToEFFunction::apply(
         chebyshev_size,
+        scaling,
         coeffs_tensor,
         linear_coeffs_tensor,
         type_bias_tensor,
@@ -4405,6 +4482,7 @@ torch::autograd::variable_list LinearMtpToEFOp(
 
 torch::autograd::variable_list LinearMtpToEsitesOp(
     int chebyshev_size,
+    double scaling,
     const at::Tensor& coeffs_tensor,
     const at::Tensor& linear_coeffs_tensor,
     const at::Tensor& type_bias_tensor,
@@ -4431,6 +4509,7 @@ torch::autograd::variable_list LinearMtpToEsitesOp(
 {
     return LinearMtpToEsitesFunction::apply(
         chebyshev_size,
+        scaling,
         coeffs_tensor,
         linear_coeffs_tensor,
         type_bias_tensor,
@@ -4459,6 +4538,7 @@ torch::autograd::variable_list LinearMtpToEsitesOp(
  
 torch::autograd::variable_list LinearMtpToDescriptorsOp(
     int chebyshev_size,
+    double scaling,
     const at::Tensor& coeffs_tensor,
     int alpha_moments_count,
     const at::Tensor& alpha_index_basic_tensor,
@@ -4478,6 +4558,7 @@ torch::autograd::variable_list LinearMtpToDescriptorsOp(
 {
     return LinearMtpToDescriptorsFunction::apply(
         chebyshev_size,
+        scaling,
         coeffs_tensor,
         alpha_moments_count,
         alpha_index_basic_tensor,

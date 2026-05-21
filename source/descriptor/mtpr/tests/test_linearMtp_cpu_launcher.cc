@@ -78,6 +78,7 @@ protected:
 
     // q factors
     real *q_scaler;
+    real scaling;
 
     static void SetUpTestSuite() {
         std::cout << "LinearMtpCPULauncher (TestSuite) is setting up...\n";
@@ -259,6 +260,7 @@ protected:
         for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++) {
             q_scaler[ii] = 0.67 + 0.05 * ii;
         }
+        scaling = 1.0;
     }
 
     void TearDown() override {
@@ -302,6 +304,7 @@ TEST_F(LinearMtpCPULauncher, find_efv_cpu_launcher) {
         bforce,
         bvirial,
         chebyshev_size,
+        scaling,
         coeffs,
         linear_coeffs,
         type_bias,
@@ -345,6 +348,7 @@ TEST_F(LinearMtpCPULauncher, find_ef_cpu_launcher) {
         betot,
         bforce,
         chebyshev_size,
+        scaling,
         coeffs,
         linear_coeffs,
         type_bias,
@@ -387,6 +391,7 @@ TEST_F(LinearMtpCPULauncher, find_descriptors_cpu_launcher) {
     ai2pot::mtpr::find_descriptors_cpu_launcher<real>(
         bdescriptors,
         chebyshev_size,
+        scaling,
         coeffs,
         mtp_param.alpha_moments_count(),
         mtp_param.alpha_index_basic_count(),
@@ -419,6 +424,7 @@ TEST_F(LinearMtpCPULauncher, find_loss_backward_cpu_launcher) {
         bforce,
         bvirial,
         chebyshev_size,
+        scaling,
         coeffs,
         linear_coeffs,
         type_bias,
@@ -460,6 +466,7 @@ TEST_F(LinearMtpCPULauncher, find_loss_backward_cpu_launcher) {
         bvirial,
         bvirial_dft,
         chebyshev_size,
+        scaling,
         coeffs,
         linear_coeffs,
         type_bias,
@@ -509,6 +516,7 @@ TEST_F(LinearMtpCPULauncher, find_ef_loss_backward_cpu_launcher) {
         betot,
         bforce,
         chebyshev_size,
+        scaling,
         coeffs,
         linear_coeffs,
         type_bias,
@@ -547,6 +555,7 @@ TEST_F(LinearMtpCPULauncher, find_ef_loss_backward_cpu_launcher) {
         bforce,
         bforce_dft,
         chebyshev_size,
+        scaling,
         coeffs,
         linear_coeffs,
         type_bias,

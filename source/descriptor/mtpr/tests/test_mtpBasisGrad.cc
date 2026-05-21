@@ -50,6 +50,8 @@ protected:
     ai2pot::Structure<double> structure;
     ai2pot::NeighborList<double> neighbor_list;
 
+    double scaling;
+
     static void SetUpTestSuite() {
         std::cout << "MtpBasisGradTest (TestSuite) is setting up...\n";
     }
@@ -187,6 +189,8 @@ protected:
             types,
             nghost,
             umax_num_neigh_atoms);
+        
+        scaling = 1.0;
     }
 
     void TearDown() override {
@@ -228,6 +232,7 @@ TEST_F(MtpBasisGradTest, mbg_der2coeff_accuracy)
         mbg_der2coeffs,
         calculate_mtp_basis,
         chebyshev_size,
+        scaling,
         coeffs,
         mtp_param.alpha_moments_count(),
         mtp_param.alpha_index_basic_count(),
@@ -257,6 +262,7 @@ TEST_F(MtpBasisGradTest, mbg_der2coeff_accuracy)
         mbg_der2coeffs_,
         calculate_mtp_basis,
         chebyshev_size,
+        scaling,
         coeffs,
         mtp_param.alpha_moments_count(),
         mtp_param.alpha_index_basic_count(),

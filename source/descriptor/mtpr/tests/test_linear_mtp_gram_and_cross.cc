@@ -82,6 +82,7 @@ protected:
     real v_weight;
 
     real *q_scaler;
+    real scaling;
 
 
     static void SetUpTestSuite() {
@@ -268,6 +269,7 @@ protected:
         for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++) {
             q_scaler[ii] = 0.67 + 0.05 * ii;
         }
+        scaling = 1.0;
     }
 
 
@@ -308,6 +310,7 @@ TEST_F(LinearMtpGramAndCrossTest, accumulate_efv_components) {
         force_components,
         virial_components,
         chebyshev_size,
+        scaling,
         coeffs,
         linear_coeffs,
         type_bias,
@@ -356,6 +359,7 @@ TEST_F(LinearMtpGramAndCrossTest, find_lin_matrix_lin_vector_launcher)
         bforce_residual,
         bvirial_residual,
         chebyshev_size,
+        scaling,
         coeffs,
         linear_coeffs,
         type_bias,

@@ -35,6 +35,7 @@ public:
         const at::Tensor& bforce_dft_tensor,
         const at::Tensor& bvirial_dft_tensor,
         int chebyshev_size,
+        double scaling,
         const at::Tensor& coeffs_tensor,
         const at::Tensor& linear_coeffs_tensor,
         const at::Tensor& type_bias_tensor,
@@ -75,6 +76,7 @@ public:
         const at::Tensor& betot_dft_tensor,
         const at::Tensor& bforce_dft_tensor,
         int chebyshev_size,
+        double scaling,
         const at::Tensor& coeffs_tensor,
         const at::Tensor& linear_coeffs_tensor,
         const at::Tensor& type_bias_tensor,
@@ -111,6 +113,7 @@ public:
     static torch::autograd::variable_list forward(
         torch::autograd::AutogradContext *ctx,
         int chebyshev_size,
+        double scaling,
         const at::Tensor& coeffs_tensor,
         const at::Tensor& linear_coeffs_tensor,
         const at::Tensor& type_bias_tensor,
@@ -147,6 +150,7 @@ public:
     static torch::autograd::variable_list forward(
         torch::autograd::AutogradContext *ctx,
         int chebyshev_size,
+        double scaling,
         const at::Tensor& coeffs_tensor,
         const at::Tensor& linear_coeffs_tensor,
         const at::Tensor& type_bias_tensor,
@@ -184,6 +188,7 @@ public:
     static torch::autograd::variable_list forward(
         torch::autograd::AutogradContext *ctx,
         int chebyshev_size,
+        double scaling,
         const at::Tensor& coeffs_tensor,
         const at::Tensor& linear_coeffs_tensor,
         const at::Tensor& type_bias_tensor,
@@ -220,6 +225,7 @@ public:
     static torch::autograd::variable_list forward(
         torch::autograd::AutogradContext *ctx,
         int chebyshev_size,
+        double scaling,
         const at::Tensor& coeffs_tensor,
         int alpha_moments_count,
         const at::Tensor& alpha_index_basic_tensor,
@@ -252,6 +258,7 @@ torch::autograd::variable_list LinearMtpToLossOp(
     const at::Tensor& bforce_dft_tensor,
     const at::Tensor& bvirial_dft_tensor,
     int chebyshev_size,
+    double scaling,
     const at::Tensor& coeffs_tensor,
     const at::Tensor& linear_coeffs_tensor,
     const at::Tensor& type_bias_tensor,
@@ -283,6 +290,7 @@ torch::autograd::variable_list LinearMtpToEFLossOp(
     const at::Tensor& betot_dft_tensor,
     const at::Tensor& bforce_dft_tensor,
     int chebyshev_size,
+    double scaling,
     const at::Tensor& coeffs_tensor,
     const at::Tensor& linear_coeffs_tensor,
     const at::Tensor& type_bias_tensor,
@@ -310,6 +318,7 @@ torch::autograd::variable_list LinearMtpToEFLossOp(
 
 torch::autograd::variable_list LinearMtpToEFVOp(
     int chebyshev_size,
+    double scaling,
     const at::Tensor& coeffs_tensor,
     const at::Tensor& linear_coeffs_tensor,
     const at::Tensor& type_bias_tensor,
@@ -337,6 +346,7 @@ torch::autograd::variable_list LinearMtpToEFVOp(
 
 torch::autograd::variable_list LinearMtpToEFOp(
     int chebyshev_size,
+    double scaling,
     const at::Tensor& coeffs_tensor,
     const at::Tensor& linear_coeffs_tensor,
     const at::Tensor& type_bias_tensor,
@@ -364,6 +374,7 @@ torch::autograd::variable_list LinearMtpToEFOp(
 
 torch::autograd::variable_list LinearMtpToEsitesOp(
     int chebyshev_size,
+    double scaling,
     const at::Tensor& coeffs_tensor,
     const at::Tensor& linear_coeffs_tensor,
     const at::Tensor& type_bias_tensor,
@@ -391,6 +402,7 @@ torch::autograd::variable_list LinearMtpToEsitesOp(
 
 torch::autograd::variable_list LinearMtpToDescriptorsOp(
     int chebyshev_size,
+    double scaling,
     const at::Tensor& coeffs_tensor,
     int alpha_moments_count,
     const at::Tensor& alpha_index_basic_tensor,

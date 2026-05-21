@@ -15,8 +15,7 @@ from ai2pot.fromcc import (
     linearMtpToEFOp,
     linearMtpToEsitesOp,
     mtpParamOp,
-    linearMtpToDescriptorsOp
-)
+    linearMtpToDescriptorsOp)
 
 
 TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")
@@ -28,8 +27,6 @@ PbTe_EXTXYZ_PATH = os.path.join(TEST_FILES_DIR, "XYZ", "11_NEP_potential_PbTe", 
 #torch.use_deterministic_algorithms(True)
 torch.set_num_threads(1)
 torch.manual_seed(214)
-
-
 
 
 
@@ -89,9 +86,10 @@ class LinearMtpTest(unittest.TestCase):
         print("LinearMtpTest (TestCase) is setting up...\n")
         # 0.
         self.torch_float_dtype: torch._C.dtype = torch.float64
-        self.device: torch._C.device = torch.device("cuda")
+        self.device: torch._C.device = torch.device("cpu")
         
         # 1. 
+        self.scaling: float = 1.1
         self.mtp_level: int = 18
         self.chebyshev_size: int = 8
         self.rmax: float = 5.0
@@ -184,9 +182,10 @@ class LinearMtpTest(unittest.TestCase):
         print("LinearMtpTest (TestCase) is tearing down...\n")
 
 
-    def est_nepToEF(self):
+    def test_nepToEF(self):
         input_info: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(self.structure)
         e, f = linearMtpToEFOp(self.chebyshev_size,
+                               self.scaling,
                                 self.coeffs_tensor,
                                 self.linear_coeffs_tensor,
                                 self.type_bias_tensor,
@@ -241,6 +240,7 @@ class LinearMtpTest(unittest.TestCase):
                                  input_info[3],
                                  input_info[4],
                                  self.chebyshev_size,
+                                 self.scaling,
                                  self.coeffs_tensor,
                                  self.linear_coeffs_tensor,
                                  self.type_bias_tensor,
@@ -285,6 +285,7 @@ class LinearMtpTest(unittest.TestCase):
 
         test = gradcheck(func=linearMtpToEsitesOp,
                          inputs=(self.chebyshev_size,
+                                 self.scaling,
                                  self.coeffs_tensor,
                                  self.linear_coeffs_tensor,
                                  self.type_bias_tensor,
@@ -324,6 +325,7 @@ class LinearMtpTest(unittest.TestCase):
 
         bdescriptors = linearMtpToDescriptorsOp(
             self.chebyshev_size,
+            self.scaling,
             self.coeffs_tensor,
             self.alpha_moments_count,
             self.alpha_index_basic_tensor,

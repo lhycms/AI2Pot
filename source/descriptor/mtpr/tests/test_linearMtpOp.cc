@@ -86,6 +86,7 @@ protected:
     double *zbl_dks;
 
     at::Tensor q_scaler_tensor;
+    double scaling;
 
     static void SetUpTestSuite() {
         std::cout << "LinearMtpOpTest (TestSuite) is setting up...\n";
@@ -297,6 +298,7 @@ protected:
         }
 
         q_scaler_tensor = at::ones({mtp_param.alpha_scalar_moments()}, float_options);
+        scaling = 1.0;
     }
 
     void TearDown() override {
@@ -314,6 +316,7 @@ TEST_F(LinearMtpOpTest, LinearMtpToLoss_apply) {
         bforce_dft_tensor,
         bvirial_dft_tensor,
         chebyshev_size,
+        scaling,
         coeffs_tensor,
         linear_coeffs_tensor,
         type_bias_tensor,
@@ -352,6 +355,7 @@ TEST_F(LinearMtpOpTest, ef_apply) {
         betot_dft_tensor,
         bforce_dft_tensor,
         chebyshev_size,
+        scaling,
         coeffs_tensor,
         linear_coeffs_tensor,
         type_bias_tensor,

@@ -25,6 +25,7 @@ void find_efv_components_torch_launcher(
     CoordType *d_bforce_components,
     CoordType *d_bvirial_components,
     int chebyshev_size,
+    CoordType scaling,
     CoordType *d_coeffs,
     CoordType *d_linear_coeffs,
     CoordType *d_type_bias,

@@ -53,6 +53,8 @@ protected:
     at::Tensor mus4moms_tensor;
     at::Tensor nmus_tensor;
 
+    double scaling;
+
     static void SetUpTestSuite() {
         std::cout << "MtpBasisOpTest (TestSuite) is setting up...\n";
     }
@@ -182,6 +184,8 @@ protected:
         coeffs_tensor = at::ones({ntypes*ntypes*nmus_tensor.item<int>()*chebyshev_size}, float_options);
         rmax = 5.0;
         rmin = 2.0;
+
+        scaling = 1.0;
     }
 
     void TearDown() override {
@@ -199,6 +203,7 @@ TEST_F(MtpBasisOpTest, forward)
                                                            nmus_tensor,
                                                            ntypes,
                                                            chebyshev_size,
+                                                           scaling,
                                                            coeffs_tensor,
                                                            binum_tensor,
                                                            bilist_tensor,
@@ -232,6 +237,7 @@ TEST_F(MtpBasisOpTest, backward_der2xyz)
                                                            nmus_tensor,
                                                            ntypes,
                                                            chebyshev_size,
+                                                           scaling,
                                                            coeffs_tensor,
                                                            binum_tensor,
                                                            bilist_tensor,
@@ -256,6 +262,7 @@ TEST_F(MtpBasisOpTest, backward_der2xyz)
                                                            nmus_tensor,
                                                            ntypes,
                                                            chebyshev_size,
+                                                           scaling,
                                                            coeffs_tensor,
                                                            binum_tensor,
                                                            bilist_tensor,
@@ -298,6 +305,7 @@ TEST_F(MtpBasisOpTest, backward_der2coeffs)
                                                            nmus_tensor,
                                                            ntypes,
                                                            chebyshev_size,
+                                                           scaling,
                                                            coeffs_tensor,
                                                            binum_tensor,
                                                            bilist_tensor,
@@ -320,6 +328,7 @@ TEST_F(MtpBasisOpTest, backward_der2coeffs)
                                                            nmus_tensor,
                                                            ntypes,
                                                            chebyshev_size,
+                                                           scaling,
                                                            coeffs_tensor_,
                                                            binum_tensor,
                                                            bilist_tensor,

@@ -35,6 +35,7 @@ torch::autograd::variable_list MtpBasisFunction::forward(
     const at::Tensor &nmus_tensor,
     int ntypes,
     int chebyshev_size,
+    double scaling,
     const at::Tensor &coeffs_tensor,
     const at::Tensor &binum_tensor,
     const at::Tensor &bilist_tensor,
@@ -120,6 +121,7 @@ torch::autograd::variable_list MtpBasisFunction::forward(
                 calculate_der2xyz,
                 calculate_der2coeffs,
                 chebyshev_size,
+                scaling,
                 coeffs,
                 alpha_moments_count,
                 alpha_index_basic_count,
@@ -176,6 +178,7 @@ torch::autograd::variable_list MtpBasisFunction::forward(
                 calculate_der2xyz,
                 calculate_der2coeffs,
                 chebyshev_size,
+                scaling,
                 coeffs,
                 alpha_moments_count,
                 alpha_index_basic_count,
@@ -200,7 +203,12 @@ torch::autograd::variable_list MtpBasisFunction::forward(
                 rmin);
         }
     }
-    ctx->save_for_backward({binum_tensor,
+
+    float_options = c10::TensorOptions()
+                        .dtype(torch::kFloat64)
+                        .device(brcs_tensor.device());
+    ctx->save_for_backward({at::tensor(scaling, float_options),
+                            binum_tensor,
                             brcs_tensor,
                             mtp_size_tensor,
                             bmtp_basis_der_tensor,
@@ -216,11 +224,12 @@ torch::autograd::variable_list MtpBasisFunction::backward(
     at::Tensor bgrad_output_tensor = bgrad_outputs_tensor[0];
     if ( !bgrad_output_tensor.is_contiguous() )
         bgrad_output_tensor = bgrad_output_tensor.contiguous();
-    at::Tensor binum_tensor = ctx->get_saved_variables()[0];
-    at::Tensor brcs_tensor = ctx->get_saved_variables()[1];
-    at::Tensor mtp_size_tensor = ctx->get_saved_variables()[2];
-    at::Tensor bmtp_basis_der_tensor = ctx->get_saved_variables()[3];
-    at::Tensor bmtp_basis_der2coeffs_tensor = ctx->get_saved_variables()[4];
+    double scaling = ctx->get_saved_variables()[0].item<double>();
+    at::Tensor binum_tensor = ctx->get_saved_variables()[1];
+    at::Tensor brcs_tensor = ctx->get_saved_variables()[2];
+    at::Tensor mtp_size_tensor = ctx->get_saved_variables()[3];
+    at::Tensor bmtp_basis_der_tensor = ctx->get_saved_variables()[4];
+    at::Tensor bmtp_basis_der2coeffs_tensor = ctx->get_saved_variables()[5];
 
     int batch_size = (int)brcs_tensor.size(0);
     int natoms_pad = (int)brcs_tensor.size(1);
@@ -308,7 +317,7 @@ torch::autograd::variable_list MtpBasisFunction::backward(
     
     return {
         at::Tensor(), at::Tensor(), at::Tensor(), at::Tensor(), at::Tensor(), at::Tensor(),
-        at::Tensor(), at::Tensor(),
+        at::Tensor(), at::Tensor(), at::Tensor(),
         bout_der2coeffs_tensor,
         at::Tensor(), at::Tensor(), at::Tensor(), at::Tensor(),
         bout_der_tensor,
@@ -325,6 +334,7 @@ torch::autograd::variable_list MtpBasisOp(
     const at::Tensor &nmus_tensor,
     int ntypes,
     int chebyshev_size,
+    double scaling,
     const at::Tensor &coeffs_tensor,
     const at::Tensor &binum_tensor,
     const at::Tensor &bilist_tensor,
@@ -345,6 +355,7 @@ torch::autograd::variable_list MtpBasisOp(
         nmus_tensor,
         ntypes,
         chebyshev_size,
+        scaling,
         coeffs_tensor,
         binum_tensor,
         bilist_tensor,

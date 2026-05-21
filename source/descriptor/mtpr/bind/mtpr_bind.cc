@@ -54,6 +54,7 @@ TORCH_LIBRARY(mtpr, m) {
            const at::Tensor& bforce_dft_tensor,
            const at::Tensor& bvirial_dft_tensor,
            int64_t chebyshev_size,
+           double scaling,
            const at::Tensor& coeffs_tensor,
            const at::Tensor& linear_coeffs_tensor,
            const at::Tensor& type_bias_tensor,
@@ -91,6 +92,7 @@ TORCH_LIBRARY(mtpr, m) {
                 bforce_dft_tensor,
                 bvirial_dft_tensor,
                 (int)chebyshev_size,
+                scaling,
                 coeffs_tensor,
                 linear_coeffs_tensor,
                 type_bias_tensor,
@@ -136,6 +138,7 @@ TORCH_LIBRARY(mtpr, m) {
            const at::Tensor &nmus_tensor,
            int64_t ntypes,
            int64_t chebyshev_size,
+           double scaling,
            const at::Tensor &coeffs_tensor,
            const at::Tensor &binum_tensor,
            const at::Tensor &bilist_tensor,
@@ -160,6 +163,7 @@ TORCH_LIBRARY(mtpr, m) {
                 nmus_tensor,
                 (int)ntypes,
                 (int)chebyshev_size,
+                scaling,
                 coeffs_tensor,
                 binum_tensor,
                 bilist_tensor,
@@ -182,6 +186,7 @@ TORCH_LIBRARY(mtpr, m) {
            const at::Tensor& bforce_dft_tensor,
            const at::Tensor& bvirial_dft_tensor,
            int64_t chebyshev_size,
+           double scaling,
            const at::Tensor& coeffs_tensor,
            const at::Tensor& linear_coeffs_tensor,
            const at::Tensor& type_bias_tensor,
@@ -219,6 +224,7 @@ TORCH_LIBRARY(mtpr, m) {
                 bforce_dft_tensor,
                 bvirial_dft_tensor,
                 (int)chebyshev_size,
+                scaling,
                 coeffs_tensor,
                 linear_coeffs_tensor,
                 type_bias_tensor,
@@ -252,6 +258,7 @@ TORCH_LIBRARY(mtpr, m) {
            const at::Tensor& betot_dft_tensor,
            const at::Tensor& bforce_dft_tensor,
            int64_t chebyshev_size,
+           double scaling,
            const at::Tensor& coeffs_tensor,
            const at::Tensor& linear_coeffs_tensor,
            const at::Tensor& type_bias_tensor,
@@ -287,6 +294,7 @@ TORCH_LIBRARY(mtpr, m) {
                 betot_dft_tensor,
                 bforce_dft_tensor,
                 (int)chebyshev_size,
+                scaling,
                 coeffs_tensor,
                 linear_coeffs_tensor,
                 type_bias_tensor,
@@ -316,6 +324,7 @@ TORCH_LIBRARY(mtpr, m) {
     m.def(
         "linearMtpToEFVOp",
         [](int64_t chebyshev_size,
+           double scaling,
            const at::Tensor& coeffs_tensor,
            const at::Tensor& linear_coeffs_tensor,
            const at::Tensor& type_bias_tensor,
@@ -347,6 +356,7 @@ TORCH_LIBRARY(mtpr, m) {
 
             return ai2pot::mtpr::LinearMtpToEFVOp(
                 (int)chebyshev_size,
+                scaling,
                 coeffs_tensor,
                 linear_coeffs_tensor,
                 type_bias_tensor,
@@ -377,6 +387,7 @@ TORCH_LIBRARY(mtpr, m) {
     m.def(
         "linearMtpToEFOp",
         [](int64_t chebyshev_size,
+           double scaling,
            const at::Tensor& coeffs_tensor,
            const at::Tensor& linear_coeffs_tensor,
            const at::Tensor& type_bias_tensor,
@@ -408,6 +419,7 @@ TORCH_LIBRARY(mtpr, m) {
 
             return ai2pot::mtpr::LinearMtpToEFOp(
                 (int)chebyshev_size,
+                scaling,
                 coeffs_tensor,
                 linear_coeffs_tensor,
                 type_bias_tensor,
@@ -438,6 +450,7 @@ TORCH_LIBRARY(mtpr, m) {
     m.def(
         "linearMtpToEsitesOp",
         [](int64_t chebyshev_size,
+           double scaling,
            const at::Tensor& coeffs_tensor,
            const at::Tensor& linear_coeffs_tensor,
            const at::Tensor& type_bias_tensor,
@@ -469,6 +482,7 @@ TORCH_LIBRARY(mtpr, m) {
 
             return ai2pot::mtpr::LinearMtpToEsitesOp(
                 (int)chebyshev_size,
+                scaling,
                 coeffs_tensor,
                 linear_coeffs_tensor,
                 type_bias_tensor,
@@ -498,6 +512,7 @@ TORCH_LIBRARY(mtpr, m) {
     m.def(
         "linearMtpToDescriptorsOp",
         [](int64_t chebyshev_size,
+           double scaling,
            const at::Tensor& coeffs_tensor,
            int64_t alpha_moments_count,
            const at::Tensor& alpha_index_basic_tensor,
@@ -522,6 +537,7 @@ TORCH_LIBRARY(mtpr, m) {
 
             return ai2pot::mtpr::LinearMtpToDescriptorsOp(
                 (int)chebyshev_size,
+                scaling,
                 coeffs_tensor,
                 (int)alpha_moments_count,
                 alpha_index_basic_tensor,

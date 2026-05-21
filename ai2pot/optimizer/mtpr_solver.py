@@ -171,7 +171,6 @@ class LinearMtpSolver(object):
                     lin_matrix_tensor.add_(tmp_lin_matrix)
                     lin_vector_tensor.add_(tmp_lin_vector)
             
-            print("*** ", torch.linalg.cond(lin_matrix_tensor))
             ## 2.2. Ridge regression
             TS_size: int = len(self.trainset)
             lin_matrix_diag_tensor: torch.Tensor = lin_matrix_tensor.diagonal()
@@ -201,7 +200,7 @@ class LinearMtpSolver(object):
             alpha_scalar_moments: int = self.linear_mtp.get_num_descriptors()
             self.linear_mtp.linear_coeffs_tensor.copy_(solution[:alpha_scalar_moments])
             self.linear_mtp.type_bias_tensor.copy_(solution[alpha_scalar_moments:])
-            print(self.linear_mtp.linear_coeffs_tensor)
+
 
     def rescale_coeffs(self):
         pass

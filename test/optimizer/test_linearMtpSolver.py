@@ -31,13 +31,13 @@ class LinearMtpSolverTest(unittest.TestCase):
         self.rmax: float = 5.0
         self.rmin: float = 0.0
         self.umax_num_neigh_atoms: int = 200
-        self.device: torch._C.device = torch.device("cpu")
-        self.torch_float_dtype: torch._C.dtype = torch.float32
+        self.device: torch._C.device = torch.device("cuda")
+        self.torch_float_dtype: torch._C.dtype = torch.float64
         fit_virial: bool = False
         self.linear_mtp: LinearMtp = LinearMtp(type_map=self.type_map,
                                                umax_num_neigh_atoms=self.umax_num_neigh_atoms,
                                                fit_virial=fit_virial,
-                                               mtp_level=18,
+                                               mtp_level=10,
                                                chebyshev_size=self.chebyshev_size,
                                                rmax=self.rmax,
                                                rmin=self.rmin,
@@ -45,7 +45,7 @@ class LinearMtpSolverTest(unittest.TestCase):
                                                zbl_rmin=0.0,
                                                zbl_cks_list=None,
                                                zbl_dks_list=None).to(device=self.device).to(self.torch_float_dtype)
-        
+        self.linear_mtp._init_as_mlip()
         self.trainset: ExtxyzDataset = ExtxyzDataset(filename=PbTe_EXTXYZ_PATH,
                                                      rcut=self.rmax,
                                                      umax_num_neigh_atoms=self.umax_num_neigh_atoms,
@@ -59,7 +59,9 @@ class LinearMtpSolverTest(unittest.TestCase):
         v_weight: float = 0.0
         self.solver: LinearMtpSolver = LinearMtpSolver(e_weight=e_weight,
                                                        f_weight=f_weight,
-                                                       v_weight=v_weight)
+                                                       v_weight=v_weight,
+                                                       linear_mtp=self.linear_mtp,
+                                                       trainset=self.trainset)
 
 
     def tearDown(self):
@@ -71,7 +73,7 @@ class LinearMtpSolverTest(unittest.TestCase):
         nmus: int = self.linear_mtp.nmus
         chebyshev_size: int = self.linear_mtp.chebyshev_size
 
-        self.solver.orthogonalize(linear_mtp=self.linear_mtp)
+        self.solver.orthogonalize()
         orthogonal_coeffs_tensor: torch.Tensor = self.linear_mtp.coeffs_tensor.reshape(ntypes, ntypes, nmus, chebyshev_size)
 
         ### 
@@ -86,10 +88,10 @@ class LinearMtpSolverTest(unittest.TestCase):
 
     
     def test_solve_linear_equation(self):
-        self.solver.solve_linear_equation(trainset=self.trainset,
-                                          linear_mtp=self.linear_mtp)
+        #print(self.linear_mtp.linear_coeffs_tensor)
+        self.solver.solve_linear_equation()
+        #print(self.linear_mtp.linear_coeffs_tensor)
         
-
 
 if __name__ == "__main__":
     unittest.main()

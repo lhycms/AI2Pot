@@ -44,6 +44,7 @@ class LinearMtp(nn.Module):
                  zbl_cks_list: Optional[List[float]] = None,
                  zbl_dks_list: Optional[List[float]] = None):
         super(LinearMtp, self).__init__()
+        self.scaling: float = 1.0
         self.mtp_level: int = mtp_level
         self.register_buffer(
             name="type_map_tensor", 
@@ -163,6 +164,7 @@ class LinearMtp(nn.Module):
             bforce_dft_tensor,
             bvirial_dft_tensor,
             self.chebyshev_size,
+            self.scaling,
             self.coeffs_tensor,
             self.linear_coeffs_tensor,
             self.type_bias_tensor,
@@ -211,6 +213,7 @@ class LinearMtp(nn.Module):
             betot_dft_tensor,
             bforce_dft_tensor,
             self.chebyshev_size,
+            self.scaling,
             self.coeffs_tensor,
             self.linear_coeffs_tensor,
             self.type_bias_tensor,
@@ -250,6 +253,7 @@ class LinearMtp(nn.Module):
                     btypes_tensor: torch.Tensor,
                     bnghost_tensor: torch.Tensor):
         betot_tensor, bforce_tensor, bvirial_tensor = linearMtpToEFVOp(self.chebyshev_size,
+                                                                       self.scaling,
                                                                        self.coeffs_tensor,
                                                                        self.linear_coeffs_tensor,
                                                                        self.type_bias_tensor,
@@ -285,6 +289,7 @@ class LinearMtp(nn.Module):
                    btypes_tensor: torch.Tensor,
                    bnghost_tensor: torch.Tensor):
         betot_tensor, bforce_tensor = linearMtpToEFOp(self.chebyshev_size,
+                                                      self.scaling,
                                                       self.coeffs_tensor,
                                                       self.linear_coeffs_tensor,
                                                       self.type_bias_tensor,
@@ -321,6 +326,7 @@ class LinearMtp(nn.Module):
                         bnghost_tensor: torch.Tensor):
         assert(brcs_tensor.device == torch.device("cpu"))
         be_sites_tensor: torch.Tensor = linearMtpToEsitesOp(self.chebyshev_size,
+                                                            self.scaling,
                                                             self.coeffs_tensor,
                                                             self.linear_coeffs_tensor,
                                                             self.type_bias_tensor,
@@ -357,6 +363,7 @@ class LinearMtp(nn.Module):
                             bnghost_tensor: torch.Tensor):
         bdescriptors_tensor: torch.Tensor = linearMtpToDescriptorsOp(
                                                     self.chebyshev_size,
+                                                    self.scaling,
                                                     self.coeffs_tensor,
                                                     self.alpha_moments_count,
                                                     self.alpha_index_basic_tensor,
