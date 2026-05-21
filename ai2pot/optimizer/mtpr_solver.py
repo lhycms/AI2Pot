@@ -49,28 +49,30 @@ class LinearMtpSolver(object):
                                                                          self.linear_mtp.nmus,
                                                                          self.linear_mtp.chebyshev_size,
                                                                          self.linear_mtp.coeffs_tensor)[0]
+            # Write Back
             self.linear_mtp.coeffs_tensor.copy_(orthogonal_coeffs_tensor)
         
     
     def solve_linear_equation(self):
-        fit_virial: bool = self.linear_mtp.fit_virial
-        param = next(self.linear_mtp.parameters())
-        device: torch._C.device = param.device
-        torch_float_dtype: torch._C.dtype = param.dtype
-
-        train_loader: DataLoader = DataLoader(dataset=self.trainset,
-                                              batch_size=self.BATCH_SIZE_HERE,
-                                              shuffle=False)
-        # 2. Construct Equation
-        ## 2.1. 
-        num_parameters: int = self.linear_mtp.get_num_descriptors() + self.linear_mtp.ntypes
-        lin_matrix_tensor: torch.Tensor = torch.zeros((num_parameters, num_parameters),
-                                                      dtype=torch_float_dtype,
-                                                      device=device)
-        lin_vector_tensor: torch.Tensor = torch.zeros(num_parameters,
-                                                       dtype=torch_float_dtype,
-                                                       device=device)
         with torch.no_grad():
+            fit_virial: bool = self.linear_mtp.fit_virial
+            param = next(self.linear_mtp.parameters())
+            device: torch._C.device = param.device
+            torch_float_dtype: torch._C.dtype = param.dtype
+
+            train_loader: DataLoader = DataLoader(dataset=self.trainset,
+                                                batch_size=self.BATCH_SIZE_HERE,
+                                                shuffle=False)
+            # 2. Construct Equation
+            ## 2.1. 
+            num_parameters: int = self.linear_mtp.get_num_descriptors() + self.linear_mtp.ntypes
+            lin_matrix_tensor: torch.Tensor = torch.zeros((num_parameters, num_parameters),
+                                                        dtype=torch_float_dtype,
+                                                        device=device)
+            lin_vector_tensor: torch.Tensor = torch.zeros(num_parameters,
+                                                        dtype=torch_float_dtype,
+                                                        device=device)
+            
             if (fit_virial):
                 for batch_idx, batch_data in enumerate(train_loader):
                     binum_tensor, bilist_tensor, bnumneigh_tensor, bfirstneigh_tensor, \
@@ -168,24 +170,33 @@ class LinearMtpSolver(object):
                         self.linear_mtp.zbl_dks_tensor)
                     lin_matrix_tensor.add_(tmp_lin_matrix)
                     lin_vector_tensor.add_(tmp_lin_vector)
-        
-        ## 2.2. Ridge regression
-        TS_size: int = len(self.trainset)
-        lin_matrix_diag_tensor: torch.Tensor = lin_matrix_tensor.diagonal()
-        proposed_reg_tensor: torch.Tensor = self.reg_param * torch.clamp(lin_matrix_diag_tensor, min=1.0) / TS_size
-        
-        if not self.reg_init:
-            lower_bound_tensor: torch.Tensor = 1e-2 * proposed_reg_tensor
-            upper_bound_tensor: torch.Tensor = 1e2 * proposed_reg_tensor
-            update_reg_mark: bool = torch.any(self.reg_vector_tenosr < lower_bound_tensor) or \
-                                    torch.any(self.reg_vector_tenosr > upper_bound_tensor)
-            if (update_reg_mark):
-                self.reg_vector_tenosr = proposed_reg_tensor.clone()
-                self.reg_init = True
-                print("Regularization parameters updated. Hessian in BFGS need to reset.")
             
-        lin_matrix_diag_tensor.add_(self.reg_vector_tenosr * TS_size)
+            ## 2.2. Ridge regression
+            TS_size: int = len(self.trainset)
+            lin_matrix_diag_tensor: torch.Tensor = lin_matrix_tensor.diagonal()
+            proposed_reg_tensor: torch.Tensor = self.reg_param * torch.clamp(lin_matrix_diag_tensor, min=1.0) / TS_size
+            
+            if not self.reg_init:
+                lower_bound_tensor: torch.Tensor = 1e-2 * proposed_reg_tensor
+                upper_bound_tensor: torch.Tensor = 1e2 * proposed_reg_tensor
+                update_reg_mark: bool = torch.any(self.reg_vector_tenosr < lower_bound_tensor) or \
+                                        torch.any(self.reg_vector_tenosr > upper_bound_tensor)
+                if (update_reg_mark):
+                    self.reg_vector_tenosr = proposed_reg_tensor.clone()
+                    self.reg_init = True
+                    print("Regularization parameters updated. Hessian in BFGS need to reset.")
+                
+            lin_matrix_diag_tensor.add_(self.reg_vector_tenosr * TS_size)
 
-        # 3. Gaussian Elimination
-        
-        
+            # 3. Gaussian Elimination
+            print("Solving normal equations...")
+            try:
+                solution = torch.linalg.solve(lin_matrix_tensor, lin_vector_tensor)
+            except RuntimeError as e:
+                print("Matrix is singular, falling back to lstsq solver...")
+                solution = torch.linalg.lstsq(lin_matrix_tensor, lin_vector_tensor).solution
+            
+            # 4. Write back
+            alpha_scalar_moments: int = self.linear_mtp.get_num_descriptors()
+            self.linear_mtp.linear_coeffs_tensor.copy_(solution[:alpha_scalar_moments])
+            self.linear_mtp.type_bias_tensor.copy_(solution[alpha_scalar_moments:])
