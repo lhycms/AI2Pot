@@ -29,5 +29,5 @@ export AI2POT_PATH=
 # -DCMAKE_CXX_COMPILER=/data/app/gcc/11.3.0/bin/g++
 # -DCMAKE_C_COMPILER=/data/app/gcc/11.3.0/bin/gcc
 # -DCMAKE_CUDA_HOST_COMPILER=/data/app/gcc/11.3.0/bin/g++
-cmake -DBUILD_TEST=yes -DTORCH_OP=yes -DUSE_CUDA=yes -DMAX_MTP_LEVEL=16 -DUSE_OPENMP=yes ..
+cmake -DBUILD_TEST=yes -DTORCH_OP=yes -DUSE_CUDA=yes -DMAX_MTP_LEVEL=18 -DUSE_OPENMP=yes ..
 ```

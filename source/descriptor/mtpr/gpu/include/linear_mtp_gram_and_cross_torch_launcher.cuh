@@ -60,11 +60,12 @@ void find_efv_components_torch_launcher(
     CoordType rmin,
     CoordType *d_q_scaler)
 {
-    int block_size_x = 128;
+    int block_size_x = 64;
     int grid_size_x = (batch_size * natoms_pad - 1) / block_size_x + 1;
     dim3 grid_size(grid_size_x);
     dim3 block_size(block_size_x);
 
+    
     find_efv_components_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (
         d_benergy_components,
         d_bforce_components,

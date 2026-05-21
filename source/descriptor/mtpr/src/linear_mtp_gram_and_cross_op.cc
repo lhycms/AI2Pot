@@ -278,9 +278,6 @@ torch::autograd::variable_list LinMatrixLinVectorFunction::forward(
         float *bforce_components = bforce_components_tensor.data_ptr<float>();
         float *bvirial_components = bvirial_components_tensor.data_ptr<float>();
         
-        float *betot_dft = betot_dft_tensor.data_ptr<float>();
-        float (*bforce_dft)[3] = (float (*)[3])bforce_dft_tensor.data_ptr<float>();
-        float *bvirial_dft = bvirial_dft_tensor.data_ptr<float>();
         float *betot_zbl = betot_zbl_tensor.data_ptr<float>();
         float (*bforce_zbl)[3] = (float (*)[3])bforce_zbl_tensor.data_ptr<float>();
         float *bvirial_zbl = bvirial_zbl_tensor.data_ptr<float>();
@@ -333,9 +330,12 @@ torch::autograd::variable_list LinMatrixLinVectorFunction::forward(
                 }
             }
 
-            betot_dft_tensor.add_(-betot_zbl_tensor);
-            bforce_dft_tensor.add(-bforce_zbl_tensor);
-            bvirial_dft_tensor.add(-bvirial_zbl_tensor);
+            at::Tensor betot_residual_tensor = betot_dft_tensor - betot_zbl_tensor;
+            at::Tensor bforce_residual_tensor = bforce_dft_tensor - bforce_zbl_tensor;
+            at::Tensor bvirial_residual_tensor = bvirial_dft_tensor - bvirial_zbl_tensor;
+            float *betot_residual = betot_residual_tensor.data_ptr<float>();
+            float (*bforce_residual)[3] = (float (*)[3])bforce_residual_tensor.data_ptr<float>();
+            float *bvirial_residual = bvirial_residual_tensor.data_ptr<float>();
 
             LinearMtpGramAndCross<float>::find_lin_matrix_lin_vector_launcher(
                 lin_matrix,
@@ -343,9 +343,9 @@ torch::autograd::variable_list LinMatrixLinVectorFunction::forward(
                 (float)e_weight,
                 (float)f_weight,
                 (float)v_weight,
-                betot_dft,
-                bforce_dft,
-                bvirial_dft,
+                betot_residual,
+                bforce_residual,
+                bvirial_residual,
                 chebyshev_size,
                 coeffs,
                 linear_coeffs,
@@ -397,9 +397,12 @@ torch::autograd::variable_list LinMatrixLinVectorFunction::forward(
                     umax_num_neigh_atoms,
                     nghost);
             
-            betot_dft_tensor.add_(-betot_zbl_tensor);
-            bforce_dft_tensor.add(-bforce_zbl_tensor);
-            bvirial_dft_tensor.add(-bvirial_zbl_tensor);
+            at::Tensor betot_residual_tensor = betot_dft_tensor - betot_zbl_tensor;
+            at::Tensor bforce_residual_tensor = bforce_dft_tensor - bforce_zbl_tensor;
+            at::Tensor bvirial_residual_tensor = bvirial_dft_tensor - bvirial_zbl_tensor;
+            float *betot_residual = betot_residual_tensor.data_ptr<float>();
+            float (*bforce_residual)[3] = (float (*)[3])bforce_residual_tensor.data_ptr<float>();
+            float *bvirial_residual = bvirial_residual_tensor.data_ptr<float>();
             
             find_efv_components_torch_launcher<float>(
                 benergy_components,
@@ -432,15 +435,16 @@ torch::autograd::variable_list LinMatrixLinVectorFunction::forward(
                 (float)rmin,
                 q_scaler);
             
+            
             find_lin_matrix_lin_vector_torch_launcher<float>(
                 lin_matrix,
                 lin_vector,
                 e_weight,
                 f_weight,
                 v_weight,
-                betot_dft,
-                bforce_dft,
-                bvirial_dft,
+                betot_residual,
+                bforce_residual,
+                bvirial_residual,
                 benergy_components,
                 bforce_components,
                 bvirial_components,
@@ -518,9 +522,12 @@ torch::autograd::variable_list LinMatrixLinVectorFunction::forward(
                 }
             }
 
-            betot_dft_tensor.add_(-betot_zbl_tensor);
-            bforce_dft_tensor.add(-bforce_zbl_tensor);
-            bvirial_dft_tensor.add(-bvirial_zbl_tensor);
+            at::Tensor betot_residual_tensor = betot_dft_tensor - betot_zbl_tensor;
+            at::Tensor bforce_residual_tensor = bforce_dft_tensor - bforce_zbl_tensor;
+            at::Tensor bvirial_residual_tensor = bvirial_dft_tensor - bvirial_zbl_tensor;
+            double *betot_residual = betot_residual_tensor.data_ptr<double>();
+            double (*bforce_residual)[3] = (double (*)[3])bforce_residual_tensor.data_ptr<double>();
+            double *bvirial_residual = bvirial_residual_tensor.data_ptr<double>();
 
             LinearMtpGramAndCross<double>::find_lin_matrix_lin_vector_launcher(
                 lin_matrix,
@@ -528,9 +535,9 @@ torch::autograd::variable_list LinMatrixLinVectorFunction::forward(
                 (double)e_weight,
                 (double)f_weight,
                 (double)v_weight,
-                betot_dft,
-                bforce_dft,
-                bvirial_dft,
+                betot_residual,
+                bforce_residual,
+                bvirial_residual,
                 chebyshev_size,
                 coeffs,
                 linear_coeffs,
@@ -582,9 +589,12 @@ torch::autograd::variable_list LinMatrixLinVectorFunction::forward(
                     umax_num_neigh_atoms,
                     nghost);
             
-            betot_dft_tensor.add_(-betot_zbl_tensor);
-            bforce_dft_tensor.add(-bforce_zbl_tensor);
-            bvirial_dft_tensor.add(-bvirial_zbl_tensor);
+            at::Tensor betot_residual_tensor = betot_dft_tensor - betot_zbl_tensor;
+            at::Tensor bforce_residual_tensor = bforce_dft_tensor - bforce_zbl_tensor;
+            at::Tensor bvirial_residual_tensor = bvirial_dft_tensor - bvirial_zbl_tensor;
+            double *betot_residual = betot_residual_tensor.data_ptr<double>();
+            double (*bforce_residual)[3] = (double (*)[3])bforce_residual_tensor.data_ptr<double>();
+            double *bvirial_residual = bvirial_residual_tensor.data_ptr<double>();
             
             find_efv_components_torch_launcher<double>(
                 benergy_components,
@@ -623,9 +633,9 @@ torch::autograd::variable_list LinMatrixLinVectorFunction::forward(
                 e_weight,
                 f_weight,
                 v_weight,
-                betot_dft,
-                bforce_dft,
-                bvirial_dft,
+                betot_residual,
+                bforce_residual,
+                bvirial_residual,
                 benergy_components,
                 bforce_components,
                 bvirial_components,

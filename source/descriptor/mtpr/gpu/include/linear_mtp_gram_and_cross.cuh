@@ -329,7 +329,7 @@ void accumulate_efv_components_atom(
             }
         }
     }
-
+    
     // Step 2.2.
     for (int i=0; i<alpha_index_times_count; i++)
     {
@@ -343,8 +343,8 @@ void accumulate_efv_components_atom(
     atomicAdd(&energy_components[alpha_scalar_moments+type_central], 1.0);
     for (int k=0; k<alpha_scalar_moments; k++)
         atomicAdd(&energy_components[k], mom_vals[alpha_moment_mapping[k]] / q_scaler[k]);
-    
-    // Step 2.2. force_components && virial_components
+
+    // Step 2.3. force_components && virial_components
     for (int jj=0; jj<snumneigh; jj++) {
         neigh_idx = sfirstneigh[jj];
         type_outer = types[neigh_idx];
@@ -481,13 +481,14 @@ void find_efv_components_kernel(
     CoordType rmin,
     CoordType *q_scaler)
 {
+    
     int nx = blockIdx.x * blockDim.x + threadIdx.x;
     int istruct = nx / natoms_pad;
     int ii = nx % natoms_pad;
     if (istruct >= batch_size)
         return;
     int inum = binum[istruct];
-    
+
     int num_parameters = alpha_scalar_moments + ntypes;
 
     if (ii<inum) {
@@ -741,6 +742,7 @@ void find_lin_matrix_lin_vector_kernel(
             }
         }
     }
+    
 
     if (ii == 0) {
         // energy term
