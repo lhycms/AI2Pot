@@ -71,24 +71,39 @@ class LinearMtp(nn.Module):
         self.num_coeffs: int = self.ntypes * self.ntypes * self.nmus * self.chebyshev_size
         
         ### Init ###
-        coeffs_tensor: torch.Tensor = torch.Tensor(self.ntypes*self.ntypes*self.nmus*self.chebyshev_size)
+        coeffs_tensor: torch.Tensor = torch.empty(self.ntypes*self.ntypes*self.nmus*self.chebyshev_size)
         r1: torch.Tensor = 0.1 * torch.randn(self.num_coeffs, device=coeffs_tensor.device)
         r2: torch.Tensor = torch.rand(self.num_coeffs, device=coeffs_tensor.device)
         coeffs_tensor.copy_(r1 + r2)
         self.register_parameter(name="coeffs_tensor", param=nn.Parameter(data=coeffs_tensor))
         
-        linear_coeffs_tensor: torch.Tensor = torch.Tensor(self.num_descriptors)
-        init_linear_coeffs_std: torch.Tensor = (2.0 / (self.num_descriptors + 1)) ** 0.5
+        linear_coeffs_tensor: torch.Tensor = torch.empty(self.num_descriptors)
+        init_linear_coeffs_std: int = (2.0 / (self.num_descriptors + 1)) ** 0.5
         nn.init.normal_(linear_coeffs_tensor, mean=0.0, std=init_linear_coeffs_std)
         self.register_parameter(name="linear_coeffs_tensor", param=nn.Parameter(data=linear_coeffs_tensor))
         
-        type_bias_tensor: torch.Tensor = torch.Tensor(self.ntypes)
+        type_bias_tensor: torch.Tensor = torch.empty(self.ntypes)
         nn.init.normal_(type_bias_tensor, mean=0.0, std=1.0)
         self.register_parameter(name="type_bias_tensor", param=nn.Parameter(data=type_bias_tensor))
         ### Init ###
     
         q_scaler_tensor: torch.Tensor = torch.zeros(self.num_descriptors, dtype=torch.float32) + 100.0
         self.register_buffer("q_scaler_tensor", tensor=q_scaler_tensor)
+
+
+    @torch.no_grad()
+    def _init_as_mlip(self):
+        device: torch._C.device = self.coeffs_tensor.device
+        rand_tensor: torch.Tensor = torch.rand(self.ntypes*self.ntypes, self.nmus, self.chebyshev_size, device=device) * 2.0 - 1.0
+        coeffs_3d_tensor: torch.Tensor = 5e-7 * rand_tensor
+
+        for tmp_mu in range(self.nmus):
+            tmp_chebyshev_idx = min(tmp_mu, self.chebyshev_size - 1)
+            special_rand = torch.rand(self.ntypes * self.ntypes, device=device) * 2.0 - 1.0
+            coeffs_3d_tensor[:, tmp_mu, tmp_chebyshev_idx] = 1e-7 * (1.0 + special_rand)
+        
+        coeffs_tensor: torch.Tensor = coeffs_3d_tensor.view(-1).contiguous()
+        self.coeffs_tensor.copy_(coeffs_tensor)
 
 
     def _init_zbl_params(self, 
