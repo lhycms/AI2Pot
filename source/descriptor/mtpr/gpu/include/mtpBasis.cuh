@@ -64,6 +64,7 @@ void find_mtp_basis_val_der_cuda_kernel(
     CoordType (*mtp_basis_der)[3],
     CoordType *mtp_basis_der2coeffs,
     int chebyshev_size,
+    CoordType scaling,
     CoordType *coeffs,
     const int alpha_moments_count,
     const int alpha_index_basic_count,
@@ -98,6 +99,7 @@ void find_mtp_basis_val_der_cuda_launcher(
     CoordType (*mtp_basis_der)[3],
     CoordType *mtp_basis_der2coeffs,
     int chebyshev_size,
+    CoordType scaling,
     CoordType *coeffs,
     const int alpha_moments_count,
     const int alpha_index_basic_count,
@@ -218,6 +220,7 @@ void find_mtp_basis_val_der_cuda_kernel(
     CoordType (*mtp_basis_der)[3],
     CoordType *mtp_basis_der2coeffs,
     int chebyshev_size,
+    CoordType scaling,
     CoordType *coeffs,
     const int alpha_moments_count,
     const int alpha_index_basic_count,
@@ -308,32 +311,32 @@ void find_mtp_basis_val_der_cuda_kernel(
                               + type_outer*nmus*chebyshev_size
                               + mu*chebyshev_size
                               + xi;
-                    mom_vals[i] += coeffs[idx] * rq_chebyshev_vals[xi] * powk * mult0;
-                    mom_ders2coeffs[i*num_coeffs + idx] += rq_chebyshev_vals[xi] * powk * mult0;
-                    mom_ders[i*umax_num_neigh_atoms + jj][0] += NeighVect[0] / distance_ij * coeffs[idx] * mult0 *
+                    mom_vals[i] += coeffs[idx] * (rq_chebyshev_vals[xi] * scaling) * powk * mult0;
+                    mom_ders2coeffs[i*num_coeffs + idx] += (rq_chebyshev_vals[xi] * scaling) * powk * mult0;
+                    mom_ders[i*umax_num_neigh_atoms + jj][0] += NeighVect[0] / distance_ij * coeffs[idx] * mult0 * scaling *
                                                                 (rq_chebyshev_ders2r[xi] * powk
                                                                  - rq_chebyshev_vals[xi] * k * powk / distance_ij);
-                    mom_ders[i*umax_num_neigh_atoms + jj][1] += NeighVect[1] / distance_ij * coeffs[idx] * mult0 *
+                    mom_ders[i*umax_num_neigh_atoms + jj][1] += NeighVect[1] / distance_ij * coeffs[idx] * mult0 * scaling *
                                                                 (rq_chebyshev_ders2r[xi] * powk
                                                                  - rq_chebyshev_vals[xi] * k * powk / distance_ij);
-                    mom_ders[i*umax_num_neigh_atoms + jj][2] += NeighVect[2] / distance_ij * coeffs[idx] * mult0 *
+                    mom_ders[i*umax_num_neigh_atoms + jj][2] += NeighVect[2] / distance_ij * coeffs[idx] * mult0 * scaling *
                                                                 (rq_chebyshev_ders2r[xi] * powk
                                                                  - rq_chebyshev_vals[xi] * k * powk / distance_ij);
                     
                     if (alpha_index_basic[i][1] != 0) {
-                        mom_ders[i*umax_num_neigh_atoms + jj][0] += coeffs[idx] * rq_chebyshev_vals[xi] * powk * alpha_index_basic[i][1]
+                        mom_ders[i*umax_num_neigh_atoms + jj][0] += coeffs[idx] * (rq_chebyshev_vals[xi] * scaling) * powk * alpha_index_basic[i][1]
                             * auto_coords_powers_[alpha_index_basic[i][1]-1][0]
                             * pow1
                             * pow2;
                     }
                     if (alpha_index_basic[i][2] != 0) {
-                        mom_ders[i*umax_num_neigh_atoms + jj][1] += coeffs[idx] * rq_chebyshev_vals[xi] * powk * alpha_index_basic[i][2]
+                        mom_ders[i*umax_num_neigh_atoms + jj][1] += coeffs[idx] * (rq_chebyshev_vals[xi] * scaling) * powk * alpha_index_basic[i][2]
                             * pow0
                             * auto_coords_powers_[alpha_index_basic[i][2]-1][1]
                             * pow2;
                     }
                     if (alpha_index_basic[i][3] != 0) {
-                        mom_ders[i*umax_num_neigh_atoms + jj][2] += coeffs[idx] * rq_chebyshev_vals[xi] * powk * alpha_index_basic[i][3]
+                        mom_ders[i*umax_num_neigh_atoms + jj][2] += coeffs[idx] * (rq_chebyshev_vals[xi] * scaling) * powk * alpha_index_basic[i][3]
                             * pow0
                             * pow1
                             * auto_coords_powers_[alpha_index_basic[i][3]-1][2];
@@ -409,6 +412,7 @@ void find_mtp_basis_val_der_cuda_launcher(
     CoordType (*mtp_basis_der)[3],
     CoordType *mtp_basis_der2coeffs,
     int chebyshev_size,
+    CoordType scaling,
     CoordType *coeffs,
     const int alpha_moments_count,
     const int alpha_index_basic_count,
@@ -495,6 +499,7 @@ void find_mtp_basis_val_der_cuda_launcher(
         (CoordType (*)[3])d_mtp_basis_der,
         d_mtp_basis_der2coeffs,
         chebyshev_size,
+        scaling,
         d_coeffs,
         alpha_moments_count,
         alpha_index_basic_count,

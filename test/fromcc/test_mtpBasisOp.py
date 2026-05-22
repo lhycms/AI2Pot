@@ -17,7 +17,7 @@ class MtpBasisOpTest(unittest.TestCase):
     def setUp(self):
         print("MtpBasisOpTest (TestCase) is setting up...")
         
-        self.scaling: float = 1.1
+        self.scaling: float = 12.1
         self.mtp_level: int = 16
         self.ntypes: int = 4
         self.chebyshev_size: int = 8

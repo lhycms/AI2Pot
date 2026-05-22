@@ -257,6 +257,27 @@ torch::autograd::variable_list MtpBasisGradFunction::backward(
                 num_coeffs);
         }
     }
+
+    return {
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor()};
 }
 
 

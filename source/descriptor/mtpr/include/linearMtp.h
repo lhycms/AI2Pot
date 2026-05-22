@@ -723,7 +723,7 @@ void LinearMtp<CoordType>::find_e_sites_backward(
 
                 for (int xi=0; xi<chebyshev_size; xi++) {
                     int idx = (type_central*ntypes+type_outer)*nmus*chebyshev_size + mu*chebyshev_size + xi;
-                    CoordType A = p_RadialBasis->vals()[xi];
+                    CoordType A = p_RadialBasis->vals()[xi] * scaling;
                     CoordType B = mult0;
                     CoordType C = powk;
                     mom_vals[i] += coeffs[idx] * A * B * C;
@@ -789,7 +789,7 @@ void LinearMtp<CoordType>::find_e_sites_backward(
 
                 for (int xi=0; xi<chebyshev_size; xi++) {
                     int idx = (type_central*ntypes+type_outer)*nmus*chebyshev_size + mu*chebyshev_size + xi;
-                    CoordType A = p_RadialBasis->vals()[xi];
+                    CoordType A = p_RadialBasis->vals()[xi] * scaling;
                     CoordType B = mult0;
                     CoordType C = powk;
                     

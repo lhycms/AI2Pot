@@ -30,6 +30,8 @@ protected:
     double *h_rq_chebyshev_vals;
     double *h_rq_chebyshev_ders2r;
 
+    double scaling;
+
     static void SetUpTestSuite() {
         std::cout << "BasisUtilitiesTest (TestSuite) is setting up...\n";
     }
@@ -49,6 +51,8 @@ protected:
 
         h_rq_chebyshev_vals = (double*)malloc(chebyshev_size * sizeof(double));
         h_rq_chebyshev_ders2r = (double*)malloc(chebyshev_size * sizeof(double));
+
+        scaling = 1.1;
     }
 
     void TearDown() override {
@@ -119,6 +123,7 @@ protected:
 
     ai2pot::Structure<double> structure;
     ai2pot::NeighborList<double> neighbor_list;
+    double scaling;
 
     static void SetUpTestSuite() {
         std::cout << "MtpBasisTest (TestSuite) is setting up...\n";
@@ -300,6 +305,8 @@ protected:
         CHECK_CUDA_API( cudaMemcpy(d_firstneigh, h_firstneigh, sizeof(int)*inum*umax_num_neigh_atoms, cudaMemcpyHostToDevice) );
         CHECK_CUDA_API( cudaMemcpy(d_rcs, h_rcs, sizeof(double)*inum*umax_num_neigh_atoms*3, cudaMemcpyHostToDevice) );
         CHECK_CUDA_API( cudaMemcpy(d_types, h_types, sizeof(int)*inum, cudaMemcpyHostToDevice) );
+
+        scaling = 1.1;
     }
 
     void TearDown() override {
@@ -402,6 +409,7 @@ TEST_F(MtpBasisTest, find_mtp_basis_val_der) {
         (double (*)[3])d_mtp_basis_der,
         d_mtp_basis_der2coeffs,
         chebyshev_size,
+        scaling,
         d_coeffs,
         mtp_param.alpha_moments_count(),
         mtp_param.alpha_index_basic_count(),

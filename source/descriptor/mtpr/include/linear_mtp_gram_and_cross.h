@@ -232,7 +232,7 @@ void LinearMtpGramAndCross<CoordType>::find_structure_efv_components(
 
                 for (int xi=0; xi<chebyshev_size; xi++) {
                     int idx = (type_central*ntypes+type_outer)*nmus*chebyshev_size + mu*chebyshev_size + xi;
-                    CoordType A = p_RadialBasis->vals()[xi];
+                    CoordType A = p_RadialBasis->vals()[xi] * scaling;
                     CoordType B = mult0;
                     CoordType C = powk;
 
@@ -297,10 +297,10 @@ void LinearMtpGramAndCross<CoordType>::find_structure_efv_components(
 
                     for (int xi=0; xi<chebyshev_size; xi++) {
                         int idx = (type_central*ntypes+type_outer)*nmus*chebyshev_size + mu*chebyshev_size + xi;
-                        CoordType A = p_RadialBasis->vals()[xi];
+                        CoordType A = p_RadialBasis->vals()[xi] * scaling;
                         CoordType B = mult0;
                         CoordType C = powk;
-                        CoordType A_der = p_RadialBasis->ders2r()[xi] * neigh_vec[aa] * distance_ij_inv;
+                        CoordType A_der = (p_RadialBasis->ders2r()[xi] * scaling) * neigh_vec[aa] * distance_ij_inv;
                         CoordType B_ders[3] = {0.0};
                         if (alpha_index_basic[i][1] != 0) {
                             B_ders[0] = alpha_index_basic[i][1]

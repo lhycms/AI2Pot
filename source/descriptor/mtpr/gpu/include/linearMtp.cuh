@@ -426,7 +426,7 @@ void find_efv_atom(
 
             for (int xi=0; xi<chebyshev_size; xi++) {
                 int idx = (type_central*ntypes + type_outer)*nmus*chebyshev_size + mu*chebyshev_size + xi;
-                CoordType A = rq_chebyshev_vals[xi];
+                CoordType A = rq_chebyshev_vals[xi] * scaling;
                 CoordType B = mult0;
                 CoordType C = powk;
                 mom_vals[i] += coeffs[idx] * A * B * C;
@@ -511,15 +511,15 @@ void find_efv_atom(
             
             for (int xi=0; xi<chebyshev_size; xi++) {
                 int idx = (type_central*ntypes + type_outer)*nmus*chebyshev_size + mu*chebyshev_size + xi;
-                CoordType A = rq_chebyshev_vals[xi];
+                CoordType A = rq_chebyshev_vals[xi] * scaling;
                 CoordType B = mult0;
                 CoordType C = powk;
                 CoordType A_ders[3] = {0., 0., 0.};
                 CoordType B_ders[3] = {0., 0., 0.};
                 CoordType C_ders[3] = {0., 0., 0.};
-                A_ders[0] = rq_chebyshev_ders2r[xi] * NeighbVect[0] * distance_ij_inv;
-                A_ders[1] = rq_chebyshev_ders2r[xi] * NeighbVect[1] * distance_ij_inv;
-                A_ders[2] = rq_chebyshev_ders2r[xi] * NeighbVect[2] * distance_ij_inv;
+                A_ders[0] = (rq_chebyshev_ders2r[xi] * scaling) * NeighbVect[0] * distance_ij_inv;
+                A_ders[1] = (rq_chebyshev_ders2r[xi] * scaling) * NeighbVect[1] * distance_ij_inv;
+                A_ders[2] = (rq_chebyshev_ders2r[xi] * scaling) * NeighbVect[2] * distance_ij_inv;
                 if (alpha_index_basic[i][1] != 0) {
                     B_ders[0] = alpha_index_basic[i][1]
                                 * auto_coords_powers_[alpha_index_basic[i][1] - 1][0]
@@ -917,7 +917,7 @@ void find_ef_atom(CoordType *etot_ptr,
 
             for (int xi=0; xi<chebyshev_size; xi++) {
                 int idx = (type_central*ntypes + type_outer)*nmus*chebyshev_size + mu*chebyshev_size + xi;
-                CoordType A = rq_chebyshev_vals[xi];
+                CoordType A = rq_chebyshev_vals[xi] * scaling;
                 CoordType B = mult0;
                 CoordType C = powk;
                 mom_vals[i] += coeffs[idx] * A * B * C;
@@ -999,15 +999,15 @@ void find_ef_atom(CoordType *etot_ptr,
 
             for (int xi=0; xi<chebyshev_size; xi++) {
                 int idx = (type_central*ntypes + type_outer)*nmus*chebyshev_size + mu*chebyshev_size + xi;
-                CoordType A = rq_chebyshev_vals[xi];
+                CoordType A = rq_chebyshev_vals[xi] * scaling;
                 CoordType B = mult0;
                 CoordType C = powk;
                 CoordType A_ders[3] = {0.0, 0.0, 0.0};
                 CoordType B_ders[3] = {0.0, 0.0, 0.0};
                 CoordType C_ders[3] = {0.0, 0.0, 0.0};
-                A_ders[0] = rq_chebyshev_ders2r[xi] * NeighbVect[0] * distance_ij_inv;
-                A_ders[1] = rq_chebyshev_ders2r[xi] * NeighbVect[1] * distance_ij_inv;
-                A_ders[2] = rq_chebyshev_ders2r[xi] * NeighbVect[2] * distance_ij_inv;
+                A_ders[0] = (rq_chebyshev_ders2r[xi] * scaling) * NeighbVect[0] * distance_ij_inv;
+                A_ders[1] = (rq_chebyshev_ders2r[xi] * scaling) * NeighbVect[1] * distance_ij_inv;
+                A_ders[2] = (rq_chebyshev_ders2r[xi] * scaling) * NeighbVect[2] * distance_ij_inv;
                 if (alpha_index_basic[i][1] != 0) {
                     B_ders[0] = alpha_index_basic[i][1]
                                 * auto_coords_powers_[alpha_index_basic[i][1] - 1][0]
@@ -1366,7 +1366,7 @@ void find_descriptors_atom(
 
             for (int xi=0; xi<chebyshev_size; xi++) {
                 int idx = (type_central*ntypes + type_outer)*nmus*chebyshev_size + mu*chebyshev_size + xi;
-                CoordType A = rq_chebyshev_vals[xi];
+                CoordType A = rq_chebyshev_vals[xi] * scaling;
                 CoordType B = mult0;
                 CoordType C = powk;
                 mom_vals[i] += coeffs[idx] * A * B * C;

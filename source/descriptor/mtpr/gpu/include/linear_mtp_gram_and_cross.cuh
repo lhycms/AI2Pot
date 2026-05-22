@@ -327,7 +327,7 @@ void accumulate_efv_components_atom(
 
             for (int xi=0; xi<chebyshev_size; xi++) {
                 int idx = (type_central*ntypes+type_outer)*nmus*chebyshev_size + mu*chebyshev_size + xi;
-                CoordType A = rq_chebyshev_vals[xi];
+                CoordType A = rq_chebyshev_vals[xi] * scaling;
                 CoordType B = mult0;
                 CoordType C = powk;
                 mom_vals[i] += coeffs[idx] * A * B * C;
@@ -394,10 +394,10 @@ void accumulate_efv_components_atom(
 
                 for (int xi=0; xi<chebyshev_size; xi++) {
                     int idx = (type_central*ntypes+type_outer)*nmus*chebyshev_size + mu*chebyshev_size + xi;
-                    CoordType A = rq_chebyshev_vals[xi];
+                    CoordType A = rq_chebyshev_vals[xi] * scaling;
                     CoordType B = mult0;
                     CoordType C = powk;
-                    CoordType A_der = rq_chebyshev_ders2r[xi] * neigh_vec[aa] * distance_ij_inv;
+                    CoordType A_der = (rq_chebyshev_ders2r[xi] * scaling) * neigh_vec[aa] * distance_ij_inv;
                     CoordType B_ders[3] = {0.0};
                     if (alpha_index_basic[i][1] != 0) {
                         B_ders[0] = alpha_index_basic[i][1]

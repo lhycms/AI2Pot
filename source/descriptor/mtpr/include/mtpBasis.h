@@ -224,12 +224,12 @@ void MtpBasis<CoordType>::find_val_der(
                 
                 for (int xi=0; xi<chebyshev_size; xi++) {
                     int idx = type_central*ntypes*nmus*chebyshev_size + type_outer*nmus*chebyshev_size + mu*chebyshev_size + xi;
-                    mom_vals[i] += coeffs[idx] * p_RadialBasis->vals()[xi] * powk * mult0;
+                    mom_vals[i] += coeffs[idx] * (p_RadialBasis->vals()[xi] * scaling) * powk * mult0;
                     if (calculate_der2coeffs)
-                        mom_ders2coeffs[i*num_coeffs + idx] += p_RadialBasis->vals()[xi] * powk * mult0;
+                        mom_ders2coeffs[i*num_coeffs + idx] += (p_RadialBasis->vals()[xi] * scaling) * powk * mult0;
                     
                     if (calculate_der2xyz) {
-                        CoordType shuffle_mom_ders_part = distance_ij_inv *
+                        CoordType shuffle_mom_ders_part = distance_ij_inv * scaling *
                                         ( coeffs[idx] * p_RadialBasis->ders2r()[xi] * powk * mult0
                                         - coeffs[idx] * p_RadialBasis->vals()[xi] * k * powk * distance_ij_inv * mult0 );
                         mom_ders[i*umax_num_neigh_atoms + jj][0] += NeighbVect[0] * shuffle_mom_ders_part;
@@ -237,19 +237,19 @@ void MtpBasis<CoordType>::find_val_der(
                         mom_ders[i*umax_num_neigh_atoms + jj][2] += NeighbVect[2] * shuffle_mom_ders_part;
 
                         if (alpha_index_basic[i][1] != 0) {
-                            mom_ders[i*umax_num_neigh_atoms + jj][0] += coeffs[idx] * p_RadialBasis->vals()[xi] * powk * alpha_index_basic[i][1]
+                            mom_ders[i*umax_num_neigh_atoms + jj][0] += coeffs[idx] * (p_RadialBasis->vals()[xi] * scaling) * powk * alpha_index_basic[i][1]
                                             * auto_coords_powers_[alpha_index_basic[i][1] - 1][0]
                                             * pow1
                                             * pow2;
                         }
                         if (alpha_index_basic[i][2] != 0) {
-                            mom_ders[i*umax_num_neigh_atoms + jj][1] += coeffs[idx] * p_RadialBasis->vals()[xi] * powk * alpha_index_basic[i][2]
+                            mom_ders[i*umax_num_neigh_atoms + jj][1] += coeffs[idx] * (p_RadialBasis->vals()[xi] * scaling) * powk * alpha_index_basic[i][2]
                                             * pow0
                                             * auto_coords_powers_[alpha_index_basic[i][2] - 1][1]
                                             * pow2;
                         }
                         if (alpha_index_basic[i][3] != 0) {
-                            mom_ders[i*umax_num_neigh_atoms + jj][2] += coeffs[idx] * p_RadialBasis->vals()[xi] * powk * alpha_index_basic[i][3]
+                            mom_ders[i*umax_num_neigh_atoms + jj][2] += coeffs[idx] * (p_RadialBasis->vals()[xi] * scaling) * powk * alpha_index_basic[i][3]
                                             * pow0
                                             * pow1
                                             * auto_coords_powers_[alpha_index_basic[i][3] - 1][2];
@@ -481,15 +481,15 @@ void MomsValDer<CoordType>::find_val_der(
 
             for (int xi=0; xi<chebyshev_size; xi++) {
                 int idx = (type_central*ntypes + type_outer)*nmus*chebyshev_size + mu*chebyshev_size + xi;
-                CoordType A = p_RadialBasis->vals()[xi];
+                CoordType A = p_RadialBasis->vals()[xi] * scaling;
                 CoordType B = mult0;
                 CoordType C = powk;
                 CoordType A_ders[3] = {0., 0., 0.};
                 CoordType B_ders[3] = {0., 0., 0.};
                 CoordType C_ders[3] = {0., 0., 0.};
-                A_ders[0] = p_RadialBasis->ders2r()[xi] * NeighbVect[0] * distance_ij_inv;
-                A_ders[1] = p_RadialBasis->ders2r()[xi] * NeighbVect[1] * distance_ij_inv;
-                A_ders[2] = p_RadialBasis->ders2r()[xi] * NeighbVect[2] * distance_ij_inv;
+                A_ders[0] = (p_RadialBasis->ders2r()[xi] * scaling) * NeighbVect[0] * distance_ij_inv;
+                A_ders[1] = (p_RadialBasis->ders2r()[xi] * scaling) * NeighbVect[1] * distance_ij_inv;
+                A_ders[2] = (p_RadialBasis->ders2r()[xi] * scaling) * NeighbVect[2] * distance_ij_inv;
                 if (alpha_index_basic[i][1] != 0) {
                     B_ders[0] = alpha_index_basic[i][1]
                                 * auto_coords_powers_[alpha_index_basic[i][1] - 1][0]
