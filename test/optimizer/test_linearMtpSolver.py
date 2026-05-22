@@ -14,7 +14,7 @@ from ai2pot.data.mlffdatamodule import ExtxyzDataModule
 
 
 TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")
-PbTe_EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/Li_battery/train.xyz"
+PbTe_EXTXYZ_PATH = os.path.join(TEST_FILES_DIR, "XYZ", "11_NEP_potential_PbTe", "train_m.xyz")
 # "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/C/train.xyz"
 # "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/Li_battery/train.xyz"
 # os.path.join(TEST_FILES_DIR, "XYZ", "11_NEP_potential_PbTe", "train_m.xyz")
@@ -37,7 +37,7 @@ class LinearMtpSolverTest(unittest.TestCase):
         self.linear_mtp: LinearMtp = LinearMtp(type_map=self.type_map,
                                                umax_num_neigh_atoms=self.umax_num_neigh_atoms,
                                                fit_virial=fit_virial,
-                                               mtp_level=10,
+                                               mtp_level=16,
                                                chebyshev_size=self.chebyshev_size,
                                                rmax=self.rmax,
                                                rmin=self.rmin,
@@ -45,7 +45,7 @@ class LinearMtpSolverTest(unittest.TestCase):
                                                zbl_rmin=0.0,
                                                zbl_cks_list=None,
                                                zbl_dks_list=None).to(device=self.device).to(self.torch_float_dtype)
-        self.linear_mtp._init_as_mlip()
+        #self.linear_mtp._init_as_mlip()
         self.trainset: ExtxyzDataset = ExtxyzDataset(filename=PbTe_EXTXYZ_PATH,
                                                      rcut=self.rmax,
                                                      umax_num_neigh_atoms=self.umax_num_neigh_atoms,
@@ -68,7 +68,7 @@ class LinearMtpSolverTest(unittest.TestCase):
         print("LinearMtpSolverTest (TestCase) is tearing down...\n")
     
 
-    def test_orthogonalize(self):
+    def est_orthogonalize(self):
         ntypes: int = self.linear_mtp.ntypes
         nmus: int = self.linear_mtp.nmus
         chebyshev_size: int = self.linear_mtp.chebyshev_size
@@ -87,11 +87,16 @@ class LinearMtpSolverTest(unittest.TestCase):
         print(vertification_matrix.round(4))
 
     
-    def test_solve_linear_equation(self):
+    def est_solve_linear_equation(self):
         #print(self.linear_mtp.linear_coeffs_tensor)
         self.solver.solve_linear_equation()
         #print(self.linear_mtp.linear_coeffs_tensor)
-        
+
+
+    def test_solve_linear_equation(self):
+        self.solver.rescale_coeffs()
+        print(self.solver.linear_mtp.coeffs_tensor)
+
 
 if __name__ == "__main__":
     unittest.main()

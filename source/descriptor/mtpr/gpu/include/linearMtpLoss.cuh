@@ -762,9 +762,9 @@ void find_loss_backward_atom(
             continue;
         distance_ij_inv = 1.0 / distance_ij;
         CoordType rq_chebyshev_vals[MAX_CHEBYSHEV_SIZE] = {0.0};
-        CoordType rq_chebyshev_der2r[MAX_CHEBYSHEV_SIZE] = {0.0};
+        CoordType rq_chebyshev_ders2r[MAX_CHEBYSHEV_SIZE] = {0.0};
         find_rq_chebyshev<CoordType>(rq_chebyshev_vals,
-                                     rq_chebyshev_der2r,
+                                     rq_chebyshev_ders2r,
                                      chebyshev_size,
                                      rmax,
                                      rmin,
@@ -796,9 +796,9 @@ void find_loss_backward_atom(
                 CoordType A_ders[3] = {0.0, 0.0, 0.0};
                 CoordType B_ders[3] = {0.0, 0.0, 0.0};
                 CoordType C_ders[3] = {0.0, 0.0, 0.0};
-                A_ders[0] = (rq_chebyshev_der2r[xi] * scaling) * NeighbVect[0] * distance_ij_inv;
-                A_ders[1] = (rq_chebyshev_der2r[xi] * scaling) * NeighbVect[1] * distance_ij_inv;
-                A_ders[2] = (rq_chebyshev_der2r[xi] * scaling) * NeighbVect[2] * distance_ij_inv;
+                A_ders[0] = (rq_chebyshev_ders2r[xi] * scaling) * NeighbVect[0] * distance_ij_inv;
+                A_ders[1] = (rq_chebyshev_ders2r[xi] * scaling) * NeighbVect[1] * distance_ij_inv;
+                A_ders[2] = (rq_chebyshev_ders2r[xi] * scaling) * NeighbVect[2] * distance_ij_inv;
                 if (alpha_index_basic[i][1] != 0) {
                     B_ders[0] = alpha_index_basic[i][1]
                                 * auto_coords_powers_[alpha_index_basic[i][1] - 1][0]
@@ -903,9 +903,9 @@ void find_loss_backward_atom(
             continue;
         distance_ij_inv = 1.0 / distance_ij;
         CoordType rq_chebyshev_vals[MAX_CHEBYSHEV_SIZE] = {0.0};
-        CoordType rq_chebyshev_der2r[MAX_CHEBYSHEV_SIZE] = {0.0};
+        CoordType rq_chebyshev_ders2r[MAX_CHEBYSHEV_SIZE] = {0.0};
         find_rq_chebyshev<CoordType>(rq_chebyshev_vals,
-                                     rq_chebyshev_der2r,
+                                     rq_chebyshev_ders2r,
                                      chebyshev_size,
                                      rmax,
                                      rmin,
@@ -936,9 +936,9 @@ void find_loss_backward_atom(
                 CoordType A_ders[3] = {0.0, 0.0, 0.0};
                 CoordType B_ders[3] = {0.0, 0.0, 0.0};
                 CoordType C_ders[3] = {0.0, 0.0, 0.0};
-                A_ders[0] = (rq_chebyshev_der2r[xi] * scaling) * NeighbVect[0] * distance_ij_inv;
-                A_ders[1] = (rq_chebyshev_der2r[xi] * scaling) * NeighbVect[1] * distance_ij_inv;
-                A_ders[2] = (rq_chebyshev_der2r[xi] * scaling) * NeighbVect[2] * distance_ij_inv;
+                A_ders[0] = (rq_chebyshev_ders2r[xi] * scaling) * NeighbVect[0] * distance_ij_inv;
+                A_ders[1] = (rq_chebyshev_ders2r[xi] * scaling) * NeighbVect[1] * distance_ij_inv;
+                A_ders[2] = (rq_chebyshev_ders2r[xi] * scaling) * NeighbVect[2] * distance_ij_inv;
                 if (alpha_index_basic[i][1] != 0) {
                     B_ders[0] = alpha_index_basic[i][1]
                                 * auto_coords_powers_[alpha_index_basic[i][1] - 1][0]
@@ -1397,9 +1397,9 @@ void find_ef_loss_backward_atom(
             continue;
         distance_ij_inv = 1.0 / distance_ij;
         CoordType rq_chebyshev_vals[MAX_CHEBYSHEV_SIZE] = {0.0};
-        CoordType rq_chebyshev_der2r[MAX_CHEBYSHEV_SIZE] = {0.0};
+        CoordType rq_chebyshev_ders2r[MAX_CHEBYSHEV_SIZE] = {0.0};
         find_rq_chebyshev<CoordType>(rq_chebyshev_vals,
-                                     rq_chebyshev_der2r,
+                                     rq_chebyshev_ders2r,
                                      chebyshev_size,
                                      rmax,
                                      rmin,
@@ -1431,9 +1431,9 @@ void find_ef_loss_backward_atom(
                 CoordType A_ders[3] = {0.0, 0.0, 0.0};
                 CoordType B_ders[3] = {0.0, 0.0, 0.0};
                 CoordType C_ders[3] = {0.0, 0.0, 0.0};
-                A_ders[0] = (rq_chebyshev_der2r[xi] * scaling) * NeighbVect[0] * distance_ij_inv;
-                A_ders[1] = (rq_chebyshev_der2r[xi] * scaling) * NeighbVect[1] * distance_ij_inv;
-                A_ders[2] = (rq_chebyshev_der2r[xi] * scaling) * NeighbVect[2] * distance_ij_inv;
+                A_ders[0] = (rq_chebyshev_ders2r[xi] * scaling) * NeighbVect[0] * distance_ij_inv;
+                A_ders[1] = (rq_chebyshev_ders2r[xi] * scaling) * NeighbVect[1] * distance_ij_inv;
+                A_ders[2] = (rq_chebyshev_ders2r[xi] * scaling) * NeighbVect[2] * distance_ij_inv;
                 if (alpha_index_basic[i][1] != 0) {
                     B_ders[0] = alpha_index_basic[i][1]
                                 * auto_coords_powers_[alpha_index_basic[i][1] - 1][0]
@@ -1533,9 +1533,9 @@ void find_ef_loss_backward_atom(
             continue;
         distance_ij_inv = 1.0 / distance_ij;
         CoordType rq_chebyshev_vals[MAX_CHEBYSHEV_SIZE] = {0.0};
-        CoordType rq_chebyshev_der2r[MAX_CHEBYSHEV_SIZE] = {0.0};
+        CoordType rq_chebyshev_ders2r[MAX_CHEBYSHEV_SIZE] = {0.0};
         find_rq_chebyshev<CoordType>(rq_chebyshev_vals,
-                                     rq_chebyshev_der2r,
+                                     rq_chebyshev_ders2r,
                                      chebyshev_size,
                                      rmax,
                                      rmin,
@@ -1566,9 +1566,9 @@ void find_ef_loss_backward_atom(
                 CoordType A_ders[3] = {0.0, 0.0, 0.0};
                 CoordType B_ders[3] = {0.0, 0.0, 0.0};
                 CoordType C_ders[3] = {0.0, 0.0, 0.0};
-                A_ders[0] = (rq_chebyshev_der2r[xi] * scaling) * NeighbVect[0] * distance_ij_inv;
-                A_ders[1] = (rq_chebyshev_der2r[xi] * scaling) * NeighbVect[1] * distance_ij_inv;
-                A_ders[2] = (rq_chebyshev_der2r[xi] * scaling) * NeighbVect[2] * distance_ij_inv;
+                A_ders[0] = (rq_chebyshev_ders2r[xi] * scaling) * NeighbVect[0] * distance_ij_inv;
+                A_ders[1] = (rq_chebyshev_ders2r[xi] * scaling) * NeighbVect[1] * distance_ij_inv;
+                A_ders[2] = (rq_chebyshev_ders2r[xi] * scaling) * NeighbVect[2] * distance_ij_inv;
                 if (alpha_index_basic[i][1] != 0) {
                     B_ders[0] = alpha_index_basic[i][1]
                                 * auto_coords_powers_[alpha_index_basic[i][1] - 1][0]
