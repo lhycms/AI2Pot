@@ -68,7 +68,7 @@ class LinearMtpSolverTest(unittest.TestCase):
         print("LinearMtpSolverTest (TestCase) is tearing down...\n")
     
 
-    def est_orthogonalize(self):
+    def test_orthogonalize(self):
         ntypes: int = self.linear_mtp.ntypes
         nmus: int = self.linear_mtp.nmus
         chebyshev_size: int = self.linear_mtp.chebyshev_size
@@ -87,7 +87,7 @@ class LinearMtpSolverTest(unittest.TestCase):
         print(vertification_matrix.round(4))
 
     
-    def est_solve_linear_equation(self):
+    def test_solve_linear_equation(self):
         #print(self.linear_mtp.linear_coeffs_tensor)
         self.solver.solve_linear_equation()
         #print(self.linear_mtp.linear_coeffs_tensor)
@@ -95,7 +95,7 @@ class LinearMtpSolverTest(unittest.TestCase):
 
     def test_solve_linear_equation(self):
         self.solver.rescale_coeffs()
-        print(self.solver.linear_mtp.coeffs_tensor)
+        #print(self.solver.linear_mtp.coeffs_tensor)
 
 
 if __name__ == "__main__":

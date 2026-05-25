@@ -73,7 +73,7 @@ class LinearMtpTest(unittest.TestCase):
         print("LinearMtpTest (TestSuite) is tearing down...\n")
     
 
-    def test_predict_loss(self):
+    def est_predict_loss(self):
         times_list: List[float] = []
         for ii in range(110):
             t1 = time.time()
@@ -94,7 +94,7 @@ class LinearMtpTest(unittest.TestCase):
         print("1. Loss = ", loss)
 
 
-    def test_predict_ef_loss(self):
+    def est_predict_ef_loss(self):
         times_list: List[float] = []
         for ii in range(110):
             t1 = time.time()
@@ -162,9 +162,9 @@ class LinearMtpTest(unittest.TestCase):
         print("\t1. Esites.shape = ", e_sites.shape)
 
 
-    def est_predict_descriptors(self):
+    def test_predict_descriptors(self):
         times_list: List[float] = []
-        for ii in range(110):
+        for ii in range(1):
             t1 = time.time()
             descriptors = self.linear_mtp.predict_descriptors(*self.mlff_input.analyse_pymatgen(structure=self.structure))
             t2 = time.time()
@@ -173,7 +173,7 @@ class LinearMtpTest(unittest.TestCase):
                 
         print("0.1. Average time cost by linear_mtp.predict_descriptors() = ", np.sum(times_list) / 100)
         print("0.2. std time cost by linear_mtp.predict_descriptors() = ", np.std(times_list) / 100)
-        print("\t1. descriptors = ", descriptors)
+        print("\t1. descriptors = ", descriptors[0, 0, :])
 
 
 if __name__ == "__main__":

@@ -47,7 +47,7 @@ class TargetStatisticsOpTest(unittest.TestCase):
 
     
     def test_targetStatisticsOp_single_batch(self):
-        batch_size: int = 25
+        batch_size: int = 300
         dataloader = DataLoader(dataset=self.extxyz_dataset,
                                 batch_size=batch_size,
                                 shuffle=False)
