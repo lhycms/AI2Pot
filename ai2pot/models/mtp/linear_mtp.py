@@ -94,10 +94,10 @@ class LinearMtp(nn.Module):
         # Conversion
         self.register_buffer(
             name="conv_energy_tensor",
-            tensor=torch.tensor(1.0, device=coeffs_tensor.device, dtype=torch.float32))
+            tensor=torch.tensor(1.0, device=coeffs_tensor.device))
         self.register_buffer(
             name="conv_length_tensor",
-            tensor=torch.tensor(1.0, device=coeffs_tensor.device, dtype=torch.float32))
+            tensor=torch.tensor(1.0, device=coeffs_tensor.device))
 
 
     @torch.no_grad()
