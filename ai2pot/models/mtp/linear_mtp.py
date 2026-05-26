@@ -79,7 +79,7 @@ class LinearMtp(nn.Module):
         self.register_parameter(name="coeffs_tensor", param=nn.Parameter(data=coeffs_tensor))
         
         linear_coeffs_tensor: torch.Tensor = torch.empty(self.num_descriptors)
-        init_linear_coeffs_std: int = (2.0 / (self.num_descriptors + 1)) ** 0.5
+        init_linear_coeffs_std: float = (2.0 / (self.num_descriptors + 1)) ** 0.5
         nn.init.normal_(linear_coeffs_tensor, mean=0.0, std=init_linear_coeffs_std)
         self.register_parameter(name="linear_coeffs_tensor", param=nn.Parameter(data=linear_coeffs_tensor))
         
@@ -90,6 +90,14 @@ class LinearMtp(nn.Module):
     
         q_scaler_tensor: torch.Tensor = torch.zeros(self.num_descriptors, dtype=torch.float32) + 100.0
         self.register_buffer("q_scaler_tensor", tensor=q_scaler_tensor)
+
+        # Conversion
+        self.register_buffer(
+            name="conv_energy_tensor",
+            tensor=torch.tensor(1.0, device=coeffs_tensor.device, dtype=torch.float32))
+        self.register_buffer(
+            name="conv_length_tensor",
+            tensor=torch.tensor(1.0, device=coeffs_tensor.device, dtype=torch.float32))
 
 
     @torch.no_grad()
@@ -107,7 +115,7 @@ class LinearMtp(nn.Module):
         self.coeffs_tensor.copy_(coeffs_tensor)
 
 
-    def _init_zbl_params(self, 
+    def _init_zbl_params(self,
                          zbl_cks_list: Optional[List[float]],
                          zbl_dks_list: Optional[List[float]]):
         if (zbl_cks_list is None) or (zbl_dks_list is None):
@@ -120,8 +128,8 @@ class LinearMtp(nn.Module):
         else:
             zbl_cks_tensor: torch.Tensor = torch.tensor(zbl_cks_list, dtype=torch.float32)
             zbl_dks_tensor: torch.Tensor = torch.tensor(zbl_dks_list, dtype=torch.float32)
-            assert(zbl_cks_tensor.size() == self.ntypes*self.ntypes*4)
-            assert(zbl_dks_tensor.size() == self.ntypes*self.ntypes*4)
+            assert(zbl_cks_tensor.numel() == self.ntypes*self.ntypes*4)
+            assert(zbl_dks_tensor.numel() == self.ntypes*self.ntypes*4)
             self.register_buffer("zbl_cks_tensor", tensor=zbl_cks_tensor)
             self.register_buffer("zbl_dks_tensor", tensor=zbl_dks_tensor)
 
@@ -156,18 +164,39 @@ class LinearMtp(nn.Module):
                      brcs_tensor: torch.Tensor,
                      btypes_tensor: torch.Tensor,
                      bnghost_tensor: torch.Tensor):
+        #
+        conv_energy: float = self.conv_energy_tensor.item()
+        conv_length: float = self.conv_length_tensor.item()
+        conv_force: float = conv_energy / conv_length
+        conv_virial: float = conv_energy
+
+        betot_dft_tensor_norm: torch.Tensor = betot_dft_tensor * conv_energy
+        bforce_dft_tensor_norm: torch.Tensor = bforce_dft_tensor * conv_force
+        bvirial_dft_tensor_norm: torch.Tensor = bvirial_dft_tensor * conv_virial
+        brcs_tensor_norm: torch.Tensor = brcs_tensor * conv_length
+
+        rmax_norm: float = self.rmax * conv_length
+        rmin_norm: float = self.rmin * conv_length
+        zbl_rmax_norm: float = self.zbl_rmax * conv_length
+        zbl_rmin_norm: float = self.zbl_rmin * conv_length
+
+        type_bias_norm: torch.Tensor = self.type_bias_tensor * conv_energy
+        zbl_cks_norm: torch.Tensor = self.zbl_cks_tensor * conv_length * conv_energy
+        zbl_dks_norm: torch.Tensor = self.zbl_dks_tensor / conv_length
+
+        #
         bmse_tensor, e_rmse_tensor, f_rmse_tensor, v_rmse_tensor = linearMtpToLossOp(
             e_weight,
             f_weight,
             v_weight,
-            betot_dft_tensor,
-            bforce_dft_tensor,
-            bvirial_dft_tensor,
+            betot_dft_tensor_norm,
+            bforce_dft_tensor_norm,
+            bvirial_dft_tensor_norm,
             self.chebyshev_size,
             self.scaling,
             self.coeffs_tensor,
             self.linear_coeffs_tensor,
-            self.type_bias_tensor,
+            type_bias_norm,
             self.alpha_moments_count,
             self.alpha_index_basic_tensor,
             self.alpha_index_times_tensor,
@@ -177,21 +206,26 @@ class LinearMtp(nn.Module):
             bilist_tensor,
             bnumneigh_tensor,
             bfirstneigh_tensor,
-            brcs_tensor,
+            brcs_tensor_norm,
             btypes_tensor,
             self.type_map_tensor,
             bnghost_tensor[0].item(),
-            self.rmax,
-            self.rmin,
+            rmax_norm,
+            rmin_norm,
             self.q_scaler_tensor,
-            self.zbl_rmax,
-            self.zbl_rmin,
-            self.zbl_cks_tensor,
-            self.zbl_dks_tensor)
+            zbl_rmax_norm,
+            zbl_rmin_norm,
+            zbl_cks_norm,
+            zbl_dks_norm)
         bmse_tensor: torch.Tensor
         e_rmse_tensor: torch.Tensor
         f_rmse_tensor: torch.Tensor
         v_rmse_tensor: torch.Tensor
+
+        #
+        e_rmse_tensor = e_rmse_tensor / conv_energy
+        f_rmse_tensor = f_rmse_tensor / conv_force
+        v_rmse_tensor = v_rmse_tensor / conv_virial
 
         return bmse_tensor, e_rmse_tensor, f_rmse_tensor, v_rmse_tensor
     
@@ -208,15 +242,35 @@ class LinearMtp(nn.Module):
                         brcs_tensor: torch.Tensor,
                         btypes_tensor: torch.Tensor,
                         bnghost_tensor: torch.Tensor):
-        bmse_tensor, e_rmse_tensor, f_rmse_tensor = linearMtpToEFLossOp(e_weight,
+        #
+        conv_energy: float = self.conv_energy_tensor.item()
+        conv_length: float = self.conv_length_tensor.item()
+        conv_force: float = conv_energy / conv_length
+        
+        betot_dft_tensor_norm: torch.Tensor = betot_dft_tensor * conv_energy
+        bforce_dft_tensor_norm: torch.Tensor = bforce_dft_tensor * conv_force
+        brcs_tensor_norm: torch.Tensor = brcs_tensor * conv_length
+
+        rmax_norm: float = self.rmax * conv_length
+        rmin_norm: float = self.rmin * conv_length
+        zbl_rmax_norm: float = self.zbl_rmax * conv_length
+        zbl_rmin_norm: float = self.zbl_rmin * conv_length
+
+        type_bias_norm: torch.Tensor = self.type_bias_tensor * conv_energy
+        zbl_cks_norm: torch.Tensor = self.zbl_cks_tensor * conv_length * conv_energy
+        zbl_dks_norm: torch.Tensor = self.zbl_dks_tensor / conv_length
+
+        #
+        bmse_tensor, e_rmse_tensor, f_rmse_tensor = linearMtpToEFLossOp(
+            e_weight,
             f_weight,
-            betot_dft_tensor,
-            bforce_dft_tensor,
+            betot_dft_tensor_norm,
+            bforce_dft_tensor_norm,
             self.chebyshev_size,
             self.scaling,
             self.coeffs_tensor,
             self.linear_coeffs_tensor,
-            self.type_bias_tensor,
+            type_bias_norm,
             self.alpha_moments_count,
             self.alpha_index_basic_tensor,
             self.alpha_index_times_tensor,
@@ -226,20 +280,24 @@ class LinearMtp(nn.Module):
             bilist_tensor,
             bnumneigh_tensor,
             bfirstneigh_tensor,
-            brcs_tensor,
+            brcs_tensor_norm,
             btypes_tensor,
             self.type_map_tensor,
             bnghost_tensor[0].item(),
-            self.rmax,
-            self.rmin,
+            rmax_norm,
+            rmin_norm,
             self.q_scaler_tensor,
-            self.zbl_rmax,
-            self.zbl_rmin,
-            self.zbl_cks_tensor,
-            self.zbl_dks_tensor)
+            zbl_rmax_norm,
+            zbl_rmin_norm,
+            zbl_cks_norm,
+            zbl_dks_norm)
         bmse_tensor: torch.Tensor
         e_rmse_tensor: torch.Tensor
         f_rmse_tensor: torch.Tensor
+
+        #
+        e_rmse_tensor = e_rmse_tensor / conv_energy
+        f_rmse_tensor = f_rmse_tensor / conv_force
 
         return bmse_tensor, e_rmse_tensor, f_rmse_tensor
     
@@ -252,31 +310,56 @@ class LinearMtp(nn.Module):
                     brcs_tensor: torch.Tensor,
                     btypes_tensor: torch.Tensor,
                     bnghost_tensor: torch.Tensor):
-        betot_tensor, bforce_tensor, bvirial_tensor = linearMtpToEFVOp(self.chebyshev_size,
-                                                                       self.scaling,
-                                                                       self.coeffs_tensor,
-                                                                       self.linear_coeffs_tensor,
-                                                                       self.type_bias_tensor,
-                                                                       self.alpha_moments_count,
-                                                                       self.alpha_index_basic_tensor,
-                                                                       self.alpha_index_times_tensor,
-                                                                       self.alpha_moment_mapping_tensor,
-                                                                       self.nmus,
-                                                                       binum_tensor,
-                                                                       bilist_tensor,
-                                                                       bnumneigh_tensor,
-                                                                       bfirstneigh_tensor,
-                                                                       brcs_tensor,
-                                                                       btypes_tensor,
-                                                                       self.type_map_tensor,
-                                                                       bnghost_tensor[0].item(),
-                                                                       self.rmax,
-                                                                       self.rmin,
-                                                                       self.q_scaler_tensor,
-                                                                       self.zbl_rmax,
-                                                                       self.zbl_rmax,
-                                                                       self.zbl_cks_tensor,
-                                                                       self.zbl_dks_tensor)
+        #
+        conv_energy: float = self.conv_energy_tensor.item()
+        conv_length: float = self.conv_length_tensor.item()
+        conv_force: float = conv_energy / conv_length
+        conv_virial: float = conv_energy
+
+        brcs_tensor_norm: torch.Tensor = brcs_tensor * conv_length
+
+        rmax_norm: float = self.rmax * conv_length
+        rmin_norm: float = self.rmin * conv_length
+        zbl_rmax_norm: float = self.zbl_rmax * conv_length
+        zbl_rmin_norm: float = self.zbl_rmin * conv_length
+
+        type_bias_norm: torch.Tensor = self.type_bias_tensor * conv_energy
+        zbl_cks_norm: torch.Tensor = self.zbl_cks_tensor * conv_length * conv_energy
+        zbl_dks_norm: torch.Tensor = self.zbl_dks_tensor / conv_length
+
+        #
+        betot_tensor, bforce_tensor, bvirial_tensor = linearMtpToEFVOp(
+            self.chebyshev_size,
+            self.scaling,
+            self.coeffs_tensor,
+            self.linear_coeffs_tensor,
+            type_bias_norm,
+            self.alpha_moments_count,
+            self.alpha_index_basic_tensor,
+            self.alpha_index_times_tensor,
+            self.alpha_moment_mapping_tensor,
+            self.nmus,
+            binum_tensor,
+            bilist_tensor,
+            bnumneigh_tensor,
+            bfirstneigh_tensor,
+            brcs_tensor_norm,
+            btypes_tensor,
+            self.type_map_tensor,
+            bnghost_tensor[0].item(),
+            rmax_norm,
+            rmin_norm,
+            self.q_scaler_tensor,
+            zbl_rmax_norm,
+            zbl_rmin_norm,
+            zbl_cks_norm,
+            zbl_dks_norm)
+        
+        #
+        betot_tensor = betot_tensor / conv_energy
+        bforce_tensor = bforce_tensor / conv_force
+        bvirial_tensor = bvirial_tensor / conv_virial
+
         return betot_tensor, bforce_tensor, bvirial_tensor
 
 
@@ -288,31 +371,54 @@ class LinearMtp(nn.Module):
                    brcs_tensor: torch.Tensor,
                    btypes_tensor: torch.Tensor,
                    bnghost_tensor: torch.Tensor):
-        betot_tensor, bforce_tensor = linearMtpToEFOp(self.chebyshev_size,
-                                                      self.scaling,
-                                                      self.coeffs_tensor,
-                                                      self.linear_coeffs_tensor,
-                                                      self.type_bias_tensor,
-                                                      self.alpha_moments_count,
-                                                      self.alpha_index_basic_tensor,
-                                                      self.alpha_index_times_tensor,
-                                                      self.alpha_moment_mapping_tensor,
-                                                      self.nmus,
-                                                      binum_tensor,
-                                                      bilist_tensor,
-                                                      bnumneigh_tensor,
-                                                      bfirstneigh_tensor,
-                                                      brcs_tensor,
-                                                      btypes_tensor,
-                                                      self.type_map_tensor,
-                                                      bnghost_tensor[0].item(),
-                                                      self.rmax,
-                                                      self.rmin,
-                                                      self.q_scaler_tensor,
-                                                      self.zbl_rmax,
-                                                      self.zbl_rmax,
-                                                      self.zbl_cks_tensor,
-                                                      self.zbl_dks_tensor)
+        #
+        conv_energy: float = self.conv_energy_tensor.item()
+        conv_length: float = self.conv_length_tensor.item()
+        conv_force: float = conv_energy / conv_length
+
+        brcs_tensor_norm: torch.Tensor = brcs_tensor * conv_length
+
+        rmax_norm: float = self.rmax * conv_length
+        rmin_norm: float = self.rmin * conv_length
+        zbl_rmax_norm: float = self.zbl_rmax * conv_length
+        zbl_rmin_norm: float = self.zbl_rmin * conv_length
+
+        type_bias_norm: torch.Tensor = self.type_bias_tensor * conv_energy
+        zbl_cks_norm: torch.Tensor = self.zbl_cks_tensor * conv_length * conv_energy
+        zbl_dks_norm: torch.Tensor = self.zbl_dks_tensor / conv_length
+
+        #
+        betot_tensor, bforce_tensor = linearMtpToEFOp(
+            self.chebyshev_size,
+            self.scaling,
+            self.coeffs_tensor,
+            self.linear_coeffs_tensor,
+            type_bias_norm,
+            self.alpha_moments_count,
+            self.alpha_index_basic_tensor,
+            self.alpha_index_times_tensor,
+            self.alpha_moment_mapping_tensor,
+            self.nmus,
+            binum_tensor,
+            bilist_tensor,
+            bnumneigh_tensor,
+            bfirstneigh_tensor,
+            brcs_tensor_norm,
+            btypes_tensor,
+            self.type_map_tensor,
+            bnghost_tensor[0].item(),
+            rmax_norm,
+            rmin_norm,
+            self.q_scaler_tensor,
+            zbl_rmax_norm,
+            zbl_rmin_norm,
+            zbl_cks_norm,
+            zbl_dks_norm)
+        
+        #
+        betot_tensor = betot_tensor / conv_energy
+        bforce_tensor = bforce_tensor / conv_force
+
         return betot_tensor, bforce_tensor
     
 
@@ -325,31 +431,52 @@ class LinearMtp(nn.Module):
                         btypes_tensor: torch.Tensor,
                         bnghost_tensor: torch.Tensor):
         assert(brcs_tensor.device == torch.device("cpu"))
-        be_sites_tensor: torch.Tensor = linearMtpToEsitesOp(self.chebyshev_size,
-                                                            self.scaling,
-                                                            self.coeffs_tensor,
-                                                            self.linear_coeffs_tensor,
-                                                            self.type_bias_tensor,
-                                                            self.alpha_moments_count,
-                                                            self.alpha_index_basic_tensor,
-                                                            self.alpha_index_times_tensor,
-                                                            self.alpha_moment_mapping_tensor,
-                                                            self.nmus,
-                                                            binum_tensor,
-                                                            bilist_tensor,
-                                                            bnumneigh_tensor,
-                                                            bfirstneigh_tensor,
-                                                            brcs_tensor,
-                                                            btypes_tensor,
-                                                            self.type_map_tensor,
-                                                            bnghost_tensor[0].item(),
-                                                            self.rmax,
-                                                            self.rmin,
-                                                            self.q_scaler_tensor,
-                                                            self.zbl_rmax,
-                                                            self.zbl_rmax,
-                                                            self.zbl_cks_tensor,
-                                                            self.zbl_dks_tensor)[0]
+        #
+        conv_energy: float = self.conv_energy_tensor.item()
+        conv_length: float = self.conv_length_tensor.item()
+
+        brcs_tensor_norm: torch.Tensor = brcs_tensor * conv_length
+
+        rmax_norm: float = self.rmax * conv_length
+        rmin_norm: float = self.rmin * conv_length
+        zbl_rmax_norm: float = self.zbl_rmax * conv_length
+        zbl_rmin_norm: float = self.zbl_rmin * conv_length
+
+        type_bias_norm: torch.Tensor = self.type_bias_tensor * conv_energy
+        zbl_cks_norm: torch.Tensor = self.zbl_cks_tensor * conv_length * conv_energy
+        zbl_dks_norm: torch.Tensor = self.zbl_dks_tensor / conv_length
+
+        #
+        be_sites_tensor: torch.Tensor = linearMtpToEsitesOp(
+            self.chebyshev_size,
+            self.scaling,
+            self.coeffs_tensor,
+            self.linear_coeffs_tensor,
+            type_bias_norm,
+            self.alpha_moments_count,
+            self.alpha_index_basic_tensor,
+            self.alpha_index_times_tensor,
+            self.alpha_moment_mapping_tensor,
+            self.nmus,
+            binum_tensor,
+            bilist_tensor,
+            bnumneigh_tensor,
+            bfirstneigh_tensor,
+            brcs_tensor_norm,
+            btypes_tensor,
+            self.type_map_tensor,
+            bnghost_tensor[0].item(),
+            rmax_norm,
+            rmin_norm,
+            self.q_scaler_tensor,
+            zbl_rmax_norm,
+            zbl_rmin_norm,
+            zbl_cks_norm,
+            zbl_dks_norm)[0]
+        
+        #
+        be_sites_tensor = be_sites_tensor / conv_energy
+
         return be_sites_tensor
 
 
@@ -361,23 +488,33 @@ class LinearMtp(nn.Module):
                             brcs_tensor: torch.Tensor,
                             btypes_tensor: torch.Tensor,
                             bnghost_tensor: torch.Tensor):
+        #
+        conv_length: float = self.conv_length_tensor.item()
+
+        brcs_tensor_norm: torch.Tensor = brcs_tensor * conv_length
+
+        rmax_norm: float = self.rmax * conv_length
+        rmin_norm: float = self.rmin * conv_length
+
+        #
         bdescriptors_tensor: torch.Tensor = linearMtpToDescriptorsOp(
-                                                    self.chebyshev_size,
-                                                    self.scaling,
-                                                    self.coeffs_tensor,
-                                                    self.alpha_moments_count,
-                                                    self.alpha_index_basic_tensor,
-                                                    self.alpha_index_times_tensor,
-                                                    self.alpha_moment_mapping_tensor,
-                                                    self.nmus,
-                                                    binum_tensor,
-                                                    bilist_tensor,
-                                                    bnumneigh_tensor,
-                                                    bfirstneigh_tensor,
-                                                    brcs_tensor,
-                                                    btypes_tensor,
-                                                    self.type_map_tensor,
-                                                    bnghost_tensor[0].item(),
-                                                    self.rmax,
-                                                    self.rmin)[0]
+            self.chebyshev_size,
+            self.scaling,
+            self.coeffs_tensor,
+            self.alpha_moments_count,
+            self.alpha_index_basic_tensor,
+            self.alpha_index_times_tensor,
+            self.alpha_moment_mapping_tensor,
+            self.nmus,
+            binum_tensor,
+            bilist_tensor,
+            bnumneigh_tensor,
+            bfirstneigh_tensor,
+            brcs_tensor_norm,
+            btypes_tensor,
+            self.type_map_tensor,
+            bnghost_tensor[0].item(),
+            rmax_norm,
+            rmin_norm)[0]
+        
         return bdescriptors_tensor
