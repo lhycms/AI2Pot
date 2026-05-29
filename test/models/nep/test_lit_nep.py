@@ -13,7 +13,7 @@ from ai2pot.models.potential_train_utils import EnergyShiftCallback
 
 
 TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")
-PbTe_EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/C/train.xyz"
+PbTe_EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/Li_battery/train.xyz"
 # "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/C/train.xyz"
 # "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/Li_battery/train.xyz"
 # os.path.join(TEST_FILES_DIR, "XYZ", "11_NEP_potential_PbTe", "train_m.xyz")
@@ -33,16 +33,16 @@ class LitNepTest(unittest.TestCase):
         fit_virial: bool = False
 
         # Nep hyperparameters
-        rmax_radial: float = 7.0#6.0
+        rmax_radial: float = 6.0
         rmax_angular: float = 4.0
         n_radial_basis: int = 4 + 1
         n_angular_basis: int = 4 + 1
         l_max: int = 4
         chebyshev_size: int = 8 + 1
-        num_neurons: int = 50#30
+        num_neurons: int = 30
 
         # Lr hyperparameters
-        max_epochs: int = 1000
+        max_epochs: int = 200
         lr_start: float = 1e-3
         lr_end: float = 1e-7
         e_wgt_start: float = 1.0

@@ -433,6 +433,9 @@ class LitLinearMtp(LitPotentialBase):
             zbl_cks_list=zbl_cks_list,
             zbl_dks_list=zbl_dks_list)
         
+        self.register_buffer("conv_energy_tensor", self.model.conv_energy_tensor)
+        self.register_buffer("conv_length_tensor", self.model.conv_length_tensor)
+        
         self.save_hyperparameters()
 
 
@@ -495,6 +498,9 @@ class LitNep(LitPotentialBase):
             zbl_rmin=zbl_rmin,
             zbl_cks_list=zbl_cks_list,
             zbl_dks_list=zbl_dks_list)
+        
+        self.register_buffer("conv_energy_tensor", self.model.conv_energy_tensor)
+        self.register_buffer("conv_length_tensor", self.model.conv_length_tensor)
         
         self.save_hyperparameters()
 
