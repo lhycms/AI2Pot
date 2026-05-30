@@ -45,6 +45,9 @@ class TorchScipyBfgs(object):
         super(TorchScipyBfgs, self).__init__()
         self.linear_mtp: LinearMtp = linear_mtp
         self.extxyz_dataset: ExtxyzDataset = extxyz_dataset
+        self.train_loader: DataLoader = DataLoader(dataset=self.extxyz_dataset,
+                                                   batch_size=batch_size,
+                                                   shuffle=False)
         self.e_weight: float = e_weight
         self.f_weight: float = f_weight
         self.v_weight: float = v_weight
@@ -88,10 +91,10 @@ class TorchScipyBfgs(object):
 
         # 2.
         total_loss: float = 0.0
-        train_loader: DataLoader = DataLoader(dataset=self.extxyz_dataset,
-                                              batch_size=self.batch_size,
-                                              shuffle=True)
-        for batch_idx, batch_data in enumerate(train_loader):
+        total_samples: int = len(self.train_loader.dataset)
+        num_batches: int = 0
+        for batch_idx, batch_data in enumerate(self.train_loader):
+            num_batches += 1
             if self.fit_virial:
                 binum, bilist, bnumneigh, bfirstneigh, brcs, btypes, bnghost, betot_dft_tensor, bforce_dft_tensor, bvirial_dft_tensor = \
                     [t.to(self.device) for t in batch_data]
@@ -132,15 +135,38 @@ class TorchScipyBfgs(object):
                 e_rmse_tensor: torch.Tensor
                 f_rmse_tensor: torch.Tensor
             
-            loss: torch.Tensor = bmse_tensor.mean()
+            current_batch_size: int = betot_dft_tensor.size(0)
+            weight: float = current_batch_size / total_samples
+            loss: torch.Tensor = bmse_tensor.mean() * weight
             total_loss += loss.item()
             loss.backward()
 
+        # 
         grad_tensors_list: List[torch.Tensor] = [
             p.grad.reshape(-1) if p.grad is not None else torch.zeros(p.numel(), device=p.device, dtype=self.torch_float_dtype)
             for p in self.linear_mtp.parameters()
         ]
         grad: torch.Tensor = torch.cat(grad_tensors_list).detach().cpu().numpy()
 
-        return total_loss, grad
-            
+        return float(total_loss), grad
+    
+
+    def run(self):
+        result = minimize(
+            fun=self._loss_and_grad,
+            x0=self._get_x0(),
+            method="BFGS",
+            jac=True,
+            options={
+                "maxiter": self.maxiter,
+                "gtol": self.gtol,
+                "disp": self.disp})
+
+        if self.use_best_params and self.best_x is not None:
+            self._set_x(self.best_x)
+        else:
+            self._set_x(result.x)
+        
+        return result
+    
+
