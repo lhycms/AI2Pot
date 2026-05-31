@@ -92,9 +92,7 @@ class TorchScipyBfgs(object):
         # 2.
         total_loss: float = 0.0
         total_samples: int = len(self.train_loader.dataset)
-        num_batches: int = 0
         for batch_idx, batch_data in enumerate(self.train_loader):
-            num_batches += 1
             if self.fit_virial:
                 binum, bilist, bnumneigh, bfirstneigh, brcs, btypes, bnghost, betot_dft_tensor, bforce_dft_tensor, bvirial_dft_tensor = \
                     [t.to(self.device) for t in batch_data]
