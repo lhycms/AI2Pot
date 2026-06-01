@@ -27,16 +27,16 @@ from scipy.optimize import minimize
 
 from ai2pot.models.mtp.linear_mtp import LinearMtp
 from ai2pot.data.mlffdataset import ExtxyzDataset
+from ai2pot.optimizer.mtpr_solver import LinearMtpSolver
 
 
 class TorchScipyBfgs(object):
     def __init__(self,
                  linear_mtp: LinearMtp,
-                 extxyz_dataset: ExtxyzDataset,
+                 trainset: ExtxyzDataset,
                  e_weight: float = 1.0,
                  f_weight: float = 2.0,
                  v_weight: float = 0.0,
-                 fit_virial: bool = False,
                  batch_size: int = 300,
                  maxiter: int = 500,
                  gtol: float = 1e-7,
@@ -44,14 +44,14 @@ class TorchScipyBfgs(object):
                  use_best_params: bool = True):
         super(TorchScipyBfgs, self).__init__()
         self.linear_mtp: LinearMtp = linear_mtp
-        self.extxyz_dataset: ExtxyzDataset = extxyz_dataset
-        self.train_loader: DataLoader = DataLoader(dataset=self.extxyz_dataset,
+        self.trainset: ExtxyzDataset = trainset
+        self.train_loader: DataLoader = DataLoader(dataset=self.trainset,
                                                    batch_size=batch_size,
                                                    shuffle=False)
         self.e_weight: float = e_weight
         self.f_weight: float = f_weight
         self.v_weight: float = v_weight
-        self.fit_virial: bool = fit_virial
+        self.fit_virial: bool = self.linear_mtp.fit_virial
         self.batch_size: int = batch_size
 
         self.maxiter: int = maxiter
@@ -96,6 +96,10 @@ class TorchScipyBfgs(object):
             if self.fit_virial:
                 binum, bilist, bnumneigh, bfirstneigh, brcs, btypes, bnghost, betot_dft_tensor, bforce_dft_tensor, bvirial_dft_tensor = \
                     [t.to(self.device) for t in batch_data]
+                brcs.to(self.torch_float_dtype)
+                betot_dft_tensor.to(self.torch_float_dtype)
+                bforce_dft_tensor.to(self.torch_float_dtype)
+                bvirial_dft_tensor.to(self.torch_float_dtype)
                 bmse_tensor, e_rmse_tensor, f_rmse_tensor, v_rmse_tensor = self.linear_mtp.predict_loss(
                     self.e_weight,
                     self.f_weight,
@@ -117,6 +121,9 @@ class TorchScipyBfgs(object):
             else:
                 binum, bilist, bnumneigh, bfirstneigh, brcs, btypes, bnghost, betot_dft_tensor, bforce_dft_tensor = \
                     [t.to(self.device) for t in batch_data]
+                brcs.to(self.torch_float_dtype)
+                betot_dft_tensor.to(self.torch_float_dtype)
+                bforce_dft_tensor.to(self.torch_float_dtype)
                 bmse_tensor, e_rmse_tensor, f_rmse_tensor = self.linear_mtp.predict_ef_loss(
                     self.e_weight,
                     self.f_weight,
@@ -168,3 +175,43 @@ class TorchScipyBfgs(object):
         return result
     
 
+class ParameterInheritor(object):
+    def __init__(self,
+                 old_model: LinearMtp,
+                 new_model: LinearMtp):
+        super(ParameterInheritor, self).__init__()
+        self.old_model: LinearMtp = old_model
+        self.new_model: LinearMtp = new_model
+
+
+    @torch.no_grad()
+    def copy_flat_param(self,
+                        old_tensor: torch.Tensor,
+                        new_tensor: torch.Tensor) -> None:
+        if old_tensor.numel() > new_tensor.numel():
+            raise ValueError(
+                f"old_tensor.numel()={old_tensor.numel()}"
+                f"> new_tensor.numel()={new_tensor.numel()}.")
+        
+        old_param_size: int = old_tensor.numel()
+        new_tensor.reshape(-1)[:old_param_size].copy_(
+            old_tensor.reshape(-1)[:old_param_size].to(
+                device=new_tensor.device,
+                dtype=new_tensor.dtype)
+        )
+
+    
+    @torch.no_grad()
+    def transfer_coeffs(self,
+                        e_weight: float,
+                        f_weight: float,
+                        v_weight: float,
+                        trainset: ExtxyzDataset):
+        linear_mtp_solver: LinearMtpSolver = LinearMtpSolver(e_weight=e_weight,
+                                                             f_weight=f_weight,
+                                                             v_weight=v_weight,
+                                                             linear_mtp=self.new_model,
+                                                             trainset=trainset)
+        ParameterInheritor.copy_flat_param(old_tensor=self.old_model.coeffs_tensor,
+                                           new_tensor=self.new_model.coeffs_tensor)
+        linear_mtp_solver.solve_linear_equation()

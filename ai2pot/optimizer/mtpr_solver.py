@@ -68,9 +68,9 @@ class LinearMtpSolver(object):
                                                                         self.linear_mtp.coeffs_tensor)[0]
         # Write Back
         self.linear_mtp.coeffs_tensor.copy_(orthogonal_coeffs_tensor)
-        
+    
 
-    @torch.no_grad()    
+    @torch.no_grad()
     def solve_linear_equation(self):
         fit_virial: bool = self.linear_mtp.fit_virial
         param = next(self.linear_mtp.parameters())
@@ -90,21 +90,17 @@ class LinearMtpSolver(object):
                                                     dtype=torch_float_dtype,
                                                     device=device)
         
-        if (fit_virial):
-            for batch_idx, batch_data in enumerate(train_loader):
+        for batch_idx, batch_data in enumerate(train_loader):
+            if (fit_virial):
                 binum_tensor, bilist_tensor, bnumneigh_tensor, bfirstneigh_tensor, \
                     brcs_tensor, btypes_tensor, bnghost_tensor, \
-                    betot_dft_tensor, bforce_dft_tensor, bvirial_dft_tensor = batch_data
-                binum_tensor = binum_tensor.to(device)
-                bilist_tensor = bilist_tensor.to(device)
-                bnumneigh_tensor = bnumneigh_tensor.to(device)
-                bfirstneigh_tensor = bfirstneigh_tensor.to(device)
-                brcs_tensor = brcs_tensor.to(device).to(torch_float_dtype)
-                btypes_tensor = btypes_tensor.to(device)
-                bnghost_tensor = bnghost_tensor.to(device)
-                betot_dft_tensor = betot_dft_tensor.to(device).to(torch_float_dtype)
-                bforce_dft_tensor = bforce_dft_tensor.to(device).to(torch_float_dtype)
-                bvirial_dft_tensor = bvirial_dft_tensor.to(device).to(torch_float_dtype)
+                    betot_dft_tensor, bforce_dft_tensor, bvirial_dft_tensor = \
+                    [t.to(device) for t in batch_data]
+                brcs_tensor = brcs_tensor.to(torch_float_dtype)
+                betot_dft_tensor = betot_dft_tensor.to(torch_float_dtype)
+                bforce_dft_tensor = bforce_dft_tensor.to(torch_float_dtype)
+                bvirial_dft_tensor = bvirial_dft_tensor.to(torch_float_dtype)
+
                 tmp_lin_matrix, tmp_lin_vector = linMatrixLinVectorOp(
                     self.e_weight,
                     self.f_weight,
@@ -137,24 +133,20 @@ class LinearMtpSolver(object):
                     self.linear_mtp.zbl_rmin,
                     self.linear_mtp.zbl_cks_tensor,
                     self.linear_mtp.zbl_dks_tensor)
+                
                 lin_matrix_tensor.add_(tmp_lin_matrix)
                 lin_vector_tensor.add_(tmp_lin_vector)
-        else:
-            for batch_idx, batch_data in enumerate(train_loader):
+            else:
                 binum_tensor, bilist_tensor, bnumneigh_tensor, bfirstneigh_tensor, \
                     brcs_tensor, btypes_tensor, bnghost_tensor, \
-                    betot_dft_tensor, bforce_dft_tensor = batch_data
-                binum_tensor = binum_tensor.to(device)
-                bilist_tensor = bilist_tensor.to(device)
-                bnumneigh_tensor = bnumneigh_tensor.to(device)
-                bfirstneigh_tensor = bfirstneigh_tensor.to(device)
-                brcs_tensor = brcs_tensor.to(device).to(torch_float_dtype)
-                btypes_tensor = btypes_tensor.to(device)
-                bnghost_tensor = bnghost_tensor.to(device)
-                betot_dft_tensor = betot_dft_tensor.to(device).to(torch_float_dtype)
-                bforce_dft_tensor = bforce_dft_tensor.to(device).to(torch_float_dtype)
+                    betot_dft_tensor, bforce_dft_tensor = \
+                    [t.to(device) for t in batch_data]
+                brcs_tensor = brcs_tensor.to(torch_float_dtype)
+                betot_dft_tensor = betot_dft_tensor.to(torch_float_dtype)
+                bforce_dft_tensor = bforce_dft_tensor.to(torch_float_dtype)
                 batch_size = bfirstneigh_tensor.size(0)
                 bvirial_dft_tensor = torch.zeros((batch_size, 9), dtype=torch_float_dtype, device=device)
+
                 tmp_lin_matrix, tmp_lin_vector = linMatrixLinVectorOp(
                     self.e_weight,
                     self.f_weight,
@@ -187,6 +179,7 @@ class LinearMtpSolver(object):
                     self.linear_mtp.zbl_rmin,
                     self.linear_mtp.zbl_cks_tensor,
                     self.linear_mtp.zbl_dks_tensor)
+                
                 lin_matrix_tensor.add_(tmp_lin_matrix)
                 lin_vector_tensor.add_(tmp_lin_vector)
         
