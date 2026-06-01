@@ -73,20 +73,28 @@ class TorchScipyBfgs(object):
 
 
     def _get_x0(self) -> np.ndarray:
-        x0: np.ndarray = parameters_to_vector(self.params)
+        x0: torch.Tensor = parameters_to_vector(self.params)
         return x0.detach().cpu().numpy()
     
 
-    def _set_x(self, x: np.ndarray) -> None:
+    def _set_x(self, x: np.ndarray,
+               persistent: bool = False) -> None:
         x_tensor: torch.Tensor = torch.from_numpy(x).to(device=self.device, dtype=self.torch_float_dtype)
         with torch.no_grad():
-            vector_to_parameters(vec=x_tensor,
-                                 parameters=self.params)
+            if (persistent):
+                pointer: int = 0
+                for param in self.params:
+                    num_params: int = param.numel()
+                    param.copy_(x_tensor[pointer: pointer+num_params].view_as(param))
+                    pointer += num_params
+            else:
+                vector_to_parameters(vec=x_tensor,
+                                     parameters=self.params)
 
 
     def _loss_and_grad(self, x: np.ndarray) -> Tuple[float, np.ndarray]:
         # 1.
-        self._set_x(x=x)
+        self._set_x(x=x, persistent=False)
         self.linear_mtp.zero_grad()
 
         # 2.
@@ -96,10 +104,10 @@ class TorchScipyBfgs(object):
             if self.fit_virial:
                 binum, bilist, bnumneigh, bfirstneigh, brcs, btypes, bnghost, betot_dft_tensor, bforce_dft_tensor, bvirial_dft_tensor = \
                     [t.to(self.device) for t in batch_data]
-                brcs.to(self.torch_float_dtype)
-                betot_dft_tensor.to(self.torch_float_dtype)
-                bforce_dft_tensor.to(self.torch_float_dtype)
-                bvirial_dft_tensor.to(self.torch_float_dtype)
+                brcs = brcs.to(self.torch_float_dtype)
+                betot_dft_tensor = betot_dft_tensor.to(self.torch_float_dtype)
+                bforce_dft_tensor = bforce_dft_tensor.to(self.torch_float_dtype)
+                bvirial_dft_tensor = bvirial_dft_tensor.to(self.torch_float_dtype)
                 bmse_tensor, e_rmse_tensor, f_rmse_tensor, v_rmse_tensor = self.linear_mtp.predict_loss(
                     self.e_weight,
                     self.f_weight,
@@ -121,9 +129,9 @@ class TorchScipyBfgs(object):
             else:
                 binum, bilist, bnumneigh, bfirstneigh, brcs, btypes, bnghost, betot_dft_tensor, bforce_dft_tensor = \
                     [t.to(self.device) for t in batch_data]
-                brcs.to(self.torch_float_dtype)
-                betot_dft_tensor.to(self.torch_float_dtype)
-                bforce_dft_tensor.to(self.torch_float_dtype)
+                brcs = brcs.to(self.torch_float_dtype)
+                betot_dft_tensor = betot_dft_tensor.to(self.torch_float_dtype)
+                bforce_dft_tensor = bforce_dft_tensor.to(self.torch_float_dtype)
                 bmse_tensor, e_rmse_tensor, f_rmse_tensor = self.linear_mtp.predict_ef_loss(
                     self.e_weight,
                     self.f_weight,
@@ -168,9 +176,9 @@ class TorchScipyBfgs(object):
                 "disp": self.disp})
 
         if self.use_best_params and self.best_x is not None:
-            self._set_x(self.best_x)
+            self._set_x(x=self.best_x, persistent=True)
         else:
-            self._set_x(result.x)
+            self._set_x(x=result.x, persistent=True)
         
         return result
     
@@ -215,3 +223,4 @@ class ParameterInheritor(object):
         ParameterInheritor.copy_flat_param(old_tensor=self.old_model.coeffs_tensor,
                                            new_tensor=self.new_model.coeffs_tensor)
         linear_mtp_solver.solve_linear_equation()
+        
