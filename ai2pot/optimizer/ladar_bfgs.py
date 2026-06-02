@@ -16,7 +16,7 @@
 # along with AI2Pot.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from typing import (List, Tuple, Optional, Callable)
+from typing import (List, Tuple, Optional)
 
 import numpy as np
 import torch

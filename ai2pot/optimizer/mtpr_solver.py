@@ -16,11 +16,10 @@
 # along with AI2Pot.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from typing import (Optional, List, Union)
+from typing import List
 
 import torch
 from torch.utils.data import DataLoader
-import lightning as L
 
 from ai2pot.fromcc import (
     coeffsSchmidtOrthOp,
