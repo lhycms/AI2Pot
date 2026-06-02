@@ -31,13 +31,14 @@ from ai2pot.optimizer.mtpr_solver import LinearMtpSolver
 
 
 class TorchScipyBfgs(object):
+    BATCH_SIZE_HERE = 400
+
     def __init__(self,
                  linear_mtp: LinearMtp,
                  trainset: ExtxyzDataset,
                  e_weight: float = 1.0,
                  f_weight: float = 2.0,
                  v_weight: float = 0.0,
-                 batch_size: int = 300,
                  maxiter: int = 500,
                  gtol: float = 1e-7,
                  disp: bool = True,
@@ -46,13 +47,12 @@ class TorchScipyBfgs(object):
         self.linear_mtp: LinearMtp = linear_mtp
         self.trainset: ExtxyzDataset = trainset
         self.train_loader: DataLoader = DataLoader(dataset=self.trainset,
-                                                   batch_size=batch_size,
+                                                   batch_size=TorchScipyBfgs.BATCH_SIZE_HERE,
                                                    shuffle=False)
         self.e_weight: float = e_weight
         self.f_weight: float = f_weight
         self.v_weight: float = v_weight
         self.fit_virial: bool = self.linear_mtp.fit_virial
-        self.batch_size: int = batch_size
 
         self.maxiter: int = maxiter
         self.gtol: float = gtol
