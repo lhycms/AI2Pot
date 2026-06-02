@@ -77,7 +77,8 @@ class TorchScipyBfgs(object):
         return x0.detach().cpu().numpy()
     
 
-    def _set_x(self, x: np.ndarray,
+    def _set_x(self,
+               x: np.ndarray,
                persistent: bool = False) -> None:
         x_tensor: torch.Tensor = torch.from_numpy(x).to(device=self.device, dtype=self.torch_float_dtype)
         with torch.no_grad():

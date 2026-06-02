@@ -150,7 +150,7 @@ class LinearMtpSolver(object):
                 tmp_lin_matrix, tmp_lin_vector = linMatrixLinVectorOp(
                     self.e_weight,
                     self.f_weight,
-                    self.v_weight,
+                    0.0,
                     betot_dft_tensor,
                     bforce_dft_tensor,
                     bvirial_dft_tensor,
@@ -194,7 +194,7 @@ class LinearMtpSolver(object):
             update_reg_mark: bool = torch.any(self.reg_vector_tensor < lower_bound_tensor) or \
                                     torch.any(self.reg_vector_tensor > upper_bound_tensor)
             if (update_reg_mark):
-                self.reg_vector_tensor = proposed_reg_tensor.clone()
+                self.reg_vector_tensor.copy_(proposed_reg_tensor)
                 self.reg_init = True
                 print("Regularization parameters updated. Hessian in BFGS need to reset.")
             
