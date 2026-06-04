@@ -57,11 +57,13 @@ class LinearMtpSolverTest(unittest.TestCase):
         e_weight: float = 2.0
         f_weight: float = 3.0
         v_weight: float = 0.0
+        ridge_lambda: float = 1e-3
         self.solver: LinearMtpSolver = LinearMtpSolver(e_weight=e_weight,
                                                        f_weight=f_weight,
                                                        v_weight=v_weight,
                                                        linear_mtp=self.linear_mtp,
-                                                       trainset=self.trainset)
+                                                       trainset=self.trainset,
+                                                       ridge_lambda=ridge_lambda)
 
 
     def tearDown(self):
@@ -93,7 +95,7 @@ class LinearMtpSolverTest(unittest.TestCase):
         #print(self.linear_mtp.linear_coeffs_tensor)
 
 
-    def test_solve_linear_equation(self):
+    def test_rescale_coeffs(self):
         self.solver.rescale_coeffs()
         #print(self.solver.linear_mtp.coeffs_tensor)
 

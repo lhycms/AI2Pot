@@ -72,6 +72,7 @@ class TorchScipyBfgs(object):
         self.best_x: Optional[np.ndarray] = None
 
 
+    @torch.no_grad()
     def _get_x0(self) -> np.ndarray:
         x0: torch.Tensor = parameters_to_vector(self.params)
         return x0.detach().cpu().numpy()
@@ -187,41 +188,44 @@ class TorchScipyBfgs(object):
 class ParameterInheritor(object):
     def __init__(self,
                  old_model: LinearMtp,
-                 new_model: LinearMtp):
+                 new_model: LinearMtp,
+                 trainset: ExtxyzDataset,
+                 e_weight: float,
+                 f_weight: float,
+                 v_weight: float,):
         super(ParameterInheritor, self).__init__()
         self.old_model: LinearMtp = old_model
         self.new_model: LinearMtp = new_model
-
-
-    @torch.no_grad()
-    def copy_flat_param(self,
-                        old_tensor: torch.Tensor,
-                        new_tensor: torch.Tensor) -> None:
-        if old_tensor.numel() > new_tensor.numel():
-            raise ValueError(
-                f"old_tensor.numel()={old_tensor.numel()}"
-                f"> new_tensor.numel()={new_tensor.numel()}.")
-        
-        old_param_size: int = old_tensor.numel()
-        new_tensor.reshape(-1)[:old_param_size].copy_(
-            old_tensor.reshape(-1)[:old_param_size].to(
-                device=new_tensor.device,
-                dtype=new_tensor.dtype)
-        )
+        self.trainset: ExtxyzDataset = trainset
+        self.e_weight: float = e_weight
+        self.f_weight: float = f_weight
+        self.v_weight: float = v_weight
 
     
     @torch.no_grad()
-    def transfer_coeffs(self,
-                        e_weight: float,
-                        f_weight: float,
-                        v_weight: float,
-                        trainset: ExtxyzDataset):
-        linear_mtp_solver: LinearMtpSolver = LinearMtpSolver(e_weight=e_weight,
-                                                             f_weight=f_weight,
-                                                             v_weight=v_weight,
+    def transfer(self):
+        # 1. coeffs_tensor
+        old_coeffs_tensor: torch.Tensor = self.old_model.coeffs_tensor
+        new_coeffs_tensor: torch.Tensor = self.new_model.coeffs_tensor
+        if (old_coeffs_tensor.numel() > new_coeffs_tensor.numel()):
+            raise ValueError(
+                f"old_coeffs_tensor.numel()={old_coeffs_tensor.numel()}"
+                f"> new_coeffs_tensor.numel()={new_coeffs_tensor.numel()}.")
+        ntypes: int = self.old_model.ntypes
+        old_nmus: int = self.old_model.nmus
+        new_nmus: int = self.new_model.nmus
+        chebyshev_size: int = self.old_model.chebyshev_size
+        num_pairs: int = ntypes * ntypes
+        
+        old_coeffs_view: torch.Tensor = old_coeffs_tensor.view(num_pairs, old_nmus, chebyshev_size)
+        new_coeffs_view: torch.Tensor = new_coeffs_tensor.view(num_pairs, new_nmus, chebyshev_size)
+        new_coeffs_view[:, :old_nmus, :].copy_(old_coeffs_view)
+
+        # 2. linear_coeffs_tensor && type_bias_tensor
+        linear_mtp_solver: LinearMtpSolver = LinearMtpSolver(e_weight=self.e_weight,
+                                                             f_weight=self.f_weight,
+                                                             v_weight=self.v_weight,
                                                              linear_mtp=self.new_model,
-                                                             trainset=trainset)
-        ParameterInheritor.copy_flat_param(old_tensor=self.old_model.coeffs_tensor,
-                                           new_tensor=self.new_model.coeffs_tensor)
+                                                             trainset=self.trainset)
         linear_mtp_solver.solve_linear_equation()
         

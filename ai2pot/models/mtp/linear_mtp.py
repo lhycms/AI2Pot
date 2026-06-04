@@ -115,6 +115,20 @@ class LinearMtp(nn.Module):
         self.coeffs_tensor.copy_(coeffs_tensor)
 
 
+    
+    @torch.no_grad()
+    def _init_all_zeros(self):
+        self.coeffs_tensor.copy_(torch.zeros_like(self.coeffs_tensor))
+        self.linear_coeffs_tensor.copy_(torch.zeros_like(self.linear_coeffs_tensor))
+        self.type_bias_tensor.copy_(torch.zeros_like(self.type_bias_tensor))
+    
+
+    @torch.no_grad()
+    def _init_as_ace(self):
+        self.linear_coeffs_tensor.copy_(torch.randn_like(self.linear_coeffs_tensor) * 1e-4)
+
+
+
     def _init_zbl_params(self,
                          zbl_cks_list: Optional[List[float]],
                          zbl_dks_list: Optional[List[float]]):

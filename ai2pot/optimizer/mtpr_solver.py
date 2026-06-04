@@ -36,27 +36,18 @@ class LinearMtpSolver(object):
                  f_weight: float,
                  v_weight: float,
                  linear_mtp: LinearMtp,
-                 trainset: ExtxyzDataset):
+                 trainset: ExtxyzDataset,
+                 ridge_lambda: float = 1e-3):
         self.e_weight: float = e_weight
         self.f_weight: float = f_weight
         self.v_weight: float = v_weight
         self.linear_mtp: LinearMtp = linear_mtp
         self.trainset: ExtxyzDataset = trainset
 
-        param = next(self.linear_mtp.parameters())
-        device: torch._C.device = param.device
-        torch_float_dtype: torch._C.dtype = param.dtype
-
         self.num_parameters: int = self.linear_mtp.get_num_descriptors() + self.linear_mtp.ntypes
 
         # Regularization
-        # Whether recalculate self.reg_vector_tensor. If True, we should reset Hessian matrix.
-        self.reg_init: bool = True
-        self.reg_param: float = 1e-10 
-        # Both for ridge regression and BFGS.
-        self.reg_vector_tensor: torch.Tensor = torch.zeros(self.num_parameters,
-                                                           device=device,
-                                                           dtype=torch_float_dtype) + self.reg_param
+        self.ridge_lambda: float = ridge_lambda
 
 
     @torch.no_grad()
@@ -183,21 +174,10 @@ class LinearMtpSolver(object):
                 lin_vector_tensor.add_(tmp_lin_vector)
         
         ## 2.2. Ridge regression
-        TS_size: int = len(self.trainset)
         lin_matrix_diag_tensor: torch.Tensor = lin_matrix_tensor.diagonal()
-        proposed_reg_tensor: torch.Tensor = self.reg_param * torch.clamp(lin_matrix_diag_tensor, min=1.0) / TS_size
+        proposed_rg_tensor: torch.Tensor = self.ridge_lambda * torch.clamp(lin_matrix_diag_tensor, min=1.0)
+        lin_matrix_diag_tensor.add_(proposed_rg_tensor)
         
-        if not self.reg_init:
-            lower_bound_tensor: torch.Tensor = 1e-2 * proposed_reg_tensor
-            upper_bound_tensor: torch.Tensor = 1e2 * proposed_reg_tensor
-            update_reg_mark: bool = torch.any(self.reg_vector_tensor < lower_bound_tensor) or \
-                                    torch.any(self.reg_vector_tensor > upper_bound_tensor)
-            if (update_reg_mark):
-                self.reg_vector_tensor.copy_(proposed_reg_tensor)
-                self.reg_init = True
-                print("Regularization parameters updated. Hessian in BFGS need to reset.")
-            
-        lin_matrix_diag_tensor.add_(self.reg_vector_tensor * TS_size)
 
         # 3. Gaussian Elimination
         print("Solving normal equations...")
@@ -238,11 +218,11 @@ class LinearMtpSolver(object):
                 all_coeffs: torch.Tensor = torch.cat([self.linear_mtp.linear_coeffs_tensor,
                                                       self.linear_mtp.type_bias_tensor])
                 abs_all_coeffs: torch.Tensor = torch.abs(all_coeffs)
-                rms: float = torch.sqrt(torch.sum(torch.pow(abs_all_coeffs, 2))).item()
+                l2_norm: float = torch.sqrt(torch.sum(torch.pow(abs_all_coeffs, 2))).item()
                 #median: float = torch.median(abs_all_coeffs).item()
                 sorted_all_coeffs, _ = torch.sort(abs_all_coeffs)
                 median = sorted_all_coeffs[len(sorted_all_coeffs) // 2].item()
-                cond_num: float = rms / (median + 1e-15)
+                cond_num: float = l2_norm / (median + 1e-15)
                 condition_numbers_list.append(cond_num)
 
             #
