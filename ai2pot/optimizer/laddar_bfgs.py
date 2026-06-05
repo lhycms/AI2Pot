@@ -17,6 +17,7 @@
 
 
 from typing import (List, Tuple, Optional)
+from copy import deepcopy
 
 import numpy as np
 import torch
@@ -243,7 +244,11 @@ class LaddarTrainer(object):
                  f_weight: float,
                  v_weight: float,
                  laddar_start: int = 6,
-                 laddar_step: int = 2):
+                 laddar_step: int = 2,
+                 maxiter: int = 500,
+                 gtol: float = 1e-7,
+                 disp: bool = True,
+                 ridge_lambda: float = 1e-2):
         super(LaddarTrainer, self).__init__()
         self.lit_linear_mtp: LitLinearMtp = lit_linear_mtp
         self.linear_mtp: LinearMtp = self.lit_linear_mtp.model
@@ -290,6 +295,14 @@ class LaddarTrainer(object):
 
         self.device: torch._C.device = self.lit_linear_mtp.device
         self.torch_float_dtype: torch._C.dtype = self.lit_linear_mtp.dtype
+
+        # 3. BFGS
+        self.maxiter: int = maxiter
+        self.gtol: float= gtol
+        self.disp: bool = disp
+
+        # 4. Ridge
+        self.ridge_lambda: float = ridge_lambda
     
 
     def _generate_model(self, mtp_level: int):
@@ -310,13 +323,91 @@ class LaddarTrainer(object):
     def _fit_sub_models(self):
         # 1. 
         old_model: LinearMtp = self._generate_model(mtp_level=self.mtp_levels_list[0])
+        old_torch_scipy_bfgs: TorchScipyBfgs = TorchScipyBfgs(linear_mtp=old_model,
+                                                              trainset=self.trainset,
+                                                              e_weight=self.e_weight,
+                                                              f_weight=self.f_weight,
+                                                              v_weight=self.v_weight,
+                                                              maxiter=self.maxiter,
+                                                              gtol=self.gtol,
+                                                              disp=self.disp)
+        linear_mtp_solver: LinearMtpSolver = LinearMtpSolver(linear_mtp=old_model,
+                                                             trainset=self.trainset,
+                                                             e_weight=self.e_weight,
+                                                             f_weight=self.f_weight,
+                                                             v_weight=self.v_weight,
+                                                             ridge_lambda=self.ridge_lambda)
+        #old_torch_scipy_bfgs.run()
+        linear_mtp_solver.solve_linear_equation()
         
+        # 2. 
         for ii, tmp_mtp_level in enumerate(self.mtp_levels_list):
-            model: LinearMtp = None
+            if ii == 0:
+                continue
+            print(tmp_mtp_level)
+            ## 2.1. 
+            model: LinearMtp = self._generate_model(mtp_level=tmp_mtp_level)
+            
+            ## 2.2.
+            parameter_inheritor: ParameterInheritor = ParameterInheritor(old_model=old_model,
+                                                                         new_model=model,
+                                                                         trainset=self.trainset,
+                                                                         e_weight=self.e_weight,
+                                                                         f_weight=self.f_weight,
+                                                                         v_weight=self.v_weight,
+                                                                         ridge_lambda=self.ridge_lambda)
+            parameter_inheritor.transfer()
+
+            ## 2.3.
+            torch_scipy_bfgs: TorchScipyBfgs = TorchScipyBfgs(linear_mtp=model,
+                                                              trainset=self.trainset,
+                                                              e_weight=self.e_weight,
+                                                              f_weight=self.f_weight,
+                                                              v_weight=self.v_weight,
+                                                              maxiter=self.maxiter,
+                                                              gtol=self.gtol,
+                                                              disp=self.disp)
+            linear_mtp_solver: LinearMtpSolver = LinearMtpSolver(linear_mtp=model,
+                                                                 trainset=self.trainset,
+                                                                 e_weight=self.e_weight,
+                                                                 f_weight=self.f_weight,
+                                                                 v_weight=self.v_weight,
+                                                                 ridge_lambda=self.ridge_lambda)
+            #torch_scipy_bfgs.run()
+            linear_mtp_solver.solve_linear_equation()
+            
+            ## 2.4. 
+            old_model = deepcopy(model)
+        
+        # 3. 
+        parameter_inheritor = ParameterInheritor(old_model=old_model,
+                                                 new_model=self.linear_mtp,
+                                                 trainset=self.trainset,
+                                                 e_weight=self.e_weight,
+                                                 f_weight=self.f_weight,
+                                                 v_weight=self.v_weight,
+                                                 ridge_lambda=self.ridge_lambda)
+        parameter_inheritor.transfer()
+        
 
 
     def _fit_final_model(self):
-        pass
+        torch_scipy_bfgs: TorchScipyBfgs = TorchScipyBfgs(linear_mtp=self.linear_mtp,
+                                                          trainset=self.trainset,
+                                                          e_weight=self.e_weight,
+                                                          f_weight=self.f_weight,
+                                                          v_weight=self.v_weight,
+                                                          maxiter=self.maxiter,
+                                                          gtol=self.gtol,
+                                                          disp=self.disp)
+        linear_mtp_solver: LinearMtpSolver = LinearMtpSolver(linear_mtp=self.linear_mtp,
+                                                             trainset=self.trainset,
+                                                             e_weight=self.e_weight,
+                                                             f_weight=self.f_weight,
+                                                             v_weight=self.v_weight,
+                                                             ridge_lambda=self.ridge_lambda)
+        #torch_scipy_bfgs.run()
+        linear_mtp_solver.solve_linear_equation()
 
 
     def fit(self):
@@ -324,4 +415,3 @@ class LaddarTrainer(object):
             self._fit_final_model()
         else:
             self._fit_sub_models()
-            

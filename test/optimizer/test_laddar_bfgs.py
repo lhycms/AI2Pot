@@ -252,7 +252,7 @@ class LaddarTrainerTest(unittest.TestCase):
 
 
     def test_fit(self):
-        pass        
+        self.laddar_trainer.fit()
 
 
 if __name__ == "__main__":
