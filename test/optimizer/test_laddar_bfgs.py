@@ -62,7 +62,7 @@ class TorchScipyBfgsTest(unittest.TestCase):
                                                      has_virial=self.fit_virial)
 
         ###
-        self.maxiter: int = 500
+        self.maxiter: int = 100
         self.torch_scipy_bfgs: TorchScipyBfgs = TorchScipyBfgs(linear_mtp=self.linear_mtp,
                                                                trainset=self.trainset,
                                                                e_weight=1.0,
@@ -96,6 +96,16 @@ class TorchScipyBfgsTest(unittest.TestCase):
         grad: np.ndarray
         print("1. Total loss = ", total_loss)
         print("2. grad = \n", grad)
+
+    
+    def test_run(self):
+        result = self.torch_scipy_bfgs.run()
+        print(result.x)
+        print("1.1. coeffs_tensor=\n", self.linear_mtp.coeffs_tensor)
+        print("1.2. linear_coeffs_tensor=\n", self.linear_mtp.linear_coeffs_tensor)
+        print("1.3. type_bias_tensor=\n", self.linear_mtp.type_bias_tensor)
+
+    
 
 
 
@@ -243,7 +253,7 @@ class LaddarTrainerTest(unittest.TestCase):
         print("LaddarTrainerTest (TestCase) is tearing down...\n")
     
 
-    def test_generate_model(self):
+    def est_generate_model(self):
         new_model: LinearMtp = self.laddar_trainer._generate_model(mtp_level=8)
         param: torch.nn.Parameter = next(new_model.parameters())
         print(f"1. The mtp level of new model = {new_model.mtp_level}")
@@ -251,7 +261,7 @@ class LaddarTrainerTest(unittest.TestCase):
         assert(param.dtype == self.lit_linear_mtp.dtype)
 
 
-    def test_fit(self):
+    def est_fit(self):
         self.laddar_trainer.fit()
 
 

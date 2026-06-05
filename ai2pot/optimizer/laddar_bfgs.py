@@ -32,6 +32,41 @@ from ai2pot.data.mlffdataset import ExtxyzDataset
 from ai2pot.optimizer.mtpr_solver import LinearMtpSolver
 
 
+class CallbackBase(object):
+    def on_train_start(self,
+                       trainer,
+                       lit_linear_mtp: LitLinearMtp):
+        pass
+
+    def on_fit_start(self,
+                     trainer,
+                     lit_linear_mtp: LitLinearMtp):
+        pass
+
+    def on_train_step_end(self,
+                          trainer,
+                          lit_linear_mtp: LitLinearMtp):
+        pass
+
+    def on_train_end(self,
+                     trainer,
+                     lit_linear_mtp: LitLinearMtp):
+        pass
+
+    def on_fit_end(self,
+                   trainer,
+                   lit_linear_mtp: LitLinearMtp):
+        pass
+
+
+class CallbackManager(object):
+    def __init__(self,
+                 callbacks_list: List[CallbackBase]):
+        super(CallbackManager, self).__init__()
+        
+
+
+
 class TorchScipyBfgs(object):
     BATCH_SIZE_HERE = 500
 
@@ -164,7 +199,7 @@ class TorchScipyBfgs(object):
         grad: torch.Tensor = torch.cat(grad_tensors_list).detach().cpu().numpy()
 
         return float(total_loss), grad
-    
+
 
     def run(self):
         result = minimize(
@@ -177,6 +212,8 @@ class TorchScipyBfgs(object):
                 "gtol": self.gtol,
                 "disp": self.disp})
         
+        self._set_x(x=result.x, persistent=True)
+
         return result
     
 
