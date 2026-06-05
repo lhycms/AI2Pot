@@ -58,11 +58,11 @@ class LinearMtpSolverTest(unittest.TestCase):
         f_weight: float = 3.0
         v_weight: float = 0.0
         ridge_lambda: float = 1e-3
-        self.solver: LinearMtpSolver = LinearMtpSolver(e_weight=e_weight,
+        self.solver: LinearMtpSolver = LinearMtpSolver(linear_mtp=self.linear_mtp,
+                                                       trainset=self.trainset,
+                                                       e_weight=e_weight,
                                                        f_weight=f_weight,
                                                        v_weight=v_weight,
-                                                       linear_mtp=self.linear_mtp,
-                                                       trainset=self.trainset,
                                                        ridge_lambda=ridge_lambda)
 
 

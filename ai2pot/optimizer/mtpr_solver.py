@@ -32,12 +32,12 @@ class LinearMtpSolver(object):
     BATCH_SIZE_HERE: int = 500
 
     def __init__(self,
+                 linear_mtp: LinearMtp,
+                 trainset: ExtxyzDataset,
                  e_weight: float,
                  f_weight: float,
                  v_weight: float,
-                 linear_mtp: LinearMtp,
-                 trainset: ExtxyzDataset,
-                 ridge_lambda: float = 1e-3):
+                 ridge_lambda: float = 1e-2):
         self.e_weight: float = e_weight
         self.f_weight: float = f_weight
         self.v_weight: float = v_weight
@@ -244,3 +244,4 @@ class LinearMtpSolver(object):
             
             min_scaling = min(min_scaling, self.linear_mtp.scaling)
             max_scaling = max(max_scaling, self.linear_mtp.scaling)
+    

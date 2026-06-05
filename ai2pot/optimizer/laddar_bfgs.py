@@ -26,12 +26,13 @@ from torch.utils.data import DataLoader
 from scipy.optimize import minimize
 
 from ai2pot.models.mtp.linear_mtp import LinearMtp
+from ai2pot.models.potential_train import LitLinearMtp
 from ai2pot.data.mlffdataset import ExtxyzDataset
 from ai2pot.optimizer.mtpr_solver import LinearMtpSolver
 
 
 class TorchScipyBfgs(object):
-    BATCH_SIZE_HERE = 400
+    BATCH_SIZE_HERE = 500
 
     def __init__(self,
                  linear_mtp: LinearMtp,
@@ -41,8 +42,7 @@ class TorchScipyBfgs(object):
                  v_weight: float = 0.0,
                  maxiter: int = 500,
                  gtol: float = 1e-7,
-                 disp: bool = True,
-                 use_best_params: bool = True):
+                 disp: bool = True):
         super(TorchScipyBfgs, self).__init__()
         self.linear_mtp: LinearMtp = linear_mtp
         self.trainset: ExtxyzDataset = trainset
@@ -58,7 +58,6 @@ class TorchScipyBfgs(object):
         self.gtol: float = gtol
         self.disp: bool = disp
 
-        self.use_best_params: bool = use_best_params
         self.params: List[nn.Parameter] = [p for p in linear_mtp.parameters() if p.requires_grad]
         if not self.params:
             raise ValueError("Model has no trainable parameters.")
@@ -176,11 +175,6 @@ class TorchScipyBfgs(object):
                 "maxiter": self.maxiter,
                 "gtol": self.gtol,
                 "disp": self.disp})
-
-        if self.use_best_params and self.best_x is not None:
-            self._set_x(x=self.best_x, persistent=True)
-        else:
-            self._set_x(x=result.x, persistent=True)
         
         return result
     
@@ -192,7 +186,8 @@ class ParameterInheritor(object):
                  trainset: ExtxyzDataset,
                  e_weight: float,
                  f_weight: float,
-                 v_weight: float,):
+                 v_weight: float,
+                 ridge_lambda: float = 1e-2):
         super(ParameterInheritor, self).__init__()
         self.old_model: LinearMtp = old_model
         self.new_model: LinearMtp = new_model
@@ -200,6 +195,7 @@ class ParameterInheritor(object):
         self.e_weight: float = e_weight
         self.f_weight: float = f_weight
         self.v_weight: float = v_weight
+        self.ridge_lambda: float = ridge_lambda
 
     
     @torch.no_grad()
@@ -217,15 +213,115 @@ class ParameterInheritor(object):
         chebyshev_size: int = self.old_model.chebyshev_size
         num_pairs: int = ntypes * ntypes
         
+        ## 1.1. 
         old_coeffs_view: torch.Tensor = old_coeffs_tensor.view(num_pairs, old_nmus, chebyshev_size)
         new_coeffs_view: torch.Tensor = new_coeffs_tensor.view(num_pairs, new_nmus, chebyshev_size)
         new_coeffs_view[:, :old_nmus, :].copy_(old_coeffs_view)
+
+        ## 1.2.
+        new_coeffs_view= new_coeffs_tensor.view(ntypes, ntypes, new_nmus, chebyshev_size)
+        for tmp_mu in range(old_nmus, new_nmus):
+            idx: int = tmp_mu if tmp_mu < chebyshev_size else 0
+            new_coeffs_view[:, :, tmp_mu, idx] = 1.0
+
 
         # 2. linear_coeffs_tensor && type_bias_tensor
         linear_mtp_solver: LinearMtpSolver = LinearMtpSolver(e_weight=self.e_weight,
                                                              f_weight=self.f_weight,
                                                              v_weight=self.v_weight,
                                                              linear_mtp=self.new_model,
-                                                             trainset=self.trainset)
+                                                             trainset=self.trainset,
+                                                             ridge_lambda=self.ridge_lambda)
         linear_mtp_solver.solve_linear_equation()
+
+
+class LaddarTrainer(object):
+    def __init__(self,
+                 lit_linear_mtp: LitLinearMtp,
+                 trainset: ExtxyzDataset,
+                 e_weight: float,
+                 f_weight: float,
+                 v_weight: float,
+                 laddar_start: int = 6,
+                 laddar_step: int = 2):
+        super(LaddarTrainer, self).__init__()
+        self.lit_linear_mtp: LitLinearMtp = lit_linear_mtp
+        self.linear_mtp: LinearMtp = self.lit_linear_mtp.model
+        self.trainset: ExtxyzDataset = trainset
+        self.e_weight: float = e_weight
+        self.f_weight: float = f_weight
+        self.v_weight: float = v_weight
+
+        # 1.
+        self.laddar_start: int = laddar_start
+        self.laddar_end: int = self.linear_mtp.mtp_level
+        self.laddar_step: int = laddar_step
+        self.mtp_levels_list: List[int] = [*range(self.laddar_start, self.laddar_end, self.laddar_step)]
+        ## 1.1
+        if self.laddar_start % 2 != 0:
+            raise ValueError(f"laddar_start must be an even number. Current value: {self.laddar_start}")
+        if self.laddar_start > self.laddar_end:
+            raise ValueError(f"laddar_start must <= laddar_end ({self.laddar_end}). Current value: {self.laddar_start}")
         
+        ## 1.2.
+        if self.laddar_step % 2 != 0:
+            raise ValueError(f"laddar_step must be a multiple of 2. Current value: {self.laddar_step}")
+        if self.laddar_step > 6:
+            raise ValueError(f"laddar_step must <= 6. Current value: {self.laddar_step}")
+    
+        ## 1.3. 
+        if self.laddar_end % 2 != 0:
+            raise ValueError(f"laddar_end must be an even number. Current value: {self.laddar_end}")
+        if self.laddar_end > 28:
+            raise ValueError(f"laddar_end must <= 28. Current value: {self.laddar_end}")
+        
+
+        # 2. Model 
+        self.type_map: List[int] = self.linear_mtp.type_map_tensor.detach().cpu().numpy().tolist()
+        self.umax_num_neigh_atoms: int = self.linear_mtp.umax_num_neigh_atoms
+        self.fit_virial: bool = self.linear_mtp.fit_virial
+        self.chebyshev_size: int = self.linear_mtp.chebyshev_size
+        self.rmax: float = self.linear_mtp.rmax
+        self.rmin: float = self.linear_mtp.rmin
+        self.zbl_rmax: float = self.linear_mtp.zbl_rmax
+        self.zbl_rmin: float = self.linear_mtp.zbl_rmin
+        self.zbl_cks_list: Optional[List[List[float]]] = self.linear_mtp.zbl_cks_tensor.detach().cpu().numpy().tolist()
+        self.zbl_dks_list: Optional[List[List[float]]] = self.linear_mtp.zbl_dks_tensor.detach().cpu().numpy().tolist()        
+
+        self.device: torch._C.device = self.lit_linear_mtp.device
+        self.torch_float_dtype: torch._C.dtype = self.lit_linear_mtp.dtype
+    
+
+    def _generate_model(self, mtp_level: int):
+        new_model: LinearMtp = LinearMtp(type_map=self.type_map,
+                                         umax_num_neigh_atoms=self.umax_num_neigh_atoms,
+                                         fit_virial=self.fit_virial,
+                                         mtp_level=mtp_level,
+                                         chebyshev_size=self.chebyshev_size,
+                                         rmax=self.rmax,
+                                         rmin=self.rmin,
+                                         zbl_rmax=self.zbl_rmax,
+                                         zbl_rmin=self.zbl_rmin,
+                                         zbl_cks_list=self.zbl_cks_list,
+                                         zbl_dks_list=self.zbl_dks_list).to(device=self.device, dtype=self.torch_float_dtype)
+        return new_model
+
+
+    def _fit_sub_models(self):
+        # 1. 
+        old_model: LinearMtp = self._generate_model(mtp_level=self.mtp_levels_list[0])
+        
+        for ii, tmp_mtp_level in enumerate(self.mtp_levels_list):
+            model: LinearMtp = None
+
+
+    def _fit_final_model(self):
+        pass
+
+
+    def fit(self):
+        if len(self.mtp_levels_list) == 0:
+            self._fit_final_model()
+        else:
+            self._fit_sub_models()
+            
