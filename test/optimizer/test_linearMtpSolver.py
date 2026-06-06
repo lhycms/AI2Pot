@@ -34,17 +34,28 @@ class LinearMtpSolverTest(unittest.TestCase):
         self.device: torch._C.device = torch.device("cuda")
         self.torch_float_dtype: torch._C.dtype = torch.float64
         fit_virial: bool = False
-        self.linear_mtp: LinearMtp = LinearMtp(type_map=self.type_map,
-                                               umax_num_neigh_atoms=self.umax_num_neigh_atoms,
-                                               fit_virial=fit_virial,
-                                               mtp_level=16,
-                                               chebyshev_size=self.chebyshev_size,
-                                               rmax=self.rmax,
-                                               rmin=self.rmin,
-                                               zbl_rmax=0.0,
-                                               zbl_rmin=0.0,
-                                               zbl_cks_list=None,
-                                               zbl_dks_list=None).to(device=self.device).to(self.torch_float_dtype)
+
+        self.e_weight: float = 2.0
+        self.f_weight: float = 3.0
+        self.v_weight: float = 0.0
+        self.lit_linear_mtp: LitLinearMtp = LitLinearMtp(type_map=self.type_map,
+                                                         umax_num_neigh_atoms=self.umax_num_neigh_atoms,
+                                                         fit_virial=fit_virial,
+                                                         mtp_level=16,
+                                                         chebyshev_size=self.chebyshev_size,
+                                                         rmax=self.rmax,
+                                                         rmin=self.rmin,
+                                                         zbl_rmax=0.0,
+                                                         zbl_rmin=0.0,
+                                                         zbl_cks_list=None,
+                                                         zbl_dks_list=None,
+                                                         e_wgt_start=self.e_weight,
+                                                         e_wgt_end=self.e_weight,
+                                                         f_wgt_start=self.f_weight,
+                                                         f_wgt_end=self.f_weight,
+                                                         v_wgt_start=self.v_weight,
+                                                         v_wgt_end=self.v_weight).to(device=self.device).to(self.torch_float_dtype)
+        self.linear_mtp: LinearMtp = self.lit_linear_mtp.model
         #self.linear_mtp._init_as_mlip()
         self.trainset: ExtxyzDataset = ExtxyzDataset(filename=PbTe_EXTXYZ_PATH,
                                                      rcut=self.rmax,
@@ -53,16 +64,9 @@ class LinearMtpSolverTest(unittest.TestCase):
                                                      sort=False,
                                                      torch_float_dtype=self.torch_float_dtype,
                                                      has_virial=fit_virial)
-
-        e_weight: float = 2.0
-        f_weight: float = 3.0
-        v_weight: float = 0.0
-        ridge_lambda: float = 1e-3
-        self.solver: LinearMtpSolver = LinearMtpSolver(linear_mtp=self.linear_mtp,
+        ridge_lambda: float = 1e-2
+        self.solver: LinearMtpSolver = LinearMtpSolver(lit_linear_mtp=self.lit_linear_mtp,
                                                        trainset=self.trainset,
-                                                       e_weight=e_weight,
-                                                       f_weight=f_weight,
-                                                       v_weight=v_weight,
                                                        ridge_lambda=ridge_lambda)
 
 

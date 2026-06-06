@@ -32,69 +32,34 @@ from ai2pot.data.mlffdataset import ExtxyzDataset
 from ai2pot.optimizer.mtpr_solver import LinearMtpSolver
 
 
-class CallbackBase(object):
-    def on_train_start(self,
-                       trainer,
-                       lit_linear_mtp: LitLinearMtp):
-        pass
-
-    def on_fit_start(self,
-                     trainer,
-                     lit_linear_mtp: LitLinearMtp):
-        pass
-
-    def on_train_step_end(self,
-                          trainer,
-                          lit_linear_mtp: LitLinearMtp):
-        pass
-
-    def on_train_end(self,
-                     trainer,
-                     lit_linear_mtp: LitLinearMtp):
-        pass
-
-    def on_fit_end(self,
-                   trainer,
-                   lit_linear_mtp: LitLinearMtp):
-        pass
-
-
-class CallbackManager(object):
-    def __init__(self,
-                 callbacks_list: List[CallbackBase]):
-        super(CallbackManager, self).__init__()
-        
-
-
-
 class TorchScipyBfgs(object):
     BATCH_SIZE_HERE = 500
 
     def __init__(self,
-                 linear_mtp: LinearMtp,
+                 lit_linear_mtp: LitLinearMtp,
                  trainset: ExtxyzDataset,
-                 e_weight: float = 1.0,
-                 f_weight: float = 2.0,
-                 v_weight: float = 0.0,
                  maxiter: int = 500,
                  gtol: float = 1e-7,
                  disp: bool = True):
         super(TorchScipyBfgs, self).__init__()
-        self.linear_mtp: LinearMtp = linear_mtp
+        self.lit_linear_mtp: LitLinearMtp = lit_linear_mtp
+        self.linear_mtp: LinearMtp = self.lit_linear_mtp.model
         self.trainset: ExtxyzDataset = trainset
         self.train_loader: DataLoader = DataLoader(dataset=self.trainset,
                                                    batch_size=TorchScipyBfgs.BATCH_SIZE_HERE,
                                                    shuffle=False)
-        self.e_weight: float = e_weight
-        self.f_weight: float = f_weight
-        self.v_weight: float = v_weight
+        self.e_weight: float = self.lit_linear_mtp.e_wgt_start
+        self.f_weight: float = self.lit_linear_mtp.f_wgt_start
+        self.v_weight: float = self.lit_linear_mtp.v_wgt_start
         self.fit_virial: bool = self.linear_mtp.fit_virial
 
+        # BFGS
         self.maxiter: int = maxiter
         self.gtol: float = gtol
         self.disp: bool = disp
 
-        self.params: List[nn.Parameter] = [p for p in linear_mtp.parameters() if p.requires_grad]
+        # Device and dtype
+        self.params: List[nn.Parameter] = [p for p in self.linear_mtp.parameters() if p.requires_grad]
         if not self.params:
             raise ValueError("Model has no trainable parameters.")
         
@@ -103,8 +68,17 @@ class TorchScipyBfgs(object):
         self.npy_float_dtype: np.dtype = np.float32
         if (self.torch_float_dtype == torch.float64):
             self.npy_float_dtype = np.float64
-        self.best_loss = np.inf
-        self.best_x: Optional[np.ndarray] = None
+        
+        ### Assertion
+        if (self.e_weight != self.lit_linear_mtp.e_wgt_end) or \
+            (self.f_weight != self.lit_linear_mtp.f_wgt_end) or \
+            (self.v_weight != self.lit_linear_mtp.v_wgt_end):
+            raise ValueError(
+                f"BFGS loss weights must match the final weights. "
+                f"Got (e_wgt_start={self.e_weight}, f_wgt_start={self.f_weight}, v_wgt_start={self.v_weight}), "
+                f"but expected "
+                f"(e_wgt_end={self.lit_linear_mtp.e_wgt_end}, f_wgt_end={self.lit_linear_mtp.f_wgt_end}, v_wgt_end={self.lit_linear_mtp.v_wgt_end})."
+            )
 
 
     @torch.no_grad()
@@ -219,25 +193,54 @@ class TorchScipyBfgs(object):
 
 class ParameterInheritor(object):
     def __init__(self,
-                 old_model: LinearMtp,
-                 new_model: LinearMtp,
+                 old_lit_model: LitLinearMtp,
+                 new_lit_model: LitLinearMtp,
                  trainset: ExtxyzDataset,
-                 e_weight: float,
-                 f_weight: float,
-                 v_weight: float,
                  ridge_lambda: float = 1e-2):
         super(ParameterInheritor, self).__init__()
-        self.old_model: LinearMtp = old_model
-        self.new_model: LinearMtp = new_model
+        self.old_lit_model: LitLinearMtp = old_lit_model
+        self.new_lit_model: LitLinearMtp = new_lit_model
+        self.old_model: LinearMtp = self.old_lit_model.model
+        self.new_model: LinearMtp = self.new_lit_model.model
         self.trainset: ExtxyzDataset = trainset
-        self.e_weight: float = e_weight
-        self.f_weight: float = f_weight
-        self.v_weight: float = v_weight
+        self.e_weight: float = self.old_lit_model.e_wgt_start
+        self.f_weight: float = self.old_lit_model.f_wgt_start
+        self.v_weight: float = self.old_lit_model.v_wgt_start
         self.ridge_lambda: float = ridge_lambda
+
+        ### Assertion
+        if (self.old_lit_model.e_wgt_start != self.old_lit_model.e_wgt_end) or \
+            (self.old_lit_model.f_wgt_start != self.old_lit_model.f_wgt_end) or \
+            (self.old_lit_model.v_wgt_start != self.old_lit_model.v_wgt_end):
+            raise ValueError(
+                f"ParameterInheritor loss weights of old_lit_model must match the final weights. "
+                f"Got (e_wgt_start={self.old_lit_model.e_wgt_start}, f_wgt_start={self.old_lit_model.f_wgt_start}, v_weight_start={self.old_lit_model.v_wgt_start}), "
+                f"but expected "
+                f"(e_wgt_end={self.old_lit_model.e_wgt_end}, f_wgt_end={self.old_lit_model.f_wgt_end}, v_wgt_end={self.old_lit_model.v_wgt_end})."
+            )
+        if (self.new_lit_model.e_wgt_start != self.new_lit_model.e_wgt_end) or \
+            (self.new_lit_model.f_wgt_start != self.new_lit_model.f_wgt_end) or \
+            (self.new_lit_model.v_wgt_start != self.new_lit_model.v_wgt_end):
+            raise ValueError(
+                f"ParameterInheritor loss weights of new_lit_model must match the final weights. "
+                f"Got (e_wgt_start={self.new_lit_model.e_wgt_start}, f_wgt_start={self.new_lit_model.f_wgt_start}, v_weight_start={self.new_lit_model.v_wgt_start}), "
+                f"but expected "
+                f"(e_wgt_end={self.new_lit_model.e_wgt_end}, f_wgt_end={self.new_lit_model.f_wgt_end}, v_wgt_end={self.new_lit_model.v_wgt_end})."
+            )
+        if (self.old_lit_model.e_wgt_start != self.new_lit_model.e_wgt_start) or \
+            (self.old_lit_model.f_wgt_start != self.new_lit_model.f_wgt_start) or \
+            (self.old_lit_model.v_wgt_start != self.new_lit_model.v_wgt_start):
+            raise ValueError(
+                f"ParameterInheritor loss weights of old_lit_model must match the new_lit_models'. "
+                f"Got (old.e_weight={self.old_lit_model.e_wgt_start}, old.f_weight={self.old_lit_model.f_wgt_start}, old.v_weight={self.old_lit_model.v_wgt_start}), "
+                f"but expected "
+                f"(new.e_weight={self.new_lit_model.e_wgt_start}, new.f_weight={self.new_lit_model.f_wgt_start}, new.v_weight={self.new_lit_model.v_wgt_start})."
+            )
 
     
     @torch.no_grad()
     def transfer(self):
+        self.new_model._init_all_zeros()
         # 1. coeffs_tensor
         old_coeffs_tensor: torch.Tensor = self.old_model.coeffs_tensor
         new_coeffs_tensor: torch.Tensor = self.new_model.coeffs_tensor
@@ -264,10 +267,7 @@ class ParameterInheritor(object):
 
 
         # 2. linear_coeffs_tensor && type_bias_tensor
-        linear_mtp_solver: LinearMtpSolver = LinearMtpSolver(e_weight=self.e_weight,
-                                                             f_weight=self.f_weight,
-                                                             v_weight=self.v_weight,
-                                                             linear_mtp=self.new_model,
+        linear_mtp_solver: LinearMtpSolver = LinearMtpSolver(lit_linear_mtp=self.new_lit_model,
                                                              trainset=self.trainset,
                                                              ridge_lambda=self.ridge_lambda)
         linear_mtp_solver.solve_linear_equation()
@@ -277,9 +277,6 @@ class LaddarTrainer(object):
     def __init__(self,
                  lit_linear_mtp: LitLinearMtp,
                  trainset: ExtxyzDataset,
-                 e_weight: float,
-                 f_weight: float,
-                 v_weight: float,
                  laddar_start: int = 6,
                  laddar_step: int = 2,
                  maxiter: int = 500,
@@ -290,9 +287,9 @@ class LaddarTrainer(object):
         self.lit_linear_mtp: LitLinearMtp = lit_linear_mtp
         self.linear_mtp: LinearMtp = self.lit_linear_mtp.model
         self.trainset: ExtxyzDataset = trainset
-        self.e_weight: float = e_weight
-        self.f_weight: float = f_weight
-        self.v_weight: float = v_weight
+        self.e_weight: float = self.lit_linear_mtp.e_wgt_start
+        self.f_weight: float = self.lit_linear_mtp.f_wgt_start
+        self.v_weight: float = self.lit_linear_mtp.v_wgt_start
 
         # 1.
         self.laddar_start: int = laddar_start
@@ -340,31 +337,45 @@ class LaddarTrainer(object):
 
         # 4. Ridge
         self.ridge_lambda: float = ridge_lambda
+
+        ### Assertion
+        if (self.e_weight != self.lit_linear_mtp.e_wgt_end) or \
+            (self.f_weight != self.lit_linear_mtp.f_wgt_end) or \
+            (self.v_weight != self.lit_linear_mtp.v_wgt_end):
+            raise ValueError(
+                f"LadderTrainer loss weights must match the final weights. "
+                f"Got (e_wgt_start={self.e_weight}, f_wgt_start={self.f_weight}, v_wgt_start={self.v_weight}), "
+                f"but expected "
+                f"(e_wgt_end={self.lit_linear_mtp.e_wgt_end}, f_wgt_end={self.lit_linear_mtp.f_wgt_end}, v_wgt_end={self.lit_linear_mtp.v_wgt_end})."
+            )
     
 
-    def _generate_model(self, mtp_level: int):
-        new_model: LinearMtp = LinearMtp(type_map=self.type_map,
-                                         umax_num_neigh_atoms=self.umax_num_neigh_atoms,
-                                         fit_virial=self.fit_virial,
-                                         mtp_level=mtp_level,
-                                         chebyshev_size=self.chebyshev_size,
-                                         rmax=self.rmax,
-                                         rmin=self.rmin,
-                                         zbl_rmax=self.zbl_rmax,
-                                         zbl_rmin=self.zbl_rmin,
-                                         zbl_cks_list=self.zbl_cks_list,
-                                         zbl_dks_list=self.zbl_dks_list).to(device=self.device, dtype=self.torch_float_dtype)
-        return new_model
+    def _generate_lit_model(self, mtp_level: int) -> LitLinearMtp:
+        new_lit_model: LinearMtp = LitLinearMtp(type_map=self.type_map,
+                                                umax_num_neigh_atoms=self.umax_num_neigh_atoms,
+                                                fit_virial=self.fit_virial,
+                                                mtp_level=mtp_level,
+                                                chebyshev_size=self.chebyshev_size,
+                                                rmax=self.rmax,
+                                                rmin=self.rmin,
+                                                zbl_rmax=self.zbl_rmax,
+                                                zbl_rmin=self.zbl_rmin,
+                                                zbl_cks_list=self.zbl_cks_list,
+                                                zbl_dks_list=self.zbl_dks_list,
+                                                e_wgt_start=self.e_weight,
+                                                e_wgt_end=self.e_weight,
+                                                f_wgt_start=self.f_weight,
+                                                f_wgt_end=self.f_weight,
+                                                v_wgt_start=self.v_weight,
+                                                v_wgt_end=self.v_weight).to(device=self.device, dtype=self.torch_float_dtype)
+        return new_lit_model
 
 
-    def _fit_sub_models(self):
+    def _fit_sub_models(self) -> None:
         # 1.
-        old_model: LinearMtp = self._generate_model(mtp_level=self.mtp_levels_list[0])
-        old_torch_scipy_bfgs: TorchScipyBfgs = TorchScipyBfgs(linear_mtp=old_model,
+        old_lit_model: LinearMtp = self._generate_lit_model(mtp_level=self.mtp_levels_list[0])
+        old_torch_scipy_bfgs: TorchScipyBfgs = TorchScipyBfgs(lit_linear_mtp=old_lit_model,
                                                               trainset=self.trainset,
-                                                              e_weight=self.e_weight,
-                                                              f_weight=self.f_weight,
-                                                              v_weight=self.v_weight,
                                                               maxiter=self.maxiter,
                                                               gtol=self.gtol,
                                                               disp=self.disp)
@@ -375,58 +386,43 @@ class LaddarTrainer(object):
             if ii == 0:
                 continue
             ## 2.1. 
-            model: LinearMtp = self._generate_model(mtp_level=tmp_mtp_level)
+            lit_model: LitLinearMtp = self._generate_lit_model(mtp_level=tmp_mtp_level)
             
             ## 2.2.
-            parameter_inheritor: ParameterInheritor = ParameterInheritor(old_model=old_model,
-                                                                         new_model=model,
+            parameter_inheritor: ParameterInheritor = ParameterInheritor(old_lit_model=old_lit_model,
+                                                                         new_lit_model=lit_model,
                                                                          trainset=self.trainset,
-                                                                         e_weight=self.e_weight,
-                                                                         f_weight=self.f_weight,
-                                                                         v_weight=self.v_weight,
                                                                          ridge_lambda=self.ridge_lambda)
             parameter_inheritor.transfer()
 
             ## 2.3.
-            torch_scipy_bfgs: TorchScipyBfgs = TorchScipyBfgs(linear_mtp=model,
+            torch_scipy_bfgs: TorchScipyBfgs = TorchScipyBfgs(lit_linear_mtp=lit_model,
                                                               trainset=self.trainset,
-                                                              e_weight=self.e_weight,
-                                                              f_weight=self.f_weight,
-                                                              v_weight=self.v_weight,
                                                               maxiter=self.maxiter,
                                                               gtol=self.gtol,
                                                               disp=self.disp)
             #torch_scipy_bfgs.run()
             
             ## 2.4. 
-            old_model = deepcopy(model)
+            old_lit_model = deepcopy(lit_model)
         
         # 3.
-        parameter_inheritor = ParameterInheritor(old_model=old_model,
-                                                 new_model=self.linear_mtp,
+        parameter_inheritor = ParameterInheritor(old_lit_model=old_lit_model,
+                                                 new_lit_model=self.lit_linear_mtp,
                                                  trainset=self.trainset,
-                                                 e_weight=self.e_weight,
-                                                 f_weight=self.f_weight,
-                                                 v_weight=self.v_weight,
                                                  ridge_lambda=self.ridge_lambda)
         parameter_inheritor.transfer()
         
 
 
-    def _fit_final_model(self):
-        torch_scipy_bfgs: TorchScipyBfgs = TorchScipyBfgs(linear_mtp=self.linear_mtp,
+    def _fit_final_model(self) -> None:
+        torch_scipy_bfgs: TorchScipyBfgs = TorchScipyBfgs(lit_linear_mtp=self.lit_linear_mtp,
                                                           trainset=self.trainset,
-                                                          e_weight=self.e_weight,
-                                                          f_weight=self.f_weight,
-                                                          v_weight=self.v_weight,
                                                           maxiter=self.maxiter,
                                                           gtol=self.gtol,
                                                           disp=self.disp)
-        linear_mtp_solver: LinearMtpSolver = LinearMtpSolver(linear_mtp=self.linear_mtp,
+        linear_mtp_solver: LinearMtpSolver = LinearMtpSolver(lit_linear_mtp=self.lit_linear_mtp,
                                                              trainset=self.trainset,
-                                                             e_weight=self.e_weight,
-                                                             f_weight=self.f_weight,
-                                                             v_weight=self.v_weight,
                                                              ridge_lambda=self.ridge_lambda)
         #torch_scipy_bfgs.run()
         linear_mtp_solver.solve_linear_equation()

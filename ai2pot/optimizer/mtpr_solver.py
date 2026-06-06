@@ -25,6 +25,7 @@ from ai2pot.fromcc import (
     coeffsSchmidtOrthOp,
     linMatrixLinVectorOp)
 from ai2pot.models.mtp.linear_mtp import LinearMtp
+from ai2pot.models.potential_train import LitLinearMtp
 from ai2pot.data.mlffdataset import ExtxyzDataset
 
 
@@ -32,22 +33,31 @@ class LinearMtpSolver(object):
     BATCH_SIZE_HERE: int = 500
 
     def __init__(self,
-                 linear_mtp: LinearMtp,
+                 lit_linear_mtp: LitLinearMtp,
                  trainset: ExtxyzDataset,
-                 e_weight: float,
-                 f_weight: float,
-                 v_weight: float,
                  ridge_lambda: float = 1e-2):
-        self.e_weight: float = e_weight
-        self.f_weight: float = f_weight
-        self.v_weight: float = v_weight
-        self.linear_mtp: LinearMtp = linear_mtp
+        self.lit_linear_mtp: LitLinearMtp = lit_linear_mtp
+        self.linear_mtp: LinearMtp = self.lit_linear_mtp.model
+        self.e_weight: float = self.lit_linear_mtp.e_wgt_start
+        self.f_weight: float = self.lit_linear_mtp.f_wgt_start
+        self.v_weight: float = self.lit_linear_mtp.v_wgt_start
         self.trainset: ExtxyzDataset = trainset
 
         self.num_parameters: int = self.linear_mtp.get_num_descriptors() + self.linear_mtp.ntypes
 
         # Regularization
         self.ridge_lambda: float = ridge_lambda
+
+        ### Assertion
+        if (self.e_weight != self.lit_linear_mtp.e_wgt_end) or \
+            (self.f_weight != self.lit_linear_mtp.f_wgt_end) or \
+            (self.v_weight != self.lit_linear_mtp.v_wgt_end):
+            raise ValueError(
+                f"LSTSQ loss weights must match the final weights. "
+                f"Got (e_wgt_start={self.e_weight}, f_wgt_start={self.f_weight}, v_wgt_start={self.v_weight}), "
+                f"but expected "
+                f"(e_wgt_end={self.lit_linear_mtp.e_wgt_end}, f_wgt_end={self.lit_linear_mtp.f_wgt_end}, v_wgt_end={self.lit_linear_mtp.v_wgt_end})."
+            )
 
 
     @torch.no_grad()

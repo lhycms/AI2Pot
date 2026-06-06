@@ -1,5 +1,4 @@
 import os
-import time
 import unittest
 from typing import (List)
 
@@ -41,17 +40,29 @@ class TorchScipyBfgsTest(unittest.TestCase):
         self.rmin: float = 0.0
         self.device: torch._C.device = torch.device("cuda")
         self.torch_float_dtype: torch._C.dtype = torch.float32
-        self.linear_mtp: LinearMtp = LinearMtp(type_map=self.type_map,
-                                               umax_num_neigh_atoms=self.umax_num_neigh_atoms,
-                                               fit_virial=self.fit_virial,
-                                               mtp_level=16,
-                                               chebyshev_size=self.chebyshev_size,
-                                               rmax=self.rmax,
-                                               rmin=self.rmin,
-                                               zbl_rmax=0.0,
-                                               zbl_rmin=0.0,
-                                               zbl_cks_list=None,
-                                               zbl_dks_list=None).to(device=self.device).to(self.torch_float_dtype)
+
+        self.e_weight: float = 2.0
+        self.f_weight: float = 3.0
+        self.v_weight: float = 0.0
+
+        self.lit_linear_mtp: LitLinearMtp = LitLinearMtp(type_map=self.type_map,
+                                                         umax_num_neigh_atoms=self.umax_num_neigh_atoms,
+                                                         fit_virial=self.fit_virial,
+                                                         mtp_level=16,
+                                                         chebyshev_size=self.chebyshev_size,
+                                                         rmax=self.rmax,
+                                                         rmin=self.rmin,
+                                                         zbl_rmax=0.0,
+                                                         zbl_rmin=0.0,
+                                                         zbl_cks_list=None,
+                                                         zbl_dks_list=None,
+                                                         e_wgt_start=self.e_weight,
+                                                         e_wgt_end=self.e_weight,
+                                                         f_wgt_start=self.f_weight,
+                                                         f_wgt_end=self.f_weight,
+                                                         v_wgt_start=self.v_weight,
+                                                         v_wgt_end=self.v_weight).to(device=self.device, dtype=self.torch_float_dtype)
+        self.linear_mtp: LinearMtp = self.lit_linear_mtp.model
         
         self.trainset: ExtxyzDataset = ExtxyzDataset(filename=PbTe_EXTXYZ_PATH,
                                                      rcut=self.rmax,
@@ -62,12 +73,9 @@ class TorchScipyBfgsTest(unittest.TestCase):
                                                      has_virial=self.fit_virial)
 
         ###
-        self.maxiter: int = 100
-        self.torch_scipy_bfgs: TorchScipyBfgs = TorchScipyBfgs(linear_mtp=self.linear_mtp,
+        self.maxiter: int = 5000
+        self.torch_scipy_bfgs: TorchScipyBfgs = TorchScipyBfgs(lit_linear_mtp=self.lit_linear_mtp,
                                                                trainset=self.trainset,
-                                                               e_weight=1.0,
-                                                               f_weight=2.0,
-                                                               v_weight=0.0,
                                                                maxiter=self.maxiter,
                                                                gtol=1e-7,
                                                                disp=True)
@@ -80,13 +88,23 @@ class TorchScipyBfgsTest(unittest.TestCase):
     def est_get_x0(self):
         x0: np.ndarray = self.torch_scipy_bfgs._get_x0()
         print("1. x0:")
-        print("*" * 80)
         print(x0)
+        print("*" * 60)
 
     
     def est_set_x(self):
+        print("1. Before _set_x(x, persistent):")
+        #print("1.1. coeffs_tensor=\n", self.linear_mtp.coeffs_tensor)
+        #print("1.2. linear_coeffs_tensor=\n", self.linear_mtp.linear_coeffs_tensor)
+        print("1.3. type_bias_tensor=\n", self.linear_mtp.type_bias_tensor)
+        
         x0: np.ndarray = self.torch_scipy_bfgs._get_x0() + 1.0
         self.torch_scipy_bfgs._set_x(x=x0)
+
+        print("2. After _set_x(x, persistent):")
+        #print("2.1. coeffs_tensor=\n", self.linear_mtp.coeffs_tensor)
+        #print("2.2. linear_coeffs_tensor=\n", self.linear_mtp.linear_coeffs_tensor)
+        print("2.3. type_bias_tensor=\n", self.linear_mtp.type_bias_tensor)
 
     
     def est_loss_and_grad(self):
@@ -98,7 +116,7 @@ class TorchScipyBfgsTest(unittest.TestCase):
         print("2. grad = \n", grad)
 
     
-    def test_run(self):
+    def est_run(self):
         result = self.torch_scipy_bfgs.run()
         print(result.x)
         print("1.1. coeffs_tensor=\n", self.linear_mtp.coeffs_tensor)
@@ -121,28 +139,45 @@ class ParameterInheritorTest(unittest.TestCase):
         self.rmin: float = 0.0
         self.device: torch._C.device = torch.device("cuda")
         self.torch_float_dtype: torch._C.dtype = torch.float32
-        self.old_linear_mtp: LinearMtp = LinearMtp(type_map=self.type_map,
-                                                   umax_num_neigh_atoms=self.umax_num_neigh_atoms,
-                                                   fit_virial=self.fit_virial,
-                                                   mtp_level=14,
-                                                   chebyshev_size=self.chebyshev_size,
-                                                   rmax=self.rmax,
-                                                   rmin=self.rmin,
-                                                   zbl_rmax=0.0,
-                                                   zbl_rmin=0.0,
-                                                   zbl_cks_list=None,
-                                                   zbl_dks_list=None).to(device=self.device, dtype=self.torch_float_dtype)
-        self.new_linear_mtp: LinearMtp = LinearMtp(type_map=self.type_map,
-                                                   umax_num_neigh_atoms=self.umax_num_neigh_atoms,
-                                                   fit_virial=self.fit_virial,
-                                                   mtp_level=16,
-                                                   chebyshev_size=self.chebyshev_size,
-                                                   rmax=self.rmax,
-                                                   rmin=self.rmin,
-                                                   zbl_rmax=0.0,
-                                                   zbl_rmin=0.0,
-                                                   zbl_cks_list=None,
-                                                   zbl_dks_list=None).to(device=self.device, dtype=self.torch_float_dtype)
+        self.e_weight: float = 2.0
+        self.f_weight: float = 3.0
+        self.v_weight: float = 0.0
+        self.old_lit_linear_mtp: LitLinearMtp = LitLinearMtp(type_map=self.type_map,
+                                                             umax_num_neigh_atoms=self.umax_num_neigh_atoms,
+                                                             fit_virial=self.fit_virial,
+                                                             mtp_level=14,
+                                                             chebyshev_size=self.chebyshev_size,
+                                                             rmax=self.rmax,
+                                                             rmin=self.rmin,
+                                                             zbl_rmax=0.0,
+                                                             zbl_rmin=0.0,
+                                                             zbl_cks_list=None,
+                                                             zbl_dks_list=None,
+                                                             e_wgt_start=self.e_weight,
+                                                             e_wgt_end=self.e_weight,
+                                                             f_wgt_start=self.f_weight,
+                                                             f_wgt_end=self.f_weight,
+                                                             v_wgt_start=self.v_weight,
+                                                             v_wgt_end=self.v_weight).to(device=self.device, dtype=self.torch_float_dtype)
+        self.new_lit_linear_mtp: LitLinearMtp = LitLinearMtp(type_map=self.type_map,
+                                                             umax_num_neigh_atoms=self.umax_num_neigh_atoms,
+                                                             fit_virial=self.fit_virial,
+                                                             mtp_level=16,
+                                                             chebyshev_size=self.chebyshev_size,
+                                                             rmax=self.rmax,
+                                                             rmin=self.rmin,
+                                                             zbl_rmax=0.0,
+                                                             zbl_rmin=0.0,
+                                                             zbl_cks_list=None,
+                                                             zbl_dks_list=None,
+                                                             e_wgt_start=self.e_weight,
+                                                             e_wgt_end=self.e_weight,
+                                                             f_wgt_start=self.f_weight,
+                                                             f_wgt_end=self.f_weight,
+                                                             v_wgt_start=self.v_weight,
+                                                             v_wgt_end=self.v_weight).to(device=self.device, dtype=self.torch_float_dtype)
+        self.old_linear_mtp: LinearMtp = self.old_lit_linear_mtp.model
+        self.new_linear_mtp: LinearMtp = self.new_lit_linear_mtp.model
         
         self.trainset: ExtxyzDataset = ExtxyzDataset(filename=PbTe_EXTXYZ_PATH,
                                                      rcut=self.rmax,
@@ -153,16 +188,10 @@ class ParameterInheritorTest(unittest.TestCase):
                                                      has_virial=self.fit_virial)
         
         ### Main
-        self.e_weight: float = 1.0
-        self.f_weight: float = 2.0
-        self.v_weight: float = 0.0
         self.ridge_lambda: float = 1e-2
-        self.param_inheritor: ParameterInheritor = ParameterInheritor(old_model=self.old_linear_mtp,
-                                                                      new_model=self.new_linear_mtp,
+        self.param_inheritor: ParameterInheritor = ParameterInheritor(old_lit_model=self.old_lit_linear_mtp,
+                                                                      new_lit_model=self.new_lit_linear_mtp,
                                                                       trainset=self.trainset,
-                                                                      e_weight=self.e_weight,
-                                                                      f_weight=self.f_weight,
-                                                                      v_weight=self.v_weight,
                                                                       ridge_lambda=self.ridge_lambda)
 
 
@@ -183,17 +212,13 @@ class ParameterInheritorTest(unittest.TestCase):
     
     def est_transfer(self):
         # 1. Solve the linear equation for old_model
-        linear_mtp_solver: LinearMtpSolver = LinearMtpSolver(e_weight=self.e_weight,
-                                                             f_weight=self.f_weight,
-                                                             v_weight=self.v_weight,
-                                                             linear_mtp=self.old_linear_mtp,
+        linear_mtp_solver: LinearMtpSolver = LinearMtpSolver(lit_linear_mtp=self.old_lit_linear_mtp,
                                                              trainset=self.trainset,
                                                              ridge_lambda=self.ridge_lambda)
         linear_mtp_solver.solve_linear_equation()
         old_descriptors = self.old_linear_mtp.predict_descriptors(*self.mlff_input.analyse_ase(atoms=self.structure))
 
         # 2. Transfer parameters
-        self.new_linear_mtp._init_all_zeros()
         self.param_inheritor.transfer()
         new_descriptors = self.new_linear_mtp.predict_descriptors(*self.mlff_input.analyse_ase(atoms=self.structure))
         print("1.1. Descriptors calculated by old MTP:\n", old_descriptors[0, 1, :])
@@ -215,6 +240,9 @@ class LaddarTrainerTest(unittest.TestCase):
         self.rmin: float = 0.0
         self.device: torch._C.device = torch.device("cuda")
         self.torch_float_dtype: torch._C.dtype = torch.float32
+        self.e_weight: float = 2.0
+        self.f_weight: float = 3.0
+        self.v_weight: float = 0.0
         self.lit_linear_mtp: LitLinearMtp = LitLinearMtp(type_map=self.type_map,
                                                          umax_num_neigh_atoms=self.umax_num_neigh_atoms,
                                                          fit_virial=self.fit_virial,
@@ -225,7 +253,13 @@ class LaddarTrainerTest(unittest.TestCase):
                                                          zbl_rmax=0.0,
                                                          zbl_rmin=0.0,
                                                          zbl_cks_list=None,
-                                                         zbl_dks_list=None).to(device=self.device, dtype=self.torch_float_dtype)
+                                                         zbl_dks_list=None,
+                                                         e_wgt_start=self.e_weight,
+                                                         e_wgt_end=self.e_weight,
+                                                         f_wgt_start=self.f_weight,
+                                                         f_wgt_end=self.f_weight,
+                                                         v_wgt_start=self.v_weight,
+                                                         v_wgt_end=self.v_weight).to(device=self.device, dtype=self.torch_float_dtype)
         self.trainset: ExtxyzDataset = ExtxyzDataset(filename=PbTe_EXTXYZ_PATH,
                                                      rcut=self.rmax,
                                                      umax_num_neigh_atoms=self.umax_num_neigh_atoms,
@@ -242,9 +276,6 @@ class LaddarTrainerTest(unittest.TestCase):
         self.laddar_step: int = 2
         self.laddar_trainer: LaddarTrainer = LaddarTrainer(lit_linear_mtp=self.lit_linear_mtp,
                                                            trainset=self.trainset,
-                                                           e_weight=self.e_weight,
-                                                           f_weight=self.f_weight,
-                                                           v_weight=self.v_weight,
                                                            laddar_start=self.laddar_start,
                                                            laddar_step=self.laddar_step)
 
@@ -253,15 +284,15 @@ class LaddarTrainerTest(unittest.TestCase):
         print("LaddarTrainerTest (TestCase) is tearing down...\n")
     
 
-    def est_generate_model(self):
-        new_model: LinearMtp = self.laddar_trainer._generate_model(mtp_level=8)
-        param: torch.nn.Parameter = next(new_model.parameters())
-        print(f"1. The mtp level of new model = {new_model.mtp_level}")
+    def test_generate_lit_model(self):
+        new_lit_model: LitLinearMtp= self.laddar_trainer._generate_lit_model(mtp_level=16)
+        param: torch.nn.Parameter = next(new_lit_model.model.parameters())
+        print(f"1. The mtp level of new model = {new_lit_model.model.mtp_level}")
         assert(param.device == self.lit_linear_mtp.device)
         assert(param.dtype == self.lit_linear_mtp.dtype)
 
 
-    def est_fit(self):
+    def test_fit(self):
         self.laddar_trainer.fit()
 
 

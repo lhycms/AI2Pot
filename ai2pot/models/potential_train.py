@@ -398,7 +398,7 @@ class LitLinearMtp(LitPotentialBase):
             e_wgt_start: float = 1.0,
             e_wgt_end: float = 1.0,
             f_wgt_start: float = 2.0,
-            f_wgt_end: float = 1.0,
+            f_wgt_end: float = 2.0,
             v_wgt_start: float = 0.0,
             v_wgt_end: float = 0.0,
             max_clip_norm: float = 10.0):
