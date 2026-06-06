@@ -27,7 +27,7 @@ setup(
             "scikit-learn==1.7.0"
             #"torch-2.4.0+cpu"
     ],
-    extras_requires={
+    extras_require={
         "presentation": ["chgnet"]
     }
 )

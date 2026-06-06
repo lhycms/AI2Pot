@@ -30,4 +30,16 @@ export AI2POT_PATH=
 # -DCMAKE_C_COMPILER=/data/app/gcc/11.3.0/bin/gcc
 # -DCMAKE_CUDA_HOST_COMPILER=/data/app/gcc/11.3.0/bin/g++
 cmake -DBUILD_TEST=yes -DTORCH_OP=yes -DUSE_CUDA=yes -DMAX_MTP_LEVEL=18 -DUSE_OPENMP=yes ..
+
+# 4.
+## 4.1. User
+$ pip install .
+## 4.2. developer
+$ pip3 install -e .
+# .vscode/settings.json
+#{
+#  "python.analysis.extraPaths": [
+#    "/data/home/liuhanyu/mycode/AI2Pot"
+#  ]
+#}
 ```

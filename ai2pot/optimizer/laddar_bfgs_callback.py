@@ -17,7 +17,6 @@
 
 
 from typing import (List, Tuple, Optional)
-from copy import deepcopy
 
 import numpy as np
 import torch

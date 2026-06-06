@@ -3,7 +3,7 @@
 **/ReNbSSe
 **/lightning_logs
 ai2pot.egg-info
-**/__pycache__
+**/*__pycache__*
 **/*.pyc
 
 **/*.png
