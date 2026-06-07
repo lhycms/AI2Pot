@@ -19,13 +19,15 @@ save_dir: str = os.path.join(os.environ.get("AI2POT_TUTORIALS_PATH"),
 name: str = "linear_mtp"
 
 # 2. extxyz path
-extxyz_path: str = os.path.join(os.environ.get("AI2POT_TEST_DATA_PATH"),
-                                "11_NEP_potential_PbTe",
-                                "train_m.xyz")
-extxyz_path = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/Li_battery/train.xyz"
+TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")
+PbTe_EXTXYZ_PATH = os.path.join(TEST_FILES_DIR, "XYZ", "11_NEP_potential_PbTe", "train_m.xyz")
+# "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/C/train.xyz"
+# "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/Li_battery/train.xyz"
+# os.path.join(TEST_FILES_DIR, "XYZ", "11_NEP_potential_PbTe", "train_m.xyz")
+
 from ai2pot.utils.prepot import ExtxyzShifter
 
-extxyz_shifter: ExtxyzShifter = ExtxyzShifter(extxyz_path=extxyz_path)
+extxyz_shifter: ExtxyzShifter = ExtxyzShifter(extxyz_path=PbTe_EXTXYZ_PATH)
 energy_shifts: List[float] = extxyz_shifter.types_energy_shifts
 print("energy_shifts =", energy_shifts)
 
@@ -33,7 +35,7 @@ max_epochs: int = 200
 accelerator: str = "cpu"
 devices: int = 1
 
-trainset_path: str = extxyz_path
+trainset_path: str = PbTe_EXTXYZ_PATH
 rcut: float = 5.0
 umax_num_neigh_atoms: int = 200
 pbc_xyz: List[bool] = [True, True, True]
@@ -41,7 +43,7 @@ sort: bool = False
 torch_float_dtype: torch._C.dtype = torch.float32
 has_virial: bool = False
 
-mtp_level: int = 18
+mtp_level: int = 16
 type_map: List[int] = extxyz_shifter.type_map
 chebyshev_size: int = 8
 rmax: float = rcut
@@ -65,7 +67,7 @@ torch.manual_seed(4231)
 
 lit_linear_mtp: LitLinearMtp = LitLinearMtp(mtp_level=mtp_level,
                                             type_map=type_map,
-                                            energy_shifts=energy_shifts,
+                                            #energy_shifts=energy_shifts,
                                             chebyshev_size=chebyshev_size,
                                             rmax=rmax,
                                             rmin=rmin,
@@ -75,18 +77,16 @@ lit_linear_mtp: LitLinearMtp = LitLinearMtp(mtp_level=mtp_level,
                                             zbl_rmin=zbl_rmin,
                                             zbl_cks_list=None,
                                             zbl_dks_list=None,
-                                            torch_float_dtype=torch_float_dtype,
                                             lr_start=lr_start,
                                             lr_end=lr_end,
                                             e_wgt_start=e_wgt_start,
                                             e_wgt_end=e_wgt_end,
                                             f_wgt_start=f_wgt_start,
-                                            f_wgt_end=f_wgt_end,
-                                            lr_decay_step=lr_decay_step)
+                                            f_wgt_end=f_wgt_end)
 
 optimizer = FullParametersOptimizer(
     lit_linear_mtp=lit_linear_mtp,
-    extxyz_path=extxyz_path,
+    extxyz_path=PbTe_EXTXYZ_PATH,
     rcut=rcut,
     umax_num_neigh_atoms=umax_num_neigh_atoms,
     pbc_xyz=[True, True, True],

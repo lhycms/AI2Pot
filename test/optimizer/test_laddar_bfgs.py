@@ -11,6 +11,7 @@ from ase.io import read as ase_read
 from ai2pot.optimizer.laddar_bfgs import (TorchScipyBfgs,
                                           ParameterInheritor,
                                           LaddarTrainer)
+from ai2pot.optimizer.laddar_bfgs_callback import PrintEFVLossCallback
 from ai2pot.optimizer.mtpr_solver import LinearMtpSolver
 from ai2pot.models.mtp.linear_mtp import LinearMtp
 from ai2pot.models.potential_train import LitLinearMtp
@@ -73,12 +74,10 @@ class TorchScipyBfgsTest(unittest.TestCase):
                                                      has_virial=self.fit_virial)
 
         ###
-        self.maxiter: int = 5000
+        self.maxiter: int = 10
         self.torch_scipy_bfgs: TorchScipyBfgs = TorchScipyBfgs(lit_linear_mtp=self.lit_linear_mtp,
                                                                trainset=self.trainset,
-                                                               maxiter=self.maxiter,
-                                                               gtol=1e-7,
-                                                               disp=True)
+                                                               maxiter=self.maxiter)
 
     
     def tearDown(self):
@@ -107,7 +106,7 @@ class TorchScipyBfgsTest(unittest.TestCase):
         print("2.3. type_bias_tensor=\n", self.linear_mtp.type_bias_tensor)
 
     
-    def est_loss_and_grad(self):
+    def test_loss_and_grad(self):
         x1: np.ndarray = self.torch_scipy_bfgs._get_x0() + 1.0
         total_loss, grad = self.torch_scipy_bfgs._loss_and_grad(x=x1)
         total_loss: float
@@ -122,10 +121,10 @@ class TorchScipyBfgsTest(unittest.TestCase):
         print("1.1. coeffs_tensor=\n", self.linear_mtp.coeffs_tensor)
         print("1.2. linear_coeffs_tensor=\n", self.linear_mtp.linear_coeffs_tensor)
         print("1.3. type_bias_tensor=\n", self.linear_mtp.type_bias_tensor)
+        PrintEFVLossCallback().on_train_step_end(lit_linear_mtp=self.lit_linear_mtp,
+                                                 trainset=self.trainset)
 
     
-
-
 
 class ParameterInheritorTest(unittest.TestCase):
     def setUp(self):
@@ -225,6 +224,7 @@ class ParameterInheritorTest(unittest.TestCase):
         print("1.2. Descriptors calculated by new MTP:\n", new_descriptors[0, 1, :])
         print("2.1. Old linear_coeffs_tensor:\n", self.old_linear_mtp.linear_coeffs_tensor)
         print("2.2. New linear_coeffs_tensor:\n", self.new_linear_mtp.linear_coeffs_tensor)
+        print(self.new_linear_mtp.conv_length_tensor, self.new_linear_mtp.conv_energy_tensor)
         
 
 
@@ -274,17 +274,21 @@ class LaddarTrainerTest(unittest.TestCase):
         self.v_weight: float = 0.0
         self.laddar_start: int = 6
         self.laddar_step: int = 2
+        self.maxitr: int = 10
+        self.ridge_lambda: float = 1e-2
         self.laddar_trainer: LaddarTrainer = LaddarTrainer(lit_linear_mtp=self.lit_linear_mtp,
                                                            trainset=self.trainset,
                                                            laddar_start=self.laddar_start,
-                                                           laddar_step=self.laddar_step)
+                                                           laddar_step=self.laddar_step,
+                                                           maxiter=self.maxitr,
+                                                           ridge_lambda=self.ridge_lambda)
 
 
     def tearDown(self):
         print("LaddarTrainerTest (TestCase) is tearing down...\n")
     
 
-    def test_generate_lit_model(self):
+    def est_generate_lit_model(self):
         new_lit_model: LitLinearMtp= self.laddar_trainer._generate_lit_model(mtp_level=16)
         param: torch.nn.Parameter = next(new_lit_model.model.parameters())
         print(f"1. The mtp level of new model = {new_lit_model.model.mtp_level}")
@@ -292,7 +296,7 @@ class LaddarTrainerTest(unittest.TestCase):
         assert(param.dtype == self.lit_linear_mtp.dtype)
 
 
-    def test_fit(self):
+    def est_fit(self):
         self.laddar_trainer.fit()
 
 

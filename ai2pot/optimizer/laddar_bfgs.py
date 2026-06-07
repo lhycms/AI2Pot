@@ -38,9 +38,7 @@ class TorchScipyBfgs(object):
     def __init__(self,
                  lit_linear_mtp: LitLinearMtp,
                  trainset: ExtxyzDataset,
-                 maxiter: int = 500,
-                 gtol: float = 1e-7,
-                 disp: bool = True):
+                 maxiter: int = 500):
         super(TorchScipyBfgs, self).__init__()
         self.lit_linear_mtp: LitLinearMtp = lit_linear_mtp
         self.linear_mtp: LinearMtp = self.lit_linear_mtp.model
@@ -53,11 +51,6 @@ class TorchScipyBfgs(object):
         self.v_weight: float = self.lit_linear_mtp.v_wgt_start
         self.fit_virial: bool = self.linear_mtp.fit_virial
 
-        # BFGS
-        self.maxiter: int = maxiter
-        self.gtol: float = gtol
-        self.disp: bool = disp
-
         # Device and dtype
         self.params: List[nn.Parameter] = [p for p in self.linear_mtp.parameters() if p.requires_grad]
         if not self.params:
@@ -68,7 +61,12 @@ class TorchScipyBfgs(object):
         self.npy_float_dtype: np.dtype = np.float32
         if (self.torch_float_dtype == torch.float64):
             self.npy_float_dtype = np.float64
-        
+
+        # BFGS
+        self.maxiter: int = maxiter
+        self.gtol: float = 1e-5 if self.torch_float_dtype == torch.float32 else 1e-7
+        self.disp: bool = True
+
         ### Assertion
         if (self.e_weight != self.lit_linear_mtp.e_wgt_end) or \
             (self.f_weight != self.lit_linear_mtp.f_wgt_end) or \
@@ -87,25 +85,19 @@ class TorchScipyBfgs(object):
         return x0.detach().cpu().numpy()
     
 
-    def _set_x(self,
-               x: np.ndarray,
-               persistent: bool = False) -> None:
+    def _set_x(self, x: np.ndarray) -> None:
         x_tensor: torch.Tensor = torch.from_numpy(x).to(device=self.device, dtype=self.torch_float_dtype)
         with torch.no_grad():
-            if (persistent):
-                pointer: int = 0
-                for param in self.params:
-                    num_params: int = param.numel()
-                    param.copy_(x_tensor[pointer: pointer+num_params].view_as(param))
-                    pointer += num_params
-            else:
-                vector_to_parameters(vec=x_tensor,
-                                     parameters=self.params)
+            pointer: int = 0
+            for param in self.params:
+                num_params: int = param.numel()
+                param.copy_(x_tensor[pointer: pointer+num_params].view_as(param))
+                pointer += num_params
 
 
     def _loss_and_grad(self, x: np.ndarray) -> Tuple[float, np.ndarray]:
         # 1.
-        self._set_x(x=x, persistent=False)
+        self._set_x(x=x)
         self.linear_mtp.zero_grad()
 
         # 2.
@@ -168,8 +160,8 @@ class TorchScipyBfgs(object):
         # 
         grad_tensors_list: List[torch.Tensor] = [
             p.grad.reshape(-1) if p.grad is not None else torch.zeros(p.numel(), device=p.device, dtype=self.torch_float_dtype)
-            for p in self.linear_mtp.parameters()
-        ]
+            for p in self.params
+            ]
         grad: torch.Tensor = torch.cat(grad_tensors_list).detach().cpu().numpy()
 
         return float(total_loss), grad
@@ -186,7 +178,7 @@ class TorchScipyBfgs(object):
                 "gtol": self.gtol,
                 "disp": self.disp})
         
-        self._set_x(x=result.x, persistent=True)
+        self._set_x(x=result.x)
 
         return result
     
@@ -265,12 +257,16 @@ class ParameterInheritor(object):
             idx: int = tmp_mu if tmp_mu < chebyshev_size else 0
             new_coeffs_view[:, :, tmp_mu, idx] = 1.0
 
-
         # 2. linear_coeffs_tensor && type_bias_tensor
         linear_mtp_solver: LinearMtpSolver = LinearMtpSolver(lit_linear_mtp=self.new_lit_model,
                                                              trainset=self.trainset,
                                                              ridge_lambda=self.ridge_lambda)
         linear_mtp_solver.solve_linear_equation()
+
+        # 3. buffers for normalization
+        self.new_model.q_scaler_tensor[:self.old_model.get_num_descriptors()].copy_(self.old_model.q_scaler_tensor)
+        self.new_model.conv_energy_tensor.copy_(self.old_model.conv_energy_tensor)
+        self.new_model.conv_length_tensor.copy_(self.old_model.conv_length_tensor)
 
 
 class LaddarTrainer(object):
@@ -280,8 +276,6 @@ class LaddarTrainer(object):
                  laddar_start: int = 6,
                  laddar_step: int = 2,
                  maxiter: int = 500,
-                 gtol: float = 1e-7,
-                 disp: bool = True,
                  ridge_lambda: float = 1e-2):
         super(LaddarTrainer, self).__init__()
         self.lit_linear_mtp: LitLinearMtp = lit_linear_mtp
@@ -332,8 +326,8 @@ class LaddarTrainer(object):
 
         # 3. BFGS
         self.maxiter: int = maxiter
-        self.gtol: float= gtol
-        self.disp: bool = disp
+        self.gtol: float= 1e-5 if self.torch_float_dtype == torch.float32 else 1e-7
+        self.disp: bool = True
 
         # 4. Ridge
         self.ridge_lambda: float = ridge_lambda
@@ -351,23 +345,23 @@ class LaddarTrainer(object):
     
 
     def _generate_lit_model(self, mtp_level: int) -> LitLinearMtp:
-        new_lit_model: LinearMtp = LitLinearMtp(type_map=self.type_map,
-                                                umax_num_neigh_atoms=self.umax_num_neigh_atoms,
-                                                fit_virial=self.fit_virial,
-                                                mtp_level=mtp_level,
-                                                chebyshev_size=self.chebyshev_size,
-                                                rmax=self.rmax,
-                                                rmin=self.rmin,
-                                                zbl_rmax=self.zbl_rmax,
-                                                zbl_rmin=self.zbl_rmin,
-                                                zbl_cks_list=self.zbl_cks_list,
-                                                zbl_dks_list=self.zbl_dks_list,
-                                                e_wgt_start=self.e_weight,
-                                                e_wgt_end=self.e_weight,
-                                                f_wgt_start=self.f_weight,
-                                                f_wgt_end=self.f_weight,
-                                                v_wgt_start=self.v_weight,
-                                                v_wgt_end=self.v_weight).to(device=self.device, dtype=self.torch_float_dtype)
+        new_lit_model: LitLinearMtp = LitLinearMtp(type_map=self.type_map,
+                                                   umax_num_neigh_atoms=self.umax_num_neigh_atoms,
+                                                   fit_virial=self.fit_virial,
+                                                   mtp_level=mtp_level,
+                                                   chebyshev_size=self.chebyshev_size,
+                                                   rmax=self.rmax,
+                                                   rmin=self.rmin,
+                                                   zbl_rmax=self.zbl_rmax,
+                                                   zbl_rmin=self.zbl_rmin,
+                                                   zbl_cks_list=self.zbl_cks_list,
+                                                   zbl_dks_list=self.zbl_dks_list,
+                                                   e_wgt_start=self.e_weight,
+                                                   e_wgt_end=self.e_weight,
+                                                   f_wgt_start=self.f_weight,
+                                                   f_wgt_end=self.f_weight,
+                                                   v_wgt_start=self.v_weight,
+                                                   v_wgt_end=self.v_weight).to(device=self.device, dtype=self.torch_float_dtype)
         return new_lit_model
 
 
@@ -376,9 +370,7 @@ class LaddarTrainer(object):
         old_lit_model: LinearMtp = self._generate_lit_model(mtp_level=self.mtp_levels_list[0])
         old_torch_scipy_bfgs: TorchScipyBfgs = TorchScipyBfgs(lit_linear_mtp=old_lit_model,
                                                               trainset=self.trainset,
-                                                              maxiter=self.maxiter,
-                                                              gtol=self.gtol,
-                                                              disp=self.disp)
+                                                              maxiter=self.maxiter)
         #old_torch_scipy_bfgs.run()
         
         # 2.
@@ -398,9 +390,7 @@ class LaddarTrainer(object):
             ## 2.3.
             torch_scipy_bfgs: TorchScipyBfgs = TorchScipyBfgs(lit_linear_mtp=lit_model,
                                                               trainset=self.trainset,
-                                                              maxiter=self.maxiter,
-                                                              gtol=self.gtol,
-                                                              disp=self.disp)
+                                                              maxiter=self.maxiter)
             #torch_scipy_bfgs.run()
             
             ## 2.4. 
@@ -418,9 +408,7 @@ class LaddarTrainer(object):
     def _fit_final_model(self) -> None:
         torch_scipy_bfgs: TorchScipyBfgs = TorchScipyBfgs(lit_linear_mtp=self.lit_linear_mtp,
                                                           trainset=self.trainset,
-                                                          maxiter=self.maxiter,
-                                                          gtol=self.gtol,
-                                                          disp=self.disp)
+                                                          maxiter=self.maxiter)
         linear_mtp_solver: LinearMtpSolver = LinearMtpSolver(lit_linear_mtp=self.lit_linear_mtp,
                                                              trainset=self.trainset,
                                                              ridge_lambda=self.ridge_lambda)

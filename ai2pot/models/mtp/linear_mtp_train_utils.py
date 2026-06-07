@@ -129,8 +129,8 @@ class FullParametersOptimizer(object):
                                                       bfirstneigh,
                                                       brcs,
                                                       btypes,
-                                                      bnghost[0].item())
-            batch_loss: torch.Tensor = bmse_loss.sum()
+                                                      bnghost)
+            batch_loss: torch.Tensor = bmse_loss[0].sum()
             loss = loss + batch_loss
         loss.backward()
         self.last_error = loss.item()
