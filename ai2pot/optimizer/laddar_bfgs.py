@@ -263,7 +263,10 @@ class ParameterInheritor(object):
                                                              ridge_lambda=self.ridge_lambda)
         linear_mtp_solver.solve_linear_equation()
 
-        # 3. buffers for normalization
+        # 3. scaling
+        self.new_model.scaling = self.old_model.scaling
+
+        # 4. buffers for normalization
         self.new_model.q_scaler_tensor[:self.old_model.get_num_descriptors()].copy_(self.old_model.q_scaler_tensor)
         self.new_model.conv_energy_tensor.copy_(self.old_model.conv_energy_tensor)
         self.new_model.conv_length_tensor.copy_(self.old_model.conv_length_tensor)
