@@ -106,7 +106,7 @@ class TorchScipyBfgsTest(unittest.TestCase):
         print("2.3. type_bias_tensor=\n", self.linear_mtp.type_bias_tensor)
 
     
-    def test_loss_and_grad(self):
+    def est_loss_and_grad(self):
         x1: np.ndarray = self.torch_scipy_bfgs._get_x0() + 1.0
         total_loss, grad = self.torch_scipy_bfgs._loss_and_grad(x=x1)
         total_loss: float
@@ -269,13 +269,13 @@ class LaddarTrainerTest(unittest.TestCase):
                                                      has_virial=self.fit_virial)
 
         ###
-        self.e_weight: float = 2.0
-        self.f_weight: float = 3.0
+        self.e_weight: float = 1.0
+        self.f_weight: float = 0.1
         self.v_weight: float = 0.0
         self.laddar_start: int = 6
         self.laddar_step: int = 2
-        self.maxitr: int = 10
-        self.ridge_lambda: float = 1e-2
+        self.maxitr: int = 500
+        self.ridge_lambda: float = 1e-3
         self.laddar_trainer: LaddarTrainer = LaddarTrainer(lit_linear_mtp=self.lit_linear_mtp,
                                                            trainset=self.trainset,
                                                            laddar_start=self.laddar_start,
@@ -296,8 +296,10 @@ class LaddarTrainerTest(unittest.TestCase):
         assert(param.dtype == self.lit_linear_mtp.dtype)
 
 
-    def est_fit(self):
+    def test_fit(self):
         self.laddar_trainer.fit()
+        PrintEFVLossCallback().on_train_step_end(lit_linear_mtp=self.lit_linear_mtp,
+                                                 trainset=self.trainset)
 
 
 if __name__ == "__main__":

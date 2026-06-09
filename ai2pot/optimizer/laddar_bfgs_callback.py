@@ -28,10 +28,6 @@ from scipy.optimize import minimize
 from ai2pot.models.mtp.linear_mtp import LinearMtp
 from ai2pot.models.potential_train import LitLinearMtp
 from ai2pot.data.mlffdataset import ExtxyzDataset
-from ai2pot.optimizer.mtpr_solver import LinearMtpSolver
-from ai2pot.optimizer.laddar_bfgs import (TorchScipyBfgs, 
-                                          ParameterInheritor,
-                                          LaddarTrainer)
 
 
 class CallbackBase(object):

@@ -88,7 +88,7 @@ class LinearMtp(nn.Module):
         self.register_parameter(name="type_bias_tensor", param=nn.Parameter(data=type_bias_tensor))
         ### Init ###
     
-        q_scaler_tensor: torch.Tensor = torch.zeros(self.num_descriptors, dtype=torch.float32) + 100.0
+        q_scaler_tensor: torch.Tensor = torch.ones(self.num_descriptors, dtype=torch.float32)
         self.register_buffer("q_scaler_tensor", tensor=q_scaler_tensor)
 
         # Conversion

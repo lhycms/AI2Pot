@@ -31,6 +31,8 @@ from ai2pot.models.potential_train import LitLinearMtp
 from ai2pot.data.mlffdataset import ExtxyzDataset
 from ai2pot.optimizer.mtpr_solver import LinearMtpSolver
 
+from ai2pot.optimizer.laddar_bfgs_callback import PrintEFVLossCallback
+
 
 class TorchScipyBfgs(object):
     BATCH_SIZE_HERE = 500
@@ -312,7 +314,7 @@ class LaddarTrainer(object):
             raise ValueError(f"laddar_end must <= 28. Current value: {self.laddar_end}")
         
 
-        # 2. Model 
+        # 2. Model generation
         self.type_map: List[int] = self.linear_mtp.type_map_tensor.detach().cpu().numpy().tolist()
         self.umax_num_neigh_atoms: int = self.linear_mtp.umax_num_neigh_atoms
         self.fit_virial: bool = self.linear_mtp.fit_virial
@@ -336,12 +338,12 @@ class LaddarTrainer(object):
         self.ridge_lambda: float = ridge_lambda
 
         ### Assertion
-        if (self.e_weight != self.lit_linear_mtp.e_wgt_end) or \
-            (self.f_weight != self.lit_linear_mtp.f_wgt_end) or \
-            (self.v_weight != self.lit_linear_mtp.v_wgt_end):
+        if (self.lit_linear_mtp.e_wgt_start != self.lit_linear_mtp.e_wgt_end) or \
+            (self.lit_linear_mtp.f_wgt_start != self.lit_linear_mtp.f_wgt_end) or \
+            (self.lit_linear_mtp.v_wgt_start != self.lit_linear_mtp.v_wgt_end):
             raise ValueError(
                 f"LadderTrainer loss weights must match the final weights. "
-                f"Got (e_wgt_start={self.e_weight}, f_wgt_start={self.f_weight}, v_wgt_start={self.v_weight}), "
+                f"Got (e_wgt_start={self.lit_linear_mtp.e_wgt_start}, f_wgt_start={self.lit_linear_mtp.f_wgt_start}, v_wgt_start={self.lit_linear_mtp.v_wgt_start}), "
                 f"but expected "
                 f"(e_wgt_end={self.lit_linear_mtp.e_wgt_end}, f_wgt_end={self.lit_linear_mtp.f_wgt_end}, v_wgt_end={self.lit_linear_mtp.v_wgt_end})."
             )
@@ -374,7 +376,7 @@ class LaddarTrainer(object):
         old_torch_scipy_bfgs: TorchScipyBfgs = TorchScipyBfgs(lit_linear_mtp=old_lit_model,
                                                               trainset=self.trainset,
                                                               maxiter=self.maxiter)
-        #old_torch_scipy_bfgs.run()
+        old_torch_scipy_bfgs.run()
         
         # 2.
         for ii, tmp_mtp_level in enumerate(self.mtp_levels_list):
@@ -394,7 +396,10 @@ class LaddarTrainer(object):
             torch_scipy_bfgs: TorchScipyBfgs = TorchScipyBfgs(lit_linear_mtp=lit_model,
                                                               trainset=self.trainset,
                                                               maxiter=self.maxiter)
-            #torch_scipy_bfgs.run()
+            torch_scipy_bfgs.run()
+            
+            PrintEFVLossCallback().on_train_step_end(lit_linear_mtp=lit_model,
+                                                 trainset=self.trainset)
             
             ## 2.4. 
             old_lit_model = deepcopy(lit_model)
@@ -405,8 +410,7 @@ class LaddarTrainer(object):
                                                  trainset=self.trainset,
                                                  ridge_lambda=self.ridge_lambda)
         parameter_inheritor.transfer()
-        
-
+    
 
     def _fit_final_model(self) -> None:
         torch_scipy_bfgs: TorchScipyBfgs = TorchScipyBfgs(lit_linear_mtp=self.lit_linear_mtp,
@@ -415,7 +419,7 @@ class LaddarTrainer(object):
         linear_mtp_solver: LinearMtpSolver = LinearMtpSolver(lit_linear_mtp=self.lit_linear_mtp,
                                                              trainset=self.trainset,
                                                              ridge_lambda=self.ridge_lambda)
-        #torch_scipy_bfgs.run()
+        torch_scipy_bfgs.run()
         linear_mtp_solver.solve_linear_equation()
 
 
@@ -424,3 +428,4 @@ class LaddarTrainer(object):
             self._fit_final_model()
         else:
             self._fit_sub_models()
+            self._fit_final_model()
