@@ -31,8 +31,6 @@ from ai2pot.models.potential_train import LitLinearMtp
 from ai2pot.data.mlffdataset import ExtxyzDataset
 from ai2pot.optimizer.mtpr_solver import LinearMtpSolver
 
-from ai2pot.optimizer.laddar_bfgs_callback import PrintEFVLossCallback
-
 
 class TorchScipyBfgs(object):
     BATCH_SIZE_HERE = 500
@@ -257,16 +255,16 @@ class ParameterInheritor(object):
         new_coeffs_view= new_coeffs_tensor.view(ntypes, ntypes, new_nmus, chebyshev_size)
         for tmp_mu in range(old_nmus, new_nmus):
             idx: int = tmp_mu if tmp_mu < chebyshev_size else 0
-            new_coeffs_view[:, :, tmp_mu, idx] = 1.0
+            new_coeffs_view[:, :, tmp_mu, idx] = 1e-2
 
-        # 2. linear_coeffs_tensor && type_bias_tensor
+        # 2. scaling
+        self.new_model.scaling = self.old_model.scaling
+
+        # 3. linear_coeffs_tensor && type_bias_tensor
         linear_mtp_solver: LinearMtpSolver = LinearMtpSolver(lit_linear_mtp=self.new_lit_model,
                                                              trainset=self.trainset,
                                                              ridge_lambda=self.ridge_lambda)
         linear_mtp_solver.solve_linear_equation()
-
-        # 3. scaling
-        self.new_model.scaling = self.old_model.scaling
 
         # 4. buffers for normalization
         self.new_model.q_scaler_tensor[:self.old_model.get_num_descriptors()].copy_(self.old_model.q_scaler_tensor)
@@ -397,10 +395,7 @@ class LaddarTrainer(object):
                                                               trainset=self.trainset,
                                                               maxiter=self.maxiter)
             torch_scipy_bfgs.run()
-            
-            PrintEFVLossCallback().on_train_step_end(lit_linear_mtp=lit_model,
-                                                 trainset=self.trainset)
-            
+
             ## 2.4. 
             old_lit_model = deepcopy(lit_model)
         

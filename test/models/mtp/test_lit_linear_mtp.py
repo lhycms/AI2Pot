@@ -17,7 +17,7 @@ from ai2pot.models.potential_train_utils import EnergyShiftCallback
 
 
 TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")
-PbTe_EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/Li_battery/train.xyz"
+PbTe_EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/C/train.xyz"
 # "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/C/train.xyz"
 # "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/Li_battery/train.xyz"
 # os.path.join(TEST_FILES_DIR, "XYZ", "11_NEP_potential_PbTe", "train_m.xyz")
@@ -45,7 +45,7 @@ class LitLinearMtpTest(unittest.TestCase):
         # Lr hyperparameters
         max_epochs: int = 200
         lr_start: float = 1e-3
-        lr_end: float = 1e-5
+        lr_end: float = 1e-7
         e_wgt_start: float = 1.0
         e_wgt_end: float = 1.0
         f_wgt_start: float = 2.0

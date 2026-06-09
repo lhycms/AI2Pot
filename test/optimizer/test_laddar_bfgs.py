@@ -239,9 +239,9 @@ class LaddarTrainerTest(unittest.TestCase):
         self.rmax: float = 5.0
         self.rmin: float = 0.0
         self.device: torch._C.device = torch.device("cuda")
-        self.torch_float_dtype: torch._C.dtype = torch.float32
-        self.e_weight: float = 2.0
-        self.f_weight: float = 3.0
+        self.torch_float_dtype: torch._C.dtype = torch.float64
+        self.e_weight: float = 1.0
+        self.f_weight: float = 0.1
         self.v_weight: float = 0.0
         self.lit_linear_mtp: LitLinearMtp = LitLinearMtp(type_map=self.type_map,
                                                          umax_num_neigh_atoms=self.umax_num_neigh_atoms,
@@ -269,9 +269,6 @@ class LaddarTrainerTest(unittest.TestCase):
                                                      has_virial=self.fit_virial)
 
         ###
-        self.e_weight: float = 1.0
-        self.f_weight: float = 0.1
-        self.v_weight: float = 0.0
         self.laddar_start: int = 6
         self.laddar_step: int = 2
         self.maxitr: int = 500

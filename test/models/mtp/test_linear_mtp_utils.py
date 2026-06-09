@@ -122,7 +122,7 @@ class LinearMtpActiveDRTest(unittest.TestCase):
 class LinearMtp4ExtxyzTest(unittest.TestCase):
     def setUp(self):
         print("LinearMtp4ExtxyzTest (TestSuite) is setting up...")
-        self.checkpoint_path: str = "/data/home/liuhanyu/mycode/AI2Pot/lightning_logs/lightning_logs/version_45/checkpoints/epoch=199-step=5000.ckpt"
+        self.checkpoint_path: str = "/data/home/liuhanyu/mycode/AI2Pot/lightning_logs/lightning_logs/version_50/checkpoints/epoch=199-step=5000.ckpt"
         self.testset_path: str = EXTXYZ_PATH
         self.map_location: str = "cuda"        
         self.torch_float_dtype: torch._C.dtype = torch.float32
@@ -147,6 +147,30 @@ class LinearMtp4ExtxyzTest(unittest.TestCase):
         print("RMSE summary:")
         print("\t1. RMSE of energy = {0:.3f} meV".format(e_rmse * 1000))
         print("\t2. RMSE of force = {0:.3f} meV/A".format(f_rmse * 1000))
+
+
+    def test_print_descriptor(self):
+        from ase import Atoms
+        from ase.io import read as ase_read
+        from ai2pot.utils.usepot import MlffInput
+        mlff_input: MlffInput = MlffInput(type_map=self.linear_mtp_extxyz.model.type_map_tensor.detach().cpu().numpy().tolist(),
+                                          rcut=5.0,
+                                          umax_num_neigh_atoms=200,
+                                          pbc_xyz=[True, True, True],
+                                          sort=False,
+                                          dtype=self.torch_float_dtype,
+                                          device=torch.device(self.map_location))
+        atoms: Atoms = ase_read(filename=EXTXYZ_PATH, index=":")[0]
+        descriptors = self.linear_mtp_extxyz.model.predict_descriptors(*mlff_input.analyse_ase(atoms=atoms))
+        descriptors_max = descriptors.max(dim=0, keepdim=False)[0].max(dim=0, keepdim=False)[0]
+        descriptors_min = descriptors.min(dim=0, keepdim=False)[0].min(dim=0, keepdim=False)[0]
+        #print(descriptors_max)
+        #print(descriptors_min)
+        print((descriptors_max - descriptors_min) / self.linear_mtp_extxyz.model.q_scaler_tensor)
+        print(descriptors[0, 0, :])
+
+        #print(self.linear_mtp_extxyz.model.linear_coeffs_tensor)
+    
 
 
 
