@@ -18,11 +18,12 @@
 
 import os
 import torch
+import platform
 import sys
 
 ai2pot_root_dir:str = os.environ.get("AI2POT_PATH")
 ai2pot_source_build_lib_dir:str = os.path.join(ai2pot_root_dir, "source", "build", "lib")
-
+IS_DARWIN: bool = platform.system() == "Darwin"
 
 ### Part 1 . nblist
 nblist_lib_dir: str = os.path.join(ai2pot_source_build_lib_dir, "nblist")
@@ -30,72 +31,73 @@ sys.path.append(nblist_lib_dir)
 import nblist
 
 
-### Part 2.1. fituils
-fitutils_lib_dir:str = os.path.join(ai2pot_source_build_lib_dir, "descriptor", "fitutils")
-fitutils_bind_so_path: str = os.path.join(fitutils_lib_dir, "libfitutils_bind.so")
-torch.ops.load_library(fitutils_bind_so_path)
-targetStatisticsOp = torch.ops.fitutils.targetStatisticsOp
-allTypeDescriptorsStatisticsOp = torch.ops.fitutils.allTypeDescriptorsStatisticsOp
-eachTypeDescriptorsStatisticsOp = torch.ops.fitutils.eachTypeDescriptorsStatisticsOp
-allTypeDescriptorsMaxminOp = torch.ops.fitutils.allTypeDescriptorsMaxminOp
+if not IS_DARWIN:
+    ### Part 2.1. fituils
+    fitutils_lib_dir:str = os.path.join(ai2pot_source_build_lib_dir, "descriptor", "fitutils")
+    fitutils_bind_so_path: str = os.path.join(fitutils_lib_dir, "libfitutils_bind.so")
+    torch.ops.load_library(fitutils_bind_so_path)
+    targetStatisticsOp = torch.ops.fitutils.targetStatisticsOp
+    allTypeDescriptorsStatisticsOp = torch.ops.fitutils.allTypeDescriptorsStatisticsOp
+    eachTypeDescriptorsStatisticsOp = torch.ops.fitutils.eachTypeDescriptorsStatisticsOp
+    allTypeDescriptorsMaxminOp = torch.ops.fitutils.allTypeDescriptorsMaxminOp
 
-### Part 2.2. deepmd
-deepmd_lib_dir:str = os.path.join(ai2pot_source_build_lib_dir, "descriptor", "deepmd")
-envMatrixOp_bind_so_path:str = os.path.join(deepmd_lib_dir, "libenvMatrixOp_bind.so")
-torch.ops.load_library(envMatrixOp_bind_so_path)
-# name `envMatrixOp`
-envMatrixOp = torch.ops.deepmd.EnvMatrixOp
-
-
-### Part 2.3. mtpr
-mtpr_lib_dir:str = os.path.join(ai2pot_source_build_lib_dir, "descriptor", "mtpr")
-mtpr_bind_so_path: str = os.path.join(mtpr_lib_dir, "libmtpr_bind.so")
-torch.ops.load_library(mtpr_bind_so_path)
-# name
-coeffsSchmidtOrthOp = torch.ops.mtpr.CoeffsSchmidtOrthOp
-linMatrixLinVectorOp = torch.ops.mtpr.LinMatrixLinVectorOp
-mtpParamOp = torch.ops.mtpr.mtpParamOp
-mtpBasisOp = torch.ops.mtpr.mtpBasisOp
-linearMtpToLossOp = torch.ops.mtpr.linearMtpToLossOp
-linearMtpToEFLossOp = torch.ops.mtpr.linearMtpToEFLossOp
-linearMtpToEFVOp = torch.ops.mtpr.linearMtpToEFVOp
-linearMtpToEFOp = torch.ops.mtpr.linearMtpToEFOp
-linearMtpToEsitesOp = torch.ops.mtpr.linearMtpToEsitesOp
-linearMtpToDescriptorsOp = torch.ops.mtpr.linearMtpToDescriptorsOp
+    ### Part 2.2. deepmd
+    deepmd_lib_dir:str = os.path.join(ai2pot_source_build_lib_dir, "descriptor", "deepmd")
+    envMatrixOp_bind_so_path:str = os.path.join(deepmd_lib_dir, "libenvMatrixOp_bind.so")
+    torch.ops.load_library(envMatrixOp_bind_so_path)
+    # name `envMatrixOp`
+    envMatrixOp = torch.ops.deepmd.EnvMatrixOp
 
 
-### Part 2.4. nnmtp
-nnmtp_lib_dir:str = os.path.join(ai2pot_source_build_lib_dir, "descriptor", "nnmtp")
-nnmtp_bind_so_path: str = os.path.join(nnmtp_lib_dir, "libnnmtp_bind.so")
-torch.ops.load_library(nnmtp_bind_so_path)
-# name
-mtpParamOp = torch.ops.nnmtp.mtpParamOp
-nnMtpToEFLossOp = torch.ops.nnmtp.nnMtpToEFLossOp
-nnMtpToLossOp = torch.ops.nnmtp.nnMtpToLossOp
-nnMtpToEFOp = torch.ops.nnmtp.nnMtpToEFOp
-nnMtpToEFVOp = torch.ops.nnmtp.nnMtpToEFVOp
-nnMtpToDescriptorsOp = torch.ops.nnmtp.nnMtpToDescriptorsOp
-nnMtpToEsitesOp = torch.ops.nnmtp.nnMtpToEsitesOp
+    ### Part 2.3. mtpr
+    mtpr_lib_dir:str = os.path.join(ai2pot_source_build_lib_dir, "descriptor", "mtpr")
+    mtpr_bind_so_path: str = os.path.join(mtpr_lib_dir, "libmtpr_bind.so")
+    torch.ops.load_library(mtpr_bind_so_path)
+    # name
+    coeffsSchmidtOrthOp = torch.ops.mtpr.CoeffsSchmidtOrthOp
+    linMatrixLinVectorOp = torch.ops.mtpr.LinMatrixLinVectorOp
+    mtpParamOp = torch.ops.mtpr.mtpParamOp
+    mtpBasisOp = torch.ops.mtpr.mtpBasisOp
+    linearMtpToLossOp = torch.ops.mtpr.linearMtpToLossOp
+    linearMtpToEFLossOp = torch.ops.mtpr.linearMtpToEFLossOp
+    linearMtpToEFVOp = torch.ops.mtpr.linearMtpToEFVOp
+    linearMtpToEFOp = torch.ops.mtpr.linearMtpToEFOp
+    linearMtpToEsitesOp = torch.ops.mtpr.linearMtpToEsitesOp
+    linearMtpToDescriptorsOp = torch.ops.mtpr.linearMtpToDescriptorsOp
 
 
-### Part 2.5. nep
-nep_lib_dir:str = os.path.join(ai2pot_source_build_lib_dir, "descriptor", "nep")
-nep_bind_so_path: str = os.path.join(nep_lib_dir, "libnep_bind.so")
-torch.ops.load_library(nep_bind_so_path)
-# name
-nepToEFOp = torch.ops.nep.nepToEFOp
-nepToEFVOp = torch.ops.nep.nepToEFVOp
-nepToEFLossOp = torch.ops.nep.nepToEFLossOp
-nepToLossOp = torch.ops.nep.nepToLossOp
-nepToDescriptorsOp = torch.ops.nep.nepToDescriptorsOp
+    ### Part 2.4. nnmtp
+    nnmtp_lib_dir:str = os.path.join(ai2pot_source_build_lib_dir, "descriptor", "nnmtp")
+    nnmtp_bind_so_path: str = os.path.join(nnmtp_lib_dir, "libnnmtp_bind.so")
+    torch.ops.load_library(nnmtp_bind_so_path)
+    # name
+    mtpParamOp = torch.ops.nnmtp.mtpParamOp
+    nnMtpToEFLossOp = torch.ops.nnmtp.nnMtpToEFLossOp
+    nnMtpToLossOp = torch.ops.nnmtp.nnMtpToLossOp
+    nnMtpToEFOp = torch.ops.nnmtp.nnMtpToEFOp
+    nnMtpToEFVOp = torch.ops.nnmtp.nnMtpToEFVOp
+    nnMtpToDescriptorsOp = torch.ops.nnmtp.nnMtpToDescriptorsOp
+    nnMtpToEsitesOp = torch.ops.nnmtp.nnMtpToEsitesOp
 
-### Part 3. fvt
-fvt_sr_lib_dir: str = os.path.join(ai2pot_source_build_lib_dir, "fvt")
-fvt_sr_bind_so_path: str = os.path.join(fvt_sr_lib_dir, "libfvt_sr_op_bind.so")
-torch.ops.load_library(fvt_sr_bind_so_path)
-# name
-forceSrOp = torch.ops.fvt.ForceSrOp
-virialSrOp = torch.ops.fvt.VirialSrOp
+
+    ### Part 2.5. nep
+    nep_lib_dir:str = os.path.join(ai2pot_source_build_lib_dir, "descriptor", "nep")
+    nep_bind_so_path: str = os.path.join(nep_lib_dir, "libnep_bind.so")
+    torch.ops.load_library(nep_bind_so_path)
+    # name
+    nepToEFOp = torch.ops.nep.nepToEFOp
+    nepToEFVOp = torch.ops.nep.nepToEFVOp
+    nepToEFLossOp = torch.ops.nep.nepToEFLossOp
+    nepToLossOp = torch.ops.nep.nepToLossOp
+    nepToDescriptorsOp = torch.ops.nep.nepToDescriptorsOp
+
+    ### Part 3. fvt
+    fvt_sr_lib_dir: str = os.path.join(ai2pot_source_build_lib_dir, "fvt")
+    fvt_sr_bind_so_path: str = os.path.join(fvt_sr_lib_dir, "libfvt_sr_op_bind.so")
+    torch.ops.load_library(fvt_sr_bind_so_path)
+    # name
+    forceSrOp = torch.ops.fvt.ForceSrOp
+    virialSrOp = torch.ops.fvt.VirialSrOp
 
 
 ### Part 4, gst
