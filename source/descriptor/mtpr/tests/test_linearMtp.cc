@@ -522,7 +522,7 @@ TEST_F(LinearMtpTest, efv_force_accuracy) {
         q_scaler);
 
     // *** delta
-    real cart_coords[inum][3] = {0};
+    real cart_coords[12][3] = {0};
     for (int ii=0; ii<inum; ii++)
         for (int aa=0; aa<3; aa++)
             cart_coords[ii][aa] = structure.get_cart_coords()[ii][aa];
@@ -620,7 +620,7 @@ TEST_F(LinearMtpTest, ef_force_accuracy) {
         q_scaler);
 
     // *** delta
-    real cart_coords[inum][3] = {0};
+    real cart_coords[12][3] = {0};
     for (int ii=0; ii<inum; ii++)
         for (int aa=0; aa<3; aa++)
             cart_coords[ii][aa] = structure.get_cart_coords()[ii][aa];
