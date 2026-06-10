@@ -18,7 +18,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef USE_OPENMP
+#if defined(USE_OPENMP) or defined(__INTELLISENSE__)
 #include <omp.h>
 #endif
 

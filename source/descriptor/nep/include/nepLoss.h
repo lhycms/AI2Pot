@@ -16,7 +16,9 @@
 #ifndef AI2POT_NEP_NEP_LOSS_H
 #define AI2POT_NEP_NEP_LOSS_H
 
+#if defined(USE_OPENMP) or defined(__INTELLISENSE__)
 #include <omp.h>
+#endif
 #include <stdlib.h>
 #include <math.h>
 
