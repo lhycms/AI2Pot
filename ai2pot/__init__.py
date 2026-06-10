@@ -15,6 +15,3 @@
 # You should have received a copy of the GNU General Public License
 # along with AI2Pot.  If not, see <http://www.gnu.org/licenses/>.
 
-from ai2pot import data
-from ai2pot import models
-from ai2pot import utils
