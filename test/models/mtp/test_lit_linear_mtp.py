@@ -17,10 +17,11 @@ from ai2pot.models.potential_train_utils import EnergyShiftCallback
 
 
 TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")
-PbTe_EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/C/train.xyz"
+PbTe_EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/gst/train.xyz"
 # "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/C/train.xyz"
 # "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/Li_battery/train.xyz"
 # os.path.join(TEST_FILES_DIR, "XYZ", "11_NEP_potential_PbTe", "train_m.xyz")
+# "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/gst/train.xyz"
 
 torch.manual_seed(42)
 torch.set_num_threads(16)
@@ -44,12 +45,12 @@ class LitLinearMtpTest(unittest.TestCase):
         
         # Lr hyperparameters
         max_epochs: int = 200
-        lr_start: float = 1e-3
-        lr_end: float = 1e-7
-        e_wgt_start: float = 1.0
-        e_wgt_end: float = 1.0
-        f_wgt_start: float = 2.0
-        f_wgt_end: float = 2.0
+        lr_start: float = 1e-2
+        lr_end: float = 1e-4
+        e_wgt_start: float = 0.1
+        e_wgt_end: float = 2.0
+        f_wgt_start: float = 10.0
+        f_wgt_end: float = 1.0
         v_wgt_start: float = 0.00
         v_wgt_end: float = 0.00
         max_clip_norm: float = 10.0
@@ -71,7 +72,9 @@ class LitLinearMtpTest(unittest.TestCase):
             f_wgt_end=f_wgt_end,
             v_wgt_start=v_wgt_start,
             v_wgt_end=v_wgt_end,
-            max_clip_norm=max_clip_norm).to(torch_float_dtype)
+            max_clip_norm=max_clip_norm,
+            zbl_rmax=0.0,
+            zbl_rmin=0.0).to(torch_float_dtype)
         
         ### DataModule hyperparameters
         rcut: float = rmax

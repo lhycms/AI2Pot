@@ -19,7 +19,7 @@ class NblistTest(unittest.TestCase):
         self.atoms: Atoms = ase_read(os.path.join(TEST_FILES_DIR, "POSCARs", "POSCAR"))
 
         self.rcut: float = 3.2
-        self.umax_num_neigh_atoms: int = 6
+        self.umax_num_neigh_atoms: int = 10
         self.pbc_xyz: List[bool] = [True, True, True]
         self.sort: bool = True
     

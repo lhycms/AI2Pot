@@ -27,7 +27,9 @@ EXTXYZ_PATH: str = os.path.join(TEST_FILES_DIR,
                                 "11_NEP_potential_PbTe",
                                 "train_m.xyz")
 EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/Li_battery/train.xyz"
+EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/Li_battery/train_802.xyz"
 #EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/C/train.xyz"
+EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/gst/test.xyz"
 
 torch.manual_seed(42)
 torch.set_num_threads(16)
@@ -122,7 +124,7 @@ class LinearMtpActiveDRTest(unittest.TestCase):
 class LinearMtp4ExtxyzTest(unittest.TestCase):
     def setUp(self):
         print("LinearMtp4ExtxyzTest (TestSuite) is setting up...")
-        self.checkpoint_path: str = "/data/home/liuhanyu/mycode/AI2Pot/lightning_logs/lightning_logs/version_50/checkpoints/epoch=199-step=5000.ckpt"
+        self.checkpoint_path: str = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/gst/lightning_logs_copy2/lightning_logs/version_1/checkpoints/epoch=62-step=165879.ckpt"
         self.testset_path: str = EXTXYZ_PATH
         self.map_location: str = "cuda"        
         self.torch_float_dtype: torch._C.dtype = torch.float32
@@ -167,9 +169,9 @@ class LinearMtp4ExtxyzTest(unittest.TestCase):
         #print(descriptors_max)
         #print(descriptors_min)
         print((descriptors_max - descriptors_min) / self.linear_mtp_extxyz.model.q_scaler_tensor)
-        print(descriptors[0, 0, :])
+        #print(descriptors[0, 0, :])
 
-        #print(self.linear_mtp_extxyz.model.linear_coeffs_tensor)
+        print(self.linear_mtp_extxyz.model.linear_coeffs_tensor)
     
 
 

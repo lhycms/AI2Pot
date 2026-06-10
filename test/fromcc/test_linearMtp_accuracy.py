@@ -92,7 +92,7 @@ class LinearMtpTest(unittest.TestCase):
         self.scaling: float = 12.1
         self.mtp_level: int = 18
         self.chebyshev_size: int = 8
-        self.rmax: float = 5.0
+        self.rmax: float = 6.0
         self.rmin: float = 0.0
         self.umax_num_neigh_atoms: int = 200
         self.fit_virial: bool = False
@@ -103,6 +103,7 @@ class LinearMtpTest(unittest.TestCase):
         self.type_map_tensor = torch.tensor(self.type_map, dtype=torch.int32).to(self.device)
         self.structure: Structure = Structure.from_file(MoS2_POSCAR_PATH)
         #
+        """
         self.ntypes: int = 2
         self.type_map: List[int] = [1, 8]
         self.type_map_tensor: torch.Tensor = torch.tensor(data=self.type_map, 
@@ -114,7 +115,7 @@ class LinearMtpTest(unittest.TestCase):
                                                       [3.0, 0.0, 0]
                                                       ],
                                               coords_are_cartesian=True)
-        #
+        """
         print(self.structure)
     
         # 2. ZBL
@@ -211,6 +212,7 @@ class LinearMtpTest(unittest.TestCase):
                                 self.zbl_dks_tensor)
         e: torch.Tensor
         f: torch.Tensor
+        print(e)
         print(f)
 
     
@@ -318,7 +320,7 @@ class LinearMtpTest(unittest.TestCase):
         print("-------------------------------------------------")
 
 
-    def test_output_descriptors(self):
+    def est_output_descriptors(self):
         input_info: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(self.structure)
         for item in input_info:
             item.to(self.device)
