@@ -519,7 +519,9 @@ void GroupZBL<CoordType>::correct_efv(CoordType &etot,
     CoordType distance_ij;
     CoordType distance_ij_inv;
 
+    #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
     #pragma omp for schedule(static)
+    #endif
     for (int ii=0; ii<inum; ii++) {
         center_idx = ilist[ii];
         type_inner = types[center_idx];
