@@ -17,7 +17,11 @@ set_target_properties(gst PROPERTIES
     SUFFIX ${PYTHON_MODULE_EXTENSION})
 target_include_directories(gst PRIVATE ${PYTHON_INCLUDE_DIRS})
 target_include_directories(gst PRIVATE ${NUMPY_INCLUDE_PATH})
-target_link_libraries(gst PRIVATE ${PYTHON_LIBRARIES})
+if(APPLE)
+    target_link_options(gst PRIVATE "-undefined" "dynamic_lookup")
+else()
+    target_link_libraries(gst PRIVATE ${PYTHON_LIBRARIES})
+endif()
 
 # 6. Compile test
 add_executable(test_altbc ${CMAKE_CURRENT_SOURCE_DIR}/test/test_altbc.cc)

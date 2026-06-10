@@ -22,7 +22,11 @@ set_target_properties(nblist PROPERTIES
 target_include_directories(nblist PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/bind)
 target_include_directories(nblist PRIVATE ${NUMPY_INCLUDE_PATH})
 target_include_directories(nblist PRIVATE ${PYTHON_INCLUDE_DIRS})
-target_link_libraries(nblist PRIVATE ${PYTHON_LIBRARIES})
+if(APPLE)
+    target_link_options(nblist PRIVATE "-undefined" "dynamic_lookup")
+else()
+    target_link_libraries(nblist PRIVATE ${PYTHON_LIBRARIES})
+endif()
 
 # 6.
 if (BUILD_TEST)
