@@ -128,13 +128,13 @@ class MlffToLossInput(object):
         num_atoms = len(structure.species)
         betot_dft_tensor: torch.Tensor = torch.zeros(size=(1,),
                                                      dtype=self.torch_float_dtype, 
-                                                     device=self.device) + 100.0
+                                                     device=self.device) + 2.1
         bforce_dft_tensor: torch.Tensor = torch.zeros(size=(1, num_atoms, 3), 
                                                       dtype=self.torch_float_dtype, 
-                                                      device=self.device) + 10.0
+                                                      device=self.device) + 3.2
         bvirial_dft_tensor: torch.Tensor = torch.zeros(size=(1, 3, 3),
                                                        dtype=self.torch_float_dtype, 
-                                                       device=self.device)
+                                                       device=self.device) + 4.1
         cell: np.ndarray = np.array(structure.lattice.matrix).astype(self.np_float_dtype)
         types: np.ndarray = np.array([self.type_map.index(el.Z) for el in structure.species])
         cart_coords: np.ndarray = np.array(structure.cart_coords).astype(self.np_float_dtype)
@@ -193,10 +193,10 @@ class MlffToEFLossInput(object):
         num_atoms = len(structure.species)
         betot_dft_tensor: torch.Tensor = torch.zeros(size=(1,),
                                                      dtype=self.torch_float_dtype, 
-                                                     device=self.device) + 10.0
+                                                     device=self.device) + 2.1
         bforce_dft_tensor: torch.Tensor = torch.zeros(size=(1, num_atoms, 3), 
                                                       dtype=self.torch_float_dtype, 
-                                                      device=self.device) + 10.0
+                                                      device=self.device) + 3.2
         cell: np.ndarray = np.array(structure.lattice.matrix).astype(self.np_float_dtype)
         types: np.ndarray = np.array([self.type_map.index(el.Z) for el in structure.species])
         cart_coords: np.ndarray = np.array(structure.cart_coords).astype(self.np_float_dtype)
