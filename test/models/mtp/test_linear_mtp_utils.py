@@ -14,25 +14,55 @@ from ai2pot.models.mtp.linear_mtp_utils import (LinearMtp4Extxyz,
 
 
 TEST_FILES_DIR = os.getenv("AI2POT_PATH")
-CHECK_POINT_PATH: str = os.path.join(TEST_FILES_DIR,
-                                     "lightning_logs",
-                                     "linear_mtp",
-                                     "version_34",
-                                     "checkpoints",
-                                     "epoch=146-step=3675.ckpt")
+CHECK_POINT_PATH: str = "/data/home/liuhanyu/ai2pot_paper/2.demo/hea_linear_mtp/lightning_logs/version_0/checkpoints/epoch=199-step=674000.ckpt"
 EXTXYZ_PATH: str = os.path.join(TEST_FILES_DIR,
                                 "test",
                                 "test_data",
                                 "XYZ",
                                 "11_NEP_potential_PbTe",
-                                "train_m.xyz")
+                                "train.xyz")
 EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/Li_battery/train.xyz"
 EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/Li_battery/train_802.xyz"
 #EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/C/train.xyz"
-EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/gst/test.xyz"
+#EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/gst/test.xyz"
+#EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/gst/train.xyz"
+EXTXYZ_PATH = "/data/home/liuhanyu/ai2pot_paper/2.demo/hea_linear_mtp/train.xyz"
 
 torch.manual_seed(42)
 torch.set_num_threads(16)
+
+
+
+class LinearMtp4ExtxyzTest(unittest.TestCase):
+    def setUp(self):
+        print("LinearMtp4ExtxyzTest (TestSuite) is setting up...")
+        self.checkpoint_path: str = CHECK_POINT_PATH
+        self.testset_path: str = EXTXYZ_PATH
+        self.map_location: str = "cuda"
+        self.torch_float_dtype: torch._C.dtype = torch.float32
+        self.linear_mtp_extxyz: LinearMtp4Extxyz = LinearMtp4Extxyz(checkpoint_path=self.checkpoint_path,
+                                                                    testset_path=self.testset_path,
+                                                                    map_location=self.map_location,
+                                                                    torch_float_dtype=self.torch_float_dtype,
+                                                                    pbc_xyz=[True, True, True])
+
+    def tearDown(self):
+        print("LinearMtp4ExtxyzTest (TestSuite) is tearing down...")
+
+
+    def test_calculate_parity(self):
+        e_dft_array, f_dft_array, e_ml_array, f_ml_array = self.linear_mtp_extxyz.calculate_parity()
+        print(e_dft_array.shape)
+        print(f_dft_array.shape)
+        print(e_ml_array.shape)
+        print(f_ml_array.shape)
+
+
+    def test_calculate_rmse(self):
+        e_rmse, f_rmse = self.linear_mtp_extxyz.calculate_rmse()
+        print("RMSE summary:")
+        print("\t1. RMSE of energy = {0:.3f} meV".format(e_rmse * 1000))
+        print("\t2. RMSE of force = {0:.3f} meV/A".format(f_rmse * 1000))
 
 
 """
@@ -119,61 +149,7 @@ class LinearMtpActiveDRTest(unittest.TestCase):
         print("\t1. Shape of T-SNE descriptors = ", tnse_2d.shape)
         self.linear_mtp_active_dr.plot_tsne_2d()
 """
-
-
-class LinearMtp4ExtxyzTest(unittest.TestCase):
-    def setUp(self):
-        print("LinearMtp4ExtxyzTest (TestSuite) is setting up...")
-        self.checkpoint_path: str = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/gst/lightning_logs_copy2/lightning_logs/version_1/checkpoints/epoch=62-step=165879.ckpt"
-        self.testset_path: str = EXTXYZ_PATH
-        self.map_location: str = "cuda"        
-        self.torch_float_dtype: torch._C.dtype = torch.float32
-        self.linear_mtp_extxyz: LinearMtp4Extxyz = LinearMtp4Extxyz(checkpoint_path=self.checkpoint_path,
-                                                                    testset_path=self.testset_path,
-                                                                    map_location=self.map_location,
-                                                                    torch_float_dtype=self.torch_float_dtype)
-
-    def tearDown(self):
-        print("LinearMtp4ExtxyzTest (TestSuite) is tearing down...")
-
     
-    def test_plot_ef_diagonal(self):
-        print("=== q_scaler ===")
-        print(1.0 / self.linear_mtp_extxyz.model.q_scaler_tensor)
-        print("=== q_scaler ===")
-        self.linear_mtp_extxyz.plot_ef_diagonal(save=True)
-
-
-    def test_calculate_ef_rmse(self):
-        e_rmse, f_rmse = self.linear_mtp_extxyz.calculate_ef_rmse()
-        print("RMSE summary:")
-        print("\t1. RMSE of energy = {0:.3f} meV".format(e_rmse * 1000))
-        print("\t2. RMSE of force = {0:.3f} meV/A".format(f_rmse * 1000))
-
-
-    def test_print_descriptor(self):
-        from ase import Atoms
-        from ase.io import read as ase_read
-        from ai2pot.utils.usepot import MlffInput
-        mlff_input: MlffInput = MlffInput(type_map=self.linear_mtp_extxyz.model.type_map_tensor.detach().cpu().numpy().tolist(),
-                                          rcut=5.0,
-                                          umax_num_neigh_atoms=200,
-                                          pbc_xyz=[True, True, True],
-                                          sort=False,
-                                          dtype=self.torch_float_dtype,
-                                          device=torch.device(self.map_location))
-        atoms: Atoms = ase_read(filename=EXTXYZ_PATH, index=":")[0]
-        descriptors = self.linear_mtp_extxyz.model.predict_descriptors(*mlff_input.analyse_ase(atoms=atoms))
-        descriptors_max = descriptors.max(dim=0, keepdim=False)[0].max(dim=0, keepdim=False)[0]
-        descriptors_min = descriptors.min(dim=0, keepdim=False)[0].min(dim=0, keepdim=False)[0]
-        #print(descriptors_max)
-        #print(descriptors_min)
-        print((descriptors_max - descriptors_min) / self.linear_mtp_extxyz.model.q_scaler_tensor)
-        #print(descriptors[0, 0, :])
-
-        print(self.linear_mtp_extxyz.model.linear_coeffs_tensor)
-    
-
 
 
 if __name__ == '__main__':
