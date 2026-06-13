@@ -172,6 +172,7 @@ template <typename CoordType>
 void find_v_se_torch_launcher(
     CoordType *d_v_se_ptr,
     int batch_size,
+    int *d_binum,
     CoordType *d_bvirial_ml,
     CoordType *d_bvirial_dft);
 

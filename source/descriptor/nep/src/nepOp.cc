@@ -471,12 +471,14 @@ extern template void find_f_se_torch_launcher(
 extern template void find_v_se_torch_launcher(
     float *d_v_se_ptr,
     int batch_size,
+    int *d_binum,
     float *d_bvirial_ml,
     float *d_bvirial_dft);
 
 extern template void find_v_se_torch_launcher(
     double *d_v_se_ptr,
     int batch_size,
+    int *d_binum,
     double *d_bvirial_ml,
     double *d_bvirial_dft);
 
@@ -2636,6 +2638,7 @@ torch::autograd::variable_list NepToLossFunction::forward(
             find_v_se_torch_launcher(
                 v_rmse_ptr,
                 batch_size,
+                binum,
                 bvirial,
                 bvirial_dft);
             e_rmse_tensor = torch::sqrt(e_rmse_tensor / batch_size);
@@ -2858,6 +2861,7 @@ torch::autograd::variable_list NepToLossFunction::forward(
             find_v_se_torch_launcher(
                 v_rmse_ptr,
                 batch_size,
+                binum,
                 bvirial,
                 bvirial_dft);
             e_rmse_tensor = torch::sqrt(e_rmse_tensor / batch_size);

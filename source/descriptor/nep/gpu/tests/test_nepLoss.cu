@@ -173,6 +173,7 @@ TEST_F(NepLossTest, find_v_se_launcher) {
     ai2pot::nep::find_v_se_launcher<double>(
         &v_se,
         batch_size,
+        binum,
         bvirial_ml,
         bvirial_dft);
 

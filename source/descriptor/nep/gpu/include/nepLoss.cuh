@@ -408,6 +408,7 @@ static __global__
 void find_v_se_kernel(
     CoordType *v_se_ptr,
     int batch_size,
+    int *binum,
     CoordType *bvirial_ml,
     CoordType *bvirial_dft);
 
@@ -416,6 +417,7 @@ static __host__
 void find_v_se_launcher(
     CoordType *h_v_se_ptr,
     int batch_size,
+    int *h_binum,
     CoordType *h_bvirial_ml,
     CoordType *h_bvirial_dft);
 
@@ -2520,6 +2522,7 @@ __global__
 void find_v_se_kernel(
     CoordType *v_se_ptr,
     int batch_size,
+    int *binum,
     CoordType *bvirial_ml,
     CoordType *bvirial_dft)
 {
@@ -2532,7 +2535,7 @@ void find_v_se_kernel(
     for (int ii=nx; ii<batch_size; ii+=gridDim.x*blockDim.x) {
         for (int a=0; a<3; a++) {
             for (int b=0; b<3; b++) {
-                CoordType tmp_diff = (bvirial_ml[ii*9 + a*3 + b] - bvirial_dft[ii*9 + a*3 + b]);
+                CoordType tmp_diff = (bvirial_ml[ii*9 + a*3 + b] - bvirial_dft[ii*9 + a*3 + b]) / binum[ii];
                 local_sum += tmp_diff * tmp_diff;
             }
         }
@@ -2562,6 +2565,7 @@ __host__
 void find_v_se_launcher(
     CoordType *h_v_se_ptr,
     int batch_size,
+    int *h_binum,
     CoordType *h_bvirial_ml,
     CoordType *h_bvirial_dft)
 {
@@ -2571,14 +2575,17 @@ void find_v_se_launcher(
     dim3 block_size(block_size_x);
 
     CoordType *d_v_se_ptr;
+    int *d_binum;
     CoordType *d_bvirial_ml;
     CoordType *d_bvirial_dft;
     
     CHECK_CUDA_API( cudaMalloc((void**)&d_v_se_ptr, sizeof(CoordType)) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_binum, sizeof(int)*batch_size) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_bvirial_ml, sizeof(CoordType)*batch_size*9) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_bvirial_dft, sizeof(CoordType)*batch_size*9) );
 
     CHECK_CUDA_API( cudaMemset(d_v_se_ptr, 0, sizeof(CoordType)) );
+    CHECK_CUDA_API( cudaMemcpy(d_binum, h_binum, sizeof(int)*batch_size, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_bvirial_ml, h_bvirial_ml, sizeof(CoordType)*batch_size*9, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_bvirial_dft, h_bvirial_dft, sizeof(CoordType)*batch_size*9, cudaMemcpyHostToDevice) );
 
@@ -2586,6 +2593,7 @@ void find_v_se_launcher(
     find_v_se_kernel KERNEL_ARG2(grid_size, block_size) (
         d_v_se_ptr,
         batch_size,
+        d_binum,
         d_bvirial_ml,
         d_bvirial_dft);
     CHECK_CUDA_KERNEL;
@@ -2593,6 +2601,7 @@ void find_v_se_launcher(
     CHECK_CUDA_API( cudaMemcpy(h_v_se_ptr, d_v_se_ptr, sizeof(CoordType), cudaMemcpyDeviceToHost) );
 
     CHECK_CUDA_API( cudaFree(d_v_se_ptr) );
+    CHECK_CUDA_API( cudaFree(d_binum) );
     CHECK_CUDA_API( cudaFree(d_bvirial_ml) );
     CHECK_CUDA_API( cudaFree(d_bvirial_dft) );
 }
