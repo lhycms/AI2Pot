@@ -98,7 +98,6 @@ class LinearMtpTest(unittest.TestCase):
         self.umax_num_neigh_atoms: int = 200
         self.fit_virial: bool = False
         
-        
         self.ntypes: int = 2
         self.type_map: List[int] = [42, 16] #[16, 34, 41, 75]
         self.type_map_tensor = torch.tensor(self.type_map, dtype=torch.int32).to(self.device)

@@ -135,7 +135,7 @@ class Nep(nn.Module):
 
     def forward(self, *args, **kwargs):
         if (self.fit_virial):
-            pass
+            bmse_tensor: torch.Tensor = self.predict_loss(*args, **kwargs)
         else:
             bmse_tensor: torch.Tensor = self.predict_ef_loss(*args, **kwargs)
         return bmse_tensor
