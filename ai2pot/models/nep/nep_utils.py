@@ -56,7 +56,7 @@ class Nep4Extxyz(Potential4ExtxyzBase):
         self.testset_path: str = testset_path
         self.lit_module: LitNep = LitNep.load_from_checkpoint(checkpoint_path=self.checkpoint_path,
                                                               map_location=map_location)
-        self.has_virial: bool = self.lit_module.model.fit_virial
+        self.fit_virial: bool = self.lit_module.model.fit_virial
 
         # model and data
         self.model: Nep = self.lit_module.model
@@ -68,7 +68,7 @@ class Nep4Extxyz(Potential4ExtxyzBase):
             pbc_xyz=pbc_xyz,
             sort=False,
             torch_float_dtype=self.lit_module.dtype,
-            has_virial=self.has_virial)
+            has_virial=self.fit_virial)
         extxyz_datamodule.setup("test")
         self.test_dataloader: DataLoader = extxyz_datamodule.test_dataloader()
 
