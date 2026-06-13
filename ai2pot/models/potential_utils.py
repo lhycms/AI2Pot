@@ -40,7 +40,6 @@ class Potential4ExtxyzBase(object):
             checkpoint_path: str,
             testset_path: str,
             map_location: str = "cpu",
-            torch_float_dtype: torch._C.dtype = torch.float32,
             pbc_xyz: List[bool] = [True, True, True]):
         self.checkpoint_path: str = checkpoint_path
         self.testset_path: str = testset_path
