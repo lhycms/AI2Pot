@@ -372,6 +372,7 @@ template <typename CoordType>
 void find_v_se_torch_launcher(
     CoordType *d_v_se_ptr,
     int batch_size,
+    int *d_binum,
     CoordType *d_bvirial_ml,
     CoordType *d_bvirial_dft)
 {
@@ -383,6 +384,7 @@ void find_v_se_torch_launcher(
     find_v_se_kernel KERNEL_ARG2(grid_size, block_size) (
         d_v_se_ptr,
         batch_size,
+        d_binum,
         d_bvirial_ml,
         d_bvirial_dft);
     CHECK_CUDA_KERNEL;

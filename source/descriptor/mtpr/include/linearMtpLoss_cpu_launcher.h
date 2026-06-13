@@ -513,7 +513,7 @@ static void find_efv_rmse_cpu_launcher(
 
         for (int a=0; a<3; a++) {
             for (int b=0; b<3; b++) {
-                CoordType tmp_v_diff = bvirial_ml[bb*9 + a*3+b] - bvirial_dft[bb*9 + a*3+b];
+                CoordType tmp_v_diff = (bvirial_ml[bb*9 + a*3+b] - bvirial_dft[bb*9 + a*3+b]) / binum[bb];
                 v_mse += tmp_v_diff * tmp_v_diff;
             }
         }

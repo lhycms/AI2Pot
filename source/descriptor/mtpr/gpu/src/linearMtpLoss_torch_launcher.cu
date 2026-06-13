@@ -293,11 +293,13 @@ template void ai2pot::mtpr::find_f_se_torch_launcher(
 template void ai2pot::mtpr::find_v_se_torch_launcher(
     float *d_v_se_ptr,
     int batch_size,
+    int *d_binum,
     float *d_bvirial_ml,
     float *d_bvirial_dft);
 
 template void ai2pot::mtpr::find_v_se_torch_launcher(
     double *d_v_se_ptr,
     int batch_size,
+    int *d_binum,
     double *d_bvirial_ml,
     double *d_bvirial_dft);

@@ -83,8 +83,8 @@ class Potential4ExtxyzBase(object):
                 e_dft_list.append(betot_dft_tensor / binum_tensor)
                 f_ml_list.append(bforce_ml_tensor[mask_for_force])
                 f_dft_list.append(bforce_dft_tensor[mask_for_force])
-                v_ml_list.append(bvirial_ml_tensor / binum_tensor)
-                v_dft_list.append(bvirial_dft_tensor / binum_tensor)
+                v_ml_list.append(bvirial_ml_tensor / binum_tensor[:, None])
+                v_dft_list.append(bvirial_dft_tensor / binum_tensor[:, None])
             else:
                 binum_tensor, bilist_tensor, bnumneigh_tensor, bfirstneigh_tensor, \
                     brcs_tensor, btypes_tensor, bnghost_tensor, \
