@@ -103,20 +103,6 @@ class LinearMtpTest(unittest.TestCase):
         self.type_map: List[int] = [42, 16] #[16, 34, 41, 75]
         self.type_map_tensor = torch.tensor(self.type_map, dtype=torch.int32).to(self.device)
         self.structure: Structure = Structure.from_file(MoS2_POSCAR_PATH)
-        #
-        """
-        self.ntypes: int = 2
-        self.type_map: List[int] = [1, 8]
-        self.type_map_tensor: torch.Tensor = torch.tensor(data=self.type_map, 
-                                                          dtype=torch.int32).to(self.device)
-        self.structure: Structure = Structure(lattice=[[10, 0, 0], [0, 10, 0], [0, 0, 10]],
-                                              species=["H", "H", "O"],
-                                              coords=[[0, 0, 0],
-                                                      [0, 4.0, 0],
-                                                      [3.0, 0.0, 0]
-                                                      ],
-                                              coords_are_cartesian=True)
-        """
         #print(self.structure)
     
         # 2. ZBL

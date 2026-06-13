@@ -33,7 +33,7 @@ class NepTest(unittest.TestCase):
         print("NepTest (TestCase) is setting up...\n")
         # 0.
         self.torch_float_dtype: torch._C.dtype = torch.float64
-        self.device: torch._C.device = torch.device("cpu")
+        self.device: torch._C.device = torch.device("cuda")
 
         # 1. 
         self.n_radial_basis: int = 4
@@ -54,18 +54,7 @@ class NepTest(unittest.TestCase):
         #self.type_map_tensor: torch.Tensor = torch.tensor(data=[6], dtype=torch.int32)
         self.type_map_tensor: torch.Tensor = torch.tensor(data=[16, 42], dtype=torch.int32)
         self.structure: Structure = Structure.from_file(MoS2_POSCAR_PATH)
-        """
-        self.ntypes: int = 2
-        self.type_map_tensor: torch.Tensor = torch.tensor(data=[1, 8], dtype=torch.int32)
-        self.structure: Structure = Structure(lattice=[[10, 0, 0], [0, 10, 0], [0, 0, 10]],
-                                              species=["H", "H", "O"],
-                                              coords=[[0, 0, 0], 
-                                                      [0, 4.0, 0],
-                                                      [3.0, 0.0, 0]
-                                                      ],
-                                              coords_are_cartesian=True)
-        """
-        print(self.structure)
+        #print(self.structure)
 
         # 2. ZBL
         self.zbl_rmax: float = 0.0
