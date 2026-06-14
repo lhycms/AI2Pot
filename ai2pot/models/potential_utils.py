@@ -69,7 +69,7 @@ class Potential4ExtxyzBase(object):
                 binum_tensor, bilist_tensor, bnumneigh_tensor, bfirstneigh_tensor, \
                     brcs_tensor, btypes_tensor, bnghost_tensor, \
                     betot_dft_tensor, bforce_dft_tensor, bvirial_dft_tensor = \
-                    [t.to(self.lit_module.device) for t in batch_data]
+                        [t.to(self.lit_module.device) for t in batch_data]
 
                 betot_ml_tensor, bforce_ml_tensor, bvirial_ml_tensor= self.model.predict_efv(binum_tensor,
                                                                                              bilist_tensor,
@@ -122,6 +122,7 @@ class Potential4ExtxyzBase(object):
         return e_dft_array, f_dft_array, e_ml_array, f_ml_array
 
 
+    @torch.no_grad()
     def calculate_rmse(self) -> Tuple[float]:
         if (self.fit_virial):
             e_dft_array, f_dft_array, v_dft_array, e_ml_array, f_ml_array, v_ml_array = self.calculate_parity()
@@ -145,6 +146,45 @@ class Potential4ExtxyzBase(object):
             return e_rmse.item(), f_rmse.item(), v_rmse.item()
 
         return e_rmse.item(), f_rmse.item()
+
+
+    @torch.no_grad()
+    def calculate_descriptors(self) -> Tuple[np.ndarray, np.ndarray]:
+        descriptors_list: List[torch.Tensor] = []
+        atomic_numbers_list: List[torch.Tensor] = []
+
+        for batch_idx, batch_data in enumerate(self.test_dataloader):
+            if (self.fit_virial):
+                binum_tensor, bilist_tensor, bnumneigh_tensor, bfirstneigh_tensor, \
+                    brcs_tensor, btypes_tensor, bnghost_tensor, \
+                    betot_dft_tensor, bforce_dft_tensor, bvirial_dft_tensor = \
+                        [t.to(self.lit_module.device) for t in batch_data]
+            else:
+                binum_tensor, bilist_tensor, bnumneigh_tensor, bfirstneigh_tensor, \
+                    brcs_tensor, btypes_tensor, bnghost_tensor, \
+                    betot_dft_tensor, bforce_dft_tensor = \
+                        [t.to(self.lit_module.device) for t in batch_data]
+            bdescriptors_tensor: torch.Tensor = self.model.predict_descriptors(binum_tensor,
+                                                                               bilist_tensor,
+                                                                               bnumneigh_tensor,
+                                                                               bfirstneigh_tensor,
+                                                                               brcs_tensor,
+                                                                               btypes_tensor,
+                                                                               bnghost_tensor)
+
+            mask_for_center_atoms: torch.Tensor = torch.arange(bilist_tensor.size(1),
+                                                               device=self.lit_module.device,
+                                                               dtype=torch.int32)[None, :] < binum_tensor[:, None]
+            descriptors_list.append(bdescriptors_tensor[mask_for_center_atoms])
+
+            safe_bilist_tensor: torch.Tensor = bilist_tensor.long().clamp(min=0, max=btypes_tensor.size(1)-1)
+            bitype_tensor: torch.Tensor = torch.gather(input=btypes_tensor, dim=1, index=safe_bilist_tensor.to(dtype=torch.int64))
+            atomic_numbers_list.append(self.model.type_map_tensor[bitype_tensor.long()][mask_for_center_atoms])
+            
+        descriptors_array: np.ndarray = torch.cat(descriptors_list, dim=0).detach().cpu().numpy()
+        atomic_numbers_array: np.ndarray = torch.cat(atomic_numbers_list, dim=0).detach().cpu().numpy()
+        return descriptors_array, atomic_numbers_array
+
 
 
 

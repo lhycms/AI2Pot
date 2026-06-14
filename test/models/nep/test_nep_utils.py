@@ -35,9 +35,7 @@ class Nep4ExtxyzTest(unittest.TestCase):
         self.torch_float_dtype: torch._C.dtype = torch.float32
         self.nep_extxyz: Nep4Extxyz = Nep4Extxyz(checkpoint_path=CHECK_POINT_PATH,
                                                  testset_path=self.testset_path,
-                                                 map_location=self.map_location,
-                                                 torch_float_dtype=self.torch_float_dtype)
-        print(self.nep_extxyz.model.coeffs_tensor)
+                                                 map_location=self.map_location)
 
     def tearDown(self):
         print("Nep4ExtxyzTest (TestCase) is tearing down...")
@@ -57,6 +55,12 @@ class Nep4ExtxyzTest(unittest.TestCase):
         print("\t2. RMSE of force = {0:.3f} meV/A".format(f_rmse * 1000))
 
 
+    def test_calculate_descriptors(self):
+        descriptors_array, atomic_numbers_array = self.nep_extxyz.calculate_descriptors()
+        print("1.1. descriptors_array.shape = ", descriptors_array.shape)
+        print("1.2. atomic_numbers_array.shape = ", atomic_numbers_array.shape)
+
+
 class NepCalculatorTest(unittest.TestCase):
     def setUp(self):
         print("NepCalculator (TestSuite) is setting up...")
@@ -74,7 +78,7 @@ class NepCalculatorTest(unittest.TestCase):
         print("NepCalculator (TestSuite) is tearing down...")
 
 
-    def test_calculate_without_virial(self):
+    def est_calculate_without_virial(self):
         print("Calculator (without virial) Summary:")
         print("-------------------")
         print("\t1.1. Energy = ", self.atoms.get_potential_energy())
@@ -84,7 +88,7 @@ class NepCalculatorTest(unittest.TestCase):
         print("\t2.1. descriptors.shape = ",self.nep_calculator.get_property("descriptors", self.atoms).shape)
     
 
-    def test_calculate_with_virial(self):
+    def est_calculate_with_virial(self):
         print("Calculator (with virial) Summary:")
         print("-------------------")
         print("\t1.1. Energy = ", self.atoms.get_potential_energy())

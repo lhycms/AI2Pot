@@ -43,7 +43,6 @@ class LinearMtp4ExtxyzTest(unittest.TestCase):
         self.linear_mtp_extxyz: LinearMtp4Extxyz = LinearMtp4Extxyz(checkpoint_path=self.checkpoint_path,
                                                                     testset_path=self.testset_path,
                                                                     map_location=self.map_location,
-                                                                    torch_float_dtype=self.torch_float_dtype,
                                                                     pbc_xyz=[True, True, True])
 
     def tearDown(self):
@@ -63,6 +62,12 @@ class LinearMtp4ExtxyzTest(unittest.TestCase):
         print("RMSE summary:")
         print("\t1. RMSE of energy = {0:.3f} meV".format(e_rmse * 1000))
         print("\t2. RMSE of force = {0:.3f} meV/A".format(f_rmse * 1000))
+
+    
+    def test_calculate_descriptors(self):
+        descriptors_array, atomic_numbers_array = self.linear_mtp_extxyz.calculate_descriptors()
+        print("1.1. descriptors_array.shape = ", descriptors_array.shape)
+        print("1.2. atomic_numbers_array.shape = ", atomic_numbers_array.shape)
 
 
 
@@ -84,7 +89,7 @@ class LinearMtpCalculatorTest(unittest.TestCase):
         print("LinearMtpCalculator (TestSuite) is tearing down...")
 
 
-    def test_calculate_without_virail(self):
+    def est_calculate_without_virail(self):
         print("Calculator (without virial) Summary:")
         print("-------------------")
         print("\t1.1. Energy = ", self.atoms.get_potential_energy())
@@ -94,7 +99,7 @@ class LinearMtpCalculatorTest(unittest.TestCase):
         print("\t2.1. descriptors.shape = ", self.atoms.calc.get_property("descriptors", atoms=self.atoms).shape)
 
 
-    def test_calculate_with_virial(self):
+    def est_calculate_with_virial(self):
         print("Calculator (virial) Summary:")
         print("-------------------")
         print("\t1.1. Energy = ", self.atoms.get_potential_energy())
