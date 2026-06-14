@@ -18,7 +18,8 @@
 
 from typing import List, Optional, Tuple
 
-from ase.calculators.calculator import (Calculator, 
+from ase.calculators.calculator import (Calculator,
+                                        PropertyNotImplementedError,
                                         all_changes)
 from ase import Atoms
 import numpy as np
@@ -99,7 +100,7 @@ class Potential4ExtxyzBase(object):
                                                                  bnghost_tensor)
                 mask_for_force: torch.Tensor = torch.arange(bilist_tensor.size(1),
                                                             device=self.lit_module.device,
-                                                            dtype=self.lit_module.dtype)[None, :] < binum_tensor[:, None]
+                                                            dtype=torch.int32)[None, :] < binum_tensor[:, None]
                 
                 e_ml_list.append(betot_ml_tensor / binum_tensor)
                 e_dft_list.append(betot_dft_tensor / binum_tensor)
@@ -145,52 +146,63 @@ class Potential4ExtxyzBase(object):
 
 
 
-class PotentialCalculatorBase(Calculator):
-    implemented_properties = ['energy',
-                              'forces',
-                              "descriptors",
-                              'e_sites',
-                              "coeffs_gradients"]
-    
-    def __init__(
-            self,
-            checkpoint_path: str,
-            map_location: str = "cpu",
-            torch_float_dtype: torch._C.dtype = torch.float32,
-            **kwargs):
+class PotentialCalculatorBase(Calculator):    
+    def __init__(self,
+                 checkpoint_path: str,
+                 map_location: str = "cpu",
+                 pbc_xyz: List[bool] = [True, True, True],
+                 **kwargs):
         super().__init__(**kwargs)
         self.checkpoint_path: str = checkpoint_path
-        self.torch_float_dtype: torch._C.dtype = torch_float_dtype
         self.lit_moudle: Optional[L.LightningModule] = None
-        self.has_virial: Optional[bool] = None
+        self.fit_virial: Optional[bool] = None
 
         # model and data
         self.model: Optional[torch.Module] = None
         self.mlff_input: Optional[MlffInput] = None
     
 
-    def calculate(
-            self,
-            atoms: Atoms,
-            properties: Optional[List[str]] = None,
-            system_changes: List[str] = all_changes):
-        super().calculate(atoms, properties, system_changes)
-        if ("energy" in properties) or ("forces" in properties):
-            if (self.has_virial == False):
-                e, f = self.predict_ef(atoms = atoms)
-                self.results["energy"] = e
-                self.results["forces"] = f
-            else:
-                pass
-        
-        if ("e_sites" in properties):
-            self.results["e_sites"] = self.predict_e_sites(atoms=atoms)
+    def calculate(self,
+                  atoms: Atoms,
+                  properties: Optional[List[str]] = None,
+                  system_changes: List[str] = all_changes):
+        # 1.
+        ## 1.1. Which can provide
+        self.implemented_properties: List[str] = ["energy", "forces", "descriptors"]
+        if self.fit_virial:
+            self.implemented_properties.extend(["virial", "stress"])
+        # 1.2. To calculate
+        requested_properties: List[str] = properties or ["energy"]
+        unsupported_properties = set(requested_properties) - set(self.implemented_properties)
+        if unsupported_properties:
+            unsupported_string: str = ", ".join(sorted(unsupported_properties))
+            supported_string: str = ", ".join(self.implemented_properties)
 
-        if ("descriptors" in properties):
-            self.results["descriptors"] = self.predict_descriptors(atoms=atoms)
+            raise PropertyNotImplementedError(
+            f"The loaded model does not support: {unsupported_string}. "
+            f"Supported properties are: {supported_string}."
+        )
+        # 1.3.
+        super().calculate(atoms, requested_properties, system_changes)
 
-        #if ("coeffs_gradients" in properties):
-        #    self.results["coeffs_gradients"] = self.predict_coeffs_gradients(atoms=atoms)
+        # 2. Optional
+        if "descriptors" in requested_properties:
+            descriptors_tensor: torch.Tensor = self.model.predict_descriptors(*self.mlff_input.analyse_ase(atoms))
+            self.results["descriptors"] = descriptors_tensor.detach().cpu().numpy()
+
+        # 3. Calculate energy, force, virial, stress
+        if self.fit_virial:
+            energy_tensor, forces_tensor, virial_tensor = self.model.predict_efv(*self.mlff_input.analyse_ase(atoms=atoms))
+            self.results["virial"] = virial_tensor.detach().cpu().numpy().shape(3, 3)
+            self.results["stress"] = virial_tensor
+        else:
+            energy_tensor, forces_tensor = self.model.predict_ef(*self.mlff_input.analyse_ase(atoms))
+        self.results["energy"] = energy_tensor.detach().cpu().numpy().item()
+        self.results["forces"] = forces_tensor.detach().cpu().numpy().reshape(-1, 3)
+
+
+        #if ("descriptors" in properties):
+        #    self.results["descriptors"] = self.predict_descriptors(atoms=atoms)
     
 
     def predict_ef(self, atoms: Atoms):

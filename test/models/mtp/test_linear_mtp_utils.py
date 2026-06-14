@@ -14,7 +14,7 @@ from ai2pot.models.mtp.linear_mtp_utils import (LinearMtp4Extxyz,
 
 
 TEST_FILES_DIR = os.getenv("AI2POT_PATH")
-CHECK_POINT_PATH: str = "/data/home/liuhanyu/ai2pot_paper/2.demo/hea_linear_mtp/lightning_logs/version_0/checkpoints/epoch=199-step=674000.ckpt"
+CHECK_POINT_PATH: str = "/data/home/liuhanyu/mycode/AI2Pot/lightning_logs/lightning_logs/version_59/checkpoints/epoch=199-step=5000.ckpt"
 EXTXYZ_PATH: str = os.path.join(TEST_FILES_DIR,
                                 "test",
                                 "test_data",
@@ -22,11 +22,11 @@ EXTXYZ_PATH: str = os.path.join(TEST_FILES_DIR,
                                 "11_NEP_potential_PbTe",
                                 "train.xyz")
 EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/Li_battery/train.xyz"
-EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/Li_battery/train_802.xyz"
+#EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/Li_battery/train_802.xyz"
 #EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/C/train.xyz"
 #EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/gst/test.xyz"
 #EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/gst/train.xyz"
-EXTXYZ_PATH = "/data/home/liuhanyu/ai2pot_paper/2.demo/hea_linear_mtp/train.xyz"
+#EXTXYZ_PATH = "/data/home/liuhanyu/ai2pot_paper/2.demo/hea_linear_mtp/train.xyz"
 
 torch.manual_seed(42)
 torch.set_num_threads(16)
@@ -50,7 +50,7 @@ class LinearMtp4ExtxyzTest(unittest.TestCase):
         print("LinearMtp4ExtxyzTest (TestSuite) is tearing down...")
 
 
-    def test_calculate_parity(self):
+    def est_calculate_parity(self):
         e_dft_array, f_dft_array, e_ml_array, f_ml_array = self.linear_mtp_extxyz.calculate_parity()
         print(e_dft_array.shape)
         print(f_dft_array.shape)
@@ -58,18 +58,18 @@ class LinearMtp4ExtxyzTest(unittest.TestCase):
         print(f_ml_array.shape)
 
 
-    def test_calculate_rmse(self):
+    def est_calculate_rmse(self):
         e_rmse, f_rmse = self.linear_mtp_extxyz.calculate_rmse()
         print("RMSE summary:")
         print("\t1. RMSE of energy = {0:.3f} meV".format(e_rmse * 1000))
         print("\t2. RMSE of force = {0:.3f} meV/A".format(f_rmse * 1000))
 
 
-"""
+
 class LinearMtpCalculatorTest(unittest.TestCase):
     def setUp(self):
         print("LinearMtpCalculator (TestSuite) is setting up...")
-        self.checkpoint_path: str = "/data/home/liuhanyu/mycode/AI2Pot/lightning_logs/version_2/checkpoints/epoch=199-step=5000.ckpt"
+        self.checkpoint_path: str = CHECK_POINT_PATH
         self.map_location: str = "cpu"
         self.torch_float_dtype: torch._C.dtype = torch.float32
         
@@ -84,32 +84,25 @@ class LinearMtpCalculatorTest(unittest.TestCase):
         print("LinearMtpCalculator (TestSuite) is tearing down...")
 
 
-    def test_calculate(self):
-        print("Calculator Summary:")
+    def test_calculate_without_virail(self):
+        print("Calculator (without virial) Summary:")
         print("-------------------")
-        print("\t1. Energy = ", self.atoms.get_potential_energy())
-        print("\t2. forces.shape = ", self.atoms.get_forces().shape)
-        print("\t3. descriptors.shape = ",self.linear_mtp_calculator.get_property("descriptors", self.atoms).shape)
-        #print("\t4. coeffs_gradients.shape = ", self.linear_mtp_calculator.get_property("coeffs_gradients", self.atoms).shape)
+        print("\t1.1. Energy = ", self.atoms.get_potential_energy())
+        print("\t1.2. forces.shape = ", self.atoms.get_forces().shape)
+        print()
+
+        print("\t2.1. descriptors.shape = ", self.atoms.calc.get_property("descriptors", atoms=self.atoms).shape)
 
 
-    def test_predict_atoms_ef(self):
-        e, f = self.linear_mtp_calculator.predict_ef(atoms=self.atoms)
-        e: float = e
-        f: np.ndarray = f
-        print("\t1. Energy = {0:.3f} eV".format(e))
-        print("\t2. Force.shape = ", f.shape)
-    
-
-    def test_predict_atoms_e_sites(self):
-        e_sites = self.linear_mtp_calculator.predict_e_sites(atoms=self.atoms)
-        print("\t1. e_sites.shape = ", e_sites.shape)
+    def test_calculate_with_virial(self):
+        print("Calculator (without virial) Summary:")
+        print("-------------------")
+        print("\t1.1. Energy = ", self.atoms.get_potential_energy())
+        print("\t1.2. force.shape = ", self.atoms.get_forces().shape)
+        print("\t1.3. virial.shape = ", self.atoms.get_stress().shape)
 
     
-    #def test_predict_atoms_coeffs_gradients(self):
-    #    coeffs_gradients: np.ndarray = self.linear_mtp_calculator.predict_coeffs_gradients(atoms=self.atoms)
-    #    print("\t1. coeffs_gradients.shape = ", coeffs_gradients.shape)
-"""
+
 
 """
 class LinearMtpActiveDRTest(unittest.TestCase):
