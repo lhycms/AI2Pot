@@ -74,37 +74,30 @@ class Nep4Extxyz(Potential4ExtxyzBase):
 
 
 class NepCalculator(PotentialCalculatorBase):
-    implemented_properties = ['energy', 
-                              'e_sites',
-                              'forces',
-                              "descriptors",
-                              "coeffs_gradients"]
-
     def __init__(self,
                  checkpoint_path: str,
                  map_location: str = "cpu",
-                 torch_float_dtype: torch._C.dtype = torch.float32,
+                 pbc_xyz: List[bool] = [True, True, True],
                  **kwargs):
         super().__init__(
             checkpoint_path=checkpoint_path,
             map_location=map_location,
-            torch_float_dtype=torch_float_dtype,
+            pbc_xyz=pbc_xyz,
             **kwargs)
         self.checkpoint_path: str = checkpoint_path
-        self.torch_float_dtype: torch._C.dtype = torch_float_dtype
         self.lit_module: LitNep = LitNep.load_from_checkpoint(checkpoint_path=self.checkpoint_path,
                                                               map_location=map_location)
-        self.has_virial: bool = self.lit_module.model.fit_virial
+        self.fit_virial: bool = self.lit_module.model.fit_virial
 
         # model and data
-        self.model: LitNep = self.lit_module.model.to(torch_float_dtype)
+        self.model: LitNep = self.lit_module.model
         self.mlff_input: MlffInput = MlffInput(
-            type_map=self.model.type_map_tensor.numpy().tolist(),
-            rcut=self.model.rmax,
+            type_map=self.model.type_map_tensor.detach().cpu().numpy().tolist(),
+            rcut=self.model.rmax_radial,
             umax_num_neigh_atoms=self.model.umax_num_neigh_atoms,
-            pbc_xyz=[True, True, True],
+            pbc_xyz=pbc_xyz,
             sort=False,
-            dtype=self.torch_float_dtype,
+            dtype=self.lit_module.dtype,
             device=torch.device(map_location))
 
         

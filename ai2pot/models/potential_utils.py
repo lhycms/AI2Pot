@@ -21,9 +21,11 @@ from typing import List, Optional, Tuple
 from ase.calculators.calculator import (Calculator,
                                         PropertyNotImplementedError,
                                         all_changes)
+from ase.stress import full_3x3_to_voigt_6_stress
 from ase import Atoms
 import numpy as np
 import torch
+import torch.nn as nn
 from torch.utils.data import DataLoader
 import lightning as L
 
@@ -146,7 +148,13 @@ class Potential4ExtxyzBase(object):
 
 
 
-class PotentialCalculatorBase(Calculator):    
+class PotentialCalculatorBase(Calculator):
+    implemented_properties: List[str] = ["energy",
+                                         "forces",
+                                         "virial",
+                                         "stress",
+                                         "descriptors"]
+    
     def __init__(self,
                  checkpoint_path: str,
                  map_location: str = "cpu",
@@ -154,11 +162,11 @@ class PotentialCalculatorBase(Calculator):
                  **kwargs):
         super().__init__(**kwargs)
         self.checkpoint_path: str = checkpoint_path
-        self.lit_moudle: Optional[L.LightningModule] = None
+        self.lit_module: Optional[L.LightningModule] = None
         self.fit_virial: Optional[bool] = None
 
         # model and data
-        self.model: Optional[torch.Module] = None
+        self.model: Optional[nn.Module] = None
         self.mlff_input: Optional[MlffInput] = None
     
 
@@ -187,40 +195,39 @@ class PotentialCalculatorBase(Calculator):
 
         # 2. Optional
         if "descriptors" in requested_properties:
-            descriptors_tensor: torch.Tensor = self.model.predict_descriptors(*self.mlff_input.analyse_ase(atoms))
+            with torch.no_grad():
+                descriptors_tensor: torch.Tensor = self.model.predict_descriptors(*self.mlff_input.analyse_ase(atoms))
             self.results["descriptors"] = descriptors_tensor.detach().cpu().numpy()
+
+        ## 2.x return
+        need_efv: bool = any(
+            prop in requested_properties
+            for prop in ("energy", "forces", "virial", "stress")
+        )
+        if not need_efv:
+            return
 
         # 3. Calculate energy, force, virial, stress
         if self.fit_virial:
-            energy_tensor, forces_tensor, virial_tensor = self.model.predict_efv(*self.mlff_input.analyse_ase(atoms=atoms))
-            self.results["virial"] = virial_tensor.detach().cpu().numpy().shape(3, 3)
-            self.results["stress"] = virial_tensor
+            with torch.no_grad():
+                energy_tensor, forces_tensor, virial_tensor = self.model.predict_efv(*self.mlff_input.analyse_ase(atoms=atoms))
+            self.results["virial"] = full_3x3_to_voigt_6_stress(
+                                        virial_tensor.detach().cpu().numpy().reshape(3, 3)
+                                    )
+            self.results["stress"] = full_3x3_to_voigt_6_stress(
+                                        -virial_tensor.detach().cpu().numpy().reshape(3, 3) / atoms.get_volume()
+                                    ) #* 160.2177
         else:
-            energy_tensor, forces_tensor = self.model.predict_ef(*self.mlff_input.analyse_ase(atoms))
+            with torch.no_grad():
+                energy_tensor, forces_tensor = self.model.predict_ef(*self.mlff_input.analyse_ase(atoms))
         self.results["energy"] = energy_tensor.detach().cpu().numpy().item()
         self.results["forces"] = forces_tensor.detach().cpu().numpy().reshape(-1, 3)
-
-
-        #if ("descriptors" in properties):
-        #    self.results["descriptors"] = self.predict_descriptors(atoms=atoms)
-    
-
-    def predict_ef(self, atoms: Atoms):
-        e, f = self.model.predict_ef(*self.mlff_input.analyse_ase(atoms=atoms))
-        e: float = e.item()
-        f: np.ndarray = f.squeeze(dim=0).detach().numpy()
-        return e, f
     
 
     def predict_e_sites(self, atoms: Atoms):
         e_sites_tensor: torch.Tensor = self.model.predict_e_sites(*self.mlff_input.analyse_ase(atoms=atoms))
         return e_sites_tensor.squeeze(dim=0).detach().numpy()
-    
 
-    def predict_descriptors(self, atoms: Atoms):
-        descriptors: np.ndarray = self.model.predict_descriptors(*self.mlff_input.analyse_ase(atoms=atoms))
-        return descriptors.squeeze(dim=0).detach().numpy()
-    
 
     def predict_coeffs_gradients(self, atoms: Atoms):
         pass

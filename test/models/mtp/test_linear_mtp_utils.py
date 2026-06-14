@@ -70,7 +70,7 @@ class LinearMtpCalculatorTest(unittest.TestCase):
     def setUp(self):
         print("LinearMtpCalculator (TestSuite) is setting up...")
         self.checkpoint_path: str = CHECK_POINT_PATH
-        self.map_location: str = "cpu"
+        self.map_location: str = "cuda"
         self.torch_float_dtype: torch._C.dtype = torch.float32
         
         self.linear_mtp_calculator: LinearMtpCalculator = LinearMtpCalculator(checkpoint_path=self.checkpoint_path,
@@ -95,7 +95,7 @@ class LinearMtpCalculatorTest(unittest.TestCase):
 
 
     def test_calculate_with_virial(self):
-        print("Calculator (without virial) Summary:")
+        print("Calculator (virial) Summary:")
         print("-------------------")
         print("\t1.1. Energy = ", self.atoms.get_potential_energy())
         print("\t1.2. force.shape = ", self.atoms.get_forces().shape)

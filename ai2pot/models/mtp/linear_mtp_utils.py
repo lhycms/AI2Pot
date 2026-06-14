@@ -75,11 +75,6 @@ class LinearMtp4Extxyz(Potential4ExtxyzBase):
 
 
 class LinearMtpCalculator(PotentialCalculatorBase):
-    implemented_properties = ['energy', 
-                              'forces',
-                              'virial',
-                              'stress']
-
     def __init__(self,
                  checkpoint_path: str,
                  map_location: str = "cpu",
