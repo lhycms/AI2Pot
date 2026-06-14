@@ -124,6 +124,11 @@ class LitPotentialBase(L.LightningModule):
         mean_bmse_tensor: torch.Tensor = bmse_tensor.mean()
 
         ### Log ###
+        self.log("train/mse", mean_bmse_tensor,
+                 on_epoch=True,
+                 on_step=True,
+                 prog_bar=True,
+                 sync_dist=True)
         self.log("train/e_rmse", e_rmse_tensor,
                  on_epoch=True,
                  on_step=True,

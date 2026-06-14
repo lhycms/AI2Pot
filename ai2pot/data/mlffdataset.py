@@ -326,7 +326,7 @@ class ExtxyzDataset(Dataset):
 
     
     @staticmethod
-    def get_type_map(filename: str):
+    def get_type_map(filename: str) -> List[int]:
         atoms_list: List[Atoms] = ase_read(filename=filename, index=":")
         atom_symbol_list: List[int] = []
         for atoms in atoms_list:
@@ -334,7 +334,7 @@ class ExtxyzDataset(Dataset):
                 if tmp_symbol not in atom_symbol_list:
                     atom_symbol_list.append(tmp_symbol)
         type_map: List[int] = sorted(atom_symbol_list)
-        return torch.tensor(type_map, dtype=torch.int32)
+        return type_map
     
     
     def analyse_pymatgen(self,
