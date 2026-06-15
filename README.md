@@ -29,7 +29,10 @@ export AI2POT_PATH=
 # -DCMAKE_CXX_COMPILER=/data/app/gcc/11.3.0/bin/g++
 # -DCMAKE_C_COMPILER=/data/app/gcc/11.3.0/bin/gcc
 # -DCMAKE_CUDA_HOST_COMPILER=/data/app/gcc/11.3.0/bin/g++
-cmake -DBUILD_TEST=yes -DTORCH_OP=yes -DUSE_CUDA=yes -DMAX_MTP_LEVEL=20 -DUSE_OPENMP=yes ..
+# -DCMAKE_INSTALL_PREFIX="$HOME/.ai2pot"
+cmake -DBUILD_TEST=yes -DTORCH_OP=yes -DUSE_CUDA=yes -DUSE_OPENMP=yes -DMAX_MTP_LEVEL=20 ..
+$ make -j
+$ make install
 
 # 4.
 ## 4.1. User
@@ -42,4 +45,12 @@ $ pip3 install -e .
 #    "/data/home/liuhanyu/mycode/AI2Pot"
 #  ]
 #}
+```
+
+# 5. New mode
+```shell
+$CC=/data/app/gcc/11.3.0/bin/gcc \
+ CXX=/data/app/gcc/11.3.0/bin/g++ \
+ CUDAHOSTCXX=/data/app/gcc/11.3.0/bin/g++ \
+ pip install -e .
 ```

@@ -4,8 +4,14 @@ project(ai2pot)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(CUDA_ARCHITECTURES 61)
+set(CUDA_STANDARD 17)
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -O3")
+
+add_compile_options(-D_GLIBCXX_USE_CXX11_ABI=0) # make googletest and torch2.x compitable.
+set(CMAKE_GTEST_DISCOVERY_TIMEOUT 600)
 
 # Debug
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
@@ -14,13 +20,8 @@ set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -O3")
 #LD_PRELOAD=/data/app/gcc/11.3.0/lib64/libasan.so python3 /data/home/liuhanyu/mycode/AI2Pot/test/test1.py
 #set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -G -g")
 
-set(CMAKE_GTEST_DISCOVERY_TIMEOUT 600)
 
-set(CUDA_ARCHITECTURES 61)
-set(CUDA_STANDARD 17)
-
-
-# 2. include FetchContent
+# 2. Include FetchContent
 ## 2.1. Way 1: Build gtest
 #include(FetchContent)
 #FetchContent_Declare(
@@ -32,9 +33,11 @@ set(CUDA_STANDARD 17)
 #include(GoogleTest)
 
 ## 2.1. Way 2: Build gtest
-add_compile_options(-D_GLIBCXX_USE_CXX11_ABI=0) # Compitable with torch2.x
-add_subdirectory("$ENV{AI2POT_PATH}/source/ext/googletest-main")
-include(GoogleTest)
+if(BUILD_TEST)
+    enable_testing()
+    add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/ext/googletest-main")
+    include(GoogleTest)
+endif()
 
 
 ## 2.2. pybind11
@@ -103,3 +106,13 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/descriptor/nep)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/fvt)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/gst)
+
+
+# 7. Copy
+install(
+    TARGETS
+        # nblist
+        nblist
+        # 
+    LIBRARY DESTINATION ai2pot/_lib
+)

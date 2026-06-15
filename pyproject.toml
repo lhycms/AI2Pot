@@ -1,3 +1,67 @@
+# ============================================================
+# 1. Build system
+# ============================================================
+# 指定使用 scikit-build-core 作为构建后端。
+# pip install . 或 python -m build 时会先安装这里的构建依赖。
 [build-system]
-requires = ["setuptools>=64.0.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = [
+    "scikit-build-core>=0.10",
+    "pybind11==2.11.1"
+]
+build-backend = "scikit_build_core.build"
+
+
+# ============================================================
+# 2. Project metadata
+# ============================================================
+[project]
+name = "ai2pot"
+version = "1.0"
+authors = [
+    {name = "Hanyu Liu", email = "domainofbuaa@gmail.com"}
+]
+dependencies = [
+    "cmake==3.26.4",
+    "pymatgen==2024.7.18",
+    "ase==3.23.0",
+    "numpy==1.26.4",
+    "pybind11==2.11.1",
+    "dpdata==0.2.24",
+    "lightning==2.5.1",
+    "tensorboard==2.19.0",
+    "matplotlib==3.10.3",
+    "scikit-learn==1.7.0",
+]
+
+
+# ============================================================
+# 3. Project URLs
+# ============================================================
+[project.urls]
+Homepage = "https://github.com/lhycms/AI2Pot"
+Repository = "https://github.com/lhycms/AI2Pot"
+
+
+# ============================================================
+# 4. scikit-build-core configuration
+# ============================================================
+[tool.scikit-build]
+cmake.version = ">=3.26"
+wheel.packages = ["ai2pot"]
+cmake.args = [
+    #"-DCMAKE_CXX_COMPILER=/data/app/gcc/11.3.0/bin/g++",
+    #"-DCMAKE_C_COMPILER=/data/app/gcc/11.3.0/bin/gcc",
+    #"-DCMAKE_CUDA_HOST_COMPILER=/data/app/gcc/11.3.0/bin/g++",
+    #-DCMAKE_INSTALL_PREFIX="$HOME/.ai2pot"
+]
+
+
+# ============================================================
+# 5. CMake cache definitions
+# ============================================================
+[tool.scikit-build.cmake.define]
+BUILD_TEST = "yes"
+TORCH_OP = "yes"
+USE_CUDA = "yes"
+MAX_MTP_LEVEL = "20"
+USE_OPENMP = "yes"
