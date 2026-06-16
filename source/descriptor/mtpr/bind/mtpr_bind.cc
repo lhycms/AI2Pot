@@ -17,15 +17,24 @@
 #include <torch/extension.h>
 #include <climits>
 #include <cassert>
+#include <string>
 
 #include "../include/schmidt_orth_op.h"
 #include "../include/linear_mtp_gram_and_cross_op.h"
+#include "../include/mtpParam.h"
 #include "../include/mtpParamOp.h"
 #include "../include/mtpBasisOp.h"
 #include "../include/linearMtpOp.h"
 
 
 TORCH_LIBRARY(mtpr, m) {
+    m.def(
+        "set_ai2pot_path",
+        [](const std::string& path)
+        {
+            ai2pot::mtpr::set_ai2pot_path(path);
+        });
+
     m.def(
         "CoeffsSchmidtOrthOp",
         [](int64_t ntypes,

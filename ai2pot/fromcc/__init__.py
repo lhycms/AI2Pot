@@ -20,20 +20,48 @@ import os
 import torch
 import platform
 import sys
+import importlib.resources
 
-ai2pot_root_dir:str = os.environ.get("AI2POT_PATH")
-ai2pot_source_build_lib_dir:str = os.path.join(ai2pot_root_dir, "source", "build", "lib")
+
+# 1. Device
 IS_DARWIN: bool = platform.system() == "Darwin"
 
-### Part 1 . nblist
-nblist_lib_dir: str = os.path.join(ai2pot_source_build_lib_dir, "nblist")
-sys.path.append(nblist_lib_dir)
-import nblist
+
+# 2. Environment Variable
+#       - AI2POT_PATH
+#       - ai2pot_lib_dir
+def _get_ai2pot_path():
+    ai2pot_path: str = os.getenv("AI2POT_PATH")
+    if (ai2pot_path):
+        return ai2pot_path
+    else:
+        return str(importlib.resources.files("ai2pot"))
+
+def _get_ai2pot_lib_dir():
+    ai2pot_path: str = os.getenv("AI2POT_PATH")
+    if (ai2pot_path):
+        return os.path.join(ai2pot_path, "source", "build", "lib")
+    else:
+        return str(importlib.resources.files("ai2pot").joinpath("_lib"))
+
+ai2pot_path: str = _get_ai2pot_path()
+ai2pot_lib_dir:str = _get_ai2pot_lib_dir()
 
 
+
+# 3. Register CPython operators
+if os.getenv("AI2POT_PATH"):
+    for lib_name in ("nblist", "gst"):
+        sys.path.append(os.path.join(ai2pot_lib_dir, lib_name))
+else:
+    sys.path.join(ai2pot_lib_dir)
+
+
+
+# 4. Register Torch opeartors
 if not IS_DARWIN:
     ### Part 2.1. fituils
-    fitutils_lib_dir:str = os.path.join(ai2pot_source_build_lib_dir, "descriptor", "fitutils")
+    fitutils_lib_dir:str = os.path.join(ai2pot_lib_dir, "descriptor", "fitutils") if os.getenv("AI2POT_PATH") else ai2pot_lib_dir
     fitutils_bind_so_path: str = os.path.join(fitutils_lib_dir, "libfitutils_bind.so")
     torch.ops.load_library(fitutils_bind_so_path)
     targetStatisticsOp = torch.ops.fitutils.targetStatisticsOp
@@ -42,7 +70,7 @@ if not IS_DARWIN:
     allTypeDescriptorsMaxminOp = torch.ops.fitutils.allTypeDescriptorsMaxminOp
 
     ### Part 2.2. deepmd
-    deepmd_lib_dir:str = os.path.join(ai2pot_source_build_lib_dir, "descriptor", "deepmd")
+    deepmd_lib_dir:str = os.path.join(ai2pot_lib_dir, "descriptor", "deepmd") if os.getenv("AI2POT_PATH") else ai2pot_lib_dir
     envMatrixOp_bind_so_path:str = os.path.join(deepmd_lib_dir, "libenvMatrixOp_bind.so")
     torch.ops.load_library(envMatrixOp_bind_so_path)
     # name `envMatrixOp`
@@ -50,7 +78,7 @@ if not IS_DARWIN:
 
 
     ### Part 2.3. mtpr
-    mtpr_lib_dir:str = os.path.join(ai2pot_source_build_lib_dir, "descriptor", "mtpr")
+    mtpr_lib_dir:str = os.path.join(ai2pot_lib_dir, "descriptor", "mtpr") if os.getenv("AI2POT_PATH") else ai2pot_lib_dir
     mtpr_bind_so_path: str = os.path.join(mtpr_lib_dir, "libmtpr_bind.so")
     torch.ops.load_library(mtpr_bind_so_path)
     # name
@@ -64,10 +92,12 @@ if not IS_DARWIN:
     linearMtpToEFOp = torch.ops.mtpr.linearMtpToEFOp
     linearMtpToEsitesOp = torch.ops.mtpr.linearMtpToEsitesOp
     linearMtpToDescriptorsOp = torch.ops.mtpr.linearMtpToDescriptorsOp
+    # Action
+    torch.ops.mtpr.set_ai2pot_path(ai2pot_path)
 
 
     ### Part 2.4. nnmtp
-    nnmtp_lib_dir:str = os.path.join(ai2pot_source_build_lib_dir, "descriptor", "nnmtp")
+    nnmtp_lib_dir:str = os.path.join(ai2pot_lib_dir, "descriptor", "nnmtp") if os.getenv("AI2POT_PATH") else ai2pot_lib_dir
     nnmtp_bind_so_path: str = os.path.join(nnmtp_lib_dir, "libnnmtp_bind.so")
     torch.ops.load_library(nnmtp_bind_so_path)
     # name
@@ -78,10 +108,12 @@ if not IS_DARWIN:
     nnMtpToEFVOp = torch.ops.nnmtp.nnMtpToEFVOp
     nnMtpToDescriptorsOp = torch.ops.nnmtp.nnMtpToDescriptorsOp
     nnMtpToEsitesOp = torch.ops.nnmtp.nnMtpToEsitesOp
+    # Action
+    torch.ops.nnmtp.set_ai2pot_path(ai2pot_path)
 
 
     ### Part 2.5. nep
-    nep_lib_dir:str = os.path.join(ai2pot_source_build_lib_dir, "descriptor", "nep")
+    nep_lib_dir:str = os.path.join(ai2pot_lib_dir, "descriptor", "nep") if os.getenv("AI2POT_PATH") else ai2pot_lib_dir
     nep_bind_so_path: str = os.path.join(nep_lib_dir, "libnep_bind.so")
     torch.ops.load_library(nep_bind_so_path)
     # name
@@ -92,15 +124,9 @@ if not IS_DARWIN:
     nepToDescriptorsOp = torch.ops.nep.nepToDescriptorsOp
 
     ### Part 3. fvt
-    fvt_sr_lib_dir: str = os.path.join(ai2pot_source_build_lib_dir, "fvt")
+    fvt_sr_lib_dir: str = os.path.join(ai2pot_lib_dir, "fvt") if os.getenv("AI2POT_PATH") else ai2pot_lib_dir
     fvt_sr_bind_so_path: str = os.path.join(fvt_sr_lib_dir, "libfvt_sr_op_bind.so")
     torch.ops.load_library(fvt_sr_bind_so_path)
     # name
     forceSrOp = torch.ops.fvt.ForceSrOp
     virialSrOp = torch.ops.fvt.VirialSrOp
-
-
-### Part 4, gst
-gst_lib_dir: str = os.path.join(ai2pot_source_build_lib_dir, "gst")
-sys.path.append(gst_lib_dir)
-import gst

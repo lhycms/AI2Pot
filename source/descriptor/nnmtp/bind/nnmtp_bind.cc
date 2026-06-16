@@ -18,12 +18,19 @@
 #include <climits>
 #include <cassert>
 
-
+#include "../include/mtpParam.h"
 #include "../include/mtpParamOp.h"
 #include "../include/nnMtpOp.h"
 
 
 TORCH_LIBRARY(nnmtp, m) {
+    m.def(
+        "set_ai2pot_path",
+        [](const std::string& path)
+        {
+            ai2pot::nnmtp::set_ai2pot_path(path);
+        });
+
     m.def(
         "mtpParamOp",
         [](int64_t mtp_level)

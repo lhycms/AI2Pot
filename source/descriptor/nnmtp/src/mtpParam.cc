@@ -23,8 +23,24 @@
 #include "../include/mtpParam.h"
 
 
+static std::string g_ai2pot_path;
+
 namespace ai2pot {
 namespace nnmtp {
+
+void set_ai2pot_path(const std::string& path) {
+    g_ai2pot_path = path;
+}
+
+
+std::string get_mtp_template_dir() {
+    const char* ai2pot_path = std::getenv("AI2POT_PATH");
+    if (ai2pot_path)
+        return std::string(ai2pot_path) + "/source/descriptor/mtpr/MTP_templates/";
+    else
+        return g_ai2pot_path + "/_data/MTP_templates";
+}
+
 
 MtpParam::MtpParam()
 {
@@ -45,10 +61,11 @@ MtpParam::MtpParam(const std::string& filename)
     this->_load(filename);
 }
 
+
 MtpParam::MtpParam(const int mtp_level) {
     if ((mtp_level < 2) || (mtp_level > 28) || (mtp_level % 2 != 0))
         MtpError("mtp level must be odd number (2 ~ 28)");
-    std::string dir = (std::string)std::getenv("AI2POT_PATH") + "/source/descriptor/mtpr/MTP_templates/";
+    std::string dir = get_mtp_template_dir();
     std::string filename;
     if (mtp_level <= 4) {
         filename = dir + (std::string)"depreciated-" + "0" + std::to_string(mtp_level) + ".almtp";

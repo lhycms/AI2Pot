@@ -113,6 +113,39 @@ install(
     TARGETS
         # nblist
         nblist
-        # 
+        # fitutils
+        target_statistics_op
+        descriptor_statistics_op
+        fitutils_bind
+        # deepmd
+        se4pw_op
+        envMatrixOp
+        envMatrixOp_bind
+        # mtpr
+        mtpParam
+        schmidt_orth_op
+        linear_mtp_gram_and_cross_op
+        mtpParamOp
+        mtpBasisOp
+        mtpBasisGradOp
+        linearMtpOp
+        mtpr_bind
+        # nnmtp
+        mtpParam_nnMtp
+        mtpParamOp_nnMtp
+        nnMtpOp
+        nnmtp_bind
+        # nep
+        nepOp
+        nep_bind
+        # fvt
+        force_sr_op
+        virial_sr_op
+        fvt_sr_op_bind
+        # gst
+        gst
     LIBRARY DESTINATION ai2pot/_lib
 )
+
+install(DIRECTORY "${CMAKE_SOURCE_DIR}/descriptor/mtpr/MTP_templates"
+        DESTINATION ai2pot/_data/)

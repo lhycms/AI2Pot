@@ -38,6 +38,11 @@ public:
     ",\n    source file " + __FILE__ + \
     ",\n    line " + std::to_string(static_cast<long long>(__LINE__)) + "\n");
 
+
+void set_ai2pot_path(const std::string& path);
+std::string get_mtp_template_dir();
+
+
 class MtpParam {
 public:
     MtpParam();
