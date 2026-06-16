@@ -13,6 +13,10 @@ set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -O3")
 add_compile_options(-D_GLIBCXX_USE_CXX11_ABI=0) # make googletest and torch2.x compitable.
 set(CMAKE_GTEST_DISCOVERY_TIMEOUT 600)
 
+# set LD_LIBRARY_PATH
+set(CMAKE_BUILD_RPATH "$ORIGIN")    # For developers
+set(CMAKE_INSTALL_RPATH "$ORIGIN")  # For users
+
 # Debug
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fno-omit-frame-pointer -g")
@@ -113,14 +117,23 @@ install(
     TARGETS
         # nblist
         nblist
+
         # fitutils
         target_statistics_op
         descriptor_statistics_op
         fitutils_bind
+        #
+        descriptor_statistics_torch_launcher
+
+        #correction
+        #
+        zbl_torch_launcher
+
         # deepmd
         se4pw_op
         envMatrixOp
         envMatrixOp_bind
+
         # mtpr
         mtpParam
         schmidt_orth_op
@@ -130,18 +143,33 @@ install(
         mtpBasisGradOp
         linearMtpOp
         mtpr_bind
+        #
+        linear_mtp_torch_launcher
+        schmidt_orth_torch_launcher
+        linear_mtp_loss_torch_launcher
+        linear_mtp_gram_and_cross_torch_launcher
+
         # nnmtp
         mtpParam_nnMtp
         mtpParamOp_nnMtp
         nnMtpOp
         nnmtp_bind
+        #
+        nnmtp_torch_launcher
+        nnmtp_loss_torch_launcher
+
         # nep
         nepOp
         nep_bind
+        #
+        nep_torch_launcher
+        nep_loss_torch_launcher
+
         # fvt
         force_sr_op
         virial_sr_op
         fvt_sr_op_bind
+
         # gst
         gst
     LIBRARY DESTINATION ai2pot/_lib
