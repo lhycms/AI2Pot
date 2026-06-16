@@ -22,7 +22,8 @@ pip install torch==2.4.0 --index-url https://download.pytorch.org/whl/cpu
 ## 2.2. GPU
 pip install torch==2.4.0 --index-url https://download.pytorch.org/whl/cu124
 
-# 3. 
+
+# 3. Developer
 # 3.1.
 export AI2POT_PATH=
 # 3.2
@@ -33,24 +34,16 @@ export AI2POT_PATH=
 cmake -DBUILD_TEST=yes -DTORCH_OP=yes -DUSE_CUDA=yes -DUSE_OPENMP=yes -DMAX_MTP_LEVEL=20 ..
 $ make -j
 $ make install
-
-# 4.
-## 4.1. User
-$ pip install .
-## 4.2. developer
-$ pip3 install -e .
+$ pip install -e .
 # .vscode/settings.json
 #{
 #  "python.analysis.extraPaths": [
 #    "/data/home/liuhanyu/mycode/AI2Pot"
 #  ]
 #}
-```
 
-# 5. New mode
-```shell
-$CC=/data/app/gcc/11.3.0/bin/gcc \
- CXX=/data/app/gcc/11.3.0/bin/g++ \
- CUDAHOSTCXX=/data/app/gcc/11.3.0/bin/g++ \
- pip install -e .
+
+# 4. User
+## 4.1. 
+$ CMAKE_BUILD_PARALLEL_LEVEL=16 CC=/data/app/gcc/11.3.0/bin/gcc CXX=/data/app/gcc/11.3.0/bin/g++ CUDAHOSTCXX=/data/app/gcc/11.3.0/bin/g++ python -m pip install -v --no-build-isolation .
 ```

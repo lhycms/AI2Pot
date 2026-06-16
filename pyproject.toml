@@ -5,7 +5,7 @@
 # pip install . 或 python -m build 时会先安装这里的构建依赖。
 [build-system]
 requires = [
-    "scikit-build-core>=0.10",
+    "scikit-build-core==0.12.2",
     "pybind11==2.11.1"
 ]
 build-backend = "scikit_build_core.build"
@@ -21,7 +21,8 @@ authors = [
     {name = "Hanyu Liu", email = "domainofbuaa@gmail.com"}
 ]
 dependencies = [
-    "cmake==3.26.4",
+    "scikit-build-core==0.12.2",
+    "cmake==4.3.2",
     "pymatgen==2024.7.18",
     "ase==3.23.0",
     "numpy==1.26.4",
@@ -46,13 +47,14 @@ Repository = "https://github.com/lhycms/AI2Pot"
 # 4. scikit-build-core configuration
 # ============================================================
 [tool.scikit-build]
-cmake.version = ">=3.26"
+cmake.source-dir = "source"
+cmake.version = "==4.3.2"
 wheel.packages = ["ai2pot"]
 cmake.args = [
     #"-DCMAKE_CXX_COMPILER=/data/app/gcc/11.3.0/bin/g++",
     #"-DCMAKE_C_COMPILER=/data/app/gcc/11.3.0/bin/gcc",
     #"-DCMAKE_CUDA_HOST_COMPILER=/data/app/gcc/11.3.0/bin/g++",
-    #-DCMAKE_INSTALL_PREFIX="$HOME/.ai2pot"
+    #"-DCMAKE_INSTALL_PREFIX="$HOME/.ai2pot",
 ]
 
 
