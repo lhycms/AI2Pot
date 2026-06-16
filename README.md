@@ -7,13 +7,15 @@ AI2Pot is distributed under the GNU General Public License v3.0.
 
 ## What is AI2Pot?
 
-**AI2Pot** (**Ab Initio and Artificial Intelligence POTential**) is a machine-learning interatomic-potential framework for materials modeling.
+**AI2Pot** (**Ab Initio and Artificial Intelligence POTential**) is a machine-learning interatomic-potential framework for materials modeling. It integrates multiple potential models, including the **Moment Tensor Potential** (**MTP**) and **Neuroevolution Potential** (**NEP**), within a unified PyTorch-based training and simulation workflow.
 
 AI2Pot provides:
 
+* Unified implementations of **MTP** and **NEP**
 * High-performance C++ and CUDA operators
-* PyTorch-based training pipelines
+* PyTorch-based training, inference, and evaluation pipelines
 * Interoperability with pymatgen, ASE, and LAMMPS
+* A companion CLI tool, AI2Pot-cli, for data preprocessing, model training, and post-processing. (Repository: https://github.com/lhycms/AI2Pot-cli)
 
 ## Installation
 
