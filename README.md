@@ -174,11 +174,11 @@ CUDA host compiler: /data/app/gcc/11.3.0/bin/g++
 Equivalent installation command:
 
 ```bash
-CMAKE_BUILD_PARALLEL_LEVEL=16 \
-CC=/data/app/gcc/11.3.0/bin/gcc \
-CXX=/data/app/gcc/11.3.0/bin/g++ \
-CUDAHOSTCXX=/data/app/gcc/11.3.0/bin/g++ \
-python -m pip install -v --no-build-isolation .
+$ CMAKE_BUILD_PARALLEL_LEVEL=16 \
+CC=/path/to/gcc \
+CXX=/path/to/g++ \
+CUDAHOSTCXX=/path/to/g++ \
+python -m pip install -v --no-build-isolation --no-deps .
 ```
 
 ### Optional VS Code configuration
