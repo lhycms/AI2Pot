@@ -39,7 +39,7 @@ std::string get_mtp_template_dir() {
     if (ai2pot_path)
         return std::string(ai2pot_path) + "/source/descriptor/mtpr/MTP_templates/";
     else
-        return g_ai2pot_path + "/_data/MTP_templates";
+        return g_ai2pot_path + "/_data/MTP_templates/";
 }
 
 
