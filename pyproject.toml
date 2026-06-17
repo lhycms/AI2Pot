@@ -6,7 +6,8 @@
 [build-system]
 requires = [
     "scikit-build-core==0.12.2",
-    "pybind11==2.11.1"
+    "pybind11==2.11.1",
+    "numpy==1.26.4",
 ]
 build-backend = "scikit_build_core.build"
 
@@ -17,17 +18,19 @@ build-backend = "scikit_build_core.build"
 [project]
 name = "ai2pot"
 version = "1.0"
+description = "A machine-learning interatomic-potential framework for materials modeling."
+requires-python = ">=3.10,<3.13"
+
 authors = [
     {name = "Hanyu Liu", email = "domainofbuaa@gmail.com"}
 ]
+
 dependencies = [
-    "scikit-build-core==0.12.2",
-    "cmake==4.3.2",
     "pymatgen==2024.7.18",
     "ase==3.23.0",
+    "scipy==1.16.0",
     "numpy==1.26.4",
-    "pybind11==2.11.1",
-    "dpdata==0.2.24",
+    "pandas==2.3.1",
     "lightning==2.5.1",
     "tensorboard==2.19.0",
     "matplotlib==3.10.3",

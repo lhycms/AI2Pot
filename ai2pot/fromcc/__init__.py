@@ -55,6 +55,8 @@ if os.getenv("AI2POT_PATH"):
         sys.path.append(os.path.join(ai2pot_lib_dir, lib_name))
 else:
     sys.path.join(ai2pot_lib_dir)
+import nblist
+import gst
 
 
 

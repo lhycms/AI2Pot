@@ -15,7 +15,7 @@ AI2Pot provides:
 * High-performance C++ and CUDA operators
 * PyTorch-based training, inference, and evaluation pipelines
 * Interoperability with pymatgen, ASE, and LAMMPS
-* A companion CLI tool, AI2Pot-cli, for data preprocessing, model training, and post-processing. (Repository: https://github.com/lhycms/AI2Pot-cli)
+* A companion CLI tool, `AI2Pot-cli`, for data preprocessing, model training, and post-processing. (Repository: https://github.com/lhycms/AI2Pot-cli)
 
 ## Installation
 
@@ -45,6 +45,12 @@ $ nvcc --version
 
 Choose either the CPU or CUDA version.
 
+#### Python environment
+
+```bash
+$ conda create -n ai2pot python=3.11.13
+```
+
 #### CPU
 
 ```bash
@@ -72,7 +78,19 @@ AI2Pot currently needs to compile against the NumPy and PyTorch packages install
 Install the build backend first:
 
 ```bash
-$ python -m pip install scikit-build-core==0.12.2
+$ python -m pip install -U pip setuptools wheel
+$ python -m pip install \
+    scikit-build-core==0.12.2 \
+    cmake==4.3.2 \
+    pybind11==2.11.1 \
+    meson-python \
+    meson \
+    ninja==1.13.0 \
+    Cython \
+    pythran \
+    setuptools-scm \
+    pkgconfig==1.6.0
+$ python -m pip install -r requirements-lock.txt
 ```
 
 Then install AI2Pot:
@@ -90,7 +108,7 @@ $ CMAKE_BUILD_PARALLEL_LEVEL=16 \
 CC=/path/to/gcc \
 CXX=/path/to/g++ \
 CUDAHOSTCXX=/path/to/g++ \
-python -m pip install -v --no-build-isolation .
+python -m pip install -v --no-build-isolation --no-deps .
 ```
 
 <details>

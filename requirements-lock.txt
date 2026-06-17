@@ -1,0 +1,11 @@
+pybind11==2.11.1
+cmake==4.3.2
+pymatgen==2024.7.18
+ase==3.23.0
+scipy==1.16.0
+numpy==1.26.4
+pandas==2.3.1
+lightning==2.5.1
+tensorboard==2.19.0
+matplotlib==3.10.3
+scikit-learn==1.7.0
