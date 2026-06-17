@@ -82,21 +82,14 @@ $ python -m pip install -U pip setuptools wheel
 $ python -m pip install \
     scikit-build-core==0.12.2 \
     cmake==4.3.2 \
-    pybind11==2.11.1 \
-    meson-python \
-    meson \
-    ninja==1.13.0 \
-    Cython \
-    pythran \
-    setuptools-scm \
-    pkgconfig==1.6.0
+    pybind11==2.11.1
 $ python -m pip install -r requirements-lock.txt
 ```
 
 Then install AI2Pot:
 
 ```bash
-$ CMAKE_BUILD_PARALLEL_LEVEL=16 python -m pip install -v --no-build-isolation .
+$ CMAKE_BUILD_PARALLEL_LEVEL=16 python -m pip install -v --no-build-isolation --no-deps .
 ```
 
 `CMAKE_BUILD_PARALLEL_LEVEL` controls the number of parallel compilation jobs. Reduce this value if compilation consumes too much memory.
