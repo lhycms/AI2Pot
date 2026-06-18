@@ -151,7 +151,11 @@ Install the Python package in editable mode:
 
 ```bash
 $ cd "${AI2POT_PATH}"
-$ python -m pip install -e .
+$ CMAKE_BUILD_PARALLEL_LEVEL=16 \
+CC=/data/app/gcc/11.3.0/bin/gcc \
+CXX=/data/app/gcc/11.3.0/bin/g++ \
+CUDAHOSTCXX=/data/app/gcc/11.3.0/bin/g++ \
+python -m pip install --no-build-isolation --no-deps -v -e .
 ```
 
 ### Optional CMake arguments
@@ -175,9 +179,9 @@ Equivalent installation command:
 
 ```bash
 $ CMAKE_BUILD_PARALLEL_LEVEL=16 \
-CC=/path/to/gcc \
-CXX=/path/to/g++ \
-CUDAHOSTCXX=/path/to/g++ \
+CC=/data/app/gcc/11.3.0/bin/gcc \
+CXX=/data/app/gcc/11.3.0/bin/g++ \
+CUDAHOSTCXX=/data/app/gcc/11.3.0/bin/g++ \
 python -m pip install -v --no-build-isolation --no-deps .
 ```
 

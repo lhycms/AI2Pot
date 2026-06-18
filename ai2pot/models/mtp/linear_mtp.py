@@ -316,6 +316,7 @@ class LinearMtp(nn.Module):
         return bmse_tensor, e_rmse_tensor, f_rmse_tensor
     
     
+    @torch.no_grad()
     def predict_efv(self,
                     binum_tensor: torch.Tensor,
                     bilist_tensor: torch.Tensor,
@@ -377,6 +378,7 @@ class LinearMtp(nn.Module):
         return betot_tensor, bforce_tensor, bvirial_tensor
 
 
+    @torch.no_grad()
     def predict_ef(self,
                    binum_tensor: torch.Tensor,
                    bilist_tensor: torch.Tensor,
@@ -494,6 +496,7 @@ class LinearMtp(nn.Module):
         return be_sites_tensor
 
 
+    @torch.no_grad()
     def predict_descriptors(self,
                             binum_tensor: torch.Tensor,
                             bilist_tensor: torch.Tensor,
