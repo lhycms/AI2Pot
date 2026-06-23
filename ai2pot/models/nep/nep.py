@@ -321,7 +321,7 @@ class Nep(nn.Module):
         zbl_dks_norm: torch.Tensor = self.zbl_dks_tensor / conv_length
 
         #
-        betot_tensor, bforce_tensor, bvirial_tensor = nepToEFVOp(
+        betot_tensor, bforce_tensor, bvirial_tensor = torch.ops.nep.nepToEFVOp(
             self.chebyshev_size,
             self.n_radial_basis,
             self.n_angular_basis,
@@ -381,7 +381,7 @@ class Nep(nn.Module):
         zbl_dks_norm: torch.Tensor = self.zbl_dks_tensor / conv_length
 
         #
-        betot_tensor, bforce_tensor = nepToEFOp(
+        betot_tensor, bforce_tensor = torch.ops.nep.nepToEFOp(
             self.chebyshev_size,
             self.n_radial_basis,
             self.n_angular_basis,
