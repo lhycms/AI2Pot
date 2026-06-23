@@ -214,7 +214,9 @@ $ cp AI2Pot/interface/lammps/Makefile.mpi lammps/src/MAKE/
 ```bash
 $ cd lammps/src
 $ make yes-AI2POT
-$ make mpi TORCH_ROOT=$(python -c "import torch, os; print(os.path.dirname(torch.__file__))")
+$ make -j 16 mpi \
+    TORCH_ROOT=$(python -c "import torch, os; print(os.path.dirname(torch.__file__))") \
+    AI2POT_ROOT=$(python -c "import ai2pot, os; print(os.path.dirname(ai2pot.__file__))")
 ```
 
 ### AI2Pot pair style usage

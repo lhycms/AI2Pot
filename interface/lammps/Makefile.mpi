@@ -11,6 +11,7 @@ CC =		mpicxx
 CCFLAGS =	-g -O3 -std=c++17 -D_GLIBCXX_USE_CXX11_ABI=0
 CCFLAGS += -I$(TORCH_ROOT)/include
 CCFLAGS += -I$(TORCH_ROOT)/include/torch/csrc/api/include
+CCFLAGS += $(shell python3-config --embed --includes)
 ### Modify by AI2Pot
 SHFLAGS =	-fPIC
 DEPFLAGS =	-M
@@ -18,6 +19,7 @@ DEPFLAGS =	-M
 LINK =		mpicxx
 LINKFLAGS =	-g -O3 -std=c++17
 ### Modify by AI2Pot
+TORCH_LIBDIR = $(TORCH_ROOT)/lib
 TORCH_HAS_CUDA := $(shell test -f $(TORCH_LIBDIR)/libtorch_cuda.so && echo 1 || echo 0)
 
 LIB =
@@ -32,6 +34,14 @@ ifeq ($(TORCH_HAS_CUDA),1)
 LIB += -ltorch_cuda
 LIB += -lc10_cuda
 endif
+
+LIB += -L${AI2POT_ROOT}/_lib
+LIB += -Wl,-rpath,${AI2POT_ROOT}/_lib
+LIB += -lmtpr_bind
+LIB += -llinearMtpOp
+LIB += -lnep_bind
+LIB += -lnepOp
+LIB += $(shell python3-config --embed --ldflags)
 ### Modify by AI2Pot
 SIZE =		size
 
