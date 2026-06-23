@@ -4,18 +4,17 @@ Copyright © 2025 Hanyu Liu.
 
 AI2Pot is distributed under the GNU General Public License v3.0.
 
-
 ## What is AI2Pot?
 
 **AI2Pot** (**Ab Initio and Artificial Intelligence POTential**) is a machine-learning interatomic-potential framework for materials modeling. It integrates multiple potential models, including the **Moment Tensor Potential** (**MTP**) and **Neuroevolution Potential** (**NEP**), within a unified PyTorch-based training and simulation workflow.
 
 AI2Pot provides:
 
-* Unified implementations of **MTP** and **NEP**
-* High-performance C++ and CUDA operators
-* PyTorch-based training, inference, and evaluation pipelines
-* Interoperability with pymatgen, ASE, and LAMMPS
-* A companion CLI tool, `AI2Pot-cli`, for data preprocessing, model training, and post-processing. (Repository: https://github.com/lhycms/AI2Pot-cli)
+- Unified implementations of **MTP** and **NEP**
+- High-performance C++ and CUDA operators
+- PyTorch-based training, inference, and evaluation pipelines
+- Interoperability with pymatgen, ASE, and LAMMPS
+- A companion CLI tool, `AI2Pot-cli`, for data preprocessing, model training, and post-processing. (Repository: <https://github.com/lhycms/AI2Pot-cli>)
 
 ## Installation
 
@@ -98,10 +97,10 @@ To use specific C, C++, and CUDA host compilers:
 
 ```bash
 $ CMAKE_BUILD_PARALLEL_LEVEL=16 \
-CC=/path/to/gcc \
-CXX=/path/to/g++ \
-CUDAHOSTCXX=/path/to/g++ \
-python -m pip install -v --no-build-isolation --no-deps .
+  CC=/path/to/gcc \
+  CXX=/path/to/g++ \
+  CUDAHOSTCXX=/path/to/g++ \
+  python -m pip install -v --no-build-isolation --no-deps .
 ```
 
 <details>
@@ -152,10 +151,10 @@ Install the Python package in editable mode:
 ```bash
 $ cd "${AI2POT_PATH}"
 $ CMAKE_BUILD_PARALLEL_LEVEL=16 \
-CC=/data/app/gcc/11.3.0/bin/gcc \
-CXX=/data/app/gcc/11.3.0/bin/g++ \
-CUDAHOSTCXX=/data/app/gcc/11.3.0/bin/g++ \
-python -m pip install --no-build-isolation --no-deps -v -e .
+  CC=/data/app/gcc/11.3.0/bin/gcc \
+  CXX=/data/app/gcc/11.3.0/bin/g++ \
+  CUDAHOSTCXX=/data/app/gcc/11.3.0/bin/g++ \
+  python -m pip install --no-build-isolation --no-deps -v -e .
 ```
 
 ### Optional CMake arguments
@@ -179,10 +178,10 @@ Equivalent installation command:
 
 ```bash
 $ CMAKE_BUILD_PARALLEL_LEVEL=16 \
-CC=/data/app/gcc/11.3.0/bin/gcc \
-CXX=/data/app/gcc/11.3.0/bin/g++ \
-CUDAHOSTCXX=/data/app/gcc/11.3.0/bin/g++ \
-python -m pip install -v --no-build-isolation --no-deps .
+  CC=/data/app/gcc/11.3.0/bin/gcc \
+  CXX=/data/app/gcc/11.3.0/bin/g++ \
+  CUDAHOSTCXX=/data/app/gcc/11.3.0/bin/g++ \
+  python -m pip install -v --no-build-isolation --no-deps .
 ```
 
 ### Optional VS Code configuration
@@ -199,19 +198,29 @@ Add the repository path to `.vscode/settings.json` if Pylance cannot resolve the
 
 </details>
 
+## LAMMPS Interface
 
-## Install AI2Pot-lammps
-```shell
-# 1. 
+### Install AI2Pot-lammps
+
+1. Copy the AI2Pot interface files into the LAMMPS source directory:
+
+```bash
 $ cp AI2Pot/interface/lammps/AI2POT lammps/src
 $ cp AI2Pot/interface/lammps/Makefile.mpi lammps/src/MAKE/
+```
 
-# 2. 
+2. Build LAMMPS with the AI2POT package:
+
+```bash
 $ cd lammps/src
 $ make yes-AI2POT
 $ make mpi TORCH_ROOT=$(python -c "import torch, os; print(os.path.dirname(torch.__file__))")
 ```
 
+### AI2Pot pair style usage
+
+> **TODO**: Add documentation for using the AI2Pot pair style in LAMMPS input scripts,
+> including supported pair styles, parameter descriptions, and example input files.
 
 ## License
 
