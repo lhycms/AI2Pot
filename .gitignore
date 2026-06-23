@@ -6,6 +6,8 @@ ai2pot.egg-info
 **/*__pycache__*
 **/*.pyc
 
+**/*.pt
+**/*.ckpt
 **/*.png
 **/*.traj
 **/*.log

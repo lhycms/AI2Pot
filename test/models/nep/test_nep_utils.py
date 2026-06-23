@@ -8,6 +8,7 @@ from ase import Atoms
 from ase.io import read as ase_read
 
 from ai2pot.models.nep.nep_utils import (
+    NepSerializer,
     NepCalculator,
     Nep4Extxyz)
 
@@ -25,6 +26,27 @@ EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/Li_battery/t
 #EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/C/train.xyz"
 
 torch.set_num_threads(16)
+
+
+
+class NepSerializerTest(unittest.TestCase):
+    def setUp(self):
+        print("NepSerializerTest (TestCase) is setting up...\n")
+
+
+    def tearDown(self):
+        print("NepSerializerTest (TestCase) is tearing down...\n")
+
+    
+    def test_serialize(self):
+        pt_path: str = "./ai2pot_libtorch.pt"
+        NepSerializer.serialize(ckpt_path=CHECK_POINT_PATH,
+                                pt_path=pt_path)
+        
+        scripted_model = torch.jit.load(pt_path, map_location="cpu")
+        scripted_model.eval()
+        print(scripted_model._c._method_names())
+
 
 
 class Nep4ExtxyzTest(unittest.TestCase):

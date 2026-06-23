@@ -33,10 +33,32 @@ from sklearn.manifold import TSNE
 from ai2pot.data.mlffdatamodule import ExtxyzDataModule
 from ai2pot.utils.usepot import MlffInput
 from ai2pot.models.potential_train import LitLinearMtp
-from ai2pot.models.mtp.linear_mtp import LinearMtp
+from ai2pot.models.mtp.linear_mtp import (LinearMtp)
 from ai2pot.models.potential_utils import (
+    PotentialSerializerBase,
     PotentialCalculatorBase,
     Potential4ExtxyzBase)
+
+
+
+class LinearMtpSerializer(PotentialSerializerBase):
+    @staticmethod
+    def serialize(ckpt_path: str,
+                  pt_path: str):
+        # Lightning
+        lit_linear_mtp: LitLinearMtp = LitLinearMtp.load_from_checkpoint(checkpoint_path=ckpt_path,
+                                                                         map_location="cpu")
+        lit_linear_mtp.eval()
+        lit_linear_mtp.freeze()
+
+        # nn.Module
+        linear_mtp: LinearMtp = lit_linear_mtp.model
+        linear_mtp.eval()
+
+        with torch.no_grad():
+            scripted_linear_mtp = torch.jit.script(linear_mtp)
+            scripted_linear_mtp = torch.jit.freeze(scripted_linear_mtp)
+            scripted_linear_mtp.save(pt_path)
 
 
 class LinearMtp4Extxyz(Potential4ExtxyzBase):

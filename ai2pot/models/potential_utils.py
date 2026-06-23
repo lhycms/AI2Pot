@@ -37,6 +37,10 @@ from ai2pot.utils.usepot import MlffInput
 
 
 
+class PotentialSerializerBase(object):
+    pass
+
+
 class Potential4ExtxyzBase(object):
     def __init__(
             self,

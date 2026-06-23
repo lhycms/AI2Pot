@@ -34,8 +34,30 @@ from ai2pot.utils.usepot import MlffInput
 from ai2pot.models.potential_train import LitNep
 from ai2pot.models.nep.nep import Nep
 from ai2pot.models.potential_utils import (
+    PotentialSerializerBase,
     Potential4ExtxyzBase,
     PotentialCalculatorBase)
+
+
+
+class NepSerializer(PotentialSerializerBase):
+    @staticmethod
+    def serialize(ckpt_path: str,
+                  pt_path: str):
+        # Lightning
+        lit_nep: LitNep = LitNep.load_from_checkpoint(checkpoint_path=ckpt_path,
+                                                      map_location="cpu")
+        lit_nep.eval()
+        lit_nep.freeze()
+
+        # nn.Module
+        nep: Nep = lit_nep.model
+        nep.eval()
+
+        with torch.no_grad():
+            scripted_nep = torch.jit.script(nep)
+            scripted_nep = torch.jit.freeze(scripted_nep)
+            scripted_nep.save(pt_path)
 
 
 class Nep4Extxyz(Potential4ExtxyzBase):

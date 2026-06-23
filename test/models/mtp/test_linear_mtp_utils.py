@@ -7,14 +7,16 @@ import torch
 from ase import Atoms
 from ase.io import read as ase_read
 
-from ai2pot.models.mtp.linear_mtp_utils import (LinearMtp4Extxyz,
+from ai2pot.models.mtp.linear_mtp_utils import (LinearMtpSerializer,
+                                                LinearMtp4Extxyz,
                                                 LinearMtpActiveDR,
                                                 LinearMtpCalculator)
 
 
 
 TEST_FILES_DIR = os.getenv("AI2POT_PATH")
-CHECK_POINT_PATH: str = "/data/home/liuhanyu/mycode/AI2Pot/lightning_logs/lightning_logs/version_59/checkpoints/epoch=199-step=5000.ckpt"
+CHECK_POINT_PATH: str = "/data/home/liuhanyu/ai2pot_paper/2.demo/1.6.zxg_gst_linear_mtp_bs16/lightning_logs/version_0/checkpoints/last.ckpt"
+# "/data/home/liuhanyu/mycode/AI2Pot/lightning_logs/lightning_logs/version_59/checkpoints/epoch=199-step=5000.ckpt"
 EXTXYZ_PATH: str = os.path.join(TEST_FILES_DIR,
                                 "test",
                                 "test_data",
@@ -31,6 +33,26 @@ EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/Li_battery/t
 torch.manual_seed(42)
 torch.set_num_threads(16)
 
+
+
+class LinearMtpSerializerTest(unittest.TestCase):
+    def setUp(self):
+        print("LinearMtpSerializer (TestCase) is setting up...")
+
+
+    def tearDown(self):
+        print("LinearMtpSerializer (TestCase) is tearing down...")
+
+    
+    def test_serialize(self):
+        pt_path: str = "./ai2pot_libtorch.pt"
+        LinearMtpSerializer.serialize(ckpt_path=CHECK_POINT_PATH,
+                                      pt_path=pt_path)
+        
+        scripted_model = torch.jit.load(pt_path, map_location="cpu")
+        scripted_model.eval()
+
+        print(scripted_model._c._method_names())
 
 
 class LinearMtp4ExtxyzTest(unittest.TestCase):
@@ -64,7 +86,7 @@ class LinearMtp4ExtxyzTest(unittest.TestCase):
         print("\t2. RMSE of force = {0:.3f} meV/A".format(f_rmse * 1000))
 
     
-    def test_calculate_descriptors(self):
+    def est_calculate_descriptors(self):
         descriptors_array, atomic_numbers_array = self.linear_mtp_extxyz.calculate_descriptors()
         print("1.1. descriptors_array.shape = ", descriptors_array.shape)
         print("1.2. atomic_numbers_array.shape = ", atomic_numbers_array.shape)

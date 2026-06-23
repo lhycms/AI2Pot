@@ -16,7 +16,7 @@
 # along with AI2Pot.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import torch
 import torch.nn as nn
@@ -156,6 +156,7 @@ class LinearMtp(nn.Module):
         return self.alpha_moments_count
 
     
+    @torch.jit.ignore
     def forward(self, *args, **kwargs):
         if self.fit_virial:
             bmse_tensor = self.predict_loss(*args, **kwargs)
@@ -163,7 +164,8 @@ class LinearMtp(nn.Module):
             bmse_tensor = self.predict_ef_loss(*args, **kwargs)
         return bmse_tensor
     
-    
+
+    @torch.jit.ignore
     def predict_loss(self,
                      e_weight: float,
                      f_weight: float,
@@ -244,6 +246,7 @@ class LinearMtp(nn.Module):
         return bmse_tensor, e_rmse_tensor, f_rmse_tensor, v_rmse_tensor
     
     
+    @torch.jit.ignore
     def predict_ef_loss(self,
                         e_weight: float,
                         f_weight: float,
@@ -316,7 +319,7 @@ class LinearMtp(nn.Module):
         return bmse_tensor, e_rmse_tensor, f_rmse_tensor
     
     
-    @torch.no_grad()
+    @torch.jit.export
     def predict_efv(self,
                     binum_tensor: torch.Tensor,
                     bilist_tensor: torch.Tensor,
@@ -324,10 +327,10 @@ class LinearMtp(nn.Module):
                     bfirstneigh_tensor: torch.Tensor,
                     brcs_tensor: torch.Tensor,
                     btypes_tensor: torch.Tensor,
-                    bnghost_tensor: torch.Tensor):
+                    bnghost_tensor: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         #
-        conv_energy: float = self.conv_energy_tensor.item()
-        conv_length: float = self.conv_length_tensor.item()
+        conv_energy: float = float( self.conv_energy_tensor.item() )
+        conv_length: float = float( self.conv_length_tensor.item() )
         conv_force: float = conv_energy / conv_length
         conv_virial: float = conv_energy
 
@@ -343,7 +346,7 @@ class LinearMtp(nn.Module):
         zbl_dks_norm: torch.Tensor = self.zbl_dks_tensor / conv_length
 
         #
-        betot_tensor, bforce_tensor, bvirial_tensor = linearMtpToEFVOp(
+        betot_tensor, bforce_tensor, bvirial_tensor = torch.ops.mtpr.linearMtpToEFVOp(
             self.chebyshev_size,
             self.scaling,
             self.coeffs_tensor,
@@ -378,7 +381,7 @@ class LinearMtp(nn.Module):
         return betot_tensor, bforce_tensor, bvirial_tensor
 
 
-    @torch.no_grad()
+    @torch.jit.export
     def predict_ef(self,
                    binum_tensor: torch.Tensor,
                    bilist_tensor: torch.Tensor,
@@ -386,10 +389,10 @@ class LinearMtp(nn.Module):
                    bfirstneigh_tensor: torch.Tensor,
                    brcs_tensor: torch.Tensor,
                    btypes_tensor: torch.Tensor,
-                   bnghost_tensor: torch.Tensor):
+                   bnghost_tensor: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         #
-        conv_energy: float = self.conv_energy_tensor.item()
-        conv_length: float = self.conv_length_tensor.item()
+        conv_energy: float = float( self.conv_energy_tensor.item() )
+        conv_length: float = float( self.conv_length_tensor.item() )
         conv_force: float = conv_energy / conv_length
 
         brcs_tensor_norm: torch.Tensor = brcs_tensor * conv_length
@@ -404,7 +407,7 @@ class LinearMtp(nn.Module):
         zbl_dks_norm: torch.Tensor = self.zbl_dks_tensor / conv_length
 
         #
-        betot_tensor, bforce_tensor = linearMtpToEFOp(
+        betot_tensor, bforce_tensor = torch.ops.mtpr.linearMtpToEFOp(
             self.chebyshev_size,
             self.scaling,
             self.coeffs_tensor,
@@ -535,3 +538,4 @@ class LinearMtp(nn.Module):
             rmin_norm)[0]
         
         return bdescriptors_tensor
+

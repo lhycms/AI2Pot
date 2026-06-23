@@ -16,7 +16,7 @@
 # along with AI2Pot.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import torch
 import torch.nn as nn
@@ -133,6 +133,7 @@ class Nep(nn.Module):
         return self.num_descriptors
     
 
+    @torch.jit.ignore
     def forward(self, *args, **kwargs):
         if (self.fit_virial):
             bmse_tensor: torch.Tensor = self.predict_loss(*args, **kwargs)
@@ -141,6 +142,7 @@ class Nep(nn.Module):
         return bmse_tensor
 
 
+    @torch.jit.ignore
     def predict_loss(self,
                      e_weight: float,
                      f_weight: float,
@@ -220,6 +222,7 @@ class Nep(nn.Module):
         return bmse_tensor, e_rmse_tensor, f_rmse_tensor, v_rmse_tensor
 
 
+    @torch.jit.ignore
     def predict_ef_loss(self,
                         e_weight: float,
                         f_weight: float,
@@ -291,7 +294,7 @@ class Nep(nn.Module):
         return bmse_tensor, e_rmse_tensor, f_rmse_tensor
 
 
-    @torch.no_grad()
+    @torch.jit.export
     def predict_efv(self,
                     binum_tensor: torch.Tensor,
                     bilist_tensor: torch.Tensor,
@@ -299,10 +302,10 @@ class Nep(nn.Module):
                     bfirstneigh_tensor: torch.Tensor,
                     brcs_tensor: torch.Tensor,
                     btypes_tensor: torch.Tensor,
-                    bnghost_tensor: torch.Tensor):
+                    bnghost_tensor: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         #
-        conv_energy: float = self.conv_energy_tensor.item()
-        conv_length: float = self.conv_length_tensor.item()
+        conv_energy: float = float( self.conv_energy_tensor.item() )
+        conv_length: float = float( self.conv_length_tensor.item() )
         conv_force: float = conv_energy / conv_length
         conv_virial: float = conv_energy
 
@@ -343,9 +346,6 @@ class Nep(nn.Module):
             zbl_rmin_norm,
             zbl_cks_norm,
             zbl_dks_norm)
-        betot_tensor: torch.Tensor
-        bforce_tensor: torch.Tensor
-        bvirial_tensor: torch.Tensor
 
         #
         betot_tensor = betot_tensor / conv_energy
@@ -355,7 +355,7 @@ class Nep(nn.Module):
         return betot_tensor, bforce_tensor, bvirial_tensor
 
 
-    @torch.no_grad()
+    @torch.jit.export
     def predict_ef(self,
                    binum_tensor: torch.Tensor,
                    bilist_tensor: torch.Tensor,
@@ -363,10 +363,10 @@ class Nep(nn.Module):
                    bfirstneigh_tensor: torch.Tensor,
                    brcs_tensor: torch.Tensor,
                    btypes_tensor: torch.Tensor,
-                   bnghost_tensor: torch.Tensor):
+                   bnghost_tensor: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         #
-        conv_energy: float = self.conv_energy_tensor.item()
-        conv_length: float = self.conv_length_tensor.item()
+        conv_energy: float = float( self.conv_energy_tensor.item() )
+        conv_length: float = float( self.conv_length_tensor.item() )
         conv_force: float = conv_energy / conv_length
 
         brcs_norm: torch.Tensor = brcs_tensor * conv_length
