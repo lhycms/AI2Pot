@@ -1,0 +1,16 @@
+units           metal
+atom_style      atomic
+boundary        p p p
+
+read_data       data.gst_minimal
+
+pair_style      ai2pot ./ai2pot_libtorch.pt
+pair_coeff      * * Ge Sb Te
+
+neighbor        2.0 bin
+neigh_modify    every 1 delay 0 check yes
+
+thermo          1
+thermo_style    custom step atoms pe etotal press
+
+run             0

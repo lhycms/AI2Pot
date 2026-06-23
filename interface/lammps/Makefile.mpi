@@ -38,6 +38,7 @@ endif
 LIB += -L$(AI2POT_ROOT)/_lib
 LIB += -Wl,-rpath,$(AI2POT_ROOT)/_lib
 LIB += -lmtpr_bind
+LIB += -lmtpParamOp
 LIB += -llinearMtpOp
 LIB += -lnep_bind
 LIB += -lnepOp
