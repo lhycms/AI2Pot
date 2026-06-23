@@ -199,6 +199,20 @@ Add the repository path to `.vscode/settings.json` if Pylance cannot resolve the
 
 </details>
 
+
+## Install AI2Pot-lammps
+```shell
+# 1. 
+$ cp AI2Pot/interface/lammps/AI2POT lammps/src
+$ cp AI2Pot/interface/lammps/Makefile.mpi lammps/src/MAKE/
+
+# 2. 
+$ cd lammps/src
+$ make yes-AI2POT
+$ make mpi TORCH_ROOT=$(python -c "import torch, os; print(os.path.dirname(torch.__file__))")
+```
+
+
 ## License
 
 AI2Pot is licensed under the GNU General Public License v3.0. See [`LICENSE`](LICENSE) for details.
