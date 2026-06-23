@@ -35,13 +35,14 @@ LIB += -ltorch_cuda
 LIB += -lc10_cuda
 endif
 
-LIB += -L${AI2POT_ROOT}/_lib
-LIB += -Wl,-rpath,${AI2POT_ROOT}/_lib
+LIB += -L$(AI2POT_ROOT)/_lib
+LIB += -Wl,-rpath,$(AI2POT_ROOT)/_lib
 LIB += -lmtpr_bind
 LIB += -llinearMtpOp
 LIB += -lnep_bind
 LIB += -lnepOp
 LIB += $(shell python3-config --embed --ldflags)
+LIB += -Wl,-rpath,$(CONDA_PREFIX)/lib
 ### Modify by AI2Pot
 SIZE =		size
 
