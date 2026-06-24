@@ -16,6 +16,7 @@
 #include <torch/torch.h>
 #include <ATen/ATen.h>
 #include <torch/script.h>
+#include <torch/autograd.h>
 #include <mpi.h>
 
 #include <iostream>
@@ -170,6 +171,67 @@ std::vector<int> PairAI2Pot::get_lmp2model_type_map(
 }
 
 
+void PairAI2Pot::construct_mlff_input()
+{
+    int nlocal = atom->nlocal;
+    int nghost = atom->nghost;
+    int nall = atom->nlocal + atom->nghost;
+    // int* list->ilist
+    // int* list->numneigh
+    // int** list->firstneigh
+    // int* atom->type
+    // double** x = atom->x
+
+    // 1. Malloc tensor
+    c10::TensorOptions local_int_options = c10::TensorOptions().dtype(torch::kInt32).device(c10::kCPU);
+    c10::TensorOptions local_float_options = c10::TensorOptions().dtype(torch::kFloat32).device(c10::kCPU);
+    binum_tensor = at::zeros({1}, local_int_options);
+    bilist_tensor = at::zeros({1, nlocal}, local_int_options);
+    bnumneigh_tensor = at::zeros({1, nlocal}, local_int_options);
+    bfirstneigh_tensor = at::zeros({1, nlocal, umax_num_neigh_atoms}, local_int_options);
+    brcs_tensor = at::zeros({1, nlocal, umax_num_neigh_atoms, 3}, local_float_options);
+    btypes_tensor = at::zeros({1, nall}, local_int_options);
+    bnghost_tensor = at::zeros({1}, local_int_options);
+
+    // 2. Assign tensor
+    int *inum_ptr = binum_tensor.data_ptr<int>();
+    int *ilist = bilist_tensor.data_ptr<int>();
+    int *numneigh = bnumneigh_tensor.data_ptr<int>();
+    int *firstneigh = bfirstneigh_tensor.data_ptr<int>();
+    float *rcs = brcs_tensor.data_ptr<float>();
+    int *types = btypes_tensor.data_ptr<int>();
+    int *nghost_ptr = bnghost_tensor.data_ptr<int>();
+
+    inum_ptr[0] = nlocal;
+    nghost_ptr[0] = nghost;
+    for (int ii=0; ii<list->inum; ii++) {
+        int center_idx = list->ilist[ii];
+        ilist[ii] = list->ilist[ii];
+        numneigh[ii] = list->numneigh[center_idx];
+
+        for (int jj=0; jj<list->numneigh[center_idx]; jj++) {
+            int neigh_idx = list->firstneigh[center_idx][jj] & NEIGHMASK;
+            firstneigh[ii*umax_num_neigh_atoms + jj] = neigh_idx;
+
+            for (int aa=0; aa<3; aa++)
+                rcs[ii*umax_num_neigh_atoms*3 + jj*3 + aa] = atom->x[neigh_idx][aa] - atom->x[center_idx][aa];
+        }
+    }
+
+    for (int ii=0; ii<nall; ii++)
+        types[ii] = lmp2model_type_map[atom->type[ii]];
+
+    // 3. Communication
+    binum_tensor = binum_tensor.to(device);
+    bilist_tensor = bilist_tensor.to(device);
+    bnumneigh_tensor = bnumneigh_tensor.to(device);
+    bfirstneigh_tensor = bfirstneigh_tensor.to(device);
+    brcs_tensor = brcs_tensor.to(device);
+    btypes_tensor = btypes_tensor.to(device);
+    bnghost_tensor = bnghost_tensor.to(device);
+}
+
+
 void PairAI2Pot::settings(int argc, char **argv) {
     if (argc != 1)
         error->all(FLERR, "Illegal pair_style command");
@@ -257,7 +319,11 @@ void PairAI2Pot::coeff(int argc, char **argv) {
     // 4. Other attributions of model
     umax_num_neigh_atoms = model.attr("umax_num_neigh_atoms").toInt();
 
-    // 5. Log
+    // 5. TensorOptions
+    int_options = c10::TensorOptions().dtype(torch::kInt32).device(device);
+    float_options = c10::TensorOptions().dtype(torch_float_dtype).device(device);
+
+    // 6. Log
     if (comm->me == 0) {
         std::string message;
         message += "AI2Pot: pair_coeff initialized\n";
@@ -298,5 +364,60 @@ void PairAI2Pot::init_style() {
 
 
 void PairAI2Pot::compute(int eflag, int vflag) {
+    if (eflag || vflag)
+        ev_setup(eflag, vflag);
+
+    // 1. Construct mlff_input
+    double **f = atom->f;
+    int nlocal = atom->nlocal;
+    int nall = atom->nlocal + atom->nghost;
+    construct_mlff_input();
+
+if (comm->me == 0) {
+    std::cout << "binum dtype       = " << binum_tensor.dtype() << std::endl;
+    std::cout << "bilist dtype      = " << bilist_tensor.dtype() << std::endl;
+    std::cout << "bnumneigh dtype   = " << bnumneigh_tensor.dtype() << std::endl;
+    std::cout << "bfirstneigh dtype = " << bfirstneigh_tensor.dtype() << std::endl;
+    std::cout << "brcs dtype        = " << brcs_tensor.dtype() << std::endl;
+    std::cout << "btypes dtype      = " << btypes_tensor.dtype() << std::endl;
+    std::cout << "bnghost dtype     = " << bnghost_tensor.dtype() << std::endl;
+
+    std::cout << "binum sizes       = " << binum_tensor.sizes() << std::endl;
+    std::cout << "bilist sizes      = " << bilist_tensor.sizes() << std::endl;
+    std::cout << "bnumneigh sizes   = " << bnumneigh_tensor.sizes() << std::endl;
+    std::cout << "bfirstneigh sizes = " << bfirstneigh_tensor.sizes() << std::endl;
+    std::cout << "brcs sizes        = " << brcs_tensor.sizes() << std::endl;
+    std::cout << "btypes sizes      = " << btypes_tensor.sizes() << std::endl;
+    std::cout << "bnghost sizes     = " << bnghost_tensor.sizes() << std::endl;
+}
+
+    // 2. Forward
+    if (model.attr("fit_virial").toBool() == true) {
+        auto output = model.get_method("predict_efv")(
+            {
+                binum_tensor,
+                bilist_tensor,
+                bnumneigh_tensor,
+                bfirstneigh_tensor,
+                brcs_tensor,
+                btypes_tensor,
+                bnghost_tensor
+            }
+        ).toTuple();
+    } else {
+        auto output = model.get_method("predict_ef")(
+            {
+                binum_tensor,
+                bilist_tensor,
+                bnumneigh_tensor,
+                bfirstneigh_tensor,
+                brcs_tensor,
+                btypes_tensor,
+                bnghost_tensor
+            }
+        ).toTuple();
+    }
+    
+    // 3. Assign lmp variable
 
 }

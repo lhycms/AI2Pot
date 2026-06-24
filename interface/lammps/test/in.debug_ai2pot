@@ -13,4 +13,4 @@ neigh_modify    every 1 delay 0 check yes
 thermo          1
 thermo_style    custom step atoms pe etotal press
 
-run             0
+run             100

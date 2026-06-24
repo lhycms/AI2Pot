@@ -63,6 +63,16 @@ private:
     std::vector<int> model_type_map;
     std::vector<int> lmp_type_map;
     std::vector<int> lmp2model_type_map;
+    c10::TensorOptions int_options;
+    c10::TensorOptions float_options;
+
+    at::Tensor binum_tensor;
+    at::Tensor bilist_tensor;
+    at::Tensor bnumneigh_tensor;
+    at::Tensor bfirstneigh_tensor;
+    at::Tensor brcs_tensor;
+    at::Tensor btypes_tensor;
+    at::Tensor bnghost_tensor;
 };  // class : PairAI2Pot
 
 };  // namespace : LAMMPS_NS
