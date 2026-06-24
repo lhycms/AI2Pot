@@ -51,9 +51,10 @@ class LinearMtpSerializer(PotentialSerializerBase):
         lit_linear_mtp.eval()
         lit_linear_mtp.freeze()
 
-        # nn.Module
+        # nn.Module (torch.float32 for lammps)
         linear_mtp: LinearMtp = lit_linear_mtp.model
         linear_mtp.eval()
+        linear_mtp.to(torch.float32) 
 
         with torch.no_grad():
             scripted_linear_mtp = torch.jit.script(linear_mtp)

@@ -2,7 +2,7 @@ units           metal
 atom_style      atomic
 boundary        p p p
 
-read_data       data.gst_minimal
+read_data       data.gst
 
 pair_style      ai2pot ./ai2pot_libtorch.pt
 pair_coeff      * * Ge Sb Te
@@ -13,4 +13,7 @@ neigh_modify    every 1 delay 0 check yes
 thermo          1
 thermo_style    custom step atoms pe etotal press
 
-run             100
+dump            d1 all custom 1 force.dump id type x y z fx fy fz
+dump_modify     d1 sort id first yes
+
+run             10

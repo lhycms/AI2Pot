@@ -245,7 +245,7 @@ void PairAI2Pot::settings(int argc, char **argv) {
         
         model = torch::jit::load(pt_path);
         model.to(device);
-        model.to(torch_float_dtype);
+        // LibTorch bug : model.to(torch_float_dtype);
         model.eval();
 
         std::string potential_type = "AI2Pot-NEP";
@@ -366,34 +366,27 @@ void PairAI2Pot::init_style() {
 void PairAI2Pot::compute(int eflag, int vflag) {
     if (eflag || vflag)
         ev_setup(eflag, vflag);
+    if (eflag_atom)
+        error->all(FLERR, "AI2Pot: per-atom energy is not supported yet");
+    if (vflag_atom)
+        error->all(FLERR, "AI2Pot: per-atom virial is not supported yet");
 
     // 1. Construct mlff_input
+    construct_mlff_input();
     double **f = atom->f;
     int nlocal = atom->nlocal;
     int nall = atom->nlocal + atom->nghost;
-    construct_mlff_input();
-
-if (comm->me == 0) {
-    std::cout << "binum dtype       = " << binum_tensor.dtype() << std::endl;
-    std::cout << "bilist dtype      = " << bilist_tensor.dtype() << std::endl;
-    std::cout << "bnumneigh dtype   = " << bnumneigh_tensor.dtype() << std::endl;
-    std::cout << "bfirstneigh dtype = " << bfirstneigh_tensor.dtype() << std::endl;
-    std::cout << "brcs dtype        = " << brcs_tensor.dtype() << std::endl;
-    std::cout << "btypes dtype      = " << btypes_tensor.dtype() << std::endl;
-    std::cout << "bnghost dtype     = " << bnghost_tensor.dtype() << std::endl;
-
-    std::cout << "binum sizes       = " << binum_tensor.sizes() << std::endl;
-    std::cout << "bilist sizes      = " << bilist_tensor.sizes() << std::endl;
-    std::cout << "bnumneigh sizes   = " << bnumneigh_tensor.sizes() << std::endl;
-    std::cout << "bfirstneigh sizes = " << bfirstneigh_tensor.sizes() << std::endl;
-    std::cout << "brcs sizes        = " << brcs_tensor.sizes() << std::endl;
-    std::cout << "btypes sizes      = " << btypes_tensor.sizes() << std::endl;
-    std::cout << "bnghost sizes     = " << bnghost_tensor.sizes() << std::endl;
-}
+    
+    bool fit_virial = model.attr("fit_virial").toBool();
+    if (vflag_global && !fit_virial)
+        error->all(FLERR, "AI2Pot: LAMMPS requests virial, but this model does not output virial");
 
     // 2. Forward
-    if (model.attr("fit_virial").toBool() == true) {
-        auto output = model.get_method("predict_efv")(
+    torch::NoGradGuard no_grad;
+    c10::intrusive_ptr<c10::ivalue::Tuple> output;
+
+    if (vflag_global) {
+        output = model.get_method("predict_efv")(
             {
                 binum_tensor,
                 bilist_tensor,
@@ -405,7 +398,7 @@ if (comm->me == 0) {
             }
         ).toTuple();
     } else {
-        auto output = model.get_method("predict_ef")(
+        output = model.get_method("predict_ef")(
             {
                 binum_tensor,
                 bilist_tensor,
@@ -419,5 +412,30 @@ if (comm->me == 0) {
     }
     
     // 3. Assign lmp variable
-
+    at::Tensor betot_tensor = output->elements()[0].toTensor().to(c10::kCPU, torch_float_dtype);
+    at::Tensor bforce_tensor = output->elements()[1].toTensor().to(c10::kCPU, torch_float_dtype);
+    at::Tensor bvirial_tensor;
+    if (vflag_global)
+        bvirial_tensor = output->elements()[2].toTensor().to(c10::kCPU, torch_float_dtype);
+    
+    // 3.1. force
+    float* bforce_ptr = bforce_tensor.data_ptr<float>();
+    for (int ii=0; ii<nall; ii++)
+        for (int aa=0; aa<3; aa++)
+            f[ii][aa] += (double)bforce_ptr[ii*3 + aa];
+    
+    // 3.2. Energy
+    if (eflag_global)
+        eng_vdwl += (double)betot_tensor[0].item<float>();
+    
+    // 3.3. Virial
+    if (vflag_global) {
+        float *bvirial_ptr = bvirial_tensor.data_ptr<float>();
+        virial[0] += (double)bvirial_ptr[0];
+        virial[1] += (double)bvirial_ptr[4];
+        virial[2] += (double)bvirial_ptr[8];
+        virial[3] += (double)bvirial_ptr[1];
+        virial[4] += (double)bvirial_ptr[2];
+        virial[5] += (double)bvirial_ptr[5];
+    }
 }

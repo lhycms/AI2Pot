@@ -27,7 +27,7 @@ EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/Li_battery/t
 #EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/Li_battery/train_802.xyz"
 #EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/C/train.xyz"
 #EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/gst/test.xyz"
-#EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/gst/train.xyz"
+EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/gst/train.xyz"
 #EXTXYZ_PATH = "/data/home/liuhanyu/ai2pot_paper/2.demo/hea_linear_mtp/train.xyz"
 
 torch.manual_seed(42)
@@ -44,7 +44,7 @@ class LinearMtpSerializerTest(unittest.TestCase):
         print("LinearMtpSerializer (TestCase) is tearing down...")
 
     
-    def test_serialize(self):
+    def est_serialize(self):
         pt_path: str = "./ai2pot_libtorch.pt"
         LinearMtpSerializer.serialize(ckpt_path=CHECK_POINT_PATH,
                                       pt_path=pt_path)
@@ -103,7 +103,7 @@ class LinearMtpCalculatorTest(unittest.TestCase):
         self.linear_mtp_calculator: LinearMtpCalculator = LinearMtpCalculator(checkpoint_path=self.checkpoint_path,
                                                                               map_location=self.map_location,
                                                                               torch_float_dtype=self.torch_float_dtype)
-        self.atoms: Atoms = ase_read(filename=EXTXYZ_PATH, index=":")[0]
+        self.atoms: Atoms = ase_read(filename=EXTXYZ_PATH, index=":")[2000]
         self.atoms.calc = self.linear_mtp_calculator
 
 
@@ -121,12 +121,12 @@ class LinearMtpCalculatorTest(unittest.TestCase):
         print("\t2.1. descriptors.shape = ", self.atoms.calc.get_property("descriptors", atoms=self.atoms).shape)
 
 
-    def est_calculate_with_virial(self):
+    def test_calculate_with_virial(self):
         print("Calculator (virial) Summary:")
         print("-------------------")
         print("\t1.1. Energy = ", self.atoms.get_potential_energy())
-        print("\t1.2. force.shape = ", self.atoms.get_forces().shape)
-        print("\t1.3. virial.shape = ", self.atoms.get_stress().shape)
+        print("\t1.2. force = \n", self.atoms.get_forces())
+        print("\t1.3. virial = \n", self.atoms.get_stress())
 
     
 

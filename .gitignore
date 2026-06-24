@@ -7,6 +7,7 @@ ai2pot.egg-info
 **/*.pyc
 
 **/*.pt
+**/*.dump
 **/*.ckpt
 **/*.png
 **/*.traj
