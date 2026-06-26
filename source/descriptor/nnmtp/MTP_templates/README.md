@@ -1,3 +1,19 @@
+# MTP Template Files
+
+The `.almtp` template files provided in this directory are adapted from the
+official MLIP project:
+
+https://gitlab.com/ashapeev/mlip-3
+
+These template files define the standard Moment Tensor Potential (MTP)
+parameterizations (levels 6–28) originally introduced in MLIP. They are
+included here for compatibility and convenience.
+
+The AI2Pot implementation, including the training pipeline, descriptor
+evaluation, optimization algorithms, and C++/CUDA operators, is developed
+independently and is **not** copied from the MLIP implementation.
+
+# Available templates
 06.almtp, ... 28.almtp: are the standard MTP files with different number of paramters (levels 6 through 28)
 The levels 2 and 4 are depreciated: their training may not be stable.
 Some stuff should be manually edited, see the "<<<" comments
