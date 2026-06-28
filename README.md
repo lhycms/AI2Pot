@@ -221,8 +221,10 @@ $ make -j 16 mpi \
 
 ### AI2Pot pair style usage
 
-> **TODO**: Add documentation for using the AI2Pot pair style in LAMMPS input scripts,
-> including supported pair styles, parameter descriptions, and example input files.
+```txt
+pair_style ai2pot ai2pot_libtorch.pt
+pair_coeff * * Ge Sb Te
+```
 
 ## License
 
