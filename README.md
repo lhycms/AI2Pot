@@ -222,7 +222,7 @@ $ make -j 16 mpi \
 ### AI2Pot pair style usage
 
 ```txt
-pair_style ai2pot ai2pot_libtorch.pt
+pair_style ai2pot ./ai2pot_libtorch.pt
 pair_coeff * * Ge Sb Te
 ```
 
