@@ -184,24 +184,39 @@ void PairAI2Pot::construct_mlff_input()
     // double** x = atom->x
 
     // 1. Malloc tensor
-    c10::TensorOptions local_int_options = c10::TensorOptions().dtype(torch::kInt32).device(c10::kCPU);
-    c10::TensorOptions local_float_options = c10::TensorOptions().dtype(torch::kFloat32).device(c10::kCPU);
-    binum_tensor = at::zeros({1}, local_int_options);
-    bilist_tensor = at::zeros({1, nlocal}, local_int_options);
-    bnumneigh_tensor = at::zeros({1, nlocal}, local_int_options);
-    bfirstneigh_tensor = at::zeros({1, nlocal, umax_num_neigh_atoms}, local_int_options);
-    brcs_tensor = at::zeros({1, nlocal, umax_num_neigh_atoms, 3}, local_float_options);
-    btypes_tensor = at::zeros({1, nall}, local_int_options);
-    bnghost_tensor = at::zeros({1}, local_int_options);
+    if (!tensors_ready || (nlocal != cached_nlocal) || (nall != cached_nall)) {
+        // 1.1. CPU tensors
+        binum_tensor_cpu = torch::empty({1}, cpu_int_options);
+        bilist_tensor_cpu = torch::empty({1, nlocal}, cpu_int_options);
+        bnumneigh_tensor_cpu = torch::empty({1, nlocal}, cpu_int_options);
+        bfirstneigh_tensor_cpu = torch::empty({1, nlocal, umax_num_neigh_atoms}, cpu_int_options);
+        brcs_tensor_cpu = torch::empty({1, nlocal, umax_num_neigh_atoms, 3}, cpu_float_options);
+        btypes_tensor_cpu = torch::empty({1, nall}, cpu_int_options);
+        bnghost_tensor_cpu = torch::empty({1}, cpu_int_options);
 
-    // 2. Assign tensor
-    int *inum_ptr = binum_tensor.data_ptr<int>();
-    int *ilist = bilist_tensor.data_ptr<int>();
-    int *numneigh = bnumneigh_tensor.data_ptr<int>();
-    int *firstneigh = bfirstneigh_tensor.data_ptr<int>();
-    float *rcs = brcs_tensor.data_ptr<float>();
-    int *types = btypes_tensor.data_ptr<int>();
-    int *nghost_ptr = bnghost_tensor.data_ptr<int>();
+        // 1.2. GPU tensor
+        binum_tensor = torch::empty({1}, int_options);
+        bilist_tensor = torch::empty({1, nlocal}, int_options);
+        bnumneigh_tensor = torch::empty({1, nlocal}, int_options);
+        bfirstneigh_tensor = torch::empty({1, nlocal, umax_num_neigh_atoms}, int_options);
+        brcs_tensor = torch::empty({1, nlocal, umax_num_neigh_atoms, 3}, float_options);
+        btypes_tensor = torch::empty({1, nall}, int_options);
+        bnghost_tensor = torch::empty({1}, int_options);
+
+        // 1.3. Cached variable
+        tensors_ready = true;
+        cached_nlocal = nlocal;
+        cached_nall = nall;
+    }
+
+    // 2. Assign tensor on CPU
+    int *inum_ptr = binum_tensor_cpu.data_ptr<int>();
+    int *ilist = bilist_tensor_cpu.data_ptr<int>();
+    int *numneigh = bnumneigh_tensor_cpu.data_ptr<int>();
+    int *firstneigh = bfirstneigh_tensor_cpu.data_ptr<int>();
+    float *rcs = brcs_tensor_cpu.data_ptr<float>();
+    int *types = btypes_tensor_cpu.data_ptr<int>();
+    int *nghost_ptr = bnghost_tensor_cpu.data_ptr<int>();
 
     inum_ptr[0] = nlocal;
     nghost_ptr[0] = nghost;
@@ -214,22 +229,23 @@ void PairAI2Pot::construct_mlff_input()
             int neigh_idx = list->firstneigh[center_idx][jj] & NEIGHMASK;
             firstneigh[ii*umax_num_neigh_atoms + jj] = neigh_idx;
 
-            for (int aa=0; aa<3; aa++)
-                rcs[ii*umax_num_neigh_atoms*3 + jj*3 + aa] = atom->x[neigh_idx][aa] - atom->x[center_idx][aa];
+            rcs[ii*umax_num_neigh_atoms*3 + jj*3 + 0] = atom->x[neigh_idx][0] - atom->x[center_idx][0];
+            rcs[ii*umax_num_neigh_atoms*3 + jj*3 + 1] = atom->x[neigh_idx][1] - atom->x[center_idx][1];
+            rcs[ii*umax_num_neigh_atoms*3 + jj*3 + 2] = atom->x[neigh_idx][2] - atom->x[center_idx][2];
         }
     }
 
     for (int ii=0; ii<nall; ii++)
         types[ii] = lmp2model_type_map[atom->type[ii]];
 
-    // 3. Communication
-    binum_tensor = binum_tensor.to(device);
-    bilist_tensor = bilist_tensor.to(device);
-    bnumneigh_tensor = bnumneigh_tensor.to(device);
-    bfirstneigh_tensor = bfirstneigh_tensor.to(device);
-    brcs_tensor = brcs_tensor.to(device);
-    btypes_tensor = btypes_tensor.to(device);
-    bnghost_tensor = bnghost_tensor.to(device);
+    // 3. Copy to target device (CPU or GPU)
+    binum_tensor.copy_(binum_tensor_cpu);
+    bilist_tensor.copy_(bilist_tensor_cpu);
+    bnumneigh_tensor.copy_(bnumneigh_tensor_cpu);
+    bfirstneigh_tensor.copy_(bfirstneigh_tensor_cpu);
+    brcs_tensor.copy_(brcs_tensor_cpu);
+    btypes_tensor.copy_(btypes_tensor_cpu);
+    bnghost_tensor.copy_(bnghost_tensor_cpu);
 }
 
 
@@ -239,7 +255,7 @@ void PairAI2Pot::settings(int argc, char **argv) {
 
     std::string pt_path = argv[0];
     try {
-        // 1. Model
+        // 1. Model && device
         torch::jit::getExecutorMode() = false;
         if (torch::cuda::is_available())
             device = torch::Device(torch::kCUDA, get_node_rank());
@@ -373,9 +389,9 @@ void PairAI2Pot::compute(int eflag, int vflag) {
         error->all(FLERR, "AI2Pot: per-atom virial is not supported yet");
 
     // 1. Construct mlff_input
-//auto start_cpu = std::chrono::high_resolution_clock::now(); // Time
+auto start_cpu = std::chrono::high_resolution_clock::now(); // Time
     construct_mlff_input();
-//auto end_cpu = std::chrono::high_resolution_clock::now();   // Time
+auto end_cpu = std::chrono::high_resolution_clock::now();   // Time
     double **f = atom->f;
     int nlocal = atom->nlocal;
     int nall = atom->nlocal + atom->nghost;
@@ -388,7 +404,7 @@ void PairAI2Pot::compute(int eflag, int vflag) {
     torch::NoGradGuard no_grad;
     c10::intrusive_ptr<c10::ivalue::Tuple> output;
 
-//auto start_gpu = std::chrono::high_resolution_clock::now(); // Time
+auto start_gpu = std::chrono::high_resolution_clock::now(); // Time
     if (vflag_global) {
         output = model.get_method("predict_efv")(
             {
@@ -414,7 +430,7 @@ void PairAI2Pot::compute(int eflag, int vflag) {
             }
         ).toTuple();
     }
-//auto end_gpu = std::chrono::high_resolution_clock::now(); // Time
+auto end_gpu = std::chrono::high_resolution_clock::now(); // Time
 // Time
 float cpu_time = std::chrono::duration<double, std::milli>(end_cpu - start_cpu).count();
 float gpu_time = std::chrono::duration<double, std::milli>(end_gpu - start_gpu).count();

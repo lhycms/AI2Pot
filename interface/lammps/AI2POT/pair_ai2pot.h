@@ -63,8 +63,23 @@ private:
     std::vector<int> model_type_map;
     std::vector<int> lmp_type_map;
     std::vector<int> lmp2model_type_map;
+    c10::TensorOptions cpu_int_options = c10::TensorOptions().dtype(torch::kInt32).device(c10::kCPU);
+    c10::TensorOptions cpu_float_options = c10::TensorOptions().dtype(torch::kFloat32).device(c10::kCPU);
     c10::TensorOptions int_options;
     c10::TensorOptions float_options;
+
+    // For tensors
+    bool tensors_ready = false;
+    int cached_nlocal = -1;
+    int cached_nall = -1;
+
+    at::Tensor binum_tensor_cpu;
+    at::Tensor bilist_tensor_cpu;
+    at::Tensor bnumneigh_tensor_cpu;
+    at::Tensor bfirstneigh_tensor_cpu;
+    at::Tensor brcs_tensor_cpu;
+    at::Tensor btypes_tensor_cpu;
+    at::Tensor bnghost_tensor_cpu;
 
     at::Tensor binum_tensor;
     at::Tensor bilist_tensor;
