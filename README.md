@@ -124,7 +124,7 @@ Configure the project:
 
 ```bash
 $ cmake \
-    -DBUILD_TEST=ON \
+    -DBUILD_TEST=ON`` \
     -DTORCH_OP=ON \
     -DUSE_CUDA=ON \
     -DUSE_OPENMP=ON \

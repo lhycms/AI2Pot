@@ -44,7 +44,7 @@ class LitLinearMtpTest(unittest.TestCase):
         rmin: float = 0.0
         
         # Lr hyperparameters
-        max_epochs: int = 200
+        max_epochs: int = 1
         lr_start: float = 1e-2
         lr_end: float = 1e-4
         e_wgt_start: float = 0.1
@@ -77,6 +77,7 @@ class LitLinearMtpTest(unittest.TestCase):
             zbl_rmin=0.0).to(torch_float_dtype)
         
         ### DataModule hyperparameters
+        batch_size: int = 16
         rcut: float = rmax
         pbc_xyz: List[bool] = [True, True, True]
         sort: bool = False
@@ -85,7 +86,7 @@ class LitLinearMtpTest(unittest.TestCase):
             validset_path=PbTe_EXTXYZ_PATH,
             testset_path=None,
             predict_path=None,
-            batch_size=1,
+            batch_size=batch_size,
             rcut=rcut,
             umax_num_neigh_atoms=umax_num_neigh_atoms,
             pbc_xyz=pbc_xyz,
@@ -113,11 +114,41 @@ class LitLinearMtpTest(unittest.TestCase):
     def tearDown(self):
         print("LitLinearMtp (TestCase) is tearing down...\n")
     
-    
+
+    def print_cuda_memory(self, prefix: str = ""):
+        if not torch.cuda.is_available():
+            print(f"{prefix} CUDA is not available.")
+            return
+
+        device = torch.cuda.current_device()
+        allocated = torch.cuda.memory_allocated(device) / 1024**2
+        reserved = torch.cuda.memory_reserved(device) / 1024**2
+        max_allocated = torch.cuda.max_memory_allocated(device) / 1024**2
+        max_reserved = torch.cuda.max_memory_reserved(device) / 1024**2
+
+        print(
+            f"\n[{prefix}] CUDA memory on device {device}:\n"
+            f"  allocated      = {allocated:.2f} MiB\n"
+            f"  reserved       = {reserved:.2f} MiB\n"
+            f"  cached/free    = {reserved - allocated:.2f} MiB\n"
+            f"  max allocated  = {max_allocated:.2f} MiB\n"
+            f"  max reserved   = {max_reserved:.2f} MiB\n"
+        )
+
+
     def test_train(self):
+        torch.cuda.reset_peak_memory_stats()
+        self.print_cuda_memory("before fit")
+
+        ## run 
         self.trainer.fit(
             model=self.lit_linear_mtp,             
             datamodule=self.extxyz_datamodule)
+        
+        torch.cuda.synchronize()
+        self.print_cuda_memory("after fit")
+        
+
     
 
 if __name__ == "__main__":
