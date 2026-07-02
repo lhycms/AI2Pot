@@ -18,6 +18,7 @@
 #include <torch/script.h>
 #include <torch/autograd.h>
 #include <mpi.h>
+#include <chrono>
 
 #include <iostream>
 #include <stdio.h>
@@ -372,7 +373,9 @@ void PairAI2Pot::compute(int eflag, int vflag) {
         error->all(FLERR, "AI2Pot: per-atom virial is not supported yet");
 
     // 1. Construct mlff_input
+//auto start_cpu = std::chrono::high_resolution_clock::now(); // Time
     construct_mlff_input();
+//auto end_cpu = std::chrono::high_resolution_clock::now();   // Time
     double **f = atom->f;
     int nlocal = atom->nlocal;
     int nall = atom->nlocal + atom->nghost;
@@ -385,6 +388,7 @@ void PairAI2Pot::compute(int eflag, int vflag) {
     torch::NoGradGuard no_grad;
     c10::intrusive_ptr<c10::ivalue::Tuple> output;
 
+//auto start_gpu = std::chrono::high_resolution_clock::now(); // Time
     if (vflag_global) {
         output = model.get_method("predict_efv")(
             {
@@ -410,6 +414,17 @@ void PairAI2Pot::compute(int eflag, int vflag) {
             }
         ).toTuple();
     }
+//auto end_gpu = std::chrono::high_resolution_clock::now(); // Time
+// Time
+float cpu_time = std::chrono::duration<double, std::milli>(end_cpu - start_cpu).count();
+float gpu_time = std::chrono::duration<double, std::milli>(end_gpu - start_gpu).count();
+
+if (comm->me == 0) {
+    std::cout << "AI2Pot timing (ms):\n";
+    std::cout << "  CPU + neighbor + transfer: " << cpu_time << "\n";
+    std::cout << "  GPU forward: " << gpu_time << "\n";
+}
+// Time
     
     // 3. Assign lmp variable
     at::Tensor betot_tensor = output->elements()[0].toTensor().to(c10::kCPU, torch_float_dtype);
