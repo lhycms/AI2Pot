@@ -15,7 +15,7 @@ from ai2pot.models.mtp.linear_mtp_utils import (LinearMtpSerializer,
 
 
 TEST_FILES_DIR = os.getenv("AI2POT_PATH")
-CHECK_POINT_PATH: str = "/data/home/liuhanyu/ai2pot_paper/2.demo/1.6.zxg_gst_linear_mtp_bs16/lightning_logs/version_0/checkpoints/last.ckpt"
+CHECK_POINT_PATH: str = "/data/home/liuhanyu/ai2pot_paper_code/2.demo/1.6.zxg_gst_linear_mtp_bs16/lightning_logs/version_0/checkpoints/last.ckpt"
 # "/data/home/liuhanyu/mycode/AI2Pot/lightning_logs/lightning_logs/version_59/checkpoints/epoch=199-step=5000.ckpt"
 EXTXYZ_PATH: str = os.path.join(TEST_FILES_DIR,
                                 "test",

@@ -16,4 +16,4 @@ thermo_style    custom step atoms pe etotal press
 dump            d1 all custom 1 force.dump id type x y z fx fy fz
 dump_modify     d1 sort id first yes
 
-run             10
+run             1

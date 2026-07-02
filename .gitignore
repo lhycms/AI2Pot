@@ -12,3 +12,4 @@ ai2pot.egg-info
 **/*.png
 **/*.traj
 **/*.log
+**/log.lammps
