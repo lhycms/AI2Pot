@@ -226,6 +226,10 @@ pair_style ai2pot ./ai2pot_libtorch.pt
 pair_coeff * * Ge Sb Te
 ```
 
-## License
+## Citation
 
-AI2Pot is licensed under the GNU General Public License v3.0. See [`LICENSE`](LICENSE) for details.
+If you use AI2Pot in your research, please cite:
+
+1. Hanyu Liu, Linggang Zhu, Xuanguang Zhang, Ning Yang, Jian Zhou, and Zhimei Sun.  
+"AI2Pot: A scalable and unified framework for machine-learning interatomic potential development and large-scale molecular dynamics simulations."  
+arXiv:2607.06969 (2026).
