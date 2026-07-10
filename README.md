@@ -53,14 +53,14 @@ $ conda create -n ai2pot python=3.11.13
 #### CPU
 
 ```bash
-$ python -m pip install torch==2.4.0 \
+$ python -m pip install torch==2.5.0 \
     --index-url https://download.pytorch.org/whl/cpu
 ```
 
 #### CUDA 12.4
 
 ```bash
-$ python -m pip install torch==2.4.0 \
+$ python -m pip install torch==2.5.0 \
     --index-url https://download.pytorch.org/whl/cu124
 ```
 

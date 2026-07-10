@@ -1,5 +1,7 @@
 pybind11==2.11.1
 cmake==4.3.2
+spglib==2.6.0
+pillow==11.3.0
 pymatgen==2024.7.18
 ase==3.23.0
 scipy==1.16.0
