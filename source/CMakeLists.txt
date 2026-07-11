@@ -119,9 +119,10 @@ install(
         nblist
 
         # fitutils
-        target_statistics_op
-        descriptor_statistics_op
-        fitutils_bind
+        target_statistics_op_cpu
+        descriptor_statistics_op_cuda
+        fitutils_bind_cpu
+        fitutils_bind_cuda
         #
         descriptor_statistics_torch_launcher
 

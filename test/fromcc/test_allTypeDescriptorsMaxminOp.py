@@ -16,7 +16,7 @@ class AllTypeDescriptorsMaxminOp(unittest.TestCase):
     def setUp(self):
         print("AllTypeDescriptorsMaxminOp (TestCase) is setting up...")
 
-        device: torch._C.device = torch.device('cuda')
+        device: torch._C.device = torch.device('cpu')
         torch_float_dtype: torch._C.device = torch.float64
 
         batch_size: int = 31
