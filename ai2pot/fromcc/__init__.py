@@ -64,8 +64,12 @@ import gst
 if not IS_DARWIN:
     ### Part 2.1. fituils
     fitutils_lib_dir:str = os.path.join(ai2pot_lib_dir, "descriptor", "fitutils") if os.getenv("AI2POT_PATH") else ai2pot_lib_dir
-    fitutils_bind_so_path: str = os.path.join(fitutils_lib_dir, "libfitutils_bind.so")
-    torch.ops.load_library(fitutils_bind_so_path)
+    fitutils_bind_cpu_so_path: str = os.path.join(fitutils_lib_dir, "libfitutils_bind_cpu.so")
+    torch.ops.load_library(fitutils_bind_cpu_so_path)
+    if torch.cuda.is_available():
+        fitutils_bind_cuda_so_path = os.path.join(fitutils_lib_dir, "libfitutils_bind_cuda.so")
+        torch.ops.load_library(fitutils_bind_cuda_so_path)
+    # name
     targetStatisticsOp = torch.ops.fitutils.targetStatisticsOp
     allTypeDescriptorsStatisticsOp = torch.ops.fitutils.allTypeDescriptorsStatisticsOp
     eachTypeDescriptorsStatisticsOp = torch.ops.fitutils.eachTypeDescriptorsStatisticsOp

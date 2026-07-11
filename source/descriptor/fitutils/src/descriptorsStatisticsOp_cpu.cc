@@ -249,6 +249,42 @@ torch::autograd::variable_list AllTypeDescriptorsMaxminFunctionCPU::backward(
 }
 
 
+torch::autograd::variable_list AllTypeDescriptorsStatisticsOpCPU(
+    const at::Tensor& binum_tensor,
+    const at::Tensor& bdescriptors_tensor)
+{
+    return AllTypeDescriptorsStatisticsFunctionCPU::apply(
+        binum_tensor,
+        bdescriptors_tensor);
+}
+
+
+torch::autograd::variable_list EachTypeDescriptorsStatisticsOpCPU(
+    const at::Tensor& binum_tensor,
+    const at::Tensor& bilist_tensor,
+    const at::Tensor& btypes_tensor,
+    int ntypes,
+    const at::Tensor& bdescriptors_tensor)
+{
+    return EachTypeDescriptorsStatisticsFunctionCPU::apply(
+        binum_tensor,
+        bilist_tensor,
+        btypes_tensor,
+        ntypes,
+        bdescriptors_tensor);
+}
+
+
+torch::autograd::variable_list AllTypeDescriptorsMaxminOpCPU(
+    const at::Tensor& binum_tensor,
+    const at::Tensor& bdescriptors_tensor)
+{
+    return AllTypeDescriptorsMaxminFunctionCPU::apply(
+        binum_tensor,
+        bdescriptors_tensor);
+}
+
+
 
 };  // namespace : fitutils
 };  // namespace : ai2pot

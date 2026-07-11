@@ -40,6 +40,7 @@ public:
 
 class EachTypeDescriptorsStatisticsFunctionCPU : public torch::autograd::Function<EachTypeDescriptorsStatisticsFunctionCPU>
 {
+public:
     static torch::autograd::variable_list forward(
         torch::autograd::AutogradContext *ctx,
         const at::Tensor& binum_tensor,

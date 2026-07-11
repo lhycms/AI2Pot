@@ -18,8 +18,8 @@
 #include <climits>
 #include <cassert>
 
-#include "../include/targetStatisticsOp.h"
-#include "../include/descriptorsStatisticsOp.h"
+#include "../include/targetStatisticsOp_cpu.h"
+#include "../include/descriptorsStatisticsOp_cpu.h"
 
 
 TORCH_LIBRARY(fitutils, m) {
@@ -29,7 +29,7 @@ TORCH_LIBRARY(fitutils, m) {
            const at::Tensor& betot_dft_tensor,
            const at::Tensor& bforce_dft_tensor)
         {
-            return ai2pot::fitutils::TargetStatisticsOp(
+            return ai2pot::fitutils::TargetStatisticsOpCPU(
                 binum_tensor,
                 betot_dft_tensor,
                 bforce_dft_tensor);
@@ -41,7 +41,7 @@ TORCH_LIBRARY(fitutils, m) {
         [](const at::Tensor& binum_tensor,
            const at::Tensor& bdescriptors_tensor)
         {
-            return ai2pot::fitutils::AllTypeDescriptorsStatisticsOp(
+            return ai2pot::fitutils::AllTypeDescriptorsStatisticsOpCPU(
                 binum_tensor,
                 bdescriptors_tensor);
         }
@@ -57,7 +57,7 @@ TORCH_LIBRARY(fitutils, m) {
         {
             assert(ntypes < INT_MAX);
 
-            return ai2pot::fitutils::EachTypeDescriptorsStatisticsOp(
+            return ai2pot::fitutils::EachTypeDescriptorsStatisticsOpCPU(
                 binum_tensor,
                 bilist_tensor,
                 btypes_tensor,
@@ -66,13 +66,70 @@ TORCH_LIBRARY(fitutils, m) {
         }
     );
 
-
     m.def(
         "allTypeDescriptorsMaxminOp",
         [](const at::Tensor& binum_tensor,
            const at::Tensor& bdescriptors_tensor)
         {
-            return ai2pot::fitutils::AllTypeDescriptorsMaxminOp(
+            return ai2pot::fitutils::AllTypeDescriptorsMaxminOpCPU(
+                binum_tensor,
+                bdescriptors_tensor);
+        }
+    );
+}
+
+
+
+TORCH_LIBRARY_IMPL(fitutils, CPU, m) {
+    m.impl(
+        "targetStatisticsOp",
+        [](const at::Tensor& binum_tensor,
+           const at::Tensor& betot_dft_tensor,
+           const at::Tensor& bforce_dft_tensor)
+        {
+            return ai2pot::fitutils::TargetStatisticsOpCPU(
+                binum_tensor,
+                betot_dft_tensor,
+                bforce_dft_tensor);
+        }
+    );
+
+    m.impl(
+        "allTypeDescriptorsStatisticsOp",
+        [](const at::Tensor& binum_tensor,
+           const at::Tensor& bdescriptors_tensor)
+        {
+            return ai2pot::fitutils::AllTypeDescriptorsStatisticsOpCPU(
+                binum_tensor,
+                bdescriptors_tensor);
+        }
+    );
+
+    m.impl(
+        "eachTypeDescriptorsStatisticsOp",
+        [](const at::Tensor& binum_tensor,
+           const at::Tensor& bilist_tensor,
+           const at::Tensor& btypes_tensor,
+           int64_t ntypes,
+           const at::Tensor& bdescriptors_tensor)
+        {
+            assert(ntypes < INT_MAX);
+
+            return ai2pot::fitutils::EachTypeDescriptorsStatisticsOpCPU(
+                binum_tensor,
+                bilist_tensor,
+                btypes_tensor,
+                (int)ntypes,
+                bdescriptors_tensor);
+        }
+    );
+
+    m.impl(
+        "allTypeDescriptorsMaxminOp",
+        [](const at::Tensor& binum_tensor,
+           const at::Tensor& bdescriptors_tensor)
+        {
+            return ai2pot::fitutils::AllTypeDescriptorsMaxminOpCPU(
                 binum_tensor,
                 bdescriptors_tensor);
         }

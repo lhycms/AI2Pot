@@ -13,8 +13,8 @@
     along with AI2Pot.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef AI2POT_FITUTILS_TARGET_STATISTICS_OP_H
-#define AI2POT_FITUTILS_TARGET_STATISTICS_OP_H
+#ifndef AI2POT_FITUTILS_TARGET_STATISTICS_OP_CUDA_H
+#define AI2POT_FITUTILS_TARGET_STATISTICS_OP_CUDA_H
 
 #include <ATen/ATen.h>
 #include <torch/torch.h>
@@ -22,7 +22,7 @@
 namespace ai2pot {
 namespace fitutils {
 
-class TargetStatisticsFunction : public torch::autograd::Function<TargetStatisticsFunction>
+class TargetStatisticsFunctionCUDA : public torch::autograd::Function<TargetStatisticsFunctionCUDA>
 {
 public:
     static torch::autograd::variable_list forward(
@@ -30,17 +30,18 @@ public:
         const at::Tensor& binum_tensor,
         const at::Tensor& betot_dft_tensor,
         const at::Tensor& bforce_dft_tensor);
-
+    
     static torch::autograd::variable_list backward(
         torch::autograd::AutogradContext *ctx,
         torch::autograd::variable_list bgrad_outputs_tensor);
-};  // class : TargetStatisticsFunction
+};  // class : TargetStatisticsFunctionCUDA
 
 
-torch::autograd::variable_list TargetStatisticsOp(
+torch::autograd::variable_list TargetStatisticsOpCUDA(
     const at::Tensor& binum_tensor,
     const at::Tensor& betot_dft_tensor,
     const at::Tensor& bforce_dft_tensor);
+
 
 };  // namespace : fitutils
 };  // namespace : ai2pot

@@ -15,35 +15,50 @@ if (CUDA_FOUND AND USE_CUDA)
 endif()
 
 
-# 5. Compile (old)
+# 5. Compile
 if (TORCH_OP)
-    add_library(target_statistics_op SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/targetStatisticsOp.cc)
-    target_link_libraries(target_statistics_op PRIVATE ${TORCH_LIBRARIES})
+    # 5.1.
+    add_library(target_statistics_op_cpu SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/targetStatisticsOp_cpu.cc)
+    target_link_libraries(target_statistics_op_cpu PRIVATE ${TORCH_LIBRARIES})
 
-    add_library(descriptor_statistics_op SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/descriptorsStatisticsOp.cc)
-    target_link_libraries(descriptor_statistics_op PRIVATE ${TORCH_LIBRARIES})
     if (USE_CUDA AND CUDA_FOUND)
-        target_compile_definitions(descriptor_statistics_op PRIVATE USE_CUDA)
-        target_link_libraries(descriptor_statistics_op PRIVATE descriptor_statistics_torch_launcher)
+        add_library(target_statistics_op_cuda SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/targetStatisticsOp_cuda.cc)
+        target_link_libraries(target_statistics_op_cuda
+                              PRIVATE
+                              #
+                              ${TORCH_LIBRARIES})
     endif()
 
-    add_library(fitutils_bind SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bind/fitutils_bind.cc)
-    target_include_directories(fitutils_bind PRIVATE ${PYTHON_INCLUDE_DIRS})
-    target_link_libraries(fitutils_bind PRIVATE target_statistics_op 
-                                                descriptor_statistics_op 
-                                                ${TORCH_LIBRARIES} 
-                                                ${PYTHON_LIBRARIES})
-endif()
-
-# 5. Compile (new)
-if (TORCH_OP)
+    # 5.2. 
     add_library(descriptor_statistics_op_cpu SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/descriptorsStatisticsOp_cpu.cc)
     target_link_libraries(descriptor_statistics_op_cpu PRIVATE ${TORCH_LIBRARIES})
+
     if (USE_CUDA AND CUDA_FOUND)
         add_library(descriptor_statistics_op_cuda SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/descriptorsStatisticsOp_cuda.cc)
         target_link_libraries(descriptor_statistics_op_cuda 
                               PRIVATE 
                               ${TORCH_LIBRARIES} descriptor_statistics_torch_launcher)
+    endif()
+
+    # 5.3. 
+
+    # 5.4.
+    add_library(fitutils_bind_cpu SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bind/fitutils_bind_cpu.cc)
+    target_include_directories(fitutils_bind_cpu PRIVATE ${PYTHON_INCLUDE_DIRS})
+    target_link_libraries(fitutils_bind_cpu
+                          PRIVATE
+                          target_statistics_op_cpu
+                          descriptor_statistics_op_cpu
+                          ${TORCH_LIBRARIES} ${PYTHON_LIBRARIES})
+
+    if (USE_CUDA AND CUDA_FOUND)
+        add_library(fitutils_bind_cuda SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bind/fitutils_bind_cuda.cc)
+        target_include_directories(fitutils_bind_cuda PRIVATE ${PYTHON_INCLUDE_DIRS})
+        target_link_libraries(fitutils_bind_cuda
+                              PRIVATE
+                              target_statistics_op_cuda
+                              descriptor_statistics_op_cuda 
+                              ${TORCH_LIBRARIES} ${PYTHON_LIBRARIES})
     endif()
 endif()
 
