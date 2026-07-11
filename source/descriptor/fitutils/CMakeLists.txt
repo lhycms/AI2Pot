@@ -15,7 +15,7 @@ if (CUDA_FOUND AND USE_CUDA)
 endif()
 
 
-# 5. Compile 
+# 5. Compile (old)
 if (TORCH_OP)
     add_library(target_statistics_op SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/targetStatisticsOp.cc)
     target_link_libraries(target_statistics_op PRIVATE ${TORCH_LIBRARIES})
@@ -34,6 +34,19 @@ if (TORCH_OP)
                                                 ${TORCH_LIBRARIES} 
                                                 ${PYTHON_LIBRARIES})
 endif()
+
+# 5. Compile (new)
+if (TORCH_OP)
+    add_library(descriptor_statistics_op_cpu SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/descriptorsStatisticsOp_cpu.cc)
+    target_link_libraries(descriptor_statistics_op_cpu PRIVATE ${TORCH_LIBRARIES})
+    if (USE_CUDA AND CUDA_FOUND)
+        add_library(descriptor_statistics_op_cuda SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/descriptorsStatisticsOp_cuda.cc)
+        target_link_libraries(descriptor_statistics_op_cuda 
+                              PRIVATE 
+                              ${TORCH_LIBRARIES} descriptor_statistics_torch_launcher)
+    endif()
+endif()
+
 
 # 6. Compile test
 if (BUILD_TEST)
