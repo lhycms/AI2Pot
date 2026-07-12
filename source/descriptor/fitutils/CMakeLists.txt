@@ -19,7 +19,8 @@ endif()
 if (TORCH_OP)
     # 5.1.
     add_library(target_statistics_op_cpu SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/targetStatisticsOp_cpu.cc)
-    target_link_libraries(target_statistics_op_cpu PRIVATE ${TORCH_LIBRARIES})
+    target_include_directories(target_statistics_op_cpu PRIVATE ${TORCH_INCLUDE_DIRS})
+    target_link_libraries(target_statistics_op_cpu PRIVATE ${TORCH_LIBRARIES_CPU})
 
     if (USE_CUDA AND CUDA_FOUND)
         add_library(target_statistics_op_cuda SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/targetStatisticsOp_cuda.cc)
@@ -31,7 +32,8 @@ if (TORCH_OP)
 
     # 5.2. 
     add_library(descriptor_statistics_op_cpu SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/descriptorsStatisticsOp_cpu.cc)
-    target_link_libraries(descriptor_statistics_op_cpu PRIVATE ${TORCH_LIBRARIES})
+    target_include_directories(descriptor_statistics_op_cpu PRIVATE ${TORCH_INCLUDE_DIRS})
+    target_link_libraries(descriptor_statistics_op_cpu PRIVATE ${TORCH_LIBRARIES_CPU})
 
     if (USE_CUDA AND CUDA_FOUND)
         add_library(descriptor_statistics_op_cuda SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/descriptorsStatisticsOp_cuda.cc)
@@ -44,12 +46,12 @@ if (TORCH_OP)
 
     # 5.4.
     add_library(fitutils_bind_cpu SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bind/fitutils_bind_cpu.cc)
-    target_include_directories(fitutils_bind_cpu PRIVATE ${PYTHON_INCLUDE_DIRS})
+    target_include_directories(fitutils_bind_cpu PRIVATE ${PYTHON_INCLUDE_DIRS} ${TORCH_INCLUDE_DIRS})
     target_link_libraries(fitutils_bind_cpu
                           PRIVATE
                           target_statistics_op_cpu
                           descriptor_statistics_op_cpu
-                          ${TORCH_LIBRARIES} ${PYTHON_LIBRARIES})
+                          ${TORCH_LIBRARIES_CPU} ${PYTHON_LIBRARIES})
 
     if (USE_CUDA AND CUDA_FOUND)
         add_library(fitutils_bind_cuda SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bind/fitutils_bind_cuda.cc)
