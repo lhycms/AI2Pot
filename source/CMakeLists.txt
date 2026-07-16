@@ -162,8 +162,10 @@ install(
         nnmtp_loss_torch_launcher
 
         # nep
-        nepOp
-        nep_bind
+        nepOp_cpu
+        nepOp_cuda
+        nep_bind_cpu
+        nep_bind_cuda
         #
         nep_torch_launcher
         nep_loss_torch_launcher

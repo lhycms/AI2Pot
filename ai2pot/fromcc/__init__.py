@@ -120,14 +120,18 @@ if not IS_DARWIN:
 
     ### Part 2.5. nep
     nep_lib_dir:str = os.path.join(ai2pot_lib_dir, "descriptor", "nep") if os.getenv("AI2POT_PATH") else ai2pot_lib_dir
-    nep_bind_so_path: str = os.path.join(nep_lib_dir, "libnep_bind.so")
-    torch.ops.load_library(nep_bind_so_path)
+    nep_bind_cpu_so_path: str = os.path.join(nep_lib_dir, "libnep_bind_cpu.so")
+    torch.ops.load_library(nep_bind_cpu_so_path)
+    if torch.cuda.is_available():
+        nep_bind_cuda_so_path: str = os.path.join(nep_lib_dir, "libnep_bind_cuda.so")
+        torch.ops.load_library(nep_bind_cuda_so_path)
     # name
     nepToEFOp = torch.ops.nep.nepToEFOp
     nepToEFVOp = torch.ops.nep.nepToEFVOp
     nepToEFLossOp = torch.ops.nep.nepToEFLossOp
     nepToLossOp = torch.ops.nep.nepToLossOp
     nepToDescriptorsOp = torch.ops.nep.nepToDescriptorsOp
+
 
     ### Part 3. fvt
     fvt_sr_lib_dir: str = os.path.join(ai2pot_lib_dir, "fvt") if os.getenv("AI2POT_PATH") else ai2pot_lib_dir

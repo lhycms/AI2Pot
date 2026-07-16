@@ -17,30 +17,45 @@ endif()
 
 # 5. compile
 if (TORCH_OP)
-    add_library(nepOp SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/nepOp.cc)
-    target_include_directories(nepOp PRIVATE ${PYTHON_INCLUDE_DIRS})
-    target_link_libraries(nepOp PRIVATE ${PYTHON_LIBRARIES} ${TORCH_LIBRARIES})
+    ## 5.1. nepOp (CPU and CUDA)
+    add_library(nepOp_cpu SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/nepOp_cpu.cc)
+    target_include_directories(nepOp_cpu PRIVATE ${TORCH_INCLUDE_DIRS})
+    target_link_libraries(nepOp_cpu PRIVATE ${TORCH_LIBRARIES_CPU})
     if (USE_OPENMP)
-        target_compile_definitions(nepOp PRIVATE USE_OPENMP)
-    endif()
-    if (USE_CUDA AND CUDA_FOUND)
-        target_compile_definitions(nepOp PRIVATE USE_CUDA)
-        target_link_libraries(nepOp PRIVATE nep_torch_launcher
-                                            nep_loss_torch_launcher
-                                            zbl_torch_launcher)
+        target_compile_definitions(nepOp_cpu PRIVATE USE_OPENMP)
     endif()
 
-    add_library(nep_bind SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bind/nep_bind.cc)
-    target_include_directories(nep_bind PRIVATE ${PYTHON_INCLUDE_DIRS})
-    target_link_libraries(nep_bind PRIVATE nepOp ${TORCH_LIBRARIES} ${PYTHON_LIBRARIES})
-    if (USE_OPENMP)
-        target_compile_definitions(nep_bind PRIVATE USE_OPENMP)
-    endif()
     if (USE_CUDA AND CUDA_FOUND)
-        target_compile_definitions(nep_bind PRIVATE USE_CUDA)
-        target_link_libraries(nep_bind PRIVATE nep_torch_launcher
-                                               nep_loss_torch_launcher
-                                               zbl_torch_launcher)
+        add_library(nepOp_cuda SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/nepOp_cuda.cc)
+        target_link_libraries(nepOp_cuda
+                              PRIVATE
+                              ${TORCH_LIBRARIES}
+                              nep_torch_launcher
+                              nep_loss_torch_launcher
+                              zbl_torch_launcher)
+        target_compile_definitions(nepOp_cuda PRIVATE USE_CUDA)
+    endif()
+
+    ## 5.2. nep_bind (CPU and CUDA)
+    add_library(nep_bind_cpu SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bind/nep_bind_cpu.cc)
+    target_include_directories(nep_bind_cpu PRIVATE ${TORCH_INCLUDE_DIRS} ${PYTHON_INCLUDE_DIRS})
+    target_link_libraries(nep_bind_cpu PRIVATE ${TORCH_LIBRARIES_CPU} ${PYTHON_LIBRARIES} nepOp_cpu)
+    if (USE_OPENMP)
+        target_compile_definitions(nep_bind_cpu PRIVATE USE_OPENMP)
+    endif()
+
+    if (USE_CUDA AND CUDA_FOUND)
+        add_library(nep_bind_cuda SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bind/nep_bind_cuda.cc)
+        target_include_directories(nep_bind_cuda PRIVATE ${PYTHON_INCLUDE_DIRS})
+        target_link_libraries(nep_bind_cuda
+                              PRIVATE
+                              ${PYTHON_LIBRARIES}
+                              ${TORCH_LIBRARIES}
+                              nep_torch_launcher
+                              nep_loss_torch_launcher
+                              zbl_torch_launcher
+                              nepOp_cuda)
+        target_compile_definitions(nep_bind_cuda PRIVATE USE_CUDA)
     endif()
 endif()
 

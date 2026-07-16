@@ -13,8 +13,8 @@
     along with AI2Pot.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef AI2POT_NEP_NEP_OP_H
-#define AI2POT_NEP_NEP_OP_H
+#ifndef AI2POT_NEP_NEP_OP_CUDA_H
+#define AI2POT_NEP_NEP_OP_CUDA_H
 
 #include <ATen/ATen.h>
 #include <torch/torch.h>
@@ -23,8 +23,7 @@
 namespace ai2pot {
 namespace nep {
 
-
-class NepToEFFunction : public torch::autograd::Function<NepToEFFunction>
+class NepToEFFunctionCUDA : public torch::autograd::Function<NepToEFFunctionCUDA>
 {
 public:
     static torch::autograd::variable_list forward(
@@ -57,10 +56,10 @@ public:
     static torch::autograd::variable_list backward(
         torch::autograd::AutogradContext *ctx,
         torch::autograd::variable_list bgrad_outputs_tensor);
-};  // class : NepToEFFunction
+};  // class : NepToEFFunctionCUDA
 
 
-class NepToEFVFunction : public torch::autograd::Function<NepToEFVFunction>
+class NepToEFVFunctionCUDA : public torch::autograd::Function<NepToEFVFunctionCUDA>
 {
 public:
     static torch::autograd::variable_list forward(
@@ -92,11 +91,11 @@ public:
     
     static torch::autograd::variable_list backward(
         torch::autograd::AutogradContext *ctx,
-        torch::autograd::variable_list bgrad_output_tensor);
-};  // class NepToEFVFunction
+        torch::autograd::variable_list bgrad_outputs_tensor);
+};  // class : NepToEFVFunctionCUDA
 
 
-class NepToEFLossFunction : public torch::autograd::Function<NepToEFLossFunction>
+class NepToEFLossFunctionCUDA : public torch::autograd::Function<NepToEFLossFunctionCUDA>
 {
 public:
     static torch::autograd::variable_list forward(
@@ -133,10 +132,10 @@ public:
     static torch::autograd::variable_list backward(
         torch::autograd::AutogradContext *ctx,
         torch::autograd::variable_list bgrad_outputs_tensor);
-};  // class : NepToEFLossFunction
+};  // class : NepToEFLossFunctionCUDA
 
 
-class NepToLossFunction : public torch::autograd::Function<NepToLossFunction>
+class NepToLossFunctionCUDA : public torch::autograd::Function<NepToLossFunctionCUDA>
 {
 public:
     static torch::autograd::variable_list forward(
@@ -175,10 +174,10 @@ public:
     static torch::autograd::variable_list backward(
         torch::autograd::AutogradContext *ctx,
         torch::autograd::variable_list bgrad_outputs_tensor);
-};  // class : NepToLossFunction
+};  // class : NepToLossFunctionCUDA
 
 
-class NepToDescriptorsFunction : public torch::autograd::Function<NepToDescriptorsFunction>
+class NepToDescriptorsFunctionCUDA : public torch::autograd::Function<NepToDescriptorsFunctionCUDA>
 {
 public:
     static torch::autograd::variable_list forward(
@@ -202,37 +201,10 @@ public:
     static torch::autograd::variable_list backward(
         torch::autograd::AutogradContext *ctx,
         torch::autograd::variable_list bgrad_outputs_tensor);
-};  // class : NepToDescriptorsFunction
+}; // class : NepToDescriptorsCUDA
 
 
-torch::autograd::variable_list NepToEFOp(
-    int chebyshev_size,
-    int n_radial_basis,
-    int n_angular_basis,
-    int l_max,
-    const at::Tensor& coeffs_tensor,
-    const at::Tensor& w0_tensor,
-    const at::Tensor& b0_tensor,
-    const at::Tensor& w1_tensor,
-    const at::Tensor& type_bias_tensor,
-    const at::Tensor& binum_tensor,
-    const at::Tensor& bilist_tensor,
-    const at::Tensor& bnumneigh_tensor,
-    const at::Tensor& bfirstneigh_tensor,
-    const at::Tensor& brcs_tensor,
-    const at::Tensor& btypes_tensor,
-    const at::Tensor& type_map_tensor,
-    int nghost,
-    double rmax_radial,
-    double rmax_angular,
-    const at::Tensor& q_scaler_tensor,
-    double zbl_rmax,
-    double zbl_rmin,
-    const at::Tensor& zbl_cks_tensor,
-    const at::Tensor& zbl_dks_tensor);
-    
-
-torch::autograd::variable_list NepToEFVOp(
+torch::autograd::variable_list NepToEFOpCUDA(
     int chebyshev_size,
     int n_radial_basis,
     int n_angular_basis,
@@ -259,7 +231,34 @@ torch::autograd::variable_list NepToEFVOp(
     const at::Tensor& zbl_dks_tensor);
 
 
-torch::autograd::variable_list NepToEFLossOp(
+torch::autograd::variable_list NepToEFVOpCUDA(
+    int chebyshev_size,
+    int n_radial_basis,
+    int n_angular_basis,
+    int l_max,
+    const at::Tensor& coeffs_tensor,
+    const at::Tensor& w0_tensor,
+    const at::Tensor& b0_tensor,
+    const at::Tensor& w1_tensor,
+    const at::Tensor& type_bias_tensor,
+    const at::Tensor& binum_tensor,
+    const at::Tensor& bilist_tensor,
+    const at::Tensor& bnumneigh_tensor,
+    const at::Tensor& bfirstneigh_tensor,
+    const at::Tensor& brcs_tensor,
+    const at::Tensor& btypes_tensor,
+    const at::Tensor& type_map_tensor,
+    int nghost,
+    double rmax_radial,
+    double rmax_angular,
+    const at::Tensor& q_scaler_tensor,
+    double zbl_rmax,
+    double zbl_rmin,
+    const at::Tensor& zbl_cks_tensor,
+    const at::Tensor& zbl_dks_tensor);
+
+
+torch::autograd::variable_list NepToEFLossOpCUDA(
     double e_weight,
     double f_weight,
     const at::Tensor& betot_dft_tensor,
@@ -290,7 +289,7 @@ torch::autograd::variable_list NepToEFLossOp(
     const at::Tensor& zbl_dks_tensor);
 
 
-torch::autograd::variable_list NepToLossOp(
+torch::autograd::variable_list NepToLossOpCUDA(
     double e_weight,
     double f_weight,
     double v_weight,
@@ -323,7 +322,7 @@ torch::autograd::variable_list NepToLossOp(
     const at::Tensor& zbl_dks_tensor);
 
 
-torch::autograd::variable_list NepToDescriptorsOp(
+torch::autograd::variable_list NepToDescriptorsOpCUDA(
     int chebyshev_size,
     int n_radial_basis,
     int n_angular_basis,
@@ -339,6 +338,7 @@ torch::autograd::variable_list NepToDescriptorsOp(
     int nghost,
     double rmax_radial,
     double rmax_angular);
+
 
 };  // namespace : nep
 };  // namespace : ai2pot
