@@ -139,13 +139,15 @@ install(
 
         # mtpr
         mtpParam
-        schmidt_orth_op
-        linear_mtp_gram_and_cross_op
+        schmidt_orth_op_cpu
+        schmidt_orth_op_cuda
+        linear_mtp_gram_and_cross_op_cpu
+        linear_mtp_gram_and_cross_op_cuda
         mtpParamOp
-        mtpBasisOp
-        mtpBasisGradOp
-        linearMtpOp
-        mtpr_bind
+        linearMtpOp_cpu
+        linearMtpOp_cuda
+        mtpr_bind_cpu
+        mtpr_bind_cuda
         #
         linear_mtp_torch_launcher
         schmidt_orth_torch_launcher

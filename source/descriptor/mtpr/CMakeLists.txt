@@ -22,85 +22,14 @@ if (CUDA_FOUND AND USE_CUDA)
 endif()
 
 
+# 5. compile
 add_library(mtpParam SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/mtpParam.cc)
-# 5. compile (old)
+
 if (TORCH_OP)
-    add_library(schmidt_orth_op SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/schmidt_orth_op.cc)
-    target_link_libraries(schmidt_orth_op PRIVATE ${TORCH_LIBRARIES})
-    if (USE_OPENMP)
-        target_compile_definitions(schmidt_orth_op PRIVATE USE_OPENMP)
-    endif()
-    if (USE_CUDA AND CUDA_FOUND)
-        target_compile_definitions(schmidt_orth_op PRIVATE USE_CUDA)
-        target_link_libraries(schmidt_orth_op PRIVATE schmidt_orth_torch_launcher)
-    endif()
-
-    
-    add_library(linear_mtp_gram_and_cross_op SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/linear_mtp_gram_and_cross_op.cc)
-    target_link_libraries(linear_mtp_gram_and_cross_op PRIVATE ${TORCH_LIBRARIES})
-    if (USE_OPENMP)
-        target_compile_definitions(linear_mtp_gram_and_cross_op PRIVATE USE_OPENMP)
-    endif()
-    if (USE_CUDA AND CUDA_FOUND)
-        target_compile_definitions(linear_mtp_gram_and_cross_op PRIVATE USE_CUDA)
-        target_link_libraries(linear_mtp_gram_and_cross_op PRIVATE linear_mtp_gram_and_cross_torch_launcher)
-    endif()
-    if (MAX_MTP_LEVEL)
-        target_compile_definitions(linear_mtp_gram_and_cross_op PRIVATE MAX_MTP_LEVEL=${MAX_MTP_LEVEL})
-    endif()
-
     add_library(mtpParamOp SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/mtpParamOp.cc)
-    target_link_libraries(mtpParamOp PRIVATE mtpParam ${TORCH_LIBRARIES})
+    target_include_directories(mtpParamOp PRIVATE ${PYTHON_INCLUDE_DIRS} ${TORCH_INCLUDE_DIRS})
+    target_link_libraries(mtpParamOp PRIVATE mtpParam ${TORCH_LIBRARIES_CPU})
 
-    add_library(mtpBasisOp SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/mtpBasisOp.cc)
-    target_link_libraries(mtpBasisOp PRIVATE ${TORCH_LIBRARIES})
-    if (MAX_MTP_LEVEL)
-        target_compile_definitions(mtpBasisOp PRIVATE MAX_MTP_LEVEL=${MAX_MTP_LEVEL})
-    endif()
-
-    add_library(mtpBasisGradOp SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/mtpBasisGradOp.cc)
-    target_link_libraries(mtpBasisGradOp PRIVATE ${TORCH_LIBRARIES})
-
-
-    add_library(linearMtpOp SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/linearMtpOp.cc)
-    target_link_libraries(linearMtpOp PRIVATE ${TORCH_LIBRARIES})
-    if (USE_OPENMP)
-        target_compile_definitions(linearMtpOp PRIVATE USE_OPENMP)
-    endif()
-    if (USE_CUDA AND CUDA_FOUND)
-        target_compile_definitions(linearMtpOp PRIVATE USE_CUDA)
-        target_link_libraries(linearMtpOp PRIVATE linear_mtp_torch_launcher 
-                                                  linear_mtp_loss_torch_launcher
-                                                  zbl_torch_launcher)
-    endif()
-    if (MAX_MTP_LEVEL)
-        target_compile_definitions(linearMtpOp PRIVATE MAX_MTP_LEVEL=${MAX_MTP_LEVEL})
-    endif()
-
-
-    add_library(mtpr_bind SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bind/mtpr_bind.cc)
-    target_include_directories(mtpr_bind PRIVATE ${PYTHON_INCLUDE_DIRS})
-    target_link_libraries(mtpr_bind PRIVATE schmidt_orth_op 
-                                            linear_mtp_gram_and_cross_op
-                                            mtpParamOp
-                                            mtpBasisOp
-                                            linearMtpOp
-                                            ${TORCH_LIBRARIES}
-                                            ${PYTHON_LIBRARIES})
-    if (USE_OPENMP)
-        target_compile_definitions(linearMtpOp PRIVATE USE_OPENMP)
-    endif()
-    if (USE_CUDA AND CUDA_FOUND)
-        target_compile_definitions(linearMtpOp PRIVATE USE_CUDA)
-    endif()
-    if (MAX_MTP_LEVEL)
-        target_compile_definitions(linearMtpOp PRIVATE MAX_MTP_LEVEL=${MAX_MTP_LEVEL})
-    endif()
-endif()
-
-
-# 5. compile (new)
-if (TORCH_OP)
     ## 5.1. linear_mtp_gram_and_cross_op
     add_library(linear_mtp_gram_and_cross_op_cpu SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/linear_mtp_gram_and_cross_op_cpu.cc)
     target_include_directories(linear_mtp_gram_and_cross_op_cpu PRIVATE ${TORCH_INCLUDE_DIRS})
