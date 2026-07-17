@@ -14,10 +14,10 @@ from ai2pot.data.mlffdatamodule import ExtxyzDataModule
 
 
 TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")
-PbTe_EXTXYZ_PATH = os.path.join(TEST_FILES_DIR, "XYZ", "11_NEP_potential_PbTe", "train_m.xyz")
+PbTe_EXTXYZ_PATH = os.path.join(TEST_FILES_DIR, "XYZ", "PbTe", "train.xyz")
 # "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/C/train.xyz"
 # "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/Li_battery/train.xyz"
-# os.path.join(TEST_FILES_DIR, "XYZ", "11_NEP_potential_PbTe", "train_m.xyz")
+# os.path.join(TEST_FILES_DIR, "XYZ", "PbTe", "train.xyz")
 
 torch.manual_seed(42)
 torch.set_num_threads(16)
@@ -31,7 +31,7 @@ class LinearMtpSolverTest(unittest.TestCase):
         self.rmax: float = 5.0
         self.rmin: float = 0.0
         self.umax_num_neigh_atoms: int = 200
-        self.device: torch._C.device = torch.device("cuda")
+        self.device: torch._C.device = torch.device("cpu")
         self.torch_float_dtype: torch._C.dtype = torch.float64
         fit_virial: bool = False
 

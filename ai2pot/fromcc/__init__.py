@@ -85,13 +85,15 @@ if not IS_DARWIN:
 
     ### Part 2.3. mtpr
     mtpr_lib_dir:str = os.path.join(ai2pot_lib_dir, "descriptor", "mtpr") if os.getenv("AI2POT_PATH") else ai2pot_lib_dir
-    mtpr_bind_so_path: str = os.path.join(mtpr_lib_dir, "libmtpr_bind.so")
-    torch.ops.load_library(mtpr_bind_so_path)
+    mtpr_bind_cpu_so_path: str = os.path.join(mtpr_lib_dir, "libmtpr_bind_cpu.so")
+    torch.ops.load_library(mtpr_bind_cpu_so_path)
+    if torch.cuda.is_available():
+        mtpr_bind_cuda_so_path: str = os.path.join(mtpr_lib_dir, "libmtpr_bind_cuda.so")
+        torch.ops.load_library(mtpr_bind_cuda_so_path)
     # name
     coeffsSchmidtOrthOp = torch.ops.mtpr.CoeffsSchmidtOrthOp
     linMatrixLinVectorOp = torch.ops.mtpr.LinMatrixLinVectorOp
     mtpParamOp = torch.ops.mtpr.mtpParamOp
-    mtpBasisOp = torch.ops.mtpr.mtpBasisOp
     linearMtpToLossOp = torch.ops.mtpr.linearMtpToLossOp
     linearMtpToEFLossOp = torch.ops.mtpr.linearMtpToEFLossOp
     linearMtpToEFVOp = torch.ops.mtpr.linearMtpToEFVOp

@@ -14,10 +14,10 @@ class CoeffsSchmidtOrthOpTest(unittest.TestCase):
     def setUp(self):
         print("CoeffsSchmidtOrthOpTest (TestCase) is setting up...")
         self.ntypes: int = 2
-        self.nmus: int = 6
+        self.nmus: int = 5
         self.chebyshev_size: int = 8
         self.num_coeffs: int = self.ntypes * self.ntypes * self.nmus * self.chebyshev_size
-        self.device: torch._C.device = torch.device("cpu")
+        self.device: torch._C.device = torch.device("cuda")
         self.torch_float_dtype: torch._C.dtype = torch.float64
         self.coeffs_tensor: torch.Tensor = torch.rand(self.num_coeffs, dtype=self.torch_float_dtype, device=self.device)
     

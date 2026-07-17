@@ -21,7 +21,7 @@ from typing import List, Union, Dict, Any
 import torch
 import torch.nn as nn
 
-from ai2pot.fromcc import mtpParamOp, mtpBasisOp, forceSrOp, virialSrOp
+from ai2pot.fromcc import mtpParamOp, forceSrOp, virialSrOp
 from ai2pot.models.potential_submodules import (
     FittingNet,
     ForceVirialSrModule,
