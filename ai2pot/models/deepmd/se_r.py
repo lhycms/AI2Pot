@@ -21,7 +21,7 @@ from typing import List, Union, Dict, Any, Optional
 import torch
 import torch.nn as nn
 
-from ai2pot.fromcc import envMatrixOp, forceSrOp, virialSrOp
+from ai2pot.fromcc import envMatrixOp
 
 
 class EmbeddingNet(nn.Module):
@@ -318,17 +318,7 @@ class DpSeR(nn.Module):
                                                               grad_outputs=mask,
                                                               retain_graph=True,
                                                               create_graph=True)[0]
-        force_sr: torch.Tensor = forceSrOp(bilist,
-                                           bnumneigh,
-                                           bfirstneigh,
-                                           bnghost[0].item(),   # int32
-                                           torch.sum(self.umax_num_neighs).item(),  # int32
-                                           eisr_rij_jacobian)[0]
-        virial_sr: torch.Tensor = virialSrOp(bnumneigh,
-                                             brcs,
-                                             torch.sum(self.umax_num_neighs).item(),    # int32
-                                             eisr_rij_jacobian)[0]
-        return [e_tot_sr, force_sr, virial_sr]
+
     
     def get_checkpoint_dict(self) -> Dict[str, Any]:
         pass

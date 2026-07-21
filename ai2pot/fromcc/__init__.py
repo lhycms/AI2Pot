@@ -133,12 +133,4 @@ if not IS_DARWIN:
     nepToEFLossOp = torch.ops.nep.nepToEFLossOp
     nepToLossOp = torch.ops.nep.nepToLossOp
     nepToDescriptorsOp = torch.ops.nep.nepToDescriptorsOp
-
-
-    ### Part 3. fvt
-    fvt_sr_lib_dir: str = os.path.join(ai2pot_lib_dir, "fvt") if os.getenv("AI2POT_PATH") else ai2pot_lib_dir
-    fvt_sr_bind_so_path: str = os.path.join(fvt_sr_lib_dir, "libfvt_sr_op_bind.so")
-    torch.ops.load_library(fvt_sr_bind_so_path)
-    # name
-    forceSrOp = torch.ops.fvt.ForceSrOp
-    virialSrOp = torch.ops.fvt.VirialSrOp
+    

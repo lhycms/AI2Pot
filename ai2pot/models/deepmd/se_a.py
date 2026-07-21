@@ -21,7 +21,7 @@ from typing import List
 import torch
 import torch.nn as nn
 
-from ai2pot.fromcc import envMatrixOp, forceSrOp, virialSrOp
+from ai2pot.fromcc import envMatrixOp
 from ai2pot.models.potential_submodules import DpResNetLinear
 
 

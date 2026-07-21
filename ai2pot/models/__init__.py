@@ -17,10 +17,7 @@
 
 
 
-from ai2pot.models.mtp.nn_mtp_rubbish import (
-    DescriptorMtp,
-    NNMtp
-)
+
 
 from ai2pot.models.mtp.linear_mtp import (
     LinearMtp
@@ -29,10 +26,6 @@ from ai2pot.models.mtp.linear_mtp import (
 from ai2pot.models.mtp.linear_mtp_utils import (
     LinearMtp4Extxyz,
     LinearMtpCalculator
-)
-
-from ai2pot.models.mtp.nn_mtp import (
-    NNMtp
 )
 
 from ai2pot.models.nep.nep import (
@@ -48,6 +41,5 @@ from ai2pot.models.potential_submodules import (
 
 from ai2pot.models.potential_train import (
     LitLinearMtp,
-    LitNNMtp,
     LitNep
 )
