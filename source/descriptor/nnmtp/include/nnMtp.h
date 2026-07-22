@@ -63,7 +63,6 @@ public:
         int nghost,
         CoordType rmax,
         CoordType rmin,
-        CoordType *q_shifter,
         CoordType *q_scaler);
 
     static void find_efv(
@@ -96,7 +95,6 @@ public:
         int nghost,
         CoordType rmax,
         CoordType rmin,
-        CoordType *q_shifter,
         CoordType *q_scaler);
 
 
@@ -153,7 +151,6 @@ public:
         int nghost,
         CoordType rmax,
         CoordType rmin,
-        CoordType *q_shifter,
         CoordType *q_scaler);
     
     static void find_e_sites_backward(
@@ -187,7 +184,6 @@ public:
         int nghost,
         CoordType rmax,
         CoordType rmin,
-        CoordType *q_shifter,
         CoordType *q_scaler);
 };  // class : NNMtp
 
@@ -223,7 +219,6 @@ void NNMtp<CoordType>::find_ef(
     int nghost,
     CoordType rmax,
     CoordType rmin,
-    CoordType *q_shifter,
     CoordType *q_scaler)
 {
     // Step 1.
@@ -295,7 +290,7 @@ void NNMtp<CoordType>::find_ef(
             CoordType activated_hidden_val = 0;
             for (int k=0; k<alpha_scalar_moments; k++) {
                 //printf("** %.15lf, %.15lf\n", type_central_w0[p*alpha_scalar_moments + k], mom_vals[alpha_moment_mapping[k]]);
-                hidden_val += type_central_w0[p*alpha_scalar_moments + k] * (mom_vals[alpha_moment_mapping[k]] - q_shifter[k]) / q_scaler[k];
+                hidden_val += type_central_w0[p*alpha_scalar_moments + k] * mom_vals[alpha_moment_mapping[k]] / q_scaler[k];
             }
             TanhActivationFunc<CoordType>::find_val(activated_hidden_val, hidden_val);
             e_site += type_central_w1[p] * activated_hidden_val;
@@ -312,7 +307,7 @@ void NNMtp<CoordType>::find_ef(
             CoordType hidden_val = 0;
             CoordType activated_hidden_der = 0;
             for (int k=0; k<alpha_scalar_moments; k++)
-                hidden_val += type_central_w0[p*alpha_scalar_moments + k] * (mom_vals[alpha_moment_mapping[k]] - q_shifter[k]) / q_scaler[k];
+                hidden_val += type_central_w0[p*alpha_scalar_moments + k] * mom_vals[alpha_moment_mapping[k]] / q_scaler[k];
             TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
             for (int k=0; k<alpha_scalar_moments; k++)
                 e_site_der2mom[alpha_moment_mapping[k]] += type_central_w1[p]
@@ -405,7 +400,6 @@ void NNMtp<CoordType>::find_efv(
     int nghost,
     CoordType rmax,
     CoordType rmin,
-    CoordType *q_shifter,
     CoordType *q_scaler)
 {
     // Step 1.
@@ -477,7 +471,7 @@ void NNMtp<CoordType>::find_efv(
             CoordType activated_hidden_val = 0;
             for (int k=0; k<alpha_scalar_moments; k++) {
                 //printf("** %.15lf, %.15lf\n", type_central_w0[p*alpha_scalar_moments + k], mom_vals[alpha_moment_mapping[k]]);
-                hidden_val += type_central_w0[p*alpha_scalar_moments + k] * (mom_vals[alpha_moment_mapping[k]] - q_shifter[k]) / q_scaler[k];
+                hidden_val += type_central_w0[p*alpha_scalar_moments + k] * mom_vals[alpha_moment_mapping[k]] / q_scaler[k];
             }
             TanhActivationFunc<CoordType>::find_val(activated_hidden_val, hidden_val);
             e_site += type_central_w1[p] * activated_hidden_val;
@@ -494,7 +488,7 @@ void NNMtp<CoordType>::find_efv(
             CoordType hidden_val = 0;
             CoordType activated_hidden_der = 0;
             for (int k=0; k<alpha_scalar_moments; k++)
-                hidden_val += type_central_w0[p*alpha_scalar_moments + k] * (mom_vals[alpha_moment_mapping[k]] - q_shifter[k]) / q_scaler[k];
+                hidden_val += type_central_w0[p*alpha_scalar_moments + k] * mom_vals[alpha_moment_mapping[k]] / q_scaler[k];
             TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
             for (int k=0; k<alpha_scalar_moments; k++)
                 e_site_der2mom[alpha_moment_mapping[k]] += type_central_w1[p]
@@ -673,7 +667,6 @@ void NNMtp<CoordType>::find_e_sites(
     int nghost,
     CoordType rmax,
     CoordType rmin,
-    CoordType *q_shifter,
     CoordType *q_scaler)
 {
     // Step 1.
@@ -737,7 +730,7 @@ void NNMtp<CoordType>::find_e_sites(
             CoordType hidden_val = 0;
             CoordType activated_hidden_val = 0;
             for (int k=0; k<alpha_scalar_moments; k++)
-                hidden_val += type_central_w0[p*alpha_scalar_moments + k] * (mom_vals[alpha_moment_mapping[k]] - q_shifter[k]) / q_scaler[k];
+                hidden_val += type_central_w0[p*alpha_scalar_moments + k] * mom_vals[alpha_moment_mapping[k]] / q_scaler[k];
             TanhActivationFunc<CoordType>::find_val(activated_hidden_val, hidden_val);
             e_sites[ii] += type_central_w1[p] * activated_hidden_val;
         }
@@ -784,7 +777,6 @@ void NNMtp<CoordType>::find_e_sites_backward(
     int nghost,
     CoordType rmax,
     CoordType rmin,
-    CoordType *q_shifter,
     CoordType *q_scaler)
 {
     // Step 1.
@@ -887,7 +879,7 @@ void NNMtp<CoordType>::find_e_sites_backward(
             CoordType hidden_val = 0.0;
             CoordType activated_hidden_der = 0.0;
             for (int k=0; k<alpha_scalar_moments; k++)
-                hidden_val += type_central_w0[p*alpha_scalar_moments+k] * (mom_vals[alpha_moment_mapping[k]] - q_shifter[k]) / q_scaler[k];
+                hidden_val += type_central_w0[p*alpha_scalar_moments+k] * mom_vals[alpha_moment_mapping[k]] / q_scaler[k];
             TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
             
             for (int k=0; k<alpha_scalar_moments; k++)
@@ -958,7 +950,7 @@ void NNMtp<CoordType>::find_e_sites_backward(
             CoordType activated_hidden_val = 0.0;
             CoordType activated_hidden_der = 0.0;
             for (int k=0; k<alpha_scalar_moments; k++)
-                hidden_val += type_central_w0[p*alpha_scalar_moments + k] * (mom_vals[alpha_moment_mapping[k]] - q_shifter[k]) / q_scaler[k];
+                hidden_val += type_central_w0[p*alpha_scalar_moments + k] * mom_vals[alpha_moment_mapping[k]] / q_scaler[k];
             TanhActivationFunc<CoordType>::find_val(activated_hidden_val, hidden_val);
             TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
             
@@ -967,7 +959,7 @@ void NNMtp<CoordType>::find_e_sites_backward(
             for (int k=0; k<alpha_scalar_moments; k++)
                 e_sites_der2w0[ii*num_neurons*alpha_scalar_moments + p*alpha_scalar_moments + k] += type_central_w1[p]
                                                                                                     * activated_hidden_der
-                                                                                                    * (mom_vals[alpha_moment_mapping[k]] - q_shifter[k])
+                                                                                                    * mom_vals[alpha_moment_mapping[k]]
                                                                                                     / q_scaler[k];
         }
 

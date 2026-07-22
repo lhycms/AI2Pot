@@ -56,7 +56,6 @@ void find_efv_torch_launcher(
     int nghost,
     CoordType rmax,
     CoordType rmin,
-    CoordType *d_q_shifter,
     CoordType *d_q_scaler)
 {
     int block_size_x = 64;
@@ -96,7 +95,6 @@ void find_efv_torch_launcher(
         nghost,
         rmax,
         rmin,
-        d_q_shifter,
         d_q_scaler);
 
     CHECK_CUDA_API( cudaDeviceSynchronize() );
@@ -137,7 +135,6 @@ void find_ef_torch_launcher(
     int nghost,
     CoordType rmax,
     CoordType rmin,
-    CoordType *d_q_shifter,
     CoordType *d_q_scaler)
 {
     int block_size_x = 64;
@@ -175,7 +172,6 @@ void find_ef_torch_launcher(
         umax_num_neigh_atoms,nghost,
         rmax,
         rmin,
-        d_q_shifter,
         d_q_scaler);
 
     CHECK_CUDA_API( cudaDeviceSynchronize() );

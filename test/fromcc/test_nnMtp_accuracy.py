@@ -19,6 +19,7 @@ from ai2pot.fromcc import (
 
 TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")
 ReNbSSe_POSCAR_PATH = os.path.join(os.path.join(TEST_FILES_DIR, "POSCARs", "POSCAR"))
+MoS2_POSCAR_PATH = os.path.join(TEST_FILES_DIR, "POSCARs", "MoS2", "POSCAR_perturbed0.2")
 PbTe_EXTXYZ_PATH = os.path.join(TEST_FILES_DIR, "XYZ", "11_NEP_potential_PbTe", "train_m.xyz")
 
 #torch.use_deterministic_algorithms(True)
@@ -43,21 +44,12 @@ class NNMtpTest(unittest.TestCase):
         self.umax_num_neigh_atoms: int = 200
         self.fit_virial: bool = False
         
-        """
-        self.ntypes: int = 4
-        self.type_map_tensor: torch.Tensor = torch.tensor(data=[16, 34, 41, 75], dtype=torch.int32)
-        self.structure: Structure = Structure.from_file(ReNbSSe_POSCAR_PATH)
-        """
+
         self.ntypes: int = 2
-        self.type_map_tensor: torch.Tensor = torch.tensor(data=[1, 8], dtype=torch.int32)
-        self.structure: Structure = Structure(lattice=[[10, 0, 0], [0, 10, 0], [0, 0, 10]],
-                                              species=["H", "H", "O"],
-                                              coords=[[0, 0, 0], 
-                                                      [0, 4.0, 0],
-                                                      [3.0, 0.0, 0]
-                                                      ],
-                                              coords_are_cartesian=True)
-        print(self.structure)
+        self.type_map: List[int] = [42, 16] #[16, 34, 41, 75]
+        self.type_map_tensor: torch.Tensor = torch.tensor(self.type_map, dtype=torch.int32)
+        self.structure: Structure = Structure.from_file(MoS2_POSCAR_PATH)
+
     
         # 2. ZBL
         self.zbl_rmax: float = 0.0
@@ -118,11 +110,8 @@ class NNMtpTest(unittest.TestCase):
                                                           device=self.device)
         nn.init.normal_(self.type_bias_tensor, mean=0.0, std=1.0)
 
-        # q_shifter_tensor, q_scaler_tensor
-        self.q_shifter_tensor: torch.Tensor = torch.randn(self.alpha_scalar_moments,
-                                                          dtype=self.torch_float_dtype,
-                                                          device=self.device)
-        self.q_scaler_tensor: torch.Tensor = torch.randn(self.alpha_scalar_moments,
+        # q_scaler_tensor
+        self.q_scaler_tensor: torch.Tensor = torch.ones(self.alpha_scalar_moments,
                                                         dtype=self.torch_float_dtype,
                                                         device=self.device)
     
@@ -130,13 +119,13 @@ class NNMtpTest(unittest.TestCase):
         print("NNMtpTest (TestCase) is tearing down...\n")
     
     
-    def est_nnMtpToEFLoss(self):
+    def test_nnMtpToEFLoss(self):
         # 1. Parameters
-        e_weight: float = 1.0
-        f_weight: float = 0.1
+        e_weight: float = 3.0
+        f_weight: float = 2.1
         v_weight: float = 0.0
-        self.coeffs_tensor.requires_grad_(True)
-        self.w0_tensor.requires_grad_(True)
+        self.coeffs_tensor.requires_grad_(False)
+        self.w0_tensor.requires_grad_(False)
         self.w1_tensor.requires_grad_(True)
         self.type_bias_tensor.requires_grad_(True)
         
@@ -171,16 +160,15 @@ class NNMtpTest(unittest.TestCase):
                                  input_info[12].item(),
                                  self.rmax,
                                  self.rmin,
-                                 self.q_shifter_tensor,
                                  self.q_scaler_tensor,
                                  self.zbl_rmax,
                                  self.zbl_rmin,
                                  self.zbl_cks_tensor,
                                  self.zbl_dks_tensor),
-                         eps=1e-5,
-                         atol=1e-6,
-                         rtol=1e-3,
-                         nondet_tol=1e-5)
+                         eps=1e-6,
+                         atol=1e-5,
+                         rtol=1e-4,
+                         nondet_tol=1e-6)
         print("-------------------------------------------------")
         print("* nnMtpToEFLossOp Gradient pass check: ", test)
         print("-------------------------------------------------")

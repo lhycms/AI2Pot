@@ -92,7 +92,6 @@ protected:
     double *e_sites;
 
     // q_factor
-    double *q_shifter;
     double *q_scaler;
 
     static void SetUpTestSuite() {
@@ -271,14 +270,11 @@ protected:
         memset(e_sites, 0.0, sizeof(double) * inum);
 
         // q_factor
-        q_shifter = (double*)malloc(sizeof(double) * mtp_param.alpha_scalar_moments());
         q_scaler = (double*)malloc(sizeof(double) * mtp_param.alpha_scalar_moments());
         for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++) {
-            q_shifter[ii] = 0.1 + 0.01 * ii;
             q_scaler[ii] = 0.67 + 0.05 * ii;
         }
         //for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++) {
-        //    q_shifter[ii] = 0.0;
         //    q_scaler[ii] = 1.0;
         //}
     }
@@ -314,7 +310,6 @@ protected:
         free(e_sites);
 
         // q_factor
-        free(q_shifter);
         free(q_scaler);
     }
 };  // class : NNMtpTest
@@ -354,7 +349,6 @@ TEST_F(NNMtpTest, find_ef_accuracy) {
         nghost,
         rmax,
         rmin,
-        q_shifter,
         q_scaler);
 
     // *** delta
@@ -405,7 +399,6 @@ TEST_F(NNMtpTest, find_ef_accuracy) {
         nghost,
         rmax,
         rmin,
-        q_shifter,
         q_scaler);
 
 printf("1.1. energy = %.15lf\n", etot);
@@ -455,7 +448,6 @@ TEST_F(NNMtpTest, find_efv_accuracy) {
         nghost,
         rmax,
         rmin,
-        q_shifter,
         q_scaler);
 
     // *** delta
@@ -507,7 +499,6 @@ TEST_F(NNMtpTest, find_efv_accuracy) {
         nghost,
         rmax,
         rmin,
-        q_shifter,
         q_scaler);
 
 printf("1.1. energy = %.15lf\n", etot);
@@ -554,7 +545,6 @@ TEST_F(NNMtpTest, find_ef_loss)
         nghost,
         rmax,
         rmin,
-        q_shifter,
         q_scaler);
 
     ai2pot::nnmtp::NNMtpLoss<double>::find_ef_loss(
@@ -605,7 +595,6 @@ TEST_F(NNMtpTest, find_loss)
         nghost,
         rmax,
         rmin,
-        q_shifter,
         q_scaler);
 
     ai2pot::nnmtp::NNMtpLoss<double>::find_loss(
@@ -656,7 +645,6 @@ TEST_F(NNMtpTest, find_ef_loss_backward) {
         nghost,
         rmax,
         rmin,
-        q_shifter,
         q_scaler);
 
     ai2pot::nnmtp::NNMtpLoss<double>::find_ef_loss_backward(
@@ -696,7 +684,6 @@ TEST_F(NNMtpTest, find_ef_loss_backward) {
         nghost,
         rmax,
         rmin,
-        q_shifter,
         q_scaler);
 
 printf("1. loss_der2coeffs:\n");
@@ -755,7 +742,6 @@ TEST_F(NNMtpTest, find_loss_backward) {
         nghost,
         rmax,
         rmin,
-        q_shifter,
         q_scaler);
 
     ai2pot::nnmtp::NNMtpLoss<double>::find_loss_backward(
@@ -798,7 +784,6 @@ TEST_F(NNMtpTest, find_loss_backward) {
         nghost,
         rmax,
         rmin,
-        q_shifter,
         q_scaler);
 
 printf("1. loss_der2coeffs:\n");
@@ -888,7 +873,6 @@ TEST_F(NNMtpTest, find_e_sites) {
         nghost,
         rmax,
         rmin,
-        q_shifter,
         q_scaler);
 
 double result = 0;

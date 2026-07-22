@@ -143,7 +143,6 @@ void find_loss_backward_atom(
     int nghost,
     CoordType rmax,
     CoordType rmin,
-    CoordType *q_shifter,
     CoordType *q_scaler);
                     
 template <typename CoordType>
@@ -190,7 +189,6 @@ void find_loss_backward_kernel(
     int nghost,
     CoordType rmax,
     CoordType rmin,
-    CoordType *q_shifter,
     CoordType *q_scaler);
 
 template <typename CoordType>
@@ -237,7 +235,6 @@ void find_loss_backward_launcher(
     int nghost,
     CoordType rmax,
     CoordType rmin,
-    CoordType *h_q_shifter,
     CoordType *h_q_scaler);
 
 template <typename CoordType>
@@ -279,7 +276,6 @@ void find_ef_loss_backward_atom(
     int nghost,
     CoordType rmax,
     CoordType rmin,
-    CoordType *q_shifter,
     CoordType *q_scaler);
 
 
@@ -324,7 +320,6 @@ void find_ef_loss_backward_kernel(
     int nghost,
     CoordType rmax,
     CoordType rmin,
-    CoordType *q_shifter,
     CoordType *q_scaler);
 
 
@@ -369,7 +364,6 @@ void find_ef_loss_backward_launcher(
     int nghost,
     CoordType rmax,
     CoordType rmin,
-    CoordType *h_q_shifter,
     CoordType *h_q_scaler);
 
 
@@ -681,7 +675,6 @@ void find_loss_backward_atom(
     int nghost,
     CoordType rmax,
     CoordType rmin,
-    CoordType *q_shifter,
     CoordType *q_scaler)
 {
     CoordType mom_vals[MAX_ALPHA_MOMENTS_COUNT] = {0.0};
@@ -816,7 +809,7 @@ void find_loss_backward_atom(
         CoordType hidden_val = 0.0;
         CoordType activated_hidden_der = 0.0;
         for (int k=0; k<alpha_scalar_moments; k++)
-            hidden_val += type_central_w0[p*alpha_scalar_moments + k] * (mom_vals[alpha_moment_mapping[k]] - q_shifter[k]) / q_scaler[k];
+            hidden_val += type_central_w0[p*alpha_scalar_moments + k] * mom_vals[alpha_moment_mapping[k]] / q_scaler[k];
         TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
         for (int k=0; k<alpha_scalar_moments; k++)
             e_site_der2mom[alpha_moment_mapping[k]] += type_central_w1[p]
@@ -948,7 +941,7 @@ void find_loss_backward_atom(
         CoordType activated_hidden_val = 0.0;
         CoordType activated_hidden_der = 0.0;
         for (int k=0; k<alpha_scalar_moments; k++)
-            hidden_val += type_central_w0[p*alpha_scalar_moments+k] * (mom_vals[alpha_moment_mapping[k]] - q_shifter[k]) / q_scaler[k];
+            hidden_val += type_central_w0[p*alpha_scalar_moments+k] * mom_vals[alpha_moment_mapping[k]] / q_scaler[k];
         TanhActivationFunc<CoordType>::find_val(activated_hidden_val, hidden_val);
         TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
         tmpe_loss_der2w1 = 2*e_weight/inum*(etot_ml - etot_dft)
@@ -968,14 +961,14 @@ void find_loss_backward_atom(
         CoordType activated_hidden_der = 0.0;
         CoordType activated_hidden_der2der = 0.0;
         for (int k=0; k<alpha_scalar_moments; k++)
-            hidden_val += type_central_w0[p*alpha_scalar_moments+k] * (mom_vals[alpha_moment_mapping[k]] - q_shifter[k]) / q_scaler[k];
+            hidden_val += type_central_w0[p*alpha_scalar_moments+k] * mom_vals[alpha_moment_mapping[k]] / q_scaler[k];
         TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
         TanhActivationFunc<CoordType>::find_der2der(activated_hidden_der2der, hidden_val);
         for (int k=0; k<alpha_scalar_moments; k++) {
             CoordType tmpe_loss_der2w0 = 2*e_weight/inum*(etot_ml - etot_dft)
                                          * type_central_w1[p]
                                          * activated_hidden_der
-                                         * (mom_vals[alpha_moment_mapping[k]] - q_shifter[k])
+                                         * mom_vals[alpha_moment_mapping[k]]
                                          / q_scaler[k];
             CoordType tmpf_loss_der2w0 = dloss_combination[alpha_moment_mapping[k]]
                                          * type_central_w1[p]
@@ -983,7 +976,7 @@ void find_loss_backward_atom(
                                          * (activated_hidden_der
                                             + activated_hidden_der2der
                                               * type_central_w0[p*alpha_scalar_moments+k]
-                                              * (mom_vals[alpha_moment_mapping[k]] - q_shifter[k])
+                                              * mom_vals[alpha_moment_mapping[k]]
                                               / q_scaler[k] );
 
             atomicAdd(&loss_der2w0[type_central*num_neurons*alpha_scalar_moments + p*alpha_scalar_moments + k], tmpe_loss_der2w0 + tmpf_loss_der2w0);
@@ -1041,7 +1034,6 @@ void find_loss_backward_kernel(
     int nghost,
     CoordType rmax,
     CoordType rmin,
-    CoordType *q_shifter,
     CoordType *q_scaler)
 {
     int nx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -1109,7 +1101,6 @@ void find_loss_backward_kernel(
             nghost,
             rmax,
             rmin,
-            q_shifter,
             q_scaler);
     }
 }
@@ -1159,7 +1150,6 @@ void find_loss_backward_launcher(
     int nghost,
     CoordType rmax,
     CoordType rmin,
-    CoordType *h_q_shifter,
     CoordType *h_q_scaler)
 {
     int block_size_x = 64;
@@ -1192,7 +1182,6 @@ void find_loss_backward_launcher(
     CoordType (*d_brcs)[3];
     int *d_btypes;
     int *d_type_map;
-    CoordType *d_q_shifter;
     CoordType *d_q_scaler;
 
     CHECK_CUDA_API( cudaMalloc((void**)&d_bloss_der2coeffs, sizeof(CoordType)*batch_size*num_coeffs) );
@@ -1224,7 +1213,6 @@ void find_loss_backward_launcher(
     CHECK_CUDA_API( cudaMalloc((void**)&d_brcs, sizeof(CoordType)*batch_size*natoms_pad*umax_num_neigh_atoms*3) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_btypes, sizeof(int)*batch_size*natoms_pad) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_type_map, sizeof(int)*ntypes) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_q_shifter, sizeof(CoordType)*alpha_scalar_moments) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_q_scaler, sizeof(CoordType)*alpha_scalar_moments) );
 
     CHECK_CUDA_API( cudaMemcpy(d_betot_ml, h_betot_ml, sizeof(CoordType)*batch_size, cudaMemcpyHostToDevice) );
@@ -1247,7 +1235,6 @@ void find_loss_backward_launcher(
     CHECK_CUDA_API( cudaMemcpy(d_brcs, h_brcs, sizeof(CoordType)*batch_size*natoms_pad*umax_num_neigh_atoms*3, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_btypes, h_btypes, sizeof(int)*batch_size*natoms_pad, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_type_map, h_type_map, sizeof(int)*ntypes, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_q_shifter, h_q_shifter, sizeof(CoordType)*alpha_scalar_moments, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_q_scaler, h_q_scaler, sizeof(CoordType)*alpha_scalar_moments, cudaMemcpyHostToDevice) );
 
 
@@ -1294,7 +1281,6 @@ void find_loss_backward_launcher(
         nghost,
         rmax,
         rmin,
-        d_q_shifter,
         d_q_scaler);
     CHECK_CUDA_API( cudaDeviceSynchronize() );
     CHECK_CUDA_API( cudaGetLastError() );
@@ -1374,7 +1360,6 @@ void find_ef_loss_backward_atom(
     int nghost,
     CoordType rmax,
     CoordType rmin,
-    CoordType *q_shifter,
     CoordType *q_scaler)
 {
     CoordType mom_vals[MAX_ALPHA_MOMENTS_COUNT] = {0.0};
@@ -1503,7 +1488,7 @@ void find_ef_loss_backward_atom(
         CoordType hidden_val = 0.0;
         CoordType activated_hidden_der = 0.0;
         for (int k=0; k<alpha_scalar_moments; k++)
-            hidden_val += type_central_w0[p*alpha_scalar_moments + k] * (mom_vals[alpha_moment_mapping[k]] - q_shifter[k]) / q_scaler[k];
+            hidden_val += type_central_w0[p*alpha_scalar_moments + k] * mom_vals[alpha_moment_mapping[k]] / q_scaler[k];
         TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
         for (int k=0; k<alpha_scalar_moments; k++)
             e_site_der2mom[alpha_moment_mapping[k]] += type_central_w1[p]
@@ -1630,7 +1615,7 @@ void find_ef_loss_backward_atom(
         CoordType activated_hidden_val = 0.0;
         CoordType activated_hidden_der = 0.0;
         for (int k=0; k<alpha_scalar_moments; k++)
-            hidden_val += type_central_w0[p*alpha_scalar_moments+k] * (mom_vals[alpha_moment_mapping[k]] - q_shifter[k]) / q_scaler[k];
+            hidden_val += type_central_w0[p*alpha_scalar_moments+k] * mom_vals[alpha_moment_mapping[k]] / q_scaler[k];
         TanhActivationFunc<CoordType>::find_val(activated_hidden_val, hidden_val);
         TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
         tmpe_loss_der2w1 = 2*e_weight/inum*(etot_ml - etot_dft)
@@ -1650,14 +1635,14 @@ void find_ef_loss_backward_atom(
         CoordType activated_hidden_der = 0.0;
         CoordType activated_hidden_der2der = 0.0;
         for (int k=0; k<alpha_scalar_moments; k++)
-            hidden_val += type_central_w0[p*alpha_scalar_moments+k] * (mom_vals[alpha_moment_mapping[k]] - q_shifter[k]) / q_scaler[k];
+            hidden_val += type_central_w0[p*alpha_scalar_moments+k] * mom_vals[alpha_moment_mapping[k]] / q_scaler[k];
         TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
         TanhActivationFunc<CoordType>::find_der2der(activated_hidden_der2der, hidden_val);
         for (int k=0; k<alpha_scalar_moments; k++) {
             CoordType tmpe_loss_der2w0 = 2*e_weight/inum*(etot_ml - etot_dft)
                                          * type_central_w1[p]
                                          * activated_hidden_der
-                                         * (mom_vals[alpha_moment_mapping[k]] - q_shifter[k])
+                                         * mom_vals[alpha_moment_mapping[k]]
                                          / q_scaler[k];
             CoordType tmpf_loss_der2w0 = dloss_combination[alpha_moment_mapping[k]]
                                          * type_central_w1[p]
@@ -1665,7 +1650,7 @@ void find_ef_loss_backward_atom(
                                          * (activated_hidden_der
                                             + activated_hidden_der2der
                                               * type_central_w0[p*alpha_scalar_moments+k]
-                                              * (mom_vals[alpha_moment_mapping[k]] - q_shifter[k])
+                                              * mom_vals[alpha_moment_mapping[k]]
                                               / q_scaler[k] );
 
             atomicAdd(&loss_der2w0[type_central*num_neurons*alpha_scalar_moments + p*alpha_scalar_moments + k], tmpe_loss_der2w0 + tmpf_loss_der2w0);
@@ -1720,7 +1705,6 @@ void find_ef_loss_backward_kernel(
     int nghost,
     CoordType rmax,
     CoordType rmin,
-    CoordType *q_shifter,
     CoordType *q_scaler)
 {
     int nx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -1787,7 +1771,6 @@ void find_ef_loss_backward_kernel(
             nghost,
             rmax,
             rmin,
-            q_shifter,
             q_scaler);
     }
 }
@@ -1834,7 +1817,6 @@ void find_ef_loss_backward_launcher(
     int nghost,
     CoordType rmax,
     CoordType rmin,
-    CoordType *h_q_shifter,
     CoordType *h_q_scaler)
 {
     int block_size_x = 64;
@@ -1865,7 +1847,6 @@ void find_ef_loss_backward_launcher(
     CoordType (*d_brcs)[3];
     int *d_btypes;
     int *d_type_map;
-    CoordType *d_q_shifter;
     CoordType *d_q_scaler;
 
     CHECK_CUDA_API( cudaMalloc((void**)&d_bloss_der2coeffs, sizeof(CoordType)*batch_size*num_coeffs) );
@@ -1895,7 +1876,6 @@ void find_ef_loss_backward_launcher(
     CHECK_CUDA_API( cudaMalloc((void**)&d_brcs, sizeof(CoordType)*batch_size*natoms_pad*umax_num_neigh_atoms*3) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_btypes, sizeof(int)*batch_size*natoms_pad) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_type_map, sizeof(int) * ntypes) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_q_shifter, sizeof(CoordType)*alpha_scalar_moments) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_q_scaler, sizeof(CoordType)*alpha_scalar_moments) );
 
     CHECK_CUDA_API( cudaMemcpy(d_betot_ml, h_betot_ml, sizeof(CoordType)*batch_size, cudaMemcpyHostToDevice) );
@@ -1916,7 +1896,6 @@ void find_ef_loss_backward_launcher(
     CHECK_CUDA_API( cudaMemcpy(d_brcs, h_brcs, sizeof(CoordType)*batch_size*natoms_pad*umax_num_neigh_atoms*3, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_btypes, h_btypes, sizeof(int)*batch_size*natoms_pad, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_type_map, h_type_map, sizeof(int)*ntypes, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_q_shifter, h_q_shifter, sizeof(CoordType)*alpha_scalar_moments, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_q_scaler, h_q_scaler, sizeof(CoordType)*alpha_scalar_moments, cudaMemcpyHostToDevice) );
 
 
@@ -1960,7 +1939,6 @@ void find_ef_loss_backward_launcher(
         nghost,
         rmax,
         rmin,
-        d_q_shifter,
         d_q_scaler);
     CHECK_CUDA_API( cudaDeviceSynchronize() );
     CHECK_CUDA_API( cudaGetLastError() );
@@ -1996,7 +1974,6 @@ void find_ef_loss_backward_launcher(
     CHECK_CUDA_API( cudaFree(d_brcs) );
     CHECK_CUDA_API( cudaFree(d_btypes) );
     CHECK_CUDA_API( cudaFree(d_type_map) );
-    CHECK_CUDA_API( cudaFree(d_q_shifter) );
     CHECK_CUDA_API( cudaFree(d_q_scaler) );
 }
 
