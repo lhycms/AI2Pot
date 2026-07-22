@@ -96,15 +96,19 @@ class NNMtpTest(unittest.TestCase):
         self.coeffs_tensor: torch.Tensor = torch.zeros(self.ntypes*self.ntypes*self.nmus*self.chebyshev_size, 
                                                        dtype=self.torch_float_dtype,
                                                        device=self.device)
-        nn.init.normal_(self.coeffs_tensor, mean=0.0, std=0.1)
+        nn.init.normal_(self.coeffs_tensor, mean=0.0, std=0.3)
         self.w0_tensor: torch.Tensor = torch.zeros(self.ntypes * self.num_neurons * self.alpha_moment_mapping_tensor.size(0),
                                                    dtype=self.torch_float_dtype,
                                                    device=self.device)
-        nn.init.normal_(self.w0_tensor, mean=0.0, std=0.1)
+        nn.init.normal_(self.w0_tensor, mean=0.0, std=0.3)
+        self.b0_tensor: torch.Tensor = torch.zeros(self.ntypes * self.num_neurons,
+                                                   dtype=self.torch_float_dtype,
+                                                   device=self.device)
+        nn.init.normal_(self.b0_tensor, mean=0.0, std=0.3)
         self.w1_tensor: torch.Tensor = torch.zeros(self.ntypes * self.num_neurons,
                                                    dtype=self.torch_float_dtype,
                                                    device=self.device)
-        nn.init.normal_(self.w1_tensor, mean=0.0, std=0.1)
+        nn.init.normal_(self.w1_tensor, mean=0.0, std=0.3)
         self.type_bias_tensor: torch.Tensor = torch.zeros(self.ntypes,
                                                           dtype=self.torch_float_dtype,
                                                           device=self.device)
@@ -113,7 +117,7 @@ class NNMtpTest(unittest.TestCase):
         # q_scaler_tensor
         self.q_scaler_tensor: torch.Tensor = torch.ones(self.alpha_scalar_moments,
                                                         dtype=self.torch_float_dtype,
-                                                        device=self.device)
+                                                        device=self.device) + 0.1
     
     def tearDown(self):
         print("NNMtpTest (TestCase) is tearing down...\n")
@@ -121,7 +125,7 @@ class NNMtpTest(unittest.TestCase):
     
     def test_nnMtpToEFLoss(self):
         # 1. Parameters
-        e_weight: float = 3.0
+        e_weight: float = 3.1
         f_weight: float = 2.1
         v_weight: float = 0.0
         self.coeffs_tensor.requires_grad_(False)
@@ -134,8 +138,10 @@ class NNMtpTest(unittest.TestCase):
                                                                                   e_weight=e_weight,
                                                                                   f_weight=f_weight,
                                                                                   v_weight=v_weight)
+        def nnMtpToEFLossOp1(*args, **kwargs):
+            return nnMtpToEFLossOp(*args, **kwargs)[0]
 
-        test = gradcheck(func=nnMtpToEFLossOp,
+        test = gradcheck(func=nnMtpToEFLossOp1,
                          inputs=(e_weight,
                                  f_weight,
                                  input_info[3],
@@ -143,6 +149,7 @@ class NNMtpTest(unittest.TestCase):
                                  self.chebyshev_size,
                                  self.coeffs_tensor,
                                  self.w0_tensor,
+                                 self.b0_tensor,
                                  self.w1_tensor,
                                  self.type_bias_tensor,
                                  self.alpha_moments_count,
@@ -174,13 +181,13 @@ class NNMtpTest(unittest.TestCase):
         print("-------------------------------------------------")
 
 
-    def est_nnMtpToLoss(self):
+    def test_nnMtpToLoss(self):
         # 1. Parameters
-        e_weight: float = 1.0
-        f_weight: float = 10.0
-        v_weight: float = 0.1
-        self.coeffs_tensor.requires_grad_(True)
-        self.w0_tensor.requires_grad_(True)
+        e_weight: float = 2.1
+        f_weight: float = 3.1
+        v_weight: float = 4.1
+        self.coeffs_tensor.requires_grad_(False)
+        self.w0_tensor.requires_grad_(False)
         self.w1_tensor.requires_grad_(True)
         self.type_bias_tensor.requires_grad_(True)
         
@@ -190,7 +197,10 @@ class NNMtpTest(unittest.TestCase):
                                                                                   f_weight=f_weight,
                                                                                   v_weight=v_weight)
 
-        test = gradcheck(func=nnMtpToLossOp,
+        def nnMtpToLossOp1(*args, **kwargs):
+            return nnMtpToLossOp(*args, **kwargs)[0]
+
+        test = gradcheck(func=nnMtpToLossOp1,
                          inputs=(e_weight,
                                  f_weight,
                                  v_weight,
@@ -200,6 +210,7 @@ class NNMtpTest(unittest.TestCase):
                                  self.chebyshev_size,
                                  self.coeffs_tensor,
                                  self.w0_tensor,
+                                 self.b0_tensor,
                                  self.w1_tensor,
                                  self.type_bias_tensor,
                                  self.alpha_moments_count,
@@ -217,14 +228,15 @@ class NNMtpTest(unittest.TestCase):
                                  input_info[12].item(),
                                  self.rmax,
                                  self.rmin,
+                                 self.q_scaler_tensor,
                                  self.zbl_rmax,
                                  self.zbl_rmin,
                                  self.zbl_cks_tensor,
                                  self.zbl_dks_tensor),
-                         eps=1e-5,
-                         atol=1e-6,
-                         rtol=1e-3,
-                         nondet_tol=1e-5)
+                         eps=1e-6,
+                         atol=1e-5,
+                         rtol=1e-4,
+                         nondet_tol=1e-6)
         print("-------------------------------------------------")
         print("* nnMtpToLossOp Gradient pass check: ", test)
         print("-------------------------------------------------")

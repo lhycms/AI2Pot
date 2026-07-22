@@ -119,7 +119,7 @@ class NepTest(unittest.TestCase):
         # q_scaler_tensor
         self.q_scaler_tensor: torch.Tensor = torch.ones(self.num_descriptors,
                                                         dtype=self.torch_float_dtype,
-                                                        device=self.device)
+                                                        device=self.device) + 0.1
 
     
     def tearDown(self):

@@ -617,11 +617,9 @@ void find_efv_kernel(
         return;
     int ii = nx % natoms_pad;
 
-    __shared__ CoordType s_local_virial[64][9];
-    int tid = threadIdx.x;
-    for (int ii=0; ii<9; ii++)
-        s_local_virial[tid][ii] = 0.0;
-    //__syncthreads();
+    __shared__ CoordType s_local_virial[9];
+    for (int v=0; v<9; v++)
+        s_local_virial[v] = 0.0;
 
     CoordType *etot_ptr = &betot_ptr[istruct];
     CoordType (*force)[3] = &bforce[istruct*(natoms_pad+nghost) + 0];
@@ -664,14 +662,10 @@ void find_efv_kernel(
             rmax,
             rmin,
             q_scaler,
-            s_local_virial[tid]);
-    }
-    __syncthreads();
+            s_local_virial);
 
-    if (tid == 0) {
-        for (int t=0; t<blockDim.x; t++)
-            for (int i=0; i<9; i++)
-                atomicAdd(&virial[i], s_local_virial[t][i]);
+        for (int v=0; v<9; v++)
+            atomicAdd(&virial[v], s_local_virial[v]);
     }
 }
 
