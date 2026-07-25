@@ -67,11 +67,6 @@ protected:
     double *w1;
     double *type_bias;
 
-    double zbl_rmax;
-    double zbl_rmin;
-    double *zbl_cks;
-    double *zbl_dks;
-
 
     // Loss
     double e_weight;
@@ -236,12 +231,6 @@ protected:
         type_bias = (double*)malloc(sizeof(double) * ntypes);
         type_bias[0] = -0.1;
         type_bias[1] = -0.2;
-
-        zbl_rmax = 0.0;
-        zbl_rmin = 0.0;
-        zbl_cks = nullptr;
-        zbl_dks = nullptr;
-
 
         // Loss
         e_weight = 1.0;

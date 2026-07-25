@@ -80,6 +80,16 @@ if (BUILD_TEST)
         target_compile_definitions(test_nnMtp PRIVATE USE_OPENMP)
     endif()
 
+    add_executable(test_nnMtp_cpu_launcher ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nnMtp_cpu_launcher.cc)
+    target_link_libraries(test_nnMtp_cpu_launcher 
+                          PRIVATE 
+                          mtpParam_nnMtp
+                          gtest gtest_main)
+    if (USE_OPENMP)
+        target_compile_definitions(test_nnMtp_cpu_launcher PRIVATE USE_OPENMP)
+    endif()
+
     gtest_discover_tests(test_nnMtpUtils)
     gtest_discover_tests(test_nnMtp)
+    gtest_discover_tests(test_nnMtp_cpu_launcher)
 endif()
