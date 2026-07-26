@@ -430,6 +430,169 @@ void find_descriptors_cpu_launcher(
 }
 
 
+template <typename CoordType>
+void find_e_sites_cpu_launcher(
+    CoordType *be_sites,
+    int chebyshev_size,
+    int num_neurons,
+    CoordType *coeffs,
+    CoordType *w0,
+    CoordType *b0,
+    CoordType *w1,
+    CoordType *type_bias,
+    const int alpha_moments_count,
+    const int alpha_index_basic_count,
+    const int (*alpha_index_basic)[4],
+    const int alpha_index_times_count,
+    const int (*alpha_index_times)[4],
+    const int alpha_scalar_moments,
+    const int *alpha_moment_mapping,
+    int nmus,
+    int batch_size,
+    int natoms_pad,
+    int *binum,
+    int *bilist,
+    int *bnumneigh,
+    int *bfirstneigh,
+    CoordType (*brcs)[3],
+    int *btypes,
+    int ntypes,
+    int *type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    CoordType rmax,
+    CoordType rmin,
+    CoordType *q_scaler)
+{
+    for (int bb=0; bb<batch_size; bb++) {
+        CoordType *e_sites = &be_sites[bb*natoms_pad];
+        int inum = binum[bb];
+        int *ilist = &bilist[bb*natoms_pad];
+        int *numneigh = &bnumneigh[bb*natoms_pad];
+        int *firstneigh = &bfirstneigh[bb*natoms_pad*umax_num_neigh_atoms];
+        CoordType (*rcs)[3] = &brcs[bb*natoms_pad*umax_num_neigh_atoms];
+        int *types = &btypes[bb*(natoms_pad + nghost)];
+
+        NNMtp<CoordType>::find_e_sites(
+            e_sites,
+            chebyshev_size,
+            num_neurons,
+            coeffs,
+            w0,
+            w1,
+            type_bias,
+            alpha_moments_count,
+            alpha_index_basic_count,
+            alpha_index_basic,
+            alpha_index_times_count,
+            alpha_index_times,
+            alpha_scalar_moments,
+            alpha_moment_mapping,
+            nmus,
+            inum,
+            ilist,
+            numneigh,
+            firstneigh,
+            rcs,
+            types,
+            ntypes,
+            type_map,
+            umax_num_neigh_atoms,
+            nghost,
+            rmax,
+            rmin,
+            q_scaler);
+    }
+}
+
+
+template <typename CoordType>
+void find_e_sites_backward_cpu_launcher(
+    CoordType *be_sites_der2coeffs,
+    CoordType *be_sites_der2w0,
+    CoordType *be_sites_der2b0,
+    CoordType *be_sites_der2w1,
+    CoordType *be_sites_der2type_bias,
+    int chebyshev_size,
+    int num_neurons,
+    CoordType *coeffs,
+    CoordType *w0,
+    CoordType *b0,
+    CoordType *w1,
+    CoordType *type_bias,
+    const int alpha_moments_count,
+    const int alpha_index_basic_count,
+    const int (*alpha_index_basic)[4],
+    const int alpha_index_times_count,
+    const int (*alpha_index_times)[4],
+    const int alpha_scalar_moments,
+    const int *alpha_moment_mapping,
+    int nmus,
+    int batch_size,
+    int natoms_pad,
+    int *binum,
+    int *bilist,
+    int *bnumneigh,
+    int *bfirstneigh,
+    CoordType (*brcs)[3],
+    int *btypes,
+    int ntypes,
+    int *type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    CoordType rmax,
+    CoordType rmin,
+    CoordType *q_scaler)
+{
+    for (int bb=0; bb<batch_size; bb++) {
+        CoordType *e_sites_der2coeffs = &be_sites_der2coeffs[bb*natoms_pad*(ntypes*ntypes*nmus*chebyshev_size)];
+        CoordType *e_sites_der2w0 = &be_sites_der2w0[bb*natoms_pad*(ntypes*num_neurons*alpha_scalar_moments)];
+        CoordType *e_sites_der2b0 = &be_sites_der2b0[bb*natoms_pad*(ntypes*num_neurons)];
+        CoordType *e_sites_der2w1 = &be_sites_der2w1[bb*natoms_pad*(ntypes*num_neurons)];
+        CoordType *e_sites_der2type_bias = &be_sites_der2type_bias[bb*natoms_pad*(ntypes)];
+        int inum = binum[bb];
+        int *ilist = &bilist[bb*natoms_pad];
+        int *numneigh = &bnumneigh[bb*natoms_pad];
+        int *firstneigh = &bfirstneigh[bb*natoms_pad*umax_num_neigh_atoms];
+        CoordType (*rcs)[3] = &brcs[bb*natoms_pad*umax_num_neigh_atoms];
+        int *types = &btypes[bb*(natoms_pad + nghost)];
+
+        NNMtp<CoordType>::find_e_sites_backward(
+            e_sites_der2coeffs,
+            e_sites_der2w0,
+            e_sites_der2w1,
+            e_sites_der2type_bias,
+            chebyshev_size,
+            num_neurons,
+            coeffs,
+            w0,
+            w1,
+            type_bias,
+            alpha_moments_count,
+            alpha_index_basic_count,
+            alpha_index_basic,
+            alpha_index_times_count,
+            alpha_index_times,
+            alpha_scalar_moments,
+            alpha_moment_mapping,
+            nmus,
+            inum,
+            ilist,
+            numneigh,
+            firstneigh,
+            rcs,
+            types,
+            ntypes,
+            type_map,
+            umax_num_neigh_atoms,
+            nghost,
+            rmax,
+            rmin,
+            q_scaler);
+    }
+}
+
+
 };  // namespace : nnmtp
 };  // namespace : ai2pot
 

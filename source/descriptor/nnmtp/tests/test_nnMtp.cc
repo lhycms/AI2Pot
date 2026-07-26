@@ -64,6 +64,7 @@ protected:
     int num_neurons;
     double *coeffs;
     double *w0;
+    double *b0;
     double *w1;
     double *type_bias;
 
@@ -79,6 +80,7 @@ protected:
     // Loss derivatives
     double *loss_der2coeffs;
     double *loss_der2w0;
+    double *loss_der2b0;
     double *loss_der2w1;
     double *loss_der2type_bias;
 
@@ -163,7 +165,7 @@ protected:
         pbc_xyz[0] = true;
         pbc_xyz[1] = true;
         pbc_xyz[2] = true;
-        nblist = ai2pot::NeighborList<double>(structure, rcut, pbc_xyz, false);
+        nblist = ai2pot::NeighborList<double>(structure, rcut, pbc_xyz, true);
         inum = 12;
         ntypes = 2;
         umax_num_neigh_atoms = 20;
@@ -225,6 +227,9 @@ protected:
         w0 = (double*)malloc(sizeof(double) * ntypes * num_neurons * mtp_param.alpha_scalar_moments());
         for (int ii=0; ii<ntypes * num_neurons * mtp_param.alpha_scalar_moments(); ii++)
             w0[ii] = 0.1 + 0.001 * ii;
+        b0 = (double*)malloc(sizeof(double) * ntypes * num_neurons);
+        for (int ii=0; ii<ntypes * num_neurons; ii++)
+            b0[ii] = 0.1 + 0.001 * ii;
         w1 = (double*)malloc(sizeof(double) * ntypes * num_neurons);
         for (int ii=0; ii<ntypes * num_neurons; ii++)
             w1[ii] = 0.1 + 0.001 * ii;
@@ -233,9 +238,9 @@ protected:
         type_bias[1] = -0.2;
 
         // Loss
-        e_weight = 1.0;
-        f_weight = 1.0;
-        v_weight = 1.0;
+        e_weight = 0.1;
+        f_weight = 0.2;
+        v_weight = 0.3;
         etot_dft = 0.0;
         forces_dft = (double (*)[3])malloc(sizeof(double) * inum * 3);
         memset(forces_dft, 0.0, sizeof(double) * inum * 3);
@@ -247,6 +252,8 @@ protected:
         memset(loss_der2coeffs, 0, sizeof(double) * ntypes * ntypes * mtp_param.nmus() * chebyshev_size);
         loss_der2w0 = (double*)malloc(sizeof(double) * ntypes * num_neurons * mtp_param.alpha_scalar_moments());
         memset(loss_der2w0, 0, sizeof(double) * ntypes * num_neurons * mtp_param.alpha_scalar_moments());
+        loss_der2b0 = (double*)malloc(sizeof(double) * ntypes * num_neurons);
+        memset(loss_der2b0, 0, sizeof(double) * ntypes * num_neurons);
         loss_der2w1 = (double*)malloc(sizeof(double) * ntypes * num_neurons);
         memset(loss_der2w1, 0, sizeof(double) * ntypes * num_neurons);
         loss_der2type_bias = (double*)malloc(sizeof(double) * ntypes);
@@ -281,6 +288,7 @@ protected:
         free(virial_);
         free(coeffs);
         free(w0);
+        free(b0);
         free(w1);
         free(type_bias);
 
@@ -291,6 +299,7 @@ protected:
         // Loss derivatives
         free(loss_der2coeffs);
         free(loss_der2w0);
+        free(loss_der2b0);
         free(loss_der2w1);
         free(loss_der2type_bias);
 
@@ -390,14 +399,14 @@ TEST_F(NNMtpTest, find_ef_accuracy) {
         rmin,
         q_scaler);
 
-printf("1.1. energy = %.15lf\n", etot);
-printf("1.1. force[%d][%d] calculated by custom code = %.15lf\n", center_idx_modify, direction1_idx_modify, forces[center_idx_modify][direction1_idx_modify]);
-printf("1.2. energy = %.15lf\n", etot_);
-printf("1.2. force[%d][%d] calculated by finite difference method = %.15lf\n", center_idx_modify, direction1_idx_modify, -(etot_ - etot) / delta);
-printf("2.1. energy = %.15lf\n", etot);
+printf("1.1. energy = %.10f\n", etot);
+printf("1.1. force[%d][%d] calculated by custom code = %.10f\n", center_idx_modify, direction1_idx_modify, forces[center_idx_modify][direction1_idx_modify]);
+printf("1.2. energy = %.10f\n", etot_);
+printf("1.2. force[%d][%d] calculated by finite difference method = %.10f\n", center_idx_modify, direction1_idx_modify, -(etot_ - etot) / delta);
+printf("2.1. energy = %.10f\n", etot);
 printf("2.2. force=\n");
 for (int ii=0; ii<inum; ii++)
-    printf("\t\t%3d: [%.15f, %.15f, %.15f]\n", ii, forces[ii][0], forces[ii][1], forces[ii][2]);
+    printf("\t\t%3d: [%.10f, %.10f, %.10f]\n", ii, forces[ii][0], forces[ii][1], forces[ii][2]);
 }
 
 
@@ -490,14 +499,14 @@ TEST_F(NNMtpTest, find_efv_accuracy) {
         rmin,
         q_scaler);
 
-printf("1.1. energy = %.15lf\n", etot);
-printf("1.1. force[%d][%d] calculated by custom code = %.15lf\n", center_idx_modify, direction1_idx_modify, forces[center_idx_modify][direction1_idx_modify]);
-printf("1.2. energy = %.15lf\n", etot_);
-printf("1.2. force[%d][%d] calculated by finite difference method = %.15lf\n", center_idx_modify, direction1_idx_modify, -(etot_ - etot) / delta);
-printf("2.1. energy = %.15lf\n", etot);
+printf("1.1. energy = %.10f\n", etot);
+printf("1.1. force[%d][%d] calculated by custom code = %.10f\n", center_idx_modify, direction1_idx_modify, forces[center_idx_modify][direction1_idx_modify]);
+printf("1.2. energy = %.10f\n", etot_);
+printf("1.2. force[%d][%d] calculated by finite difference method = %.10f\n", center_idx_modify, direction1_idx_modify, -(etot_ - etot) / delta);
+printf("2.1. energy = %.10f\n", etot);
 printf("2.2. force=\n");
 for (int ii=0; ii<inum; ii++)
-    printf("\t\t%3d: [%.15f, %.15f, %.15f]\n", ii, forces[ii][0], forces[ii][1], forces[ii][2]);
+    printf("\t\t%3d: [%.10f, %.10f, %.10f]\n", ii, forces[ii][0], forces[ii][1], forces[ii][2]);
 }
 
 
@@ -546,7 +555,7 @@ TEST_F(NNMtpTest, find_ef_loss)
         etot_dft,
         forces,
         forces_dft);
-printf("\t1. ef_loss = %.15lf\n", loss);
+printf("\t1. ef_loss = %.10f\n", loss);
 }
 
 
@@ -599,7 +608,7 @@ TEST_F(NNMtpTest, find_loss)
         forces_dft,
         virial,
         virial_dft);
-printf("\t1. efv_loss = %.15lf\n", loss);
+printf("\t1. efv_loss = %.10f\n", loss);
 }
 
 
@@ -677,30 +686,33 @@ TEST_F(NNMtpTest, find_ef_loss_backward) {
 
 printf("1. loss_der2coeffs:\n");
 for (int ii=0; ii<ntypes*ntypes*mtp_param.nmus()*chebyshev_size; ii++)
-    printf("%.15f, ", loss_der2coeffs[ii]);
+    printf("%.10f, ", loss_der2coeffs[ii]);
 printf("\n\n");
 
 printf("2. loss_der2w0:\n");
 for (int ii=0; ii<ntypes*num_neurons*mtp_param.alpha_scalar_moments(); ii++)
-    printf("%.15f, ", loss_der2w0[ii]);
+    printf("%.10f, ", loss_der2w0[ii]);
 printf("\n\n");
 
-printf("3. loss_der2w1:\n");
+printf("3. loss_der2b0:\n");
 for (int ii=0; ii<ntypes*num_neurons; ii++)
-    printf("%.15f, ", loss_der2w1[ii]);
+    printf("%.10f, ", loss_der2b0[ii]);
 printf("\n\n");
 
-printf("4. loss_der2type_bias:\n");
+printf("4. loss_der2w1:\n");
+for (int ii=0; ii<ntypes*num_neurons; ii++)
+    printf("%.10f, ", loss_der2w1[ii]);
+printf("\n\n");
+
+printf("5. loss_der2type_bias:\n");
 for (int ii=0; ii<ntypes; ii++)
-    printf("%.15f, ", loss_der2type_bias[ii]);
+    printf("%.10f, ", loss_der2type_bias[ii]);
 printf("\n\n");
 }
 
 
 
-TEST_F(NNMtpTest, find_loss_backward) {
-    v_weight = 0.0;
-    
+TEST_F(NNMtpTest, find_loss_backward) {    
     ai2pot::nnmtp::NNMtp<double>::find_efv(
         etot,
         forces,
@@ -777,22 +789,27 @@ TEST_F(NNMtpTest, find_loss_backward) {
 
 printf("1. loss_der2coeffs:\n");
 for (int ii=0; ii<ntypes*ntypes*mtp_param.nmus()*chebyshev_size; ii++)
-    printf("%.15f, ", loss_der2coeffs[ii]);
+    printf("%.10f, ", loss_der2coeffs[ii]);
 printf("\n\n");
 
 printf("2. loss_der2w0:\n");
 for (int ii=0; ii<ntypes*num_neurons*mtp_param.alpha_scalar_moments(); ii++)
-    printf("%.15f, ", loss_der2w0[ii]);
+    printf("%.10f, ", loss_der2w0[ii]);
 printf("\n\n");
 
-printf("3. loss_der2w1:\n");
+printf("3. loss_der2b0:\n");
 for (int ii=0; ii<ntypes*num_neurons; ii++)
-    printf("%.15f, ", loss_der2w1[ii]);
+    printf("%.10f, ", loss_der2b0[ii]);
 printf("\n\n");
 
-printf("4. loss_der2type_bias:\n");
+printf("4. loss_der2w1:\n");
+for (int ii=0; ii<ntypes*num_neurons; ii++)
+    printf("%.10f, ", loss_der2w1[ii]);
+printf("\n\n");
+
+printf("5. loss_der2type_bias:\n");
 for (int ii=0; ii<ntypes; ii++)
-    printf("%.15f, ", loss_der2type_bias[ii]);
+    printf("%.10f, ", loss_der2type_bias[ii]);
 printf("\n\n");
 }
 
@@ -828,7 +845,7 @@ TEST_F(NNMtpTest, find_descriptors) {
     
     printf("1. Descriptors of atom#%d:\n", center_idx);
     for (int k=0; k<mtp_param.alpha_scalar_moments(); k++)
-        printf("%.5lf, ", descriptors[center_idx*mtp_param.alpha_scalar_moments() + k]);
+        printf("%.10f, ", descriptors[center_idx*mtp_param.alpha_scalar_moments() + k]);
     printf("\n");
 }
 
@@ -867,7 +884,7 @@ TEST_F(NNMtpTest, find_e_sites) {
 double result = 0;
 for (int ii=0; ii<inum; ii++)
     result += e_sites[ii];
-printf("1. Sum of e_sites = %.15lf\n", result);
+printf("1. Sum of e_sites = %.10f\n", result);
 }
 
 

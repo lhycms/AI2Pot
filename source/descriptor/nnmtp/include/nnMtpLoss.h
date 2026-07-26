@@ -19,6 +19,8 @@
 #include <cstring>
 #include <cmath>
 
+#include "../include/nnMtp.h"
+
 
 namespace ai2pot {
 namespace nnmtp {

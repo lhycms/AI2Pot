@@ -88,6 +88,9 @@ if (BUILD_TEST)
     if (USE_OPENMP)
         target_compile_definitions(test_nnMtp_cpu_launcher PRIVATE USE_OPENMP)
     endif()
+    
+    add_executable(test_nnMtpLoss_cpu_launcher ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nnMtpLoss_cpu_launcher.cc)
+    target_link_libraries(test_nnMtpLoss_cpu_launcher PRIVATE gtest gtest_main)
 
     gtest_discover_tests(test_nnMtpUtils)
     gtest_discover_tests(test_nnMtp)

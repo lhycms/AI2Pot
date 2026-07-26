@@ -26,6 +26,7 @@
 #include "../include/mtpParam.h"
 #include "../include/nnMtp.h"
 #include "../include/nnMtp_cpu_launcher.h"
+#include "../include/nnMtpLoss_cpu_launcher.h"
 
 
 typedef double real;
@@ -94,16 +95,24 @@ protected:
 
     // Descriptors
     real *bdescriptors;
+    real *be_sites;
+
+    // Esites derivatives
+    real *be_sites_der2coeffs;
+    real *be_sites_der2w0;
+    real *be_sites_der2b0;
+    real *be_sites_der2w1;
+    real *be_sites_der2type_bias;
 
     // q factors
     real *q_scaler;
 
     static void SetUpTestSuite() {
-        std::cout << "LinearMtpCPULauncher (TestSuite) is setting up...\n";
+        std::cout << "NNMtpCPULauncher (TestSuite) is setting up...\n";
     }
 
     static void TearDownTestSuite() {
-        std::cout << "LinearMtpCPULauncher (TestSuite) is tearing down...\n";
+        std::cout << "NNMtpCPULauncher (TestSuite) is tearing down...\n";
     }
 
     void SetUp() override {
@@ -270,9 +279,9 @@ protected:
         memset(bloss_der2type_bias, 0, sizeof(real) * ntypes);
 
         // Loss
-        e_weight = 1.0;
-        f_weight = 1.0;
-        v_weight = 0.0;
+        e_weight = 0.1;
+        f_weight = 0.2;
+        v_weight = 0.3;
         betot_dft = (real*)malloc(sizeof(real) * batch_size);
         memset(betot_dft, 0, sizeof(real)*batch_size);
         bforce_dft = (real (*)[3])malloc(sizeof(real) * batch_size * natoms_pad * 3);
@@ -283,6 +292,20 @@ protected:
         // Descriptors
         bdescriptors = (real*)malloc(sizeof(real) * batch_size * natoms_pad * mtp_param.alpha_scalar_moments());
         memset(bdescriptors, 0, sizeof(real) * batch_size * natoms_pad * mtp_param.alpha_scalar_moments());
+        be_sites = (real*)malloc(sizeof(real) * batch_size * natoms_pad);
+        memset(be_sites, 0, sizeof(real) * batch_size * natoms_pad);
+
+        // Esites derivatives
+        be_sites_der2coeffs = (real*)malloc(sizeof(real) * batch_size * natoms_pad * (ntypes*ntypes*mtp_param.nmus()*chebyshev_size));
+        memset(be_sites_der2coeffs, 0, sizeof(real) * batch_size * natoms_pad * (ntypes*ntypes*mtp_param.nmus()*chebyshev_size));
+        be_sites_der2w0 = (real*)malloc(sizeof(real) * batch_size * natoms_pad * (ntypes*num_neurons*mtp_param.alpha_scalar_moments()));
+        memset(be_sites_der2w0, 0, sizeof(real) * batch_size * natoms_pad * (ntypes*num_neurons*mtp_param.alpha_scalar_moments()));
+        be_sites_der2b0 = (real*)malloc(sizeof(real) * batch_size * natoms_pad * (ntypes*num_neurons));
+        memset(be_sites_der2b0, 0, sizeof(real) * batch_size * natoms_pad * (ntypes*num_neurons));
+        be_sites_der2w1 = (real*)malloc(sizeof(real) * batch_size * natoms_pad * (ntypes*num_neurons));
+        memset(be_sites_der2w1, 0, sizeof(real) * batch_size * natoms_pad * (ntypes*num_neurons));
+        be_sites_der2type_bias = (real*)malloc(sizeof(real) * batch_size * natoms_pad * (ntypes));
+        memset(be_sites_der2type_bias, 0, sizeof(real) * batch_size * natoms_pad * (ntypes));
 
         // 
         q_scaler = (real*)malloc(sizeof(real) * mtp_param.alpha_scalar_moments());
@@ -322,6 +345,13 @@ protected:
         free(bvirial_dft);
 
         free(bdescriptors);
+        free(be_sites);
+        free(be_sites_der2coeffs);
+        free(be_sites_der2w0);
+        free(be_sites_der2b0);
+        free(be_sites_der2w1);
+        free(be_sites_der2type_bias);
+
         free(q_scaler);
     }
 };  // class : NNMtpCPULauncher
@@ -365,11 +395,11 @@ TEST_F(NNMtpCPULauncher, find_ef_cpu_launcher) {
         rmin,
         q_scaler);
     
-printf("1.1. energy = %.15lf\n", betot[0]);
-printf("1.2. force[%d][%d] calculated by custom code = %.15lf\n", center_idx_modify, direction1_idx_modify, bforce[center_idx_modify][direction1_idx_modify]);
+printf("1.1. energy = %.10lf\n", betot[0]);
+printf("1.2. force[%d][%d] calculated by custom code = %.10lf\n", center_idx_modify, direction1_idx_modify, bforce[center_idx_modify][direction1_idx_modify]);
 printf("1.3. force=\n");
 for (int ii=0; ii<natoms_pad; ii++)
-    printf("\t\t%3d: [%.15f, %.15f, %.15f]\n", ii, bforce[ii][0], bforce[ii][1], bforce[ii][2]);
+    printf("\t\t%3d: [%.10f, %.10f, %.10f]\n", ii, bforce[ii][0], bforce[ii][1], bforce[ii][2]);
 }
 
 
@@ -413,11 +443,11 @@ TEST_F(NNMtpCPULauncher, find_efv_cpu_launcher) {
         rmin,
         q_scaler);
     
-printf("1.1. energy = %.15lf\n", betot[0]);
-printf("1.2. force[%d][%d] calculated by custom code = %.15lf\n", center_idx_modify, direction1_idx_modify, bforce[center_idx_modify][direction1_idx_modify]);
+printf("1.1. energy = %.10lf\n", betot[0]);
+printf("1.2. force[%d][%d] calculated by custom code = %.10lf\n", center_idx_modify, direction1_idx_modify, bforce[center_idx_modify][direction1_idx_modify]);
 printf("1.3. force=\n");
 for (int ii=0; ii<natoms_pad; ii++)
-    printf("\t\t%3d: [%.15f, %.15f, %.15f]\n", ii, bforce[ii][0], bforce[ii][1], bforce[ii][2]);
+    printf("\t\t%3d: [%.10f, %.10f, %.10f]\n", ii, bforce[ii][0], bforce[ii][1], bforce[ii][2]);
 }
 
 
@@ -455,6 +485,302 @@ printf("1.1. descriptors of atom#%d = \n\t[", center_idx_modify);
 for (int ii=0; ii<mtp_param.alpha_scalar_moments(); ii++)
     printf("%.8f, ", bdescriptors[center_idx_modify*mtp_param.alpha_scalar_moments() + ii]);
 printf("]\n");
+}
+
+
+TEST_F(NNMtpCPULauncher, find_e_sites_cpu_launcher) {
+    int center_idx_modify = 0;
+
+    ai2pot::nnmtp::find_e_sites_cpu_launcher<real>(
+        be_sites,
+        chebyshev_size,
+        num_neurons,
+        coeffs,
+        w0,
+        b0,
+        w1,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        mtp_param.nmus(),
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        bnumneigh,
+        bfirstneigh,
+        (real (*)[3])brcs,
+        btypes,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin,
+        q_scaler);
+}
+
+
+TEST_F(NNMtpCPULauncher, find_e_sites_backward_cpu_launcher) {
+    int center_idx_modify = 0;
+
+    ai2pot::nnmtp::find_e_sites_backward_cpu_launcher<real>(
+        be_sites_der2coeffs,
+        be_sites_der2w0,
+        be_sites_der2b0,
+        be_sites_der2w1,
+        be_sites_der2type_bias,
+        chebyshev_size,
+        num_neurons,
+        coeffs,
+        w0,
+        b0,
+        w1,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        mtp_param.nmus(),
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        bnumneigh,
+        bfirstneigh,
+        (real (*)[3])brcs,
+        btypes,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin,
+        q_scaler);
+}
+
+
+TEST_F(NNMtpCPULauncher, find_loss_backward_cpu_backward) {
+    ai2pot::nnmtp::find_efv_cpu_launcher<real>(
+        betot,
+        bforce,
+        bvirial,
+        chebyshev_size,
+        num_neurons,
+        coeffs,
+        w0,
+        b0,
+        w1,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        mtp_param.nmus(),
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        bnumneigh,
+        bfirstneigh,
+        (real (*)[3])brcs,
+        btypes,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin,
+        q_scaler);
+
+    // 
+    ai2pot::nnmtp::find_loss_backward_cpu_launcher<real>(
+        bloss_der2coeffs,
+        bloss_der2w0,
+        bloss_der2b0,
+        bloss_der2w1,
+        bloss_der2type_bias,
+        e_weight,
+        f_weight,
+        v_weight,
+        betot,
+        betot_dft,
+        bforce,
+        bforce_dft,
+        bvirial,
+        bvirial_dft,
+        chebyshev_size,
+        num_neurons,
+        coeffs,
+        w0,
+        b0,
+        w1,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        mtp_param.nmus(),
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        bnumneigh,
+        bfirstneigh,
+        (real (*)[3])brcs,
+        btypes,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin,
+        q_scaler);
+
+printf("1. bloss_der2coeffs:\n");
+for (int ii=0; ii<ntypes*ntypes*mtp_param.nmus()*chebyshev_size; ii++)
+    printf("%.10f, ", bloss_der2coeffs[ii]);
+printf("\n\n");
+
+printf("2. bloss_der2w0:\n");
+for (int ii=0; ii<ntypes*num_neurons*mtp_param.alpha_scalar_moments(); ii++)
+    printf("%.10f, ", bloss_der2w0[ii]);
+printf("\n\n");
+
+printf("3. bloss_der2b0:\n");
+for (int ii=0; ii<ntypes*num_neurons; ii++)
+    printf("%.10f, ", bloss_der2b0[ii]);
+printf("\n\n");
+
+printf("4. bloss_der2w1:\n");
+for (int ii=0; ii<ntypes*num_neurons; ii++)
+    printf("%.10f, ", bloss_der2w1[ii]);
+printf("\n\n");
+
+printf("5. bloss_der2type_bias:\n");
+for (int ii=0; ii<ntypes; ii++)
+    printf("%.10f, ", bloss_der2type_bias[ii]);
+printf("\n\n");
+}
+
+
+TEST_F(NNMtpCPULauncher, find_ef_loss_backward_cpu_backward) {
+    ai2pot::nnmtp::find_ef_cpu_launcher<real>(
+        betot,
+        bforce,
+        chebyshev_size,
+        num_neurons,
+        coeffs,
+        w0,
+        b0,
+        w1,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        mtp_param.nmus(),
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        bnumneigh,
+        bfirstneigh,
+        (real (*)[3])brcs,
+        btypes,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin,
+        q_scaler);
+
+    // 
+    ai2pot::nnmtp::find_ef_loss_backward_cpu_launcher<real>(
+        bloss_der2coeffs,
+        bloss_der2w0,
+        bloss_der2b0,
+        bloss_der2w1,
+        bloss_der2type_bias,
+        e_weight,
+        f_weight,
+        betot,
+        betot_dft,
+        bforce,
+        bforce_dft,
+        chebyshev_size,
+        num_neurons,
+        coeffs,
+        w0,
+        b0,
+        w1,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        mtp_param.nmus(),
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        bnumneigh,
+        bfirstneigh,
+        (real (*)[3])brcs,
+        btypes,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin,
+        q_scaler);
+
+printf("1. bloss_der2coeffs:\n");
+for (int ii=0; ii<ntypes*ntypes*mtp_param.nmus()*chebyshev_size; ii++)
+    printf("%.10f, ", bloss_der2coeffs[ii]);
+printf("\n\n");
+
+printf("2. bloss_der2w0:\n");
+for (int ii=0; ii<ntypes*num_neurons*mtp_param.alpha_scalar_moments(); ii++)
+    printf("%.10f, ", bloss_der2w0[ii]);
+printf("\n\n");
+
+printf("3. bloss_der2b0:\n");
+for (int ii=0; ii<ntypes*num_neurons; ii++)
+    printf("%.10f, ", bloss_der2b0[ii]);
+printf("\n\n");
+
+printf("4. bloss_der2w1:\n");
+for (int ii=0; ii<ntypes*num_neurons; ii++)
+    printf("%.10f, ", bloss_der2w1[ii]);
+printf("\n\n");
+
+printf("5. bloss_der2type_bias:\n");
+for (int ii=0; ii<ntypes; ii++)
+    printf("%.10f, ", bloss_der2type_bias[ii]);
+printf("\n\n");
 }
 
 
