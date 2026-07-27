@@ -92,6 +92,7 @@ if (TORCH_OP)
         target_link_libraries(linearMtpOp_cuda
                               PRIVATE
                               ${TORCH_LIBRARIES}
+                              efv_rmse_torch_launcher
                               linear_mtp_torch_launcher 
                               linear_mtp_loss_torch_launcher
                               zbl_torch_launcher)

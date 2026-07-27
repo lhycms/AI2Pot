@@ -30,6 +30,7 @@ if (TORCH_OP)
         target_link_libraries(nepOp_cuda
                               PRIVATE
                               ${TORCH_LIBRARIES}
+                              efv_rmse_torch_launcher
                               nep_torch_launcher
                               nep_loss_torch_launcher
                               zbl_torch_launcher)

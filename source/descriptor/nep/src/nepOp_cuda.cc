@@ -21,6 +21,7 @@
 #include "../gpu/include/nep_torch_launcher.h"
 #include "../gpu/include/nepLoss_torch_launcher.h"
 #include "../../correction/gpu/include/zbl_torch_launcher.h"
+#include "../../fitutils/gpu/include/efv_rmse_torch_launcher.h"
 
 
 namespace ai2pot {
@@ -420,14 +421,20 @@ extern template void ai2pot::nep::find_loss_backward_torch_launcher<double>(
     double rmax_angular,
     double *d_q_scaler);
 
+};  // namespace : nep
+};  // namespace : ai2pot
 
-// 2.5.1. find_num_real_atoms_in_batch
+
+namespace ai2pot {
+namespace fitutils {
+
+// 1. find_num_real_atoms_in_batch
 extern void find_num_real_atoms_in_batch_torch_launcher(
     int *d_num_real_atoms_in_batch_ptr,
     int batch_size,
     int *d_binum);
 
-// 2.5.2. find_e_se
+// 2. find_e_se
 extern template void find_e_se_torch_launcher(
     float *d_e_se_ptr,
     int batch_size,
@@ -442,7 +449,7 @@ extern template void find_e_se_torch_launcher(
     double *d_betot_ml,
     double *d_betot_dft);
 
-// 2.5.3. find_f_se
+// 3. find_f_se
 extern template void find_f_se_torch_launcher(
     float *d_f_se_ptr,
     int batch_size,
@@ -461,7 +468,7 @@ extern template void find_f_se_torch_launcher(
     double (*d_bforce_ml)[3],
     double (*d_bforce_dft)[3]);
 
-// 2.5.4. find_v_se
+// 4. find_v_se
 extern template void find_v_se_torch_launcher(
     float *d_v_se_ptr,
     int batch_size,
@@ -476,8 +483,7 @@ extern template void find_v_se_torch_launcher(
     double *d_bvirial_ml,
     double *d_bvirial_dft);
 
-
-};  // namespace : nep
+};  // namespace : fitutils
 };  // namespace : ai2pot
 
 
@@ -1166,18 +1172,18 @@ torch::autograd::variable_list NepToEFLossFunctionCUDA::forward(
             betot_dft,
             bforce,
             bforce_dft);
-        
-        find_num_real_atoms_in_batch_torch_launcher(
+
+        ai2pot::fitutils::find_num_real_atoms_in_batch_torch_launcher(
             num_real_atoms_in_batch_ptr,
             batch_size,
             binum);
-        find_e_se_torch_launcher(
+        ai2pot::fitutils::find_e_se_torch_launcher(
             e_rmse_ptr,
             batch_size,
             binum,
             betot,
             betot_dft);
-        find_f_se_torch_launcher(
+        ai2pot::fitutils::find_f_se_torch_launcher(
             f_rmse_ptr,
             batch_size,
             natoms_pad,
@@ -1272,17 +1278,17 @@ torch::autograd::variable_list NepToEFLossFunctionCUDA::forward(
             bforce,
             bforce_dft);
         
-        find_num_real_atoms_in_batch_torch_launcher(
+        ai2pot::fitutils::find_num_real_atoms_in_batch_torch_launcher(
             num_real_atoms_in_batch_ptr,
             batch_size,
             binum);
-        find_e_se_torch_launcher(
+        ai2pot::fitutils::find_e_se_torch_launcher(
             e_rmse_ptr,
             batch_size,
             binum,
             betot,
             betot_dft);
-        find_f_se_torch_launcher(
+        ai2pot::fitutils::find_f_se_torch_launcher(
             f_rmse_ptr,
             batch_size,
             natoms_pad,
@@ -1823,17 +1829,17 @@ torch::autograd::variable_list NepToLossFunctionCUDA::forward(
             bvirial,
             bvirial_dft);
         
-        find_num_real_atoms_in_batch_torch_launcher(
+        ai2pot::fitutils::find_num_real_atoms_in_batch_torch_launcher(
             num_real_atoms_in_batch_ptr,
             batch_size,
             binum);
-        find_e_se_torch_launcher(
+        ai2pot::fitutils::find_e_se_torch_launcher(
             e_rmse_ptr,
             batch_size,
             binum,
             betot,
             betot_dft);
-        find_f_se_torch_launcher(
+        ai2pot::fitutils::find_f_se_torch_launcher(
             f_rmse_ptr,
             batch_size,
             natoms_pad,
@@ -1841,7 +1847,7 @@ torch::autograd::variable_list NepToLossFunctionCUDA::forward(
             bilist,
             bforce,
             bforce_dft);
-        find_v_se_torch_launcher(
+        ai2pot::fitutils::find_v_se_torch_launcher(
             v_rmse_ptr,
             batch_size,
             binum,
@@ -1943,17 +1949,17 @@ torch::autograd::variable_list NepToLossFunctionCUDA::forward(
             bvirial,
             bvirial_dft);
         
-        find_num_real_atoms_in_batch_torch_launcher(
+        ai2pot::fitutils::find_num_real_atoms_in_batch_torch_launcher(
             num_real_atoms_in_batch_ptr,
             batch_size,
             binum);
-        find_e_se_torch_launcher(
+        ai2pot::fitutils::find_e_se_torch_launcher(
             e_rmse_ptr,
             batch_size,
             binum,
             betot,
             betot_dft);
-        find_f_se_torch_launcher(
+        ai2pot::fitutils::find_f_se_torch_launcher(
             f_rmse_ptr,
             batch_size,
             natoms_pad,
@@ -1961,7 +1967,7 @@ torch::autograd::variable_list NepToLossFunctionCUDA::forward(
             bilist,
             bforce,
             bforce_dft);
-        find_v_se_torch_launcher(
+        ai2pot::fitutils::find_v_se_torch_launcher(
             v_rmse_ptr,
             batch_size,
             binum,

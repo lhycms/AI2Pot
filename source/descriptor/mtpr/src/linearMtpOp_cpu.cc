@@ -22,6 +22,7 @@
 #include "../include/linearMtpLoss_cpu_launcher.h"
 #include "../include/linearMtpLoss.h"
 #include "../../correction/include/zbl.h"
+#include "../../fitutils/include/efv_rmse_cpu_launcher.h"
 
 
 
@@ -208,7 +209,7 @@ torch::autograd::variable_list LinearMtpToLossFunctionCPU::forward(
             bvirial,
             bvirial_dft);
         
-        find_efv_rmse_cpu_launcher<float>(
+        ai2pot::fitutils::find_efv_rmse_cpu_launcher<float>(
             *e_rmse_ptr,
             *f_rmse_ptr,
             *v_rmse_ptr,
@@ -330,7 +331,7 @@ torch::autograd::variable_list LinearMtpToLossFunctionCPU::forward(
             bvirial,
             bvirial_dft);
         
-        find_efv_rmse_cpu_launcher<double>(
+        ai2pot::fitutils::find_efv_rmse_cpu_launcher<double>(
             *e_rmse_ptr,
             *f_rmse_ptr,
             *v_rmse_ptr,
@@ -947,7 +948,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunctionCPU::forward(
             bforce,
             bforce_dft);
         
-        find_ef_rmse_cpu_launcher<float>(
+        ai2pot::fitutils::find_ef_rmse_cpu_launcher<float>(
             *e_rmse_ptr,
             *f_rmse_ptr,
             batch_size,
@@ -1059,7 +1060,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunctionCPU::forward(
             bforce,
             bforce_dft);
         
-        find_ef_rmse_cpu_launcher<double>(
+        ai2pot::fitutils::find_ef_rmse_cpu_launcher<double>(
             *e_rmse_ptr,
             *f_rmse_ptr,
             batch_size,
