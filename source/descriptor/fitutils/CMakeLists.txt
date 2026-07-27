@@ -76,6 +76,10 @@ if (BUILD_TEST)
     add_executable(test_each_type_descriptors_statistics ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_EachTypeDescriptorsStatistics.cc)
     target_link_libraries(test_each_type_descriptors_statistics PRIVATE gtest gtest_main)
 
+    add_executable(test_efv_rmse_cpu_launcher ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_efv_rmse_cpu_launcher.cc)
+    target_link_libraries(test_efv_rmse_cpu_launcher PRIVATE gtest gtest_main)
+
     gtest_discover_tests(test_target_statistics)
     gtest_discover_tests(test_all_type_descriptors_statistics)
+    gtest_discover_tests(test_efv_rmse_cpu_launcher)
 endif()

@@ -1,0 +1,151 @@
+#include <gtest/gtest.h>
+#include <stdio.h>
+#include <iostream>
+#include <stdlib.h>
+
+#include "../include/fitutils_utilities.cuh"
+#include "../include/efv_rmse.cuh"
+
+
+class EFVRmseTest : public ::testing::Test
+{
+protected:
+    double *bloss;
+    int batch_size;
+    int natoms_pad;
+    int *binum;
+    int *bilist;
+    double e_weight;
+    double f_weight;
+    double v_weight;
+    double *betot_ml;
+    double *betot_dft;
+    double (*bforce_ml)[3];
+    double (*bforce_dft)[3];
+    double *bvirial_ml;
+    double *bvirial_dft;
+
+    static void SetUpTestSuite() {
+        std::cout << "EFVRmseTest (TestSuite) is setting up...\n";
+    }
+
+    static void TearDownTestSuite() {
+        std::cout << "EFVRmseTest (TestSuite) is tearing down...\n";
+    }
+
+    void SetUp() override {
+        bloss = (double*)malloc(sizeof(double) * batch_size);
+        batch_size = 1;
+        natoms_pad = 12;
+        binum = (int*)malloc(sizeof(int) * batch_size);
+        for (int bb=0; bb<batch_size; bb++)
+            binum[bb] = 12;
+        bilist = (int*)malloc(sizeof(int) * batch_size * natoms_pad);
+        for (int bb=0; bb<batch_size; bb++)
+            for (int ii=0; ii<natoms_pad; ii++)
+                bilist[ii] = ii;
+        e_weight = 1.0;
+        f_weight = 1.0;
+        v_weight = 1.0;
+        betot_ml = (double*)malloc(sizeof(double) * batch_size);
+        betot_ml[0] = 100;
+        betot_dft = (double*)malloc(sizeof(double) * batch_size);
+        betot_dft[0] = 102;
+
+        bforce_ml = (double (*)[3])malloc(sizeof(double) * batch_size * natoms_pad * 3);
+        bforce_dft = (double (*)[3])malloc(sizeof(double) * batch_size * natoms_pad * 3);
+        for (int bb=0; bb<batch_size; bb++) {
+            for (int ii=0; ii<natoms_pad; ii++) {
+                for (int aa=0; aa<3; aa++) {
+                    bforce_ml[bb*natoms_pad + ii][aa] = 1.00;
+                    bforce_dft[bb*natoms_pad + ii][aa] = 1.02 + ii*0.01;
+                }
+            }
+        }
+
+        bvirial_ml = (double*)malloc(sizeof(double) * batch_size * 9);
+        bvirial_dft = (double*)malloc(sizeof(double) * batch_size * 9);
+        for (int b=0; b<batch_size; b++) {
+            for (int aa=0; aa<3; aa++) {
+                for (int bb=0; bb<3; bb++) {
+                    bvirial_ml[b*9 + aa*3 + bb] = 1.00;
+                    bvirial_dft[b*9 + aa*3 + bb] = 1.00 + (aa+bb)*0.01;
+                }
+            }
+        }
+    }
+
+    void TearDown() override {
+        free(bloss);
+        free(binum);
+        free(bilist);
+        free(betot_ml);
+        free(betot_dft);
+        free(bforce_ml);
+        free(bforce_dft);
+        free(bvirial_ml);
+        free(bvirial_dft);
+    }
+};  // class : EFVRmseTest
+
+
+
+TEST_F(EFVRmseTest, find_num_real_atoms_in_batch_launcher) {
+    int num_real_atoms_in_batch = 0.0;
+    ai2pot::fitutils::find_num_real_atoms_in_batch_launcher(
+        &num_real_atoms_in_batch,
+        batch_size,
+        binum);
+
+printf("1. num_real_atoms_in_batch = %d\n", num_real_atoms_in_batch);
+}
+
+
+TEST_F(EFVRmseTest, find_e_se_launcher) {
+    double e_se = 0.0;
+    ai2pot::fitutils::find_e_se_launcher<double>(
+        &e_se,
+        batch_size,
+        binum,
+        betot_ml,
+        betot_dft);
+
+printf("1. Energy RMSE = %.15f\n", std::sqrt(e_se / batch_size));
+}
+
+
+TEST_F(EFVRmseTest, find_f_se_launcher) {
+    double f_se = 0.0;
+    ai2pot::fitutils::find_f_se_launcher<double>(
+        &f_se,
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        bforce_ml,
+        bforce_dft);
+
+printf("1. Force RMSE = %.15f\n", std::sqrt(f_se/(12*3)));
+}
+
+
+TEST_F(EFVRmseTest, find_v_se_launcher) {
+    double v_se = 0.0;
+    ai2pot::fitutils::find_v_se_launcher<double>(
+        &v_se,
+        batch_size,
+        binum,
+        bvirial_ml,
+        bvirial_dft);
+
+printf("1. Virial RMSE = %.15f\n", std::sqrt(v_se/(batch_size*9)));
+}
+
+
+
+
+
+int main(int argc, char **argv) {
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
+}

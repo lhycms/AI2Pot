@@ -126,6 +126,7 @@ if (USE_CUDA AND CUDA_FOUND)
             fitutils_bind_cuda
             #
             descriptor_statistics_torch_launcher
+            efv_rmse_torch_launcher
 
             #correction
             #
