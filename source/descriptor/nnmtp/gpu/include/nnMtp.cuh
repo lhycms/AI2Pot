@@ -35,6 +35,7 @@ void find_efv_atom(
     int num_neurons,
     CoordType *coeffs,
     CoordType *w0,
+    CoordType *b0,
     CoordType *w1,
     CoordType *type_bias,
     const int alpha_moments_count,
@@ -69,6 +70,7 @@ void find_efv_kernel(
     int num_neurons,
     CoordType *coeffs,
     CoordType *w0,
+    CoordType *b0,
     CoordType *w1,
     CoordType *type_bias,
     const int alpha_moments_count,
@@ -106,6 +108,7 @@ void find_efv_launcher(
     int num_neurons,
     CoordType *h_coeffs,
     CoordType *h_w0,
+    CoordType *h_b0,
     CoordType *h_w1,
     CoordType *h_type_bias,
     const int alpha_moments_count,
@@ -141,6 +144,7 @@ void find_ef_atom(
     int num_neurons,
     CoordType *coeffs,
     CoordType *w0,
+    CoordType *b0,
     CoordType *w1,
     CoordType *type_bias,
     const int alpha_moments_count,
@@ -173,6 +177,7 @@ void find_ef_kernel(
     int num_neurons,
     CoordType *coeffs,
     CoordType *w0,
+    CoordType *b0,
     CoordType *w1,
     CoordType *type_bias,
     const int alpha_moments_count,
@@ -208,6 +213,7 @@ void find_ef_launcher(
     int num_neurons,
     CoordType *h_coeffs,
     CoordType *h_w0,
+    CoordType *h_b0,
     CoordType *h_w1,
     CoordType *h_type_bias,
     const int alpha_moments_count,
@@ -336,6 +342,7 @@ void find_efv_atom(
     int num_neurons,
     CoordType *coeffs,
     CoordType *w0,
+    CoordType *b0,
     CoordType *w1,
     CoordType *type_bias,
     const int alpha_moments_count,
@@ -585,6 +592,7 @@ void find_efv_kernel(
     int num_neurons,
     CoordType *coeffs,
     CoordType *w0,
+    CoordType *b0,
     CoordType *w1,
     CoordType *type_bias,
     const int alpha_moments_count,
@@ -640,6 +648,7 @@ void find_efv_kernel(
             num_neurons,
             coeffs,
             w0,
+            b0,
             w1,
             type_bias,
             alpha_moments_count,
@@ -680,6 +689,7 @@ void find_efv_launcher(
     int num_neurons,
     CoordType *h_coeffs,
     CoordType *h_w0,
+    CoordType *h_b0,
     CoordType *h_w1,
     CoordType *h_type_bias,
     const int alpha_moments_count,
@@ -716,6 +726,7 @@ void find_efv_launcher(
     CoordType *d_bvirial;
     CoordType *d_coeffs;
     CoordType *d_w0;
+    CoordType *d_b0;
     CoordType *d_w1;
     CoordType *d_type_bias;
     int (*d_alpha_index_basic)[4];
@@ -741,6 +752,7 @@ void find_efv_launcher(
 
     CHECK_CUDA_API( cudaMalloc((void**)&d_coeffs, sizeof(CoordType) * num_coeffs) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_w0, sizeof(CoordType) * ntypes * num_neurons * alpha_scalar_moments) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_b0, sizeof(CoordType) * ntypes * num_neurons) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_w1, sizeof(CoordType) * ntypes * num_neurons) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_type_bias, sizeof(CoordType) * ntypes) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_alpha_index_basic, sizeof(int) * alpha_index_basic_count * 4) );
@@ -760,6 +772,7 @@ void find_efv_launcher(
     //CHECK_CUDA_API( cudaMemcpy(d_virial, h_virial, sizeof(CoordType)*9, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_coeffs, h_coeffs, sizeof(CoordType)*ntypes*ntypes*nmus*chebyshev_size, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_w0, h_w0, sizeof(CoordType)*ntypes*num_neurons*alpha_scalar_moments, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_b0, h_b0, sizeof(CoordType)*ntypes*num_neurons, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_w1, h_w1, sizeof(CoordType)*ntypes*num_neurons, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_type_bias, h_type_bias, sizeof(CoordType)*ntypes, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_alpha_index_basic, h_alpha_index_basic, sizeof(int)*alpha_index_basic_count*4, cudaMemcpyHostToDevice) );
@@ -784,6 +797,7 @@ void find_efv_launcher(
         num_neurons,
         d_coeffs,
         d_w0,
+        d_b0,
         d_w1,
         d_type_bias,
         alpha_moments_count,
@@ -824,6 +838,7 @@ void find_efv_launcher(
     CHECK_CUDA_API( cudaFree(d_bvirial) );
     CHECK_CUDA_API( cudaFree(d_coeffs) );
     CHECK_CUDA_API( cudaFree(d_w0) );
+    CHECK_CUDA_API( cudaFree(d_b0) );
     CHECK_CUDA_API( cudaFree(d_w1) );
     CHECK_CUDA_API( cudaFree(d_type_bias) );
     CHECK_CUDA_API( cudaFree(d_alpha_index_basic) );
@@ -849,6 +864,7 @@ void find_ef_atom(
     int num_neurons,
     CoordType *coeffs,
     CoordType *w0,
+    CoordType *b0,
     CoordType *w1,
     CoordType *type_bias,
     const int alpha_moments_count,
@@ -1091,6 +1107,7 @@ void find_ef_kernel(
     int num_neurons,
     CoordType *coeffs,
     CoordType *w0,
+    CoordType *b0,
     CoordType *w1,
     CoordType *type_bias,
     const int alpha_moments_count,
@@ -1140,6 +1157,7 @@ void find_ef_kernel(
             num_neurons,
             coeffs,
             w0,
+            b0,
             w1,
             type_bias,
             alpha_moments_count,
@@ -1175,6 +1193,7 @@ void find_ef_launcher(
     int num_neurons,
     CoordType *h_coeffs,
     CoordType *h_w0,
+    CoordType *h_b0,
     CoordType *h_w1,
     CoordType *h_type_bias,
     const int alpha_moments_count,
@@ -1210,6 +1229,7 @@ void find_ef_launcher(
     CoordType (*d_bforce)[3];
     CoordType *d_coeffs;
     CoordType *d_w0;
+    CoordType *d_b0;
     CoordType *d_w1;
     CoordType *d_type_bias;
     int (*d_alpha_index_basic)[4];
@@ -1233,6 +1253,7 @@ void find_ef_launcher(
 
     CHECK_CUDA_API( cudaMalloc((void**)&d_coeffs, sizeof(CoordType) * num_coeffs) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_w0, sizeof(CoordType) * ntypes * num_neurons * alpha_scalar_moments) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_b0, sizeof(CoordType) * ntypes * num_neurons) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_w1, sizeof(CoordType) * ntypes * num_neurons) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_type_bias, sizeof(CoordType) * ntypes) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_alpha_index_basic, sizeof(int) * alpha_index_basic_count * 4) );
@@ -1252,6 +1273,7 @@ void find_ef_launcher(
     //CHECK_CUDA_API( cudaMemcpy(d_virial, h_virial, sizeof(CoordType)*9, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_coeffs, h_coeffs, sizeof(CoordType)*ntypes*ntypes*nmus*chebyshev_size, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_w0, h_w0, sizeof(CoordType)*ntypes*num_neurons*alpha_scalar_moments, cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_b0, h_b0, sizeof(CoordType)*ntypes*num_neurons, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_w1, h_w1, sizeof(CoordType)*ntypes*num_neurons, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_type_bias, h_type_bias, sizeof(CoordType)*ntypes, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_alpha_index_basic, h_alpha_index_basic, sizeof(int)*alpha_index_basic_count*4, cudaMemcpyHostToDevice) );
@@ -1275,6 +1297,7 @@ void find_ef_launcher(
         num_neurons,
         d_coeffs,
         d_w0,
+        d_b0,
         d_w1,
         d_type_bias,
         alpha_moments_count,
@@ -1313,6 +1336,7 @@ void find_ef_launcher(
     CHECK_CUDA_API( cudaFree(d_bforce) );
     CHECK_CUDA_API( cudaFree(d_coeffs) );
     CHECK_CUDA_API( cudaFree(d_w0) );
+    CHECK_CUDA_API( cudaFree(d_b0) );
     CHECK_CUDA_API( cudaFree(d_w1) );
     CHECK_CUDA_API( cudaFree(d_type_bias) );
     CHECK_CUDA_API( cudaFree(d_alpha_index_basic) );

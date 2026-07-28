@@ -39,6 +39,7 @@ protected:
 
     real *coeffs;
     real *w0;
+    real *b0;
     real *w1;
     real *type_bias;
     real rmax;
@@ -77,6 +78,7 @@ protected:
 
     real *bloss_der2coeffs;
     real *bloss_der2w0;
+    real *bloss_der2b0;
     real *bloss_der2w1;
     real *bloss_der2type_bias;
 
@@ -123,12 +125,15 @@ protected:
 
         coeffs = (real*)malloc(sizeof(real) * ntypes * ntypes * mtp_param.nmus() * chebyshev_size);
         w0 = (real*)malloc(sizeof(real) * ntypes * num_neurons * mtp_param.alpha_scalar_moments());
+        b0 = (real*)malloc(sizeof(real) * ntypes * num_neurons);
         w1 = (real*)malloc(sizeof(real) * ntypes * num_neurons);
         type_bias = (real*)malloc(sizeof(real) * ntypes);
         for (int ii=0; ii<ntypes*ntypes*mtp_param.nmus()*chebyshev_size; ii++)
             coeffs[ii] = 0.01 + 0.001 * ii;
         for (int ii=0; ii<ntypes * num_neurons * mtp_param.alpha_scalar_moments(); ii++)
             w0[ii] = 0.1 + 0.001 * ii;
+        for (int ii=0; ii<ntypes * num_neurons; ii++)
+            b0[ii] = 0.1 + 0.001 * ii;
         for (int ii=0; ii<ntypes * num_neurons; ii++)
             w1[ii] = 0.1 + 0.001 * ii;
         type_bias[0] = -0.1;
@@ -250,6 +255,8 @@ protected:
         memset(bloss_der2coeffs, 0, sizeof(real)*batch_size*ntypes*ntypes*mtp_param.nmus()*chebyshev_size);
         bloss_der2w0 = (real*)malloc(sizeof(real)*batch_size*ntypes*num_neurons*mtp_param.alpha_scalar_moments());
         memset(bloss_der2w0, 0, sizeof(real)*batch_size*ntypes*num_neurons*mtp_param.alpha_scalar_moments());
+        bloss_der2b0 = (real*)malloc(sizeof(real)*batch_size*ntypes*num_neurons);
+        memset(bloss_der2b0, 0, sizeof(real)*batch_size*ntypes*num_neurons);
         bloss_der2w1 = (real*)malloc(sizeof(real)*batch_size*ntypes*num_neurons);
         memset(bloss_der2w1, 0, sizeof(real)*batch_size*ntypes*num_neurons);
         bloss_der2type_bias = (real*)malloc(sizeof(real)*batch_size*ntypes);
@@ -284,6 +291,7 @@ protected:
 
         free(coeffs);
         free(w0);
+        free(b0);
         free(w1);
         free(type_bias);
 
@@ -320,6 +328,7 @@ TEST_F(NNMtpTest, find_efv_accuracy) {
         num_neurons,
         coeffs,
         w0,
+        b0,
         w1,
         type_bias,
         mtp_param.alpha_moments_count(),
@@ -374,6 +383,7 @@ TEST_F(NNMtpTest, find_efv_accuracy) {
         num_neurons,
         coeffs,
         w0,
+        b0,
         w1,
         type_bias,
         mtp_param.alpha_moments_count(),
@@ -401,15 +411,15 @@ TEST_F(NNMtpTest, find_efv_accuracy) {
         q_scaler);
 
 
-printf("1.1. energy = %.15lf\n", betot[0]);
-printf("1.1. bforce[%d][%d][%d] calculated by custom code = %.15lf\n", 0, center_idx_modify, direction_idx_modify, bforce[0*(natoms_pad+nghost) + center_idx_modify][direction_idx_modify]);
-printf("1.2. energy = %.15lf\n", betot_[0]);
-printf("1.2. bforce[%d][%d][%d] calculated by finite difference method = %.15lf\n", 0, center_idx_modify, direction_idx_modify, -(betot_[0] - betot[0]) / delta);
+printf("1.1. energy = %.10f\n", betot[0]);
+printf("1.1. bforce[%d][%d][%d] calculated by custom code = %.10f\n", 0, center_idx_modify, direction_idx_modify, bforce[0*(natoms_pad+nghost) + center_idx_modify][direction_idx_modify]);
+printf("1.2. energy = %.10f\n", betot_[0]);
+printf("1.2. bforce[%d][%d][%d] calculated by finite difference method = %.10f\n", 0, center_idx_modify, direction_idx_modify, -(betot_[0] - betot[0]) / delta);
 printf("\n\nfind_efv_launcher:\n");
-printf("\t2.1. Energy = %.15f\n", betot[0]);
+printf("\t2.1. Energy = %.10f\n", betot[0]);
 printf("\t2.2. Force =\n");
 for (int ii=0; ii<natoms_pad; ii++)
-    printf("\t\t%3d: [%.15f, %.15f, %.15f]\n", ii, bforce[0*(natoms_pad+nghost) + ii][0], bforce[0*(natoms_pad+nghost) + ii][1], bforce[0*(natoms_pad+nghost) + ii][2]);
+    printf("\t\t%3d: [%.10f, %.10f, %.10f]\n", ii, bforce[0*(natoms_pad+nghost) + ii][0], bforce[0*(natoms_pad+nghost) + ii][1], bforce[0*(natoms_pad+nghost) + ii][2]);
 }
 
 
@@ -426,6 +436,7 @@ TEST_F(NNMtpTest, find_ef_accuracy) {
         num_neurons,
         coeffs,
         w0,
+        b0,
         w1,
         type_bias,
         mtp_param.alpha_moments_count(),
@@ -478,6 +489,7 @@ TEST_F(NNMtpTest, find_ef_accuracy) {
         num_neurons,
         coeffs,
         w0,
+        b0,
         w1,
         type_bias,
         mtp_param.alpha_moments_count(),
@@ -505,24 +517,24 @@ TEST_F(NNMtpTest, find_ef_accuracy) {
         q_scaler);
 
 
-printf("1.1. energy = %.15lf\n", betot[0]);
-printf("1.1. bforce[%d][%d][%d] calculated by custom code = %.15lf\n", 0, center_idx_modify, direction_idx_modify, bforce[0*(natoms_pad+nghost) + center_idx_modify][direction_idx_modify]);
-printf("1.2. energy = %.15lf\n", betot_[0]);
-printf("1.2. bforce[%d][%d][%d] calculated by finite difference method = %.15lf\n", 0, center_idx_modify, direction_idx_modify, -(betot_[0] - betot[0]) / delta);
+printf("1.1. energy = %.10f\n", betot[0]);
+printf("1.1. bforce[%d][%d][%d] calculated by custom code = %.10f\n", 0, center_idx_modify, direction_idx_modify, bforce[0*(natoms_pad+nghost) + center_idx_modify][direction_idx_modify]);
+printf("1.2. energy = %.10f\n", betot_[0]);
+printf("1.2. bforce[%d][%d][%d] calculated by finite difference method = %.10f\n", 0, center_idx_modify, direction_idx_modify, -(betot_[0] - betot[0]) / delta);
 printf("\n\nfind_efv_launcher:\n");
-printf("\t2.1. Energy = %.15f\n", betot[0]);
+printf("\t2.1. Energy = %.10f\n", betot[0]);
 printf("\t2.2. Force =\n");
 for (int ii=0; ii<natoms_pad; ii++)
-    printf("\t\t%3d: [%.15f, %.15f, %.15f]\n", ii, bforce[0*(natoms_pad+nghost) + ii][0], bforce[0*(natoms_pad+nghost) + ii][1], bforce[0*(natoms_pad+nghost) + ii][2]);
+    printf("\t\t%3d: [%.10f, %.10f, %.10f]\n", ii, bforce[0*(natoms_pad+nghost) + ii][0], bforce[0*(natoms_pad+nghost) + ii][1], bforce[0*(natoms_pad+nghost) + ii][2]);
 }
 
 
 
 TEST_F(NNMtpTest, find_loss_backward_launcer)
 {
-    real e_weight = 1.0;
-    real f_weight = 1.0;
-    real v_weight = 0.0;
+    real e_weight = 0.1;
+    real f_weight = 0.2;
+    real v_weight = 0.3;
     
     ai2pot::nnmtp::find_efv_launcher<real>(
         betot,
@@ -532,6 +544,7 @@ TEST_F(NNMtpTest, find_loss_backward_launcer)
         num_neurons,
         coeffs,
         w0,
+        b0,
         w1,
         type_bias,
         mtp_param.alpha_moments_count(),
@@ -576,6 +589,7 @@ TEST_F(NNMtpTest, find_loss_backward_launcer)
         num_neurons,
         coeffs,
         w0,
+        b0,
         w1,
         type_bias,
         mtp_param.alpha_moments_count(),
@@ -604,22 +618,27 @@ TEST_F(NNMtpTest, find_loss_backward_launcer)
 
 printf("1. loss_der2coeffs:\n");
 for (int ii=0; ii<ntypes*ntypes*mtp_param.nmus()*chebyshev_size; ii++)
-    printf("%.15f, ", bloss_der2coeffs[ii]);
+    printf("%.10f, ", bloss_der2coeffs[ii]);
 printf("\n\n");
 
 printf("2. loss_der2w0:\n");
 for (int ii=0; ii<ntypes*num_neurons*mtp_param.alpha_scalar_moments(); ii++)
-    printf("%.15f, ", bloss_der2w0[ii]);
+    printf("%.10f, ", bloss_der2w0[ii]);
 printf("\n\n");
 
-printf("3. loss_der2w1:\n");
+printf("3. loss_der2b0:\n");
 for (int ii=0; ii<ntypes*num_neurons; ii++)
-    printf("%.15f, ", bloss_der2w1[ii]);
+    printf("%.10f, ", bloss_der2b0[ii]);
 printf("\n\n");
 
-printf("4. loss_der2type_bias:\n");
+printf("4. loss_der2w1:\n");
+for (int ii=0; ii<ntypes*num_neurons; ii++)
+    printf("%.10f, ", bloss_der2w1[ii]);
+printf("\n\n");
+
+printf("5. loss_der2type_bias:\n");
 for (int ii=0; ii<ntypes; ii++)
-    printf("%.15f, ", bloss_der2type_bias[ii]);
+    printf("%.10f, ", bloss_der2type_bias[ii]);
 printf("\n\n");
 }
 
@@ -627,8 +646,8 @@ printf("\n\n");
 
 TEST_F(NNMtpTest, find_ef_loss_backward_launcer)
 {
-    real e_weight = 1.0;
-    real f_weight = 1.0;
+    real e_weight = 0.1;
+    real f_weight = 0.2;
     
     ai2pot::nnmtp::find_ef_launcher<real>(
         betot,
@@ -637,6 +656,7 @@ TEST_F(NNMtpTest, find_ef_loss_backward_launcer)
         num_neurons,
         coeffs,
         w0,
+        b0,
         w1,
         type_bias,
         mtp_param.alpha_moments_count(),
@@ -678,6 +698,7 @@ TEST_F(NNMtpTest, find_ef_loss_backward_launcer)
         num_neurons,
         coeffs,
         w0,
+        b0,
         w1,
         type_bias,
         mtp_param.alpha_moments_count(),
@@ -706,26 +727,31 @@ TEST_F(NNMtpTest, find_ef_loss_backward_launcer)
 
 printf("1. loss_der2coeffs:\n");
 for (int ii=0; ii<ntypes*ntypes*mtp_param.nmus()*chebyshev_size; ii++)
-    printf("%.15f, ", bloss_der2coeffs[ii]);
+    printf("%.10f, ", bloss_der2coeffs[ii]);
 printf("\n\n");
 
 printf("2. loss_der2w0:\n");
 for (int ii=0; ii<ntypes*num_neurons*mtp_param.alpha_scalar_moments(); ii++)
-    printf("%.15f, ", bloss_der2w0[ii]);
+    printf("%.10f, ", bloss_der2w0[ii]);
 printf("\n\n");
 
-printf("3. loss_der2w1:\n");
+printf("3. loss_der2b0:\n");
 for (int ii=0; ii<ntypes*num_neurons; ii++)
-    printf("%.15f, ", bloss_der2w1[ii]);
+    printf("%.10f, ", bloss_der2b0[ii]);
 printf("\n\n");
 
-printf("4. loss_der2type_bias:\n");
+printf("4. loss_der2w1:\n");
+for (int ii=0; ii<ntypes*num_neurons; ii++)
+    printf("%.10f, ", bloss_der2w1[ii]);
+printf("\n\n");
+
+printf("5. loss_der2type_bias:\n");
 for (int ii=0; ii<ntypes; ii++)
-    printf("%.15f, ", bloss_der2type_bias[ii]);
+    printf("%.10f, ", bloss_der2type_bias[ii]);
 printf("\n\n");
 }
 
-/*
+
 TEST_F(NNMtpTest, find_descriptors_launcher) {
     int center_idx = 0;
     ai2pot::nnmtp::find_descriptors_launcher(
@@ -755,12 +781,12 @@ TEST_F(NNMtpTest, find_descriptors_launcher) {
         rmax,
         rmin);
     
-    printf("1. Descriptors of atom#%d:\n", center_idx);
-    for (int k=0; k<mtp_param.alpha_scalar_moments(); k++)
-        printf("%.5lf, ", bdescriptors[0*natoms_pad*mtp_param.alpha_scalar_moments() + center_idx*mtp_param.alpha_scalar_moments() + k]);
-    printf("\n");
+printf("1. Descriptors of atom#%d:\n", center_idx);
+for (int k=0; k<mtp_param.alpha_scalar_moments(); k++)
+    printf("%.10f, ", bdescriptors[center_idx*natoms_pad*mtp_param.alpha_scalar_moments() + center_idx*mtp_param.alpha_scalar_moments() + k]);
+printf("\n");
 }
-*/
+
 
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
