@@ -30,7 +30,6 @@ def build_cart_basis(direction_tensor: torch.Tensor):
     r2 = x*x + y*y + z*z
 
     l0_basis_tensor: torch.Tensor = torch.ones_like(x).unsqueeze(-1)
-    l1_basis_tensor: torch.Tensor = torch.stack([x, y, z], dim=-1)
     l2_basis_tensor = torch.stack([
         sqrt_three * x * y,
         sqrt_three * y * z,
@@ -40,6 +39,6 @@ def build_cart_basis(direction_tensor: torch.Tensor):
     ], dim=-1)
 
     return torch.cat(
-        [l0_basis_tensor, l1_basis_tensor, l2_basis_tensor],
+        [l0_basis_tensor, direction_tensor, l2_basis_tensor],
         dim=-1
     )
