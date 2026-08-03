@@ -8,16 +8,16 @@ from ai2pot.utils.usepot import MlffInput
 
 from ai2pot.utils.gnn_converter import (
     GraphData,
-    convert_nblist_to_graph)
+    GraphDataConverter)
 
 
 TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")
 MoS2_POSCAR_PATH = os.path.join(TEST_FILES_DIR, "POSCARs", "MoS2", "POSCAR_perturbed0.2")
 
 
-class GnnConverterTest(unittest.TestCase):
+class GraphDataConverterTest(unittest.TestCase):
     def setUp(self):
-        print("GnnConverterTest (TestCase) is setting up...\n")
+        print("GraphDataConverterTest (TestCase) is setting up...\n")
         self.type_map: List[int] = [42, 16]
         self.rcut: float = 5.0
         self.umax_num_neigh_atoms: int = 200
@@ -37,13 +37,13 @@ class GnnConverterTest(unittest.TestCase):
     
     
     def tearDown(self):
-        print("GnnConverterTest (TestCase) is tearing down...\n")
+        print("GraphDataConverterTest (TestCase) is tearing down...\n")
     
     
     def test_convert_nblist_to_graph(self):
         binum_tensor, bilist_tensor, bnumneigh_tensor, bfirstneigh_tensor, brcs_tensor, btypes_tensor, bnghost_tensor = self.mlff_input.analyse_pymatgen(structure=self.structure)
         
-        graph_data: GraphData = convert_nblist_to_graph(
+        graph_data: GraphData = GraphDataConverter.convert_nblist_to_graph(
             binum_tensor=binum_tensor,
             bilist_tensor=bilist_tensor,
             bnumneigh_tensor=bnumneigh_tensor,
