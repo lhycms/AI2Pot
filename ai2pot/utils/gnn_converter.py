@@ -91,8 +91,8 @@ def convert_nblist_to_graph(binum_tensor: torch.Tensor,
     
     # 4. global_edge_index
     base: torch.Tensor = _get_frame_offsets(binum_tensor=binum_tensor)
-    global_src_tensor: torch.Tensor = src_tensor + edge_frame_idx_tensor[edge_frame_idx_tensor]
-    global_dst_tensor: torch.Tensor = dst_tensor + edge_frame_idx_tensor[edge_frame_idx_tensor]
+    global_src_tensor: torch.Tensor = src_tensor + base[edge_frame_idx_tensor]
+    global_dst_tensor: torch.Tensor = dst_tensor + base[edge_frame_idx_tensor]
     
     # 5. node_frame_idx_tensor
     all_center_mask: torch.Tensor = torch.arange(btypes_tensor.shape[1], device=device) < binum_tensor[:, None]
@@ -105,7 +105,7 @@ def convert_nblist_to_graph(binum_tensor: torch.Tensor,
 
     return GraphData(
         node_types_tensor=node_types_tensor,
-        edge_index_tensor=torch.stack([src_tensor, dst_tensor], dim=0),
+        edge_index_tensor=torch.stack([global_src_tensor, global_dst_tensor], dim=0),
         edge_vec_tensor=edge_vec_tensor,
         node_frame_idx_tensor=node_frame_idx_tensor,
         binum_tensor=binum_tensor
