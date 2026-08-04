@@ -27,6 +27,7 @@ class GraphData(object):
     edge_vec_tensor: torch.Tensor
     node_frame_idx_tensor: torch.Tensor
     binum_tensor: torch.Tensor
+    bnghost_tensor: torch.Tensor
     
     @property
     def num_nodes(self):
@@ -126,11 +127,11 @@ class GraphDataConverter(object):
     
     @staticmethod
     def _get_node_features(binum_tensor: torch.Tensor,
-                             btypes_tensor: torch.Tensor,
-                             bnghost_tensor: torch.Tensor,
-                             batch_size: int):
+                           btypes_tensor: torch.Tensor,
+                           bnghost_tensor: torch.Tensor,
+                           batch_size: int):
         device: torch._C.device = binum_tensor.device
-        node_mask = torch.arange(btypes_tensor.shape[1], device=device) < (binum_tensor + bnghost_tensor)[:, None]
+        node_mask = torch.arange(btypes_tensor.shape[1], device=device)[None, :] < (binum_tensor + bnghost_tensor)[:, None]
         node_types_tensor = btypes_tensor[node_mask]
         node_frame_idx_tensor = torch.repeat_interleave(
             input=torch.arange(batch_size, device=device),
@@ -201,6 +202,7 @@ class GraphDataConverter(object):
             edge_index_tensor=torch.stack([global_src_tensor, global_dst_tensor], dim=0),
             edge_vec_tensor=edge_vec_tensor,
             node_frame_idx_tensor=node_frame_idx_tensor,
-            binum_tensor=binum_tensor
+            binum_tensor=binum_tensor,
+            bnghost_tensor=bnghost_tensor
         )
         
