@@ -113,117 +113,118 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/gst)
 
 
 # 7. Copy
-if (USE_CUDA AND CUDA_FOUND)
-    install(
-        TARGETS
-            # nblist
-            nblist
-
-            # fitutils
-            target_statistics_op_cpu
-            descriptor_statistics_op_cuda
-            fitutils_bind_cpu
-            fitutils_bind_cuda
-            #
-            descriptor_statistics_torch_launcher
-            efv_rmse_torch_launcher
-
-            #correction
-            #
-            zbl_torch_launcher
-
-            # deepmd
-            se4pw_op
-            envMatrixOp
-            envMatrixOp_bind
-
-            # mtpr
-            mtpParam
-            schmidt_orth_op_cpu
-            schmidt_orth_op_cuda
-            linear_mtp_gram_and_cross_op_cpu
-            linear_mtp_gram_and_cross_op_cuda
-            mtpParamOp
-            linearMtpOp_cpu
-            linearMtpOp_cuda
-            mtpr_bind_cpu
-            mtpr_bind_cuda
-            #
-            linear_mtp_torch_launcher
-            schmidt_orth_torch_launcher
-            linear_mtp_loss_torch_launcher
-            linear_mtp_gram_and_cross_torch_launcher
-
-            # nnmtp
-            mtpParam_nnMtp
-            mtpParamOp_nnMtp
-            nnMtpOp
-            nnmtp_bind
-            #
-            nnmtp_torch_launcher
-            nnmtp_loss_torch_launcher
-
-            # nep
-            nepOp_cpu
-            nepOp_cuda
-            nep_bind_cpu
-            nep_bind_cuda
-            #
-            nep_torch_launcher
-            nep_loss_torch_launcher
-
-
-            # gst
-            gst
-        LIBRARY DESTINATION ai2pot/_lib
-    )
-else()
-    install(
-        TARGETS
-            # nblist
-            nblist
-
-            # fitutils
-            target_statistics_op_cpu
-            fitutils_bind_cpu
-            #
-
-            #correction
-            #
-            
-            # deepmd
-            se4pw_op
-            envMatrixOp
-            envMatrixOp_bind
-
-            # mtpr
-            mtpParam
-            schmidt_orth_op_cpu
-            linear_mtp_gram_and_cross_op_cpu
-            mtpParamOp
-            linearMtpOp_cpu
-            mtpr_bind_cpu
-            #
-
-            # nnmtp
-            mtpParam_nnMtp
-            mtpParamOp_nnMtp
-            nnMtpOp
-            nnmtp_bind
-            #
-            nnmtp_torch_launcher
-            nnmtp_loss_torch_launcher
-
-            # nep
-            nepOp_cpu
-            nep_bind_cpu
-            #
-
-            # gst
-            gst
-        LIBRARY DESTINATION ai2pot/_lib
-    )
-endif()
-
 install(DIRECTORY "${CMAKE_SOURCE_DIR}/descriptor/mtpr/MTP_templates"
         DESTINATION ai2pot/_data/)
+
+install(
+    TARGETS
+        # nblist
+        nblist
+        
+        # gst
+        gst
+    
+    LIBRARY DESTINATION ai2pot/_lib
+)
+
+if (TORCH_OP)
+    if (USE_CUDA AND CUDA_FOUND)
+        install(
+            TARGETS
+                # fitutils
+                target_statistics_op_cpu
+                descriptor_statistics_op_cuda
+                fitutils_bind_cpu
+                fitutils_bind_cuda
+                #
+                descriptor_statistics_torch_launcher
+                efv_rmse_torch_launcher
+
+                #correction
+                #
+                zbl_torch_launcher
+
+                # deepmd
+                se4pw_op
+                envMatrixOp
+                envMatrixOp_bind
+
+                # mtpr
+                mtpParam
+                schmidt_orth_op_cpu
+                schmidt_orth_op_cuda
+                linear_mtp_gram_and_cross_op_cpu
+                linear_mtp_gram_and_cross_op_cuda
+                mtpParamOp
+                linearMtpOp_cpu
+                linearMtpOp_cuda
+                mtpr_bind_cpu
+                mtpr_bind_cuda
+                #
+                linear_mtp_torch_launcher
+                schmidt_orth_torch_launcher
+                linear_mtp_loss_torch_launcher
+                linear_mtp_gram_and_cross_torch_launcher
+
+                # nnmtp
+                mtpParam_nnMtp
+                mtpParamOp_nnMtp
+                nnMtpOp
+                nnmtp_bind
+                #
+                nnmtp_torch_launcher
+                nnmtp_loss_torch_launcher
+
+                # nep
+                nepOp_cpu
+                nepOp_cuda
+                nep_bind_cpu
+                nep_bind_cuda
+                #
+                nep_torch_launcher
+                nep_loss_torch_launcher
+            LIBRARY DESTINATION ai2pot/_lib
+        )
+    else()
+        install(
+            TARGETS
+                # fitutils
+                target_statistics_op_cpu
+                fitutils_bind_cpu
+                #
+
+                #correction
+                #
+                
+                # deepmd
+                se4pw_op
+                envMatrixOp
+                envMatrixOp_bind
+
+                # mtpr
+                mtpParam
+                schmidt_orth_op_cpu
+                linear_mtp_gram_and_cross_op_cpu
+                mtpParamOp
+                linearMtpOp_cpu
+                mtpr_bind_cpu
+                #
+
+                # nnmtp
+                mtpParam_nnMtp
+                mtpParamOp_nnMtp
+                nnMtpOp
+                nnmtp_bind
+                #
+                nnmtp_torch_launcher
+                nnmtp_loss_torch_launcher
+
+                # nep
+                nepOp_cpu
+                nep_bind_cpu
+                #
+
+            LIBRARY DESTINATION ai2pot/_lib
+        )
+    endif()
+endif()
