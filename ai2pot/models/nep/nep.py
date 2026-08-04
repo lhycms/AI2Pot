@@ -45,9 +45,19 @@ class Nep(nn.Module):
                  zbl_cks_list: Optional[List[float]] = None,
                  zbl_dks_list: Optional[List[float]] = None):
         super(Nep, self).__init__()
-        assert(n_radial_basis <= 20)
-        assert(n_angular_basis <= 12)
-        assert(l_max <= 4)
+        
+        if (n_radial_basis > 20):
+            raise ValueError(
+                f"n_radial_basis must be <= 20, but got {n_radial_basis}"
+            )
+        if (n_angular_basis > 12):
+            raise ValueError(
+                f"n_angular_basis must be <= 12, but got {n_angular_basis}"
+            )
+        if (l_max > 4):
+            raise ValueError(
+                f"l_max must be <= 4, but got {l_max}"
+            )
 
         self.register_buffer(
             name="type_map_tensor",

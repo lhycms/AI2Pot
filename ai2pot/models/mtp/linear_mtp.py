@@ -44,6 +44,12 @@ class LinearMtp(nn.Module):
                  zbl_cks_list: Optional[List[float]] = None,
                  zbl_dks_list: Optional[List[float]] = None):
         super(LinearMtp, self).__init__()
+        
+        if (mtp_level > 20):
+            raise ValueError(
+                f"mtp_level must be <= 20, but got {mtp_level}"
+            )
+        
         self.scaling: float = 1.0
         self.mtp_level: int = mtp_level
         self.register_buffer(
