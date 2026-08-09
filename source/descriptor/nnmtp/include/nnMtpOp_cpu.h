@@ -35,6 +35,7 @@ public:
         int chebyshev_size,
         const at::Tensor& coeffs_tensor,
         const at::Tensor& w0_tensor,
+        const at::Tensor& b0_tensor,
         const at::Tensor& w1_tensor,
         const at::Tensor& type_bias_tensor,
         int alpha_moments_count,
@@ -52,15 +53,303 @@ public:
         int nghost,
         double rmax,
         double rmin,
-        const at::Tensor& q_shifter_tensor,
         const at::Tensor& q_scaler_tensor,
         double zbl_rmax,
         double zbl_rmin,
         const at::Tensor& zbl_cks_tensor,
         const at::Tensor& zbl_dks_tensor);
     
+    static torch::autograd::variable_list backward(
+        torch::autograd::AutogradContext *ctx,
+        torch::autograd::variable_list bgrad_outputs_tensor);
+};  // class : NNMtpToEFLossFunctionCPU
+
+
+class NNMtpToLossFunctionCPU : public torch::autograd::Function<NNMtpToLossFunctionCPU>
+{
+public:
+    static torch::autograd::variable_list forward(
+        torch::autograd::AutogradContext *ctx,
+        double e_weight,
+        double f_weight,
+        double v_weight,
+        const at::Tensor& betot_dft_tensor,
+        const at::Tensor& bforce_dft_tensor,
+        const at::Tensor& bvirial_dft_tensor,
+        int chebyshev_size,
+        const at::Tensor& coeffs_tensor,
+        const at::Tensor& w0_tensor,
+        const at::Tensor& b0_tensor,
+        const at::Tensor& w1_tensor,
+        const at::Tensor& type_bias_tensor,
+        int alpha_moments_count,
+        const at::Tensor& alpha_index_basic_tensor,
+        const at::Tensor& alpha_index_times_tensor,
+        const at::Tensor& alpha_moment_mapping_tensor,
+        int nmus,
+        const at::Tensor& binum_tensor,
+        const at::Tensor& bilist_tensor,
+        const at::Tensor& bnumneigh_tensor,
+        const at::Tensor& bfirstneigh_tensor,
+        const at::Tensor& brcs_tensor,
+        const at::Tensor& btypes_tensor,
+        const at::Tensor& type_map_tensor,
+        int nghost,
+        double rmax,
+        double rmin,
+        const at::Tensor& q_scaler_tensor,
+        double zbl_rmax,
+        double zbl_rmin,
+        const at::Tensor& zbl_cks_tensor,
+        const at::Tensor& zbl_dks_tensor);
     
-};
+    static torch::autograd::variable_list backward(
+        torch::autograd::AutogradContext *ctx,
+        torch::autograd::variable_list bgrad_outputs_tensor);
+};  // class : NNMtpToLossFunctionCPU
+
+
+class NNMtpToEFFunctionCPU : public torch::autograd::Function<NNMtpToEFFunctionCPU>
+{
+public:
+    static torch::autograd::variable_list forward(
+        torch::autograd::AutogradContext *ctx,
+        int chebyshev_size,
+        const at::Tensor& coeffs_tensor,
+        const at::Tensor& w0_tensor,
+        const at::Tensor& b0_tensor,
+        const at::Tensor& w1_tensor,
+        const at::Tensor& type_bias_tensor,
+        int alpha_moments_count,
+        const at::Tensor& alpha_index_basic_tensor,
+        const at::Tensor& alpha_index_times_tensor,
+        const at::Tensor& alpha_moment_mapping_tensor,
+        int nmus,
+        const at::Tensor& binum_tensor,
+        const at::Tensor& bilist_tensor,
+        const at::Tensor& bnumneigh_tensor,
+        const at::Tensor& bfirstneigh_tensor,
+        const at::Tensor& brcs_tensor,
+        const at::Tensor& btypes_tensor,
+        const at::Tensor& type_map_tensor,
+        int nghost,
+        double rmax,
+        double rmin,
+        const at::Tensor& q_scaler_tensor,
+        double zbl_rmax,
+        double zbl_rmin,
+        const at::Tensor& zbl_cks_tensor,
+        const at::Tensor& zbl_dks_tensor);
+    
+    static torch::autograd::variable_list backward(
+        torch::autograd::AutogradContext *ctx,
+        torch::autograd::variable_list bgrad_outputs_tensor);
+};  // class : NNMtpToEFFunctionCPU
+
+
+class NNMtpToEFVFunctionCPU : public torch::autograd::Function<NNMtpToEFVFunctionCPU>
+{
+public:
+    static torch::autograd::variable_list forward(
+        torch::autograd::AutogradContext *ctx,
+        int chebyshev_size,
+        const at::Tensor& coeffs_tensor,
+        const at::Tensor& w0_tensor,
+        const at::Tensor& b0_tensor,
+        const at::Tensor& w1_tensor,
+        const at::Tensor& type_bias_tensor,
+        int alpha_moments_count,
+        const at::Tensor& alpha_index_basic_tensor,
+        const at::Tensor& alpha_index_times_tensor,
+        const at::Tensor& alpha_moment_mapping_tensor,
+        int nmus,
+        const at::Tensor& binum_tensor,
+        const at::Tensor& bilist_tensor,
+        const at::Tensor& bnumneigh_tensor,
+        const at::Tensor& bfirstneigh_tensor,
+        const at::Tensor& brcs_tensor,
+        const at::Tensor& btypes_tensor,
+        const at::Tensor& type_map_tensor,
+        int nghost,
+        double rmax,
+        double rmin,
+        const at::Tensor& q_scaler_tensor,
+        double zbl_rmax,
+        double zbl_rmin,
+        const at::Tensor& zbl_cks_tensor,
+        const at::Tensor& zbl_dks_tensor);
+};  // class : NNMtpToEFVFunctionCPU
+
+
+class NNMtpToDescriptorsFunctionCPU : public torch::autograd::Function<NNMtpToDescriptorsFunctionCPU>
+{
+public:
+    static torch::autograd::variable_list forward(
+        torch::autograd::AutogradContext *ctx,
+        int chebyshev_size,
+        const at::Tensor& coeffs_tensor,
+        int alpha_moments_count,
+        const at::Tensor& alpha_index_basic_tensor,
+        const at::Tensor& alpha_index_times_tensor,
+        const at::Tensor& alpha_moment_mapping_tensor,
+        int nmus,
+        const at::Tensor& binum_tensor,
+        const at::Tensor& bilist_tensor,
+        const at::Tensor& bnumneigh_tensor,
+        const at::Tensor& bfirstneigh_tensor,
+        const at::Tensor& brcs_tensor,
+        const at::Tensor& btypes_tensor,
+        int nghost,
+        double rmax,
+        double rmin);
+    
+    static torch::autograd::variable_list backward(
+        torch::autograd::AutogradContext *ctx,
+        torch::autograd::variable_list bgrad_outputs_tensor);
+};  // class : NNMtpToDescriptorsFunctionCPU
+
+
+torch::autograd::variable_list NNMtpToEFLossOpCPU(
+    double e_weight,
+    double f_weight,
+    const at::Tensor& betot_dft_tensor,
+    const at::Tensor& bforce_dft_tensor,
+    int chebyshev_size,
+    const at::Tensor& coeffs_tensor,
+    const at::Tensor& w0_tensor,
+    const at::Tensor& b0_tensor,
+    const at::Tensor& w1_tensor,
+    const at::Tensor& type_bias_tensor,
+    int alpha_moments_count,
+    const at::Tensor& alpha_index_basic_tensor,
+    const at::Tensor& alpha_index_times_tensor,
+    const at::Tensor& alpha_moment_mapping_tensor,
+    int nmus,
+    const at::Tensor& binum_tensor,
+    const at::Tensor& bilist_tensor,
+    const at::Tensor& bnumneigh_tensor,
+    const at::Tensor& bfirstneigh_tensor,
+    const at::Tensor& brcs_tensor,
+    const at::Tensor& btypes_tensor,
+    const at::Tensor& type_map_tensor,
+    int nghost,
+    double rmax,
+    double rmin,
+    const at::Tensor& q_scaler_tensor,
+    double zbl_rmax,
+    double zbl_rmin,
+    const at::Tensor& zbl_cks_tensor,
+    const at::Tensor& zbl_dks_tensor);
+
+torch::autograd::variable_list NNMtpToLossOpCPU(
+    double e_weight,
+    double f_weight,
+    double v_weight,
+    const at::Tensor& betot_dft_tensor,
+    const at::Tensor& bforce_dft_tensor,
+    const at::Tensor& bvirial_dft_tensor,
+    int chebyshev_size,
+    const at::Tensor& coeffs_tensor,
+    const at::Tensor& w0_tensor,
+    const at::Tensor& b0_tensor,
+    const at::Tensor& w1_tensor,
+    const at::Tensor& type_bias_tensor,
+    int alpha_moments_count,
+    const at::Tensor& alpha_index_basic_tensor,
+    const at::Tensor& alpha_index_times_tensor,
+    const at::Tensor& alpha_moment_mapping_tensor,
+    int nmus,
+    const at::Tensor& binum_tensor,
+    const at::Tensor& bilist_tensor,
+    const at::Tensor& bnumneigh_tensor,
+    const at::Tensor& bfirstneigh_tensor,
+    const at::Tensor& brcs_tensor,
+    const at::Tensor& btypes_tensor,
+    const at::Tensor& type_map_tensor,
+    int nghost,
+    double rmax,
+    double rmin,
+    const at::Tensor& q_scaler_tensor,
+    double zbl_rmax,
+    double zbl_rmin,
+    const at::Tensor& zbl_cks_tensor,
+    const at::Tensor& zbl_dks_tensor);
+
+torch::autograd::variable_list NNMtpToEFOpCPU(
+    int chebyshev_size,
+    const at::Tensor& coeffs_tensor,
+    const at::Tensor& w0_tensor,
+    const at::Tensor& b0_tensor,
+    const at::Tensor& w1_tensor,
+    const at::Tensor& type_bias_tensor,
+    int alpha_moments_count,
+    const at::Tensor& alpha_index_basic_tensor,
+    const at::Tensor& alpha_index_times_tensor,
+    const at::Tensor& alpha_moment_mapping_tensor,
+    int nmus,
+    const at::Tensor& binum_tensor,
+    const at::Tensor& bilist_tensor,
+    const at::Tensor& bnumneigh_tensor,
+    const at::Tensor& bfirstneigh_tensor,
+    const at::Tensor& brcs_tensor,
+    const at::Tensor& btype_tensor,
+    const at::Tensor& type_map_tensor,
+    int nghost,
+    double rmax,
+    double rmin,
+    const at::Tensor& q_scaler_tensor,
+    double zbl_rmax,
+    double zbl_rmin,
+    const at::Tensor& zbl_cks_tensor,
+    const at::Tensor& zbl_dks_tensor);
+
+torch::autograd::variable_list NNMtpToEFVOpCPU(
+    int chebyshev_size,
+    const at::Tensor& coeffs_tensor,
+    const at::Tensor& w0_tensor,
+    const at::Tensor& b0_tensor,
+    const at::Tensor& w1_tensor,
+    const at::Tensor& type_bias_tensor,
+    int alpha_moments_count,
+    const at::Tensor& alpha_index_basic_tensor,
+    const at::Tensor& alpha_index_times_tensor,
+    const at::Tensor& alpha_moment_mapping_tensor,
+    int nmus,
+    const at::Tensor& binum_tensor,
+    const at::Tensor& bilist_tensor,
+    const at::Tensor& bnumneigh_tensor,
+    const at::Tensor& bfirstneigh_tensor,
+    const at::Tensor& brcs_tensor,
+    const at::Tensor& btype_tensor,
+    const at::Tensor& type_map_tensor,
+    int nghost,
+    double rmax,
+    double rmin,
+    const at::Tensor& q_scaler_tensor,
+    double zbl_rmax,
+    double zbl_rmin,
+    const at::Tensor& zbl_cks_tensor,
+    const at::Tensor& zbl_dks_tensor);
+
+torch::autograd::variable_list NNMtpToDescriptorsOpCPU(
+    int chebyshev_size,
+    const at::Tensor& coeffs_tensor,
+    int alpha_moments_count,
+    const at::Tensor& alpha_index_basic_tensor,
+    const at::Tensor& alpha_index_times_tensor,
+    const at::Tensor& alpha_moment_mapping_tensor,
+    int nmus,
+    const at::Tensor& binum_tensor,
+    const at::Tensor& bilist_tensor,
+    const at::Tensor& bnumneigh_tensor,
+    const at::Tensor& bfirstneigh_tensor,
+    const at::Tensor& brcs_tensor,
+    const at::Tensor& btypes_tensor,
+    const at::Tensor& type_map_tensor,
+    int nghost,
+    double rmax,
+    double rmin);
+
 
 };  // namespace : nnmtp
 };  // namespace : ai2pot

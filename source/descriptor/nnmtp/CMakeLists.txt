@@ -22,7 +22,7 @@ if (USE_CUDA AND CUDA_FOUND)
 endif()
 
 
-# 5. compile
+# 5.1. compile (old)
 add_library(mtpParam_nnMtp SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/mtpParam.cc)
 target_include_directories(mtpParam_nnMtp PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
@@ -62,6 +62,36 @@ if (TORCH_OP)
         target_compile_definitions(nnmtp_bind PRIVATE MAX_MTP_LEVEL=${MAX_MTP_LEVEL})
     endif()
 endif()
+
+
+# 5.2. compile (new)
+#add_library(mtpParam_nnMtp SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/mtpParam.cc)
+#target_include_directories(mtpParam_nnMtp PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+if (TORCH_OP)
+    #add_library(mtpParamOp_nnMtp SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/mtpParamOp.cc)
+    #target_include_directories(mtpParamOp_nnMtp PRIVATE ${TORCH_INCLUDE_DIRS} ${PYTHON_INCLUDE_DIRS})
+    #target_link_libraries(mtpParamOp_nnMtp mtpParam_nnMtp ${PYTHON_LIBRARIES} ${TORCH_LIBRARIES_CPU})
+
+    ## 5.1. nnMtpOp (CPU and CUDA)
+    add_library(nnMtpOp_cpu SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/nnMtpOp_cpu.cc)
+    target_include_directories(nnMtpOp_cpu PRIVATE ${TORCH_INCLUDE_DIRS})
+    target_link_libraries(nnMtpOp_cpu PRIVATE ${TORCH_LIBRARIES_CPU})
+    if (USE_OPENMP)
+        target_compile_definitions(nnMtpOp_cpu PRIVATE USE_OPENMP)
+    endif()
+    if (MAX_MTP_LEVEL)
+        target_compile_definitions(nnMtpOp PRIVATE MAX_MTP_LEVEL=${MAX_MTP_LEVEL})
+    endif()
+
+    if (USE_CUDA AND CUDA_FOUND)
+    endif()
+
+    ## 5.1. nnMtpToLossOp (CPU and CUDA)
+    
+endif()
+
+
 
 # 6. compile test
 if (BUILD_TEST)
