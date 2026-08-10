@@ -85,6 +85,7 @@ if (TORCH_OP)
     endif()
 
     if (USE_CUDA AND CUDA_FOUND)
+        
     endif()
 
     ## 5.1. nnMtpToLossOp (CPU and CUDA)
