@@ -85,11 +85,44 @@ if (TORCH_OP)
     endif()
 
     if (USE_CUDA AND CUDA_FOUND)
-        
+        add_library(nnMtpOp_cuda SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/nnMtpOp_cuda.cc)
+        target_link_libraries(nnMtpOp_cuda 
+                              PRIVATE 
+                              ${TORCH_LIBRARIES})
+        target_compile_definitions(nnMtpOp_cuda PRIVATE USE_CUDA)
+        if (MAX_MTP_LEVEL)
+            target_compile_definitions(nnMtpOp_cuda PRIVATE MAX_MTP_LEVEL=${MAX_MTP_LEVEL})
+        endif()
     endif()
 
-    ## 5.1. nnMtpToLossOp (CPU and CUDA)
-    
+    ## 5.2. nnMtp_bind (CPU and CUDA)
+    add_library(nnmtp_bind_cpu SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bind/nnmtp_bind_cpu.cc)
+    target_include_directories(nnmtp_bind_cpu PRIVATE ${PYTHON_INCLUDE_DIRS} ${TORCH_INCLUDE_DIRS})
+    target_link_libraries(nnmtp_bind_cpu
+                          PRIVATE
+                          mtpParam_nnMtp
+                          nnMtpOp_cpu
+                          ${TORCH_LIBRARIES_CPU}
+                          ${PYTHON_LIBRARIES})
+    if (USE_OPENMP)
+        target_compile_definitions(nnmtp_bind_cpu PRIVATE USE_OPENMP)
+    endif()
+    if (MAX_MTP_LEVEL)
+        target_compile_definitions(nnmtp_bind_cpu PRIVATE MAX_MTP_LEVEL=${MAX_MTP_LEVEL})
+    endif()
+
+    if (USE_CUDA AND CUDA_FOUND)
+        add_library(nnmtp_bind_cuda SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bind/nnmtp_bind_cuda.cc)
+        target_include_directories(nnmtp_bind_cuda PRIVATE ${PYTHON_INCLUDE_DIRS})
+        target_link_libraries(nnmtp_bind_cuda 
+                              PRIVATE
+                              ${PYTHON_LIBRARIES}
+                              ${TORCH_LIBRARIES})
+        target_compile_definitions(nnmtp_bind_cuda PRIVATE USE_CUDA)
+        if (MAX_MTP_LEVEL)
+            target_compile_definitions(nnmtp_bind_cuda PRIVATE MAX_MTP_LEVEL=${MAX_MTP_LEVEL})
+        endif()
+    endif()
 endif()
 
 

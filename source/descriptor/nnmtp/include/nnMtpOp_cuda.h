@@ -178,6 +178,10 @@ public:
         double zbl_rmin,
         const at::Tensor& zbl_cks_tensor,
         const at::Tensor& zbl_dks_tensor);
+    
+    static torch::autograd::variable_list backward(
+        torch::autograd::AutogradContext *ctx,
+        torch::autograd::variable_list bgrad_outputs_tensor);
 };  // class : NNMtpToEFVFunctionCUDA
 
 
@@ -199,6 +203,7 @@ public:
         const at::Tensor& bfirstneigh_tensor,
         const at::Tensor& brcs_tensor,
         const at::Tensor& btypes_tensor,
+        const at::Tensor& type_map_tensor,
         int nghost,
         double rmax,
         double rmin);
