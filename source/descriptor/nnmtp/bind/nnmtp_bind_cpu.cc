@@ -18,10 +18,28 @@
 #include <climits>
 #include <cassert>
 
+#include "../include/mtpParam.h"
+#include "../include/mtpParamOp.h"
 #include "../include/nnMtpOp_cpu.h"
 
 
 TORCH_LIBRARY(nnmtp, m) {
+    m.def(
+        "set_ai2pot_path",
+        [](const std::string& path)
+        {
+            ai2pot::nnmtp::set_ai2pot_path(path);
+        });
+
+    m.def(
+        "mtpParamOp",
+        [](int64_t mtp_level)
+        {
+            assert(mtp_level <= INT_MAX);
+            return ai2pot::nnmtp::MtpParamOp((int)mtp_level);
+        }
+    );  // mtpParamOp
+
     m.def(
         "nnMtpToEFLossOp",
         [](double e_weight,
@@ -616,6 +634,147 @@ TORCH_LIBRARY_IMPL(nnmtp, CPU, m) {
                 (int)nghost,
                 rmax,
                 rmin);
+        }
+    );
+};
+
+
+TORCH_LIBRARY_IMPL(nnmtp, AutogradCPU, m) {
+    m.impl(
+        "nnMtpToEFLossOp",
+        [](double e_weight,
+           double f_weight,
+           const at::Tensor& betot_dft_tensor,
+           const at::Tensor& bforce_dft_tensor,
+           int64_t chebyshev_size,
+           const at::Tensor& coeffs_tensor,
+           const at::Tensor& w0_tensor,
+           const at::Tensor& b0_tensor,
+           const at::Tensor& w1_tensor,
+           const at::Tensor& type_bias_tensor,
+           int64_t alpha_moments_count,
+           const at::Tensor& alpha_index_basic_tensor,
+           const at::Tensor& alpha_index_times_tensor,
+           const at::Tensor& alpha_moment_mapping_tensor,
+           int64_t nmus,
+           const at::Tensor& binum_tensor,
+           const at::Tensor& bilist_tensor,
+           const at::Tensor& bnumneigh_tensor,
+           const at::Tensor& bfirstneigh_tensor,
+           const at::Tensor& brcs_tensor,
+           const at::Tensor& btypes_tensor,
+           const at::Tensor& type_map_tensor,
+           int64_t nghost,
+           double rmax,
+           double rmin,
+           const at::Tensor& q_scaler_tensor,
+           double zbl_rmax,
+           double zbl_rmin,
+           const at::Tensor& zbl_cks_tensor,
+           const at::Tensor& zbl_dks_tensor) 
+        {
+            return ai2pot::nnmtp::NNMtpToEFLossOpCPU(
+                e_weight,
+                f_weight,
+                betot_dft_tensor,
+                bforce_dft_tensor,
+                (int)chebyshev_size,
+                coeffs_tensor,
+                w0_tensor,
+                b0_tensor,
+                w1_tensor,
+                type_bias_tensor,
+                (int)alpha_moments_count,
+                alpha_index_basic_tensor,
+                alpha_index_times_tensor,
+                alpha_moment_mapping_tensor,
+                (int)nmus,
+                binum_tensor,
+                bilist_tensor,
+                bnumneigh_tensor,
+                bfirstneigh_tensor,
+                brcs_tensor,
+                btypes_tensor,
+                type_map_tensor,
+                (int)nghost,
+                rmax,
+                rmin,
+                q_scaler_tensor,
+                zbl_rmax,
+                zbl_rmin,
+                zbl_cks_tensor,
+                zbl_dks_tensor);
+        }
+    );
+
+    m.impl(
+        "nnMtpToLossOp",
+        [](double e_weight,
+           double f_weight,
+           double v_weight,
+           const at::Tensor& betot_dft_tensor,
+           const at::Tensor& bforce_dft_tensor,
+           const at::Tensor& bvirial_dft_tensor,
+           int64_t chebyshev_size,
+           const at::Tensor& coeffs_tensor,
+           const at::Tensor& w0_tensor,
+           const at::Tensor& b0_tensor,
+           const at::Tensor& w1_tensor,
+           const at::Tensor& type_bias_tensor,
+           int64_t alpha_moments_count,
+           const at::Tensor& alpha_index_basic_tensor,
+           const at::Tensor& alpha_index_times_tensor,
+           const at::Tensor& alpha_moment_mapping_tensor,
+           int64_t nmus,
+           const at::Tensor& binum_tensor,
+           const at::Tensor& bilist_tensor,
+           const at::Tensor& bnumneigh_tensor,
+           const at::Tensor& bfirstneigh_tensor,
+           const at::Tensor& brcs_tensor,
+           const at::Tensor& btypes_tensor,
+           const at::Tensor& type_map_tensor,
+           int64_t nghost,
+           double rmax,
+           double rmin,
+           const at::Tensor& q_scaler_tensor,
+           double zbl_rmax,
+           double zbl_rmin,
+           const at::Tensor& zbl_cks_tensor,
+           const at::Tensor& zbl_dks_tensor) 
+        {
+            return ai2pot::nnmtp::NNMtpToLossOpCPU(
+                e_weight,
+                f_weight,
+                v_weight,
+                betot_dft_tensor,
+                bforce_dft_tensor,
+                bvirial_dft_tensor,
+                (int)chebyshev_size,
+                coeffs_tensor,
+                w0_tensor,
+                b0_tensor,
+                w1_tensor,
+                type_bias_tensor,
+                (int)alpha_moments_count,
+                alpha_index_basic_tensor,
+                alpha_index_times_tensor,
+                alpha_moment_mapping_tensor,
+                (int)nmus,
+                binum_tensor,
+                bilist_tensor,
+                bnumneigh_tensor,
+                bfirstneigh_tensor,
+                brcs_tensor,
+                btypes_tensor,
+                type_map_tensor,
+                (int)nghost,
+                rmax,
+                rmin,
+                q_scaler_tensor,
+                zbl_rmax,
+                zbl_rmin,
+                zbl_cks_tensor,
+                zbl_dks_tensor);
         }
     );
 };

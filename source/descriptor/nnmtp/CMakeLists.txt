@@ -88,7 +88,11 @@ if (TORCH_OP)
         add_library(nnMtpOp_cuda SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/nnMtpOp_cuda.cc)
         target_link_libraries(nnMtpOp_cuda 
                               PRIVATE 
-                              ${TORCH_LIBRARIES})
+                              ${TORCH_LIBRARIES}
+                              efv_rmse_torch_launcher
+                              nnmtp_torch_launcher
+                              nnmtp_loss_torch_launcher
+                              zbl_torch_launcher)
         target_compile_definitions(nnMtpOp_cuda PRIVATE USE_CUDA)
         if (MAX_MTP_LEVEL)
             target_compile_definitions(nnMtpOp_cuda PRIVATE MAX_MTP_LEVEL=${MAX_MTP_LEVEL})
@@ -101,6 +105,7 @@ if (TORCH_OP)
     target_link_libraries(nnmtp_bind_cpu
                           PRIVATE
                           mtpParam_nnMtp
+                          mtpParamOp_nnMtp
                           nnMtpOp_cpu
                           ${TORCH_LIBRARIES_CPU}
                           ${PYTHON_LIBRARIES})
@@ -117,7 +122,8 @@ if (TORCH_OP)
         target_link_libraries(nnmtp_bind_cuda 
                               PRIVATE
                               ${PYTHON_LIBRARIES}
-                              ${TORCH_LIBRARIES})
+                              ${TORCH_LIBRARIES}
+                              nnMtpOp_cuda)
         target_compile_definitions(nnmtp_bind_cuda PRIVATE USE_CUDA)
         if (MAX_MTP_LEVEL)
             target_compile_definitions(nnmtp_bind_cuda PRIVATE MAX_MTP_LEVEL=${MAX_MTP_LEVEL})

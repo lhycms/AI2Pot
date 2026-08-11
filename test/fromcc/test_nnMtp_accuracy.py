@@ -11,8 +11,7 @@ from ai2pot.utils.usepot import MlffToLossInput, MlffInput
 from ai2pot.fromcc import (
     nnMtpToEFLossOp,
     nnMtpToLossOp,
-    mtpParamOp,
-    nnMtpToEsitesOp,
+    nnMtpParamOp,
     nnMtpToDescriptorsOp
 )
 
@@ -32,7 +31,7 @@ class NNMtpTest(unittest.TestCase):
         print("NNMtpTest (TestCase) is setting up...\n")
         # 0.
         self.torch_float_dtype: torch._C.dtype = torch.float64
-        self.device: torch._C.device = torch.device("cpu")
+        self.device: torch._C.device = torch.device("cuda")
         
         # 1. 
         self.mtp_level: int = 12
@@ -83,8 +82,8 @@ class NNMtpTest(unittest.TestCase):
                                                 dtype=self.torch_float_dtype,
                                                 device=self.device)
         
-        # 2. mtpParamOp
-        mtp_param_info = mtpParamOp(self.mtp_level)
+        # 2. nnMtpParamOp
+        mtp_param_info = nnMtpParamOp(self.mtp_level)
         self.alpha_moments_count: int = mtp_param_info[0].item()
         self.alpha_index_basic_tensor: torch.Tensor = mtp_param_info[1].to(self.device)
         self.alpha_index_times_tensor: torch.Tensor = mtp_param_info[2].to(self.device)
@@ -241,52 +240,7 @@ class NNMtpTest(unittest.TestCase):
         print("-------------------------------------------------")
         print("* nnMtpToLossOp Gradient pass check: ", test)
         print("-------------------------------------------------")
-
-
-    def est_linearMtpToEsites(self):
-        # 1. Parameters
-        self.coeffs_tensor.requires_grad_(True)
-        self.w0_tensor.requires_grad_(True)
-        self.w1_tensor.requires_grad_(True)
-        self.type_bias_tensor.requires_grad_(True)
-
         
-        # 2. Run
-        input_info: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(self.structure)
-
-        test = gradcheck(func=nnMtpToEsitesOp,
-                         inputs=(self.chebyshev_size,
-                                 self.coeffs_tensor,
-                                 self.w0_tensor,
-                                 self.w1_tensor,
-                                 self.type_bias_tensor,
-                                 self.alpha_moments_count,
-                                 self.alpha_index_basic_tensor,
-                                 self.alpha_index_times_tensor,
-                                 self.alpha_moment_mapping_tensor,
-                                 self.nmus,
-                                 input_info[0],
-                                 input_info[1],
-                                 input_info[2],
-                                 input_info[3],
-                                 input_info[4],
-                                 input_info[5],
-                                 self.type_map_tensor,
-                                 input_info[6].item(),
-                                 self.rmax,
-                                 self.rmin,
-                                 self.zbl_rmax,
-                                 self.zbl_rmin,
-                                 self.zbl_cks_tensor,
-                                 self.zbl_dks_tensor),
-                         eps=1e-8,
-                         atol=1e-6,
-                         rtol=1e-3,
-                         nondet_tol=1e-2)
-        print("-------------------------------------------------")
-        print("* nnMtpToEsitesOp Gradient pass check: ", test)
-        print("-------------------------------------------------")
-
 
     def est_output_descriptors(self):
         input_info: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(self.structure)

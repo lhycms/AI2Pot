@@ -106,16 +106,18 @@ if not IS_DARWIN:
 
     ### Part 2.4. nnmtp
     nnmtp_lib_dir:str = os.path.join(ai2pot_lib_dir, "descriptor", "nnmtp") if os.getenv("AI2POT_PATH") else ai2pot_lib_dir
-    nnmtp_bind_so_path: str = os.path.join(nnmtp_lib_dir, "libnnmtp_bind.so")
+    nnmtp_bind_so_path: str = os.path.join(nnmtp_lib_dir, "libnnmtp_bind_cpu.so")
     torch.ops.load_library(nnmtp_bind_so_path)
+    if torch.cuda.is_available():
+        nnmtp_bind_cuda_so_path: str = os.path.join(nnmtp_lib_dir, "libnnmtp_bind_cuda.so")
+        torch.ops.load_library(nnmtp_bind_cuda_so_path)
     # name
-    mtpParamOp = torch.ops.nnmtp.mtpParamOp
+    nnMtpParamOp = torch.ops.nnmtp.mtpParamOp
     nnMtpToEFLossOp = torch.ops.nnmtp.nnMtpToEFLossOp
     nnMtpToLossOp = torch.ops.nnmtp.nnMtpToLossOp
     nnMtpToEFOp = torch.ops.nnmtp.nnMtpToEFOp
     nnMtpToEFVOp = torch.ops.nnmtp.nnMtpToEFVOp
     nnMtpToDescriptorsOp = torch.ops.nnmtp.nnMtpToDescriptorsOp
-    nnMtpToEsitesOp = torch.ops.nnmtp.nnMtpToEsitesOp
     # Action
     torch.ops.nnmtp.set_ai2pot_path(ai2pot_path)
 
