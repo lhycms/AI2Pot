@@ -169,8 +169,10 @@ if (TORCH_OP)
                 # nnmtp
                 mtpParam_nnMtp
                 mtpParamOp_nnMtp
-                nnMtpOp
-                nnmtp_bind
+                nnMtpOp_cpu
+                nnMtpOp_cuda
+                nnmtp_bind_cpu
+                nnmtp_bind_cuda
                 #
                 nnmtp_torch_launcher
                 nnmtp_loss_torch_launcher
@@ -213,8 +215,8 @@ if (TORCH_OP)
                 # nnmtp
                 mtpParam_nnMtp
                 mtpParamOp_nnMtp
-                nnMtpOp
-                nnmtp_bind
+                nnMtpOp_cpu
+                nnmtp_bind_cpu
                 #
                 nnmtp_torch_launcher
                 nnmtp_loss_torch_launcher
