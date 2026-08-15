@@ -655,6 +655,7 @@ TEST_F(NNMtpTest, find_ef_loss_backward) {
     ai2pot::nnmtp::NNMtpLoss<double>::find_ef_loss_backward(
         loss_der2coeffs,
         loss_der2w0,
+        loss_der2b0,
         loss_der2w1,
         loss_der2type_bias,
         e_weight,
@@ -757,6 +758,7 @@ TEST_F(NNMtpTest, find_loss_backward) {
     ai2pot::nnmtp::NNMtpLoss<double>::find_loss_backward(
         loss_der2coeffs,
         loss_der2w0,
+        loss_der2b0,
         loss_der2w1,
         loss_der2type_bias,
         e_weight,

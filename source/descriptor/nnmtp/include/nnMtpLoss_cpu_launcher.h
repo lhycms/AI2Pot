@@ -309,6 +309,7 @@ void find_loss_backward_cpu_launcher(
         NNMtpLoss<CoordType>::find_loss_backward(
             loss_der2coeffs,
             loss_der2w0,
+            loss_der2b0,
             loss_der2w1,
             loss_der2type_bias,
             e_weight,
@@ -420,6 +421,7 @@ void find_ef_loss_backward_cpu_launcher(
         NNMtpLoss<CoordType>::find_ef_loss_backward(
             loss_der2coeffs,
             loss_der2w0,
+            loss_der2b0,
             loss_der2w1,
             loss_der2type_bias,
             e_weight,

@@ -56,6 +56,7 @@ public:
     static void find_loss_backward(
         CoordType *loss_der2coeffs,
         CoordType *loss_der2w0,
+        CoordType *loss_der2b0,
         CoordType *loss_der2w1,
         CoordType *loss_der2type_bias,
         CoordType e_weight,
@@ -100,6 +101,7 @@ public:
     static void find_ef_loss_backward(
         CoordType *loss_der2coeffs,
         CoordType *loss_der2w0,
+        CoordType *loss_der2b0,
         CoordType *loss_der2w1,
         CoordType *loss_der2type_bias,
         CoordType e_weight,
@@ -218,6 +220,7 @@ template <typename CoordType>
 void NNMtpLoss<CoordType>::find_loss_backward(
     CoordType *loss_der2coeffs,
     CoordType *loss_der2w0,
+    CoordType *loss_der2b0,
     CoordType *loss_der2w1,
     CoordType *loss_der2type_bias,
     CoordType e_weight,
@@ -615,6 +618,7 @@ template <typename CoordType>
 void NNMtpLoss<CoordType>::find_ef_loss_backward(
     CoordType *loss_der2coeffs,
     CoordType *loss_der2w0,
+    CoordType *loss_der2b0,
     CoordType *loss_der2w1,
     CoordType *loss_der2type_bias,
     CoordType e_weight,

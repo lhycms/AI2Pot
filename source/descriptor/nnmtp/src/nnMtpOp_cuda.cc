@@ -290,6 +290,7 @@ extern template void ai2pot::nnmtp::find_ef_loss_torch_launcher<double>(
 extern template void ai2pot::nnmtp::find_loss_backward_torch_launcher<float>(
     float *d_bloss_der2coeffs,
     float *d_bloss_der2w0,
+    float *d_bloss_der2b0,
     float *d_bloss_der2w1,
     float *d_bloss_der2type_bias,
     float e_weight,
@@ -335,6 +336,7 @@ extern template void ai2pot::nnmtp::find_loss_backward_torch_launcher<float>(
 extern template void ai2pot::nnmtp::find_loss_backward_torch_launcher<double>(
     double *d_bloss_der2coeffs,
     double *d_bloss_der2w0,
+    double *d_bloss_der2b0,
     double *d_bloss_der2w1,
     double *d_bloss_der2type_bias,
     double e_weight,
@@ -382,6 +384,7 @@ extern template void ai2pot::nnmtp::find_loss_backward_torch_launcher<double>(
 extern template void ai2pot::nnmtp::find_ef_loss_backward_torch_launcher<float>(
     float *d_bloss_der2coeffs,
     float *d_bloss_der2w0,
+    float *d_bloss_der2b0,
     float *d_bloss_der2w1,
     float *d_bloss_der2type_bias,
     float e_weight,
@@ -425,6 +428,7 @@ extern template void ai2pot::nnmtp::find_ef_loss_backward_torch_launcher<float>(
 extern template void ai2pot::nnmtp::find_ef_loss_backward_torch_launcher<double>(
     double *d_bloss_der2coeffs,
     double *d_bloss_der2w0,
+    double *d_bloss_der2b0,
     double *d_bloss_der2w1,
     double *d_bloss_der2type_bias,
     double e_weight,
@@ -1115,6 +1119,7 @@ torch::autograd::variable_list NNMtpToEFLossFunctionCUDA::backward(
         find_ef_loss_backward_torch_launcher(
             bloss_der2coeffs,
             bloss_der2w0,
+            bloss_der2b0,
             bloss_der2w1,
             bloss_der2type_bias,
             (float)e_weight,
@@ -1232,6 +1237,7 @@ torch::autograd::variable_list NNMtpToEFLossFunctionCUDA::backward(
         find_ef_loss_backward_torch_launcher(
             bloss_der2coeffs,
             bloss_der2w0,
+            bloss_der2b0,
             bloss_der2w1,
             bloss_der2type_bias,
             e_weight,
@@ -1841,6 +1847,7 @@ torch::autograd::variable_list NNMtpToLossFunctionCUDA::backward(
         find_loss_backward_torch_launcher(
             bloss_der2coeffs,
             bloss_der2w0,
+            bloss_der2b0,
             bloss_der2w1,
             bloss_der2type_bias,
             (float)e_weight,
@@ -1965,6 +1972,7 @@ torch::autograd::variable_list NNMtpToLossFunctionCUDA::backward(
         find_loss_backward_torch_launcher(
             bloss_der2coeffs,
             bloss_der2w0,
+            bloss_der2b0,
             bloss_der2w1,
             bloss_der2type_bias,
             e_weight,

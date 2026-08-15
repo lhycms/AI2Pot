@@ -304,6 +304,7 @@ protected:
 
         free(bloss_der2coeffs);
         free(bloss_der2w0);
+        free(bloss_der2b0);
         free(bloss_der2w1);
         free(bloss_der2type_bias);
         free(betot_dft);
@@ -574,6 +575,7 @@ TEST_F(NNMtpTest, find_loss_backward_launcer)
     ai2pot::nnmtp::find_loss_backward_launcher<real>(
         bloss_der2coeffs,
         bloss_der2w0,
+        bloss_der2b0,
         bloss_der2w1,
         bloss_der2type_bias,
         e_weight,
@@ -686,6 +688,7 @@ TEST_F(NNMtpTest, find_ef_loss_backward_launcer)
     ai2pot::nnmtp::find_ef_loss_backward_launcher<real>(
         bloss_der2coeffs,
         bloss_der2w0,
+        bloss_der2b0,
         bloss_der2w1,
         bloss_der2type_bias,
         e_weight,

@@ -114,6 +114,7 @@ __host__
 void find_loss_backward_torch_launcher(
     CoordType *d_bloss_der2coeffs,
     CoordType *d_bloss_der2w0,
+    CoordType *d_bloss_der2b0,
     CoordType *d_bloss_der2w1,
     CoordType *d_bloss_der2type_bias,
     CoordType e_weight,
@@ -164,6 +165,7 @@ void find_loss_backward_torch_launcher(
     find_loss_backward_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (
         d_bloss_der2coeffs,
         d_bloss_der2w0,
+        d_bloss_der2b0,
         d_bloss_der2w1,
         d_bloss_der2type_bias,
         e_weight,
@@ -217,6 +219,7 @@ __host__
 void find_ef_loss_backward_torch_launcher(
     CoordType *d_bloss_der2coeffs,
     CoordType *d_bloss_der2w0,
+    CoordType *d_bloss_der2b0,
     CoordType *d_bloss_der2w1,
     CoordType *d_bloss_der2type_bias,
     CoordType e_weight,
@@ -264,6 +267,7 @@ void find_ef_loss_backward_torch_launcher(
     find_ef_loss_backward_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (
         d_bloss_der2coeffs,
         d_bloss_der2w0,
+        d_bloss_der2b0,
         d_bloss_der2w1,
         d_bloss_der2type_bias,
         e_weight,

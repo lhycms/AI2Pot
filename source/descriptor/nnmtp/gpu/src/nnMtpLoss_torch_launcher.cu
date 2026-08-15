@@ -82,6 +82,7 @@ template void ai2pot::nnmtp::find_ef_loss_torch_launcher<double>(
 template void ai2pot::nnmtp::find_loss_backward_torch_launcher<float>(
     float *d_bloss_der2coeffs,
     float *d_bloss_der2w0,
+    float *d_bloss_der2b0,
     float *d_bloss_der2w1,
     float *d_bloss_der2type_bias,
     float e_weight,
@@ -127,6 +128,7 @@ template void ai2pot::nnmtp::find_loss_backward_torch_launcher<float>(
 template void ai2pot::nnmtp::find_loss_backward_torch_launcher<double>(
     double *d_bloss_der2coeffs,
     double *d_bloss_der2w0,
+    double *d_bloss_der2b0,
     double *d_bloss_der2w1,
     double *d_bloss_der2type_bias,
     double e_weight,
@@ -174,6 +176,7 @@ template void ai2pot::nnmtp::find_loss_backward_torch_launcher<double>(
 template void ai2pot::nnmtp::find_ef_loss_backward_torch_launcher<float>(
     float *d_bloss_der2coeffs,
     float *d_bloss_der2w0,
+    float *d_bloss_der2b0,
     float *d_bloss_der2w1,
     float *d_bloss_der2type_bias,
     float e_weight,
@@ -216,6 +219,7 @@ template void ai2pot::nnmtp::find_ef_loss_backward_torch_launcher<float>(
 template void ai2pot::nnmtp::find_ef_loss_backward_torch_launcher<double>(
     double *d_bloss_der2coeffs,
     double *d_bloss_der2w0,
+    double *d_bloss_der2b0,
     double *d_bloss_der2w1,
     double *d_bloss_der2type_bias,
     double e_weight,
