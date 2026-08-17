@@ -389,6 +389,7 @@ void find_efv_atom(
     type_central = types[center_idx];
     Zi = type_map[type_central];
     CoordType *type_central_w0 = &w0[type_central * num_neurons * alpha_scalar_moments];
+    CoordType *type_central_b0 = &b0[type_central * num_neurons];
     CoordType *type_central_w1 = &w1[type_central * num_neurons];
 
     
@@ -463,6 +464,7 @@ void find_efv_atom(
         CoordType activated_hidden_val = 0.0;
         for (int k=0; k<alpha_scalar_moments; k++)
             hidden_val += type_central_w0[p*alpha_scalar_moments + k] * mom_vals[alpha_moment_mapping[k]] / q_scaler[k];
+        hidden_val += type_central_b0[p];
         TanhActivationFunc<CoordType>::find_val(activated_hidden_val, hidden_val);
         e_site += type_central_w1[p] * activated_hidden_val;
     }
@@ -473,6 +475,7 @@ void find_efv_atom(
         CoordType activated_hidden_der = 0.0;
         for (int k=0; k<alpha_scalar_moments; k++)
             hidden_val += type_central_w0[p*alpha_scalar_moments + k] * mom_vals[alpha_moment_mapping[k]] / q_scaler[k];
+        hidden_val += type_central_b0[p];
         TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
         for (int k=0; k<alpha_scalar_moments; k++)
             e_site_der2mom[alpha_moment_mapping[k]] += type_central_w1[p]
@@ -910,6 +913,7 @@ void find_ef_atom(
     type_central = types[center_idx];
     Zi = type_map[type_central];
     CoordType *type_central_w0 = &w0[type_central * num_neurons * alpha_scalar_moments];
+    CoordType *type_central_b0 = &b0[type_central * num_neurons];
     CoordType *type_central_w1 = &w1[type_central * num_neurons];
 
     
@@ -984,6 +988,7 @@ void find_ef_atom(
         CoordType activated_hidden_val = 0.0;
         for (int k=0; k<alpha_scalar_moments; k++)
             hidden_val += type_central_w0[p*alpha_scalar_moments + k] * mom_vals[alpha_moment_mapping[k]] / q_scaler[k];
+        hidden_val += type_central_b0[p];
         TanhActivationFunc<CoordType>::find_val(activated_hidden_val, hidden_val);
         e_site += type_central_w1[p] * activated_hidden_val;
     }
@@ -994,6 +999,7 @@ void find_ef_atom(
         CoordType activated_hidden_der = 0.0;
         for (int k=0; k<alpha_scalar_moments; k++)
             hidden_val += type_central_w0[p*alpha_scalar_moments + k] * mom_vals[alpha_moment_mapping[k]] / q_scaler[k];
+        hidden_val += type_central_b0[p];
         TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
         for (int k=0; k<alpha_scalar_moments; k++)
             e_site_der2mom[alpha_moment_mapping[k]] += type_central_w1[p]
