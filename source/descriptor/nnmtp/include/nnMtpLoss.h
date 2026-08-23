@@ -265,6 +265,9 @@ void NNMtpLoss<CoordType>::find_loss_backward(
     CoordType *mom_vals;
     CoordType *e_site_der2mom;
     CoordType *dloss_combination;
+    CoordType *activated_hidden_vals;
+    CoordType *activated_hidden_ders;
+    CoordType *activated_hidden_der2ders;
     int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
 
     int max_alpha_index_basic = 0;
@@ -282,8 +285,10 @@ void NNMtpLoss<CoordType>::find_loss_backward(
     // Step 2. ef : delete
 
     // Step 3.
-#ifdef USE_OPENMP
-#pragma omp parallel private(mom_vals, e_site_der2mom, dloss_combination, auto_dist_powers_, auto_coords_powers_, p_RadialBasis)
+#if defined(USE_OPENMP) or defined(__INTELLISENSE__)
+#pragma omp parallel private(mom_vals, e_site_der2mom, dloss_combination,                               \
+                             auto_dist_powers_, auto_coords_powers_, p_RadialBasis,                     \
+                             activated_hidden_vals, activated_hidden_ders, activated_hidden_der2ders)
 {
 #endif
     mom_vals = (CoordType*)malloc(sizeof(CoordType) * alpha_moments_count);
@@ -292,6 +297,9 @@ void NNMtpLoss<CoordType>::find_loss_backward(
     auto_dist_powers_ = (CoordType*)malloc(sizeof(CoordType) * max_alpha_index_basic);
     auto_coords_powers_ = (CoordType (*)[3])malloc(sizeof(CoordType) * max_alpha_index_basic * 3);
     p_RadialBasis = new RQ_Chebyshev<CoordType>(chebyshev_size, rmax, rmin);
+    activated_hidden_vals = (CoordType*)malloc(sizeof(CoordType) * num_neurons);
+    activated_hidden_ders = (CoordType*)malloc(sizeof(CoordType) * num_neurons);
+    activated_hidden_der2ders = (CoordType*)malloc(sizeof(CoordType) * num_neurons);
 
     int center_idx;
     int type_central;
@@ -304,7 +312,7 @@ void NNMtpLoss<CoordType>::find_loss_backward(
     CoordType distance_ij;
     CoordType distance_ij_inv;
 
-    #ifdef USE_OPENMP
+    #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
     #pragma omp for schedule(static)
     #endif
     for (int ii=0; ii<inum; ii++) {
@@ -312,6 +320,9 @@ void NNMtpLoss<CoordType>::find_loss_backward(
         memset(mom_vals, 0, sizeof(CoordType) * alpha_moments_count);
         memset(e_site_der2mom, 0, sizeof(CoordType) * alpha_moments_count);
         memset(dloss_combination, 0, sizeof(CoordType) * alpha_moments_count);
+        memset(activated_hidden_vals, 0, sizeof(CoordType) * num_neurons);
+        memset(activated_hidden_ders, 0, sizeof(CoordType) * num_neurons);
+        memset(activated_hidden_der2ders, 0, sizeof(CoordType) * num_neurons);
         center_idx = ilist[ii];
         type_central = types[center_idx];
         type_central_w0 = &w0[type_central * num_neurons * alpha_scalar_moments];
@@ -413,6 +424,16 @@ void NNMtpLoss<CoordType>::find_loss_backward(
             mom_vals[alpha_index_times[i][3]] += val2 * val0 * val1;
             dloss_combination[alpha_index_times[i][3]] += (dloss_combination[alpha_index_times[i][0]] * val1 * val2
                                                            + dloss_combination[alpha_index_times[i][1]] * val0 * val2);
+        }
+
+        for (int p=0; p<num_neurons; p++) {
+            CoordType hidden_val = 0.0;
+            for (int k=0; k<alpha_scalar_moments; k++)
+                hidden_val += type_central_w0[p*alpha_scalar_moments + k] * mom_vals[alpha_moment_mapping[k]] / q_scaler[k];
+            hidden_val += type_central_b0[p];
+            TanhActivationFunc<CoordType>::find_val(activated_hidden_vals[p], hidden_val);
+            TanhActivationFunc<CoordType>::find_der(activated_hidden_ders[p], hidden_val);
+            TanhActivationFunc<CoordType>::find_der2der(activated_hidden_der2ders[p], hidden_val);
         }
 
         // Step 4.1. NN Energy derivative w.r.t xyz
@@ -530,7 +551,7 @@ void NNMtpLoss<CoordType>::find_loss_backward(
                         }
                         tmpf_loss_der2coeff += tmp_prefix * tmp_deriv;
                     }
-                    #ifdef USE_OPENMP
+                    #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
                     #pragma omp atomic
                     #endif
                     loss_der2coeffs[idx] += (tmpe_loss_der2coeff
@@ -539,68 +560,51 @@ void NNMtpLoss<CoordType>::find_loss_backward(
             }
         }
 
-        // Step 4.4. Loss derivative w.r.t. w1
+        // Step 4.4. loss der2w0 && der2b0
+        for (int p=0; p<num_neurons; p++) {
+            CoordType dloss_combination_sum = 0.0;
+            for (int k=0; k<alpha_scalar_moments; k++)
+                dloss_combination_sum += type_central_w0[p*alpha_scalar_moments + k]
+                                         / q_scaler[k]
+                                         * dloss_combination[alpha_moment_mapping[k]];
+
+            
+
+            CoordType tmpe_loss_der2b0 = 2*e_weight/inum*(etot_ml - etot_dft)
+                                         * type_central_w1[p]
+                                         * activated_hidden_ders[p];
+            CoordType tmpf_loss_der2b0 = type_central_w1[p]
+                                         * activated_hidden_der2ders[p]
+                                         * dloss_combination_sum;
+            #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
+            #pragma omp atomic
+            #endif
+            loss_der2b0[type_central*num_neurons + p] += (tmpe_loss_der2b0 + tmpf_loss_der2b0);
+        }
+
+        // Step 4.5. Loss derivative w.r.t. w1
         for (int p=0; p<num_neurons; p++) {
             CoordType tmpe_loss_der2w1 = 0.0;
             CoordType tmpf_loss_der2w1 = 0.0;
-            CoordType hidden_val = 0;
-            CoordType activated_hidden_val = 0;
-            CoordType activated_hidden_der = 0;
-            for (int k=0; k<alpha_scalar_moments; k++)
-                hidden_val += type_central_w0[p*alpha_scalar_moments+k] * mom_vals[alpha_moment_mapping[k]] / q_scaler[k];
-            hidden_val += type_central_b0[p];
-            TanhActivationFunc<CoordType>::find_val(activated_hidden_val, hidden_val);
-            TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
+
             tmpe_loss_der2w1 = 2*e_weight/inum*(etot_ml - etot_dft)
-                               * activated_hidden_val;
+                               * activated_hidden_vals[p];
             for (int k=0; k<alpha_scalar_moments; k++) {
-                tmpf_loss_der2w1 += dloss_combination[alpha_moment_mapping[k]]
-                                    * activated_hidden_der
+                tmpf_loss_der2w1 += activated_hidden_ders[p]
+                                    * dloss_combination[alpha_moment_mapping[k]]
                                     * type_central_w0[p*alpha_scalar_moments + k]
                                     / q_scaler[k];
             }
             
-            #ifdef USE_OPENMP
+            #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
             #pragma omp atomic
             #endif
             loss_der2w1[type_central*num_neurons + p] += (tmpe_loss_der2w1
                                                           + tmpf_loss_der2w1);
         }
 
-        // Step 4.5. Loss derivative w.r.t. w0
-        for (int p=0; p<num_neurons; p++) {
-            CoordType hidden_val = 0;
-            CoordType activated_hidden_der = 0;
-            CoordType activated_hidden_der2der = 0;
-            for (int k=0; k<alpha_scalar_moments; k++)
-                hidden_val += type_central_w0[p*alpha_scalar_moments+k] * mom_vals[alpha_moment_mapping[k]] / q_scaler[k];
-            hidden_val += type_central_b0[p];
-            TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
-            TanhActivationFunc<CoordType>::find_der2der(activated_hidden_der2der, hidden_val);
-            for (int k=0; k<alpha_scalar_moments; k++) {
-                CoordType tmpe_loss_der2w0 = 2*e_weight/inum*(etot_ml - etot_dft)
-                                             * type_central_w1[p]
-                                             * activated_hidden_der
-                                             * mom_vals[alpha_moment_mapping[k]] / q_scaler[k];
-                CoordType tmpf_loss_der2w0 = dloss_combination[alpha_moment_mapping[k]]
-                                             * type_central_w1[p]
-                                             / q_scaler[k]
-                                             * (activated_hidden_der
-                                                + activated_hidden_der2der
-                                                  * type_central_w0[p*alpha_scalar_moments+k]
-                                                  / q_scaler[k]
-                                                  * mom_vals[alpha_moment_mapping[k]]);
-                
-                #ifdef USE_OPENMP
-                #pragma omp atomic
-                #endif
-                loss_der2w0[type_central*num_neurons*alpha_scalar_moments + p*alpha_scalar_moments + k] += tmpe_loss_der2w0
-                                                                                                           + tmpf_loss_der2w0;
-            }
-        }
-
         // Step 4.6. Loss derivative_ w.r.t. type_bias
-        #ifdef USE_OPENMP
+        #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
         #pragma omp atomic
         #endif
         loss_der2type_bias[type_central] += 2*e_weight/inum*(etot_ml - etot_dft);
@@ -612,6 +616,9 @@ void NNMtpLoss<CoordType>::find_loss_backward(
     free(dloss_combination);
     free(auto_dist_powers_);
     free(auto_coords_powers_);
+    free(activated_hidden_vals);
+    free(activated_hidden_ders);
+    free(activated_hidden_der2ders);
     delete p_RadialBasis;
 #ifdef USE_OPENMP
 }
@@ -980,7 +987,7 @@ void NNMtpLoss<CoordType>::find_ef_loss_backward(
                                                   / q_scaler[k]
                                                   * mom_vals[alpha_moment_mapping[k]] );
                 
-                #ifdef USE_OPENMP
+                #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
                 #pragma omp atomic
                 #endif
                 loss_der2w0[type_central*num_neurons*alpha_scalar_moments + p*alpha_scalar_moments + k] += tmpe_loss_der2w0
@@ -989,7 +996,7 @@ void NNMtpLoss<CoordType>::find_ef_loss_backward(
         }
 
         // Step 4.6. Loss derivative_ w.r.t. type_bias
-        #ifdef USE_OPENMP
+        #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
         #pragma omp atomic
         #endif
         loss_der2type_bias[type_central] += 2*e_weight/inum*(etot_ml - etot_dft);
