@@ -58,6 +58,7 @@ do {                                                                        \
 
 
 #define MAX_CHEBYSHEV_SIZE 20
+#define MAX_NUM_NEURONS 120
 
 #if MAX_MTP_LEVEL == 2
     #define MAX_NUM_MUS 1

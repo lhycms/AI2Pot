@@ -684,7 +684,7 @@ void find_loss_backward_atom(
     int ntypes,
     int *type_map,
     int umax_num_neigh_atoms,
-    int nghost,
+    int nghost, 
     CoordType rmax,
     CoordType rmin,
     CoordType *q_scaler)
@@ -692,6 +692,9 @@ void find_loss_backward_atom(
     CoordType mom_vals[MAX_ALPHA_MOMENTS_COUNT] = {0.0};
     CoordType e_site_der2mom[MAX_ALPHA_MOMENTS_COUNT] = {0.0};
     CoordType dloss_combination[MAX_ALPHA_MOMENTS_COUNT] = {0.0};
+    CoordType activated_hidden_vals[MAX_NUM_NEURONS] = {0.0};
+    CoordType activated_hidden_ders[MAX_NUM_NEURONS] = {0.0};
+    CoordType activated_hidden_der2ders[MAX_NUM_NEURONS] = {0.0};
 
     int center_idx;
     int type_central;
@@ -815,6 +818,16 @@ void find_loss_backward_atom(
         mom_vals[alpha_index_times[i][3]] += val2 * val0 * val1;
         dloss_combination[alpha_index_times[i][3]] += (dloss_combination[alpha_index_times[i][0]] * val2 * val1
                                                        + dloss_combination[alpha_index_times[i][1]] * val2 * val0);
+    }
+
+    for (int p=0; p<num_neurons; p++) {
+        CoordType hidden_val = 0.0;
+        for (int k=0; k<alpha_scalar_moments; k++)
+            hidden_val += type_central_w0[p*alpha_scalar_moments+k] * mom_vals[alpha_moment_mapping[k]] / q_scaler[k];
+        hidden_val += type_central_b0[p];
+        TanhActivationFunc<CoordType>::find_val(activated_hidden_vals[p], hidden_val);
+        TanhActivationFunc<CoordType>::find_der(activated_hidden_ders[p], hidden_val);
+        TanhActivationFunc<CoordType>::find_der2der(activated_hidden_der2ders[p], hidden_val);
     }
 
     // 2.1. NN Energy derivative w.r.t. mom_vals
@@ -945,64 +958,60 @@ void find_loss_backward_atom(
             }
         }
     }
+    
+    // 2.4. loss der2w0 & der2b0
+    for (int p=0; p<num_neurons; p++) {
+        CoordType dloss_combination_sum = 0.0;
+        for (int k=0; k<alpha_scalar_moments; k++)
+            dloss_combination_sum += type_central_w0[p*alpha_scalar_moments + k]
+                                     / q_scaler[k]
+                                     * dloss_combination[alpha_moment_mapping[k]];
+        
+        for (int k=0; k<alpha_scalar_moments; k++) {
+            CoordType tmpe_loss_der2w0 = 2*e_weight/inum*(etot_ml-etot_dft)
+                                         * type_central_w1[p]
+                                         * activated_hidden_ders[p]
+                                         * mom_vals[alpha_moment_mapping[k]]
+                                         / q_scaler[k];
+            CoordType tmpf_loss_der2w0_p1 = activated_hidden_der2ders[p]
+                                            * mom_vals[alpha_moment_mapping[k]]
+                                            * dloss_combination_sum;
+            CoordType tmpf_loss_der2w0_p2 = activated_hidden_ders[p]
+                                            * dloss_combination[alpha_moment_mapping[k]];
+            CoordType tmpf_loss_der2w0 = type_central_w1[p] / q_scaler[k]
+                                         * (tmpf_loss_der2w0_p1 + tmpf_loss_der2w0_p2);
+            
+            atomicAdd(&loss_der2w0[type_central*num_neurons*alpha_scalar_moments + p*alpha_scalar_moments + k],
+                      tmpe_loss_der2w0 + tmpf_loss_der2w0);
+        }
+        
+        CoordType tmpe_loss_der2b0 = 2*e_weight/inum*(etot_ml-etot_dft)
+                                     * type_central_w1[p]
+                                     * activated_hidden_ders[p];
+        CoordType tmpf_loss_der2b0 = type_central_w1[p]
+                                     * activated_hidden_der2ders[p]
+                                     * dloss_combination_sum;
+        atomicAdd(&loss_der2b0[type_central*num_neurons + p], tmpe_loss_der2b0 + tmpf_loss_der2b0);
+    }
 
-
-    // 2.4. loss derivative w.r.t. w1
+    // 2.5. loss derivative w.r.t. w1
     for (int p=0; p<num_neurons; p++) {
         CoordType tmpe_loss_der2w1 = 0.0;
         CoordType tmpf_loss_der2w1 = 0.0;
-        CoordType hidden_val = 0.0;
-        CoordType activated_hidden_val = 0.0;
-        CoordType activated_hidden_der = 0.0;
-        for (int k=0; k<alpha_scalar_moments; k++)
-            hidden_val += type_central_w0[p*alpha_scalar_moments+k] * mom_vals[alpha_moment_mapping[k]] / q_scaler[k];
-        hidden_val += type_central_b0[p];
-        TanhActivationFunc<CoordType>::find_val(activated_hidden_val, hidden_val);
-        TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
+        
         tmpe_loss_der2w1 = 2*e_weight/inum*(etot_ml - etot_dft)
-                           * activated_hidden_val;
+                           * activated_hidden_vals[p];
         for (int k=0; k<alpha_scalar_moments; k++)
             tmpf_loss_der2w1 += dloss_combination[alpha_moment_mapping[k]]
-                                * activated_hidden_der
+                                * activated_hidden_ders[p]
                                 * type_central_w0[p*alpha_scalar_moments + k]
                                 / q_scaler[k];
         
         atomicAdd(&loss_der2w1[type_central*num_neurons + p], tmpe_loss_der2w1 + tmpf_loss_der2w1);
     }
-    
-    // 2.5. loss derivative w.r.t. w0
-    for (int p=0; p<num_neurons; p++) {
-        CoordType hidden_val = 0.0;
-        CoordType activated_hidden_der = 0.0;
-        CoordType activated_hidden_der2der = 0.0;
-        for (int k=0; k<alpha_scalar_moments; k++)
-            hidden_val += type_central_w0[p*alpha_scalar_moments+k] * mom_vals[alpha_moment_mapping[k]] / q_scaler[k];
-        hidden_val += type_central_b0[p];
-        TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
-        TanhActivationFunc<CoordType>::find_der2der(activated_hidden_der2der, hidden_val);
-        for (int k=0; k<alpha_scalar_moments; k++) {
-            CoordType tmpe_loss_der2w0 = 2*e_weight/inum*(etot_ml - etot_dft)
-                                         * type_central_w1[p]
-                                         * activated_hidden_der
-                                         * mom_vals[alpha_moment_mapping[k]]
-                                         / q_scaler[k];
-            CoordType tmpf_loss_der2w0 = dloss_combination[alpha_moment_mapping[k]]
-                                         * type_central_w1[p]
-                                         / q_scaler[k]
-                                         * (activated_hidden_der
-                                            + activated_hidden_der2der
-                                              * type_central_w0[p*alpha_scalar_moments+k]
-                                              * mom_vals[alpha_moment_mapping[k]]
-                                              / q_scaler[k] );
-
-            atomicAdd(&loss_der2w0[type_central*num_neurons*alpha_scalar_moments + p*alpha_scalar_moments + k], tmpe_loss_der2w0 + tmpf_loss_der2w0);
-        }
-    }
-
 
     // 2.6. loss derivative w.r.t. type_bias
-    atomicAdd(&loss_der2type_bias[type_central],
-              2*e_weight/inum*(etot_ml - etot_dft));
+    atomicAdd(&loss_der2type_bias[type_central], 2*e_weight/inum*(etot_ml - etot_dft));
 }
 
 
@@ -1400,6 +1409,9 @@ void find_ef_loss_backward_atom(
     CoordType mom_vals[MAX_ALPHA_MOMENTS_COUNT] = {0.0};
     CoordType e_site_der2mom[MAX_ALPHA_MOMENTS_COUNT] = {0.0};
     CoordType dloss_combination[MAX_ALPHA_MOMENTS_COUNT] = {0.0};
+    CoordType activated_hidden_vals[MAX_NUM_NEURONS] = {0.0};
+    CoordType activated_hidden_ders[MAX_NUM_NEURONS] = {0.0};
+    CoordType activated_hidden_der2ders[MAX_NUM_NEURONS] = {0.0};
 
     int center_idx;
     int type_central;
@@ -1517,6 +1529,16 @@ void find_ef_loss_backward_atom(
         mom_vals[alpha_index_times[i][3]] += val2 * val0 * val1;
         dloss_combination[alpha_index_times[i][3]] += (dloss_combination[alpha_index_times[i][0]] * val2 * val1
                                                        + dloss_combination[alpha_index_times[i][1]] * val2 * val0);
+    }
+
+    for (int p=0; p<num_neurons; p++) {
+        CoordType hidden_val = 0.0;
+        for (int k=0; k<alpha_scalar_moments; k++)
+            hidden_val += type_central_w0[p*alpha_scalar_moments+k] * mom_vals[alpha_moment_mapping[k]] / q_scaler[k];
+        hidden_val += type_central_b0[p];
+        TanhActivationFunc<CoordType>::find_val(activated_hidden_vals[p], hidden_val);
+        TanhActivationFunc<CoordType>::find_der(activated_hidden_ders[p], hidden_val);
+        TanhActivationFunc<CoordType>::find_der2der(activated_hidden_der2ders[p], hidden_val);
     }
 
     // 2.1. NN Energy derivative w.r.t. mom_vals
@@ -1642,64 +1664,61 @@ void find_ef_loss_backward_atom(
             }
         }
     }
+    
+    // 2.4. loss der2w0 & der2b0
+    for (int p=0; p<num_neurons; p++) {
+        CoordType dloss_combination_sum = 0.0;
+        for (int k=0; k<alpha_scalar_moments; k++)
+            dloss_combination_sum += type_central_w0[p*alpha_scalar_moments + k]
+                                     / q_scaler[k]
+                                     * dloss_combination[alpha_moment_mapping[k]];
+        
+        for (int k=0; k<alpha_scalar_moments; k++) {
+            CoordType tmpe_loss_der2w0 = 2*e_weight/inum*(etot_ml-etot_dft)
+                                         * type_central_w1[p]
+                                         * activated_hidden_ders[p]
+                                         * mom_vals[alpha_moment_mapping[k]]
+                                         / q_scaler[k];
+            CoordType tmpf_loss_der2w0_p1 = activated_hidden_der2ders[p]
+                                            * mom_vals[alpha_moment_mapping[k]]
+                                            * dloss_combination_sum;
+            CoordType tmpf_loss_der2w0_p2 = activated_hidden_ders[p]
+                                            * dloss_combination[alpha_moment_mapping[k]];
+            CoordType tmpf_loss_der2w0 = type_central_w1[p] / q_scaler[k]
+                                         * (tmpf_loss_der2w0_p1 + tmpf_loss_der2w0_p2);
+            
+            atomicAdd(&loss_der2w0[type_central*num_neurons*alpha_scalar_moments + p*alpha_scalar_moments + k],
+                      tmpe_loss_der2w0 + tmpf_loss_der2w0);
+        }
 
+        
+        CoordType tmpe_loss_der2b0 = 2*e_weight/inum*(etot_ml-etot_dft)
+                                     * type_central_w1[p]
+                                     * activated_hidden_ders[p];
+        CoordType tmpf_loss_der2b0 = type_central_w1[p]
+                                     * activated_hidden_der2ders[p]
+                                     * dloss_combination_sum;
+        atomicAdd(&loss_der2b0[type_central*num_neurons + p], tmpe_loss_der2b0 + tmpf_loss_der2b0);
+    }
 
-    // 2.4. loss derivative w.r.t. w1
+    // 2.5. loss derivative w.r.t. w1
     for (int p=0; p<num_neurons; p++) {
         CoordType tmpe_loss_der2w1 = 0.0;
         CoordType tmpf_loss_der2w1 = 0.0;
-        CoordType hidden_val = 0.0;
-        CoordType activated_hidden_val = 0.0;
-        CoordType activated_hidden_der = 0.0;
-        for (int k=0; k<alpha_scalar_moments; k++)
-            hidden_val += type_central_w0[p*alpha_scalar_moments+k] * mom_vals[alpha_moment_mapping[k]] / q_scaler[k];
-        hidden_val += type_central_b0[p];
-        TanhActivationFunc<CoordType>::find_val(activated_hidden_val, hidden_val);
-        TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
+        
         tmpe_loss_der2w1 = 2*e_weight/inum*(etot_ml - etot_dft)
-                           * activated_hidden_val;
+                           * activated_hidden_vals[p];
         for (int k=0; k<alpha_scalar_moments; k++)
             tmpf_loss_der2w1 += dloss_combination[alpha_moment_mapping[k]]
-                                * activated_hidden_der
+                                * activated_hidden_ders[p]
                                 * type_central_w0[p*alpha_scalar_moments + k]
                                 / q_scaler[k];
         
         atomicAdd(&loss_der2w1[type_central*num_neurons + p], tmpe_loss_der2w1 + tmpf_loss_der2w1);
     }
-    
-    // 2.5. loss derivative w.r.t. w0
-    for (int p=0; p<num_neurons; p++) {
-        CoordType hidden_val = 0.0;
-        CoordType activated_hidden_der = 0.0;
-        CoordType activated_hidden_der2der = 0.0;
-        for (int k=0; k<alpha_scalar_moments; k++)
-            hidden_val += type_central_w0[p*alpha_scalar_moments+k] * mom_vals[alpha_moment_mapping[k]] / q_scaler[k];
-        hidden_val += type_central_b0[p];
-        TanhActivationFunc<CoordType>::find_der(activated_hidden_der, hidden_val);
-        TanhActivationFunc<CoordType>::find_der2der(activated_hidden_der2der, hidden_val);
-        for (int k=0; k<alpha_scalar_moments; k++) {
-            CoordType tmpe_loss_der2w0 = 2*e_weight/inum*(etot_ml - etot_dft)
-                                         * type_central_w1[p]
-                                         * activated_hidden_der
-                                         * mom_vals[alpha_moment_mapping[k]]
-                                         / q_scaler[k];
-            CoordType tmpf_loss_der2w0 = dloss_combination[alpha_moment_mapping[k]]
-                                         * type_central_w1[p]
-                                         / q_scaler[k]
-                                         * (activated_hidden_der
-                                            + activated_hidden_der2der
-                                              * type_central_w0[p*alpha_scalar_moments+k]
-                                              * mom_vals[alpha_moment_mapping[k]]
-                                              / q_scaler[k] );
-
-            atomicAdd(&loss_der2w0[type_central*num_neurons*alpha_scalar_moments + p*alpha_scalar_moments + k], tmpe_loss_der2w0 + tmpf_loss_der2w0);
-        }
-    }
-
 
     // 2.6. loss derivative w.r.t. type_bias
-    atomicAdd(&loss_der2type_bias[type_central],
-              2*e_weight/inum*(etot_ml - etot_dft));
+    atomicAdd(&loss_der2type_bias[type_central], 2*e_weight/inum*(etot_ml - etot_dft));
 }
 
 

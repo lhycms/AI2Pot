@@ -31,7 +31,7 @@ class NNMtpTest(unittest.TestCase):
         print("NNMtpTest (TestCase) is setting up...\n")
         # 0.
         self.torch_float_dtype: torch._C.dtype = torch.float64
-        self.device: torch._C.device = torch.device("cuda")
+        self.device: torch._C.device = torch.device("cpu")
         
         # 1. 
         self.mtp_level: int = 12
@@ -128,8 +128,8 @@ class NNMtpTest(unittest.TestCase):
         f_weight: float = 2.1
         v_weight: float = 0.0
         self.coeffs_tensor.requires_grad_(False)
-        self.w0_tensor.requires_grad_(False)
-        self.b0_tensor.requires_grad_(False)
+        self.w0_tensor.requires_grad_(True)
+        self.b0_tensor.requires_grad_(True)
         self.w1_tensor.requires_grad_(True)
         self.type_bias_tensor.requires_grad_(True)
         
@@ -187,7 +187,8 @@ class NNMtpTest(unittest.TestCase):
         f_weight: float = 3.1
         v_weight: float = 4.1
         self.coeffs_tensor.requires_grad_(False)
-        self.w0_tensor.requires_grad_(False)
+        self.w0_tensor.requires_grad_(True)
+        self.b0_tensor.requires_grad_(True)
         self.w1_tensor.requires_grad_(True)
         self.type_bias_tensor.requires_grad_(True)
         
