@@ -513,49 +513,61 @@ class LitNep(LitPotentialBase):
 class LitNNMtp(LitPotentialBase):
     def __init__(
             self,
-            mtp_level: int,
             type_map: List[int],
-            energy_shifts: Optional[List[float]] = None,
+            umax_num_neigh_atoms: int = 200,
+            fit_virial: bool = True,
+            mtp_level: int = 18,
             chebyshev_size: int = 8,
             num_neurons: int = 30,
             rmax: float = 5.0,
             rmin: float = 0.0,
-            umax_num_neigh_atoms: int = 200,
-            fit_virial: bool = False,
-            zbl_rmax: float = 2.0,
-            zbl_rmin: float = 1.0,
+            zbl_rmax: float = 0.0,
+            zbl_rmin: float = 0.0,
             zbl_cks_list: Optional[List[float]] = None,
             zbl_dks_list: Optional[List[float]] = None,
-            lr_start: float = 1e-3,
-            lr_end: float = 1e-7,
-            e_wgt_start: float = 0.02,
-            e_wgt_end: float = 1.0,
-            f_wgt_start: float = 1000.0,
-            f_wgt_end: float = 0.1,
-            v_wgt_start: float = 0.0,
-            v_wgt_end: float = 0.0):
-        super().__init__()
+            lr_start: float = 1e-2,
+            lr_end: float = 1e-4,
+            e_wgt_start: float = 0.1,
+            e_wgt_end: float = 2.0,
+            f_wgt_start: float = 10.0,
+            f_wgt_end: float = 1.0,
+            v_wgt_start: float = 0.1,
+            v_wgt_end: float = 1.0,
+            max_clip_norm: float = 10.0):
+        super().__init__(
+            type_map=type_map,
+            umax_num_neigh_atoms=umax_num_neigh_atoms,
+            fit_virial=fit_virial,
+            zbl_rmax=zbl_rmax,
+            zbl_rmin=zbl_rmin,
+            zbl_cks_list=zbl_cks_list,
+            zbl_dks_list=zbl_dks_list,
+            lr_start=lr_start,
+            lr_end=lr_end,
+            e_wgt_start=e_wgt_start,
+            e_wgt_end=e_wgt_end,
+            f_wgt_start=f_wgt_start,
+            f_wgt_end=f_wgt_end,
+            v_wgt_start=v_wgt_start,
+            v_wgt_end=v_wgt_end,
+            max_clip_norm=max_clip_norm)
+        
+        self.model: nn.Module = NNMtp(
+            type_map=type_map,
+            umax_num_neigh_atoms=umax_num_neigh_atoms,
+            fit_virial=fit_virial,
+            mtp_level=mtp_level,
+            chebyshev_size=chebyshev_size,
+            num_neurons=num_neurons,
+            rmax=rmax,
+            rmin=rmin,
+            zbl_rmax=zbl_rmax,
+            zbl_rmin=zbl_rmin,
+            zbl_cks_list=zbl_cks_list,
+            zbl_dks_list=zbl_dks_list)
+        
+        self.register_buffer("conv_energy_tensor", self.model.conv_energy_tensor)
+        self.register_buffer("conv_length_tensor", self.model.conv_length_tensor)
+        
         self.save_hyperparameters()
-        
-        self.model: nn.Module = NNMtp(mtp_level=mtp_level,
-                                      type_map=type_map,
-                                      energy_shifts=energy_shifts,
-                                      chebyshev_size=chebyshev_size,
-                                      num_neurons=num_neurons,
-                                      rmax=rmax,
-                                      rmin=rmin,
-                                      umax_num_neigh_atoms=umax_num_neigh_atoms,
-                                      fit_virial=fit_virial,
-                                      zbl_rmax=zbl_rmax,
-                                      zbl_rmin=zbl_rmin,
-                                      zbl_cks_list=zbl_cks_list,
-                                      zbl_dks_list=zbl_dks_list)
-        
-        self.lr_start: float = lr_start
-        self.lr_end: float = lr_end
-        self.e_wgt_start: float = e_wgt_start
-        self.e_wgt_end: float = e_wgt_end
-        self.f_wgt_start: float = f_wgt_start
-        self.f_wgt_end: float = f_wgt_end
-        self.v_wgt_start: float = v_wgt_start
-        self.v_wgt_end: float = v_wgt_end
+    

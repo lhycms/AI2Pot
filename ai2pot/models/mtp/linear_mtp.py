@@ -24,8 +24,6 @@ import torch.nn as nn
 from ai2pot.fromcc import (mtpParamOp,
                            linearMtpToLossOp,
                            linearMtpToEFLossOp,
-                           linearMtpToEFVOp,
-                           linearMtpToEFOp,
                            linearMtpToEsitesOp,
                            linearMtpToDescriptorsOp)
 

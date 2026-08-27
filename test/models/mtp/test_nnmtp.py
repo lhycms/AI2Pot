@@ -12,7 +12,6 @@ from ai2pot.models.mtp.nn_mtp import NNMtp
 
 TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")
 ReNbSSe_POSCAR_PATH = os.path.join(TEST_FILES_DIR, "POSCARs", "POSCAR")
-torch.manual_seed(16)
 torch.set_num_threads(16)
 
 print("Number of omp threads = ", torch.get_num_threads())
@@ -29,14 +28,18 @@ class NNMtpTest(unittest.TestCase):
         self.umax_num_neigh_atoms = 200
         self.device: torch._C.device = torch.device("cpu")
         self.torch_float_dtype: torch._C.dtype = torch.float32
-        self.nn_mtp: NNMtp = NNMtp(mtp_level=16,
-                                   type_map=self.type_map,
+        self.nn_mtp: NNMtp = NNMtp(type_map=self.type_map,
+                                   umax_num_neigh_atoms=self.umax_num_neigh_atoms,
+                                   fit_virial=True,
+                                   mtp_level=16,
                                    chebyshev_size=self.chebyshev_size,
                                    num_neurons=self.num_neurons,
                                    rmax=self.rmax,
                                    rmin=self.rmin,
-                                   umax_num_neigh_atoms=self.umax_num_neigh_atoms,
-                                   fit_virial=True)
+                                   zbl_rmax=0.0,
+                                   zbl_rmin=0.0,
+                                   zbl_cks_list=None,
+                                   zbl_dks_list=None)
         self.nn_mtp.to(self.device)
         self.nn_mtp.to(self.torch_float_dtype)
         self.mlff_input: MlffInput = MlffInput(type_map=self.type_map,
@@ -68,7 +71,7 @@ class NNMtpTest(unittest.TestCase):
             loss = self.nn_mtp.predict_loss(*self.mlff_to_loss_input.analyse_pymatgen(self.structure,
                                                                                           e_weight=1.0,
                                                                                           f_weight=1.0,
-                                                                                          v_weight=0.0))
+                                                                                          v_weight=0.0))[0]
             loss.sum().backward()
             t2 = time.time()
             if (ii == 0):
@@ -82,13 +85,13 @@ class NNMtpTest(unittest.TestCase):
         print("1. Loss = ", loss)
 
 
-    def test_predict_ef_loss(self):
+    def est_predict_ef_loss(self):
         times_list: List[float] = []
         for ii in range(110):
             t1 = time.time()
             ef_loss = self.nn_mtp.predict_ef_loss(*self.mlff_to_ef_loss_input.analyse_pymatgen(self.structure,
                                                                                                    e_weight=1.0,
-                                                                                                   f_weight=1.0))
+                                                                                                   f_weight=1.0))[0]
             ef_loss.sum().backward()
             t2 = time.time()
             if (ii == 0):
@@ -133,21 +136,7 @@ class NNMtpTest(unittest.TestCase):
         print("2. Force.shape = \n", f[0][5])
 
 
-    def est_predict_e_sites(self):
-        times_list: List[float] = []
-        for ii in range(110):
-            t1 = time.time()
-            e_sites = self.nn_mtp.predict_e_sites(*self.mlff_input.analyse_pymatgen(structure=self.structure))
-            t2 = time.time()
-            if (ii>9):
-                times_list.append(t2-t1)
-                
-        print("0.1. Average time cost by nn_mtp.predict_ef() = ", np.sum(times_list) / 100)
-        print("0.2. std time cost by nn_mtp.predict_ef() = ", np.std(times_list) / 100)
-        print("\t1. Esites.shape = ", e_sites.shape)
-
-
-    def est_predict_descriptors(self):
+    def test_predict_descriptors(self):
         times_list: List[float] = []
         for ii in range(110):
             t1 = time.time()

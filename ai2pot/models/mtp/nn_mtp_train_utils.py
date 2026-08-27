@@ -16,9 +16,16 @@
 # along with AI2Pot.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from typing import List, Union, Dict, Any
-
+from typing import Optional, List
+import copy
 import torch
-import torch.nn as nn
+from torch.utils.data import DataLoader
+import numpy as np
+from scipy.optimize import minimize
 
 
+from ai2pot.models.potential_train_utils import DescriptorNormCallbackBase
+
+
+class NNMtpDescriptorNormCallback(DescriptorNormCallbackBase):
+    pass
