@@ -268,6 +268,8 @@ void NNMtpLoss<CoordType>::find_loss_backward(
     CoordType *activated_hidden_vals;
     CoordType *activated_hidden_ders;
     CoordType *activated_hidden_der2ders;
+    CoordType *de22m0m1_dloss_combinations;
+    CoordType *nn_der2seed;
     int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
 
     int max_alpha_index_basic = 0;
@@ -288,7 +290,8 @@ void NNMtpLoss<CoordType>::find_loss_backward(
 #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
 #pragma omp parallel private(mom_vals, e_site_der2mom, dloss_combination,                               \
                              auto_dist_powers_, auto_coords_powers_, p_RadialBasis,                     \
-                             activated_hidden_vals, activated_hidden_ders, activated_hidden_der2ders)
+                             activated_hidden_vals, activated_hidden_ders, activated_hidden_der2ders,   \
+                             de22m0m1_dloss_combinations, nn_der2seed)
 {
 #endif
     mom_vals = (CoordType*)malloc(sizeof(CoordType) * alpha_moments_count);
@@ -300,6 +303,8 @@ void NNMtpLoss<CoordType>::find_loss_backward(
     activated_hidden_vals = (CoordType*)malloc(sizeof(CoordType) * num_neurons);
     activated_hidden_ders = (CoordType*)malloc(sizeof(CoordType) * num_neurons);
     activated_hidden_der2ders = (CoordType*)malloc(sizeof(CoordType) * num_neurons);
+    de22m0m1_dloss_combinations = (CoordType*)malloc(sizeof(CoordType) * alpha_moments_count);
+    nn_der2seed = (CoordType*)malloc(sizeof(CoordType) * alpha_moments_count);
 
     int center_idx;
     int type_central;
@@ -323,6 +328,8 @@ void NNMtpLoss<CoordType>::find_loss_backward(
         memset(activated_hidden_vals, 0, sizeof(CoordType) * num_neurons);
         memset(activated_hidden_ders, 0, sizeof(CoordType) * num_neurons);
         memset(activated_hidden_der2ders, 0, sizeof(CoordType) * num_neurons);
+        memset(de22m0m1_dloss_combinations, 0, sizeof(CoordType) * alpha_moments_count);
+        memset(nn_der2seed, 0, sizeof(CoordType) * alpha_moments_count);
         center_idx = ilist[ii];
         type_central = types[center_idx];
         type_central_w0 = &w0[type_central * num_neurons * alpha_scalar_moments];
@@ -463,6 +470,51 @@ void NNMtpLoss<CoordType>::find_loss_backward(
         }
 
         // Step 4.3. Loss derivative w.r.t. coeffs
+        // New Code
+        for (int i=0; i<alpha_index_times_count; i++) {
+            CoordType val2 = alpha_index_times[i][2];
+            de22m0m1_dloss_combinations[alpha_index_times[i][1]] += val2 * e_site_der2mom[alpha_index_times[i][3]]
+                                                                    * dloss_combination[alpha_index_times[i][0]];
+            de22m0m1_dloss_combinations[alpha_index_times[i][0]] += val2 * e_site_der2mom[alpha_index_times[i][3]]
+                                                                    * dloss_combination[alpha_index_times[i][1]];
+        }
+
+        for (int i=alpha_index_times_count-1; i>=0; i--) {
+            CoordType val0 = mom_vals[alpha_index_times[i][0]];
+            CoordType val1 = mom_vals[alpha_index_times[i][1]];
+            CoordType val2 = alpha_index_times[i][2];
+
+            de22m0m1_dloss_combinations[alpha_index_times[i][0]] += de22m0m1_dloss_combinations[alpha_index_times[i][3]]
+                                                                    * val2 * val1;
+            de22m0m1_dloss_combinations[alpha_index_times[i][1]] += de22m0m1_dloss_combinations[alpha_index_times[i][3]]
+                                                                    * val2 * val0;
+        }
+
+        for (int p=0; p<num_neurons; p++) {
+            CoordType dloss_combination_sum = 0.0;
+            for (int s=0; s<alpha_scalar_moments; s++)
+                dloss_combination_sum += type_central_w0[p*alpha_scalar_moments + s] / q_scaler[s]
+                                         * dloss_combination[alpha_moment_mapping[s]];
+            
+            for (int s=0; s<alpha_scalar_moments; s++)
+                nn_der2seed[alpha_moment_mapping[s]] += type_central_w1[p]
+                                                        * activated_hidden_der2ders[p]
+                                                        * type_central_w0[p*alpha_scalar_moments + s]
+                                                        / q_scaler[s]
+                                                        * dloss_combination_sum;
+        }
+
+        for (int i=alpha_index_times_count-1; i>=0; i--) {
+            CoordType val0 = mom_vals[alpha_index_times[i][0]];
+            CoordType val1 = mom_vals[alpha_index_times[i][1]];
+            CoordType val2 = alpha_index_times[i][2];
+            nn_der2seed[alpha_index_times[i][0]] += nn_der2seed[alpha_index_times[i][3]] * val2 * val1;
+            nn_der2seed[alpha_index_times[i][1]] += nn_der2seed[alpha_index_times[i][3]] * val2 * val0;
+        }
+        for (int i=0; i<alpha_index_basic_count; i++)
+            de22m0m1_dloss_combinations[i] += nn_der2seed[i];
+        // New Code
+
         for (int jj=0; jj<numneigh[ii]; jj++) {
             neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
             type_outer = types[neigh_idx];
@@ -533,7 +585,7 @@ void NNMtpLoss<CoordType>::find_loss_backward(
                                           * e_site_der2mom[i]
                                           * A * B * C;
                     
-                    CoordType tmpf_loss_der2coeff = 0.0;
+                    CoordType tmpf_loss_der2coeff = de22m0m1_dloss_combinations[i] * A * B * C;
                     for (int aa=0; aa<3; aa++) {
                         CoordType tmp_prefix = 0.0;
                         CoordType tmp_deriv = (A_ders[aa] * B * C
@@ -544,18 +596,18 @@ void NNMtpLoss<CoordType>::find_loss_backward(
                                       * (force_ml[center_idx][aa] - force_dft[center_idx][aa]);
                         tmp_prefix -= 2*f_weight/(3*inum)
                                       * (force_ml[neigh_idx][aa] - force_dft[neigh_idx][aa]);
-                        for (int bb=0; bb<3; bb++) {
+                        for (int bb=0; bb<3; bb++)
+                        {
                             tmp_prefix -= 2*v_weight/(9*inum)
                                           * (virial_ml[aa*3+bb] - virial_dft[aa*3+bb])
                                           * neigh_vec[bb];
                         }
-                        tmpf_loss_der2coeff += tmp_prefix * tmp_deriv;
+                        tmpf_loss_der2coeff += tmp_prefix * e_site_der2mom[i] * tmp_deriv;
                     }
                     #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
                     #pragma omp atomic
                     #endif
-                    loss_der2coeffs[idx] += (tmpe_loss_der2coeff
-                                             + tmpf_loss_der2coeff * e_site_der2mom[i]);
+                    loss_der2coeffs[idx] += (tmpe_loss_der2coeff + tmpf_loss_der2coeff);
                 }
             }
         }
@@ -638,6 +690,8 @@ void NNMtpLoss<CoordType>::find_loss_backward(
     free(activated_hidden_vals);
     free(activated_hidden_ders);
     free(activated_hidden_der2ders);
+    free(de22m0m1_dloss_combinations);
+    free(nn_der2seed);
     delete p_RadialBasis;
 #ifdef USE_OPENMP
 }

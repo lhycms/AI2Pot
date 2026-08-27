@@ -186,7 +186,7 @@ class NNMtpTest(unittest.TestCase):
         e_weight: float = 2.1
         f_weight: float = 3.1
         v_weight: float = 4.1
-        self.coeffs_tensor.requires_grad_(False)
+        self.coeffs_tensor.requires_grad_(True)
         self.w0_tensor.requires_grad_(True)
         self.b0_tensor.requires_grad_(True)
         self.w1_tensor.requires_grad_(True)
