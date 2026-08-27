@@ -695,6 +695,8 @@ void find_loss_backward_atom(
     CoordType activated_hidden_vals[MAX_NUM_NEURONS] = {0.0};
     CoordType activated_hidden_ders[MAX_NUM_NEURONS] = {0.0};
     CoordType activated_hidden_der2ders[MAX_NUM_NEURONS] = {0.0};
+    CoordType de22m0m1_dloss_combinations[MAX_ALPHA_MOMENTS_COUNT] = {0.0};
+    CoordType nn_der2seed[MAX_ALPHA_MOMENTS_COUNT] = {0.0};
 
     int center_idx;
     int type_central;
@@ -858,6 +860,51 @@ void find_loss_backward_atom(
     }
     
     // 2.3. loss derivative w.r.t. coeffs
+    // New Code
+    for (int i=0; i<alpha_index_times_count; i++) {
+        CoordType val2 = alpha_index_times[i][2];
+        de22m0m1_dloss_combinations[alpha_index_times[i][1]] += val2 * e_site_der2mom[alpha_index_times[i][3]]
+                                                                * dloss_combination[alpha_index_times[i][0]];
+        de22m0m1_dloss_combinations[alpha_index_times[i][0]] += val2 * e_site_der2mom[alpha_index_times[i][3]]
+                                                                * dloss_combination[alpha_index_times[i][1]];
+    }
+
+    for (int i=alpha_index_times_count-1; i>=0; i--) {
+        CoordType val0 = mom_vals[alpha_index_times[i][0]];
+        CoordType val1 = mom_vals[alpha_index_times[i][1]];
+        CoordType val2 = alpha_index_times[i][2];
+
+        de22m0m1_dloss_combinations[alpha_index_times[i][0]] += de22m0m1_dloss_combinations[alpha_index_times[i][3]]
+                                                                * val2 * val1;
+        de22m0m1_dloss_combinations[alpha_index_times[i][1]] += de22m0m1_dloss_combinations[alpha_index_times[i][3]]
+                                                                * val2 * val0;
+    }
+
+    for (int p=0; p<num_neurons; p++) {
+        CoordType dloss_combination_sum = 0.0;
+        for (int s=0; s<alpha_scalar_moments; s++)
+            dloss_combination_sum += type_central_w0[p*alpha_scalar_moments + s] / q_scaler[s]
+                                        * dloss_combination[alpha_moment_mapping[s]];
+        
+        for (int s=0; s<alpha_scalar_moments; s++)
+            nn_der2seed[alpha_moment_mapping[s]] += type_central_w1[p]
+                                                    * activated_hidden_der2ders[p]
+                                                    * type_central_w0[p*alpha_scalar_moments + s]
+                                                    / q_scaler[s]
+                                                    * dloss_combination_sum;
+    }
+
+    for (int i=alpha_index_times_count-1; i>=0; i--) {
+        CoordType val0 = mom_vals[alpha_index_times[i][0]];
+        CoordType val1 = mom_vals[alpha_index_times[i][1]];
+        CoordType val2 = alpha_index_times[i][2];
+        nn_der2seed[alpha_index_times[i][0]] += nn_der2seed[alpha_index_times[i][3]] * val2 * val1;
+        nn_der2seed[alpha_index_times[i][1]] += nn_der2seed[alpha_index_times[i][3]] * val2 * val0;
+    }
+    for (int i=0; i<alpha_index_basic_count; i++)
+        de22m0m1_dloss_combinations[i] += nn_der2seed[i];
+    // New Code
+
     for (int jj=0; jj<snumneigh; jj++)
     {
         neigh_idx = sfirstneigh[jj];
@@ -934,7 +981,7 @@ void find_loss_backward_atom(
                                                 * e_site_der2mom[i]
                                                 * A * B * C;
 
-                CoordType tmpf_loss_der2coeff = 0;
+                CoordType tmpf_loss_der2coeff = de22m0m1_dloss_combinations[i] * A * B * C;
                 for (int aa=0; aa<3; aa++) 
                 {
                     CoordType tmp_prefix = 0;
@@ -1412,6 +1459,8 @@ void find_ef_loss_backward_atom(
     CoordType activated_hidden_vals[MAX_NUM_NEURONS] = {0.0};
     CoordType activated_hidden_ders[MAX_NUM_NEURONS] = {0.0};
     CoordType activated_hidden_der2ders[MAX_NUM_NEURONS] = {0.0};
+    CoordType de22m0m1_dloss_combinations[MAX_ALPHA_MOMENTS_COUNT] = {0.0};
+    CoordType nn_der2seed[MAX_ALPHA_MOMENTS_COUNT] = {0.0};
 
     int center_idx;
     int type_central;
@@ -1569,6 +1618,51 @@ void find_ef_loss_backward_atom(
     }
     
     // 2.3. loss derivative w.r.t. coeffs
+    // New Code
+    for (int i=0; i<alpha_index_times_count; i++) {
+        CoordType val2 = alpha_index_times[i][2];
+        de22m0m1_dloss_combinations[alpha_index_times[i][1]] += val2 * e_site_der2mom[alpha_index_times[i][3]]
+                                                                * dloss_combination[alpha_index_times[i][0]];
+        de22m0m1_dloss_combinations[alpha_index_times[i][0]] += val2 * e_site_der2mom[alpha_index_times[i][3]]
+                                                                * dloss_combination[alpha_index_times[i][1]];
+    }
+
+    for (int i=alpha_index_times_count-1; i>=0; i--) {
+        CoordType val0 = mom_vals[alpha_index_times[i][0]];
+        CoordType val1 = mom_vals[alpha_index_times[i][1]];
+        CoordType val2 = alpha_index_times[i][2];
+
+        de22m0m1_dloss_combinations[alpha_index_times[i][0]] += de22m0m1_dloss_combinations[alpha_index_times[i][3]]
+                                                                * val2 * val1;
+        de22m0m1_dloss_combinations[alpha_index_times[i][1]] += de22m0m1_dloss_combinations[alpha_index_times[i][3]]
+                                                                * val2 * val0;
+    }
+
+    for (int p=0; p<num_neurons; p++) {
+        CoordType dloss_combination_sum = 0.0;
+        for (int s=0; s<alpha_scalar_moments; s++)
+            dloss_combination_sum += type_central_w0[p*alpha_scalar_moments + s] / q_scaler[s]
+                                        * dloss_combination[alpha_moment_mapping[s]];
+        
+        for (int s=0; s<alpha_scalar_moments; s++)
+            nn_der2seed[alpha_moment_mapping[s]] += type_central_w1[p]
+                                                    * activated_hidden_der2ders[p]
+                                                    * type_central_w0[p*alpha_scalar_moments + s]
+                                                    / q_scaler[s]
+                                                    * dloss_combination_sum;
+    }
+
+    for (int i=alpha_index_times_count-1; i>=0; i--) {
+        CoordType val0 = mom_vals[alpha_index_times[i][0]];
+        CoordType val1 = mom_vals[alpha_index_times[i][1]];
+        CoordType val2 = alpha_index_times[i][2];
+        nn_der2seed[alpha_index_times[i][0]] += nn_der2seed[alpha_index_times[i][3]] * val2 * val1;
+        nn_der2seed[alpha_index_times[i][1]] += nn_der2seed[alpha_index_times[i][3]] * val2 * val0;
+    }
+    for (int i=0; i<alpha_index_basic_count; i++)
+        de22m0m1_dloss_combinations[i] += nn_der2seed[i];
+    // New Code
+
     for (int jj=0; jj<snumneigh; jj++)
     {
         neigh_idx = sfirstneigh[jj];
@@ -1645,7 +1739,7 @@ void find_ef_loss_backward_atom(
                                                 * e_site_der2mom[i]
                                                 * A * B * C;
 
-                CoordType tmpf_loss_der2coeff = 0;
+                CoordType tmpf_loss_der2coeff = de22m0m1_dloss_combinations[i] * A * B * C;
                 for (int aa=0; aa<3; aa++) 
                 {
                     CoordType tmp_prefix = 0;
@@ -1656,11 +1750,9 @@ void find_ef_loss_backward_atom(
                                   * (force_ml[center_idx][aa] - force_dft[center_idx][aa]);
                     tmp_prefix -= 2*f_weight/(3*inum)
                                   * (force_ml[neigh_idx][aa] - force_dft[neigh_idx][aa]);
-                    tmpf_loss_der2coeff += tmp_prefix * tmp_deriv;
+                    tmpf_loss_der2coeff += tmp_prefix * e_site_der2mom[i] * tmp_deriv;
                 }
-                atomicAdd(&loss_der2coeffs[idx],
-                          tmpe_loss_der2coeff
-                          + tmpf_loss_der2coeff * e_site_der2mom[i]);
+                atomicAdd(&loss_der2coeffs[idx], tmpe_loss_der2coeff + tmpf_loss_der2coeff);
             }
         }
     }
