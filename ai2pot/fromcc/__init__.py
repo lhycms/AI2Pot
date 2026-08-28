@@ -76,11 +76,11 @@ if not IS_DARWIN:
     allTypeDescriptorsMaxminOp = torch.ops.fitutils.allTypeDescriptorsMaxminOp
 
     ### Part 2.2. deepmd
-    deepmd_lib_dir:str = os.path.join(ai2pot_lib_dir, "descriptor", "deepmd") if os.getenv("AI2POT_PATH") else ai2pot_lib_dir
-    envMatrixOp_bind_so_path:str = os.path.join(deepmd_lib_dir, "libenvMatrixOp_bind.so")
-    torch.ops.load_library(envMatrixOp_bind_so_path)
+    #deepmd_lib_dir:str = os.path.join(ai2pot_lib_dir, "descriptor", "deepmd") if os.getenv("AI2POT_PATH") else ai2pot_lib_dir
+    #envMatrixOp_bind_so_path:str = os.path.join(deepmd_lib_dir, "libenvMatrixOp_bind.so")
+    #torch.ops.load_library(envMatrixOp_bind_so_path)
     # name `envMatrixOp`
-    envMatrixOp = torch.ops.deepmd.EnvMatrixOp
+    #envMatrixOp = torch.ops.deepmd.EnvMatrixOp
 
 
     ### Part 2.3. mtpr
