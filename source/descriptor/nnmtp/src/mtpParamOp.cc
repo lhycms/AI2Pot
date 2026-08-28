@@ -13,7 +13,6 @@
     along with AI2Pot.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <ATen/ATen.h>
 #include <torch/torch.h>
 
 #include "../include/mtpParamOp.h"
