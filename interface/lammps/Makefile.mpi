@@ -37,11 +37,24 @@ endif
 
 LIB += -L$(AI2POT_ROOT)/_lib
 LIB += -Wl,-rpath,$(AI2POT_ROOT)/_lib
-LIB += -lmtpr_bind
+LIB += -lmtpr_bind_cpu
 LIB += -lmtpParamOp
-LIB += -llinearMtpOp
-LIB += -lnep_bind
-LIB += -lnepOp
+LIB += -llinearMtpOp_cpu
+LIB += -lnep_bind_cpu
+LIB += -lnepOp_cpu
+LIB += -lnnmtp_bind_cpu
+LIB += -lmtpParamOp_nnMtp
+LIB += -lnnMtpOp_cpu
+
+ifeq ($(TORCH_HAS_CUDA),1)
+LIB += -lmtpr_bind_cuda
+LIB += -llinearMtpOp_cuda
+LIB += -lnep_bind_cuda
+LIB += -lnepOp_cuda
+LIB += -lnnmtp_bind_cuda
+LIB += -lnnMtpOp_cuda
+endif
+
 LIB += $(shell python3-config --embed --ldflags)
 LIB += -Wl,-rpath,$(CONDA_PREFIX)/lib
 ### Modify by AI2Pot

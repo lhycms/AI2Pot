@@ -133,6 +133,8 @@ if (TORCH_OP)
             TARGETS
                 # fitutils
                 target_statistics_op_cpu
+                target_statistics_op_cuda
+                descriptor_statistics_op_cpu
                 descriptor_statistics_op_cuda
                 fitutils_bind_cpu
                 fitutils_bind_cuda
@@ -192,6 +194,7 @@ if (TORCH_OP)
             TARGETS
                 # fitutils
                 target_statistics_op_cpu
+                descriptor_statistics_op_cpu
                 fitutils_bind_cpu
                 #
 

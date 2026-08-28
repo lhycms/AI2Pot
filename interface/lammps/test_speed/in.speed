@@ -3,9 +3,9 @@ atom_style      atomic
 boundary        p p p
 
 read_data       data.gst
-replicate       10 10 10
+replicate       7 7 7
 
-pair_style      ai2pot ./nep_ai2pot_libtorch.pt
+pair_style      ai2pot ./mtp_ai2pot_libtorch.pt
 pair_coeff      * * Ge Sb Te
 
 neighbor        2.0 bin
@@ -13,4 +13,4 @@ neigh_modify    every 1 delay 0 check yes
 
 thermo          100
 
-run             100
+run             10

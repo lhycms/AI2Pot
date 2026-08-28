@@ -15,7 +15,7 @@ from ai2pot.models.mtp.nn_mtp_utils import (NNMtpSerializer,
 
 
 TEST_FILES_DIR = os.getenv("AI2POT_PATH")
-CHECK_POINT_PATH: str = "/data/home/liuhanyu/mycode/AI2Pot/lightning_logs/lightning_logs/version_68/checkpoints/epoch=0-step=165.ckpt"
+CHECK_POINT_PATH: str = "/data/home/liuhanyu/ai2pot_paper_code/3.GST_demo/NNMTP/bs16/lightning_logs/version_0/checkpoints/last.ckpt"
 # "/data/home/liuhanyu/mycode/AI2Pot/lightning_logs/lightning_logs/version_59/checkpoints/epoch=199-step=5000.ckpt"
 EXTXYZ_PATH: str = os.path.join(TEST_FILES_DIR,
                                 "test",
@@ -114,7 +114,7 @@ class NNMtpCalculatorTest(unittest.TestCase):
         print("Calculator (without virial) Summary:")
         print("-------------------")
         print("\t1.1. Energy = ", self.atoms.get_potential_energy())
-        print("\t1.2. forces.shape = ", self.atoms.get_forces().shape)
+        print("\t1.2. forces.shape = ", self.atoms.get_forces())
         print()
 
         print("\t2.1. descriptors.shape = ", self.atoms.calc.get_property("descriptors", atoms=self.atoms).shape)

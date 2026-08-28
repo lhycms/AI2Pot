@@ -4,7 +4,7 @@ boundary        p p p
 
 read_data       data.gst
 
-pair_style      ai2pot ./ai2pot_libtorch.pt
+pair_style      ai2pot ./ai2pot_libtorch_nnmtp.pt
 pair_coeff      * * Ge Sb Te
 
 neighbor        2.0 bin

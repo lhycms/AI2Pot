@@ -266,7 +266,9 @@ void PairAI2Pot::settings(int argc, char **argv) {
         model.eval();
 
         std::string potential_type = "AI2Pot-NEP";
-        if (model.hasattr("mtp_level"))
+        if (model.hasattr("mtp_level") && (model.hasattr("num_neurons")))
+            potential_type = "AI2Pot-NNMTP";
+        else if (model.hasattr("mtp_level"))
             potential_type = "AI2Pot-MTP";
 
         // 2. Log
