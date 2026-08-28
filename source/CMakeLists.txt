@@ -147,9 +147,9 @@ if (TORCH_OP)
                 zbl_torch_launcher
 
                 # deepmd
-                se4pw_op
-                envMatrixOp
-                envMatrixOp_bind
+                #se4pw_op
+                #envMatrixOp
+                #envMatrixOp_bind
 
                 # mtpr
                 mtpParam
@@ -202,9 +202,9 @@ if (TORCH_OP)
                 #
                 
                 # deepmd
-                se4pw_op
-                envMatrixOp
-                envMatrixOp_bind
+                #se4pw_op
+                #envMatrixOp
+                #envMatrixOp_bind
 
                 # mtpr
                 mtpParam
