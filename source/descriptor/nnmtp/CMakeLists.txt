@@ -3,7 +3,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/descriptor/nnmtp)
 file(MAKE_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/descriptor/nnmtp)
-file(MAKE_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+file(MAKE_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/obj/descriptor/nnmtp)
 file(MAKE_DIRECTORY ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY})
@@ -30,7 +30,7 @@ if (TORCH_OP)
     ## 5.0. 
     add_library(mtpParamOp_nnMtp SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/mtpParamOp.cc)
     target_include_directories(mtpParamOp_nnMtp PRIVATE ${PYTHON_INCLUDE_DIRS})
-    target_link_libraries(mtpParamOp_nnMtp mtpParam_nnMtp ${PYTHON_LIBRARIES} ${TORCH_LIBRARIES})
+    target_link_libraries(mtpParamOp_nnMtp mtpParam_nnMtp ${PYTHON_LIBRARIES} ${TORCH_LIBRARIES_CPU})
 
     ## 5.1. nnMtpOp (CPU and CUDA)
     add_library(nnMtpOp_cpu SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/nnMtpOp_cpu.cc)
@@ -106,7 +106,7 @@ if (BUILD_TEST)
     add_executable(test_nnMtpLoss ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nnMtpLoss.cc)
     target_link_libraries(test_nnMtpLoss PRIVATE gtest gtest_main)
     if (USE_OPENMP)
-        target_compile_definitions(test_nnMtp PRIVATE USE_OPENMP)
+        target_compile_definitions(test_nnMtpLoss PRIVATE USE_OPENMP)
     endif()
 
     add_executable(test_nnMtp_cpu_launcher ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nnMtp_cpu_launcher.cc)
