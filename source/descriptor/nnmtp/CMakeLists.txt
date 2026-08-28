@@ -30,7 +30,7 @@ if (TORCH_OP)
     ## 5.0. 
     add_library(mtpParamOp_nnMtp SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/mtpParamOp.cc)
     target_include_directories(mtpParamOp_nnMtp PRIVATE ${PYTHON_INCLUDE_DIRS} ${TORCH_INCLUDE_DIRS})
-    target_link_libraries(mtpParamOp_nnMtp mtpParam_nnMtp ${PYTHON_LIBRARIES} ${TORCH_LIBRARIES_CPU})
+    target_link_libraries(mtpParamOp_nnMtp PRIVATE ${PYTHON_LIBRARIES} ${TORCH_LIBRARIES_CPU})
 
     ## 5.1. nnMtpOp (CPU and CUDA)
     add_library(nnMtpOp_cpu SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/nnMtpOp_cpu.cc)
