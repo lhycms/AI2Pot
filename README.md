@@ -228,4 +228,4 @@ pair_coeff * * Ge Sb Te
 
 ## Citation
 
-[Liu2026] Hanyu Liu, Linggang Zhu, Xuanguang Zhang, Ning Yang, Jian Zhou, Zhimei Sun. [AI2Pot: A scalable and unified framework for machine-learning interatomic potential development and large-scale molecular dynamics simulations](https://arxiv.org/pdf/2607.06969), arXiv preprint arXiv:2607.06969 (2026).
+[Liu2026] Hanyu Liu, Linggang Zhu, Xuanguang Zhang, Ning Yang, Jian Zhou, Zhimei Sun. [AI2Pot: A scalable and unified framework for machine-learning interatomic potential development and large-scale molecular dynamics simulations](https://arxiv.org/abs/2607.06969), arXiv preprint arXiv:2607.06969 (2026).
