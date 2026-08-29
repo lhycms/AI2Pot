@@ -223,15 +223,15 @@ void PairAI2Pot::construct_mlff_input()
     for (int ii=0; ii<list->inum; ii++) {
         int center_idx = list->ilist[ii];
         ilist[ii] = list->ilist[ii];
-        numneigh[ii] = list->numneigh[center_idx];
+        numneigh[center_idx] = list->numneigh[center_idx];
 
         for (int jj=0; jj<list->numneigh[center_idx]; jj++) {
             int neigh_idx = list->firstneigh[center_idx][jj] & NEIGHMASK;
-            firstneigh[ii*umax_num_neigh_atoms + jj] = neigh_idx;
+            firstneigh[center_idx*umax_num_neigh_atoms + jj] = neigh_idx;
 
-            rcs[ii*umax_num_neigh_atoms*3 + jj*3 + 0] = atom->x[neigh_idx][0] - atom->x[center_idx][0];
-            rcs[ii*umax_num_neigh_atoms*3 + jj*3 + 1] = atom->x[neigh_idx][1] - atom->x[center_idx][1];
-            rcs[ii*umax_num_neigh_atoms*3 + jj*3 + 2] = atom->x[neigh_idx][2] - atom->x[center_idx][2];
+            rcs[center_idx*umax_num_neigh_atoms*3 + jj*3 + 0] = atom->x[neigh_idx][0] - atom->x[center_idx][0];
+            rcs[center_idx*umax_num_neigh_atoms*3 + jj*3 + 1] = atom->x[neigh_idx][1] - atom->x[center_idx][1];
+            rcs[center_idx*umax_num_neigh_atoms*3 + jj*3 + 2] = atom->x[neigh_idx][2] - atom->x[center_idx][2];
         }
     }
 

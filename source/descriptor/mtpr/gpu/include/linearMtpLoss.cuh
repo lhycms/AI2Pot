@@ -1011,9 +1011,9 @@ void find_loss_backward_kernel(
 
     if (ii < inum) {
         int silist = bilist[istruct*natoms_pad + ii];
-        int snumneigh = bnumneigh[istruct*natoms_pad + ii];
-        int *sfirstneigh = &bfirstneigh[istruct*natoms_pad*umax_num_neigh_atoms + ii*umax_num_neigh_atoms];
-        CoordType (*srcs)[3] = (CoordType (*)[3])(&brcs[istruct*natoms_pad*umax_num_neigh_atoms + ii*umax_num_neigh_atoms][0]);
+        int snumneigh = bnumneigh[istruct*natoms_pad + silist];
+        int *sfirstneigh = &bfirstneigh[istruct*natoms_pad*umax_num_neigh_atoms + silist*umax_num_neigh_atoms];
+        CoordType (*srcs)[3] = (CoordType (*)[3])(&brcs[istruct*natoms_pad*umax_num_neigh_atoms + silist*umax_num_neigh_atoms][0]);
         find_loss_backward_atom<CoordType>(
             loss_der2coeffs,
             loss_der2linear_coeffs,
@@ -1628,9 +1628,9 @@ void find_ef_loss_backward_kernel(
 
     if (ii < inum) {
         int silist = bilist[istruct*natoms_pad + ii];
-        int snumneigh = bnumneigh[istruct*natoms_pad + ii];
-        int *sfirstneigh = &bfirstneigh[istruct*natoms_pad*umax_num_neigh_atoms + ii*umax_num_neigh_atoms];
-        CoordType (*srcs)[3] = (CoordType (*)[3])(&brcs[istruct*natoms_pad*umax_num_neigh_atoms + ii*umax_num_neigh_atoms][0]);
+        int snumneigh = bnumneigh[istruct*natoms_pad + silist];
+        int *sfirstneigh = &bfirstneigh[istruct*natoms_pad*umax_num_neigh_atoms + silist*umax_num_neigh_atoms];
+        CoordType (*srcs)[3] = (CoordType (*)[3])(&brcs[istruct*natoms_pad*umax_num_neigh_atoms + silist*umax_num_neigh_atoms][0]);
         find_ef_loss_backward_atom<CoordType>(
             loss_der2coeffs,
             loss_der2linear_coeffs,

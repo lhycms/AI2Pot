@@ -54,7 +54,7 @@ public:
         int *ilist,
         int *numneigh,
         int *firstneigh,
-        CoordType (*relative_coords)[3],
+        CoordType (*rcs)[3],
         int *types,
         int ntypes,
         int umax_num_neigh_atoms,
@@ -94,7 +94,7 @@ public:
         int silist,
         int snumneigh,
         int *sfirstneigh,
-        CoordType (*srelative_coords)[3],
+        CoordType (*srcs)[3],
         int *types,
         int ntypes,
         int umax_num_neigh_atoms,
@@ -128,7 +128,7 @@ void MtpBasis<CoordType>::find_val_der(
     int *ilist,
     int *numneigh,
     int *firstneigh,
-    CoordType (*relative_coords)[3],
+    CoordType (*rcs)[3],
     int *types,
     int ntypes,
     int umax_num_neigh_atoms,
@@ -166,10 +166,12 @@ void MtpBasis<CoordType>::find_val_der(
     auto_coords_powers_ = (CoordType (*)[3])malloc(sizeof(CoordType) * max_alpha_index_basic * 3);
     //memset(auto_dist_powers_, 0, sizeof(CoordType) * max_alpha_index_basic);
     //memset(auto_coords_powers_, 0, sizeof(CoordType) * max_alpha_index_basic * 3);
-    CoordType NeighbVect[3];
+    CoordType neigh_vec[3];
     CoordType distance_ij;
     CoordType distance_ij_inv;
+    int center_idx;
     int type_central;
+    int neigh_idx;
     int type_outer;
     int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
 
@@ -184,20 +186,22 @@ void MtpBasis<CoordType>::find_val_der(
         if (calculate_der2coeffs)
             memset(mom_ders2coeffs, 0, sizeof(CoordType) * alpha_moments_count * num_coeffs);
 
+        center_idx = ilist[ii];
         type_central = types[ilist[ii]];
         if (type_central >= ntypes)
             throw MtpException("Too few types in the MTP potential.");
 
-        for (int jj=0; jj<numneigh[ii]; jj++) 
+        for (int jj=0; jj<numneigh[center_idx]; jj++) 
         {
-            type_outer = types[firstneigh[ii*umax_num_neigh_atoms + jj]];
+            neigh_idx = firstneigh[center_idx*umax_num_neigh_atoms + jj];
+            type_outer = types[neigh_idx];
             if (type_outer >= ntypes)
                 throw MtpException("Too few types in the MTP potential.");
             for (int a=0; a<3; a++)
-                NeighbVect[a] = relative_coords[ii*umax_num_neigh_atoms + jj][a];
-            distance_ij = std::sqrt( std::pow(NeighbVect[0], 2) + 
-                                     std::pow(NeighbVect[1], 2) + 
-                                     std::pow(NeighbVect[2], 2) );
+                neigh_vec[a] = rcs[center_idx*umax_num_neigh_atoms + jj][a];
+            distance_ij = std::sqrt( std::pow(neigh_vec[0], 2) + 
+                                     std::pow(neigh_vec[1], 2) + 
+                                     std::pow(neigh_vec[2], 2) );
             if (distance_ij > rmax)
                 continue;
             distance_ij_inv = 1 / distance_ij;
@@ -209,7 +213,7 @@ void MtpBasis<CoordType>::find_val_der(
             for (int k=1; k<max_alpha_index_basic; k++) {
                 auto_dist_powers_[k] = auto_dist_powers_[k-1] * distance_ij;
                 for (int a=0; a<3; a++)
-                    auto_coords_powers_[k][a] = auto_coords_powers_[k-1][a] * NeighbVect[a];
+                    auto_coords_powers_[k][a] = auto_coords_powers_[k-1][a] * neigh_vec[a];
             }
 
             for (int i=0; i<alpha_index_basic_count; i++)
@@ -232,9 +236,9 @@ void MtpBasis<CoordType>::find_val_der(
                         CoordType shuffle_mom_ders_part = distance_ij_inv * scaling *
                                         ( coeffs[idx] * p_RadialBasis->ders2r()[xi] * powk * mult0
                                         - coeffs[idx] * p_RadialBasis->vals()[xi] * k * powk * distance_ij_inv * mult0 );
-                        mom_ders[i*umax_num_neigh_atoms + jj][0] += NeighbVect[0] * shuffle_mom_ders_part;
-                        mom_ders[i*umax_num_neigh_atoms + jj][1] += NeighbVect[1] * shuffle_mom_ders_part;
-                        mom_ders[i*umax_num_neigh_atoms + jj][2] += NeighbVect[2] * shuffle_mom_ders_part;
+                        mom_ders[i*umax_num_neigh_atoms + jj][0] += neigh_vec[0] * shuffle_mom_ders_part;
+                        mom_ders[i*umax_num_neigh_atoms + jj][1] += neigh_vec[1] * shuffle_mom_ders_part;
+                        mom_ders[i*umax_num_neigh_atoms + jj][2] += neigh_vec[2] * shuffle_mom_ders_part;
 
                         if (alpha_index_basic[i][1] != 0) {
                             mom_ders[i*umax_num_neigh_atoms + jj][0] += coeffs[idx] * (p_RadialBasis->vals()[xi] * scaling) * powk * alpha_index_basic[i][1]
@@ -294,13 +298,13 @@ void MtpBasis<CoordType>::find_val_der(
             }
             
             if (calculate_der2xyz) {
-                for (int jj=0; jj<numneigh[ii]; jj++)
+                for (int jj=0; jj<numneigh[center_idx]; jj++)
                 {
                     for (int a=0; a<3; a++)
-                        NeighbVect[a] = relative_coords[ii*umax_num_neigh_atoms + jj][a];
-                    distance_ij = std::sqrt( std::pow(NeighbVect[0], 2)
-                                           + std::pow(NeighbVect[1], 2)
-                                           + std::pow(NeighbVect[2], 2) );
+                        neigh_vec[a] = rcs[center_idx*umax_num_neigh_atoms + jj][a];
+                    distance_ij = std::sqrt( std::pow(neigh_vec[0], 2)
+                                           + std::pow(neigh_vec[1], 2)
+                                           + std::pow(neigh_vec[2], 2) );
                     if (distance_ij > rmax)
                         continue;
 
@@ -323,12 +327,12 @@ void MtpBasis<CoordType>::find_val_der(
             mtp_basis_val[ii*alpha_scalar_moments + i] = mom_vals[alpha_moment_mapping[i]];
 
             if (calculate_der2xyz) {
-                for (int jj=0; jj<numneigh[ii]; jj++) {
+                for (int jj=0; jj<numneigh[center_idx]; jj++) {
                     for (int a=0; a<3; a++)
-                        NeighbVect[a] = relative_coords[ii*umax_num_neigh_atoms + jj][a];
-                    distance_ij = std::sqrt( std::pow(NeighbVect[0], 2)
-                                           + std::pow(NeighbVect[1], 2) 
-                                           + std::pow(NeighbVect[2], 2));
+                        neigh_vec[a] = rcs[center_idx*umax_num_neigh_atoms + jj][a];
+                    distance_ij = std::sqrt( std::pow(neigh_vec[0], 2)
+                                           + std::pow(neigh_vec[1], 2) 
+                                           + std::pow(neigh_vec[2], 2));
                     if (distance_ij > rmax)
                         continue;
 
@@ -412,7 +416,7 @@ void MomsValDer<CoordType>::find_val_der(
         int silist,
         int snumneigh,
         int *sfirstneigh,
-        CoordType (*srelative_coords)[3],
+        CoordType (*srcs)[3],
         int *types,
         int ntypes,
         int umax_num_neigh_atoms,
@@ -437,7 +441,7 @@ void MomsValDer<CoordType>::find_val_der(
     auto_dist_powers_ = (CoordType*)malloc(sizeof(CoordType) * max_alpha_index_basic);
     auto_coords_powers_ = (CoordType (*)[3])malloc(sizeof(CoordType) * max_alpha_index_basic * 3);
     
-    CoordType NeighbVect[3];
+    CoordType neigh_vec[3];
     CoordType distance_ij;
     CoordType distance_ij_inv;
     int type_central;
@@ -451,10 +455,10 @@ void MomsValDer<CoordType>::find_val_der(
     for (int jj=0; jj<snumneigh; jj++) {
         type_outer = types[sfirstneigh[jj]];
         for (int a=0; a<3; a++)
-            NeighbVect[a] = srelative_coords[jj][a];
-        distance_ij = std::sqrt( std::pow(NeighbVect[0], 2)
-                                 + std::pow(NeighbVect[1], 2)
-                                 + std::pow(NeighbVect[2], 2));
+            neigh_vec[a] = srcs[jj][a];
+        distance_ij = std::sqrt( std::pow(neigh_vec[0], 2)
+                                 + std::pow(neigh_vec[1], 2)
+                                 + std::pow(neigh_vec[2], 2));
         if (distance_ij > rmax)
             continue;
         distance_ij_inv = 1.0 / distance_ij;
@@ -466,7 +470,7 @@ void MomsValDer<CoordType>::find_val_der(
         for (int k=1; k<max_alpha_index_basic; k++) {
             auto_dist_powers_[k] = auto_dist_powers_[k-1] * distance_ij;
             for (int a=0; a<3; a++)
-                auto_coords_powers_[k][a] = auto_coords_powers_[k-1][a] * NeighbVect[a];
+                auto_coords_powers_[k][a] = auto_coords_powers_[k-1][a] * neigh_vec[a];
         }
 
         for (int i=0; i<alpha_index_basic_count; i++)
@@ -487,9 +491,9 @@ void MomsValDer<CoordType>::find_val_der(
                 CoordType A_ders[3] = {0., 0., 0.};
                 CoordType B_ders[3] = {0., 0., 0.};
                 CoordType C_ders[3] = {0., 0., 0.};
-                A_ders[0] = (p_RadialBasis->ders2r()[xi] * scaling) * NeighbVect[0] * distance_ij_inv;
-                A_ders[1] = (p_RadialBasis->ders2r()[xi] * scaling) * NeighbVect[1] * distance_ij_inv;
-                A_ders[2] = (p_RadialBasis->ders2r()[xi] * scaling) * NeighbVect[2] * distance_ij_inv;
+                A_ders[0] = (p_RadialBasis->ders2r()[xi] * scaling) * neigh_vec[0] * distance_ij_inv;
+                A_ders[1] = (p_RadialBasis->ders2r()[xi] * scaling) * neigh_vec[1] * distance_ij_inv;
+                A_ders[2] = (p_RadialBasis->ders2r()[xi] * scaling) * neigh_vec[2] * distance_ij_inv;
                 if (alpha_index_basic[i][1] != 0) {
                     B_ders[0] = alpha_index_basic[i][1]
                                 * auto_coords_powers_[alpha_index_basic[i][1] - 1][0]
@@ -508,9 +512,9 @@ void MomsValDer<CoordType>::find_val_der(
                                 * pow1
                                 * auto_coords_powers_[alpha_index_basic[i][3] - 1][2];
                 }
-                C_ders[0] = -k * powk * distance_ij_inv * distance_ij_inv * NeighbVect[0];
-                C_ders[1] = -k * powk * distance_ij_inv * distance_ij_inv * NeighbVect[1];
-                C_ders[2] = -k * powk * distance_ij_inv * distance_ij_inv * NeighbVect[2];
+                C_ders[0] = -k * powk * distance_ij_inv * distance_ij_inv * neigh_vec[0];
+                C_ders[1] = -k * powk * distance_ij_inv * distance_ij_inv * neigh_vec[1];
+                C_ders[2] = -k * powk * distance_ij_inv * distance_ij_inv * neigh_vec[2];
                 mom_vals[i] += coeffs[idx] * A * B * C;
                 for (int a=0; a<3; a++)
                     mom_ders[i*umax_num_neigh_atoms + jj][a] += coeffs[idx]

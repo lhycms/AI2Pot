@@ -132,6 +132,7 @@ void MtpBasisGrad<CoordType>::find_val_der(
     auto_coords_powers_ = (CoordType (*)[3])malloc(sizeof(CoordType) * max_alpha_index_basic * 3);
     memset(auto_dist_powers_, 0, sizeof(CoordType) * max_alpha_index_basic);
     memset(auto_coords_powers_, 0, sizeof(CoordType) * max_alpha_index_basic * 3);
+    int center_idx;
     CoordType NeighbVect[3];
     CoordType distance_ij;
     CoordType distance_ij_inv;
@@ -148,13 +149,14 @@ void MtpBasisGrad<CoordType>::find_val_der(
         memset(mom_ders, 0, sizeof(CoordType) * alpha_moments_count * umax_num_neigh_atoms * 3);
         memset(mom_der2coeffs, 0, sizeof(CoordType) * alpha_moments_count * num_coeffs);
         memset(mom_ders_der2coeffs, 0, sizeof(CoordType) * alpha_moments_count * umax_num_neigh_atoms * 3 * num_coeffs);
+        center_idx = ilist[ii];
         type_central = types[ilist[ii]];
 
-        for (int jj=0; jj<numneigh[ii]; jj++) 
+        for (int jj=0; jj<numneigh[center_idx]; jj++) 
         {
-            type_outer = types[firstneigh[ii*umax_num_neigh_atoms + jj]];
+            type_outer = types[firstneigh[center_idx*umax_num_neigh_atoms + jj]];
             for (int a=0; a<3; a++)
-                NeighbVect[a] = relative_coords[ii*umax_num_neigh_atoms + jj][a];
+                NeighbVect[a] = relative_coords[center_idx*umax_num_neigh_atoms + jj][a];
             distance_ij = std::sqrt( std::pow(NeighbVect[0], 2)
                                    + std::pow(NeighbVect[1], 2)
                                    + std::pow(NeighbVect[2], 2) );
@@ -258,11 +260,11 @@ void MtpBasisGrad<CoordType>::find_val_der(
                 }
             }
 
-            for (int jj=0; jj<numneigh[ii]; jj++)
+            for (int jj=0; jj<numneigh[center_idx]; jj++)
             {
-                type_outer = types[firstneigh[ii*umax_num_neigh_atoms + jj]];
+                type_outer = types[firstneigh[center_idx*umax_num_neigh_atoms + jj]];
                 for (int a=0; a<3; a++)
-                    NeighbVect[a] = relative_coords[ii*umax_num_neigh_atoms + jj][a];
+                    NeighbVect[a] = relative_coords[center_idx*umax_num_neigh_atoms + jj][a];
                 distance_ij = std::sqrt( std::pow(NeighbVect[0], 2)
                                        + std::pow(NeighbVect[1], 2)
                                        + std::pow(NeighbVect[2], 2) );
@@ -321,9 +323,9 @@ void MtpBasisGrad<CoordType>::find_val_der(
             if (calculate_mtp_basis)
                 mtp_basis_val[ii*alpha_scalar_moments + i] = mom_vals[alpha_moment_mapping[i]];
 
-            for (int jj=0; jj<numneigh[ii]; jj++) {
+            for (int jj=0; jj<numneigh[center_idx]; jj++) {
                 for (int a=0; a<3; a++)
-                    NeighbVect[a] = relative_coords[ii*umax_num_neigh_atoms + jj][a];
+                    NeighbVect[a] = relative_coords[center_idx*umax_num_neigh_atoms + jj][a];
                 distance_ij = std::sqrt( std::pow(NeighbVect[0], 2)
                                        + std::pow(NeighbVect[1], 2)
                                        + std::pow(NeighbVect[2], 2));
@@ -352,24 +354,6 @@ void MtpBasisGrad<CoordType>::find_val_der(
     delete p_RadialBasis;
 }
 
-
-template <typename CoordType>
-void MtpBasisGrad<CoordType>::find_der_backward(
-    CoordType *out_der2coeffs,
-    CoordType *grad_output,
-    CoordType *mbg_der2coeffs,
-    int inum,
-    int *numneigh,
-    int umax_num_neighs,
-    int num_coeffs)
-{
-    for (int ii=0; ii<inum; ii++)
-        for (int jj=0; jj<numneigh[ii]; jj++)
-            for (int a=0; a<3; a++)
-                for (int idx=0; idx<num_coeffs; idx++)
-                    out_der2coeffs[idx] += grad_output[ii*umax_num_neighs*3 + jj*3 + a]
-                        * mbg_der2coeffs[ii*umax_num_neighs*3*num_coeffs + jj*3*num_coeffs + a*num_coeffs + idx];
-}
 
 };  // namespace : mtpr
 };  // namespace : ai2pot

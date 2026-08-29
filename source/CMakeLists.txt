@@ -1,10 +1,10 @@
 # 1. Basic
-cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 project(ai2pot)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(CUDA_ARCHITECTURES 61)
+set(CUDA_ARCHITECTURES 86)
 set(CUDA_STANDARD 17)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
@@ -77,7 +77,7 @@ if (USE_CUDA)
     if (CUDA_FOUND)
         message(STATUS "CUDA found: ${CUDA_VERSION_STRING}")
         enable_language(CXX CUDA)
-        set(CMAKE_CUDA_ARCHITECTURES 61)
+        set(CMAKE_CUDA_ARCHITECTURES ${CUDA_ARCHITECTURES})
     else()
         message(STATUS "CUDA not found, compile only CPU version.")
         enable_language(CXX)

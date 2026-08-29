@@ -84,7 +84,7 @@ public:
         int *ilist,
         int *numneigh,
         int *firstneigh,
-        CoordType (*relative_coords)[3],
+        CoordType (*rcs)[3],
         int *types,
         int ntypes,
         int *type_map,
@@ -122,7 +122,7 @@ public:
         int *ilist,
         int *numneigh,
         int *firstneigh,
-        CoordType (*relative_coords)[3],
+        CoordType (*rcs)[3],
         int *types,
         int ntypes,
         int *type_map,
@@ -239,7 +239,7 @@ void LinearMtpLoss<CoordType>::find_loss_backward(
     int *ilist,
     int *numneigh,
     int *firstneigh,
-    CoordType (*relative_coords)[3],
+    CoordType (*rcs)[3],
     int *types,
     int ntypes,
     int *type_map,
@@ -286,7 +286,7 @@ void LinearMtpLoss<CoordType>::find_loss_backward(
     int type_central;
     int neigh_idx;
     int type_outer;
-    CoordType NeighbVect[3];
+    CoordType neigh_vec[3];
     CoordType distance_ij;
     CoordType distance_ij_inv;
 
@@ -302,15 +302,15 @@ void LinearMtpLoss<CoordType>::find_loss_backward(
         center_idx = ilist[ii];
         type_central = types[center_idx];
 
-        for (int jj=0; jj<numneigh[ii]; jj++) {
-            neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
+        for (int jj=0; jj<numneigh[center_idx]; jj++) {
+            neigh_idx = firstneigh[center_idx*umax_num_neigh_atoms + jj];
             type_outer = types[neigh_idx];
-            NeighbVect[0] = relative_coords[ii*umax_num_neigh_atoms + jj][0];
-            NeighbVect[1] = relative_coords[ii*umax_num_neigh_atoms + jj][1];
-            NeighbVect[2] = relative_coords[ii*umax_num_neigh_atoms + jj][2];
-            distance_ij = std::sqrt( std::pow(NeighbVect[0], 2)
-                                     + std::pow(NeighbVect[1], 2)
-                                     + std::pow(NeighbVect[2], 2) );
+            neigh_vec[0] = rcs[center_idx*umax_num_neigh_atoms + jj][0];
+            neigh_vec[1] = rcs[center_idx*umax_num_neigh_atoms + jj][1];
+            neigh_vec[2] = rcs[center_idx*umax_num_neigh_atoms + jj][2];
+            distance_ij = std::sqrt( std::pow(neigh_vec[0], 2)
+                                     + std::pow(neigh_vec[1], 2)
+                                     + std::pow(neigh_vec[2], 2) );
             if (distance_ij > rmax)
                 continue;
             distance_ij_inv = 1.0 / distance_ij;
@@ -322,7 +322,7 @@ void LinearMtpLoss<CoordType>::find_loss_backward(
             for (int k=1; k<max_alpha_index_basic; k++) {
                 auto_dist_powers_[k] = auto_dist_powers_[k-1] * distance_ij;
                 for (int aa=0; aa<3; aa++)
-                    auto_coords_powers_[k][aa] = auto_coords_powers_[k-1][aa] * NeighbVect[aa];
+                    auto_coords_powers_[k][aa] = auto_coords_powers_[k-1][aa] * neigh_vec[aa];
             }
 
             for (int i=0; i<alpha_index_basic_count; i++) {
@@ -342,9 +342,9 @@ void LinearMtpLoss<CoordType>::find_loss_backward(
                     CoordType A_ders[3] = {0.0, 0.0, 0.0};
                     CoordType B_ders[3] = {0.0, 0.0, 0.0};
                     CoordType C_ders[3] = {0.0, 0.0, 0.0};
-                    A_ders[0] = (p_RadialBasis->ders2r()[xi] * scaling) * NeighbVect[0] * distance_ij_inv;
-                    A_ders[1] = (p_RadialBasis->ders2r()[xi] * scaling) * NeighbVect[1] * distance_ij_inv;
-                    A_ders[2] = (p_RadialBasis->ders2r()[xi] * scaling) * NeighbVect[2] * distance_ij_inv;
+                    A_ders[0] = (p_RadialBasis->ders2r()[xi] * scaling) * neigh_vec[0] * distance_ij_inv;
+                    A_ders[1] = (p_RadialBasis->ders2r()[xi] * scaling) * neigh_vec[1] * distance_ij_inv;
+                    A_ders[2] = (p_RadialBasis->ders2r()[xi] * scaling) * neigh_vec[2] * distance_ij_inv;
                     if (alpha_index_basic[i][1] != 0) {
                         B_ders[0] = alpha_index_basic[i][1]
                                     * auto_coords_powers_[alpha_index_basic[i][1] - 1][0]
@@ -363,9 +363,9 @@ void LinearMtpLoss<CoordType>::find_loss_backward(
                                     * pow1
                                     * auto_coords_powers_[alpha_index_basic[i][3] - 1][2];
                     }
-                    C_ders[0] = -k * powk * distance_ij_inv * distance_ij_inv * NeighbVect[0];
-                    C_ders[1] = -k * powk * distance_ij_inv * distance_ij_inv * NeighbVect[1];
-                    C_ders[2] = -k * powk * distance_ij_inv * distance_ij_inv * NeighbVect[2];
+                    C_ders[0] = -k * powk * distance_ij_inv * distance_ij_inv * neigh_vec[0];
+                    C_ders[1] = -k * powk * distance_ij_inv * distance_ij_inv * neigh_vec[1];
+                    C_ders[2] = -k * powk * distance_ij_inv * distance_ij_inv * neigh_vec[2];
                     mom_vals[i] += coeffs[idx] * A * B * C;
 
                     for (int aa=0; aa<3; aa++) {
@@ -380,7 +380,7 @@ void LinearMtpLoss<CoordType>::find_loss_backward(
                         for (int bb=0; bb<3; bb++) {
                             dloss_combination[i] -= 2*v_weight/(9*inum)
                                                     * (virial_ml[aa*3+bb] - virial_dft[aa*3+bb])
-                                                    * NeighbVect[bb]
+                                                    * neigh_vec[bb]
                                                     * tmp_deriv;
                         }
                     }
@@ -435,16 +435,16 @@ void LinearMtpLoss<CoordType>::find_loss_backward(
         // New code
 
         // Step 4.3. Loss derivative w.r.t. coeffs
-        for (int jj=0; jj<numneigh[ii]; jj++) 
+        for (int jj=0; jj<numneigh[center_idx]; jj++) 
         {
-            neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
+            neigh_idx = firstneigh[center_idx*umax_num_neigh_atoms + jj];
             type_outer = types[neigh_idx];
-            NeighbVect[0] = relative_coords[ii*umax_num_neigh_atoms+jj][0];
-            NeighbVect[1] = relative_coords[ii*umax_num_neigh_atoms+jj][1];
-            NeighbVect[2] = relative_coords[ii*umax_num_neigh_atoms+jj][2];
-            distance_ij = std::sqrt( std::pow(NeighbVect[0], 2)
-                                    + std::pow(NeighbVect[1], 2)
-                                    + std::pow(NeighbVect[2], 2) );
+            neigh_vec[0] = rcs[center_idx*umax_num_neigh_atoms+jj][0];
+            neigh_vec[1] = rcs[center_idx*umax_num_neigh_atoms+jj][1];
+            neigh_vec[2] = rcs[center_idx*umax_num_neigh_atoms+jj][2];
+            distance_ij = std::sqrt( std::pow(neigh_vec[0], 2)
+                                    + std::pow(neigh_vec[1], 2)
+                                    + std::pow(neigh_vec[2], 2) );
             if (distance_ij > rmax)
                 continue;
             distance_ij_inv = 1.0 / distance_ij;
@@ -456,7 +456,7 @@ void LinearMtpLoss<CoordType>::find_loss_backward(
             for (int k=1; k<max_alpha_index_basic; k++) {
                 auto_dist_powers_[k] = auto_dist_powers_[k-1] * distance_ij;
                 for (int aa=0; aa<3; aa++)
-                    auto_coords_powers_[k][aa] = auto_coords_powers_[k-1][aa] * NeighbVect[aa];
+                    auto_coords_powers_[k][aa] = auto_coords_powers_[k-1][aa] * neigh_vec[aa];
             }
 
             for (int i=0; i<alpha_index_basic_count; i++) {
@@ -476,9 +476,9 @@ void LinearMtpLoss<CoordType>::find_loss_backward(
                     CoordType A_ders[3] = {0., 0., 0.};
                     CoordType B_ders[3] = {0., 0., 0.};
                     CoordType C_ders[3] = {0., 0., 0.};
-                    A_ders[0] = (p_RadialBasis->ders2r()[xi] * scaling) * NeighbVect[0] * distance_ij_inv;
-                    A_ders[1] = (p_RadialBasis->ders2r()[xi] * scaling) * NeighbVect[1] * distance_ij_inv;
-                    A_ders[2] = (p_RadialBasis->ders2r()[xi] * scaling) * NeighbVect[2] * distance_ij_inv;
+                    A_ders[0] = (p_RadialBasis->ders2r()[xi] * scaling) * neigh_vec[0] * distance_ij_inv;
+                    A_ders[1] = (p_RadialBasis->ders2r()[xi] * scaling) * neigh_vec[1] * distance_ij_inv;
+                    A_ders[2] = (p_RadialBasis->ders2r()[xi] * scaling) * neigh_vec[2] * distance_ij_inv;
                     if (alpha_index_basic[i][1] != 0) {
                         B_ders[0] = alpha_index_basic[i][1]
                                     * auto_coords_powers_[alpha_index_basic[i][1] - 1][0]
@@ -497,9 +497,9 @@ void LinearMtpLoss<CoordType>::find_loss_backward(
                                     * pow1
                                     * auto_coords_powers_[alpha_index_basic[i][3] - 1][2];
                     }
-                    C_ders[0] = -k * powk * distance_ij_inv * distance_ij_inv * NeighbVect[0];
-                    C_ders[1] = -k * powk * distance_ij_inv * distance_ij_inv * NeighbVect[1];
-                    C_ders[2] = -k * powk * distance_ij_inv * distance_ij_inv * NeighbVect[2];
+                    C_ders[0] = -k * powk * distance_ij_inv * distance_ij_inv * neigh_vec[0];
+                    C_ders[1] = -k * powk * distance_ij_inv * distance_ij_inv * neigh_vec[1];
+                    C_ders[2] = -k * powk * distance_ij_inv * distance_ij_inv * neigh_vec[2];
 
                     CoordType tmpe_loss_der2coeff = 0.0;
                     tmpe_loss_der2coeff = 2*e_weight/inum*(etot_ml - etot_dft) 
@@ -523,7 +523,7 @@ void LinearMtpLoss<CoordType>::find_loss_backward(
                         {
                             tmp_prefix -= 2*v_weight/(9*inum)
                                           * (virial_ml[aa*3+bb] - virial_dft[aa*3+bb])
-                                          * NeighbVect[bb];
+                                          * neigh_vec[bb];
                         }
                         tmpf_loss_der2coeff += tmp_prefix * e_site_der2mom[i] * tmp_deriv;
                     }
@@ -598,7 +598,7 @@ void LinearMtpLoss<CoordType>::find_ef_loss_backward(
     int *ilist,
     int *numneigh,
     int *firstneigh,
-    CoordType (*relative_coords)[3],
+    CoordType (*rcs)[3],
     int *types,
     int ntypes,
     int *type_map,
@@ -646,7 +646,7 @@ void LinearMtpLoss<CoordType>::find_ef_loss_backward(
     int type_central;
     int neigh_idx;
     int type_outer;
-    CoordType NeighbVect[3];
+    CoordType neigh_vec[3];
     CoordType distance_ij;
     CoordType distance_ij_inv;
 
@@ -662,15 +662,15 @@ void LinearMtpLoss<CoordType>::find_ef_loss_backward(
         center_idx = ilist[ii];
         type_central = types[center_idx];
 
-        for (int jj=0; jj<numneigh[ii]; jj++) {
-            neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
+        for (int jj=0; jj<numneigh[center_idx]; jj++) {
+            neigh_idx = firstneigh[center_idx*umax_num_neigh_atoms + jj];
             type_outer = types[neigh_idx];
-            NeighbVect[0] = relative_coords[ii*umax_num_neigh_atoms + jj][0];
-            NeighbVect[1] = relative_coords[ii*umax_num_neigh_atoms + jj][1];
-            NeighbVect[2] = relative_coords[ii*umax_num_neigh_atoms + jj][2];
-            distance_ij = std::sqrt( std::pow(NeighbVect[0], 2)
-                                     + std::pow(NeighbVect[1], 2)
-                                     + std::pow(NeighbVect[2], 2));
+            neigh_vec[0] = rcs[center_idx*umax_num_neigh_atoms + jj][0];
+            neigh_vec[1] = rcs[center_idx*umax_num_neigh_atoms + jj][1];
+            neigh_vec[2] = rcs[center_idx*umax_num_neigh_atoms + jj][2];
+            distance_ij = std::sqrt( std::pow(neigh_vec[0], 2)
+                                     + std::pow(neigh_vec[1], 2)
+                                     + std::pow(neigh_vec[2], 2));
             if (distance_ij > rmax)
                 continue;
             distance_ij_inv = 1.0 / distance_ij;
@@ -682,7 +682,7 @@ void LinearMtpLoss<CoordType>::find_ef_loss_backward(
             for (int k=1; k<max_alpha_index_basic; k++) {
                 auto_dist_powers_[k] = auto_dist_powers_[k-1] * distance_ij;
                 for (int aa=0; aa<3; aa++)
-                    auto_coords_powers_[k][aa] = auto_coords_powers_[k-1][aa] * NeighbVect[aa];
+                    auto_coords_powers_[k][aa] = auto_coords_powers_[k-1][aa] * neigh_vec[aa];
             }
 
             for (int i=0; i<alpha_index_basic_count; i++) {
@@ -702,9 +702,9 @@ void LinearMtpLoss<CoordType>::find_ef_loss_backward(
                     CoordType A_ders[3] = {0., 0., 0.};
                     CoordType B_ders[3] = {0., 0., 0.};
                     CoordType C_ders[3] = {0., 0., 0.};
-                    A_ders[0] = (p_RadialBasis->ders2r()[xi] * scaling) * NeighbVect[0] * distance_ij_inv;
-                    A_ders[1] = (p_RadialBasis->ders2r()[xi] * scaling) * NeighbVect[1] * distance_ij_inv;
-                    A_ders[2] = (p_RadialBasis->ders2r()[xi] * scaling) * NeighbVect[2] * distance_ij_inv;
+                    A_ders[0] = (p_RadialBasis->ders2r()[xi] * scaling) * neigh_vec[0] * distance_ij_inv;
+                    A_ders[1] = (p_RadialBasis->ders2r()[xi] * scaling) * neigh_vec[1] * distance_ij_inv;
+                    A_ders[2] = (p_RadialBasis->ders2r()[xi] * scaling) * neigh_vec[2] * distance_ij_inv;
                     if (alpha_index_basic[i][1] != 0) {
                         B_ders[0] = alpha_index_basic[i][1]
                                     * auto_coords_powers_[alpha_index_basic[i][1] - 1][0]
@@ -723,9 +723,9 @@ void LinearMtpLoss<CoordType>::find_ef_loss_backward(
                                     * pow1
                                     * auto_coords_powers_[alpha_index_basic[i][3] - 1][2];
                     }
-                    C_ders[0] = -k * powk * distance_ij_inv * distance_ij_inv * NeighbVect[0];
-                    C_ders[1] = -k * powk * distance_ij_inv * distance_ij_inv * NeighbVect[1];
-                    C_ders[2] = -k * powk * distance_ij_inv * distance_ij_inv * NeighbVect[2];
+                    C_ders[0] = -k * powk * distance_ij_inv * distance_ij_inv * neigh_vec[0];
+                    C_ders[1] = -k * powk * distance_ij_inv * distance_ij_inv * neigh_vec[1];
+                    C_ders[2] = -k * powk * distance_ij_inv * distance_ij_inv * neigh_vec[2];
                     mom_vals[i] += coeffs[idx] * A * B * C;
 
                     for (int aa=0; aa<3; aa++) {
@@ -790,15 +790,15 @@ void LinearMtpLoss<CoordType>::find_ef_loss_backward(
         // New code
 
         // Step 4.3. Loss derivative w.r.t. coeffs
-        for (int jj=0; jj<numneigh[ii]; jj++) {
-            neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
+        for (int jj=0; jj<numneigh[center_idx]; jj++) {
+            neigh_idx = firstneigh[center_idx*umax_num_neigh_atoms + jj];
             type_outer = types[neigh_idx];
-            NeighbVect[0] = relative_coords[ii*umax_num_neigh_atoms + jj][0];
-            NeighbVect[1] = relative_coords[ii*umax_num_neigh_atoms + jj][1];
-            NeighbVect[2] = relative_coords[ii*umax_num_neigh_atoms + jj][2];
-            distance_ij = std::sqrt( std::pow(NeighbVect[0], 2)
-                                     + std::pow(NeighbVect[1], 2)
-                                     + std::pow(NeighbVect[2], 2));
+            neigh_vec[0] = rcs[center_idx*umax_num_neigh_atoms + jj][0];
+            neigh_vec[1] = rcs[center_idx*umax_num_neigh_atoms + jj][1];
+            neigh_vec[2] = rcs[center_idx*umax_num_neigh_atoms + jj][2];
+            distance_ij = std::sqrt( std::pow(neigh_vec[0], 2)
+                                     + std::pow(neigh_vec[1], 2)
+                                     + std::pow(neigh_vec[2], 2));
             if (distance_ij > rmax)
                 continue;
             distance_ij_inv = 1.0 / distance_ij;
@@ -810,7 +810,7 @@ void LinearMtpLoss<CoordType>::find_ef_loss_backward(
             for (int k=1; k<max_alpha_index_basic; k++) {
                 auto_dist_powers_[k] = auto_dist_powers_[k-1] * distance_ij;
                 for (int aa=0; aa<3; aa++)
-                    auto_coords_powers_[k][aa] = auto_coords_powers_[k-1][aa] * NeighbVect[aa];
+                    auto_coords_powers_[k][aa] = auto_coords_powers_[k-1][aa] * neigh_vec[aa];
             }
 
             for (int i=0; i<alpha_index_basic_count; i++) {
@@ -830,9 +830,9 @@ void LinearMtpLoss<CoordType>::find_ef_loss_backward(
                     CoordType A_ders[3] = {0., 0., 0.};
                     CoordType B_ders[3] = {0., 0., 0.};
                     CoordType C_ders[3] = {0., 0., 0.};
-                    A_ders[0] = (p_RadialBasis->ders2r()[xi] * scaling) * NeighbVect[0] * distance_ij_inv;
-                    A_ders[1] = (p_RadialBasis->ders2r()[xi] * scaling) * NeighbVect[1] * distance_ij_inv;
-                    A_ders[2] = (p_RadialBasis->ders2r()[xi] * scaling) * NeighbVect[2] * distance_ij_inv;
+                    A_ders[0] = (p_RadialBasis->ders2r()[xi] * scaling) * neigh_vec[0] * distance_ij_inv;
+                    A_ders[1] = (p_RadialBasis->ders2r()[xi] * scaling) * neigh_vec[1] * distance_ij_inv;
+                    A_ders[2] = (p_RadialBasis->ders2r()[xi] * scaling) * neigh_vec[2] * distance_ij_inv;
                     if (alpha_index_basic[i][1] != 0) {
                         B_ders[0] = alpha_index_basic[i][1]
                                     * auto_coords_powers_[alpha_index_basic[i][1] - 1][0]
@@ -851,9 +851,9 @@ void LinearMtpLoss<CoordType>::find_ef_loss_backward(
                                     * pow1
                                     * auto_coords_powers_[alpha_index_basic[i][3] - 1][2];
                     }
-                    C_ders[0] = -k * powk * distance_ij_inv * distance_ij_inv * NeighbVect[0];
-                    C_ders[1] = -k * powk * distance_ij_inv * distance_ij_inv * NeighbVect[1];
-                    C_ders[2] = -k * powk * distance_ij_inv * distance_ij_inv * NeighbVect[2];
+                    C_ders[0] = -k * powk * distance_ij_inv * distance_ij_inv * neigh_vec[0];
+                    C_ders[1] = -k * powk * distance_ij_inv * distance_ij_inv * neigh_vec[1];
+                    C_ders[2] = -k * powk * distance_ij_inv * distance_ij_inv * neigh_vec[2];
 
 
                     CoordType tmpe_loss_der2coeff = 0.0;

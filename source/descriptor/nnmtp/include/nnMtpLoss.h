@@ -337,12 +337,12 @@ void NNMtpLoss<CoordType>::find_loss_backward(
         type_central_w1 = &w1[type_central * num_neurons];
 
 
-        for (int jj=0; jj<numneigh[ii]; jj++) {
-            neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
+        for (int jj=0; jj<numneigh[center_idx]; jj++) {
+            neigh_idx = firstneigh[center_idx*umax_num_neigh_atoms + jj];
             type_outer = types[neigh_idx];
-            neigh_vec[0] = rcs[ii*umax_num_neigh_atoms + jj][0];
-            neigh_vec[1] = rcs[ii*umax_num_neigh_atoms + jj][1];
-            neigh_vec[2] = rcs[ii*umax_num_neigh_atoms + jj][2];
+            neigh_vec[0] = rcs[center_idx*umax_num_neigh_atoms + jj][0];
+            neigh_vec[1] = rcs[center_idx*umax_num_neigh_atoms + jj][1];
+            neigh_vec[2] = rcs[center_idx*umax_num_neigh_atoms + jj][2];
             distance_ij = std::sqrt( std::pow(neigh_vec[0], 2)
                                      + std::pow(neigh_vec[1], 2)
                                      + std::pow(neigh_vec[2], 2) );
@@ -515,12 +515,12 @@ void NNMtpLoss<CoordType>::find_loss_backward(
             de22m0m1_dloss_combinations[i] += nn_der2seed[i];
         // New Code
 
-        for (int jj=0; jj<numneigh[ii]; jj++) {
-            neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
+        for (int jj=0; jj<numneigh[center_idx]; jj++) {
+            neigh_idx = firstneigh[center_idx*umax_num_neigh_atoms + jj];
             type_outer = types[neigh_idx];
-            neigh_vec[0] = rcs[ii*umax_num_neigh_atoms + jj][0];
-            neigh_vec[1] = rcs[ii*umax_num_neigh_atoms + jj][1];
-            neigh_vec[2] = rcs[ii*umax_num_neigh_atoms + jj][2];
+            neigh_vec[0] = rcs[center_idx*umax_num_neigh_atoms + jj][0];
+            neigh_vec[1] = rcs[center_idx*umax_num_neigh_atoms + jj][1];
+            neigh_vec[2] = rcs[center_idx*umax_num_neigh_atoms + jj][2];
             distance_ij = std::sqrt( std::pow(neigh_vec[0], 2)
                                      + std::pow(neigh_vec[1], 2)
                                      + std::pow(neigh_vec[2], 2) );
@@ -816,12 +816,12 @@ void NNMtpLoss<CoordType>::find_ef_loss_backward(
         type_central_w1 = &w1[type_central * num_neurons];
 
 
-        for (int jj=0; jj<numneigh[ii]; jj++) {
-            neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
+        for (int jj=0; jj<numneigh[center_idx]; jj++) {
+            neigh_idx = firstneigh[center_idx*umax_num_neigh_atoms + jj];
             type_outer = types[neigh_idx];
-            neigh_vec[0] = rcs[ii*umax_num_neigh_atoms + jj][0];
-            neigh_vec[1] = rcs[ii*umax_num_neigh_atoms + jj][1];
-            neigh_vec[2] = rcs[ii*umax_num_neigh_atoms + jj][2];
+            neigh_vec[0] = rcs[center_idx*umax_num_neigh_atoms + jj][0];
+            neigh_vec[1] = rcs[center_idx*umax_num_neigh_atoms + jj][1];
+            neigh_vec[2] = rcs[center_idx*umax_num_neigh_atoms + jj][2];
             distance_ij = std::sqrt( std::pow(neigh_vec[0], 2)
                                      + std::pow(neigh_vec[1], 2)
                                      + std::pow(neigh_vec[2], 2) );
@@ -988,12 +988,12 @@ void NNMtpLoss<CoordType>::find_ef_loss_backward(
             de22m0m1_dloss_combinations[i] += nn_der2seed[i];
         // New code
 
-        for (int jj=0; jj<numneigh[ii]; jj++) {
-            neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
+        for (int jj=0; jj<numneigh[center_idx]; jj++) {
+            neigh_idx = firstneigh[center_idx*umax_num_neigh_atoms + jj];
             type_outer = types[neigh_idx];
-            neigh_vec[0] = rcs[ii*umax_num_neigh_atoms + jj][0];
-            neigh_vec[1] = rcs[ii*umax_num_neigh_atoms + jj][1];
-            neigh_vec[2] = rcs[ii*umax_num_neigh_atoms + jj][2];
+            neigh_vec[0] = rcs[center_idx*umax_num_neigh_atoms + jj][0];
+            neigh_vec[1] = rcs[center_idx*umax_num_neigh_atoms + jj][1];
+            neigh_vec[2] = rcs[center_idx*umax_num_neigh_atoms + jj][2];
             distance_ij = std::sqrt( std::pow(neigh_vec[0], 2)
                                      + std::pow(neigh_vec[1], 2)
                                      + std::pow(neigh_vec[2], 2) );
