@@ -116,7 +116,7 @@ public:
         int *ilist,
         int *numneigh,
         int *firstneigh,
-        CoordType (*relative_coords)[3],
+        CoordType (*rcs)[3],
         int *types,
         int ntypes,
         int *type_map,
@@ -280,9 +280,9 @@ void NNMtp<CoordType>::find_ef(
             alpha_index_times,
             nmus,
             ilist[ii],
-            numneigh[ii],
-            &firstneigh[ii*umax_num_neigh_atoms],
-            &rcs[ii*umax_num_neigh_atoms],
+            numneigh[center_idx],
+            &firstneigh[center_idx*umax_num_neigh_atoms],
+            &rcs[center_idx*umax_num_neigh_atoms],
             types,
             ntypes,
             umax_num_neigh_atoms,
@@ -338,11 +338,11 @@ void NNMtp<CoordType>::find_ef(
                                                        * val1;
         }
 
-        for (int jj=0; jj<numneigh[ii]; jj++) {
-            neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
-            neigh_vec[0] = rcs[ii*umax_num_neigh_atoms+jj][0];
-            neigh_vec[1] = rcs[ii*umax_num_neigh_atoms+jj][1];
-            neigh_vec[2] = rcs[ii*umax_num_neigh_atoms+jj][2];
+        for (int jj=0; jj<numneigh[center_idx]; jj++) {
+            neigh_idx = firstneigh[center_idx*umax_num_neigh_atoms + jj];
+            neigh_vec[0] = rcs[center_idx*umax_num_neigh_atoms+jj][0];
+            neigh_vec[1] = rcs[center_idx*umax_num_neigh_atoms+jj][1];
+            neigh_vec[2] = rcs[center_idx*umax_num_neigh_atoms+jj][2];
             distance_ij = std::sqrt( std::pow(neigh_vec[0], 2)
                                      + std::pow(neigh_vec[1], 2)
                                      + std::pow(neigh_vec[2], 2) );
@@ -466,9 +466,9 @@ void NNMtp<CoordType>::find_efv(
             alpha_index_times,
             nmus,
             ilist[ii],
-            numneigh[ii],
-            &firstneigh[ii*umax_num_neigh_atoms],
-            &rcs[ii*umax_num_neigh_atoms],
+            numneigh[center_idx],
+            &firstneigh[center_idx*umax_num_neigh_atoms],
+            &rcs[center_idx*umax_num_neigh_atoms],
             types,
             ntypes,
             umax_num_neigh_atoms,
@@ -525,11 +525,11 @@ void NNMtp<CoordType>::find_efv(
         }
 
 
-        for (int jj=0; jj<numneigh[ii]; jj++) {
-            neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
-            neigh_vec[0] = rcs[ii*umax_num_neigh_atoms+jj][0];
-            neigh_vec[1] = rcs[ii*umax_num_neigh_atoms+jj][1];
-            neigh_vec[2] = rcs[ii*umax_num_neigh_atoms+jj][2];
+        for (int jj=0; jj<numneigh[center_idx]; jj++) {
+            neigh_idx = firstneigh[center_idx*umax_num_neigh_atoms + jj];
+            neigh_vec[0] = rcs[center_idx*umax_num_neigh_atoms+jj][0];
+            neigh_vec[1] = rcs[center_idx*umax_num_neigh_atoms+jj][1];
+            neigh_vec[2] = rcs[center_idx*umax_num_neigh_atoms+jj][2];
             distance_ij = std::sqrt( std::pow(neigh_vec[0], 2)
                                      + std::pow(neigh_vec[1], 2)
                                      + std::pow(neigh_vec[2], 2) );
@@ -591,7 +591,7 @@ void NNMtp<CoordType>::find_descriptors(
     int *ilist,
     int *numneigh,
     int *firstneigh,
-    CoordType (*relative_coords)[3],
+    CoordType (*rcs)[3],
     int *types,
     int ntypes,
     int *type_map,
@@ -618,7 +618,8 @@ void NNMtp<CoordType>::find_descriptors(
     #pragma omp for schedule(static)
     #endif
     for (int ii=0; ii<inum; ii++)
-    {
+    {   
+        int center_idx = ilist[ii];
         MomsValDer<CoordType>::find_val_der(
             mom_vals,
             mom_ders,
@@ -631,9 +632,9 @@ void NNMtp<CoordType>::find_descriptors(
             alpha_index_times,
             nmus,
             ilist[ii],
-            numneigh[ii],
-            &firstneigh[ii*umax_num_neigh_atoms],
-            &relative_coords[ii*umax_num_neigh_atoms],
+            numneigh[center_idx],
+            &firstneigh[center_idx*umax_num_neigh_atoms],
+            &rcs[center_idx*umax_num_neigh_atoms],
             types,
             ntypes,
             umax_num_neigh_atoms,
@@ -731,9 +732,9 @@ void NNMtp<CoordType>::find_e_sites(
             alpha_index_times,
             nmus,
             ilist[ii],
-            numneigh[ii],
-            &firstneigh[ii*umax_num_neigh_atoms],
-            &rcs[ii*umax_num_neigh_atoms],
+            numneigh[center_idx],
+            &firstneigh[center_idx*umax_num_neigh_atoms],
+            &rcs[center_idx*umax_num_neigh_atoms],
             types,
             ntypes,
             umax_num_neigh_atoms,
@@ -844,12 +845,12 @@ void NNMtp<CoordType>::find_e_sites_backward(
         CoordType *type_central_b0 = &b0[type_central*num_neurons];
         CoordType *type_central_w1 = &w1[type_central*num_neurons];
 
-        for (int jj=0; jj<numneigh[ii]; jj++) {
-            neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
+        for (int jj=0; jj<numneigh[center_idx]; jj++) {
+            neigh_idx = firstneigh[center_idx*umax_num_neigh_atoms + jj];
             type_outer = types[neigh_idx];
-            neigh_vec[0] = rcs[ii*umax_num_neigh_atoms + jj][0];
-            neigh_vec[1] = rcs[ii*umax_num_neigh_atoms + jj][1];
-            neigh_vec[2] = rcs[ii*umax_num_neigh_atoms + jj][2];
+            neigh_vec[0] = rcs[center_idx*umax_num_neigh_atoms + jj][0];
+            neigh_vec[1] = rcs[center_idx*umax_num_neigh_atoms + jj][1];
+            neigh_vec[2] = rcs[center_idx*umax_num_neigh_atoms + jj][2];
             distance_ij = std::sqrt( std::pow(neigh_vec[0], 2)
                                      + std::pow(neigh_vec[1], 2)
                                      + std::pow(neigh_vec[2], 2) );
@@ -921,13 +922,13 @@ void NNMtp<CoordType>::find_e_sites_backward(
         }
 
         // Step 5.
-        for (int jj=0; jj<numneigh[ii]; jj++)
+        for (int jj=0; jj<numneigh[center_idx]; jj++)
         {
-            neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
+            neigh_idx = firstneigh[center_idx*umax_num_neigh_atoms + jj];
             type_outer = types[neigh_idx];
-            neigh_vec[0] = rcs[ii*umax_num_neigh_atoms + jj][0];
-            neigh_vec[1] = rcs[ii*umax_num_neigh_atoms + jj][1];
-            neigh_vec[2] = rcs[ii*umax_num_neigh_atoms + jj][2];
+            neigh_vec[0] = rcs[center_idx*umax_num_neigh_atoms + jj][0];
+            neigh_vec[1] = rcs[center_idx*umax_num_neigh_atoms + jj][1];
+            neigh_vec[2] = rcs[center_idx*umax_num_neigh_atoms + jj][2];
             distance_ij = std::sqrt( std::pow(neigh_vec[0], 2)
                                      + std::pow(neigh_vec[1], 2)
                                      + std::pow(neigh_vec[2], 2) );

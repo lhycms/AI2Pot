@@ -502,9 +502,9 @@ void find_efv_components_kernel(
         CoordType *force_components = &bforce_components[istruct*natoms_pad*3*num_parameters];
         CoordType *virial_components = &bvirial_components[istruct*3*3*num_parameters];
         int silist = bilist[istruct*natoms_pad + ii];
-        int snumneigh = bnumneigh[istruct*natoms_pad + ii];
-        int *sfirstneigh = &bfirstneigh[istruct*natoms_pad*umax_num_neigh_atoms + ii*umax_num_neigh_atoms];
-        CoordType (*srcs)[3] = &brcs[istruct*natoms_pad*umax_num_neigh_atoms + ii*umax_num_neigh_atoms];
+        int snumneigh = bnumneigh[istruct*natoms_pad + silist];
+        int *sfirstneigh = &bfirstneigh[istruct*natoms_pad*umax_num_neigh_atoms + silist*umax_num_neigh_atoms];
+        CoordType (*srcs)[3] = &brcs[istruct*natoms_pad*umax_num_neigh_atoms + silist*umax_num_neigh_atoms];
         int *types = &btypes[istruct*natoms_pad];
 
         accumulate_efv_components_atom(

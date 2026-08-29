@@ -55,7 +55,7 @@ public:
         int *ilist,
         int *numneigh,
         int *firstneigh,
-        CoordType (*relative_coords)[3],
+        CoordType (*rcs)[3],
         int *types,
         int ntypes,
         int *type_map,
@@ -86,7 +86,7 @@ public:
         int *ilist,
         int *numneigh,
         int *firstneigh,
-        CoordType (*relative_coords)[3],
+        CoordType (*rcs)[3],
         int *types,
         int ntypes,
         int *type_map,
@@ -115,7 +115,7 @@ public:
         int *ilist,
         int *numneigh,
         int *firstneigh,
-        CoordType (*relative_coords)[3],
+        CoordType (*rcs)[3],
         int *types,
         int ntypes,
         int *type_map,
@@ -147,7 +147,7 @@ public:
         int *ilist,
         int *numneigh,
         int *firstneigh,
-        CoordType (*relative_coords)[3],
+        CoordType (*rcs)[3],
         int *types,
         int ntypes,
         int *type_map,
@@ -175,7 +175,7 @@ public:
         int *ilist,
         int *numneigh,
         int *firstneigh,
-        CoordType (*relative_coords)[3],
+        CoordType (*rcs)[3],
         int *types,
         int ntypes,
         int *type_map,
@@ -208,7 +208,7 @@ void LinearMtp<CoordType>::find_efv(
     int *ilist,
     int *numneigh,
     int *firstneigh,
-    CoordType (*relative_coords)[3],
+    CoordType (*rcs)[3],
     int *types,
     int ntypes,
     int *type_map,
@@ -240,7 +240,7 @@ void LinearMtp<CoordType>::find_efv(
     int center_idx;
     int type_central;
     int neigh_idx;
-    CoordType NeighbVect[3];
+    CoordType neigh_vec[3];
     CoordType distance_ij;
 
     #ifdef USE_OPENMP
@@ -268,9 +268,9 @@ void LinearMtp<CoordType>::find_efv(
             alpha_index_times,
             nmus,
             ilist[ii],
-            numneigh[ii],
-            &firstneigh[ii*umax_num_neigh_atoms],
-            &relative_coords[ii*umax_num_neigh_atoms],
+            numneigh[center_idx],
+            &firstneigh[center_idx*umax_num_neigh_atoms],
+            &rcs[center_idx*umax_num_neigh_atoms],
             types,
             ntypes,
             umax_num_neigh_atoms,
@@ -305,14 +305,14 @@ void LinearMtp<CoordType>::find_efv(
                                                        * val1;
         }
         
-        for (int jj=0; jj<numneigh[ii]; jj++) {
-            neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
-            NeighbVect[0] = relative_coords[ii*umax_num_neigh_atoms+jj][0];
-            NeighbVect[1] = relative_coords[ii*umax_num_neigh_atoms+jj][1];
-            NeighbVect[2] = relative_coords[ii*umax_num_neigh_atoms+jj][2];
-            distance_ij = std::sqrt( std::pow(NeighbVect[0], 2)
-                                     + std::pow(NeighbVect[1], 2)
-                                     + std::pow(NeighbVect[2], 2) );
+        for (int jj=0; jj<numneigh[center_idx]; jj++) {
+            neigh_idx = firstneigh[center_idx*umax_num_neigh_atoms + jj];
+            neigh_vec[0] = rcs[center_idx*umax_num_neigh_atoms+jj][0];
+            neigh_vec[1] = rcs[center_idx*umax_num_neigh_atoms+jj][1];
+            neigh_vec[2] = rcs[center_idx*umax_num_neigh_atoms+jj][2];
+            distance_ij = std::sqrt( std::pow(neigh_vec[0], 2)
+                                     + std::pow(neigh_vec[1], 2)
+                                     + std::pow(neigh_vec[2], 2) );
             if (distance_ij > rmax)
                 continue;
 
@@ -337,7 +337,7 @@ void LinearMtp<CoordType>::find_efv(
                     #ifdef USE_OPENMP
                     #pragma omp atomic
                     #endif
-                    virial[aa*3 + bb] -= e_site_ders_ija * NeighbVect[bb];
+                    virial[aa*3 + bb] -= e_site_ders_ija * neigh_vec[bb];
             }
         }
     }
@@ -373,7 +373,7 @@ void LinearMtp<CoordType>::find_ef(
     int *ilist,
     int *numneigh,
     int *firstneigh,
-    CoordType (*relative_coords)[3],
+    CoordType (*rcs)[3],
     int *types,
     int ntypes,
     int *type_map,
@@ -404,7 +404,7 @@ void LinearMtp<CoordType>::find_ef(
     int center_idx;
     int type_central;
     int neigh_idx;
-    CoordType NeighbVect[3];
+    CoordType neigh_vec[3];
     CoordType distance_ij;
 
     #ifdef USE_OPENMP
@@ -432,9 +432,9 @@ void LinearMtp<CoordType>::find_ef(
             alpha_index_times,
             nmus,
             ilist[ii],
-            numneigh[ii],
-            &firstneigh[ii*umax_num_neigh_atoms],
-            &relative_coords[ii*umax_num_neigh_atoms],
+            numneigh[center_idx],
+            &firstneigh[center_idx*umax_num_neigh_atoms],
+            &rcs[center_idx*umax_num_neigh_atoms],
             types,
             ntypes,
             umax_num_neigh_atoms,
@@ -469,14 +469,14 @@ void LinearMtp<CoordType>::find_ef(
                                                        * val1;
         }
         
-        for (int jj=0; jj<numneigh[ii]; jj++) {
-            neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
-            NeighbVect[0] = relative_coords[ii*umax_num_neigh_atoms+jj][0];
-            NeighbVect[1] = relative_coords[ii*umax_num_neigh_atoms+jj][1];
-            NeighbVect[2] = relative_coords[ii*umax_num_neigh_atoms+jj][2];
-            distance_ij = std::sqrt( std::pow(NeighbVect[0], 2)
-                                     + std::pow(NeighbVect[1], 2)
-                                     + std::pow(NeighbVect[2], 2) );
+        for (int jj=0; jj<numneigh[center_idx]; jj++) {
+            neigh_idx = firstneigh[center_idx*umax_num_neigh_atoms + jj];
+            neigh_vec[0] = rcs[center_idx*umax_num_neigh_atoms+jj][0];
+            neigh_vec[1] = rcs[center_idx*umax_num_neigh_atoms+jj][1];
+            neigh_vec[2] = rcs[center_idx*umax_num_neigh_atoms+jj][2];
+            distance_ij = std::sqrt( std::pow(neigh_vec[0], 2)
+                                     + std::pow(neigh_vec[1], 2)
+                                     + std::pow(neigh_vec[2], 2) );
             if (distance_ij > rmax)
                 continue;
 
@@ -530,7 +530,7 @@ void LinearMtp<CoordType>::find_e_sites(
     int *ilist,
     int *numneigh,
     int *firstneigh,
-    CoordType (*relative_coords)[3],
+    CoordType (*rcs)[3],
     int *types,
     int ntypes,
     int *type_map,
@@ -585,9 +585,9 @@ void LinearMtp<CoordType>::find_e_sites(
             alpha_index_times,
             nmus,
             ilist[ii],
-            numneigh[ii],
-            &firstneigh[ii*umax_num_neigh_atoms],
-            &relative_coords[ii*umax_num_neigh_atoms],
+            numneigh[center_idx],
+            &firstneigh[center_idx*umax_num_neigh_atoms],
+            &rcs[center_idx*umax_num_neigh_atoms],
             types,
             ntypes,
             umax_num_neigh_atoms,
@@ -634,7 +634,7 @@ void LinearMtp<CoordType>::find_e_sites_backward(
     int *ilist,
     int *numneigh,
     int *firstneigh,
-    CoordType (*relative_coords)[3],
+    CoordType (*rcs)[3],
     int *types,
     int ntypes,
     int *type_map,
@@ -666,7 +666,7 @@ void LinearMtp<CoordType>::find_e_sites_backward(
     int type_central;
     int neigh_idx;
     int type_outer;
-    CoordType NeighbVect[3];
+    CoordType neigh_vec[3];
     CoordType distance_ij;
     CoordType distance_ij_inv;
     CoordType *auto_dist_powers_;
@@ -689,15 +689,15 @@ void LinearMtp<CoordType>::find_e_sites_backward(
         center_idx = ilist[ii];
         type_central = types[center_idx];
 
-        for (int jj=0; jj<numneigh[ii]; jj++) {
-            neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
+        for (int jj=0; jj<numneigh[center_idx]; jj++) {
+            neigh_idx = firstneigh[center_idx*umax_num_neigh_atoms + jj];
             type_outer = types[neigh_idx];
-            NeighbVect[0] = relative_coords[ii*umax_num_neigh_atoms + jj][0];
-            NeighbVect[1] = relative_coords[ii*umax_num_neigh_atoms + jj][1];
-            NeighbVect[2] = relative_coords[ii*umax_num_neigh_atoms + jj][2];
-            distance_ij = std::sqrt( std::pow(NeighbVect[0], 2)
-                                     + std::pow(NeighbVect[1], 2)
-                                     + std::pow(NeighbVect[2], 2) );
+            neigh_vec[0] = rcs[center_idx*umax_num_neigh_atoms + jj][0];
+            neigh_vec[1] = rcs[center_idx*umax_num_neigh_atoms + jj][1];
+            neigh_vec[2] = rcs[center_idx*umax_num_neigh_atoms + jj][2];
+            distance_ij = std::sqrt( std::pow(neigh_vec[0], 2)
+                                     + std::pow(neigh_vec[1], 2)
+                                     + std::pow(neigh_vec[2], 2) );
             if (distance_ij > rmax)
                 continue;
             distance_ij_inv = 1.0 / distance_ij;
@@ -709,7 +709,7 @@ void LinearMtp<CoordType>::find_e_sites_backward(
             for (int k=1; k<max_alpha_index_basic; k++) {
                 auto_dist_powers_[k] = auto_dist_powers_[k-1] * distance_ij;
                 for (int aa=0; aa<3; aa++)
-                    auto_coords_powers_[k][aa] = auto_coords_powers_[k-1][aa] * NeighbVect[aa];
+                    auto_coords_powers_[k][aa] = auto_coords_powers_[k-1][aa] * neigh_vec[aa];
             }
 
             for (int i=0; i<alpha_index_basic_count; i++) {
@@ -754,16 +754,16 @@ void LinearMtp<CoordType>::find_e_sites_backward(
         }
 
         // Step 5.
-        for (int jj=0; jj<numneigh[ii]; jj++)
+        for (int jj=0; jj<numneigh[center_idx]; jj++)
         {
-            neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
+            neigh_idx = firstneigh[center_idx*umax_num_neigh_atoms + jj];
             type_outer = types[neigh_idx];
-            NeighbVect[0] = relative_coords[ii*umax_num_neigh_atoms + jj][0];
-            NeighbVect[1] = relative_coords[ii*umax_num_neigh_atoms + jj][1];
-            NeighbVect[2] = relative_coords[ii*umax_num_neigh_atoms + jj][2];
-            distance_ij = std::sqrt( std::pow(NeighbVect[0], 2)
-                                     + std::pow(NeighbVect[1], 2)
-                                     + std::pow(NeighbVect[2], 2) );
+            neigh_vec[0] = rcs[center_idx*umax_num_neigh_atoms + jj][0];
+            neigh_vec[1] = rcs[center_idx*umax_num_neigh_atoms + jj][1];
+            neigh_vec[2] = rcs[center_idx*umax_num_neigh_atoms + jj][2];
+            distance_ij = std::sqrt( std::pow(neigh_vec[0], 2)
+                                     + std::pow(neigh_vec[1], 2)
+                                     + std::pow(neigh_vec[2], 2) );
             if (distance_ij > rmax)
                 continue;
             distance_ij_inv = 1.0 / distance_ij;
@@ -775,7 +775,7 @@ void LinearMtp<CoordType>::find_e_sites_backward(
             for (int k=1; k<max_alpha_index_basic; k++) {
                 auto_dist_powers_[k] = auto_dist_powers_[k-1] * distance_ij;
                 for (int aa=0; aa<3; aa++)
-                    auto_coords_powers_[k][aa] = auto_coords_powers_[k-1][aa] * NeighbVect[aa];
+                    auto_coords_powers_[k][aa] = auto_coords_powers_[k-1][aa] * neigh_vec[aa];
             }
 
             for (int i=0; i<alpha_index_basic_count; i++) {
@@ -835,7 +835,7 @@ void LinearMtp<CoordType>::find_descriptors(
     int *ilist,
     int *numneigh,
     int *firstneigh,
-    CoordType (*relative_coords)[3],
+    CoordType (*rcs)[3],
     int *types,
     int ntypes,
     int *type_map,
@@ -862,7 +862,8 @@ void LinearMtp<CoordType>::find_descriptors(
     #pragma omp for schedule(static)
     #endif
     for (int ii=0; ii<inum; ii++)
-    {
+    {   
+        int center_idx = ilist[ii];
         MomsValDer<CoordType>::find_val_der(
             mom_vals,
             mom_ders,
@@ -876,9 +877,9 @@ void LinearMtp<CoordType>::find_descriptors(
             alpha_index_times,
             nmus,
             ilist[ii],
-            numneigh[ii],
-            &firstneigh[ii*umax_num_neigh_atoms],
-            &relative_coords[ii*umax_num_neigh_atoms],
+            numneigh[center_idx],
+            &firstneigh[center_idx*umax_num_neigh_atoms],
+            &rcs[center_idx*umax_num_neigh_atoms],
             types,
             ntypes,
             umax_num_neigh_atoms,

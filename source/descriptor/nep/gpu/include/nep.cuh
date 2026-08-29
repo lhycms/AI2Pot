@@ -627,9 +627,9 @@ void find_ef_kernel(
 
     if (ii < inum) {
         int silist = bilist[istruct*natoms_pad + ii];
-        int snumneigh = bnumneigh[istruct*natoms_pad + ii];
-        int *sfirstneigh = &bfirstneigh[istruct*natoms_pad*umax_num_neigh_atoms + ii*umax_num_neigh_atoms];
-        CoordType (*srcs)[3] = &brcs[istruct*natoms_pad*umax_num_neigh_atoms + ii*umax_num_neigh_atoms];
+        int snumneigh = bnumneigh[istruct*natoms_pad + silist];
+        int *sfirstneigh = &bfirstneigh[istruct*natoms_pad*umax_num_neigh_atoms + silist*umax_num_neigh_atoms];
+        CoordType (*srcs)[3] = &brcs[istruct*natoms_pad*umax_num_neigh_atoms + silist*umax_num_neigh_atoms];
 
         find_ef_atom<CoordType>(
             etot_ptr,
@@ -1156,9 +1156,9 @@ void find_efv_kernel(
 
     if (ii < inum) {
         int silist = bilist[istruct*natoms_pad + ii];
-        int snumneigh = bnumneigh[istruct*natoms_pad + ii];
-        int *sfirstneigh = &bfirstneigh[istruct*natoms_pad*umax_num_neigh_atoms + ii*umax_num_neigh_atoms];
-        CoordType (*srcs)[3] = &brcs[istruct*natoms_pad*umax_num_neigh_atoms + ii*umax_num_neigh_atoms];
+        int snumneigh = bnumneigh[istruct*natoms_pad + silist];
+        int *sfirstneigh = &bfirstneigh[istruct*natoms_pad*umax_num_neigh_atoms + silist*umax_num_neigh_atoms];
+        CoordType (*srcs)[3] = &brcs[istruct*natoms_pad*umax_num_neigh_atoms + silist*umax_num_neigh_atoms];
 
         find_efv_atom<CoordType>(
             etot_ptr,
@@ -1508,9 +1508,9 @@ void find_descriptors_kernel(
     if (ii < inum) {
         CoordType *sdescriptors = &bdescriptors[istruct*natoms_pad*num_descriptors + ii*num_descriptors];
         int silist = bilist[istruct*natoms_pad + ii];
-        int snumneigh = bnumneigh[istruct*natoms_pad + ii];
-        int *sfirstneigh = &bfirstneigh[istruct*natoms_pad*umax_num_neigh_atoms + ii*umax_num_neigh_atoms];
-        CoordType (*srcs)[3] = &brcs[istruct*natoms_pad*umax_num_neigh_atoms + ii*umax_num_neigh_atoms];
+        int snumneigh = bnumneigh[istruct*natoms_pad + silist];
+        int *sfirstneigh = &bfirstneigh[istruct*natoms_pad*umax_num_neigh_atoms + silist*umax_num_neigh_atoms];
+        CoordType (*srcs)[3] = &brcs[istruct*natoms_pad*umax_num_neigh_atoms + silist*umax_num_neigh_atoms];
 
         find_descriptors_atom<CoordType>(
             sdescriptors,

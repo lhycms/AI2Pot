@@ -527,15 +527,15 @@ void GroupZBL<CoordType>::correct_efv(CoordType &etot,
         type_inner = types[center_idx];
         Zi = type_map[type_inner];
 
-        for (int jj=0; jj<numneigh[ii]; jj++) {
-            neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
+        for (int jj=0; jj<numneigh[center_idx]; jj++) {
+            neigh_idx = firstneigh[center_idx*umax_num_neigh_atoms + jj];
             type_outer = types[neigh_idx];
             Zj = type_map[type_outer];
             int zbl_idx = type_inner * this->_ntypes + type_outer;
             PairZBL<CoordType> pair_zbl = this->_pair_zbl_vector[zbl_idx];
             
             for (int aa=0; aa<3; aa++)
-                neigh_vec[aa] = rcs[ii*umax_num_neigh_atoms + jj][aa];
+                neigh_vec[aa] = rcs[center_idx*umax_num_neigh_atoms + jj][aa];
             
             distance_ij = std::sqrt( std::pow(neigh_vec[0], 2)
                                      + std::pow(neigh_vec[1], 2)
@@ -594,15 +594,15 @@ void GroupZBL<CoordType>::correct_ef(CoordType &etot,
         type_inner = types[center_idx];
         Zi = type_map[type_inner];
 
-        for (int jj=0; jj<numneigh[ii]; jj++) {
-            neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
+        for (int jj=0; jj<numneigh[center_idx]; jj++) {
+            neigh_idx = firstneigh[center_idx*umax_num_neigh_atoms + jj];
             type_outer = types[neigh_idx];
             Zj = type_map[type_outer];
             int zbl_idx = type_inner * this->_ntypes + type_outer;
             PairZBL<CoordType> pair_zbl = this->_pair_zbl_vector[zbl_idx];
             
             for (int aa=0; aa<3; aa++)
-                neigh_vec[aa] = rcs[ii*umax_num_neigh_atoms + jj][aa];
+                neigh_vec[aa] = rcs[center_idx*umax_num_neigh_atoms + jj][aa];
             
             distance_ij = std::sqrt( std::pow(neigh_vec[0], 2)
                                      + std::pow(neigh_vec[1], 2)
@@ -612,7 +612,7 @@ void GroupZBL<CoordType>::correct_ef(CoordType &etot,
                 continue;
 
             pair_zbl.add_atomic_energy_one(etot, distance_ij);
-            pair_zbl.add_atomic_force_one(&atomic_forces[ii*3+0], neigh_vec);
+            pair_zbl.add_atomic_force_one(&atomic_forces[center_idx*3+0], neigh_vec);
         }
     }
 #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
@@ -660,15 +660,15 @@ void GroupZBL<CoordType>::correct_e_sites(
         type_inner = types[center_idx];
         Zi = type_map[type_inner];
 
-        for (int jj=0; jj<numneigh[ii]; jj++) {
-            neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
+        for (int jj=0; jj<numneigh[center_idx]; jj++) {
+            neigh_idx = firstneigh[center_idx*umax_num_neigh_atoms + jj];
             type_outer = types[neigh_idx];
             Zj = type_map[type_outer];
             int zbl_idx = type_inner * this->_ntypes + type_outer;
             PairZBL<CoordType> pair_zbl = this->_pair_zbl_vector[zbl_idx];
 
             for (int aa=0; aa<3; aa++)
-                neigh_vec[aa] = rcs[ii*umax_num_neigh_atoms + jj][aa];
+                neigh_vec[aa] = rcs[center_idx*umax_num_neigh_atoms + jj][aa];
             
             distance_ij = std::sqrt( std::pow(neigh_vec[0], 2)
                                      + std::pow(neigh_vec[1], 2)

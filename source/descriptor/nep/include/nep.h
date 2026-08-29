@@ -199,9 +199,9 @@ void Nep<CoordType>::find_ef(
             l_max,
             coeffs,
             ilist[ii],
-            numneigh[ii],
-            &firstneigh[ii*umax_num_neigh_atoms],
-            &rcs[ii*umax_num_neigh_atoms],
+            numneigh[center_idx],
+            &firstneigh[center_idx*umax_num_neigh_atoms],
+            &rcs[center_idx*umax_num_neigh_atoms],
             types,
             ntypes,
             umax_num_neigh_atoms,
@@ -261,11 +261,11 @@ void Nep<CoordType>::find_ef(
         }
 
         // 3.3. 
-        for (int jj=0; jj<numneigh[ii]; jj++) {
-            neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
-            neigh_vec[0] = rcs[ii*umax_num_neigh_atoms+jj][0];
-            neigh_vec[1] = rcs[ii*umax_num_neigh_atoms+jj][1];
-            neigh_vec[2] = rcs[ii*umax_num_neigh_atoms+jj][2];
+        for (int jj=0; jj<numneigh[center_idx]; jj++) {
+            neigh_idx = firstneigh[center_idx*umax_num_neigh_atoms + jj];
+            neigh_vec[0] = rcs[center_idx*umax_num_neigh_atoms+jj][0];
+            neigh_vec[1] = rcs[center_idx*umax_num_neigh_atoms+jj][1];
+            neigh_vec[2] = rcs[center_idx*umax_num_neigh_atoms+jj][2];
             distance_ij = std::sqrt( neigh_vec[0] * neigh_vec[0]
                                      + neigh_vec[1] * neigh_vec[1]
                                      + neigh_vec[2] * neigh_vec[2] );
@@ -403,9 +403,9 @@ void Nep<CoordType>::find_efv(
             l_max,
             coeffs,
             ilist[ii],
-            numneigh[ii],
-            &firstneigh[ii*umax_num_neigh_atoms],
-            &rcs[ii*umax_num_neigh_atoms],
+            numneigh[center_idx],
+            &firstneigh[center_idx*umax_num_neigh_atoms],
+            &rcs[center_idx*umax_num_neigh_atoms],
             types,
             ntypes,
             umax_num_neigh_atoms,
@@ -466,11 +466,11 @@ void Nep<CoordType>::find_efv(
         }
 
         // 3.3. 
-        for (int jj=0; jj<numneigh[ii]; jj++) {
-            neigh_idx = firstneigh[ii*umax_num_neigh_atoms + jj];
-            neigh_vec[0] = rcs[ii*umax_num_neigh_atoms+jj][0];
-            neigh_vec[1] = rcs[ii*umax_num_neigh_atoms+jj][1];
-            neigh_vec[2] = rcs[ii*umax_num_neigh_atoms+jj][2];
+        for (int jj=0; jj<numneigh[center_idx]; jj++) {
+            neigh_idx = firstneigh[center_idx*umax_num_neigh_atoms + jj];
+            neigh_vec[0] = rcs[center_idx*umax_num_neigh_atoms+jj][0];
+            neigh_vec[1] = rcs[center_idx*umax_num_neigh_atoms+jj][1];
+            neigh_vec[2] = rcs[center_idx*umax_num_neigh_atoms+jj][2];
             distance_ij = std::sqrt( neigh_vec[0] * neigh_vec[0]
                                      + neigh_vec[1] * neigh_vec[1]
                                      + neigh_vec[2] * neigh_vec[2] );
@@ -577,6 +577,7 @@ void Nep<CoordType>::find_descriptors(
     #endif
     for (int ii=0; ii<inum; ii++)
     {
+        int center_idx = ilist[ii];
         MomsDodsValDer<CoordType>::find_val_der(
             mom_vals,
             dod_vals,
@@ -588,9 +589,9 @@ void Nep<CoordType>::find_descriptors(
             l_max,
             coeffs,
             ilist[ii],
-            numneigh[ii],
-            &firstneigh[ii*umax_num_neigh_atoms],
-            &rcs[ii*umax_num_neigh_atoms],
+            numneigh[center_idx],
+            &firstneigh[center_idx*umax_num_neigh_atoms],
+            &rcs[center_idx*umax_num_neigh_atoms],
             types,
             ntypes,
             umax_num_neigh_atoms,
