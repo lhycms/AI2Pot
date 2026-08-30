@@ -10,7 +10,7 @@ AI2Pot is distributed under the GNU General Public License v3.0.
 
 AI2Pot provides:
 
-- Unified implementations of **MTP** and **NEP**
+- Unified implementations of **MTP**, **NEP** and **NNMTP**
 - High-performance C++ and CUDA operators
 - PyTorch-based training, inference, and evaluation pipelines
 - Interoperability with pymatgen, ASE, and LAMMPS
