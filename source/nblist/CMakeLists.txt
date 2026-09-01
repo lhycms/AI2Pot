@@ -47,8 +47,20 @@ if (BUILD_TEST)
     add_executable(test_neighborList ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_neighborList.cc)
     target_link_libraries(test_neighborList PRIVATE gtest gtest_main)
 
-    gtest_discover_tests(test_basicStructureInfo)
-    gtest_discover_tests(test_structure)
-    gtest_discover_tests(test_binLinkedList)
-    gtest_discover_tests(test_neighborList)
+    gtest_discover_tests(
+        test_basicStructureInfo
+        DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT}
+        DISCOVERY_MODE PRE_TEST)
+    gtest_discover_tests(
+        test_structure
+        DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT}
+        DISCOVERY_MODE PRE_TEST)
+    gtest_discover_tests(
+        test_binLinkedList
+        DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT}
+        DISCOVERY_MODE PRE_TEST)
+    gtest_discover_tests(
+        test_neighborList
+        DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT}
+        DISCOVERY_MODE PRE_TEST)
 endif()

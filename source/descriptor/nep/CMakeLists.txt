@@ -24,6 +24,9 @@ if (TORCH_OP)
     if (USE_OPENMP)
         target_compile_definitions(nepOp_cpu PRIVATE USE_OPENMP)
     endif()
+    if (APPLE)
+        target_compile_options(nepOp_cpu PRIVATE -Wno-invalid-specialization)
+    endif()
 
     if (USE_CUDA AND CUDA_FOUND)
         add_library(nepOp_cuda SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/nepOp_cuda.cc)
@@ -43,6 +46,9 @@ if (TORCH_OP)
     target_link_libraries(nep_bind_cpu PRIVATE ${TORCH_LIBRARIES_CPU} ${PYTHON_LIBRARIES} nepOp_cpu)
     if (USE_OPENMP)
         target_compile_definitions(nep_bind_cpu PRIVATE USE_OPENMP)
+    endif()
+    if (APPLE)
+        target_compile_options(nep_bind_cpu PRIVATE -Wno-invalid-specialization)
     endif()
 
     if (USE_CUDA AND CUDA_FOUND)
@@ -84,14 +90,20 @@ if (BUILD_TEST)
     if (USE_OPENMP)
         target_compile_definitions(test_nep PRIVATE USE_OPENMP)
     endif()
-    gtest_discover_tests(test_nep)
+    gtest_discover_tests(
+        test_nep
+        DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT}
+        DISCOVERY_MODE PRE_TEST)
 
     add_executable(test_nep_cpu_launcher ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nep_cpu_launcher.cc)
     target_link_libraries(test_nep_cpu_launcher PRIVATE gtest gtest_main)
     if (USE_OPENMP)
         target_compile_definitions(test_nep_cpu_launcher PRIVATE USE_OPENMP)
     endif()
-    gtest_discover_tests(test_nep_cpu_launcher)
+    gtest_discover_tests(
+        test_nep_cpu_launcher
+        DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT}
+        DISCOVERY_MODE PRE_TEST)
 
     add_executable(test_nep_loss ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nepLoss.cc)
     target_link_libraries(test_nep_loss PRIVATE gtest gtest_main)

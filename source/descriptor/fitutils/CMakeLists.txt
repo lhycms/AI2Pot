@@ -21,6 +21,9 @@ if (TORCH_OP)
     add_library(target_statistics_op_cpu SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/targetStatisticsOp_cpu.cc)
     target_include_directories(target_statistics_op_cpu PRIVATE ${TORCH_INCLUDE_DIRS})
     target_link_libraries(target_statistics_op_cpu PRIVATE ${TORCH_LIBRARIES_CPU})
+    if (APPLE)
+        target_compile_options(target_statistics_op_cpu PRIVATE -Wno-invalid-specialization)
+    endif()
 
     if (USE_CUDA AND CUDA_FOUND)
         add_library(target_statistics_op_cuda SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/targetStatisticsOp_cuda.cc)
@@ -34,6 +37,9 @@ if (TORCH_OP)
     add_library(descriptor_statistics_op_cpu SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/descriptorsStatisticsOp_cpu.cc)
     target_include_directories(descriptor_statistics_op_cpu PRIVATE ${TORCH_INCLUDE_DIRS})
     target_link_libraries(descriptor_statistics_op_cpu PRIVATE ${TORCH_LIBRARIES_CPU})
+    if (APPLE)
+        target_compile_options(descriptor_statistics_op_cpu PRIVATE -Wno-invalid-specialization)
+    endif()
 
     if (USE_CUDA AND CUDA_FOUND)
         add_library(descriptor_statistics_op_cuda SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/descriptorsStatisticsOp_cuda.cc)
@@ -52,6 +58,9 @@ if (TORCH_OP)
                           target_statistics_op_cpu
                           descriptor_statistics_op_cpu
                           ${TORCH_LIBRARIES_CPU} ${PYTHON_LIBRARIES})
+    if (APPLE)
+        target_compile_options(fitutils_bind_cpu PRIVATE -Wno-invalid-specialization)
+    endif()
 
     if (USE_CUDA AND CUDA_FOUND)
         add_library(fitutils_bind_cuda SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bind/fitutils_bind_cuda.cc)
@@ -79,7 +88,16 @@ if (BUILD_TEST)
     add_executable(test_efv_rmse_cpu_launcher ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_efv_rmse_cpu_launcher.cc)
     target_link_libraries(test_efv_rmse_cpu_launcher PRIVATE gtest gtest_main)
 
-    gtest_discover_tests(test_target_statistics)
-    gtest_discover_tests(test_all_type_descriptors_statistics)
-    gtest_discover_tests(test_efv_rmse_cpu_launcher)
+    gtest_discover_tests(
+        test_target_statistics
+        DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT}
+        DISCOVERY_MODE PRE_TEST)
+    gtest_discover_tests(
+        test_all_type_descriptors_statistics
+        DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT}
+        DISCOVERY_MODE PRE_TEST)
+    gtest_discover_tests(
+        test_efv_rmse_cpu_launcher
+        DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT}
+        DISCOVERY_MODE PRE_TEST)
 endif()

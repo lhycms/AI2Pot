@@ -72,10 +72,24 @@ if (BUILD_TEST)
     target_compile_definitions(test_linear_mtp_gram_and_cross_gpu PRIVATE MAX_MTP_LEVEL=${MAX_MTP_LEVEL})
     target_link_libraries(test_linear_mtp_gram_and_cross_gpu PRIVATE mtpParam gtest gtest_main)
     
-    gtest_discover_tests(test_schmidt_orth_gpu DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT})
-    gtest_discover_tests(test_mtp_utilities DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT})
-    #gtest_discover_tests(test_mtp_basis DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT})
-    gtest_discover_tests(test_linear_mtp DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT})
-    gtest_discover_tests(test_linear_mtp_loss DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT})
-    gtest_discover_tests(test_linear_mtp_gram_and_cross_gpu DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT})
+    gtest_discover_tests(
+        test_schmidt_orth_gpu 
+        DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT}
+        DISCOVERY_MODE PRE_TEST)
+    gtest_discover_tests(
+        test_mtp_utilities
+        DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT}
+        DISCOVERY_MODE PRE_TEST)
+    gtest_discover_tests(
+        test_linear_mtp
+        DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT}
+        DISCOVERY_MODE PRE_TEST)
+    gtest_discover_tests(
+        test_linear_mtp_loss
+        DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT}
+        DISCOVERY_MODE PRE_TEST)
+    gtest_discover_tests(
+        test_linear_mtp_gram_and_cross_gpu
+        DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT}
+        DISCOVERY_MODE PRE_TEST)
 endif()

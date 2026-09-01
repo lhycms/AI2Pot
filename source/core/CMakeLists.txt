@@ -27,9 +27,24 @@ if(BUILD_TEST)
     add_executable(test_arrayUtils ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_arrayUtils.cc)
     target_link_libraries(test_arrayUtils PRIVATE gtest gtest_main)
     
-    gtest_discover_tests(test_vecx)
-    gtest_discover_tests(test_AlignedArray)
-    gtest_discover_tests(test_hardware)
-    gtest_discover_tests(test_vec3Operation)
-    gtest_discover_tests(test_arrayUtils)
+    gtest_discover_tests(
+        test_vecx
+        DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT}
+        DISCOVERY_MODE PRE_TEST)
+    gtest_discover_tests(
+        test_AlignedArray
+        DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT}
+        DISCOVERY_MODE PRE_TEST)
+    gtest_discover_tests(
+        test_hardware
+        DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT}
+        DISCOVERY_MODE PRE_TEST)
+    gtest_discover_tests(
+        test_vec3Operation
+        DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT}
+        DISCOVERY_MODE PRE_TEST)
+    gtest_discover_tests(
+        test_arrayUtils
+        DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT}
+        DISCOVERY_MODE PRE_TEST)
 endif()

@@ -24,5 +24,7 @@ else()
 endif()
 
 # 6. Compile test
-add_executable(test_altbc ${CMAKE_CURRENT_SOURCE_DIR}/test/test_altbc.cc)
-target_link_libraries(test_altbc PRIVATE gtest gtest_main)
+if (BUILD_TEST)
+    add_executable(test_altbc ${CMAKE_CURRENT_SOURCE_DIR}/test/test_altbc.cc)
+    target_link_libraries(test_altbc PRIVATE gtest gtest_main)
+endif()

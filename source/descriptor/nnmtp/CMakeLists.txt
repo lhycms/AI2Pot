@@ -30,7 +30,10 @@ if (TORCH_OP)
     ## 5.0. 
     add_library(mtpParamOp_nnMtp SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/mtpParamOp.cc)
     target_include_directories(mtpParamOp_nnMtp PRIVATE ${PYTHON_INCLUDE_DIRS} ${TORCH_INCLUDE_DIRS})
-    target_link_libraries(mtpParamOp_nnMtp PRIVATE ${PYTHON_LIBRARIES} ${TORCH_LIBRARIES_CPU})
+    target_link_libraries(mtpParamOp_nnMtp PRIVATE mtpParam_nnMtp ${PYTHON_LIBRARIES} ${TORCH_LIBRARIES_CPU})
+    if (APPLE)
+        target_compile_options(mtpParamOp_nnMtp PRIVATE -Wno-invalid-specialization)
+    endif()
 
     ## 5.1. nnMtpOp (CPU and CUDA)
     add_library(nnMtpOp_cpu SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/nnMtpOp_cpu.cc)
@@ -41,6 +44,9 @@ if (TORCH_OP)
     endif()
     if (MAX_MTP_LEVEL)
         target_compile_definitions(nnMtpOp_cpu PRIVATE MAX_MTP_LEVEL=${MAX_MTP_LEVEL})
+    endif()
+    if (APPLE)
+        target_compile_options(nnMtpOp_cpu PRIVATE -Wno-invalid-specialization)
     endif()
 
     if (USE_CUDA AND CUDA_FOUND)
@@ -73,6 +79,9 @@ if (TORCH_OP)
     endif()
     if (MAX_MTP_LEVEL)
         target_compile_definitions(nnmtp_bind_cpu PRIVATE MAX_MTP_LEVEL=${MAX_MTP_LEVEL})
+    endif()
+    if (APPLE)
+        target_compile_options(nnmtp_bind_cpu PRIVATE -Wno-invalid-specialization)
     endif()
 
     if (USE_CUDA AND CUDA_FOUND)
@@ -121,8 +130,20 @@ if (BUILD_TEST)
     add_executable(test_nnMtpLoss_cpu_launcher ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nnMtpLoss_cpu_launcher.cc)
     target_link_libraries(test_nnMtpLoss_cpu_launcher PRIVATE gtest gtest_main)
 
-    gtest_discover_tests(test_nnMtpUtils)
-    gtest_discover_tests(test_nnMtp)
-    gtest_discover_tests(test_nnMtp_cpu_launcher)
-    gtest_discover_tests(test_nnMtpLoss_cpu_launcher)
+    gtest_discover_tests(
+        test_nnMtpUtils
+        DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT}
+        DISCOVERY_MODE PRE_TEST)
+    gtest_discover_tests(
+        test_nnMtp
+        DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT}
+        DISCOVERY_MODE PRE_TEST)
+    gtest_discover_tests(
+        test_nnMtp_cpu_launcher
+        DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT}
+        DISCOVERY_MODE PRE_TEST)
+    gtest_discover_tests(
+        test_nnMtpLoss_cpu_launcher
+        DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT}
+        DISCOVERY_MODE PRE_TEST)
 endif()

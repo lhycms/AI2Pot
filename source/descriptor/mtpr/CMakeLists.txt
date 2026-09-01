@@ -29,6 +29,9 @@ if (TORCH_OP)
     add_library(mtpParamOp SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/mtpParamOp.cc)
     target_include_directories(mtpParamOp PRIVATE ${PYTHON_INCLUDE_DIRS} ${TORCH_INCLUDE_DIRS})
     target_link_libraries(mtpParamOp PRIVATE mtpParam ${TORCH_LIBRARIES_CPU})
+    if (APPLE)
+        target_compile_options(mtpParamOp PRIVATE -Wno-invalid-specialization)
+    endif()
 
     ## 5.1. linear_mtp_gram_and_cross_op
     add_library(linear_mtp_gram_and_cross_op_cpu SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/linear_mtp_gram_and_cross_op_cpu.cc)
@@ -39,6 +42,9 @@ if (TORCH_OP)
     endif()
     if (MAX_MTP_LEVEL)
         target_compile_definitions(linear_mtp_gram_and_cross_op_cpu PRIVATE MAX_MTP_LEVEL=${MAX_MTP_LEVEL})
+    endif()
+    if (APPLE)
+        target_compile_options(linear_mtp_gram_and_cross_op_cpu PRIVATE -Wno-invalid-specialization)
     endif()
 
     if (USE_CUDA AND CUDA_FOUND)
@@ -63,6 +69,9 @@ if (TORCH_OP)
     if (MAX_MTP_LEVEL)
         target_compile_definitions(schmidt_orth_op_cpu PRIVATE MAX_MTP_LEVEL=${MAX_MTP_LEVEL})
     endif()
+    if (APPLE)
+        target_compile_options(schmidt_orth_op_cpu PRIVATE -Wno-invalid-specialization)
+    endif()
 
     if (USE_CUDA AND CUDA_FOUND)
         add_library(schmidt_orth_op_cuda SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/schmidt_orth_op_cuda.cc)
@@ -85,6 +94,9 @@ if (TORCH_OP)
     endif()
     if (MAX_MTP_LEVEL)
         target_compile_definitions(linearMtpOp_cpu PRIVATE MAX_MTP_LEVEL=${MAX_MTP_LEVEL})
+    endif()
+    if (APPLE)
+        target_compile_options(linearMtpOp_cpu PRIVATE -Wno-invalid-specialization)
     endif()
 
     if (USE_CUDA AND CUDA_FOUND)
@@ -109,6 +121,7 @@ if (TORCH_OP)
                           PRIVATE
                           schmidt_orth_op_cpu 
                           linear_mtp_gram_and_cross_op_cpu
+                          mtpParam
                           mtpParamOp
                           linearMtpOp_cpu
                           ${TORCH_LIBRARIES_CPU}
@@ -118,6 +131,9 @@ if (TORCH_OP)
     endif()
     if (MAX_MTP_LEVEL)
         target_compile_definitions(mtpr_bind_cpu PRIVATE MAX_MTP_LEVEL=${MAX_MTP_LEVEL})
+    endif()
+    if (APPLE)
+        target_compile_options(mtpr_bind_cpu PRIVATE -Wno-invalid-specialization)
     endif()
 
     if (USE_CUDA AND CUDA_FOUND)
@@ -192,10 +208,28 @@ if (BUILD_TEST)
         #gtest_discover_tests(test_mtpBasisOp DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT})
     endif()
 
-    gtest_discover_tests(test_schmidt_orth)
-    gtest_discover_tests(test_basis)
-    gtest_discover_tests(test_mtpParam)
-    gtest_discover_tests(test_linear_mtp_gram_and_cross)
-    gtest_discover_tests(test_mtpBasis)
-    gtest_discover_tests(test_mtpBasisGrad)
+    gtest_discover_tests(
+        test_schmidt_orth
+        DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT}
+        DISCOVERY_MODE PRE_TEST)
+    gtest_discover_tests(
+        test_basis
+        DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT}
+        DISCOVERY_MODE PRE_TEST)
+    gtest_discover_tests(
+        test_mtpParam
+        DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT}
+        DISCOVERY_MODE PRE_TEST)
+    gtest_discover_tests(
+        test_linear_mtp_gram_and_cross
+        DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT}
+        DISCOVERY_MODE PRE_TEST)
+    gtest_discover_tests(
+        test_mtpBasis
+        DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT}
+        DISCOVERY_MODE PRE_TEST)
+    gtest_discover_tests(
+        test_mtpBasisGrad
+        DISCOVERY_TIMEOUT ${CMAKE_GTEST_DISCOVERY_TIMEOUT}
+        DISCOVERY_MODE PRE_TEST)
 endif()
