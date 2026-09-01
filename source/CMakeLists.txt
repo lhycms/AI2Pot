@@ -14,8 +14,13 @@ add_compile_options(-D_GLIBCXX_USE_CXX11_ABI=0) # make googletest and torch2.x c
 set(CMAKE_GTEST_DISCOVERY_TIMEOUT 600)
 
 # set LD_LIBRARY_PATH
-set(CMAKE_BUILD_RPATH "$ORIGIN")    # For developers
-set(CMAKE_INSTALL_RPATH "$ORIGIN")  # For users
+if (APPLE)
+    set(CMAKE_BUILD_RPATH "@loader_path")
+    set(CMAKE_INSTALL_RPATH "@loader_path")
+else()
+    set(CMAKE_BUILD_RPATH "$ORIGIN")    # For developers
+    set(CMAKE_INSTALL_RPATH "$ORIGIN")  # For users
+endif()
 
 # Debug
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
