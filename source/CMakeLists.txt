@@ -221,8 +221,6 @@ if (TORCH_OP)
                 nnMtpOp_cpu
                 nnmtp_bind_cpu
                 #
-                nnmtp_torch_launcher
-                nnmtp_loss_torch_launcher
 
                 # nep
                 nepOp_cpu
