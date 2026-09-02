@@ -21,8 +21,10 @@ version = "1.1.0"
 description = "A machine-learning interatomic-potential framework for materials modeling."
 requires-python = ">=3.11,<3.13"
 
+license = {file = "LICENSE"} 
+
 authors = [
-    {name = "Hanyu Liu", email = "domainofbuaa@gmail.com"}
+    {name = "Hanyu Liu", email = "hanyuliu2016@buaa.edu.cn"}
 ]
 
 dependencies = [
@@ -72,5 +74,3 @@ USE_CUDA = "yes"
 MAX_MTP_LEVEL = "20"
 USE_OPENMP = "yes"
 
-
-license = {file = "LICENSE"} 
