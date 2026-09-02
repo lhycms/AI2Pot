@@ -19,13 +19,14 @@ build-backend = "scikit_build_core.build"
 name = "ai2pot"
 version = "1.1.0"
 description = "A machine-learning interatomic-potential framework for materials modeling."
-requires-python = ">=3.10,<3.13"
+requires-python = ">=3.11,<3.13"
 
 authors = [
     {name = "Hanyu Liu", email = "domainofbuaa@gmail.com"}
 ]
 
 dependencies = [
+    "torch>=2.5.0",
     "pymatgen==2024.7.18",
     "ase==3.23.0",
     "scipy==1.16.0",
@@ -70,3 +71,6 @@ TORCH_OP = "yes"
 USE_CUDA = "yes"
 MAX_MTP_LEVEL = "20"
 USE_OPENMP = "yes"
+
+
+license = {file = "LICENSE"} 
