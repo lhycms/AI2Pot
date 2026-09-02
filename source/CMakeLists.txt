@@ -50,6 +50,12 @@ endif()
 
 
 ## 2.2. pybind11
+find_package(
+    Python
+    COMPONENTS Interpreter Development.Module
+    REQUIRED)
+
+set(PYBIND11_FINDPYTHON ON)
 execute_process(COMMAND python3 -c "import pybind11; print(pybind11.__path__[0])" OUTPUT_VARIABLE PYBIND11_PATH)
 string(REPLACE "\n" "/share/cmake" PYBIND11_CMAKE_PREFIX_PATH "${PYBIND11_PATH}")
 list(APPEND CMAKE_PREFIX_PATH ${PYBIND11_CMAKE_PREFIX_PATH})
