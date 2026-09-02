@@ -56,9 +56,9 @@ jobs:
       - name: Build wheels
         env:
           CIBW_ARCHS_LINUX: x86_64
-          CIBW_BUILD: "cp311-* cp312-*"
+          CIBW_BUILD: "cp311-manylinux_x86_64 cp312-manylinux_x86_64"
           # numpy 2.4.6 需要 glibc>=2.28（且与 torch 2.5 的 manylinux2014 兼容）
-          CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28_x86_64
+          # CIBW_MANYLINUX_X86_64_IMAGE: quay.io/pypa/manylinux_2_28_x86_64
           # 容器内先装构建依赖 + CPU 版 torch；--no-build-isolation 保证用容器环境里的 torch 头
           CIBW_BEFORE_BUILD_LINUX: "python -m pip install numpy==$NUMPY_VERSION pybind11==2.11.1 scikit-build-core==0.12.2 cmake==4.3.2 && python -m pip install torch==$TORCH_VERSION --index-url https://download.pytorch.org/whl/cpu"
           # 覆盖 pyproject 里硬编码的 USE_CUDA=yes / BUILD_TEST=yes
@@ -181,7 +181,7 @@ jobs:
       - name: Build wheels
         env:
           CIBW_ARCHS_MACOS: ${{ matrix.arch }}
-          CIBW_BUILD: "cp311-* cp312-*"
+          CIBW_BUILD: "cp311-manylinux_x86_64 cp312-manylinux_x86_64"
           CIBW_BEFORE_BUILD_MACOS: "python -m pip install numpy==$NUMPY_VERSION pybind11==2.11.1 scikit-build-core==0.12.2 cmake==4.3.2 && python -m pip install torch==$TORCH_VERSION"
           CIBW_BUILD_FRONTEND: "pip; args: --no-build-isolation --config-setting=cmake.define.USE_CUDA=off --config-setting=cmake.define.BUILD_TEST=off"
           # find_package(OpenMP) 需要看到 brew libomp；delocate 修 libomp 进 wheel、exclude torch 库
