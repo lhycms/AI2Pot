@@ -74,6 +74,7 @@ jobs:
           /tmp/smoke/bin/pip install -q torch==$TORCH_VERSION --index-url https://download.pytorch.org/whl/cpu
           /tmp/smoke/bin/pip install -q numpy==$NUMPY_VERSION
           /tmp/smoke/bin/pip install -q --no-deps "$WHEEL"
+          cd /tmp
           /tmp/smoke/bin/python -c "from ai2pot import fromcc; import torch; assert 'mtpr' in dir(torch.ops) and 'nep' in dir(torch.ops); print('SMOKE OK')"
 
       - name: Upload artifacts

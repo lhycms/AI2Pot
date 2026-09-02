@@ -54,19 +54,19 @@ find_package(
     Python
     COMPONENTS Interpreter Development.Module
     REQUIRED)
-
 set(PYBIND11_FINDPYTHON ON)
-execute_process(COMMAND python3 -c "import pybind11; print(pybind11.__path__[0])" OUTPUT_VARIABLE PYBIND11_PATH)
+
+execute_process(COMMAND ${Python_EXECUTABLE} -c "import pybind11; print(pybind11.__path__[0])" OUTPUT_VARIABLE PYBIND11_PATH)
 string(REPLACE "\n" "/share/cmake" PYBIND11_CMAKE_PREFIX_PATH "${PYBIND11_PATH}")
 list(APPEND CMAKE_PREFIX_PATH ${PYBIND11_CMAKE_PREFIX_PATH})
 find_package(pybind11 CONFIG REQUIRED)
 
 ## 2.3. numpy
-execute_process(COMMAND python3 -c "import numpy as np;print(np.__path__[0])" OUTPUT_VARIABLE NUMPY_ROOT_PATH)
+execute_process(COMMAND ${Python_EXECUTABLE} -c "import numpy as np;print(np.__path__[0])" OUTPUT_VARIABLE NUMPY_ROOT_PATH)
 string(REPLACE "\n" "/_core/include" NUMPY_INCLUDE_PATH ${NUMPY_ROOT_PATH})
 
 ## 2.4. torch
-execute_process(COMMAND python3 -c "import torch;print(torch.__path__[0])" OUTPUT_VARIABLE TORCH_PATH)
+execute_process(COMMAND ${Python_EXECUTABLE} -c "import torch;print(torch.__path__[0])" OUTPUT_VARIABLE TORCH_PATH)
 string(REPLACE "\n" "/share/cmake" TORCH_CMAKE_PREFIX_PATH ${TORCH_PATH})
 list(APPEND CMAKE_PREFIX_PATH ${TORCH_CMAKE_PREFIX_PATH})
 find_package(Torch CONFIG REQUIRED)
