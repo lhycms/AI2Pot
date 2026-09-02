@@ -27,7 +27,7 @@ add_library(mtpParam SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/mtpParam.cc)
 
 if (TORCH_OP)
     add_library(mtpParamOp SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/mtpParamOp.cc)
-    target_include_directories(mtpParamOp PRIVATE ${PYTHON_INCLUDE_DIRS} ${TORCH_INCLUDE_DIRS})
+    target_include_directories(mtpParamOp PRIVATE ${Python_INCLUDE_DIRS} ${TORCH_INCLUDE_DIRS})
     target_link_libraries(mtpParamOp PRIVATE mtpParam ${TORCH_LIBRARIES_CPU})
     if (APPLE)
         target_compile_options(mtpParamOp PRIVATE -Wno-invalid-specialization)
@@ -119,7 +119,7 @@ if (TORCH_OP)
 
     ## 5.4. mtp_bind
     add_library(mtpr_bind_cpu SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bind/mtpr_bind_cpu.cc)
-    target_include_directories(mtpr_bind_cpu PRIVATE ${PYTHON_INCLUDE_DIRS} ${TORCH_INCLUDE_DIRS})
+    target_include_directories(mtpr_bind_cpu PRIVATE ${Python_INCLUDE_DIRS} ${TORCH_INCLUDE_DIRS})
     target_link_libraries(mtpr_bind_cpu
                           PRIVATE
                           schmidt_orth_op_cpu 
@@ -142,7 +142,7 @@ if (TORCH_OP)
 
     if (USE_CUDA AND CUDA_FOUND)
         add_library(mtpr_bind_cuda SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bind/mtpr_bind_cuda.cc)
-        target_include_directories(mtpr_bind_cuda PRIVATE ${PYTHON_INCLUDE_DIRS})
+        target_include_directories(mtpr_bind_cuda PRIVATE ${Python_INCLUDE_DIRS})
         target_link_libraries(mtpr_bind_cuda
                               PRIVATE
                               schmidt_orth_op_cuda

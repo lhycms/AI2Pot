@@ -21,7 +21,7 @@ set_target_properties(nblist PROPERTIES
     SUFFIX ${PYTHON_MODULE_EXTENSION})
 target_include_directories(nblist PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/bind)
 target_include_directories(nblist PRIVATE ${NUMPY_INCLUDE_PATH})
-target_include_directories(nblist PRIVATE ${PYTHON_INCLUDE_DIRS})
+target_include_directories(nblist PRIVATE ${Python_INCLUDE_DIRS})
 if(APPLE)
     target_link_options(nblist PRIVATE "-undefined" "dynamic_lookup")
 else()

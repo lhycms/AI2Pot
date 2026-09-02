@@ -20,7 +20,7 @@ if (TORCH_OP)
     target_link_libraries(envMatrixOp PRIVATE ${TORCH_LIBRARIES})
 
     add_library(envMatrixOp_bind SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bind/envMatrixOp_bind.cc)
-    target_include_directories(envMatrixOp_bind PRIVATE ${PYTHON_INCLUDE_DIRS})
+    target_include_directories(envMatrixOp_bind PRIVATE ${Python_INCLUDE_DIRS})
     target_link_libraries(envMatrixOp_bind PRIVATE ${TORCH_LIBRARIES} envMatrixOp ${PYTHON_LIBRARIES})
 endif()
 

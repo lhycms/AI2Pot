@@ -43,7 +43,7 @@ if (TORCH_OP)
 
     ## 5.2. nep_bind (CPU and CUDA)
     add_library(nep_bind_cpu SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bind/nep_bind_cpu.cc)
-    target_include_directories(nep_bind_cpu PRIVATE ${TORCH_INCLUDE_DIRS} ${PYTHON_INCLUDE_DIRS})
+    target_include_directories(nep_bind_cpu PRIVATE ${TORCH_INCLUDE_DIRS} ${Python_INCLUDE_DIRS})
     target_link_libraries(nep_bind_cpu PRIVATE ${TORCH_LIBRARIES_CPU} ${PYTHON_LIBRARIES} nepOp_cpu)
     if (USE_OPENMP)
         target_compile_definitions(nep_bind_cpu PRIVATE USE_OPENMP)
@@ -55,7 +55,7 @@ if (TORCH_OP)
 
     if (USE_CUDA AND CUDA_FOUND)
         add_library(nep_bind_cuda SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bind/nep_bind_cuda.cc)
-        target_include_directories(nep_bind_cuda PRIVATE ${PYTHON_INCLUDE_DIRS})
+        target_include_directories(nep_bind_cuda PRIVATE ${Python_INCLUDE_DIRS})
         target_link_libraries(nep_bind_cuda
                               PRIVATE
                               ${PYTHON_LIBRARIES}

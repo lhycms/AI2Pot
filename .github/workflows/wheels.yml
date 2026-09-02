@@ -1,0 +1,368 @@
+# AI2Pot wheel 构建 CI（v1 草案，2026-09-02）
+#
+# 产物矩阵（版本带 PEP 440 local segment，见 outputs/wheel_publish_plan.md §4/§7.1）：
+#   - Linux CPU   : 1.x.x+cpu   manylinux_2_28_x86_64, cp311/cp312  (cibuildwheel)
+#   - Linux CUDA  : 1.x.x+cuda  linux_x86_64,            cp311/cp312  (裸机 + CUDA 12.4 toolkit)
+#   - macOS CPU   : 1.x.x+cpu   macosx arm64/x86_64,     cp311/cp312  (cibuildwheel + brew libomp)
+#
+# 已知前提 / 待跑通后迭代的点：
+#   - torch==2.5.0 为 ABI 基线（与 README 一致）；CPU 链接只依赖 libtorch_cpu/libc10，
+#     因此 repair 时必须 exclude torch 库（运行时由先 `import torch` 提供同名 SONAME）。
+#   - 发版（PyPI 上传）另建 publish job，先用 trusted publishing，这里只出 wheel 产物。
+#   - macOS x86_64 用的是 macos-13（Intel）runner；若官方下线需改用 Rosetta/CIBW_ARCHS。
+
+name: wheels
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: wheels-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TORCH_VERSION: "2.5.0"
+  NUMPY_VERSION: "2.4.6"
+
+jobs:
+  # ============================================================
+  # 1. Linux CPU wheel（manylinux_2_28_x86_64, +cpu）
+  # ============================================================
+  linux-cpu:
+    name: linux-cpu (cp311/cp312)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12 (cibuildwheel driver)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install cibuildwheel
+        run: python -m pip install cibuildwheel
+
+      # 构建期 python 版本与 wheel 元数据一致地带上 +cpu local segment
+      - name: Append +cpu local version
+        run: |
+          BASE=$(python3 -c "import re;print(re.search(r'version = \"([^\"]+)\"',open('pyproject.toml').read()).group(1))")
+          sed -i.bak "s/^version = .*/version = \"${BASE}+cpu\"/" pyproject.toml
+          sed -i.bak "s/__version__ = .*/__version__ = \"${BASE}+cpu\"/" ai2pot/__init__.py
+          rm -f pyproject.toml.bak ai2pot/__init__.py.bak
+
+      - name: Build wheels
+        env:
+          CIBW_ARCHS_LINUX: x86_64
+          CIBW_BUILD: "cp311-manylinux_x86_64 cp312-manylinux_x86_64"
+          # numpy 2.4.6 需要 glibc>=2.28（且与 torch 2.5 的 manylinux2014 兼容）
+          # CIBW_MANYLINUX_X86_64_IMAGE: quay.io/pypa/manylinux_2_28_x86_64
+          # 容器内先装构建依赖 + CPU 版 torch；--no-build-isolation 保证用容器环境里的 torch 头
+          CIBW_BEFORE_BUILD_LINUX: "python -m pip install numpy==${{ env.NUMPY_VERSION }} pybind11==2.11.1 scikit-build-core==0.12.2 cmake==4.3.2 && python -m pip install torch==${{ env.TORCH_VERSION }} --index-url https://download.pytorch.org/whl/cpu"
+          # 覆盖 pyproject 里硬编码的 USE_CUDA=yes / BUILD_TEST=yes
+          CIBW_BUILD_FRONTEND: "pip; args: --no-build-isolation --config-setting=cmake.define.USE_CUDA=off --config-setting=cmake.define.BUILD_TEST=off"
+          # torch 是运行时依赖，不能被打进 wheel（auditwheel 默认会 bundle 非白名单 .so）
+          CIBW_REPAIR_WHEEL_COMMAND_LINUX: 'auditwheel repair --exclude libtorch_cpu.so --exclude libc10.so -w {dest_dir} {wheel}'
+        run: python -m cibuildwheel --output-dir wheelhouse
+
+      - name: Smoke test (cp312 wheel, CPU torch)
+        run: |
+          WHEEL=$(ls wheelhouse/*cp312*.whl | head -1)
+          python -m venv /tmp/smoke
+          /tmp/smoke/bin/pip install -q torch==$TORCH_VERSION --index-url https://download.pytorch.org/whl/cpu
+          /tmp/smoke/bin/pip install -q numpy==$NUMPY_VERSION
+          /tmp/smoke/bin/pip install -q --no-deps "$WHEEL"
+
+          cd /tmp
+          /tmp/smoke/bin/python -c "from ai2pot import fromcc; import torch; assert 'mtpr' in dir(torch.ops) and 'nep' in dir(torch.ops); print('SMOKE OK')"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-linux-cpu
+          path: wheelhouse/*.whl
+          if-no-files-found: error
+
+  # ============================================================
+  # 2. Linux CUDA wheel（manylinux, +cu124）
+  # ============================================================
+  linux-cuda:
+    name: linux-cuda (cp311/cp312, cu124)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # 这里只是 cibuildwheel driver。
+      # 实际 cp311 / cp312 Python 都来自 manylinux 容器。
+      - name: Set up Python 3.12 (cibuildwheel driver)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install cibuildwheel
+        run: python -m pip install cibuildwheel
+
+      # 与 PyTorch CUDA wheel 命名方式一致：
+      #   torch-2.5.0+cu124
+      #   ai2pot-1.1.0+cu124
+      - name: Append +cu124 local version
+        run: |
+          BASE=$(python -c "import re; print(re.search(r'version = \"([^\"]+)\"', open('pyproject.toml').read()).group(1))")
+          sed -i.bak "s/^version = .*/version = \"${BASE}+cu124\"/" pyproject.toml
+          sed -i.bak "s/__version__ = .*/__version__ = \"${BASE}+cu124\"/" ai2pot/__init__.py
+          rm -f pyproject.toml.bak ai2pot/__init__.py.bak
+
+      - name: Build wheels
+        env:
+          # ------------------------------------------------------
+          # cibuildwheel build matrix
+          # ------------------------------------------------------
+          CIBW_ARCHS_LINUX: x86_64
+          CIBW_BUILD: "cp311-manylinux_x86_64 cp312-manylinux_x86_64"
+
+          # manylinux_2_28 基于 AlmaLinux 8 / glibc 2.28
+          #CIBW_MANYLINUX_X86_64_IMAGE: quay.io/pypa/manylinux_2_28_x86_64
+
+          # ------------------------------------------------------
+          # System dependencies installed once inside the
+          # manylinux container.
+          #
+          # CUDA 必须装在这里，而不是 GitHub runner 上。
+          #
+          # 当前 manylinux_2_28 默认 GCC 较新，
+          # CUDA 12.4 使用 GCC 13 作为 host compiler。
+          # ------------------------------------------------------
+          CIBW_BEFORE_ALL_LINUX: >-
+            dnf install -y
+            dnf-plugins-core
+            gcc-toolset-13-gcc
+            gcc-toolset-13-gcc-c++
+            &&
+            dnf config-manager
+            --add-repo
+            https://developer.download.nvidia.com/compute/cuda/repos/rhel8/x86_64/cuda-rhel8.repo
+            &&
+            dnf clean expire-cache
+            &&
+            dnf install -y cuda-toolkit-12-4
+            &&
+            /usr/local/cuda-12.4/bin/nvcc --version
+            &&
+            /opt/rh/gcc-toolset-13/root/usr/bin/g++ --version
+
+          # ------------------------------------------------------
+          # Build environment inside manylinux
+          # ------------------------------------------------------
+          CIBW_ENVIRONMENT_LINUX: >-
+            CUDA_HOME=/usr/local/cuda-12.4
+            PATH=/usr/local/cuda-12.4/bin:/opt/rh/gcc-toolset-13/root/usr/bin:$PATH
+            LD_LIBRARY_PATH=/usr/local/cuda-12.4/lib64:$LD_LIBRARY_PATH
+            CC=/opt/rh/gcc-toolset-13/root/usr/bin/gcc
+            CXX=/opt/rh/gcc-toolset-13/root/usr/bin/g++
+            CUDAHOSTCXX=/opt/rh/gcc-toolset-13/root/usr/bin/g++
+
+          # ------------------------------------------------------
+          # Python build dependencies for each cp311 / cp312 build
+          #
+          # GitHub $VAR 不会自动传进 manylinux container，
+          # 因此这里使用 ${{ env.xxx }} 先展开。
+          # ------------------------------------------------------
+          CIBW_BEFORE_BUILD_LINUX: >-
+            python -m pip install
+            numpy==${{ env.NUMPY_VERSION }}
+            pybind11==2.11.1
+            scikit-build-core==0.12.2
+            cmake==4.3.2
+            &&
+            python -m pip install
+            torch==${{ env.TORCH_VERSION }}
+            --index-url https://download.pytorch.org/whl/cu124
+            &&
+            python -c "import torch; print('Torch:', torch.__version__); print('Torch CUDA:', torch.version.cuda)"
+
+          # ------------------------------------------------------
+          # Build AI2Pot CUDA wheel
+          # ------------------------------------------------------
+          CIBW_BUILD_FRONTEND: >-
+            pip; args:
+            --no-build-isolation
+            --config-setting=cmake.define.USE_CUDA=on
+            --config-setting=cmake.define.BUILD_TEST=off
+
+          # ------------------------------------------------------
+          # Do not vendor PyTorch / CUDA runtime libraries.
+          #
+          # They are runtime dependencies supplied by torch cu124
+          # and its NVIDIA dependencies.
+          # ------------------------------------------------------
+          CIBW_REPAIR_WHEEL_COMMAND_LINUX: >-
+            auditwheel repair
+            --exclude libtorch.so
+            --exclude libtorch_cpu.so
+            --exclude libtorch_cuda.so
+            --exclude libtorch_python.so
+            --exclude libc10.so
+            --exclude libc10_cuda.so
+            --exclude libcudart.so.12
+            -w {dest_dir}
+            {wheel}
+
+        run: python -m cibuildwheel --output-dir wheelhouse
+
+      # GitHub ubuntu-latest 没有 GPU，因此这里只验证：
+      #
+      # 1. CUDA wheel 能安装
+      # 2. CUDA PyTorch runtime 能加载
+      # 3. AI2Pot C++/CUDA extension 能加载
+      # 4. torch.ops 注册正常
+      #
+      # 真正 CUDA kernel 执行仍需要 GPU runner / 本地 GPU 测试。
+      - name: Smoke test (cp312 wheel, cu124 torch)
+        run: |
+          WHEEL=$(realpath $(ls wheelhouse/*cp312*.whl | head -1))
+          python -m venv /tmp/smoke
+          /tmp/smoke/bin/pip install -q \
+            torch==$TORCH_VERSION \
+            --index-url https://download.pytorch.org/whl/cu124
+          /tmp/smoke/bin/pip install -q numpy==$NUMPY_VERSION
+          /tmp/smoke/bin/pip install -q --no-deps "$WHEEL"
+
+          cd /tmp
+          /tmp/smoke/bin/python -c \
+            "import ai2pot; print('AI2Pot:', ai2pot.__version__, ai2pot.__file__)"
+          /tmp/smoke/bin/python -c \
+            "import torch; print('Torch:', torch.__version__, 'CUDA:', torch.version.cuda); from ai2pot import fromcc; assert 'mtpr' in dir(torch.ops) and 'nep' in dir(torch.ops); print('SMOKE OK')"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-linux-cu124
+          path: wheelhouse/*.whl
+          if-no-files-found: error
+
+
+  # ============================================================
+  # 3. macOS CPU wheel（arm64, +cpu）
+  # ============================================================
+  macos-arm64:
+    name: macos-arm64 (cp311/cp312)
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      # cibuildwheel driver。
+      # 实际 cp311 / cp312 Python 由 cibuildwheel 分别调用。
+      - name: Set up Python 3.12 (cibuildwheel driver)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # macOS 本身不提供 OpenMP runtime。
+      # Apple Silicon Homebrew 安装位置通常为：
+      # /opt/homebrew/opt/libomp
+      - name: Install libomp
+        run: brew install libomp
+
+      - name: Install cibuildwheel
+        run: python -m pip install cibuildwheel delocate
+
+      # 与 Linux CPU wheel 保持一致：
+      #   ai2pot-1.1.0+cpu-...
+      - name: Append +cpu local version
+        run: |
+          BASE=$(python -c "import re; print(re.search(r'version = \"([^\"]+)\"', open('pyproject.toml').read()).group(1))")
+          sed -i.bak "s/^version = .*/version = \"${BASE}+cpu\"/" pyproject.toml
+          sed -i.bak "s/__version__ = .*/__version__ = \"${BASE}+cpu\"/" ai2pot/__init__.py
+          rm -f pyproject.toml.bak ai2pot/__init__.py.bak
+
+      - name: Build wheels
+        env:
+          # ------------------------------------------------------
+          # cibuildwheel build matrix
+          # ------------------------------------------------------
+          CIBW_ARCHS_MACOS: arm64
+          CIBW_BUILD: "cp311-macosx_arm64 cp312-macosx_arm64"
+
+          # ------------------------------------------------------
+          # Python build dependencies
+          # ------------------------------------------------------
+          CIBW_BEFORE_BUILD_MACOS: >-
+            python -m pip install
+            numpy==${{ env.NUMPY_VERSION }}
+            pybind11==2.11.1
+            scikit-build-core==0.12.2
+            cmake==4.3.2
+            &&
+            python -m pip install
+            torch==${{ env.TORCH_VERSION }}
+
+          # ------------------------------------------------------
+          # Build AI2Pot CPU wheel
+          #
+          # TORCH_OP=yes
+          # MAX_MTP_LEVEL=20
+          # USE_OPENMP=yes
+          #
+          # 已由 pyproject.toml 提供默认值。
+          # CI 这里只覆盖 CPU variant 和关闭测试。
+          # ------------------------------------------------------
+          CIBW_BUILD_FRONTEND: >-
+            pip; args:
+            --no-build-isolation
+            --config-setting=cmake.define.USE_CUDA=off
+            --config-setting=cmake.define.BUILD_TEST=off
+
+          # ------------------------------------------------------
+          # macOS build environment
+          # ------------------------------------------------------
+          CIBW_ENVIRONMENT_MACOS: >-
+            MACOSX_DEPLOYMENT_TARGET=14.0
+            CMAKE_PREFIX_PATH=/opt/homebrew/opt/libomp
+
+          # ------------------------------------------------------
+          # Repair wheel
+          #
+          # libomp 需要由 delocate 放入 wheel，
+          # 但 Torch 自己的 dylib 不应重复打包到 AI2Pot。
+          # ------------------------------------------------------
+          CIBW_REPAIR_WHEEL_COMMAND_MACOS: >-
+            delocate-wheel
+            --require-archs {delocate_archs}
+            -w {dest_dir}
+            -v
+            --exclude libtorch.dylib
+            --exclude libtorch_cpu.dylib
+            --exclude libtorch_python.dylib
+            --exclude libc10.dylib
+            --ignore-missing-dependencies
+            {wheel}
+
+        run: python -m cibuildwheel --output-dir wheelhouse
+
+      - name: Smoke test (cp312 wheel, CPU torch)
+        run: |
+          WHEEL=$(ls wheelhouse/*cp312*arm64*.whl | head -1)
+          python -m venv /tmp/smoke
+          /tmp/smoke/bin/pip install -q \
+            torch==$TORCH_VERSION
+          /tmp/smoke/bin/pip install -q \
+            numpy==$NUMPY_VERSION
+          /tmp/smoke/bin/pip install -q \
+            --no-deps "$WHEEL"
+
+          # 避免 import GitHub checkout 目录中的源码
+          cd /tmp
+          /tmp/smoke/bin/python -c \
+            "import ai2pot; print('AI2Pot:', ai2pot.__version__, ai2pot.__file__)"
+          /tmp/smoke/bin/python -c \
+            "from ai2pot import fromcc; import torch; assert 'mtpr' in dir(torch.ops) and 'nep' in dir(torch.ops); print('SMOKE OK')"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-macos-arm64
+          path: wheelhouse/*.whl
+          if-no-files-found: error
