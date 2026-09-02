@@ -57,7 +57,7 @@ find_package(pybind11 CONFIG REQUIRED)
 
 ## 2.3. numpy
 execute_process(COMMAND python3 -c "import numpy as np;print(np.__path__[0])" OUTPUT_VARIABLE NUMPY_ROOT_PATH)
-string(REPLACE "\n" "/core/include" NUMPY_INCLUDE_PATH ${NUMPY_ROOT_PATH})
+string(REPLACE "\n" "/_core/include" NUMPY_INCLUDE_PATH ${NUMPY_ROOT_PATH})
 
 ## 2.4. torch
 execute_process(COMMAND python3 -c "import torch;print(torch.__path__[0])" OUTPUT_VARIABLE TORCH_PATH)
