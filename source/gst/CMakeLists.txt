@@ -15,7 +15,7 @@ add_library(gst SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bind/gst_bind.cc)
 set_target_properties(gst PROPERTIES
     PREFIX ""
     SUFFIX ${PYTHON_MODULE_EXTENSION})
-target_include_directories(gst PRIVATE ${PYTHON_INCLUDE_DIRS})
+target_include_directories(gst PRIVATE ${Python_INCLUDE_DIRS})
 target_include_directories(gst PRIVATE ${NUMPY_INCLUDE_PATH})
 if(APPLE)
     target_link_options(gst PRIVATE "-undefined" "dynamic_lookup")

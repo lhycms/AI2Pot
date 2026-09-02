@@ -141,9 +141,6 @@ else:
     fitutils_lib_dir:str = os.path.join(ai2pot_lib_dir, "descriptor", "fitutils") if os.getenv("AI2POT_PATH") else ai2pot_lib_dir
     fitutils_bind_cpu_so_path: str = os.path.join(fitutils_lib_dir, "libfitutils_bind_cpu.dylib")
     torch.ops.load_library(fitutils_bind_cpu_so_path)
-    if torch.cuda.is_available():
-        fitutils_bind_cuda_so_path = os.path.join(fitutils_lib_dir, "libfitutils_bind_cuda.dylib")
-        torch.ops.load_library(fitutils_bind_cuda_so_path)
     # name
     targetStatisticsOp = torch.ops.fitutils.targetStatisticsOp
     allTypeDescriptorsStatisticsOp = torch.ops.fitutils.allTypeDescriptorsStatisticsOp
@@ -162,9 +159,6 @@ else:
     mtpr_lib_dir:str = os.path.join(ai2pot_lib_dir, "descriptor", "mtpr") if os.getenv("AI2POT_PATH") else ai2pot_lib_dir
     mtpr_bind_cpu_so_path: str = os.path.join(mtpr_lib_dir, "libmtpr_bind_cpu.dylib")
     torch.ops.load_library(mtpr_bind_cpu_so_path)
-    if torch.cuda.is_available():
-        mtpr_bind_cuda_so_path: str = os.path.join(mtpr_lib_dir, "libmtpr_bind_cuda.dylib")
-        torch.ops.load_library(mtpr_bind_cuda_so_path)
     # name
     coeffsSchmidtOrthOp = torch.ops.mtpr.CoeffsSchmidtOrthOp
     linMatrixLinVectorOp = torch.ops.mtpr.LinMatrixLinVectorOp
@@ -183,9 +177,6 @@ else:
     nnmtp_lib_dir:str = os.path.join(ai2pot_lib_dir, "descriptor", "nnmtp") if os.getenv("AI2POT_PATH") else ai2pot_lib_dir
     nnmtp_bind_so_path: str = os.path.join(nnmtp_lib_dir, "libnnmtp_bind_cpu.dylib")
     torch.ops.load_library(nnmtp_bind_so_path)
-    if torch.cuda.is_available():
-        nnmtp_bind_cuda_so_path: str = os.path.join(nnmtp_lib_dir, "libnnmtp_bind_cuda.dylib")
-        torch.ops.load_library(nnmtp_bind_cuda_so_path)
     # name
     nnMtpParamOp = torch.ops.nnmtp.mtpParamOp
     nnMtpToEFLossOp = torch.ops.nnmtp.nnMtpToEFLossOp
@@ -201,9 +192,6 @@ else:
     nep_lib_dir:str = os.path.join(ai2pot_lib_dir, "descriptor", "nep") if os.getenv("AI2POT_PATH") else ai2pot_lib_dir
     nep_bind_cpu_so_path: str = os.path.join(nep_lib_dir, "libnep_bind_cpu.dylib")
     torch.ops.load_library(nep_bind_cpu_so_path)
-    if torch.cuda.is_available():
-        nep_bind_cuda_so_path: str = os.path.join(nep_lib_dir, "libnep_bind_cuda.dylib")
-        torch.ops.load_library(nep_bind_cuda_so_path)
     # name
     nepToEFOp = torch.ops.nep.nepToEFOp
     nepToEFVOp = torch.ops.nep.nepToEFVOp
