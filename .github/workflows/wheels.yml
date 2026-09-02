@@ -60,7 +60,7 @@ jobs:
           # numpy 2.4.6 需要 glibc>=2.28（且与 torch 2.5 的 manylinux2014 兼容）
           # CIBW_MANYLINUX_X86_64_IMAGE: quay.io/pypa/manylinux_2_28_x86_64
           # 容器内先装构建依赖 + CPU 版 torch；--no-build-isolation 保证用容器环境里的 torch 头
-          CIBW_BEFORE_BUILD_LINUX: "python -m pip install numpy==2.4.6 pybind11==2.11.1 scikit-build-core==0.12.2 cmake==4.3.2 && python -m pip install torch==2.5.0 --index-url https://download.pytorch.org/whl/cpu"
+          CIBW_BEFORE_BUILD_LINUX: "python -m pip install numpy==${{ env.NUMPY_VERSION }} pybind11==2.11.1 scikit-build-core==0.12.2 cmake==4.3.2 && python -m pip install torch==${{ env.TORCH_VERSION }} --index-url https://download.pytorch.org/whl/cpu"
           # 覆盖 pyproject 里硬编码的 USE_CUDA=yes / BUILD_TEST=yes
           CIBW_BUILD_FRONTEND: "pip; args: --no-build-isolation --config-setting=cmake.define.USE_CUDA=off --config-setting=cmake.define.BUILD_TEST=off"
           # torch 是运行时依赖，不能被打进 wheel（auditwheel 默认会 bundle 非白名单 .so）
@@ -85,60 +85,166 @@ jobs:
           if-no-files-found: error
 
   # ============================================================
-  # 2. Linux CUDA wheel（linux_x86_64, +cuda）
+  # 2. Linux CUDA wheel（manylinux, +cu124）
   # ============================================================
   linux-cuda:
-    name: linux-cuda (py${{ matrix.python }})
+    name: linux-cuda (cp311/cp312, cu124)
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python: ["3.11", "3.12"]
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
+      # 这里只是 cibuildwheel driver。
+      # 实际 cp311 / cp312 Python 都来自 manylinux 容器。
+      - name: Set up Python 3.12 (cibuildwheel driver)
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python }}
+          python-version: "3.12"
 
-      - name: Install CUDA 12.4 toolkit (nvcc)
-        uses: Jimver/cuda-toolkit@v0.2.21
-        with:
-          cuda: "12.4.1"
+      - name: Install cibuildwheel
+        run: python -m pip install cibuildwheel
 
-      - name: Append +cuda local version
+      # 与 PyTorch CUDA wheel 命名方式一致：
+      #   torch-2.5.0+cu124
+      #   ai2pot-1.1.0+cu124
+      - name: Append +cu124 local version
         run: |
-          BASE=$(python3 -c "import re;print(re.search(r'version = \"([^\"]+)\"',open('pyproject.toml').read()).group(1))")
-          sed -i.bak "s/^version = .*/version = \"${BASE}+cuda\"/" pyproject.toml
-          sed -i.bak "s/__version__ = .*/__version__ = \"${BASE}+cuda\"/" ai2pot/__init__.py
+          BASE=$(python -c "import re; print(re.search(r'version = \"([^\"]+)\"', open('pyproject.toml').read()).group(1))")
+          sed -i.bak "s/^version = .*/version = \"${BASE}+cu124\"/" pyproject.toml
+          sed -i.bak "s/__version__ = .*/__version__ = \"${BASE}+cu124\"/" ai2pot/__init__.py
           rm -f pyproject.toml.bak ai2pot/__init__.py.bak
 
-      - name: Install torch (cu124) and build deps
-        run: |
-          python -m pip install torch==$TORCH_VERSION --index-url https://download.pytorch.org/whl/cu124
-          python -m pip install numpy==$NUMPY_VERSION pybind11==2.11.1 scikit-build-core==0.12.2 cmake==4.3.2
+      - name: Build wheels
+        env:
+          # ------------------------------------------------------
+          # cibuildwheel build matrix
+          # ------------------------------------------------------
+          CIBW_ARCHS_LINUX: x86_64
+          CIBW_BUILD: "cp311-manylinux_x86_64 cp312-manylinux_x86_64"
 
-      # 有 CUDA toolkit -> source/CMakeLists.txt 自动出 CUDA 构建；产物是 linux_x86_64 tag
-      - name: Build wheel
-        run: |
-          python -m pip wheel --no-build-isolation --no-deps . \
-            --config-setting=cmake.define.BUILD_TEST=off \
-            -w wheelhouse
+          # manylinux_2_28 基于 AlmaLinux 8 / glibc 2.28
+          #CIBW_MANYLINUX_X86_64_IMAGE: quay.io/pypa/manylinux_2_28_x86_64
 
-      - name: Smoke test (CPU torch 即可验证 CPU 算子加载，GPU 实机验证留发布前)
+          # ------------------------------------------------------
+          # System dependencies installed once inside the
+          # manylinux container.
+          #
+          # CUDA 必须装在这里，而不是 GitHub runner 上。
+          #
+          # 当前 manylinux_2_28 默认 GCC 较新，
+          # CUDA 12.4 使用 GCC 13 作为 host compiler。
+          # ------------------------------------------------------
+          CIBW_BEFORE_ALL_LINUX: >-
+            dnf install -y
+            dnf-plugins-core
+            gcc-toolset-13-gcc
+            gcc-toolset-13-gcc-c++
+            &&
+            dnf config-manager
+            --add-repo
+            https://developer.download.nvidia.com/compute/cuda/repos/rhel8/x86_64/cuda-rhel8.repo
+            &&
+            dnf clean expire-cache
+            &&
+            dnf install -y cuda-toolkit-12-4
+            &&
+            /usr/local/cuda-12.4/bin/nvcc --version
+            &&
+            /opt/rh/gcc-toolset-13/root/usr/bin/g++ --version
+
+          # ------------------------------------------------------
+          # Build environment inside manylinux
+          # ------------------------------------------------------
+          CIBW_ENVIRONMENT_LINUX: >-
+            CUDA_HOME=/usr/local/cuda-12.4
+            PATH=/usr/local/cuda-12.4/bin:/opt/rh/gcc-toolset-13/root/usr/bin:$PATH
+            LD_LIBRARY_PATH=/usr/local/cuda-12.4/lib64:$LD_LIBRARY_PATH
+            CC=/opt/rh/gcc-toolset-13/root/usr/bin/gcc
+            CXX=/opt/rh/gcc-toolset-13/root/usr/bin/g++
+            CUDAHOSTCXX=/opt/rh/gcc-toolset-13/root/usr/bin/g++
+
+          # ------------------------------------------------------
+          # Python build dependencies for each cp311 / cp312 build
+          #
+          # GitHub $VAR 不会自动传进 manylinux container，
+          # 因此这里使用 ${{ env.xxx }} 先展开。
+          # ------------------------------------------------------
+          CIBW_BEFORE_BUILD_LINUX: >-
+            python -m pip install
+            numpy==${{ env.NUMPY_VERSION }}
+            pybind11==2.11.1
+            scikit-build-core==0.12.2
+            cmake==4.3.2
+            &&
+            python -m pip install
+            torch==${{ env.TORCH_VERSION }}
+            --index-url https://download.pytorch.org/whl/cu124
+            &&
+            python -c "import torch; print('Torch:', torch.__version__); print('Torch CUDA:', torch.version.cuda)"
+
+          # ------------------------------------------------------
+          # Build AI2Pot CUDA wheel
+          # ------------------------------------------------------
+          CIBW_BUILD_FRONTEND: >-
+            pip; args:
+            --no-build-isolation
+            --config-setting=cmake.define.USE_CUDA=on
+            --config-setting=cmake.define.BUILD_TEST=off
+
+          # ------------------------------------------------------
+          # Do not vendor PyTorch / CUDA runtime libraries.
+          #
+          # They are runtime dependencies supplied by torch cu124
+          # and its NVIDIA dependencies.
+          # ------------------------------------------------------
+          CIBW_REPAIR_WHEEL_COMMAND_LINUX: >-
+            auditwheel repair
+            --exclude libtorch.so
+            --exclude libtorch_cpu.so
+            --exclude libtorch_cuda.so
+            --exclude libtorch_python.so
+            --exclude libc10.so
+            --exclude libc10_cuda.so
+            --exclude libcudart.so.12
+            -w {dest_dir}
+            {wheel}
+
+        run: python -m cibuildwheel --output-dir wheelhouse
+
+      # GitHub ubuntu-latest 没有 GPU，因此这里只验证：
+      #
+      # 1. CUDA wheel 能安装
+      # 2. CUDA PyTorch runtime 能加载
+      # 3. AI2Pot C++/CUDA extension 能加载
+      # 4. torch.ops 注册正常
+      #
+      # 真正 CUDA kernel 执行仍需要 GPU runner / 本地 GPU 测试。
+      - name: Smoke test (cp312 wheel, cu124 torch)
         run: |
-          WHEEL=$(ls wheelhouse/*.whl | head -1)
+          WHEEL=$(realpath $(ls wheelhouse/*cp312*.whl | head -1))
+
           python -m venv /tmp/smoke
-          /tmp/smoke/bin/pip install -q torch==$TORCH_VERSION --index-url https://download.pytorch.org/whl/cpu
+
+          /tmp/smoke/bin/pip install -q \
+            torch==$TORCH_VERSION \
+            --index-url https://download.pytorch.org/whl/cu124
+
           /tmp/smoke/bin/pip install -q numpy==$NUMPY_VERSION
+
           /tmp/smoke/bin/pip install -q --no-deps "$WHEEL"
-          /tmp/smoke/bin/python -c "from ai2pot import fromcc; import torch; assert 'mtpr' in dir(torch.ops) and 'nep' in dir(torch.ops); print('SMOKE OK')"
+
+          cd /tmp
+
+          /tmp/smoke/bin/python -c \
+            "import ai2pot; print('AI2Pot:', ai2pot.__version__, ai2pot.__file__)"
+
+          /tmp/smoke/bin/python -c \
+            "import torch; print('Torch:', torch.__version__, 'CUDA:', torch.version.cuda); from ai2pot import fromcc; assert 'mtpr' in dir(torch.ops) and 'nep' in dir(torch.ops); print('SMOKE OK')"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: wheels-linux-cuda-py${{ matrix.python }}
+          name: wheels-linux-cu124
           path: wheelhouse/*.whl
           if-no-files-found: error
 
