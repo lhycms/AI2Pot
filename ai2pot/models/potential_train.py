@@ -41,10 +41,10 @@ class LitPotentialBase(L.LightningModule):
             lr_end: float = 1e-6,
             e_wgt_start: float = 0.1,
             e_wgt_end: float = 2.0,
-            f_wgt_start: float = 10.0,
+            f_wgt_start: float = 50.0,
             f_wgt_end: float = 1.0,
             v_wgt_start: float = 0.1,
-            v_wgt_end: float = 1.0,
+            v_wgt_end: float = 0.5,
             max_clip_norm: float = 10.0):
         super(LitPotentialBase, self).__init__()
 
@@ -402,10 +402,10 @@ class LitLinearMtp(LitPotentialBase):
             lr_end: float = 1e-4,
             e_wgt_start: float = 0.1,
             e_wgt_end: float = 2.0,
-            f_wgt_start: float = 10.0,
+            f_wgt_start: float = 50.0,
             f_wgt_end: float = 1.0,
             v_wgt_start: float = 0.1,
-            v_wgt_end: float = 1.0,
+            v_wgt_end: float = 0.5,
             max_clip_norm: float = 10.0):
         super().__init__(
             type_map=type_map,
@@ -465,10 +465,10 @@ class LitNep(LitPotentialBase):
             lr_end: float = 1e-6,
             e_wgt_start: float = 0.1,
             e_wgt_end: float = 2.0,
-            f_wgt_start: float = 10.0,
+            f_wgt_start: float = 50.0,
             f_wgt_end: float = 1.0,
             v_wgt_start: float = 0.1,
-            v_wgt_end: float = 1.0,
+            v_wgt_end: float = 0.5,
             max_clip_norm: float = 10.0):
         super().__init__(
             type_map=type_map,
@@ -529,10 +529,10 @@ class LitNNMtp(LitPotentialBase):
             lr_end: float = 1e-4,
             e_wgt_start: float = 0.1,
             e_wgt_end: float = 2.0,
-            f_wgt_start: float = 10.0,
+            f_wgt_start: float = 50.0,
             f_wgt_end: float = 1.0,
             v_wgt_start: float = 0.1,
-            v_wgt_end: float = 1.0,
+            v_wgt_end: float = 0.5,
             max_clip_norm: float = 10.0):
         super().__init__(
             type_map=type_map,
