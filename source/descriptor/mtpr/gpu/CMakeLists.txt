@@ -14,7 +14,7 @@ add_library(linear_mtp_torch_launcher SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/lin
 set_target_properties(linear_mtp_torch_launcher PROPERTIES
     CUDA_SEPERATE_COMPILATION on
     CUDA_STANDARD ${CUDA_STANDARD}
-    CUDA_ARCHITECTURES ${CUDA_ARCHITECTURES})
+    CUDA_ARCHITECTURES "${CUDA_ARCHITECTURES}")
 if (USE_CUDA AND CUDA_FOUND)
     target_compile_definitions(linear_mtp_torch_launcher PRIVATE USE_CUDA MAX_MTP_LEVEL=${MAX_MTP_LEVEL})
 endif()
@@ -23,7 +23,7 @@ add_library(schmidt_orth_torch_launcher SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/s
 set_target_properties(schmidt_orth_torch_launcher PROPERTIES
     CUDA_SEPERATE_COMPILATION on
     CUDA_STANDARD ${CUDA_STANDARD}
-    CUDA_ARCHITECTURES ${CUDA_ARCHITECTURES})
+    CUDA_ARCHITECTURES "${CUDA_ARCHITECTURES}")
 if (USE_CUDA AND CUDA_FOUND)
     target_compile_definitions(linear_mtp_torch_launcher PRIVATE USE_CUDA)
 endif()
@@ -32,7 +32,7 @@ add_library(linear_mtp_loss_torch_launcher SHARED ${CMAKE_CURRENT_SOURCE_DIR}/sr
 set_target_properties(linear_mtp_loss_torch_launcher PROPERTIES
     CUDA_SEPERATE_COMPILATION on
     CUDA_STANDARD ${CUDA_STANDARD}
-    CUDA_ARCHITECTURES ${CUDA_ARCHITECTURES})
+    CUDA_ARCHITECTURES "${CUDA_ARCHITECTURES}")
 if (USE_CUDA AND CUDA_FOUND)
     target_compile_definitions(linear_mtp_loss_torch_launcher PRIVATE USE_CUDA MAX_MTP_LEVEL=${MAX_MTP_LEVEL})
 endif()
@@ -41,7 +41,7 @@ add_library(linear_mtp_gram_and_cross_torch_launcher SHARED ${CMAKE_CURRENT_SOUR
 set_target_properties(linear_mtp_gram_and_cross_torch_launcher PROPERTIES
     CUDA_SEPERATE_COMPILATION on
     CUDA_STANDARD ${CUDA_STANDARD}
-    CUDA_ARCHITECTURES ${CUDA_ARCHITECTURES})
+    CUDA_ARCHITECTURES "${CUDA_ARCHITECTURES}")
 if (USE_CUDA AND CUDA_FOUND)
     target_compile_definitions(linear_mtp_gram_and_cross_torch_launcher PRIVATE USE_CUDA MAX_MTP_LEVEL=${MAX_MTP_LEVEL})
 endif()

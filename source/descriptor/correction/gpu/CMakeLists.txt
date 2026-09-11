@@ -14,7 +14,7 @@ add_library(zbl_torch_launcher SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/zbl_torch_
 set_target_properties(zbl_torch_launcher PROPERTIES
     CUDA_STANDARD ${CUDA_STANDARD}
     CUDA_SEPERATE_COMPILATION on
-    CUDA_ARCHITECTURES ${CUDA_ARCHITECTURES})
+    CUDA_ARCHITECTURES "${CUDA_ARCHITECTURES}")
 
 # 6. Compile test
 if (BUILD_TEST)
@@ -26,7 +26,7 @@ if (BUILD_TEST)
 
     add_executable(test_group_zbl ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_group_zbl.cu)
     set_target_properties(test_group_zbl PROPERTIES
-        CUDA_ARCHITECTURES ${CUDA_ARCHITECTURES}
+        CUDA_ARCHITECTURES "${CUDA_ARCHITECTURES}"
         CUDA_STANDARD ${CUDA_STANDARD})
     target_link_libraries(test_group_zbl PRIVATE gtest gtest_main)
 

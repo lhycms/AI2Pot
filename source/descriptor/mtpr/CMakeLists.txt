@@ -12,7 +12,7 @@ file(MAKE_DIRECTORY ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY})
 # 4. Add subdirectory
 if (NOT DEFINED MAX_MTP_LEVEL)
     message(STATUS "MAX_MTP_LEVEL is set to 18")
-    set(MAX_MTP_LEVEL 18)
+    set(MAX_MTP_LEVEL 20)
 else()
     message(STATUS "MAX_MTP_LEVEL is set to ${MAX_MTP_LEVEL}")
 endif()

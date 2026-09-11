@@ -56,7 +56,6 @@ public:
         double rmin,
         const at::Tensor& q_scaler_tensor,
         double zbl_rmax,
-        double zbl_rmin,
         const at::Tensor& zbl_cks_tensor,
         const at::Tensor& zbl_dks_tensor);
 
@@ -95,7 +94,6 @@ torch::autograd::variable_list LinMatrixLinVectorOpCUDA(
     double rmin,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
-    double zbl_rmin,
     const at::Tensor& zbl_cks_tensor,
     const at::Tensor& zbl_dks_tensor);
 

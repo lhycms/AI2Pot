@@ -14,13 +14,13 @@ add_library(descriptor_statistics_torch_launcher SHARED ${CMAKE_CURRENT_SOURCE_D
 set_target_properties(descriptor_statistics_torch_launcher PROPERTIES
     CUDA_SEPARABLE_COMPILATION on
     CUDA_STANDARD ${CUDA_STANDARD}
-    CUDA_ARCHITECTURES ${CUDA_ARCHITECTURES})
+    CUDA_ARCHITECTURES "${CUDA_ARCHITECTURES}")
 
 add_library(efv_rmse_torch_launcher SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/efv_rmse_torch_launcher.cu)
 set_target_properties(efv_rmse_torch_launcher PROPERTIES
     CUDA_SEPARABLE_COMPILATION on
     CUDA_STANDARD ${CUDA_STANDARD}
-    CUDA_ARCHITECTURES ${CUDA_ARCHITECTURES})
+    CUDA_ARCHITECTURES "${CUDA_ARCHITECTURES}")
 
 
 # 6. Compile test
