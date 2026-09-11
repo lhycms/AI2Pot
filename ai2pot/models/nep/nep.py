@@ -41,7 +41,6 @@ class Nep(nn.Module):
                  rmax_radial: float = 8.0,
                  rmax_angular: float = 4.0,
                  zbl_rmax: float = 0.0,
-                 zbl_rmin: float = 0.0,
                  zbl_cks_list: Optional[List[float]] = None,
                  zbl_dks_list: Optional[List[float]] = None):
         super(Nep, self).__init__()
@@ -75,7 +74,6 @@ class Nep(nn.Module):
         self.rmax_angular: float = rmax_angular
         self.rmax: float = self.rmax_radial
         self.zbl_rmax: float = zbl_rmax
-        self.zbl_rmin: float = zbl_rmin
         self._init_zbl_params(zbl_cks_list=zbl_cks_list,
                               zbl_dks_list=zbl_dks_list)
 
@@ -181,7 +179,6 @@ class Nep(nn.Module):
         rmax_radial_norm: float = self.rmax_radial * conv_length
         rmax_angular_norm: float = self.rmax_angular * conv_length
         zbl_rmax_norm: float = self.zbl_rmax * conv_length
-        zbl_rmin_norm: float = self.zbl_rmin * conv_length
 
         type_bias_norm: torch.Tensor = self.type_bias_tensor * conv_energy
         zbl_cks_norm: torch.Tensor = self.zbl_cks_tensor * conv_length * conv_energy
@@ -216,7 +213,6 @@ class Nep(nn.Module):
             rmax_angular_norm,
             self.q_scaler_tensor,
             zbl_rmax_norm,
-            zbl_rmin_norm,
             zbl_cks_norm,
             zbl_dks_norm)
         bmse_tensor: torch.Tensor
@@ -257,7 +253,6 @@ class Nep(nn.Module):
         rmax_radial_norm: float = self.rmax_radial * conv_length
         rmax_angular_norm: float = self.rmax_angular * conv_length
         zbl_rmax_norm: float = self.zbl_rmax * conv_length
-        zbl_rmin_norm: float = self.zbl_rmin * conv_length
 
         type_bias_norm: torch.Tensor = self.type_bias_tensor * conv_energy
         zbl_cks_norm: torch.Tensor = self.zbl_cks_tensor * conv_length * conv_energy
@@ -290,7 +285,6 @@ class Nep(nn.Module):
             rmax_angular_norm,
             self.q_scaler_tensor,
             zbl_rmax_norm,
-            zbl_rmin_norm,
             zbl_cks_norm,
             zbl_dks_norm)
         bmse_tensor: torch.Tensor
@@ -324,7 +318,6 @@ class Nep(nn.Module):
         rmax_radial_norm: float = self.rmax_radial * conv_length
         rmax_angular_norm: float = self.rmax_angular * conv_length
         zbl_rmax_norm: float = self.zbl_rmax * conv_length
-        zbl_rmin_norm: float = self.zbl_rmin * conv_length
 
         type_bias_norm: torch.Tensor = self.type_bias_tensor * conv_energy
         zbl_cks_norm: torch.Tensor = self.zbl_cks_tensor * conv_length * conv_energy
@@ -353,7 +346,6 @@ class Nep(nn.Module):
             rmax_angular_norm,
             self.q_scaler_tensor,
             zbl_rmax_norm,
-            zbl_rmin_norm,
             zbl_cks_norm,
             zbl_dks_norm)
 
@@ -384,7 +376,6 @@ class Nep(nn.Module):
         rmax_radial_norm: float = self.rmax_radial * conv_length
         rmax_angular_norm: float = self.rmax_angular * conv_length
         zbl_rmax_norm: float = self.zbl_rmax * conv_length
-        zbl_rmin_norm: float = self.zbl_rmin * conv_length
 
         type_bias_norm: torch.Tensor = self.type_bias_tensor * conv_energy
         zbl_cks_norm: torch.Tensor = self.zbl_cks_tensor * conv_length * conv_energy
@@ -413,7 +404,6 @@ class Nep(nn.Module):
             rmax_angular_norm,
             self.q_scaler_tensor,
             zbl_rmax_norm,
-            zbl_rmin_norm,
             zbl_cks_norm,
             zbl_dks_norm)
         
