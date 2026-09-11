@@ -84,6 +84,7 @@ find_package(OpenMP)
 
 ## 2.6. CUDA
 if (USE_CUDA)
+    set(CMAKE_CUDA_ARCHITECTURES ${CUDA_ARCHITECTURES})
     enable_language(CXX CUDA)
     find_package(CUDAToolkit REQUIRED)
     message(STATUS "CUDA found: ${CUDAToolkit_VERSION}")
