@@ -10,7 +10,7 @@ file(MAKE_DIRECTORY ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY})
 
 
 # 4. Add
-if (CUDA_FOUND AND USE_CUDA)
+if (CUDAToolkit_FOUND AND USE_CUDA)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/gpu)
 endif()
 
@@ -29,7 +29,7 @@ if (TORCH_OP)
         target_compile_options(nepOp_cpu PRIVATE -Wno-invalid-specialization)
     endif()
 
-    if (USE_CUDA AND CUDA_FOUND)
+    if (USE_CUDA AND CUDAToolkit_FOUND)
         add_library(nepOp_cuda SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/nepOp_cuda.cc)
         target_link_libraries(nepOp_cuda
                               PRIVATE
@@ -53,7 +53,7 @@ if (TORCH_OP)
         target_compile_options(nep_bind_cpu PRIVATE -Wno-invalid-specialization)
     endif()
 
-    if (USE_CUDA AND CUDA_FOUND)
+    if (USE_CUDA AND CUDAToolkit_FOUND)
         add_library(nep_bind_cuda SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bind/nep_bind_cuda.cc)
         target_include_directories(nep_bind_cuda PRIVATE ${Python_INCLUDE_DIRS})
         target_link_libraries(nep_bind_cuda

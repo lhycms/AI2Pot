@@ -17,7 +17,7 @@ else()
     message(STATUS "MAX_MTP_LEVEL is set to ${MAX_MTP_LEVEL}")
 endif()
 
-if (USE_CUDA AND CUDA_FOUND)
+if (USE_CUDA AND CUDAToolkit_FOUND)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/gpu)
 endif()
 
@@ -50,7 +50,7 @@ if (TORCH_OP)
         target_compile_options(nnMtpOp_cpu PRIVATE -Wno-invalid-specialization)
     endif()
 
-    if (USE_CUDA AND CUDA_FOUND)
+    if (USE_CUDA AND CUDAToolkit_FOUND)
         add_library(nnMtpOp_cuda SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/nnMtpOp_cuda.cc)
         target_link_libraries(nnMtpOp_cuda 
                               PRIVATE 
@@ -86,7 +86,7 @@ if (TORCH_OP)
         target_compile_options(nnmtp_bind_cpu PRIVATE -Wno-invalid-specialization)
     endif()
 
-    if (USE_CUDA AND CUDA_FOUND)
+    if (USE_CUDA AND CUDAToolkit_FOUND)
         add_library(nnmtp_bind_cuda SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bind/nnmtp_bind_cuda.cc)
         target_include_directories(nnmtp_bind_cuda PRIVATE ${Python_INCLUDE_DIRS})
         target_link_libraries(nnmtp_bind_cuda 

@@ -17,7 +17,7 @@ else()
     message(STATUS "MAX_MTP_LEVEL is set to ${MAX_MTP_LEVEL}")
 endif()
 
-if (CUDA_FOUND AND USE_CUDA)
+if (CUDAToolkit_FOUND AND USE_CUDA)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/gpu)
 endif()
 
@@ -48,7 +48,7 @@ if (TORCH_OP)
         target_compile_options(linear_mtp_gram_and_cross_op_cpu PRIVATE -Wno-invalid-specialization)
     endif()
 
-    if (USE_CUDA AND CUDA_FOUND)
+    if (USE_CUDA AND CUDAToolkit_FOUND)
         add_library(linear_mtp_gram_and_cross_op_cuda SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/linear_mtp_gram_and_cross_op_cuda.cc)
         target_link_libraries(linear_mtp_gram_and_cross_op_cuda
                               PRIVATE
@@ -75,7 +75,7 @@ if (TORCH_OP)
         target_compile_options(schmidt_orth_op_cpu PRIVATE -Wno-invalid-specialization)
     endif()
 
-    if (USE_CUDA AND CUDA_FOUND)
+    if (USE_CUDA AND CUDAToolkit_FOUND)
         add_library(schmidt_orth_op_cuda SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/schmidt_orth_op_cuda.cc)
         target_link_libraries(schmidt_orth_op_cuda 
                               PRIVATE
@@ -102,7 +102,7 @@ if (TORCH_OP)
         target_compile_options(linearMtpOp_cpu PRIVATE -Wno-invalid-specialization)
     endif()
 
-    if (USE_CUDA AND CUDA_FOUND)
+    if (USE_CUDA AND CUDAToolkit_FOUND)
         add_library(linearMtpOp_cuda SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/linearMtpOp_cuda.cc)
         target_link_libraries(linearMtpOp_cuda
                               PRIVATE
@@ -140,7 +140,7 @@ if (TORCH_OP)
         target_compile_options(mtpr_bind_cpu PRIVATE -Wno-invalid-specialization)
     endif()
 
-    if (USE_CUDA AND CUDA_FOUND)
+    if (USE_CUDA AND CUDAToolkit_FOUND)
         add_library(mtpr_bind_cuda SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bind/mtpr_bind_cuda.cc)
         target_include_directories(mtpr_bind_cuda PRIVATE ${Python_INCLUDE_DIRS})
         target_link_libraries(mtpr_bind_cuda
