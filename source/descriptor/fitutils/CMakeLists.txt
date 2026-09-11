@@ -10,7 +10,7 @@ file(MAKE_DIRECTORY ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY})
 
 
 # 4. Add subdirectory
-if (CUDA_FOUND AND USE_CUDA)
+if (CUDAToolkit_FOUND AND USE_CUDA)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/gpu)
 endif()
 
@@ -25,7 +25,7 @@ if (TORCH_OP)
         target_compile_options(target_statistics_op_cpu PRIVATE -Wno-invalid-specialization)
     endif()
 
-    if (USE_CUDA AND CUDA_FOUND)
+    if (USE_CUDA AND CUDAToolkit_FOUND)
         add_library(target_statistics_op_cuda SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/targetStatisticsOp_cuda.cc)
         target_link_libraries(target_statistics_op_cuda
                               PRIVATE
@@ -41,7 +41,7 @@ if (TORCH_OP)
         target_compile_options(descriptor_statistics_op_cpu PRIVATE -Wno-invalid-specialization)
     endif()
 
-    if (USE_CUDA AND CUDA_FOUND)
+    if (USE_CUDA AND CUDAToolkit_FOUND)
         add_library(descriptor_statistics_op_cuda SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/descriptorsStatisticsOp_cuda.cc)
         target_link_libraries(descriptor_statistics_op_cuda 
                               PRIVATE 
@@ -62,7 +62,7 @@ if (TORCH_OP)
         target_compile_options(fitutils_bind_cpu PRIVATE -Wno-invalid-specialization)
     endif()
 
-    if (USE_CUDA AND CUDA_FOUND)
+    if (USE_CUDA AND CUDAToolkit_FOUND)
         add_library(fitutils_bind_cuda SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bind/fitutils_bind_cuda.cc)
         target_include_directories(fitutils_bind_cuda PRIVATE ${Python_INCLUDE_DIRS})
         target_link_libraries(fitutils_bind_cuda

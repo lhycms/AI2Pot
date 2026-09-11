@@ -34,7 +34,6 @@ class LitPotentialBase(L.LightningModule):
             umax_num_neigh_atoms: int = 200,
             fit_virial: bool = True,
             zbl_rmax: float = 0.0,
-            zbl_rmin: float = 0.0,
             zbl_cks_list: Optional[List[float]] = None,
             zbl_dks_list: Optional[List[float]] = None,
             lr_start: float = 1e-3,
@@ -52,7 +51,6 @@ class LitPotentialBase(L.LightningModule):
         self.umax_num_neigh_atoms: int = umax_num_neigh_atoms
         self.fit_virial: bool = fit_virial
         self.zbl_rmax: float = zbl_rmax
-        self.zbl_rmin: float = zbl_rmin
         self.zbl_cks_list: List[float] = zbl_cks_list
         self.zbl_dks_list: List[float] = zbl_dks_list
 
@@ -395,7 +393,6 @@ class LitLinearMtp(LitPotentialBase):
             rmax: float = 5.0,
             rmin: float = 0.0,
             zbl_rmax: float = 0.0,
-            zbl_rmin: float = 0.0,
             zbl_cks_list: Optional[List[float]] = None,
             zbl_dks_list: Optional[List[float]] = None,
             lr_start: float = 1e-2,
@@ -412,7 +409,6 @@ class LitLinearMtp(LitPotentialBase):
             umax_num_neigh_atoms=umax_num_neigh_atoms,
             fit_virial=fit_virial,
             zbl_rmax=zbl_rmax,
-            zbl_rmin=zbl_rmin,
             zbl_cks_list=zbl_cks_list,
             zbl_dks_list=zbl_dks_list,
             lr_start=lr_start,
@@ -434,7 +430,6 @@ class LitLinearMtp(LitPotentialBase):
             rmax=rmax,
             rmin=rmin,
             zbl_rmax=zbl_rmax,
-            zbl_rmin=zbl_rmin,
             zbl_cks_list=zbl_cks_list,
             zbl_dks_list=zbl_dks_list)
         
@@ -458,7 +453,6 @@ class LitNep(LitPotentialBase):
             rmax_radial: float = 6.0,
             rmax_angular: float = 4.0,
             zbl_rmax: float = 0.0,
-            zbl_rmin: float = 0.0,
             zbl_cks_list: Optional[List[float]] = None,
             zbl_dks_list: Optional[List[float]] = None,
             lr_start: float = 1e-3,
@@ -475,7 +469,6 @@ class LitNep(LitPotentialBase):
             umax_num_neigh_atoms=umax_num_neigh_atoms,
             fit_virial=fit_virial,
             zbl_rmax=zbl_rmax,
-            zbl_rmin=zbl_rmin,
             zbl_cks_list=zbl_cks_list,
             zbl_dks_list=zbl_dks_list,
             lr_start=lr_start,
@@ -500,7 +493,6 @@ class LitNep(LitPotentialBase):
             rmax_radial=rmax_radial,
             rmax_angular=rmax_angular,
             zbl_rmax=zbl_rmax,
-            zbl_rmin=zbl_rmin,
             zbl_cks_list=zbl_cks_list,
             zbl_dks_list=zbl_dks_list)
         
@@ -522,7 +514,6 @@ class LitNNMtp(LitPotentialBase):
             rmax: float = 5.0,
             rmin: float = 0.0,
             zbl_rmax: float = 0.0,
-            zbl_rmin: float = 0.0,
             zbl_cks_list: Optional[List[float]] = None,
             zbl_dks_list: Optional[List[float]] = None,
             lr_start: float = 1e-2,
@@ -539,7 +530,6 @@ class LitNNMtp(LitPotentialBase):
             umax_num_neigh_atoms=umax_num_neigh_atoms,
             fit_virial=fit_virial,
             zbl_rmax=zbl_rmax,
-            zbl_rmin=zbl_rmin,
             zbl_cks_list=zbl_cks_list,
             zbl_dks_list=zbl_dks_list,
             lr_start=lr_start,
@@ -562,7 +552,6 @@ class LitNNMtp(LitPotentialBase):
             rmax=rmax,
             rmin=rmin,
             zbl_rmax=zbl_rmax,
-            zbl_rmin=zbl_rmin,
             zbl_cks_list=zbl_cks_list,
             zbl_dks_list=zbl_dks_list)
         

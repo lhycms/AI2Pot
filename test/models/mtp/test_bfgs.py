@@ -50,7 +50,7 @@ rmax: float = rcut
 rmin: float = 0.0
 umax_num_neighs: int = umax_num_neigh_atoms
 zbl_rmax: float = 0.0
-zbl_rmin: float = 0.0
+zbl_rmin: float = zbl_rmax / 2.0
 
 lr_start: float = 1e-1
 lr_end: float = 1e-4
@@ -74,7 +74,6 @@ lit_linear_mtp: LitLinearMtp = LitLinearMtp(mtp_level=mtp_level,
                                             umax_num_neigh_atoms=umax_num_neigh_atoms,
                                             fit_virial=has_virial,
                                             zbl_rmax=zbl_rmax,
-                                            zbl_rmin=zbl_rmin,
                                             zbl_cks_list=None,
                                             zbl_dks_list=None,
                                             lr_start=lr_start,

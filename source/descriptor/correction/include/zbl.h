@@ -545,8 +545,8 @@ void GroupZBL<CoordType>::correct_efv(CoordType &etot,
                 continue;
 
             pair_zbl.add_atomic_energy_one(etot, distance_ij);
-            //pair_zbl.add_atomic_force_one(&atomic_forces[ii*3+0], neigh_vec);
-            //pair_zbl.add_virial_one(virial, neigh_vec);
+            pair_zbl.add_atomic_force_one(&atomic_forces[ii*3+0], neigh_vec);
+            pair_zbl.add_virial_one(virial, neigh_vec);
         }
     }
 #if defined(USE_OPENMP) or defined(__INTELLISENSE__)

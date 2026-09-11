@@ -226,7 +226,6 @@ torch::autograd::variable_list LinMatrixLinVectorFunctionCUDA::forward(
     double rmin,
     const at::Tensor &q_scaler_tensor,
     double zbl_rmax,
-    double zbl_rmin,
     const at::Tensor &zbl_cks_tensor,
     const at::Tensor &zbl_dks_tensor)
 {
@@ -296,7 +295,7 @@ torch::autograd::variable_list LinMatrixLinVectorFunctionCUDA::forward(
                 (float*)bforce_zbl,
                 bvirial_zbl,
                 (float)zbl_rmax,
-                (float)zbl_rmin,
+                (float)(zbl_rmax / 2.0),
                 zbl_cks,
                 zbl_dks,
                 batch_size,
@@ -403,7 +402,7 @@ torch::autograd::variable_list LinMatrixLinVectorFunctionCUDA::forward(
                 (double*)bforce_zbl,
                 bvirial_zbl,
                 (double)zbl_rmax,
-                (double)zbl_rmin,
+                (double)(zbl_rmax / 2.0),
                 zbl_cks,
                 zbl_dks,
                 batch_size,
@@ -561,7 +560,6 @@ torch::autograd::variable_list LinMatrixLinVectorOpCUDA(
     double rmin,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
-    double zbl_rmin,
     const at::Tensor& zbl_cks_tensor,
     const at::Tensor& zbl_dks_tensor)
 {
@@ -594,7 +592,6 @@ torch::autograd::variable_list LinMatrixLinVectorOpCUDA(
         rmin,
         q_scaler_tensor,
         zbl_rmax,
-        zbl_rmin,
         zbl_cks_tensor,
         zbl_dks_tensor);
 }

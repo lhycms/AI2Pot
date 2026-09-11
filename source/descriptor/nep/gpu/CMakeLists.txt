@@ -14,7 +14,7 @@ add_library(nep_torch_launcher SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/nep_torch_
 set_target_properties(nep_torch_launcher PROPERTIES
     CUDA_SEPARABLE_COMPILATION on
     CUDA_STANDARD ${CUDA_STANDARD}
-    CUDA_ARCHITECTURES ${CUDA_ARCHITECTURES})
+    CUDA_ARCHITECTURES "${CUDA_ARCHITECTURES}")
 if (USE_CUDA AND CUDA_FOUND)
     target_compile_definitions(nnmtp_torch_launcher PRIVATE USE_CUDA)
 endif()
@@ -23,7 +23,7 @@ add_library(nep_loss_torch_launcher SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/nepLo
 set_target_properties(nep_loss_torch_launcher PROPERTIES
     CUDA_SEPARABLE_COMPILATION on
     CUDA_STANDARD ${CUDA_STANDARD}
-    CUDA_ARCHITECTURES ${CUDA_ARCHITECTURES})
+    CUDA_ARCHITECTURES "${CUDA_ARCHITECTURES}")
 if (USE_CUDA AND CUDA_FOUND)
     target_compile_definitions(nep_loss_torch_launcher PRIVATE USE_CUDA)
 endif()

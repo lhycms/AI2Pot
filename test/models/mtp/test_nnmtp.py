@@ -26,7 +26,7 @@ class NNMtpTest(unittest.TestCase):
         self.rmax: float = 5.0
         self.rmin: float = 0.0
         self.umax_num_neigh_atoms = 200
-        self.device: torch._C.device = torch.device("cpu")
+        self.device: torch._C.device = torch.device("cuda")
         self.torch_float_dtype: torch._C.dtype = torch.float32
         self.nn_mtp: NNMtp = NNMtp(type_map=self.type_map,
                                    umax_num_neigh_atoms=self.umax_num_neigh_atoms,
@@ -37,7 +37,6 @@ class NNMtpTest(unittest.TestCase):
                                    rmax=self.rmax,
                                    rmin=self.rmin,
                                    zbl_rmax=0.0,
-                                   zbl_rmin=0.0,
                                    zbl_cks_list=None,
                                    zbl_dks_list=None)
         self.nn_mtp.to(self.device)
@@ -64,7 +63,7 @@ class NNMtpTest(unittest.TestCase):
         print("NNMtpTest (TestCase) is tearing down...\n")
 
 
-    def est_predict_loss(self):
+    def test_predict_loss(self):
         times_list: List[float] = []
         for ii in range(110):
             t1 = time.time()
@@ -85,7 +84,7 @@ class NNMtpTest(unittest.TestCase):
         print("1. Loss = ", loss)
 
 
-    def est_predict_ef_loss(self):
+    def test_predict_ef_loss(self):
         times_list: List[float] = []
         for ii in range(110):
             t1 = time.time()
@@ -105,7 +104,7 @@ class NNMtpTest(unittest.TestCase):
         print("1. Loss = ", ef_loss)
 
 
-    def est_predict_efv(self):
+    def test_predict_efv(self):
         times_list: List[float] = []
         for ii in range(110):
             t1 = time.time()
@@ -121,7 +120,7 @@ class NNMtpTest(unittest.TestCase):
         print("3. Virial.shape = \n", v)
     
 
-    def est_predict_ef(self):
+    def test_predict_ef(self):
         times_list: List[float] = []
         for ii in range(110):
             t1 = time.time()
@@ -148,7 +147,6 @@ class NNMtpTest(unittest.TestCase):
         print("0.1. Average time cost by nn_mtp.predict_ef() = ", np.sum(times_list) / 100)
         print("0.2. std time cost by nn_mtp.predict_ef() = ", np.std(times_list) / 100)
         print("\t1. Descriptors.shape = ", descriptors[0][0])
-
 
 
 if __name__ == "__main__":

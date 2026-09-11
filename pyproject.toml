@@ -28,8 +28,8 @@ authors = [
 ]
 
 dependencies = [
-    "torch>=2.5.0",
-    "pymatgen==2024.7.18",
+    "torch>=2.4.0",
+    "pymatgen==2026.5.4",
     "ase==3.23.0",
     "scipy==1.16.0",
     "numpy==2.4.6",

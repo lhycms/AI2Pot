@@ -6,6 +6,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CUDA_ARCHITECTURES "80;86;89;90")
 set(CUDA_STANDARD 17)
+if (USE_CUDA)
+    set(TORCH_CUDA_ARCH_LIST "8.0;8.6;8.9;9.0")
+endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -O3")
@@ -84,15 +87,14 @@ find_package(OpenMP)
 
 ## 2.6. CUDA
 if (USE_CUDA)
-    find_package(CUDA)
-    if (CUDA_FOUND)
-        message(STATUS "CUDA found: ${CUDA_VERSION_STRING}")
-        enable_language(CXX CUDA)
-        set(CMAKE_CUDA_ARCHITECTURES ${CUDA_ARCHITECTURES})
-    else()
-        message(STATUS "CUDA not found, compile only CPU version.")
-        enable_language(CXX)
-    endif()
+    set(CMAKE_CUDA_ARCHITECTURES ${CUDA_ARCHITECTURES})
+
+    enable_language(CXX CUDA)
+    find_package(CUDAToolkit REQUIRED)
+
+    message(STATUS "CUDA found: ${CUDAToolkit_VERSION}")
+    message(STATUS "CUDA compiler: ${CMAKE_CUDA_COMPILER}")
+    set(CMAKE_CUDA_ARCHITECTURES ${CUDA_ARCHITECTURES})
 endif()
 
 # 3. dirs
@@ -139,7 +141,7 @@ install(
 )
 
 if (TORCH_OP)
-    if (USE_CUDA AND CUDA_FOUND)
+    if (USE_CUDA AND CUDAToolkit_FOUND)
         install(
             TARGETS
                 # fitutils

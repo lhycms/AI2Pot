@@ -73,8 +73,7 @@ class LitLinearMtpTest(unittest.TestCase):
             v_wgt_start=v_wgt_start,
             v_wgt_end=v_wgt_end,
             max_clip_norm=max_clip_norm,
-            zbl_rmax=0.0,
-            zbl_rmin=0.0).to(torch_float_dtype)
+            zbl_rmax=0.0).to(torch_float_dtype)
         
         ### DataModule hyperparameters
         batch_size: int = 16

@@ -642,7 +642,6 @@ torch::autograd::variable_list LinearMtpToLossFunctionCUDA::forward(
     double rmin,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
-    double zbl_rmin,
     const at::Tensor& zbl_cks_tensor,
     const at::Tensor& zbl_dks_tensor)
 {
@@ -956,7 +955,6 @@ torch::autograd::variable_list LinearMtpToLossFunctionCUDA::forward(
                             at::tensor(rmin, float_options),
                             q_scaler_tensor,
                             at::tensor(zbl_rmax, float_options),
-                            at::tensor(zbl_rmin, float_options),
                             zbl_cks_tensor,
                             zbl_dks_tensor
                             });
@@ -1007,9 +1005,8 @@ torch::autograd::variable_list LinearMtpToLossFunctionCUDA::backward(
     double rmin = ctx->get_saved_variables()[25].item<double>();
     at::Tensor q_scaler_tensor = ctx->get_saved_variables()[26];
     double zbl_rmax = ctx->get_saved_variables()[27].item<double>();
-    double zbl_rmin = ctx->get_saved_variables()[28].item<double>();
-    at::Tensor zbl_cks_tensor = ctx->get_saved_variables()[29];
-    at::Tensor zbl_dks_tensor = ctx->get_saved_variables()[30];
+    at::Tensor zbl_cks_tensor = ctx->get_saved_variables()[28];
+    at::Tensor zbl_dks_tensor = ctx->get_saved_variables()[29];
     int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
     int num_linear_coeffs = (int)linear_coeffs_tensor.size(0);
 
@@ -1073,7 +1070,7 @@ torch::autograd::variable_list LinearMtpToLossFunctionCUDA::backward(
                 (float*)bforce,
                 bvirial,
                 (float)zbl_rmax,
-                (float)zbl_rmin,
+                (float)(zbl_rmax / 2.0),
                 zbl_cks,
                 zbl_dks,
                 batch_size,
@@ -1188,7 +1185,7 @@ torch::autograd::variable_list LinearMtpToLossFunctionCUDA::backward(
                 (double*)bforce,
                 bvirial,
                 zbl_rmax,
-                zbl_rmin,
+                zbl_rmax / 2.0,
                 zbl_cks,
                 zbl_dks,
                 batch_size,
@@ -1345,7 +1342,6 @@ torch::autograd::variable_list LinearMtpToEFLossFunctionCUDA::forward(
     double rmin,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
-    double zbl_rmin,
     const at::Tensor& zbl_cks_tensor,
     const at::Tensor& zbl_dks_tensor)
 {
@@ -1408,7 +1404,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunctionCUDA::forward(
                 betot,
                 (float*)bforce,
                 (float)zbl_rmax,
-                (float)zbl_rmin,
+                (float)(zbl_rmax / 2.0),
                 zbl_cks,
                 zbl_dks,
                 batch_size,
@@ -1512,7 +1508,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunctionCUDA::forward(
                 betot,
                 (double*)bforce,
                 zbl_rmax,
-                zbl_rmin,
+                zbl_rmax / 2.0,
                 zbl_cks,
                 zbl_dks,
                 batch_size,
@@ -1625,7 +1621,6 @@ torch::autograd::variable_list LinearMtpToEFLossFunctionCUDA::forward(
                             at::tensor(rmin, float_options),
                             q_scaler_tensor,
                             at::tensor(zbl_rmax, float_options),
-                            at::tensor(zbl_rmin, float_options),
                             zbl_cks_tensor,
                             zbl_dks_tensor
                             });
@@ -1672,9 +1667,8 @@ torch::autograd::variable_list LinearMtpToEFLossFunctionCUDA::backward(
     double rmin = ctx->get_saved_variables()[23].item<double>();
     at::Tensor q_scaler_tensor = ctx->get_saved_variables()[24];
     double zbl_rmax = ctx->get_saved_variables()[25].item<double>();
-    double zbl_rmin = ctx->get_saved_variables()[26].item<double>();
-    at::Tensor zbl_cks_tensor = ctx->get_saved_variables()[27];
-    at::Tensor zbl_dks_tensor = ctx->get_saved_variables()[28];
+    at::Tensor zbl_cks_tensor = ctx->get_saved_variables()[26];
+    at::Tensor zbl_dks_tensor = ctx->get_saved_variables()[27];
     int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
     int num_linear_coeffs = (int)linear_coeffs_tensor.size(0);
 
@@ -1734,7 +1728,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunctionCUDA::backward(
                 betot,
                 (float*)bforce,
                 (float)zbl_rmax,
-                (float)zbl_rmin,
+                (float)(zbl_rmax / 2.0),
                 zbl_cks,
                 zbl_dks,
                 batch_size,
@@ -1842,7 +1836,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunctionCUDA::backward(
                 betot,
                 (double*)bforce,
                 zbl_rmax,
-                zbl_rmin,
+                zbl_rmax / 2.0,
                 zbl_cks,
                 zbl_dks,
                 batch_size,
@@ -1987,7 +1981,6 @@ torch::autograd::variable_list LinearMtpToEFVFunctionCUDA::forward(
     double rmin,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
-    double zbl_rmin,
     const at::Tensor& zbl_cks_tensor,
     const at::Tensor& zbl_dks_tensor)
 {
@@ -2043,7 +2036,7 @@ torch::autograd::variable_list LinearMtpToEFVFunctionCUDA::forward(
                 (float*)bforce,
                 bvirial,
                 (float)zbl_rmax,
-                (float)zbl_rmin,
+                (float)(zbl_rmax / 2.0),
                 zbl_cks,
                 zbl_dks,
                 batch_size,
@@ -2110,7 +2103,7 @@ torch::autograd::variable_list LinearMtpToEFVFunctionCUDA::forward(
                 (double*)bforce,
                 bvirial,
                 zbl_rmax,
-                zbl_rmin,
+                zbl_rmax / 2.0,
                 zbl_cks,
                 zbl_dks,
                 batch_size,
@@ -2221,7 +2214,6 @@ torch::autograd::variable_list LinearMtpToEFFunctionCUDA::forward(
     double rmin,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
-    double zbl_rmin,
     const at::Tensor& zbl_cks_tensor,
     const at::Tensor& zbl_dks_tensor)
 {
@@ -2274,7 +2266,7 @@ torch::autograd::variable_list LinearMtpToEFFunctionCUDA::forward(
                 betot,
                 (float*)bforce,
                 (float)zbl_rmax,
-                (float)zbl_rmin,
+                (float)(zbl_rmax / 2.0),
                 zbl_cks,
                 zbl_dks,
                 batch_size,
@@ -2338,7 +2330,7 @@ torch::autograd::variable_list LinearMtpToEFFunctionCUDA::forward(
                 betot,
                 (double*)bforce,
                 zbl_rmax,
-                zbl_rmin,
+                zbl_rmax / 2.0,
                 zbl_cks,
                 zbl_dks,
                 batch_size,
@@ -2448,7 +2440,6 @@ torch::autograd::variable_list LinearMtpToEsitesFunctionCUDA::forward(
     double rmin,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
-    double zbl_rmin,
     const at::Tensor& zbl_cks_tensor,
     const at::Tensor& zbl_dks_tensor)
 {
@@ -2527,7 +2518,6 @@ torch::autograd::variable_list LinearMtpToEsitesFunctionCUDA::forward(
         torch::tensor(rmin, float_options),
         q_scaler_tensor,
         torch::tensor(zbl_rmax, float_options),
-        torch::tensor(zbl_rmin, float_options),
         zbl_cks_tensor,
         zbl_dks_tensor});
 
@@ -2566,9 +2556,8 @@ torch::autograd::variable_list LinearMtpToEsitesFunctionCUDA::backward(
     double rmin = ctx->get_saved_variables()[19].item<double>();
     at::Tensor q_scaler_tensor = ctx->get_saved_variables()[20];
     double zbl_rmax = ctx->get_saved_variables()[21].item<double>();
-    double zbl_rmin = ctx->get_saved_variables()[22].item<double>();
-    at::Tensor zbl_cks_tensor = ctx->get_saved_variables()[23];
-    at::Tensor zbl_dks_tensor = ctx->get_saved_variables()[24];
+    at::Tensor zbl_cks_tensor = ctx->get_saved_variables()[22];
+    at::Tensor zbl_dks_tensor = ctx->get_saved_variables()[23];
 
     // 1.
     int batch_size = binum_tensor.size(0);
@@ -2824,7 +2813,6 @@ torch::autograd::variable_list LinearMtpToLossOpCUDA(
     double rmin,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
-    double zbl_rmin,
     const at::Tensor& zbl_cks_tensor,
     const at::Tensor& zbl_dks_tensor)
 {
@@ -2857,7 +2845,6 @@ torch::autograd::variable_list LinearMtpToLossOpCUDA(
         rmin,
         q_scaler_tensor,
         zbl_rmax,
-        zbl_rmin,
         zbl_cks_tensor,
         zbl_dks_tensor);
 }
@@ -2890,7 +2877,6 @@ torch::autograd::variable_list LinearMtpToEFLossOpCUDA(
     double rmin,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
-    double zbl_rmin,
     const at::Tensor& zbl_cks_tensor,
     const at::Tensor& zbl_dks_tensor)
 {
@@ -2921,7 +2907,6 @@ torch::autograd::variable_list LinearMtpToEFLossOpCUDA(
         rmin,
         q_scaler_tensor,
         zbl_rmax,
-        zbl_rmin,
         zbl_cks_tensor,
         zbl_dks_tensor);
 }
@@ -2950,7 +2935,6 @@ torch::autograd::variable_list LinearMtpToEFVOpCUDA(
     double rmin,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
-    double zbl_rmin,
     const at::Tensor& zbl_cks_tensor,
     const at::Tensor& zbl_dks_tensor)
 {
@@ -2977,7 +2961,6 @@ torch::autograd::variable_list LinearMtpToEFVOpCUDA(
         rmin,
         q_scaler_tensor,
         zbl_rmax,
-        zbl_rmin,
         zbl_cks_tensor,
         zbl_dks_tensor);
 }
@@ -3006,7 +2989,6 @@ torch::autograd::variable_list LinearMtpToEFOpCUDA(
     double rmin,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
-    double zbl_rmin,
     const at::Tensor& zbl_cks_tensor,
     const at::Tensor& zbl_dks_tensor)
 {
@@ -3033,7 +3015,6 @@ torch::autograd::variable_list LinearMtpToEFOpCUDA(
         rmin,
         q_scaler_tensor,
         zbl_rmax,
-        zbl_rmin,
         zbl_cks_tensor,
         zbl_dks_tensor);
 }
@@ -3062,7 +3043,6 @@ torch::autograd::variable_list LinearMtpToEsitesOpCUDA(
     double rmin,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
-    double zbl_rmin,
     const at::Tensor& zbl_cks_tensor,
     const at::Tensor& zbl_dks_tensor)
 {
@@ -3089,7 +3069,6 @@ torch::autograd::variable_list LinearMtpToEsitesOpCUDA(
         rmin,
         q_scaler_tensor,
         zbl_rmax,
-        zbl_rmin,
         zbl_cks_tensor,
         zbl_dks_tensor);
 }
