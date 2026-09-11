@@ -65,7 +65,7 @@ jobs:
           CIBW_BUILD_FRONTEND: >-
             pip; args:
             --no-build-isolation
-            --config-setting=cmake.define.USE_CUDA=on
+            --config-setting=cmake.define.USE_CUDA=off
             --config-setting=cmake.define.BUILD_TEST=off
           # torch 是运行时依赖，不能被打进 wheel（auditwheel 默认会 bundle 非白名单 .so）
           CIBW_REPAIR_WHEEL_COMMAND_LINUX: 'auditwheel repair --exclude libtorch_cpu.so --exclude libc10.so -w {dest_dir} {wheel}'
