@@ -38,12 +38,12 @@ class LitPotentialBase(L.LightningModule):
             zbl_dks_list: Optional[List[float]] = None,
             lr_start: float = 1e-3,
             lr_end: float = 1e-6,
-            e_wgt_start: float = 0.1,
-            e_wgt_end: float = 2.0,
-            f_wgt_start: float = 10.0,
-            f_wgt_end: float = 1.0,
-            v_wgt_start: float = 0.1,
-            v_wgt_end: float = 0.5,
+            e_wgt_start: float = 0.01,
+            e_wgt_end: float = 1.0,
+            f_wgt_start: float = 1.0,
+            f_wgt_end: float = 0.05,
+            v_wgt_start: float = 0.01,
+            v_wgt_end: float = 0.1,
             max_clip_norm: float = 10.0,
             weight_decay: float = 1e-5):
         super(LitPotentialBase, self).__init__()
@@ -75,11 +75,17 @@ class LitPotentialBase(L.LightningModule):
 
         
     def get_efv_wgts(self):
-        lr_current: float = self.optimizers().param_groups[0]["lr"]
-        rate: float = lr_current / self.lr_start
-        e_wgt: float = self.e_wgt_start * rate + self.e_wgt_end * (1 - rate)
-        f_wgt: float = self.f_wgt_start * rate + self.f_wgt_end * (1 - rate)
-        v_wgt: float = self.v_wgt_start * rate + self.v_wgt_end * (1 - rate)
+        max_epochs: int = self.trainer.max_epochs
+        current_epoch: int = self.current_epoch
+        if current_epoch < max_epochs / 2:
+            e_wgt: float = self.e_wgt_start
+            f_wgt: float = self.f_wgt_start
+            v_wgt: float = self.v_wgt_start
+        else:
+            e_wgt: float = self.e_wgt_end
+            f_wgt: float = self.f_wgt_end
+            v_wgt: float = self.v_wgt_end
+
         return [e_wgt, f_wgt, v_wgt]
     
         
@@ -400,12 +406,12 @@ class LitLinearMtp(LitPotentialBase):
             zbl_dks_list: Optional[List[float]] = None,
             lr_start: float = 1e-2,
             lr_end: float = 1e-4,
-            e_wgt_start: float = 0.1,
-            e_wgt_end: float = 2.0,
-            f_wgt_start: float = 10.0,
-            f_wgt_end: float = 1.0,
-            v_wgt_start: float = 0.1,
-            v_wgt_end: float = 0.5,
+            e_wgt_start: float = 0.01,
+            e_wgt_end: float = 1.0,
+            f_wgt_start: float = 1.0,
+            f_wgt_end: float = 0.05,
+            v_wgt_start: float = 0.01,
+            v_wgt_end: float = 0.1,
             max_clip_norm: float = 10.0,
             weight_decay: float = 1e-5):
         super().__init__(
@@ -462,12 +468,12 @@ class LitNep(LitPotentialBase):
             zbl_dks_list: Optional[List[float]] = None,
             lr_start: float = 1e-3,
             lr_end: float = 1e-6,
-            e_wgt_start: float = 0.1,
-            e_wgt_end: float = 2.0,
-            f_wgt_start: float = 10.0,
-            f_wgt_end: float = 1.0,
-            v_wgt_start: float = 0.1,
-            v_wgt_end: float = 0.5,
+            e_wgt_start: float = 0.01,
+            e_wgt_end: float = 1.0,
+            f_wgt_start: float = 1.0,
+            f_wgt_end: float = 0.05,
+            v_wgt_start: float = 0.01,
+            v_wgt_end: float = 0.1,
             max_clip_norm: float = 10.0,
             weight_decay: float = 1e-5):
         super().__init__(
@@ -523,14 +529,14 @@ class LitNNMtp(LitPotentialBase):
             zbl_rmax: float = 0.0,
             zbl_cks_list: Optional[List[float]] = None,
             zbl_dks_list: Optional[List[float]] = None,
-            lr_start: float = 1e-2,
-            lr_end: float = 1e-4,
-            e_wgt_start: float = 0.1,
-            e_wgt_end: float = 2.0,
-            f_wgt_start: float = 10.0,
-            f_wgt_end: float = 1.0,
-            v_wgt_start: float = 0.1,
-            v_wgt_end: float = 0.5,
+            lr_start: float = 1e-3,
+            lr_end: float = 1e-6,
+            e_wgt_start: float = 0.01,
+            e_wgt_end: float = 1.0,
+            f_wgt_start: float = 1.0,
+            f_wgt_end: float = 0.05,
+            v_wgt_start: float = 0.01,
+            v_wgt_end: float = 0.1,
             max_clip_norm: float = 10.0,
             weight_decay: float = 1e-5):
         super().__init__(
