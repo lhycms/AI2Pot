@@ -500,6 +500,7 @@ public:
 };  // class : Blm
 
 
+
 template <typename CoordType>
 class TanhActivationFunc
 {
@@ -514,20 +515,33 @@ public:
     void find_der2der(CoordType &der2der, CoordType hidden_val);
 };  // class : TanhActivationFunc
 
+
+template <typename CoordType>
+__host__ __device__
+CoordType safe_tanh_val(CoordType hidden_val)
+{
+    if (hidden_val > 20.0)
+        return 1.0;
+    if (hidden_val < -20.0)
+        return -1.0;
+    return (std::exp(hidden_val) - std::exp(-hidden_val))
+           / (std::exp(hidden_val) + std::exp(-hidden_val));
+}
+
+
+
 template <typename CoordType>
 __host__ __device__ __forceinline__
 void TanhActivationFunc<CoordType>::find_val(CoordType &val, CoordType hidden_val)
 {
-    val = (std::exp(hidden_val) - std::exp(-hidden_val))
-          / (std::exp(hidden_val) + std::exp(-hidden_val));
+    val = safe_tanh_val<CoordType>(hidden_val);
 }
 
 template <typename CoordType>
 __host__ __device__ __forceinline__
 void TanhActivationFunc<CoordType>::find_der(CoordType &der, CoordType hidden_val)
 {
-    CoordType val = (std::exp(hidden_val) - std::exp(-hidden_val))
-                    / (std::exp(hidden_val) + std::exp(-hidden_val));
+    CoordType val = safe_tanh_val<CoordType>(hidden_val);
     der = 1 - std::pow(val, 2);
 }
 
@@ -535,8 +549,7 @@ template <typename CoordType>
 __host__ __device__ __forceinline__
 void TanhActivationFunc<CoordType>::find_der2der(CoordType &der2der, CoordType hidden_val)
 {
-    CoordType val = (std::exp(hidden_val) - std::exp(-hidden_val))
-                    / (std::exp(hidden_val) + std::exp(-hidden_val));
+    CoordType val = safe_tanh_val<CoordType>(hidden_val);
     der2der = -2*val + 2*std::pow(val, 3);
 }
 
