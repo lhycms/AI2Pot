@@ -44,8 +44,7 @@ class LitPotentialBase(L.LightningModule):
             f_wgt_end: float = 1.0,
             v_wgt_start: float = 0.1,
             v_wgt_end: float = 0.5,
-            max_clip_norm: float = 10.0,
-            weight_decay: float = 1e-5):
+            max_clip_norm: float = 10.0):
         super(LitPotentialBase, self).__init__()
 
         self.type_map: List[int] = type_map
@@ -68,8 +67,6 @@ class LitPotentialBase(L.LightningModule):
 
         self.register_buffer("avg_grad_norm_tensor", torch.tensor(-1.0))
         self.register_buffer("max_clip_norm_tensor", torch.tensor(max_clip_norm))
-        
-        self.weight_decay: float = weight_decay
 
         self.save_hyperparameters()
 
@@ -353,7 +350,7 @@ class LitPotentialBase(L.LightningModule):
                                                             lr=self.lr_start,
                                                             betas=(0.9, 0.999),
                                                             eps=1e-8,
-                                                            weight_decay=self.weight_decay)
+                                                            weight_decay=0.0)
 
         
         # Warmup
@@ -406,8 +403,7 @@ class LitLinearMtp(LitPotentialBase):
             f_wgt_end: float = 1.0,
             v_wgt_start: float = 0.1,
             v_wgt_end: float = 0.5,
-            max_clip_norm: float = 10.0,
-            weight_decay: float = 1e-5):
+            max_clip_norm: float = 10.0):
         super().__init__(
             type_map=type_map,
             umax_num_neigh_atoms=umax_num_neigh_atoms,
@@ -423,8 +419,7 @@ class LitLinearMtp(LitPotentialBase):
             f_wgt_end=f_wgt_end,
             v_wgt_start=v_wgt_start,
             v_wgt_end=v_wgt_end,
-            max_clip_norm=max_clip_norm,
-            weight_decay=weight_decay)
+            max_clip_norm=max_clip_norm)
         
         self.model: nn.Module = LinearMtp(
             type_map=type_map,
@@ -468,8 +463,7 @@ class LitNep(LitPotentialBase):
             f_wgt_end: float = 1.0,
             v_wgt_start: float = 0.1,
             v_wgt_end: float = 0.5,
-            max_clip_norm: float = 10.0,
-            weight_decay: float = 1e-5):
+            max_clip_norm: float = 10.0):
         super().__init__(
             type_map=type_map,
             umax_num_neigh_atoms=umax_num_neigh_atoms,
@@ -485,8 +479,7 @@ class LitNep(LitPotentialBase):
             f_wgt_end=f_wgt_end,
             v_wgt_start=v_wgt_start,
             v_wgt_end=v_wgt_end,
-            max_clip_norm=max_clip_norm,
-            weight_decay=weight_decay)
+            max_clip_norm=max_clip_norm)
 
         self.model: nn.Module = Nep(
             type_map=type_map,
@@ -531,8 +524,7 @@ class LitNNMtp(LitPotentialBase):
             f_wgt_end: float = 1.0,
             v_wgt_start: float = 0.1,
             v_wgt_end: float = 0.5,
-            max_clip_norm: float = 10.0,
-            weight_decay: float = 1e-5):
+            max_clip_norm: float = 10.0):
         super().__init__(
             type_map=type_map,
             umax_num_neigh_atoms=umax_num_neigh_atoms,
@@ -548,8 +540,7 @@ class LitNNMtp(LitPotentialBase):
             f_wgt_end=f_wgt_end,
             v_wgt_start=v_wgt_start,
             v_wgt_end=v_wgt_end,
-            max_clip_norm=max_clip_norm,
-            weight_decay=weight_decay)
+            max_clip_norm=max_clip_norm)
         
         self.model: nn.Module = NNMtp(
             type_map=type_map,
@@ -568,4 +559,4 @@ class LitNNMtp(LitPotentialBase):
         self.register_buffer("conv_length_tensor", self.model.conv_length_tensor)
         
         self.save_hyperparameters()
-        
+    

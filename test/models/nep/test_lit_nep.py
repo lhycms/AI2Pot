@@ -74,8 +74,7 @@ class LitNepTest(unittest.TestCase):
             f_wgt_end=f_wgt_end,
             v_wgt_start=v_wgt_start,
             v_wgt_end=v_wgt_end,
-            max_clip_norm=max_clip_norm,
-            weight_decay=1e-4).to(torch_float_dtype)
+            max_clip_norm=max_clip_norm).to(torch_float_dtype)
 
         ### DataModule hyperparameters
         rcut: float = rmax_radial
