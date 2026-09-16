@@ -65,10 +65,10 @@ public:
 
     CoordType find_pair_energy(CoordType distance_ij);
 
-    void add_atomic_energy_one(CoordType &atomic_energy,
+    void add_atomic_energy_one(CoordType &energy,
                                CoordType distance_ij);
     
-    void add_atomic_force_one(CoordType *force,
+    void add_atomic_force_one(CoordType (*atomic_force)[3],
                               CoordType *neigh_vec);
 
     void add_virial_one(CoordType *virial,
@@ -108,7 +108,7 @@ public:
     ~GroupZBL();
 
     void correct_efv(CoordType &etot,
-                     CoordType* atomic_forces,
+                     CoordType (*force)[3],
                      CoordType* virial,
                      int inum,
                      int* ilist,
@@ -122,7 +122,7 @@ public:
                      int nghost);
 
     void correct_ef(CoordType &etot,
-                    CoordType* atomic_forces,
+                    CoordType (*force)[3],
                     int inum,
                     int* ilist,
                     int* numneigh,
@@ -328,19 +328,19 @@ CoordType PairZBL<CoordType>::find_pair_energy(CoordType distance_ij)
 
 
 template <typename CoordType>
-void PairZBL<CoordType>::add_atomic_energy_one(CoordType &atomic_energy,
+void PairZBL<CoordType>::add_atomic_energy_one(CoordType &energy,
                                            CoordType distance_ij)
 {
     CoordType half_pair_energy = 0.5 * this->find_pair_energy(distance_ij);
 #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
 #pragma omp atomic
 #endif
-    atomic_energy += half_pair_energy;
+    energy += half_pair_energy;
 }
 
 
 template <typename CoordType>
-void PairZBL<CoordType>::add_atomic_force_one(CoordType *atomic_force,
+void PairZBL<CoordType>::add_atomic_force_one(CoordType (*atomic_force)[3],
                                           CoordType *neigh_vec)
 {
     CoordType distance_ij = std::sqrt( std::pow(neigh_vec[0], 2) 
@@ -358,9 +358,9 @@ void PairZBL<CoordType>::add_atomic_force_one(CoordType *atomic_force,
 #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
 #pragma omp atomic
 #endif
-        atomic_force[aa] += (A_der*B*C 
-                             + A*B_der*C
-                             + A*B*C_der) * neigh_vec[aa] / distance_ij;
+        (*atomic_force)[aa] += (A_der*B*C 
+                               + A*B_der*C
+                               + A*B*C_der) * neigh_vec[aa] / distance_ij;
     }
 }
 
@@ -490,7 +490,7 @@ GroupZBL<CoordType>::~GroupZBL() {
 
 template <typename CoordType>
 void GroupZBL<CoordType>::correct_efv(CoordType &etot,
-                                      CoordType* atomic_forces,
+                                      CoordType (*force)[3],
                                       CoordType* virial,
                                       int inum,
                                       int* ilist,
@@ -545,7 +545,7 @@ void GroupZBL<CoordType>::correct_efv(CoordType &etot,
                 continue;
 
             pair_zbl.add_atomic_energy_one(etot, distance_ij);
-            pair_zbl.add_atomic_force_one(&atomic_forces[ii*3+0], neigh_vec);
+            pair_zbl.add_atomic_force_one(&force[center_idx], neigh_vec);
             pair_zbl.add_virial_one(virial, neigh_vec);
         }
     }
@@ -558,7 +558,7 @@ void GroupZBL<CoordType>::correct_efv(CoordType &etot,
 
 template <typename CoordType>
 void GroupZBL<CoordType>::correct_ef(CoordType &etot,
-                                    CoordType* atomic_forces,
+                                    CoordType (*force)[3],
                                     int inum,
                                     int* ilist,
                                     int* numneigh,
@@ -612,7 +612,7 @@ void GroupZBL<CoordType>::correct_ef(CoordType &etot,
                 continue;
 
             pair_zbl.add_atomic_energy_one(etot, distance_ij);
-            pair_zbl.add_atomic_force_one(&atomic_forces[center_idx*3+0], neigh_vec);
+            pair_zbl.add_atomic_force_one(&force[center_idx], neigh_vec);
         }
     }
 #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
