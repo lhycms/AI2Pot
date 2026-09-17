@@ -52,7 +52,7 @@ class NepTest(unittest.TestCase):
         self.ntypes: int = 2
         #self.type_map_tensor: torch.Tensor = torch.tensor(data=[16, 34, 41, 75], dtype=torch.int32)
         #self.type_map_tensor: torch.Tensor = torch.tensor(data=[6], dtype=torch.int32)
-        self.type_map_tensor: torch.Tensor = torch.tensor(data=[16, 42], dtype=torch.int32)
+        self.type_map_tensor: torch.Tensor = torch.tensor(data=[16, 42], dtype=torch.int32).to(self.device)
         self.structure: Structure = Structure.from_file(MoS2_POSCAR_PATH)
         #print(self.structure)
 
@@ -77,17 +77,17 @@ class NepTest(unittest.TestCase):
                 self.zbl_dks_tensor[idx*4 + 3] = 0.20162
 
         # 3. 
-        self.mlff_to_ef_loss_input: MlffToEFLossInput = MlffToEFLossInput(type_map=self.type_map_tensor.numpy().tolist(),
+        self.mlff_to_ef_loss_input: MlffToEFLossInput = MlffToEFLossInput(type_map=self.type_map_tensor.detach().cpu().numpy().tolist(),
                                                                        rcut=self.rmax_radial,
                                                                        umax_num_neigh_atoms=self.umax_num_neigh_atoms,
                                                                        dtype=self.torch_float_dtype,
                                                                        device=self.device)
-        self.mlff_to_loss_input: MlffToLossInput = MlffToLossInput(type_map=self.type_map_tensor.numpy().tolist(),
+        self.mlff_to_loss_input: MlffToLossInput = MlffToLossInput(type_map=self.type_map_tensor.detach().cpu().numpy().tolist(),
                                                                        rcut=self.rmax_radial,
                                                                        umax_num_neigh_atoms=self.umax_num_neigh_atoms,
                                                                        dtype=self.torch_float_dtype,
                                                                        device=self.device)
-        self.mlff_input: MlffInput = MlffInput(type_map=self.type_map_tensor.numpy().tolist(),
+        self.mlff_input: MlffInput = MlffInput(type_map=self.type_map_tensor.detach().cpu().numpy().tolist(),
                                                 rcut=self.rmax_radial,
                                                 umax_num_neigh_atoms=self.umax_num_neigh_atoms,
                                                 dtype=self.torch_float_dtype,

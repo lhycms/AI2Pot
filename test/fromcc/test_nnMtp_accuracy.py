@@ -46,18 +46,16 @@ class NNMtpTest(unittest.TestCase):
 
         self.ntypes: int = 2
         self.type_map: List[int] = [42, 16] #[16, 34, 41, 75]
-        self.type_map_tensor: torch.Tensor = torch.tensor(self.type_map, dtype=torch.int32)
+        self.type_map_tensor: torch.Tensor = torch.tensor(self.type_map, dtype=torch.int32).to(self.device)
         self.structure: Structure = Structure.from_file(MoS2_POSCAR_PATH)
 
     
         # 2. ZBL
         self.zbl_rmax: float = 4.0
         self.zbl_cks_tensor: torch.Tensor = torch.zeros(self.ntypes*self.ntypes*4, 
-                                                        dtype=self.torch_float_dtype,
-                                                        device=self.device)
+                                                        dtype=self.torch_float_dtype).to(self.device)
         self.zbl_dks_tensor: torch.Tensor = torch.zeros(self.ntypes*self.ntypes*4, 
-                                                        dtype=self.torch_float_dtype,
-                                                        device=self.device)
+                                                        dtype=self.torch_float_dtype).to(self.device)
         for ii in range(self.ntypes):
             for jj in range(self.ntypes):
                 idx = ii*self.ntypes + jj
@@ -70,12 +68,12 @@ class NNMtpTest(unittest.TestCase):
                 self.zbl_dks_tensor[idx*4 + 2] = 0.4029
                 self.zbl_dks_tensor[idx*4 + 3] = 0.20162
         
-        self.mlff_to_loss_input: MlffToLossInput = MlffToLossInput(type_map=self.type_map_tensor.numpy().tolist(),
+        self.mlff_to_loss_input: MlffToLossInput = MlffToLossInput(type_map=self.type_map_tensor.detach().cpu().numpy().tolist(),
                                                                    rcut=self.rmax,
                                                                    umax_num_neigh_atoms=self.umax_num_neigh_atoms,
                                                                    dtype=self.torch_float_dtype,
                                                                    device=self.device)
-        self.mlff_input: MlffInput = MlffInput(type_map=self.type_map_tensor.numpy().tolist(),
+        self.mlff_input: MlffInput = MlffInput(type_map=self.type_map_tensor.detach().cpu().numpy().tolist(),
                                                 rcut=self.rmax,
                                                 umax_num_neigh_atoms=self.umax_num_neigh_atoms,
                                                 dtype=self.torch_float_dtype,
