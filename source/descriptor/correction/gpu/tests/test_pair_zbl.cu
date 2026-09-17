@@ -32,7 +32,7 @@ protected:
     double coord_1[3];
     double coord_2[3];
     double neigh_vec[3];
-    double force[3];
+    double (*force)[3];
     double virial[9];
 
     static void SetUpTestSuite() {
@@ -70,6 +70,7 @@ protected:
         neigh_vec[1] = coord_2[1] - coord_1[1];
         neigh_vec[2] = coord_2[2] - coord_1[2];
 
+        force = (double (*)[3])malloc(sizeof(double) * 3);
         force[0] = 0;
         force[1] = 0;
         force[2] = 0;
@@ -81,6 +82,8 @@ protected:
     void TearDown() override {
         free(ck);
         free(dk);
+
+        free(force);
     }
 };  // class : PairTest
 
@@ -129,7 +132,7 @@ TEST_F(PairZBLTest, find_force_accuracy) {
     ai2pot::correction::PairZBL<double>::add_atomic_force_one(force, Zi, Zj, rmax, rmin, neigh_vec, ck, dk);
 
 printf("Pair Energy = %.10lf\n", pair_energy);
-printf("\t1. Gradient calculated by custom code = %.10f\n", force[0] * std::sqrt(3));
+printf("\t1. Gradient calculated by custom code = %.10f\n", (*force)[0] * std::sqrt(3));
 printf("\t2. Gradient calculated by finite difference method = %.10f\n", (pair_energy_ - pair_energy) / delta);
 }
 
@@ -145,7 +148,7 @@ TEST_F(PairZBLTest, virial_accuracy) {
     ai2pot::correction::PairZBL<double>::add_atomic_force_one(force, Zi, Zj, rmax, rmin, neigh_vec, ck, dk);
     for (int aa=0; aa<3; aa++) {
         for (int bb=0; bb<3; bb++) {
-            calculated_virial[aa*3 + bb] += coord_1[aa] * force[bb];
+            calculated_virial[aa*3 + bb] += coord_1[aa] * (*force)[bb];
         }
     }
     ai2pot::correction::PairZBL<double>::add_virial_one(virial, Zi, Zj, rmax, rmin, neigh_vec, ck, dk);
@@ -157,7 +160,7 @@ TEST_F(PairZBLTest, virial_accuracy) {
     ai2pot::correction::PairZBL<double>::add_atomic_force_one(force, Zi, Zj, rmax, rmin, neigh_vec, ck, dk);
     for (int aa=0; aa<3; aa++) {
         for (int bb=0; bb<3; bb++) {
-            calculated_virial[aa*3 + bb] += coord_2[aa] * force[bb];
+            calculated_virial[aa*3 + bb] += coord_2[aa] * (*force)[bb];
         }
     }
     ai2pot::correction::PairZBL<double>::add_virial_one(virial, Zi, Zj, rmax, rmin, neigh_vec, ck, dk);

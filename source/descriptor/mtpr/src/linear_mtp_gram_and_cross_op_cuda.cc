@@ -148,7 +148,7 @@ namespace ai2pot {
 namespace correction {
 extern template void ai2pot::correction::correct_zbl_efv_torch_launcher<float>(
     float *d_betot_ptr,
-    float *d_bforce,
+    float (*d_bforce)[3],
     float *d_bvirial,
     float rmax,
     float rmin,
@@ -169,7 +169,7 @@ extern template void ai2pot::correction::correct_zbl_efv_torch_launcher<float>(
 
 extern template void ai2pot::correction::correct_zbl_efv_torch_launcher<double>(
     double *d_betot_ptr,
-    double *d_bforce,
+    double (*d_bforce)[3],
     double *d_bvirial,
     double rmax,
     double rmin,
@@ -292,7 +292,7 @@ torch::autograd::variable_list LinMatrixLinVectorFunctionCUDA::forward(
         if (zbl_rmax > 0.0)
             ai2pot::correction::correct_zbl_efv_torch_launcher(
                 betot_zbl,
-                (float*)bforce_zbl,
+                bforce_zbl,
                 bvirial_zbl,
                 (float)zbl_rmax,
                 (float)(zbl_rmax / 2.0),
@@ -399,7 +399,7 @@ torch::autograd::variable_list LinMatrixLinVectorFunctionCUDA::forward(
         if (zbl_rmax > 0.0)
             ai2pot::correction::correct_zbl_efv_torch_launcher(
                 betot_zbl,
-                (double*)bforce_zbl,
+                bforce_zbl,
                 bvirial_zbl,
                 (double)zbl_rmax,
                 (double)(zbl_rmax / 2.0),

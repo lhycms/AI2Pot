@@ -522,7 +522,7 @@ namespace correction {
 
 extern template void ai2pot::correction::correct_zbl_efv_torch_launcher<float>(
     float *d_betot_ptr,
-    float *d_bforce,
+    float (*d_bforce)[3],
     float *d_bvirial,
     float rmax,
     float rmin,
@@ -543,7 +543,7 @@ extern template void ai2pot::correction::correct_zbl_efv_torch_launcher<float>(
 
 extern template void ai2pot::correction::correct_zbl_efv_torch_launcher<double>(
     double *d_betot_ptr,
-    double *d_bforce,
+    double (*d_bforce)[3],
     double *d_bvirial,
     double rmax,
     double rmin,
@@ -565,7 +565,7 @@ extern template void ai2pot::correction::correct_zbl_efv_torch_launcher<double>(
 
 extern template void ai2pot::correction::correct_zbl_ef_torch_launcher<float>(
     float *d_betot_ptr,
-    float *d_bforce,
+    float (*d_bforce)[3],
     float rmax,
     float rmin,
     float *d_cks,
@@ -586,7 +586,7 @@ extern template void ai2pot::correction::correct_zbl_ef_torch_launcher<float>(
 
 extern template void ai2pot::correction::correct_zbl_ef_torch_launcher<double>(
     double *d_betot_ptr,
-    double *d_bforce,
+    double (*d_bforce)[3],
     double rmax,
     double rmin,
     double *d_cks,
@@ -707,7 +707,7 @@ torch::autograd::variable_list LinearMtpToLossFunctionCUDA::forward(
         if (zbl_rmax > 0.0)
             ai2pot::correction::correct_zbl_efv_torch_launcher(
                 betot,
-                (float*)bforce,
+                bforce,
                 bvirial,
                 (float)zbl_rmax,
                 (float)(zbl_rmax / 2.0),
@@ -826,7 +826,7 @@ torch::autograd::variable_list LinearMtpToLossFunctionCUDA::forward(
         if (zbl_rmax > 0.0)
             ai2pot::correction::correct_zbl_efv_torch_launcher(
                 betot,
-                (double*)bforce,
+                bforce,
                 bvirial,
                 zbl_rmax,
                 zbl_rmax / 2.0,
@@ -1067,7 +1067,7 @@ torch::autograd::variable_list LinearMtpToLossFunctionCUDA::backward(
         if (zbl_rmax > 0.0)
             ai2pot::correction::correct_zbl_efv_torch_launcher(
                 betot,
-                (float*)bforce,
+                bforce,
                 bvirial,
                 (float)zbl_rmax,
                 (float)(zbl_rmax / 2.0),
@@ -1182,7 +1182,7 @@ torch::autograd::variable_list LinearMtpToLossFunctionCUDA::backward(
         if (zbl_rmax > 0.0)
             ai2pot::correction::correct_zbl_efv_torch_launcher(
                 betot,
-                (double*)bforce,
+                bforce,
                 bvirial,
                 zbl_rmax,
                 zbl_rmax / 2.0,
@@ -1402,7 +1402,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunctionCUDA::forward(
         if (zbl_rmax > 0.0)
             ai2pot::correction::correct_zbl_ef_torch_launcher(
                 betot,
-                (float*)bforce,
+                bforce,
                 (float)zbl_rmax,
                 (float)(zbl_rmax / 2.0),
                 zbl_cks,
@@ -1506,7 +1506,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunctionCUDA::forward(
         if (zbl_rmax > 0.0)
             ai2pot::correction::correct_zbl_ef_torch_launcher(
                 betot,
-                (double*)bforce,
+                bforce,
                 zbl_rmax,
                 zbl_rmax / 2.0,
                 zbl_cks,
@@ -1726,7 +1726,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunctionCUDA::backward(
         if (zbl_rmax > 0.0)
             ai2pot::correction::correct_zbl_ef_torch_launcher(
                 betot,
-                (float*)bforce,
+                bforce,
                 (float)zbl_rmax,
                 (float)(zbl_rmax / 2.0),
                 zbl_cks,
@@ -1834,7 +1834,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunctionCUDA::backward(
         if (zbl_rmax > 0.0)
             ai2pot::correction::correct_zbl_ef_torch_launcher(
                 betot,
-                (double*)bforce,
+                bforce,
                 zbl_rmax,
                 zbl_rmax / 2.0,
                 zbl_cks,
@@ -2033,7 +2033,7 @@ torch::autograd::variable_list LinearMtpToEFVFunctionCUDA::forward(
         if (zbl_rmax > 0.0)
             ai2pot::correction::correct_zbl_efv_torch_launcher(
                 betot,
-                (float*)bforce,
+                bforce,
                 bvirial,
                 (float)zbl_rmax,
                 (float)(zbl_rmax / 2.0),
@@ -2100,7 +2100,7 @@ torch::autograd::variable_list LinearMtpToEFVFunctionCUDA::forward(
         if (zbl_rmax > 0.0)
             ai2pot::correction::correct_zbl_efv_torch_launcher(
                 betot,
-                (double*)bforce,
+                bforce,
                 bvirial,
                 zbl_rmax,
                 zbl_rmax / 2.0,
@@ -2264,7 +2264,7 @@ torch::autograd::variable_list LinearMtpToEFFunctionCUDA::forward(
         if (zbl_rmax > 0.0)
             ai2pot::correction::correct_zbl_ef_torch_launcher(
                 betot,
-                (float*)bforce,
+                bforce,
                 (float)zbl_rmax,
                 (float)(zbl_rmax / 2.0),
                 zbl_cks,
@@ -2328,7 +2328,7 @@ torch::autograd::variable_list LinearMtpToEFFunctionCUDA::forward(
         if (zbl_rmax > 0.0)
             ai2pot::correction::correct_zbl_ef_torch_launcher(
                 betot,
-                (double*)bforce,
+                bforce,
                 zbl_rmax,
                 zbl_rmax / 2.0,
                 zbl_cks,

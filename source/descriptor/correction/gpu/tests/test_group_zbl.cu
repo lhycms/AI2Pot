@@ -39,8 +39,8 @@ protected:
 
     double *betot_ptr;
     double *betot_ptr_;
-    double *bforces;
-    double *bforces_;
+    double (*bforces)[3];
+    double (*bforces_)[3];
     double *bvirial;
     double *bvirial_;
 
@@ -98,8 +98,8 @@ protected:
 
         betot_ptr = (double*)malloc(sizeof(double) * batch_size);
         betot_ptr_ = (double*)malloc(sizeof(double) * batch_size);
-        bforces = (double*)malloc(sizeof(double) * batch_size * natoms_pad * 3);
-        bforces_ = (double*)malloc(sizeof(double) * batch_size * natoms_pad * 3);
+        bforces = (double (*)[3])malloc(sizeof(double) * batch_size * natoms_pad * 3);
+        bforces_ = (double (*)[3])malloc(sizeof(double) * batch_size * natoms_pad * 3);
         bvirial = (double*)malloc(sizeof(double) * batch_size * 9);
         bvirial_ = (double*)malloc(sizeof(double) * batch_size * 9);
 
@@ -206,7 +206,7 @@ TEST_F(GroupZBLTest, efv_force_accuracy) {
         umax_num_neigh_atoms,
         nghost);
 printf("energy = %.10lf\n", betot_ptr[0]);
-printf("1. Force[0][1] calculated by custom code = %.10lf\n", bforces[0*3+1]);
+printf("1. Force[0][1] calculated by custom code = %.10lf\n", (*bforces)[0*3+1]);
 printf("2. Force[0][1] calculated by definition = %.10lf\n", -(betot_ptr_[0] - betot_ptr[0]) / delta);
 }
 
@@ -244,12 +244,12 @@ TEST_F(GroupZBLTest, efv_virial_accuracy)
 
     for (int aa=0; aa<3; aa++) {
         for (int bb=0; bb<3; bb++) {
-            bvirial_[aa*3 + bb] += coord_0[aa] * bforces[0*3 + bb];
+            bvirial_[aa*3 + bb] += coord_0[aa] * (*bforces)[0*3 + bb];
         }
     }
     for (int aa=0; aa<3; aa++) {
         for (int bb=0; bb<3; bb++) {
-            bvirial_[aa*3 + bb] += coord_1[aa] * bforces[1*3 + bb];
+            bvirial_[aa*3 + bb] += coord_1[aa] * (*bforces)[1*3 + bb];
         }
     }
 
@@ -320,7 +320,7 @@ TEST_F(GroupZBLTest, ef_force_accuracy) {
         umax_num_neigh_atoms,
         nghost);
 printf("energy = %.10lf\n", betot_ptr[0]);
-printf("1. Force[0][1] calculated by custom code = %.10lf\n", bforces[0*3+1]);
+printf("1. Force[0][1] calculated by custom code = %.10lf\n", (*bforces)[0*3+1]);
 printf("2. Force[0][1] calculated by definition = %.10lf\n", -(betot_ptr_[0] - betot_ptr[0]) / delta);
 }
 

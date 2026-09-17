@@ -17,7 +17,7 @@
 
 template void ai2pot::correction::correct_zbl_efv_torch_launcher<float>(
     float *d_betot_ptr,
-    float *d_bforce,
+    float (*d_bforce)[3],
     float *d_bvirial,
     float rmax,
     float rmin,
@@ -38,7 +38,7 @@ template void ai2pot::correction::correct_zbl_efv_torch_launcher<float>(
 
 template void ai2pot::correction::correct_zbl_efv_torch_launcher<double>(
     double *d_betot_ptr,
-    double *d_bforce,
+    double (*d_bforce)[3],
     double *d_bvirial,
     double rmax,
     double rmin,
@@ -60,7 +60,7 @@ template void ai2pot::correction::correct_zbl_efv_torch_launcher<double>(
 
 template void ai2pot::correction::correct_zbl_ef_torch_launcher<float>(
     float *d_betot_ptr,
-    float *d_bforce,
+    float (*d_bforce)[3],
     float rmax,
     float rmin,
     float *d_cks,
@@ -81,7 +81,7 @@ template void ai2pot::correction::correct_zbl_ef_torch_launcher<float>(
 
 template void ai2pot::correction::correct_zbl_ef_torch_launcher<double>(
     double *d_betot_ptr,
-    double *d_bforce,
+    double (*d_bforce)[3],
     double rmax,
     double rmin,
     double *d_cks,
