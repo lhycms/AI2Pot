@@ -31,7 +31,7 @@ class NNMtpTest(unittest.TestCase):
         print("NNMtpTest (TestCase) is setting up...\n")
         # 0.
         self.torch_float_dtype: torch._C.dtype = torch.float64
-        self.device: torch._C.device = torch.device("cpu")
+        self.device: torch._C.device = torch.device("cuda")
         
         # 1. 
         self.mtp_level: int = 12
@@ -51,7 +51,7 @@ class NNMtpTest(unittest.TestCase):
 
     
         # 2. ZBL
-        self.zbl_rmax: float = 0.0
+        self.zbl_rmax: float = 4.0
         self.zbl_cks_tensor: torch.Tensor = torch.zeros(self.ntypes*self.ntypes*4, 
                                                         dtype=self.torch_float_dtype,
                                                         device=self.device)

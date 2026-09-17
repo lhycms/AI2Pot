@@ -105,7 +105,7 @@ class LinearMtpTest(unittest.TestCase):
         #print(self.structure)
     
         # 2. ZBL
-        self.zbl_rmax: float = 0.0
+        self.zbl_rmax: float = 4.0
         self.zbl_cks_tensor: torch.Tensor = torch.zeros(self.ntypes*self.ntypes*4, 
                                                         dtype=self.torch_float_dtype,
                                                         device=self.device)
