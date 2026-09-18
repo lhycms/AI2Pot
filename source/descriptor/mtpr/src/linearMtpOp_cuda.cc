@@ -1311,10 +1311,7 @@ torch::autograd::variable_list LinearMtpToLossFunctionCUDA::backward(
             at::Tensor(),
             at::Tensor(),
             at::Tensor(),
-            at::Tensor(),
-            at::Tensor(),
-            at::Tensor()
-            };
+            at::Tensor()};
 }
 
 
@@ -1959,8 +1956,6 @@ torch::autograd::variable_list LinearMtpToEFLossFunctionCUDA::backward(
             at::Tensor(),
             at::Tensor(),
             at::Tensor(),
-            at::Tensor(),
-            at::Tensor(),
             at::Tensor()};
 }
 
@@ -2195,8 +2190,6 @@ torch::autograd::variable_list LinearMtpToEFVFunctionCUDA::backward(
             at::Tensor(),
             at::Tensor(),
             at::Tensor(),
-            at::Tensor(),
-            at::Tensor(),
             at::Tensor()};
 }
 
@@ -2401,7 +2394,6 @@ torch::autograd::variable_list LinearMtpToEFFunctionCUDA::backward(
     torch::autograd::variable_list bgrad_outputs_tensor)
 {
     return {at::Tensor(),
-            at::Tensor(),
             at::Tensor(),
             at::Tensor(),
             at::Tensor(),

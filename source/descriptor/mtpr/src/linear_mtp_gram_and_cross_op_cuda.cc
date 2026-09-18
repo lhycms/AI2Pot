@@ -528,7 +528,6 @@ torch::autograd::variable_list LinMatrixLinVectorFunctionCUDA::backward(
         at::Tensor(),
         at::Tensor(),
         at::Tensor(),
-        at::Tensor(),
         at::Tensor()};
 }
 

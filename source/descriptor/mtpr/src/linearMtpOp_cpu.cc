@@ -1359,7 +1359,6 @@ torch::autograd::variable_list LinearMtpToEFLossFunctionCPU::backward(
             at::Tensor(),
             at::Tensor(),
             at::Tensor(),
-            at::Tensor(),
             at::Tensor()};
 }
 
@@ -1600,7 +1599,6 @@ torch::autograd::variable_list LinearMtpToEFVFunctionCPU::backward(
             at::Tensor(),
             at::Tensor(),
             at::Tensor(),
-            at::Tensor(),
             at::Tensor()};
 }
 
@@ -1813,7 +1811,6 @@ torch::autograd::variable_list LinearMtpToEFFunctionCPU::backward(
     torch::autograd::variable_list bgrad_outputs_tensor)
 {
     return {at::Tensor(),
-            at::Tensor(),
             at::Tensor(),
             at::Tensor(),
             at::Tensor(),
@@ -2243,8 +2240,6 @@ torch::autograd::variable_list LinearMtpToEsitesFunctionCPU::backward(
         (bgrad_output_tensor.unsqueeze(-1) * be_sites_der2coeffs_tensor).sum(torch::IntArrayRef({0, 1})),
         (bgrad_output_tensor.unsqueeze(-1) * be_sites_der2linear_coeffs_tensor).sum(torch::IntArrayRef({0, 1})),
         (bgrad_output_tensor.unsqueeze(-1) * be_sites_der2type_bias_tensor).sum(torch::IntArrayRef({0, 1})),
-        at::Tensor(),
-        at::Tensor(),
         at::Tensor(),
         at::Tensor(),
         at::Tensor(),
