@@ -66,6 +66,7 @@ class LitNepTest(unittest.TestCase):
             rmax_radial=rmax_radial,
             rmax_angular=rmax_angular,
             zbl_rmax=0.0,
+            zbl_typewise_factor=0.7,
             lr_start=lr_start,
             lr_end=lr_end,
             e_wgt_start=e_wgt_start,

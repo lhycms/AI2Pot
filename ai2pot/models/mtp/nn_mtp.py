@@ -39,6 +39,7 @@ class NNMtp(nn.Module):
                  rmax: float = 5.0,
                  rmin: float = 0.0,
                  zbl_rmax: float = 0.0,
+                 zbl_typewise_factor: float = 0.7,
                  zbl_cks_list: Optional[List[float]] = None,
                  zbl_dks_list: Optional[List[float]] = None):
         super(NNMtp, self).__init__()
@@ -56,6 +57,7 @@ class NNMtp(nn.Module):
         self.umax_num_neigh_atoms: int = umax_num_neigh_atoms
         self.fit_virial: bool = fit_virial
         self.zbl_rmax: float = zbl_rmax
+        self.zbl_typewise_factor: float = zbl_typewise_factor
         self._init_zbl_params(zbl_cks_list=zbl_cks_list,
                               zbl_dks_list=zbl_dks_list)
         
@@ -173,6 +175,7 @@ class NNMtp(nn.Module):
         rmax_norm: float = self.rmax * conv_length
         rmin_norm: float = self.rmin * conv_length
         zbl_rmax_norm: float = self.zbl_rmax * conv_length
+        zbl_typewise_factor_norm: float = self.zbl_typewise_factor * conv_length
 
         type_bias_norm: torch.Tensor = self.type_bias_tensor * conv_energy
         zbl_cks_norm: torch.Tensor = self.zbl_cks_tensor * conv_length * conv_energy
@@ -209,6 +212,7 @@ class NNMtp(nn.Module):
             rmin_norm,
             self.q_scaler_tensor,
             zbl_rmax_norm,
+            zbl_typewise_factor_norm,
             zbl_cks_norm,
             zbl_dks_norm)
         bmse_tensor: torch.Tensor
@@ -249,6 +253,7 @@ class NNMtp(nn.Module):
         rmax_norm: float = self.rmax * conv_length
         rmin_norm: float = self.rmin * conv_length
         zbl_rmax_norm: float = self.zbl_rmax * conv_length
+        zbl_typewise_factor_norm: float = self.zbl_typewise_factor * conv_length
 
         type_bias_norm: torch.Tensor = self.type_bias_tensor * conv_energy
         zbl_cks_norm: torch.Tensor = self.zbl_cks_tensor * conv_length * conv_energy
@@ -283,6 +288,7 @@ class NNMtp(nn.Module):
             rmin_norm,
             self.q_scaler_tensor,
             zbl_rmax_norm,
+            zbl_typewise_factor_norm,
             zbl_cks_norm,
             zbl_dks_norm)
         bmse_tensor: torch.Tensor
@@ -316,6 +322,7 @@ class NNMtp(nn.Module):
         rmax_norm: float = self.rmax * conv_length
         rmin_norm: float = self.rmin * conv_length
         zbl_rmax_norm: float = self.zbl_rmax * conv_length
+        zbl_typewise_factor_norm: float = self.zbl_typewise_factor * conv_length
 
         type_bias_norm: torch.Tensor = self.type_bias_tensor * conv_energy
         zbl_cks_norm: torch.Tensor = self.zbl_cks_tensor * conv_length * conv_energy
@@ -346,6 +353,7 @@ class NNMtp(nn.Module):
             rmin_norm,
             self.q_scaler_tensor,
             zbl_rmax_norm,
+            zbl_typewise_factor_norm,
             zbl_cks_norm,
             zbl_dks_norm)
         
@@ -376,6 +384,7 @@ class NNMtp(nn.Module):
         rmax_norm: float = self.rmax * conv_length
         rmin_norm: float = self.rmin * conv_length
         zbl_rmax_norm: float = self.zbl_rmax * conv_length
+        zbl_typewise_factor_norm: float = self.zbl_typewise_factor * conv_length
 
         type_bias_norm: torch.Tensor = self.type_bias_tensor * conv_energy
         zbl_cks_norm: torch.Tensor = self.zbl_cks_tensor * conv_length * conv_energy
@@ -406,6 +415,7 @@ class NNMtp(nn.Module):
             rmin_norm,
             self.q_scaler_tensor,
             zbl_rmax_norm,
+            zbl_typewise_factor_norm,
             zbl_cks_norm,
             zbl_dks_norm)
         
