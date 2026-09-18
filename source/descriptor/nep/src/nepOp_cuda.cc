@@ -798,6 +798,9 @@ torch::autograd::variable_list NepToEFFunctionCUDA::backward(
         at::Tensor(),
         at::Tensor(),
         at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
         at::Tensor()};
 }
 
@@ -1003,6 +1006,9 @@ torch::autograd::variable_list NepToEFVFunctionCUDA::backward(
     torch::autograd::variable_list bgrad_outputs_tensor)
 {
     return {
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
         at::Tensor(),
         at::Tensor(),
         at::Tensor(),
@@ -1653,7 +1659,6 @@ torch::autograd::variable_list NepToEFLossFunctionCUDA::backward(
         torch::matmul(bgrad_output_tensor, bloss_der2b0_tensor),
         torch::matmul(bgrad_output_tensor, bloss_der2w1_tensor),
         torch::matmul(bgrad_output_tensor, bloss_der2type_bias_tensor),
-        at::Tensor(),
         at::Tensor(),
         at::Tensor(),
         at::Tensor(),
@@ -2351,7 +2356,6 @@ torch::autograd::variable_list NepToLossFunctionCUDA::backward(
         torch::matmul(bgrad_output_tensor, bloss_der2b0_tensor),
         torch::matmul(bgrad_output_tensor, bloss_der2w1_tensor),
         torch::matmul(bgrad_output_tensor, bloss_der2type_bias_tensor),
-        at::Tensor(),
         at::Tensor(),
         at::Tensor(),
         at::Tensor(),
