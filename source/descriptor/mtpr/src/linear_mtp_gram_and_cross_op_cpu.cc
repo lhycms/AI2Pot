@@ -54,6 +54,7 @@ torch::autograd::variable_list LinMatrixLinVectorFunctionCPU::forward(
     double rmin,
     const at::Tensor &q_scaler_tensor,
     double zbl_rmax,
+    double zbl_typewise_factor,
     const at::Tensor &zbl_cks_tensor,
     const at::Tensor &zbl_dks_tensor)
 {
@@ -357,6 +358,7 @@ torch::autograd::variable_list LinMatrixLinVectorOpCPU(
     double rmin,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
+    double zbl_typewise_factor,
     const at::Tensor& zbl_cks_tensor,
     const at::Tensor& zbl_dks_tensor)
 {
@@ -389,6 +391,7 @@ torch::autograd::variable_list LinMatrixLinVectorOpCPU(
         rmin,
         q_scaler_tensor,
         zbl_rmax,
+        zbl_typewise_factor,
         zbl_cks_tensor,
         zbl_dks_tensor);
 }

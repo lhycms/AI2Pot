@@ -60,6 +60,7 @@ torch::autograd::variable_list LinearMtpToLossFunctionCPU::forward(
     double rmin,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
+    double zbl_typewise_factor,
     const at::Tensor& zbl_cks_tensor,
     const at::Tensor& zbl_dks_tensor)
 {
@@ -353,6 +354,7 @@ torch::autograd::variable_list LinearMtpToLossFunctionCPU::forward(
                             at::tensor(rmin, float_options),
                             q_scaler_tensor,
                             at::tensor(zbl_rmax, float_options),
+                            at::tensor(zbl_typewise_factor, float_options),
                             zbl_cks_tensor,
                             zbl_dks_tensor
                             });
@@ -403,8 +405,9 @@ torch::autograd::variable_list LinearMtpToLossFunctionCPU::backward(
     double rmin = ctx->get_saved_variables()[25].item<double>();
     at::Tensor q_scaler_tensor = ctx->get_saved_variables()[26];
     double zbl_rmax = ctx->get_saved_variables()[27].item<double>();
-    at::Tensor zbl_cks_tensor = ctx->get_saved_variables()[28];
-    at::Tensor zbl_dks_tensor = ctx->get_saved_variables()[29];
+    double zbl_typewise_factor = ctx->get_saved_variables()[28].item<double>();
+    at::Tensor zbl_cks_tensor = ctx->get_saved_variables()[29];
+    at::Tensor zbl_dks_tensor = ctx->get_saved_variables()[30];
     int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
     int num_linear_coeffs = (int)linear_coeffs_tensor.size(0);
 
@@ -712,7 +715,6 @@ torch::autograd::variable_list LinearMtpToLossFunctionCPU::backward(
             at::Tensor(),
             at::Tensor(),
             at::Tensor(),
-            at::Tensor(),
             at::Tensor()
             };
 }
@@ -746,6 +748,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunctionCPU::forward(
     double rmin,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
+    double zbl_typewise_factor,
     const at::Tensor& zbl_cks_tensor,
     const at::Tensor& zbl_dks_tensor)
 {
@@ -1015,6 +1018,7 @@ torch::autograd::variable_list LinearMtpToEFLossFunctionCPU::forward(
                             at::tensor(rmin, float_options),
                             q_scaler_tensor,
                             at::tensor(zbl_rmax, float_options),
+                            at::tensor(zbl_typewise_factor, float_options),
                             zbl_cks_tensor,
                             zbl_dks_tensor
                             });
@@ -1061,8 +1065,9 @@ torch::autograd::variable_list LinearMtpToEFLossFunctionCPU::backward(
     double rmin = ctx->get_saved_variables()[23].item<double>();
     at::Tensor q_scaler_tensor = ctx->get_saved_variables()[24];
     double zbl_rmax = ctx->get_saved_variables()[25].item<double>();
-    at::Tensor zbl_cks_tensor = ctx->get_saved_variables()[26];
-    at::Tensor zbl_dks_tensor = ctx->get_saved_variables()[27];
+    double zbl_typewise_factor = ctx->get_saved_variables()[26].item<double>();
+    at::Tensor zbl_cks_tensor = ctx->get_saved_variables()[27];
+    at::Tensor zbl_dks_tensor = ctx->get_saved_variables()[28];
     int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
     int num_linear_coeffs = (int)linear_coeffs_tensor.size(0);
 
@@ -1383,6 +1388,7 @@ torch::autograd::variable_list LinearMtpToEFVFunctionCPU::forward(
     double rmin,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
+    double zbl_typewise_factor,
     const at::Tensor& zbl_cks_tensor,
     const at::Tensor& zbl_dks_tensor)
 {
@@ -1594,6 +1600,7 @@ torch::autograd::variable_list LinearMtpToEFVFunctionCPU::backward(
             at::Tensor(),
             at::Tensor(),
             at::Tensor(),
+            at::Tensor(),
             at::Tensor()};
 }
 
@@ -1622,6 +1629,7 @@ torch::autograd::variable_list LinearMtpToEFFunctionCPU::forward(
     double rmin,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
+    double zbl_typewise_factor,
     const at::Tensor& zbl_cks_tensor,
     const at::Tensor& zbl_dks_tensor)
 {
@@ -1828,6 +1836,7 @@ torch::autograd::variable_list LinearMtpToEFFunctionCPU::backward(
             at::Tensor(),
             at::Tensor(),
             at::Tensor(),
+            at::Tensor(),
             at::Tensor()};
 }
 
@@ -1856,6 +1865,7 @@ torch::autograd::variable_list LinearMtpToEsitesFunctionCPU::forward(
     double rmin,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
+    double zbl_typewise_factor,
     const at::Tensor& zbl_cks_tensor,
     const at::Tensor& zbl_dks_tensor)
 {
@@ -2056,6 +2066,7 @@ torch::autograd::variable_list LinearMtpToEsitesFunctionCPU::forward(
         torch::tensor(rmin, float_options),
         q_scaler_tensor,
         torch::tensor(zbl_rmax, float_options),
+        torch::tensor(zbl_typewise_factor, float_options),
         zbl_cks_tensor,
         zbl_dks_tensor});
 
@@ -2094,8 +2105,9 @@ torch::autograd::variable_list LinearMtpToEsitesFunctionCPU::backward(
     double rmin = ctx->get_saved_variables()[19].item<double>();
     at::Tensor q_scaler_tensor = ctx->get_saved_variables()[20];
     double zbl_rmax = ctx->get_saved_variables()[21].item<double>();
-    at::Tensor zbl_cks_tensor = ctx->get_saved_variables()[22];
-    at::Tensor zbl_dks_tensor = ctx->get_saved_variables()[23];
+    double zbl_typewise_factor = ctx->get_saved_variables()[22].item<double>();
+    at::Tensor zbl_cks_tensor = ctx->get_saved_variables()[23];
+    at::Tensor zbl_dks_tensor = ctx->get_saved_variables()[24];
 
     // 1.
     int batch_size = binum_tensor.size(0);
@@ -2231,6 +2243,7 @@ torch::autograd::variable_list LinearMtpToEsitesFunctionCPU::backward(
         (bgrad_output_tensor.unsqueeze(-1) * be_sites_der2coeffs_tensor).sum(torch::IntArrayRef({0, 1})),
         (bgrad_output_tensor.unsqueeze(-1) * be_sites_der2linear_coeffs_tensor).sum(torch::IntArrayRef({0, 1})),
         (bgrad_output_tensor.unsqueeze(-1) * be_sites_der2type_bias_tensor).sum(torch::IntArrayRef({0, 1})),
+        at::Tensor(),
         at::Tensor(),
         at::Tensor(),
         at::Tensor(),
@@ -2433,6 +2446,7 @@ torch::autograd::variable_list LinearMtpToLossOpCPU(
     double rmin,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
+    double zbl_typewise_factor,
     const at::Tensor& zbl_cks_tensor,
     const at::Tensor& zbl_dks_tensor)
 {
@@ -2465,6 +2479,7 @@ torch::autograd::variable_list LinearMtpToLossOpCPU(
         rmin,
         q_scaler_tensor,
         zbl_rmax,
+        zbl_typewise_factor,
         zbl_cks_tensor,
         zbl_dks_tensor);
 }
@@ -2497,6 +2512,7 @@ torch::autograd::variable_list LinearMtpToEFLossOpCPU(
     double rmin,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
+    double zbl_typewise_factor,
     const at::Tensor& zbl_cks_tensor,
     const at::Tensor& zbl_dks_tensor)
 {
@@ -2527,6 +2543,7 @@ torch::autograd::variable_list LinearMtpToEFLossOpCPU(
         rmin,
         q_scaler_tensor,
         zbl_rmax,
+        zbl_typewise_factor,
         zbl_cks_tensor,
         zbl_dks_tensor);
 }
@@ -2555,6 +2572,7 @@ torch::autograd::variable_list LinearMtpToEFVOpCPU(
     double rmin,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
+    double zbl_typewise_factor,
     const at::Tensor& zbl_cks_tensor,
     const at::Tensor& zbl_dks_tensor)
 {
@@ -2581,6 +2599,7 @@ torch::autograd::variable_list LinearMtpToEFVOpCPU(
         rmin,
         q_scaler_tensor,
         zbl_rmax,
+        zbl_typewise_factor,
         zbl_cks_tensor,
         zbl_dks_tensor);
 }
@@ -2609,6 +2628,7 @@ torch::autograd::variable_list LinearMtpToEFOpCPU(
     double rmin,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
+    double zbl_typewise_factor,
     const at::Tensor& zbl_cks_tensor,
     const at::Tensor& zbl_dks_tensor)
 {
@@ -2635,6 +2655,7 @@ torch::autograd::variable_list LinearMtpToEFOpCPU(
         rmin,
         q_scaler_tensor,
         zbl_rmax,
+        zbl_typewise_factor,
         zbl_cks_tensor,
         zbl_dks_tensor);
 }
@@ -2663,6 +2684,7 @@ torch::autograd::variable_list LinearMtpToEsitesOpCPU(
     double rmin,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
+    double zbl_typewise_factor,
     const at::Tensor& zbl_cks_tensor,
     const at::Tensor& zbl_dks_tensor)
 {
@@ -2689,6 +2711,7 @@ torch::autograd::variable_list LinearMtpToEsitesOpCPU(
         rmin,
         q_scaler_tensor,
         zbl_rmax,
+        zbl_typewise_factor,
         zbl_cks_tensor,
         zbl_dks_tensor);
 }
