@@ -34,6 +34,7 @@ class NepTest(unittest.TestCase):
         self.rmax_radial: float = self.rmax
         self.rmax_angular: float = 4.0
         self.zbl_rmax: float = 2.0
+        self.zbl_typewise_factor: float = 0.7
         self.zbl_cks_list: Optional[List[float]] = None
         self.zbl_dks_list: Optional[List[float]] = None
 

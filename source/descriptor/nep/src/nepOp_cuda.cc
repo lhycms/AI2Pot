@@ -607,6 +607,7 @@ torch::autograd::variable_list NepToEFFunctionCUDA::forward(
     double rmax_angular,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
+    double zbl_typewise_factor,
     const at::Tensor& zbl_cks_tensor,
     const at::Tensor& zbl_dks_tensor)
 {
@@ -796,6 +797,7 @@ torch::autograd::variable_list NepToEFFunctionCUDA::backward(
         at::Tensor(),
         at::Tensor(),
         at::Tensor(),
+        at::Tensor(),
         at::Tensor()};
 }
 
@@ -823,6 +825,7 @@ torch::autograd::variable_list NepToEFVFunctionCUDA::forward(
     double rmax_angular,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
+    double zbl_typewise_factor,
     const at::Tensor& zbl_cks_tensor,
     const at::Tensor& zbl_dks_tensor)
 {
@@ -1019,6 +1022,7 @@ torch::autograd::variable_list NepToEFVFunctionCUDA::backward(
         at::Tensor(),
         at::Tensor(),
         at::Tensor(),
+        at::Tensor(),
         at::Tensor()};
 }
 
@@ -1050,6 +1054,7 @@ torch::autograd::variable_list NepToEFLossFunctionCUDA::forward(
     double rmax_angular,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
+    double zbl_typewise_factor,
     const at::Tensor& zbl_cks_tensor,
     const at::Tensor& zbl_dks_tensor)
 {
@@ -1327,6 +1332,7 @@ torch::autograd::variable_list NepToEFLossFunctionCUDA::forward(
         torch::tensor(rmax_angular, float_options),
         q_scaler_tensor,
         torch::tensor(zbl_rmax, float_options),
+        torch::tensor(zbl_typewise_factor, float_options),
         zbl_cks_tensor,
         zbl_dks_tensor});
 
@@ -1371,8 +1377,9 @@ torch::autograd::variable_list NepToEFLossFunctionCUDA::backward(
     double rmax_angular = ctx->get_saved_variables()[22].item<double>();
     at::Tensor q_scaler_tensor = ctx->get_saved_variables()[23];
     double zbl_rmax = ctx->get_saved_variables()[24].item<double>();
-    at::Tensor zbl_cks_tensor = ctx->get_saved_variables()[25];
-    at::Tensor zbl_dks_tensor = ctx->get_saved_variables()[26];
+    double zbl_typewise_factor = ctx->get_saved_variables()[25].item<double>();
+    at::Tensor zbl_cks_tensor = ctx->get_saved_variables()[26];
+    at::Tensor zbl_dks_tensor = ctx->get_saved_variables()[27];
 
     // 1.
     int batch_size = bfirstneigh_tensor.size(0);
@@ -1660,6 +1667,7 @@ torch::autograd::variable_list NepToEFLossFunctionCUDA::backward(
         at::Tensor(),
         at::Tensor(),
         at::Tensor(),
+        at::Tensor(),
         at::Tensor()};
 }
 
@@ -1693,6 +1701,7 @@ torch::autograd::variable_list NepToLossFunctionCUDA::forward(
     double rmax_angular,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
+    double zbl_typewise_factor,
     const at::Tensor& zbl_cks_tensor,
     const at::Tensor& zbl_dks_tensor)
 {
@@ -2004,6 +2013,7 @@ torch::autograd::variable_list NepToLossFunctionCUDA::forward(
         torch::tensor(rmax_angular, float_options),
         q_scaler_tensor,
         torch::tensor(zbl_rmax, float_options),
+        torch::tensor(zbl_typewise_factor, float_options),
         zbl_cks_tensor,
         zbl_dks_tensor});
 
@@ -2050,8 +2060,9 @@ torch::autograd::variable_list NepToLossFunctionCUDA::backward(
     double rmax_angular = ctx->get_saved_variables()[24].item<double>();
     at::Tensor q_scaler_tensor = ctx->get_saved_variables()[25];
     double zbl_rmax = ctx->get_saved_variables()[26].item<double>();
-    at::Tensor zbl_cks_tensor = ctx->get_saved_variables()[27];
-    at::Tensor zbl_dks_tensor = ctx->get_saved_variables()[28];
+    double zbl_typewise_factor = ctx->get_saved_variables()[27].item<double>();
+    at::Tensor zbl_cks_tensor = ctx->get_saved_variables()[28];
+    at::Tensor zbl_dks_tensor = ctx->get_saved_variables()[29];
 
     // 1.
     int batch_size = bfirstneigh_tensor.size(0);
@@ -2354,6 +2365,7 @@ torch::autograd::variable_list NepToLossFunctionCUDA::backward(
         at::Tensor(),
         at::Tensor(),
         at::Tensor(),
+        at::Tensor(),
         at::Tensor()};
 }
 
@@ -2506,6 +2518,7 @@ torch::autograd::variable_list NepToEFOpCUDA(
     double rmax_angular,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
+    double zbl_typewise_factor,
     const at::Tensor& zbl_cks_tensor,
     const at::Tensor& zbl_dks_tensor)
 {
@@ -2531,6 +2544,7 @@ torch::autograd::variable_list NepToEFOpCUDA(
         rmax_angular,
         q_scaler_tensor,
         zbl_rmax,
+        zbl_typewise_factor,
         zbl_cks_tensor,
         zbl_dks_tensor);
 }
@@ -2558,6 +2572,7 @@ torch::autograd::variable_list NepToEFVOpCUDA(
     double rmax_angular,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
+    double zbl_typewise_factor,
     const at::Tensor& zbl_cks_tensor,
     const at::Tensor& zbl_dks_tensor)
 {
@@ -2583,6 +2598,7 @@ torch::autograd::variable_list NepToEFVOpCUDA(
         rmax_angular,
         q_scaler_tensor,
         zbl_rmax,
+        zbl_typewise_factor,
         zbl_cks_tensor,
         zbl_dks_tensor);
 }
@@ -2614,6 +2630,7 @@ torch::autograd::variable_list NepToEFLossOpCUDA(
     double rmax_angular,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
+    double zbl_typewise_factor,
     const at::Tensor& zbl_cks_tensor,
     const at::Tensor& zbl_dks_tensor)
 {
@@ -2643,6 +2660,7 @@ torch::autograd::variable_list NepToEFLossOpCUDA(
         rmax_angular,
         q_scaler_tensor,
         zbl_rmax,
+        zbl_typewise_factor,
         zbl_cks_tensor,
         zbl_dks_tensor);
 }
@@ -2676,6 +2694,7 @@ torch::autograd::variable_list NepToLossOpCUDA(
     double rmax_angular,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
+    double zbl_typewise_factor,
     const at::Tensor& zbl_cks_tensor,
     const at::Tensor& zbl_dks_tensor)
 {
@@ -2707,6 +2726,7 @@ torch::autograd::variable_list NepToLossOpCUDA(
         rmax_angular,
         q_scaler_tensor,
         zbl_rmax,
+        zbl_typewise_factor,
         zbl_cks_tensor,
         zbl_dks_tensor);
 }
