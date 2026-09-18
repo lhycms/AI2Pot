@@ -55,6 +55,7 @@ public:
         double rmin,
         const at::Tensor& q_scaler_tensor,
         double zbl_rmax,
+        double zbl_typewise_factor,
         const at::Tensor& zbl_cks_tensor,
         const at::Tensor& zbl_dks_tensor);
     
@@ -98,6 +99,7 @@ public:
         double rmin,
         const at::Tensor& q_scaler_tensor,
         double zbl_rmax,
+        double zbl_typewise_factor,
         const at::Tensor& zbl_cks_tensor,
         const at::Tensor& zbl_dks_tensor);
     
@@ -135,6 +137,7 @@ public:
         double rmin,
         const at::Tensor& q_scaler_tensor,
         double zbl_rmax,
+        double zbl_typewise_factor,
         const at::Tensor& zbl_cks_tensor,
         const at::Tensor& zbl_dks_tensor);
     
@@ -172,6 +175,7 @@ public:
         double rmin,
         const at::Tensor& q_scaler_tensor,
         double zbl_rmax,
+        double zbl_typewise_factor,
         const at::Tensor& zbl_cks_tensor,
         const at::Tensor& zbl_dks_tensor);
     
@@ -238,6 +242,7 @@ torch::autograd::variable_list NNMtpToEFLossOpCUDA(
     double rmin,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
+    double zbl_typewise_factor,
     const at::Tensor& zbl_cks_tensor,
     const at::Tensor& zbl_dks_tensor);
 
@@ -271,6 +276,7 @@ torch::autograd::variable_list NNMtpToLossOpCUDA(
     double rmin,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
+    double zbl_typewise_factor,
     const at::Tensor& zbl_cks_tensor,
     const at::Tensor& zbl_dks_tensor);
 
@@ -298,6 +304,7 @@ torch::autograd::variable_list NNMtpToEFOpCUDA(
     double rmin,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
+    double zbl_typewise_factor,
     const at::Tensor& zbl_cks_tensor,
     const at::Tensor& zbl_dks_tensor);
 
@@ -325,6 +332,7 @@ torch::autograd::variable_list NNMtpToEFVOpCUDA(
     double rmin,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
+    double zbl_typewise_factor,
     const at::Tensor& zbl_cks_tensor,
     const at::Tensor& zbl_dks_tensor);
 
