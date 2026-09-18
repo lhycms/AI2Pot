@@ -700,7 +700,6 @@ torch::autograd::variable_list NNMtpToEFLossFunctionCPU::backward(
         at::Tensor(),
         at::Tensor(),
         at::Tensor(),
-        at::Tensor(),
         at::Tensor()};
 }
 
@@ -1426,7 +1425,6 @@ torch::autograd::variable_list NNMtpToLossFunctionCPU::backward(
         at::Tensor(),
         at::Tensor(),
         at::Tensor(),
-        at::Tensor(),
         at::Tensor()};
 }
 
@@ -1648,7 +1646,6 @@ torch::autograd::variable_list NNMtpToEFFunctionCPU::backward(
     torch::autograd::variable_list bgrad_outputs_tensor)
 {
     return {
-        at::Tensor(),
         at::Tensor(),
         at::Tensor(),
         at::Tensor(),
@@ -1903,7 +1900,6 @@ torch::autograd::variable_list NNMtpToEFVFunctionCPU::backward(
     torch::autograd::variable_list bgrad_outputs_tensor)
 {
     return {
-        at::Tensor(),
         at::Tensor(),
         at::Tensor(),
         at::Tensor(),
