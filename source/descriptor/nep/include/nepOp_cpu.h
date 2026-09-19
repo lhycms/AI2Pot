@@ -169,7 +169,7 @@ public:
         double zbl_rmax,
         double zbl_typewise_factor,
         const at::Tensor& zbl_cks_tensor,
-        const at::Tensor& zbl_dks_tenosr);
+        const at::Tensor& zbl_dks_tensor);
 
     static torch::autograd::variable_list backward(
         torch::autograd::AutogradContext *ctx,

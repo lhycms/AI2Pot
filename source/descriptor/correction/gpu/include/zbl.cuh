@@ -109,7 +109,7 @@ void correct_zbl_efv_atom(
     CoordType (*force)[3],
     CoordType *virial,
     CoordType rmax,
-    CoordType zbl_typewsie_factor,
+    CoordType zbl_typewise_factor,
     CoordType *cks,
     CoordType *dks,
     int silist,
@@ -882,7 +882,7 @@ void correct_zbl_ef_launcher(
 
     CHECK_CUDA_API( cudaMalloc((void**)&d_cks, sizeof(CoordType) * ntypes * ntypes * 4) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_dks, sizeof(CoordType) * ntypes * ntypes * 4) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_binum, sizeof(CoordType) * batch_size) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_binum, sizeof(int) * batch_size) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_bilist, sizeof(int) * batch_size * natoms_pad) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_bnumneigh, sizeof(int) * batch_size * natoms_pad) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_bfirstneigh, sizeof(int) * batch_size * natoms_pad * umax_num_neigh_atoms) );
