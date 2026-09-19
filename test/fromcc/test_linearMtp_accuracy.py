@@ -105,7 +105,8 @@ class LinearMtpTest(unittest.TestCase):
         #print(self.structure)
     
         # 2. ZBL
-        self.zbl_rmax: float = 0.0
+        self.zbl_rmax: float = 4.0
+        self.zbl_typewise_factor: float = 0.7
         self.zbl_cks_tensor: torch.Tensor = torch.zeros(self.ntypes*self.ntypes*4, 
                                                         dtype=self.torch_float_dtype,
                                                         device=self.device)
@@ -195,6 +196,7 @@ class LinearMtpTest(unittest.TestCase):
                                 self.rmin,
                                 self.q_scaler_tensor,
                                 self.zbl_rmax,
+                                self.zbl_typewise_factor,
                                 self.zbl_cks_tensor,
                                 self.zbl_dks_tensor)
         e: torch.Tensor
@@ -227,6 +229,7 @@ class LinearMtpTest(unittest.TestCase):
                                 self.rmin,
                                 self.q_scaler_tensor,
                                 self.zbl_rmax,
+                                self.zbl_typewise_factor,
                                 self.zbl_cks_tensor,
                                 self.zbl_dks_tensor)
         e: torch.Tensor
@@ -284,6 +287,7 @@ class LinearMtpTest(unittest.TestCase):
                                  self.rmin,
                                  self.q_scaler_tensor,
                                  self.zbl_rmax,
+                                 self.zbl_typewise_factor,
                                  self.zbl_cks_tensor,
                                  self.zbl_dks_tensor),
                          eps=1e-6,
@@ -344,6 +348,7 @@ class LinearMtpTest(unittest.TestCase):
                                  self.rmin,
                                  self.q_scaler_tensor,
                                  self.zbl_rmax,
+                                 self.zbl_typewise_factor,
                                  self.zbl_cks_tensor,
                                  self.zbl_dks_tensor),
                          eps=1e-6,
@@ -388,6 +393,7 @@ class LinearMtpTest(unittest.TestCase):
                                  self.rmin,
                                  self.q_scaler_tensor,
                                  self.zbl_rmax,
+                                 self.zbl_typewise_factor,
                                  self.zbl_cks_tensor,
                                  self.zbl_dks_tensor),
                          eps=1e-8,

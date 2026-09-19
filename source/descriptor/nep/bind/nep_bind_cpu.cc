@@ -45,6 +45,7 @@ TORCH_LIBRARY(nep, m) {
            double rmax_angular,
            const at::Tensor& q_scaler_tensor,
            double zbl_rmax,
+           double zbl_typewise_factor,
            const at::Tensor& zbl_cks_tensor,
            const at::Tensor& zbl_dks_tensor)
         {
@@ -70,6 +71,7 @@ TORCH_LIBRARY(nep, m) {
                 rmax_angular,
                 q_scaler_tensor,
                 zbl_rmax,
+                zbl_typewise_factor,
                 zbl_cks_tensor,
                 zbl_dks_tensor);
         }
@@ -99,6 +101,7 @@ TORCH_LIBRARY(nep, m) {
            double rmax_angular,
            const at::Tensor& q_scaler_tensor,
            double zbl_rmax,
+           double zbl_typewise_factor,
            const at::Tensor& zbl_cks_tensor,
            const at::Tensor& zbl_dks_tensor)
         {
@@ -124,6 +127,7 @@ TORCH_LIBRARY(nep, m) {
                 rmax_angular,
                 q_scaler_tensor,
                 zbl_rmax,
+                zbl_typewise_factor,
                 zbl_cks_tensor,
                 zbl_dks_tensor);
         }
@@ -157,6 +161,7 @@ TORCH_LIBRARY(nep, m) {
            double rmax_angular,
            const at::Tensor& q_scaler_tensor,
            double zbl_rmax,
+           double zbl_typewise_factor,
            const at::Tensor& zbl_cks_tensor,
            const at::Tensor& zbl_dks_tensor)
         {
@@ -192,6 +197,7 @@ TORCH_LIBRARY(nep, m) {
                 rmax_angular,
                 q_scaler_tensor,
                 zbl_rmax,
+                zbl_typewise_factor,
                 zbl_cks_tensor,
                 zbl_dks_tensor);
         }
@@ -227,6 +233,7 @@ TORCH_LIBRARY(nep, m) {
            double rmax_angular,
            const at::Tensor& q_scaler_tensor,
            double zbl_rmax,
+           double zbl_typewise_factor,
            const at::Tensor& zbl_cks_tensor,
            const at::Tensor& zbl_dks_tensor)
         {
@@ -264,6 +271,7 @@ TORCH_LIBRARY(nep, m) {
                 rmax_angular,
                 q_scaler_tensor,
                 zbl_rmax,
+                zbl_typewise_factor,
                 zbl_cks_tensor,
                 zbl_dks_tensor);
         }
@@ -335,6 +343,7 @@ TORCH_LIBRARY_IMPL(nep, CPU, m) {
            double rmax_angular,
            const at::Tensor& q_scaler_tensor,
            double zbl_rmax,
+           double zbl_typewise_factor,
            const at::Tensor& zbl_cks_tensor,
            const at::Tensor& zbl_dks_tensor)
         {
@@ -360,6 +369,7 @@ TORCH_LIBRARY_IMPL(nep, CPU, m) {
                 rmax_angular,
                 q_scaler_tensor,
                 zbl_rmax,
+                zbl_typewise_factor,
                 zbl_cks_tensor,
                 zbl_dks_tensor);
         }
@@ -389,6 +399,7 @@ TORCH_LIBRARY_IMPL(nep, CPU, m) {
            double rmax_angular,
            const at::Tensor& q_scaler_tensor,
            double zbl_rmax,
+           double zbl_typewise_factor,
            const at::Tensor& zbl_cks_tensor,
            const at::Tensor& zbl_dks_tensor)
         {
@@ -414,6 +425,7 @@ TORCH_LIBRARY_IMPL(nep, CPU, m) {
                 rmax_angular,
                 q_scaler_tensor,
                 zbl_rmax,
+                zbl_typewise_factor,
                 zbl_cks_tensor,
                 zbl_dks_tensor);
         }
@@ -447,6 +459,7 @@ TORCH_LIBRARY_IMPL(nep, CPU, m) {
            double rmax_angular,
            const at::Tensor& q_scaler_tensor,
            double zbl_rmax,
+           double zbl_typewise_factor,
            const at::Tensor& zbl_cks_tensor,
            const at::Tensor& zbl_dks_tensor)
         {
@@ -482,6 +495,7 @@ TORCH_LIBRARY_IMPL(nep, CPU, m) {
                 rmax_angular,
                 q_scaler_tensor,
                 zbl_rmax,
+                zbl_typewise_factor,
                 zbl_cks_tensor,
                 zbl_dks_tensor);
         }
@@ -517,6 +531,7 @@ TORCH_LIBRARY_IMPL(nep, CPU, m) {
            double rmax_angular,
            const at::Tensor& q_scaler_tensor,
            double zbl_rmax,
+           double zbl_typewise_factor,
            const at::Tensor& zbl_cks_tensor,
            const at::Tensor& zbl_dks_tensor)
         {
@@ -554,6 +569,7 @@ TORCH_LIBRARY_IMPL(nep, CPU, m) {
                 rmax_angular,
                 q_scaler_tensor,
                 zbl_rmax,
+                zbl_typewise_factor,
                 zbl_cks_tensor,
                 zbl_dks_tensor);
         }
@@ -630,6 +646,7 @@ TORCH_LIBRARY_IMPL(nep, AutogradCPU, m) {
            double rmax_angular,
            const at::Tensor& q_scaler_tensor,
            double zbl_rmax,
+           double zbl_typewise_factor,
            const at::Tensor& zbl_cks_tensor,
            const at::Tensor& zbl_dks_tensor)
         {
@@ -665,6 +682,7 @@ TORCH_LIBRARY_IMPL(nep, AutogradCPU, m) {
                 rmax_angular,
                 q_scaler_tensor,
                 zbl_rmax,
+                zbl_typewise_factor,
                 zbl_cks_tensor,
                 zbl_dks_tensor);
         }
@@ -700,6 +718,7 @@ TORCH_LIBRARY_IMPL(nep, AutogradCPU, m) {
            double rmax_angular,
            const at::Tensor& q_scaler_tensor,
            double zbl_rmax,
+           double zbl_typewise_factor,
            const at::Tensor& zbl_cks_tensor,
            const at::Tensor& zbl_dks_tensor)
         {
@@ -737,6 +756,7 @@ TORCH_LIBRARY_IMPL(nep, AutogradCPU, m) {
                 rmax_angular,
                 q_scaler_tensor,
                 zbl_rmax,
+                zbl_typewise_factor,
                 zbl_cks_tensor,
                 zbl_dks_tensor);
         }

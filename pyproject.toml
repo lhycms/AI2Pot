@@ -17,7 +17,7 @@ build-backend = "scikit_build_core.build"
 # ============================================================
 [project]
 name = "ai2pot"
-version = "1.1.3"
+version = "1.2.0"
 description = "A machine-learning interatomic-potential framework for materials modeling."
 requires-python = ">=3.11,<3.13"
 

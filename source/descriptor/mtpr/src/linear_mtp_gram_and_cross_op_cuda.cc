@@ -148,10 +148,10 @@ namespace ai2pot {
 namespace correction {
 extern template void ai2pot::correction::correct_zbl_efv_torch_launcher<float>(
     float *d_betot_ptr,
-    float *d_bforce,
+    float (*d_bforce)[3],
     float *d_bvirial,
     float rmax,
-    float rmin,
+    float zbl_typewise_factor,
     float *d_cks,
     float *d_dks,
     int batch_size,
@@ -169,10 +169,10 @@ extern template void ai2pot::correction::correct_zbl_efv_torch_launcher<float>(
 
 extern template void ai2pot::correction::correct_zbl_efv_torch_launcher<double>(
     double *d_betot_ptr,
-    double *d_bforce,
+    double (*d_bforce)[3],
     double *d_bvirial,
     double rmax,
-    double rmin,
+    double zbl_typewise_factor,
     double *d_cks,
     double *d_dks,
     int batch_size,
@@ -226,6 +226,7 @@ torch::autograd::variable_list LinMatrixLinVectorFunctionCUDA::forward(
     double rmin,
     const at::Tensor &q_scaler_tensor,
     double zbl_rmax,
+    double zbl_typewise_factor,
     const at::Tensor &zbl_cks_tensor,
     const at::Tensor &zbl_dks_tensor)
 {
@@ -292,10 +293,10 @@ torch::autograd::variable_list LinMatrixLinVectorFunctionCUDA::forward(
         if (zbl_rmax > 0.0)
             ai2pot::correction::correct_zbl_efv_torch_launcher(
                 betot_zbl,
-                (float*)bforce_zbl,
+                bforce_zbl,
                 bvirial_zbl,
                 (float)zbl_rmax,
-                (float)(zbl_rmax / 2.0),
+                (float)zbl_typewise_factor,
                 zbl_cks,
                 zbl_dks,
                 batch_size,
@@ -399,10 +400,10 @@ torch::autograd::variable_list LinMatrixLinVectorFunctionCUDA::forward(
         if (zbl_rmax > 0.0)
             ai2pot::correction::correct_zbl_efv_torch_launcher(
                 betot_zbl,
-                (double*)bforce_zbl,
+                bforce_zbl,
                 bvirial_zbl,
                 (double)zbl_rmax,
-                (double)(zbl_rmax / 2.0),
+                (double)zbl_typewise_factor,
                 zbl_cks,
                 zbl_dks,
                 batch_size,
@@ -560,6 +561,7 @@ torch::autograd::variable_list LinMatrixLinVectorOpCUDA(
     double rmin,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
+    double zbl_typewise_factor,
     const at::Tensor& zbl_cks_tensor,
     const at::Tensor& zbl_dks_tensor)
 {
@@ -592,6 +594,7 @@ torch::autograd::variable_list LinMatrixLinVectorOpCUDA(
         rmin,
         q_scaler_tensor,
         zbl_rmax,
+        zbl_typewise_factor,
         zbl_cks_tensor,
         zbl_dks_tensor);
 }

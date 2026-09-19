@@ -21,6 +21,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <vector>
+#include "./zbl_utilities.h"
 
 #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
 #include <omp.h>
@@ -65,10 +66,10 @@ public:
 
     CoordType find_pair_energy(CoordType distance_ij);
 
-    void add_atomic_energy_one(CoordType &atomic_energy,
+    void add_atomic_energy_one(CoordType &energy,
                                CoordType distance_ij);
     
-    void add_atomic_force_one(CoordType *force,
+    void add_atomic_force_one(CoordType (*atomic_force)[3],
                               CoordType *neigh_vec);
 
     void add_virial_one(CoordType *virial,
@@ -93,7 +94,7 @@ public:
              int *Zis,
              int *Zjs,
              CoordType rmax,
-             CoordType rmin,
+             CoordType zbl_typewise_factor,
              CoordType *cks,
              CoordType *dks);
 
@@ -108,7 +109,7 @@ public:
     ~GroupZBL();
 
     void correct_efv(CoordType &etot,
-                     CoordType* atomic_forces,
+                     CoordType (*force)[3],
                      CoordType* virial,
                      int inum,
                      int* ilist,
@@ -122,7 +123,7 @@ public:
                      int nghost);
 
     void correct_ef(CoordType &etot,
-                    CoordType* atomic_forces,
+                    CoordType (*force)[3],
                     int inum,
                     int* ilist,
                     int* numneigh,
@@ -151,6 +152,7 @@ private:
     int _ntypes = 0;
     CoordType _rmax = 0.0;
     CoordType _rmin = 0.0;
+    CoordType _zbl_typewise_factor = 0.7;
     std::vector<PairZBL<CoordType>> _pair_zbl_vector;
 };  // class : GroupZBL
 
@@ -328,19 +330,19 @@ CoordType PairZBL<CoordType>::find_pair_energy(CoordType distance_ij)
 
 
 template <typename CoordType>
-void PairZBL<CoordType>::add_atomic_energy_one(CoordType &atomic_energy,
+void PairZBL<CoordType>::add_atomic_energy_one(CoordType &energy,
                                            CoordType distance_ij)
 {
     CoordType half_pair_energy = 0.5 * this->find_pair_energy(distance_ij);
 #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
 #pragma omp atomic
 #endif
-    atomic_energy += half_pair_energy;
+    energy += half_pair_energy;
 }
 
 
 template <typename CoordType>
-void PairZBL<CoordType>::add_atomic_force_one(CoordType *atomic_force,
+void PairZBL<CoordType>::add_atomic_force_one(CoordType (*atomic_force)[3],
                                           CoordType *neigh_vec)
 {
     CoordType distance_ij = std::sqrt( std::pow(neigh_vec[0], 2) 
@@ -358,9 +360,9 @@ void PairZBL<CoordType>::add_atomic_force_one(CoordType *atomic_force,
 #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
 #pragma omp atomic
 #endif
-        atomic_force[aa] += (A_der*B*C 
-                             + A*B_der*C
-                             + A*B*C_der) * neigh_vec[aa] / distance_ij;
+        (*atomic_force)[aa] += (A_der*B*C 
+                               + A*B_der*C
+                               + A*B*C_der) * neigh_vec[aa] / distance_ij;
     }
 }
 
@@ -403,20 +405,34 @@ GroupZBL<CoordType>::GroupZBL(int ntypes,
                               int* Zis,
                               int* Zjs,
                               CoordType rmax,
-                              CoordType rmin,
+                              CoordType zbl_typewise_factor,
                               CoordType* cks,
                               CoordType* dks)
 {
     this->_ntypes = ntypes;
+    this->_zbl_typewise_factor = zbl_typewise_factor;
     this->_rmax = rmax;
-    this->_rmin = rmin;
+    this->_rmin = rmax / 2.0;
+    CoordType pair_zbl_rmax = 0.0;
+    CoordType pair_zbl_rmin = 0.0;
+
     for (int ii=0; ii<this->_ntypes; ii++) {
         for (int jj=0; jj<this->_ntypes; jj++) {
             int idx = ii * this->_ntypes + jj;
+            
+            pair_zbl_rmax = this->_rmax;
+            pair_zbl_rmin = this->_rmin;
+            find_revised_rmax_min<CoordType>(
+                pair_zbl_rmax,
+                pair_zbl_rmin,
+                this->_zbl_typewise_factor,
+                Zis[ii],
+                Zjs[jj]);
+
             this->_pair_zbl_vector.push_back( PairZBL<CoordType>(Zis[ii],
                                                                  Zjs[jj],
-                                                                 this->_rmax,
-                                                                 this->_rmin,
+                                                                 pair_zbl_rmax,
+                                                                 pair_zbl_rmin,
                                                                  &cks[idx*4],
                                                                  &dks[idx*4]));
         }
@@ -428,7 +444,8 @@ template <typename CoordType>
 GroupZBL<CoordType>::GroupZBL(const GroupZBL& rhs) {
     this->_ntypes = rhs._ntypes;
     this->_rmax = rhs._rmax;
-    this->_rmin = rhs._rmin;
+    this->_rmin = rhs._rmax / 2.0;
+    this->_zbl_typewise_factor = rhs._zbl_typewise_factor;
 
     this->_pair_zbl_vector.resize(this->_ntypes * this->_ntypes);
     for (int ii=0; ii<this->_ntypes*this->_ntypes; ii++)
@@ -444,6 +461,8 @@ GroupZBL<CoordType>::GroupZBL(GroupZBL&& rhs) {
     rhs._rmax = 0.0;
     this->_rmin = rhs._rmin;
     rhs._rmin = 0.0;
+    this->_zbl_typewise_factor = rhs._zbl_typewise_factor;
+    rhs._zbl_typewise_factor = 0.0;
 
     this->_pair_zbl_vector = std::move(rhs._pair_zbl_vector);
 }
@@ -453,7 +472,8 @@ template <typename CoordType>
 GroupZBL<CoordType>& GroupZBL<CoordType>::operator=(const GroupZBL& rhs) {
     this->_ntypes = rhs._ntypes;
     this->_rmax = rhs._rmax;
-    this->_rmin = rhs._rmin;
+    this->_rmin = rhs._rmax / 2.0;
+    this->_zbl_typewise_factor = rhs._zbl_typewise_factor;
 
     this->_pair_zbl_vector.clear();
     this->_pair_zbl_vector.resize(this->_ntypes * this->_ntypes);
@@ -470,8 +490,10 @@ GroupZBL<CoordType>& GroupZBL<CoordType>::operator=(GroupZBL&& rhs) {
     rhs._ntypes = 0;
     this->_rmax = rhs._rmax;
     rhs._rmax = 0.0;
-    this->_rmin = rhs._rmin;
+    this->_rmin = rhs._rmax / 2.0;
     rhs._rmin = 0.0;
+    this->_zbl_typewise_factor = rhs._zbl_typewise_factor;
+    rhs._zbl_typewise_factor = 0.0;
 
     this->_pair_zbl_vector.clear();
     this->_pair_zbl_vector = std::move(rhs._pair_zbl_vector);
@@ -485,12 +507,13 @@ GroupZBL<CoordType>::~GroupZBL() {
     this->_ntypes = 0;
     this->_rmax = 0.0;
     this->_rmin = 0.0;
+    this->_zbl_typewise_factor = 0.0;
 }
 
 
 template <typename CoordType>
 void GroupZBL<CoordType>::correct_efv(CoordType &etot,
-                                      CoordType* atomic_forces,
+                                      CoordType (*force)[3],
                                       CoordType* virial,
                                       int inum,
                                       int* ilist,
@@ -545,7 +568,7 @@ void GroupZBL<CoordType>::correct_efv(CoordType &etot,
                 continue;
 
             pair_zbl.add_atomic_energy_one(etot, distance_ij);
-            pair_zbl.add_atomic_force_one(&atomic_forces[ii*3+0], neigh_vec);
+            pair_zbl.add_atomic_force_one(&force[center_idx], neigh_vec);
             pair_zbl.add_virial_one(virial, neigh_vec);
         }
     }
@@ -558,7 +581,7 @@ void GroupZBL<CoordType>::correct_efv(CoordType &etot,
 
 template <typename CoordType>
 void GroupZBL<CoordType>::correct_ef(CoordType &etot,
-                                    CoordType* atomic_forces,
+                                    CoordType (*force)[3],
                                     int inum,
                                     int* ilist,
                                     int* numneigh,
@@ -612,7 +635,7 @@ void GroupZBL<CoordType>::correct_ef(CoordType &etot,
                 continue;
 
             pair_zbl.add_atomic_energy_one(etot, distance_ij);
-            pair_zbl.add_atomic_force_one(&atomic_forces[center_idx*3+0], neigh_vec);
+            pair_zbl.add_atomic_force_one(&force[center_idx], neigh_vec);
         }
     }
 #if defined(USE_OPENMP) or defined(__INTELLISENSE__)

@@ -252,6 +252,7 @@ protected:
 
         etot = 0;
         e_sites = (real*)malloc(sizeof(real) * inum);
+        memset(e_sites, 0, sizeof(real) * inum);
         force = (real (*)[3])malloc(sizeof(real) * (nghost+inum) * 3);
         virial = (real*)malloc(sizeof(real) * 9);
         etot_ = 0;

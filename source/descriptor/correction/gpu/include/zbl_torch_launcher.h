@@ -22,10 +22,10 @@ namespace correction {
 template <typename CoordType>
 void correct_zbl_efv_torch_launcher(
     CoordType *d_betot_ptr,
-    CoordType *d_bforce,
+    CoordType (*d_bforce)[3],
     CoordType *d_bvirial,
     CoordType rmax,
-    CoordType rmin,
+    CoordType zbl_typewise_factor,
     CoordType *d_cks,
     CoordType *d_dks,
     int batch_size,
@@ -45,9 +45,9 @@ void correct_zbl_efv_torch_launcher(
 template <typename CoordType>
 void correct_zbl_ef_torch_launcher(
     CoordType *d_betot_ptr,
-    CoordType *d_bforce,
+    CoordType (*d_bforce)[3],
     CoordType rmax,
-    CoordType rmin,
+    CoordType zbl_typewise_factor,
     CoordType *d_cks,
     CoordType *d_dks,
     int batch_size,

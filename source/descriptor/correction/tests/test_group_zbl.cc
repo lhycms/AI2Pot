@@ -22,13 +22,13 @@ protected:
 
     double etot;
     double etot_;
-    double* forces;
-    double* forces_;
+    double (*forces)[3];
+    double (*forces_)[3];
     double virial[9];
     double virial_[9];
 
     double rmax;
-    double rmin;
+    double zbl_typewise_factor;
     int *Zis;
     int *zjs;
     double *cks;
@@ -76,8 +76,8 @@ protected:
 
         etot = 0;
         etot_ = 0;
-        forces = (double*)malloc(sizeof(double) * inum * 3);
-        forces_ = (double*)malloc(sizeof(double) * inum * 3);
+        forces = (double (*)[3])malloc(sizeof(double) * inum * 3);
+        forces_ = (double (*)[3])malloc(sizeof(double) * inum * 3);
 
         memset(forces, 0.0, sizeof(double) * inum * 3);
         memset(forces_, 0.0, sizeof(double) * inum * 3);
@@ -85,7 +85,7 @@ protected:
         memset(virial_, 0.0, sizeof(double) * 9);
 
         rmax = 2.0;
-        rmin = 1.0;
+        zbl_typewise_factor = 0.7;
         cks = (double*)malloc(sizeof(double) * ntypes * ntypes * 4);
         dks = (double*)malloc(sizeof(double) * ntypes * ntypes * 4);
         for (int ii=0; ii<ntypes; ii++) {
@@ -105,7 +105,7 @@ protected:
                                                          type_map, 
                                                          type_map, 
                                                          rmax,
-                                                         rmin,
+                                                         zbl_typewise_factor,
                                                          cks,
                                                          dks);
     }
@@ -127,6 +127,7 @@ protected:
 
 TEST_F(GroupZBLTest, correct_e_sites) {
     double *e_sites = (double*)malloc(sizeof(double) * inum);
+    memset(e_sites, 0, sizeof(double) * inum);
     rcs[0*umax_num_neigh_atoms + 0][0] = coord_1[0] - coord_0[0];
     rcs[0*umax_num_neigh_atoms + 0][1] = coord_1[1] - coord_0[1];
     rcs[0*umax_num_neigh_atoms + 0][2] = coord_1[2] - coord_0[2];
@@ -198,7 +199,7 @@ TEST_F(GroupZBLTest, force_accuracy) {
                           0);
     
     printf("0. Energy = %.10lf\n", etot);
-    printf("1. Force[0][1] calculated by custom code = %.10lf\n", forces[0*3+1]);
+    printf("1. Force[0][1] calculated by custom code = %.10lf\n", forces[0][1]);
     printf("2. Force[0][1] calculated by definition = %.10lf\n", -(etot_ - etot) / delta);
 }
 
@@ -227,12 +228,12 @@ TEST_F(GroupZBLTest, virial_accuracy) {
 
     for (int aa=0; aa<3; aa++) {
         for (int bb=0; bb<3; bb++) {
-            virial_[aa*3 + bb] += coord_0[aa] * forces[0*3 + bb];
+            virial_[aa*3 + bb] += coord_0[aa] * forces[0][bb];
         }
     }
     for (int aa=0; aa<3; aa++) {
         for (int bb=0; bb<3; bb++) {
-            virial_[aa*3 + bb] += coord_1[aa] * forces[1*3 + bb];
+            virial_[aa*3 + bb] += coord_1[aa] * forces[1][bb];
         }
     }
 

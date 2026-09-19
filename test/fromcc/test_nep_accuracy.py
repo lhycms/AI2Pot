@@ -52,12 +52,13 @@ class NepTest(unittest.TestCase):
         self.ntypes: int = 2
         #self.type_map_tensor: torch.Tensor = torch.tensor(data=[16, 34, 41, 75], dtype=torch.int32)
         #self.type_map_tensor: torch.Tensor = torch.tensor(data=[6], dtype=torch.int32)
-        self.type_map_tensor: torch.Tensor = torch.tensor(data=[16, 42], dtype=torch.int32)
+        self.type_map_tensor: torch.Tensor = torch.tensor(data=[16, 42], dtype=torch.int32).to(self.device)
         self.structure: Structure = Structure.from_file(MoS2_POSCAR_PATH)
         #print(self.structure)
 
         # 2. ZBL
-        self.zbl_rmax: float = 0.0
+        self.zbl_rmax: float = 4.0
+        self.zbl_typewise_factor: float = 0.7
         self.zbl_cks_tensor: torch.Tensor = torch.zeros(self.ntypes*self.ntypes*4, 
                                                         dtype=self.torch_float_dtype,
                                                         device=self.device)
@@ -77,17 +78,17 @@ class NepTest(unittest.TestCase):
                 self.zbl_dks_tensor[idx*4 + 3] = 0.20162
 
         # 3. 
-        self.mlff_to_ef_loss_input: MlffToEFLossInput = MlffToEFLossInput(type_map=self.type_map_tensor.numpy().tolist(),
+        self.mlff_to_ef_loss_input: MlffToEFLossInput = MlffToEFLossInput(type_map=self.type_map_tensor.detach().cpu().numpy().tolist(),
                                                                        rcut=self.rmax_radial,
                                                                        umax_num_neigh_atoms=self.umax_num_neigh_atoms,
                                                                        dtype=self.torch_float_dtype,
                                                                        device=self.device)
-        self.mlff_to_loss_input: MlffToLossInput = MlffToLossInput(type_map=self.type_map_tensor.numpy().tolist(),
+        self.mlff_to_loss_input: MlffToLossInput = MlffToLossInput(type_map=self.type_map_tensor.detach().cpu().numpy().tolist(),
                                                                        rcut=self.rmax_radial,
                                                                        umax_num_neigh_atoms=self.umax_num_neigh_atoms,
                                                                        dtype=self.torch_float_dtype,
                                                                        device=self.device)
-        self.mlff_input: MlffInput = MlffInput(type_map=self.type_map_tensor.numpy().tolist(),
+        self.mlff_input: MlffInput = MlffInput(type_map=self.type_map_tensor.detach().cpu().numpy().tolist(),
                                                 rcut=self.rmax_radial,
                                                 umax_num_neigh_atoms=self.umax_num_neigh_atoms,
                                                 dtype=self.torch_float_dtype,
@@ -148,6 +149,7 @@ class NepTest(unittest.TestCase):
                          self.rmax_angular,
                          self.q_scaler_tensor,
                          self.zbl_rmax,
+                         self.zbl_typewise_factor,
                          self.zbl_cks_tensor,
                          self.zbl_dks_tensor)
         e: torch.Tensor
@@ -179,6 +181,7 @@ class NepTest(unittest.TestCase):
                          self.rmax_angular,
                          self.q_scaler_tensor,
                          self.zbl_rmax,
+                         self.zbl_typewise_factor,
                          self.zbl_cks_tensor,
                          self.zbl_dks_tensor)
         e: torch.Tensor
@@ -233,6 +236,7 @@ class NepTest(unittest.TestCase):
                                  self.rmax_angular,
                                  self.q_scaler_tensor,
                                  self.zbl_rmax,
+                                 self.zbl_typewise_factor,
                                  self.zbl_cks_tensor,
                                  self.zbl_dks_tensor),
                             eps=1e-6,
@@ -292,6 +296,7 @@ class NepTest(unittest.TestCase):
                                  self.rmax_angular,
                                  self.q_scaler_tensor,
                                  self.zbl_rmax,
+                                 self.zbl_typewise_factor,
                                  self.zbl_cks_tensor,
                                  self.zbl_dks_tensor),
                             eps=1e-6,
@@ -343,6 +348,7 @@ class NepTest(unittest.TestCase):
                             self.rmax_angular,
                             self.q_scaler_tensor,
                             self.zbl_rmax,
+                            self.zbl_typewise_factor,
                             self.zbl_cks_tensor,
                             self.zbl_dks_tensor)[0].sum()
         loss.backward()

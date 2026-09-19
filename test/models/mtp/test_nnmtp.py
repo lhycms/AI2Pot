@@ -37,6 +37,7 @@ class NNMtpTest(unittest.TestCase):
                                    rmax=self.rmax,
                                    rmin=self.rmin,
                                    zbl_rmax=0.0,
+                                   zbl_typewise_factor=0.7,
                                    zbl_cks_list=None,
                                    zbl_dks_list=None)
         self.nn_mtp.to(self.device)

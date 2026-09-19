@@ -49,6 +49,7 @@ public:
         double rmax_angular,
         const at::Tensor& q_scaler_tensor,
         double zbl_rmax,
+        double zbl_typewise_factor,
         const at::Tensor& zbl_cks_tensor,
         const at::Tensor& zbl_dks_tensor);
     
@@ -84,6 +85,7 @@ public:
         double rmax_angular,
         const at::Tensor& q_scaler_tensor,
         double zbl_rmax,
+        double zbl_typewise_factor,
         const at::Tensor& zbl_cks_tensor,
         const at::Tensor& zbl_dks_tensor);
     
@@ -123,6 +125,7 @@ public:
         double rmax_angular,
         const at::Tensor& q_scaler_tensor,
         double zbl_rmax,
+        double zbl_typewise_factor,
         const at::Tensor& zbl_cks_tensor,
         const at::Tensor& zbl_dks_tensor);
     
@@ -164,8 +167,9 @@ public:
         double rmax_angular,
         const at::Tensor& q_scaler_tensor,
         double zbl_rmax,
+        double zbl_typewise_factor,
         const at::Tensor& zbl_cks_tensor,
-        const at::Tensor& zbl_dks_tenosr);
+        const at::Tensor& zbl_dks_tensor);
 
     static torch::autograd::variable_list backward(
         torch::autograd::AutogradContext *ctx,
@@ -222,6 +226,7 @@ torch::autograd::variable_list NepToEFOpCUDA(
     double rmax_angular,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
+    double zbl_typewise_factor,
     const at::Tensor& zbl_cks_tensor,
     const at::Tensor& zbl_dks_tensor);
 
@@ -248,6 +253,7 @@ torch::autograd::variable_list NepToEFVOpCUDA(
     double rmax_angular,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
+    double zbl_typewise_factor,
     const at::Tensor& zbl_cks_tensor,
     const at::Tensor& zbl_dks_tensor);
 
@@ -278,6 +284,7 @@ torch::autograd::variable_list NepToEFLossOpCUDA(
     double rmax_angular,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
+    double zbl_typewise_factor,
     const at::Tensor& zbl_cks_tensor,
     const at::Tensor& zbl_dks_tensor);
 
@@ -310,6 +317,7 @@ torch::autograd::variable_list NepToLossOpCUDA(
     double rmax_angular,
     const at::Tensor& q_scaler_tensor,
     double zbl_rmax,
+    double zbl_typewise_factor,
     const at::Tensor& zbl_cks_tensor,
     const at::Tensor& zbl_dks_tensor);
 

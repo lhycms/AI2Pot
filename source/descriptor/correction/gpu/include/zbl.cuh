@@ -70,7 +70,7 @@ public:
                                CoordType *dk);
     
     static __host__ __device__
-    void add_atomic_energy_one(CoordType *atomic_energy_ptr,
+    void add_atomic_energy_one(CoordType *energy_ptr,
                                int Zi,
                                int Zj,
                                CoordType rmax,
@@ -80,7 +80,7 @@ public:
                                CoordType *dk);
     
     static __host__ __device__
-    void add_atomic_force_one(CoordType *atomic_force,
+    void add_atomic_force_one(CoordType (*atomic_force)[3],
                               int Zi,
                               int Zj,
                               CoordType rmax,
@@ -106,10 +106,10 @@ template <typename CoordType>
 static __device__
 void correct_zbl_efv_atom(
     CoordType *etot_ptr,
-    CoordType *force,
+    CoordType (*force)[3],
     CoordType *virial,
     CoordType rmax,
-    CoordType rmin,
+    CoordType zbl_typewise_factor,
     CoordType *cks,
     CoordType *dks,
     int silist,
@@ -127,10 +127,10 @@ template <typename CoordType>
 static __global__
 void correct_zbl_efv_kernel(
     CoordType *betot_ptr,
-    CoordType *bforce,
+    CoordType (*bforce)[3],
     CoordType *bvirial,
     CoordType rmax,
-    CoordType rmin,
+    CoordType zbl_typewise_factor,
     CoordType *cks,
     CoordType *dks,
     int batch_size, 
@@ -151,10 +151,10 @@ template <typename CoordType>
 static __host__
 void correct_zbl_efv_launcher(
     CoordType *h_betot_ptr,
-    CoordType *h_bforce,
+    CoordType (*h_bforce)[3],
     CoordType *h_bvirial,
     CoordType rmax,
-    CoordType rmin,
+    CoordType zbl_typewise_factor,
     CoordType *h_cks,
     CoordType *h_dks,
     int batch_size,
@@ -172,28 +172,29 @@ void correct_zbl_efv_launcher(
 
 template <typename CoordType>
 static __device__
-void correct_zbl_ef_atom(CoordType *etot_ptr,
-                         CoordType *force,
-                         CoordType rmax,
-                         CoordType rmin,
-                         CoordType *cks,
-                         CoordType *dks,
-                         int silist,
-                         int snumneigh,
-                         int *sfirstneigh,
-                         CoordType (*srcs)[3],
-                         int *types,
-                         int ntypes,
-                         int *type_map,
-                         int umax_num_neigh_atoms);
+void correct_zbl_ef_atom(
+    CoordType *etot_ptr,
+    CoordType (*force)[3],
+    CoordType rmax,
+    CoordType zbl_typewise_factor,
+    CoordType *cks,
+    CoordType *dks,
+    int silist,
+    int snumneigh,
+    int *sfirstneigh,
+    CoordType (*srcs)[3],
+    int *types,
+    int ntypes,
+    int *type_map,
+    int umax_num_neigh_atoms);
 
 template <typename CoordType>
 static __global__
 void correct_zbl_ef_kernel(
     CoordType *betot_ptr,
-    CoordType *bforce,
+    CoordType (*bforce)[3],
     CoordType rmax,
-    CoordType rmin,
+    CoordType zbl_typewise_factor,
     CoordType *cks,
     CoordType *dks,
     int batch_size,
@@ -214,9 +215,9 @@ template <typename CoordType>
 static __host__
 void correct_zbl_ef_launcher(
     CoordType *h_betot_ptr,
-    CoordType *h_bforce,
+    CoordType (*h_bforce)[3],
     CoordType rmax,
-    CoordType rmin,
+    CoordType zbl_typewise_factor,
     CoordType *h_cks,
     CoordType *h_dks,
     int batch_size,
@@ -333,7 +334,7 @@ CoordType PairZBL<CoordType>::find_pair_energy(int Zi,
 
 template <typename CoordType>
 __host__ __device__
-void PairZBL<CoordType>::add_atomic_energy_one(CoordType *atomic_energy_ptr,
+void PairZBL<CoordType>::add_atomic_energy_one(CoordType *energy_ptr,
                                                int Zi,
                                                int Zj,
                                                CoordType rmax,
@@ -343,14 +344,14 @@ void PairZBL<CoordType>::add_atomic_energy_one(CoordType *atomic_energy_ptr,
                                                CoordType *dk)
 {
     CoordType half_pair_energy = 0.5 * find_pair_energy(Zi, Zj, rmax, rmin, distance_ij, ck, dk);
-    //atomic_energy += half_pair_energy;
-    atomicAdd(atomic_energy_ptr, half_pair_energy);
+    // energy += half_pair_energy;
+    atomicAdd(energy_ptr, half_pair_energy);
 }
 
 
 template <typename CoordType>
 __host__ __device__
-void PairZBL<CoordType>::add_atomic_force_one(CoordType *atomic_force,
+void PairZBL<CoordType>::add_atomic_force_one(CoordType (*atomic_force)[3],
                                               int Zi,
                                               int Zj,
                                               CoordType rmax,
@@ -371,12 +372,9 @@ void PairZBL<CoordType>::add_atomic_force_one(CoordType *atomic_force,
     CoordType C_der = find_switch_func_der2rij(rmax, rmin, distance_ij);
 
     for (int aa=0; aa<3; aa++) {
-        //atomic_force[aa] += (A_der*B*C 
-        //                     + A*B_der*C
-        //                     + A*B*C_der) * neigh_vec[aa] / distance_ij;
-        atomicAdd(&atomic_force[aa], (A_der*B*C 
-                                      + A*B_der*C
-                                      + A*B*C_der) * neigh_vec[aa] / distance_ij);
+        atomicAdd(&((*atomic_force)[aa]), (A_der*B*C 
+                                           + A*B_der*C
+                                           + A*B*C_der) * neigh_vec[aa] / distance_ij);
 
     }
 }
@@ -422,10 +420,10 @@ template <typename CoordType>
 __device__
 void correct_zbl_efv_atom(
     CoordType *etot_ptr,
-    CoordType *force,
+    CoordType (*force)[3],
     CoordType *virial,
     CoordType rmax,
-    CoordType rmin,
+    CoordType zbl_typewise_factor,
     CoordType *cks,
     CoordType *dks,
     int silist,
@@ -449,7 +447,9 @@ void correct_zbl_efv_atom(
     CoordType distance_ij_inv;
     CoordType *ck;
     CoordType *dk;
-    CoordType *atomic_force;
+    CoordType (*atomic_force)[3];
+
+    CoordType rmin = 0.0;
 
     for (int jj=0; jj<snumneigh; jj++) {
         neigh_idx = sfirstneigh[jj];
@@ -467,29 +467,38 @@ void correct_zbl_efv_atom(
         int zbl_idx = type_central*ntypes + type_outer;
         ck = &cks[zbl_idx*4];
         dk = &dks[zbl_idx*4];
-        atomic_force = &force[center_idx*3 + 0];
+        atomic_force = &force[center_idx];
+
+        CoordType pair_zbl_rmax = rmax;
+        CoordType pair_zbl_rmin = rmin;
+        find_revised_rmax_rmin<CoordType>(
+            pair_zbl_rmax,
+            pair_zbl_rmin,
+            zbl_typewise_factor,
+            Zi,
+            Zj);
 
         PairZBL<CoordType>::add_atomic_energy_one(etot_ptr,
                                                   Zi,
                                                   Zj,
-                                                  rmax,
-                                                  rmin,
+                                                  pair_zbl_rmax,
+                                                  pair_zbl_rmin,
                                                   distance_ij,
                                                   ck,
                                                   dk);
         PairZBL<CoordType>::add_atomic_force_one(atomic_force,
                                                  Zi,
                                                  Zj,
-                                                 rmax,
-                                                 rmin,
+                                                 pair_zbl_rmax,
+                                                 pair_zbl_rmin,
                                                  neigh_vec,
                                                  ck,
                                                  dk);
         PairZBL<CoordType>::add_virial_one(virial,
                                            Zi,
                                            Zj,
-                                           rmax,
-                                           rmin,
+                                           pair_zbl_rmax,
+                                           pair_zbl_rmin,
                                            neigh_vec,
                                            ck,
                                            dk,
@@ -502,10 +511,10 @@ template <typename CoordType>
 __global__
 void correct_zbl_efv_kernel(
     CoordType *betot_ptr,
-    CoordType *bforce,
+    CoordType (*bforce)[3],
     CoordType *bvirial,
     CoordType rmax,
-    CoordType rmin,
+    CoordType zbl_typewise_factor,
     CoordType *cks,
     CoordType *dks,
     int batch_size,
@@ -533,7 +542,7 @@ void correct_zbl_efv_kernel(
         s_local_virial[tid][ii] = 0.0;
 
     CoordType *etot_ptr = &betot_ptr[istruct];
-    CoordType *force = &bforce[istruct*(natoms_pad+nghost)*3 + 0];
+    CoordType (*force)[3] = &bforce[istruct*(natoms_pad+nghost)];
     CoordType *virial = &bvirial[istruct*9 + 0];
     int inum = binum[istruct];
     int *types = &btypes[istruct*(natoms_pad+nghost)];
@@ -549,7 +558,7 @@ void correct_zbl_efv_kernel(
             force,
             virial,
             rmax,
-            rmin,
+            zbl_typewise_factor,
             cks,
             dks,
             silist,
@@ -576,10 +585,10 @@ template <typename CoordType>
 static __host__
 void correct_zbl_efv_launcher(
     CoordType *h_betot_ptr,
-    CoordType *h_bforce,
+    CoordType (*h_bforce)[3],
     CoordType *h_bvirial,
     CoordType rmax,
-    CoordType rmin,
+    CoordType zbl_typewise_factor,
     CoordType *h_cks,
     CoordType *h_dks,
     int batch_size,
@@ -601,7 +610,7 @@ void correct_zbl_efv_launcher(
     dim3 block_size(block_size_x);
 
     CoordType *d_betot_ptr;
-    CoordType *d_bforce;
+    CoordType (*d_bforce)[3];
     CoordType *d_bvirial;
     CoordType *d_cks;
     CoordType *d_dks;
@@ -637,7 +646,7 @@ void correct_zbl_efv_launcher(
     CHECK_CUDA_API( cudaMemcpy(d_bnumneigh, h_bnumneigh, sizeof(int)*batch_size*natoms_pad, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_bfirstneigh, h_bfirstneigh, sizeof(int)*batch_size*natoms_pad*umax_num_neigh_atoms, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_brcs, h_brcs, sizeof(CoordType)*batch_size*natoms_pad*umax_num_neigh_atoms*3, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_btypes, h_btypes, sizeof(int)*(natoms_pad+nghost), cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_btypes, h_btypes, sizeof(int)*batch_size*(natoms_pad+nghost), cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_type_map, h_type_map, sizeof(int)*ntypes, cudaMemcpyHostToDevice) );
 
     auto t1 = std::chrono::high_resolution_clock::now();
@@ -648,7 +657,7 @@ void correct_zbl_efv_launcher(
         d_bforce,
         d_bvirial,
         rmax,
-        rmin,
+        zbl_typewise_factor,
         d_cks,
         d_dks,
         batch_size,
@@ -693,9 +702,9 @@ void correct_zbl_efv_launcher(
 template <typename CoordType>
 __device__
 void correct_zbl_ef_atom(CoordType *etot_ptr,
-                         CoordType *force,
+                         CoordType (*force)[3],
                          CoordType rmax,
-                         CoordType rmin,
+                         CoordType zbl_typewise_factor,
                          CoordType *cks,
                          CoordType *dks,
                          int silist,
@@ -718,7 +727,9 @@ void correct_zbl_ef_atom(CoordType *etot_ptr,
     CoordType distance_ij_inv;
     CoordType *ck;
     CoordType *dk;
-    CoordType *atomic_force;
+    CoordType (*atomic_force)[3];
+
+    CoordType rmin = 0.0;
 
     for (int jj=0; jj<snumneigh; jj++) {
         neigh_idx = sfirstneigh[jj];
@@ -736,21 +747,30 @@ void correct_zbl_ef_atom(CoordType *etot_ptr,
         int zbl_idx = type_central*ntypes + type_outer;
         ck = &cks[zbl_idx*4];
         dk = &dks[zbl_idx*4];
-        atomic_force = &force[center_idx*3 + 0];
+        atomic_force = &force[center_idx];
+
+        CoordType pair_zbl_rmax = rmax;
+        CoordType pair_zbl_rmin = rmin; 
+        find_revised_rmax_rmin<CoordType>(
+            pair_zbl_rmax,
+            pair_zbl_rmin,
+            zbl_typewise_factor,
+            Zi,
+            Zj);
 
         PairZBL<CoordType>::add_atomic_energy_one(etot_ptr,
                                                   Zi,
                                                   Zj,
-                                                  rmax,
-                                                  rmin,
+                                                  pair_zbl_rmax,
+                                                  pair_zbl_rmin,
                                                   distance_ij,
                                                   ck,
                                                   dk);
         PairZBL<CoordType>::add_atomic_force_one(atomic_force,
                                                  Zi,
                                                  Zj,
-                                                 rmax,
-                                                 rmin,
+                                                 pair_zbl_rmax,
+                                                 pair_zbl_rmin,
                                                  neigh_vec,
                                                  ck,
                                                  dk);
@@ -762,9 +782,9 @@ template <typename CoordType>
 __global__
 void correct_zbl_ef_kernel(
     CoordType *betot_ptr,
-    CoordType *bforce,
+    CoordType (*bforce)[3],
     CoordType rmax,
-    CoordType rmin,
+    CoordType zbl_typewise_factor,
     CoordType *cks,
     CoordType *dks,
     int batch_size,
@@ -787,7 +807,7 @@ void correct_zbl_ef_kernel(
         return;
 
     CoordType *etot_ptr = &betot_ptr[istruct];
-    CoordType *force = &bforce[istruct*(natoms_pad+nghost)*3 + 0];
+    CoordType (*force)[3] = &bforce[istruct*(natoms_pad+nghost)];
     int inum = binum[istruct];
     int *types = &btypes[istruct*(natoms_pad+nghost)];
 
@@ -801,7 +821,7 @@ void correct_zbl_ef_kernel(
             etot_ptr,
             force,
             rmax,
-            rmin,
+            zbl_typewise_factor,
             cks,
             dks,
             silist,
@@ -820,9 +840,9 @@ template <typename CoordType>
 static __host__
 void correct_zbl_ef_launcher(
     CoordType *h_betot_ptr,
-    CoordType *h_bforce,
+    CoordType (*h_bforce)[3],
     CoordType rmax,
-    CoordType rmin,
+    CoordType zbl_typewise_factor,
     CoordType *h_cks,
     CoordType *h_dks,
     int batch_size,
@@ -844,7 +864,7 @@ void correct_zbl_ef_launcher(
     dim3 block_size(block_size_x);
 
     CoordType *d_betot_ptr;
-    CoordType *d_bforce;
+    CoordType (*d_bforce)[3];
     CoordType *d_cks;
     CoordType *d_dks;
     int *d_binum;
@@ -862,7 +882,7 @@ void correct_zbl_ef_launcher(
 
     CHECK_CUDA_API( cudaMalloc((void**)&d_cks, sizeof(CoordType) * ntypes * ntypes * 4) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_dks, sizeof(CoordType) * ntypes * ntypes * 4) );
-    CHECK_CUDA_API( cudaMalloc((void**)&d_binum, sizeof(CoordType) * batch_size) );
+    CHECK_CUDA_API( cudaMalloc((void**)&d_binum, sizeof(int) * batch_size) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_bilist, sizeof(int) * batch_size * natoms_pad) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_bnumneigh, sizeof(int) * batch_size * natoms_pad) );
     CHECK_CUDA_API( cudaMalloc((void**)&d_bfirstneigh, sizeof(int) * batch_size * natoms_pad * umax_num_neigh_atoms) );
@@ -887,7 +907,7 @@ void correct_zbl_ef_launcher(
         d_betot_ptr,
         d_bforce,
         rmax,
-        rmin,
+        zbl_typewise_factor,
         d_cks,
         d_dks,
         batch_size,
