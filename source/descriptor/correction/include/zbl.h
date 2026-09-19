@@ -43,7 +43,6 @@ public:
         int Zj,
         CoordType rmax,
         CoordType rmin,
-        CoordType zbl_typewise_factor,
         CoordType *ck,
         CoordType *dk);
 
@@ -81,7 +80,6 @@ private:
     int _Zj = 0;
     CoordType _rmax = 0;
     CoordType _rmin = 0;
-    CoordType _zbl_typewise_factor = 0.7;
     CoordType *_ck = nullptr; // c1=0.18175, c2=0.50986, c3=0.28022, c4=0.02817
     CoordType *_dk = nullptr; // d1=3.1998,  d2=0.94229, d3=0.4029,  d4=0.20162
 };  // class : PairZBL
@@ -167,7 +165,6 @@ PairZBL<CoordType>::PairZBL(int Zi,
                     int Zj,
                     CoordType rmax,
                     CoordType rmin,
-                    CoordType zbl_typewise_factor,
                     CoordType *ck,
                     CoordType *dk)
 {
@@ -191,7 +188,6 @@ PairZBL<CoordType>::PairZBL(const PairZBL &rhs)
     this->_Zj = rhs._Zj;
     this->_rmax = rhs._rmax;
     this->_rmin = rhs._rmin;
-    this->_zbl_typewise_factor = rhs._zbl_typewise_factor;
     this->_ck = (CoordType*)malloc(sizeof(CoordType) * 4);
     this->_dk = (CoordType*)malloc(sizeof(CoordType) * 4);
     for (int ii=0; ii<4; ii++) {
@@ -211,8 +207,6 @@ PairZBL<CoordType>::PairZBL(PairZBL &&rhs) {
     rhs._rmax = 0;
     this->_rmin = rhs._rmin;
     rhs._rmin = 0;
-    this->_zbl_typewise_factor = rhs._zbl_typewise_factor;
-    rhs._zbl_typewise_factor = 0.0;
 
     this->_ck = rhs._ck;
     rhs._ck = nullptr;
@@ -227,7 +221,6 @@ PairZBL<CoordType>& PairZBL<CoordType>::operator=(const PairZBL &rhs) {
     this->_Zj = rhs._Zj;
     this->_rmax = rhs._rmax;
     this->_rmin = rhs._rmin;
-    this->_zbl_typewise_factor = rhs._zbl_typewise_factor;
     for (int ii=0; ii<4; ii++) {
         this->_ck[ii] = rhs._ck[ii];
         this->_dk[ii] = rhs._dk[ii];
@@ -247,8 +240,6 @@ PairZBL<CoordType>& PairZBL<CoordType>::operator=(PairZBL &&rhs) {
     rhs._rmax = 0;
     this->_rmin = rhs._rmin;
     rhs._rmin = 0;
-    this->_zbl_typewise_factor = rhs._zbl_typewise_factor;
-    rhs._zbl_typewise_factor = 0.0;
 
     this->_ck = rhs._ck;
     rhs._ck = nullptr;
@@ -265,7 +256,6 @@ PairZBL<CoordType>::~PairZBL() {
     this->_Zj = 0;
     this->_rmax = 0;
     this->_rmin = 0;
-    this->_zbl_typewise_factor = 0.0;
     free(this->_ck);
     free(this->_dk);
 }
@@ -443,7 +433,6 @@ GroupZBL<CoordType>::GroupZBL(int ntypes,
                                                                  Zjs[jj],
                                                                  pair_zbl_rmax,
                                                                  pair_zbl_rmin,
-                                                                 this->_zbl_typewise_factor,
                                                                  &cks[idx*4],
                                                                  &dks[idx*4]));
         }

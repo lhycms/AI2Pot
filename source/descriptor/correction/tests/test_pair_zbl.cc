@@ -79,7 +79,6 @@ TEST_F(PairZBLTest, find_switch_func) {
         Zj,
         rmax,
         rmin,
-        zbl_typewise_factor,
         ck,
         dk);
     double result = pair_zbl.find_switch_func(1.0);
@@ -97,7 +96,6 @@ TEST_F(PairZBLTest, find_switch_gradient) {
         Zj,
         rmax,
         rmin,
-        zbl_typewise_factor,
         ck,
         dk);
     double result = pair_zbl.find_switch_func(1.5);
@@ -117,7 +115,6 @@ TEST_F(PairZBLTest, find_phi_gradient) {
         Zj,
         rmax,
         rmin,
-        zbl_typewise_factor,
         ck,
         dk);
     double result = pair_zbl.find_phi_func(1.1);
@@ -140,7 +137,6 @@ TEST_F(PairZBLTest, find_force_accuracy) {
         Zj,
         rmax,
         rmin,
-        zbl_typewise_factor,
         ck,
         dk);
     double pair_energy = pair_zbl.find_pair_energy(distance_ij);
@@ -164,7 +160,6 @@ TEST_F(PairZBLTest, virial_accuracy) {
         Zj,
         rmax,
         rmin,
-        zbl_typewise_factor,
         ck,
         dk);
 

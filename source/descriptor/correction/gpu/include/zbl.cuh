@@ -489,8 +489,8 @@ void correct_zbl_efv_atom(
         PairZBL<CoordType>::add_atomic_force_one(atomic_force,
                                                  Zi,
                                                  Zj,
-                                                 rmax,
-                                                 rmin,
+                                                 pair_zbl_rmax,
+                                                 pair_zbl_rmin,
                                                  neigh_vec,
                                                  ck,
                                                  dk);
