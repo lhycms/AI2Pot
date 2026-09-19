@@ -544,7 +544,6 @@ void LinearMtp<CoordType>::find_e_sites(
     CoordType *mom_vals;
     CoordType (*mom_ders)[3];
     int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
-    memset(e_sites, 0.0, sizeof(CoordType) * inum);
 
     // Step 2.
 #if defined(USE_OPENMP) or defined(__INTELLISENSE__)

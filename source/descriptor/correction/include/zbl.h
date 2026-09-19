@@ -420,24 +420,29 @@ GroupZBL<CoordType>::GroupZBL(int ntypes,
                               CoordType* dks)
 {
     this->_ntypes = ntypes;
+    this->_zbl_typewise_factor = zbl_typewise_factor;
     this->_rmax = rmax;
     this->_rmin = rmax / 2.0;
-    this->_zbl_typewise_factor = zbl_typewise_factor;
+    CoordType pair_zbl_rmax = 0.0;
+    CoordType pair_zbl_rmin = 0.0;
+
     for (int ii=0; ii<this->_ntypes; ii++) {
         for (int jj=0; jj<this->_ntypes; jj++) {
             int idx = ii * this->_ntypes + jj;
             
+            pair_zbl_rmax = this->_rmax;
+            pair_zbl_rmin = this->_rmin;
             find_revised_rmax_min<CoordType>(
-                this->_rmax,
-                this->_rmin,
+                pair_zbl_rmax,
+                pair_zbl_rmin,
                 this->_zbl_typewise_factor,
                 Zis[ii],
                 Zjs[jj]);
 
             this->_pair_zbl_vector.push_back( PairZBL<CoordType>(Zis[ii],
                                                                  Zjs[jj],
-                                                                 this->_rmax,
-                                                                 this->_rmin,
+                                                                 pair_zbl_rmax,
+                                                                 pair_zbl_rmin,
                                                                  this->_zbl_typewise_factor,
                                                                  &cks[idx*4],
                                                                  &dks[idx*4]));

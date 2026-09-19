@@ -449,7 +449,7 @@ void correct_zbl_efv_atom(
     CoordType *dk;
     CoordType (*atomic_force)[3];
 
-    CoordType rmin;
+    CoordType rmin = 0.0;
 
     for (int jj=0; jj<snumneigh; jj++) {
         neigh_idx = sfirstneigh[jj];
@@ -469,9 +469,11 @@ void correct_zbl_efv_atom(
         dk = &dks[zbl_idx*4];
         atomic_force = &force[center_idx];
 
+        CoordType pair_zbl_rmax = rmax;
+        CoordType pair_zbl_rmin = rmin;
         find_revised_rmax_rmin<CoordType>(
-            rmax,
-            rmin,
+            pair_zbl_rmax,
+            pair_zbl_rmin,
             zbl_typewise_factor,
             Zi,
             Zj);
@@ -479,8 +481,8 @@ void correct_zbl_efv_atom(
         PairZBL<CoordType>::add_atomic_energy_one(etot_ptr,
                                                   Zi,
                                                   Zj,
-                                                  rmax,
-                                                  rmin,
+                                                  pair_zbl_rmax,
+                                                  pair_zbl_rmin,
                                                   distance_ij,
                                                   ck,
                                                   dk);
@@ -495,8 +497,8 @@ void correct_zbl_efv_atom(
         PairZBL<CoordType>::add_virial_one(virial,
                                            Zi,
                                            Zj,
-                                           rmax,
-                                           rmin,
+                                           pair_zbl_rmax,
+                                           pair_zbl_rmin,
                                            neigh_vec,
                                            ck,
                                            dk,
@@ -747,9 +749,11 @@ void correct_zbl_ef_atom(CoordType *etot_ptr,
         dk = &dks[zbl_idx*4];
         atomic_force = &force[center_idx];
 
+        CoordType pair_zbl_rmax = rmax;
+        CoordType pair_zbl_rmin = rmin; 
         find_revised_rmax_rmin<CoordType>(
-            rmax,
-            rmin,
+            pair_zbl_rmax,
+            pair_zbl_rmin,
             zbl_typewise_factor,
             Zi,
             Zj);
@@ -757,16 +761,16 @@ void correct_zbl_ef_atom(CoordType *etot_ptr,
         PairZBL<CoordType>::add_atomic_energy_one(etot_ptr,
                                                   Zi,
                                                   Zj,
-                                                  rmax,
-                                                  rmin,
+                                                  pair_zbl_rmax,
+                                                  pair_zbl_rmin,
                                                   distance_ij,
                                                   ck,
                                                   dk);
         PairZBL<CoordType>::add_atomic_force_one(atomic_force,
                                                  Zi,
                                                  Zj,
-                                                 rmax,
-                                                 rmin,
+                                                 pair_zbl_rmax,
+                                                 pair_zbl_rmin,
                                                  neigh_vec,
                                                  ck,
                                                  dk);
