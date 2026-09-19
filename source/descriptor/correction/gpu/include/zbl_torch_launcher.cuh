@@ -49,8 +49,6 @@ void correct_zbl_efv_torch_launcher(
     dim3 grid_size(grid_size_x);
     dim3 block_size(block_size_x);
 
-    CoordType rmin = rmax / 2.0;
-
     correct_zbl_efv_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (
         d_betot_ptr,
         d_bforce,
@@ -102,8 +100,6 @@ void correct_zbl_ef_torch_launcher(
     int grid_size_x = (batch_size*natoms_pad - 1) / block_size_x + 1;
     dim3 grid_size(grid_size_x);
     dim3 block_size(block_size_x);
-
-    CoordType rmin = rmax / 2.0;
 
     correct_zbl_ef_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (
         d_betot_ptr,

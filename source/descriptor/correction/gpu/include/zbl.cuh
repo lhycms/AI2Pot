@@ -646,7 +646,7 @@ void correct_zbl_efv_launcher(
     CHECK_CUDA_API( cudaMemcpy(d_bnumneigh, h_bnumneigh, sizeof(int)*batch_size*natoms_pad, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_bfirstneigh, h_bfirstneigh, sizeof(int)*batch_size*natoms_pad*umax_num_neigh_atoms, cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_brcs, h_brcs, sizeof(CoordType)*batch_size*natoms_pad*umax_num_neigh_atoms*3, cudaMemcpyHostToDevice) );
-    CHECK_CUDA_API( cudaMemcpy(d_btypes, h_btypes, sizeof(int)*(natoms_pad+nghost), cudaMemcpyHostToDevice) );
+    CHECK_CUDA_API( cudaMemcpy(d_btypes, h_btypes, sizeof(int)*batch_size*(natoms_pad+nghost), cudaMemcpyHostToDevice) );
     CHECK_CUDA_API( cudaMemcpy(d_type_map, h_type_map, sizeof(int)*ntypes, cudaMemcpyHostToDevice) );
 
     auto t1 = std::chrono::high_resolution_clock::now();
@@ -729,7 +729,7 @@ void correct_zbl_ef_atom(CoordType *etot_ptr,
     CoordType *dk;
     CoordType (*atomic_force)[3];
 
-    CoordType rmin;
+    CoordType rmin = 0.0;
 
     for (int jj=0; jj<snumneigh; jj++) {
         neigh_idx = sfirstneigh[jj];
