@@ -28,7 +28,7 @@ protected:
     double virial_[9];
 
     double rmax;
-    double rmin;
+    double zbl_typewise_factor;
     int *Zis;
     int *zjs;
     double *cks;
@@ -85,7 +85,7 @@ protected:
         memset(virial_, 0.0, sizeof(double) * 9);
 
         rmax = 2.0;
-        rmin = 1.0;
+        zbl_typewise_factor = 0.7;
         cks = (double*)malloc(sizeof(double) * ntypes * ntypes * 4);
         dks = (double*)malloc(sizeof(double) * ntypes * ntypes * 4);
         for (int ii=0; ii<ntypes; ii++) {
@@ -105,7 +105,7 @@ protected:
                                                          type_map, 
                                                          type_map, 
                                                          rmax,
-                                                         rmin,
+                                                         zbl_typewise_factor,
                                                          cks,
                                                          dks);
     }

@@ -11,6 +11,7 @@ protected:
     int Zj;
     double rmax;
     double rmin;
+    double zbl_typewise_factor;
     double *ck;
     double *dk;
     double coord_1[3];
@@ -32,6 +33,7 @@ protected:
         Zj = 24;
         rmax = 2.0;
         rmin = 1.0;
+        zbl_typewise_factor = 0.7;
         ck = (double*)malloc(sizeof(double) * 4);
         dk = (double*)malloc(sizeof(double) * 4);
         ck[0] = 0.18175;
@@ -72,7 +74,14 @@ protected:
 
 
 TEST_F(PairZBLTest, find_switch_func) {
-    ai2pot::correction::PairZBL<double> pair_zbl(Zi, Zj, rmax, rmin, ck, dk);
+    ai2pot::correction::PairZBL<double> pair_zbl(
+        Zi,
+        Zj,
+        rmax,
+        rmin,
+        zbl_typewise_factor,
+        ck,
+        dk);
     double result = pair_zbl.find_switch_func(1.0);
     ASSERT_EQ(result, 1.0);
     result = pair_zbl.find_switch_func(2.0);
@@ -83,7 +92,14 @@ TEST_F(PairZBLTest, find_switch_func) {
 TEST_F(PairZBLTest, find_switch_gradient) {
     double delta = 1e-5;
 
-    ai2pot::correction::PairZBL<double> pair_zbl(Zi, Zj, rmax, rmin, ck, dk);
+    ai2pot::correction::PairZBL<double> pair_zbl(
+        Zi,
+        Zj,
+        rmax,
+        rmin,
+        zbl_typewise_factor,
+        ck,
+        dk);
     double result = pair_zbl.find_switch_func(1.5);
     double gradient = pair_zbl.find_switch_func_der2rij(1.5);
     double result_ = pair_zbl.find_switch_func(1.5 + delta);
@@ -96,7 +112,14 @@ printf("\t2. Gradient calculated by finite difference method = %.10f\n", (result
 TEST_F(PairZBLTest, find_phi_gradient) {
     double delta = 1e-5;
 
-    ai2pot::correction::PairZBL<double> pair_zbl(Zi, Zj, rmax, rmin, ck, dk);
+    ai2pot::correction::PairZBL<double> pair_zbl(
+        Zi,
+        Zj,
+        rmax,
+        rmin,
+        zbl_typewise_factor,
+        ck,
+        dk);
     double result = pair_zbl.find_phi_func(1.1);
     double gradient = pair_zbl.find_phi_func_der2rij(1.1);
     double result_ = pair_zbl.find_phi_func(1.1 + delta);
@@ -112,7 +135,14 @@ TEST_F(PairZBLTest, find_force_accuracy) {
                                    + std::pow(neigh_vec[1], 2)
                                    + std::pow(neigh_vec[2], 2));
 
-    ai2pot::correction::PairZBL<double> pair_zbl(Zi, Zj, rmax, rmin, ck, dk);
+    ai2pot::correction::PairZBL<double> pair_zbl(
+        Zi,
+        Zj,
+        rmax,
+        rmin,
+        zbl_typewise_factor,
+        ck,
+        dk);
     double pair_energy = pair_zbl.find_pair_energy(distance_ij);
     double pair_energy_ = pair_zbl.find_pair_energy(distance_ij + delta);
 
@@ -129,7 +159,14 @@ TEST_F(PairZBLTest, virial_accuracy) {
                                    + std::pow(neigh_vec[1], 2)
                                    + std::pow(neigh_vec[2], 2));
     
-    ai2pot::correction::PairZBL<double> pair_zbl(Zi, Zj, rmax, rmin, ck, dk);
+    ai2pot::correction::PairZBL<double> pair_zbl(
+        Zi,
+        Zj,
+        rmax,
+        rmin,
+        zbl_typewise_factor,
+        ck,
+        dk);
 
 
     double calculated_virial[9];

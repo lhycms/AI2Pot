@@ -30,7 +30,7 @@ void find_zbl_efv_cpu_launcher(
     int *Zis,
     int *Zjs,
     CoordType rmax,
-    CoordType rmin,
+    CoordType zbl_typewise_factor,
     CoordType *cks,
     CoordType *dks,
     int batch_size,
@@ -54,7 +54,7 @@ void find_zbl_ef_cpu_launcher(
     int *Zis,
     int *Zjs,
     CoordType rmax,
-    CoordType rmin,
+    CoordType zbl_typewise_factor,
     CoordType *cks,
     CoordType *dks,
     int batch_size,
@@ -79,7 +79,7 @@ void find_zbl_efv_cpu_launcher(
     int *Zis,
     int *Zjs,
     CoordType rmax,
-    CoordType rmin,
+    CoordType zbl_typewise_factor,
     CoordType *cks,
     CoordType *dks,
     int batch_size,
@@ -100,7 +100,7 @@ void find_zbl_efv_cpu_launcher(
                 Zis,
                 Zjs,
                 rmax,
-                rmin,
+                zbl_typewise_factor,
                 cks,
                 dks);
     for (int bb=0; bb<batch_size; bb++) {
@@ -139,7 +139,7 @@ void find_zbl_ef_cpu_launcher(
     int *Zis,
     int *Zjs,
     CoordType rmax,
-    CoordType rmin,
+    CoordType zbl_typewise_factor,
     CoordType *cks,
     CoordType *dks,
     int batch_size,
@@ -160,7 +160,7 @@ void find_zbl_ef_cpu_launcher(
                 Zis,
                 Zjs,
                 rmax,
-                rmin,
+                zbl_typewise_factor,
                 cks,
                 dks);
     for (int bb=0; bb<batch_size; bb++) {

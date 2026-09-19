@@ -46,6 +46,7 @@ protected:
 
     double rmax;
     double rmin;
+    double zbl_typewise_factor;
     int *Zis;
     int *Zjs;
     double *cks;
@@ -112,6 +113,7 @@ protected:
 
         rmax = 2.0;
         rmin = 1.0;
+        zbl_typewise_factor = 0.7;
         cks = (double*)malloc(sizeof(double) * ntypes * ntypes * 4);
         dks = (double*)malloc(sizeof(double) * ntypes * ntypes * 4);
         for (int ii=0; ii<ntypes; ii++) {
@@ -161,7 +163,7 @@ TEST_F(GroupZBLTest, efv_force_accuracy) {
         bforces,
         bvirial,
         rmax,
-        rmin,
+        zbl_typewise_factor,
         cks,
         dks,
         batch_size,
@@ -190,7 +192,7 @@ TEST_F(GroupZBLTest, efv_force_accuracy) {
         bforces_,
         bvirial_,
         rmax,
-        rmin,
+        zbl_typewise_factor,
         cks,
         dks,
         batch_size,
@@ -226,7 +228,7 @@ TEST_F(GroupZBLTest, efv_virial_accuracy)
         bforces,
         bvirial,
         rmax,
-        rmin,
+        zbl_typewise_factor,
         cks,
         dks,
         batch_size,
@@ -276,7 +278,7 @@ TEST_F(GroupZBLTest, ef_force_accuracy) {
         betot_ptr,
         bforces,
         rmax,
-        rmin,
+        zbl_typewise_factor,
         cks,
         dks,
         batch_size,
@@ -304,7 +306,7 @@ TEST_F(GroupZBLTest, ef_force_accuracy) {
         betot_ptr_,
         bforces_,
         rmax,
-        rmin,
+        zbl_typewise_factor,
         cks,
         dks,
         batch_size,

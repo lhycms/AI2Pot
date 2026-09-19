@@ -21,6 +21,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <vector>
+#include "./zbl_utilities.h"
 
 #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
 #include <omp.h>
@@ -42,6 +43,7 @@ public:
         int Zj,
         CoordType rmax,
         CoordType rmin,
+        CoordType zbl_typewise_factor,
         CoordType *ck,
         CoordType *dk);
 
@@ -79,6 +81,7 @@ private:
     int _Zj = 0;
     CoordType _rmax = 0;
     CoordType _rmin = 0;
+    CoordType _zbl_typewise_factor = 0.7;
     CoordType *_ck = nullptr; // c1=0.18175, c2=0.50986, c3=0.28022, c4=0.02817
     CoordType *_dk = nullptr; // d1=3.1998,  d2=0.94229, d3=0.4029,  d4=0.20162
 };  // class : PairZBL
@@ -93,7 +96,7 @@ public:
              int *Zis,
              int *Zjs,
              CoordType rmax,
-             CoordType rmin,
+             CoordType zbl_typewise_factor,
              CoordType *cks,
              CoordType *dks);
 
@@ -151,6 +154,7 @@ private:
     int _ntypes = 0;
     CoordType _rmax = 0.0;
     CoordType _rmin = 0.0;
+    CoordType _zbl_typewise_factor = 0.7;
     std::vector<PairZBL<CoordType>> _pair_zbl_vector;
 };  // class : GroupZBL
 
@@ -163,6 +167,7 @@ PairZBL<CoordType>::PairZBL(int Zi,
                     int Zj,
                     CoordType rmax,
                     CoordType rmin,
+                    CoordType zbl_typewise_factor,
                     CoordType *ck,
                     CoordType *dk)
 {
@@ -186,6 +191,7 @@ PairZBL<CoordType>::PairZBL(const PairZBL &rhs)
     this->_Zj = rhs._Zj;
     this->_rmax = rhs._rmax;
     this->_rmin = rhs._rmin;
+    this->_zbl_typewise_factor = rhs._zbl_typewise_factor;
     this->_ck = (CoordType*)malloc(sizeof(CoordType) * 4);
     this->_dk = (CoordType*)malloc(sizeof(CoordType) * 4);
     for (int ii=0; ii<4; ii++) {
@@ -205,6 +211,8 @@ PairZBL<CoordType>::PairZBL(PairZBL &&rhs) {
     rhs._rmax = 0;
     this->_rmin = rhs._rmin;
     rhs._rmin = 0;
+    this->_zbl_typewise_factor = rhs._zbl_typewise_factor;
+    rhs._zbl_typewise_factor = 0.0;
 
     this->_ck = rhs._ck;
     rhs._ck = nullptr;
@@ -219,6 +227,7 @@ PairZBL<CoordType>& PairZBL<CoordType>::operator=(const PairZBL &rhs) {
     this->_Zj = rhs._Zj;
     this->_rmax = rhs._rmax;
     this->_rmin = rhs._rmin;
+    this->_zbl_typewise_factor = rhs._zbl_typewise_factor;
     for (int ii=0; ii<4; ii++) {
         this->_ck[ii] = rhs._ck[ii];
         this->_dk[ii] = rhs._dk[ii];
@@ -238,6 +247,8 @@ PairZBL<CoordType>& PairZBL<CoordType>::operator=(PairZBL &&rhs) {
     rhs._rmax = 0;
     this->_rmin = rhs._rmin;
     rhs._rmin = 0;
+    this->_zbl_typewise_factor = rhs._zbl_typewise_factor;
+    rhs._zbl_typewise_factor = 0.0;
 
     this->_ck = rhs._ck;
     rhs._ck = nullptr;
@@ -254,6 +265,7 @@ PairZBL<CoordType>::~PairZBL() {
     this->_Zj = 0;
     this->_rmax = 0;
     this->_rmin = 0;
+    this->_zbl_typewise_factor = 0.0;
     free(this->_ck);
     free(this->_dk);
 }
@@ -403,20 +415,30 @@ GroupZBL<CoordType>::GroupZBL(int ntypes,
                               int* Zis,
                               int* Zjs,
                               CoordType rmax,
-                              CoordType rmin,
+                              CoordType zbl_typewise_factor,
                               CoordType* cks,
                               CoordType* dks)
 {
     this->_ntypes = ntypes;
     this->_rmax = rmax;
-    this->_rmin = rmin;
+    this->_rmin = rmax / 2.0;
+    this->_zbl_typewise_factor = zbl_typewise_factor;
     for (int ii=0; ii<this->_ntypes; ii++) {
         for (int jj=0; jj<this->_ntypes; jj++) {
             int idx = ii * this->_ntypes + jj;
+            
+            find_revised_rmax_min<CoordType>(
+                this->_rmax,
+                this->_rmin,
+                this->_zbl_typewise_factor,
+                Zis[ii],
+                Zjs[jj]);
+
             this->_pair_zbl_vector.push_back( PairZBL<CoordType>(Zis[ii],
                                                                  Zjs[jj],
                                                                  this->_rmax,
                                                                  this->_rmin,
+                                                                 this->_zbl_typewise_factor,
                                                                  &cks[idx*4],
                                                                  &dks[idx*4]));
         }
@@ -428,7 +450,8 @@ template <typename CoordType>
 GroupZBL<CoordType>::GroupZBL(const GroupZBL& rhs) {
     this->_ntypes = rhs._ntypes;
     this->_rmax = rhs._rmax;
-    this->_rmin = rhs._rmin;
+    this->_rmin = rhs._rmax / 2.0;
+    this->_zbl_typewise_factor = rhs._zbl_typewise_factor;
 
     this->_pair_zbl_vector.resize(this->_ntypes * this->_ntypes);
     for (int ii=0; ii<this->_ntypes*this->_ntypes; ii++)
@@ -444,6 +467,8 @@ GroupZBL<CoordType>::GroupZBL(GroupZBL&& rhs) {
     rhs._rmax = 0.0;
     this->_rmin = rhs._rmin;
     rhs._rmin = 0.0;
+    this->_zbl_typewise_factor = rhs._zbl_typewise_factor;
+    rhs._zbl_typewise_factor = 0.0;
 
     this->_pair_zbl_vector = std::move(rhs._pair_zbl_vector);
 }
@@ -453,7 +478,8 @@ template <typename CoordType>
 GroupZBL<CoordType>& GroupZBL<CoordType>::operator=(const GroupZBL& rhs) {
     this->_ntypes = rhs._ntypes;
     this->_rmax = rhs._rmax;
-    this->_rmin = rhs._rmin;
+    this->_rmin = rhs._rmax / 2.0;
+    this->_zbl_typewise_factor = rhs._zbl_typewise_factor;
 
     this->_pair_zbl_vector.clear();
     this->_pair_zbl_vector.resize(this->_ntypes * this->_ntypes);
@@ -470,8 +496,10 @@ GroupZBL<CoordType>& GroupZBL<CoordType>::operator=(GroupZBL&& rhs) {
     rhs._ntypes = 0;
     this->_rmax = rhs._rmax;
     rhs._rmax = 0.0;
-    this->_rmin = rhs._rmin;
+    this->_rmin = rhs._rmax / 2.0;
     rhs._rmin = 0.0;
+    this->_zbl_typewise_factor = rhs._zbl_typewise_factor;
+    rhs._zbl_typewise_factor = 0.0;
 
     this->_pair_zbl_vector.clear();
     this->_pair_zbl_vector = std::move(rhs._pair_zbl_vector);
@@ -485,6 +513,7 @@ GroupZBL<CoordType>::~GroupZBL() {
     this->_ntypes = 0;
     this->_rmax = 0.0;
     this->_rmin = 0.0;
+    this->_zbl_typewise_factor = 0.0;
 }
 
 

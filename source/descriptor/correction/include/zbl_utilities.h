@@ -32,4 +32,33 @@ const double COVALENT_RADIUS[94] = {
   2.02667,  2.04,     2.05333, 2.06667};
 
 
+namespace ai2pot {
+namespace correction {
+
+
+template <typename CoordType>
+void find_revised_rmax_min(
+  CoordType &zbl_rmax,
+  CoordType &zbl_rmin,
+  CoordType zbl_typewise_factor,
+  int Zi,
+  int Zj)
+{
+  CoordType old_zbl_rmax = zbl_rmax;
+  CoordType typewise_zbl_rmax = zbl_typewise_factor 
+                                * (COVALENT_RADIUS[Zi] + COVALENT_RADIUS[Zj]);
+  if (typewise_zbl_rmax <= old_zbl_rmax) {
+    zbl_rmax = typewise_zbl_rmax;
+    zbl_rmin = 0;
+  }
+  else {
+    zbl_rmax = old_zbl_rmax;
+    zbl_rmin = old_zbl_rmax / 2.0;
+  }
+}
+
+
+};  // namespace : correction
+};  // namespace : ai2pot
+
 #endif

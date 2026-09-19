@@ -109,7 +109,7 @@ void correct_zbl_efv_atom(
     CoordType (*force)[3],
     CoordType *virial,
     CoordType rmax,
-    CoordType rmin,
+    CoordType zbl_typewsie_factor,
     CoordType *cks,
     CoordType *dks,
     int silist,
@@ -130,7 +130,7 @@ void correct_zbl_efv_kernel(
     CoordType (*bforce)[3],
     CoordType *bvirial,
     CoordType rmax,
-    CoordType rmin,
+    CoordType zbl_typewise_factor,
     CoordType *cks,
     CoordType *dks,
     int batch_size, 
@@ -154,7 +154,7 @@ void correct_zbl_efv_launcher(
     CoordType (*h_bforce)[3],
     CoordType *h_bvirial,
     CoordType rmax,
-    CoordType rmin,
+    CoordType zbl_typewise_factor,
     CoordType *h_cks,
     CoordType *h_dks,
     int batch_size,
@@ -176,7 +176,7 @@ void correct_zbl_ef_atom(
     CoordType *etot_ptr,
     CoordType (*force)[3],
     CoordType rmax,
-    CoordType rmin,
+    CoordType zbl_typewise_factor,
     CoordType *cks,
     CoordType *dks,
     int silist,
@@ -194,7 +194,7 @@ void correct_zbl_ef_kernel(
     CoordType *betot_ptr,
     CoordType (*bforce)[3],
     CoordType rmax,
-    CoordType rmin,
+    CoordType zbl_typewise_factor,
     CoordType *cks,
     CoordType *dks,
     int batch_size,
@@ -217,7 +217,7 @@ void correct_zbl_ef_launcher(
     CoordType *h_betot_ptr,
     CoordType (*h_bforce)[3],
     CoordType rmax,
-    CoordType rmin,
+    CoordType zbl_typewise_factor,
     CoordType *h_cks,
     CoordType *h_dks,
     int batch_size,
@@ -423,7 +423,7 @@ void correct_zbl_efv_atom(
     CoordType (*force)[3],
     CoordType *virial,
     CoordType rmax,
-    CoordType rmin,
+    CoordType zbl_typewise_factor,
     CoordType *cks,
     CoordType *dks,
     int silist,
@@ -449,6 +449,8 @@ void correct_zbl_efv_atom(
     CoordType *dk;
     CoordType (*atomic_force)[3];
 
+    CoordType rmin;
+
     for (int jj=0; jj<snumneigh; jj++) {
         neigh_idx = sfirstneigh[jj];
         type_outer = types[neigh_idx];
@@ -466,6 +468,13 @@ void correct_zbl_efv_atom(
         ck = &cks[zbl_idx*4];
         dk = &dks[zbl_idx*4];
         atomic_force = &force[center_idx];
+
+        find_revised_rmax_rmin<CoordType>(
+            rmax,
+            rmin,
+            zbl_typewise_factor,
+            Zi,
+            Zj);
 
         PairZBL<CoordType>::add_atomic_energy_one(etot_ptr,
                                                   Zi,
@@ -503,7 +512,7 @@ void correct_zbl_efv_kernel(
     CoordType (*bforce)[3],
     CoordType *bvirial,
     CoordType rmax,
-    CoordType rmin,
+    CoordType zbl_typewise_factor,
     CoordType *cks,
     CoordType *dks,
     int batch_size,
@@ -547,7 +556,7 @@ void correct_zbl_efv_kernel(
             force,
             virial,
             rmax,
-            rmin,
+            zbl_typewise_factor,
             cks,
             dks,
             silist,
@@ -577,7 +586,7 @@ void correct_zbl_efv_launcher(
     CoordType (*h_bforce)[3],
     CoordType *h_bvirial,
     CoordType rmax,
-    CoordType rmin,
+    CoordType zbl_typewise_factor,
     CoordType *h_cks,
     CoordType *h_dks,
     int batch_size,
@@ -646,7 +655,7 @@ void correct_zbl_efv_launcher(
         d_bforce,
         d_bvirial,
         rmax,
-        rmin,
+        zbl_typewise_factor,
         d_cks,
         d_dks,
         batch_size,
@@ -693,7 +702,7 @@ __device__
 void correct_zbl_ef_atom(CoordType *etot_ptr,
                          CoordType (*force)[3],
                          CoordType rmax,
-                         CoordType rmin,
+                         CoordType zbl_typewise_factor,
                          CoordType *cks,
                          CoordType *dks,
                          int silist,
@@ -718,6 +727,8 @@ void correct_zbl_ef_atom(CoordType *etot_ptr,
     CoordType *dk;
     CoordType (*atomic_force)[3];
 
+    CoordType rmin;
+
     for (int jj=0; jj<snumneigh; jj++) {
         neigh_idx = sfirstneigh[jj];
         type_outer = types[neigh_idx];
@@ -735,6 +746,13 @@ void correct_zbl_ef_atom(CoordType *etot_ptr,
         ck = &cks[zbl_idx*4];
         dk = &dks[zbl_idx*4];
         atomic_force = &force[center_idx];
+
+        find_revised_rmax_rmin<CoordType>(
+            rmax,
+            rmin,
+            zbl_typewise_factor,
+            Zi,
+            Zj);
 
         PairZBL<CoordType>::add_atomic_energy_one(etot_ptr,
                                                   Zi,
@@ -762,7 +780,7 @@ void correct_zbl_ef_kernel(
     CoordType *betot_ptr,
     CoordType (*bforce)[3],
     CoordType rmax,
-    CoordType rmin,
+    CoordType zbl_typewise_factor,
     CoordType *cks,
     CoordType *dks,
     int batch_size,
@@ -799,7 +817,7 @@ void correct_zbl_ef_kernel(
             etot_ptr,
             force,
             rmax,
-            rmin,
+            zbl_typewise_factor,
             cks,
             dks,
             silist,
@@ -820,7 +838,7 @@ void correct_zbl_ef_launcher(
     CoordType *h_betot_ptr,
     CoordType (*h_bforce)[3],
     CoordType rmax,
-    CoordType rmin,
+    CoordType zbl_typewise_factor,
     CoordType *h_cks,
     CoordType *h_dks,
     int batch_size,
@@ -885,7 +903,7 @@ void correct_zbl_ef_launcher(
         d_betot_ptr,
         d_bforce,
         rmax,
-        rmin,
+        zbl_typewise_factor,
         d_cks,
         d_dks,
         batch_size,

@@ -33,6 +33,7 @@ protected:
 
     double rmax;
     double rmin;
+    double zbl_typewise_factor;
     int *Zis;
     int *Zjs;
     double *cks;
@@ -98,6 +99,7 @@ protected:
 
         rmax = 2.0;
         rmin = 1.0;
+        zbl_typewise_factor = 0.7;
         cks = (double*)malloc(sizeof(double) * ntypes * ntypes * 4);
         dks = (double*)malloc(sizeof(double) * ntypes * ntypes * 4);
         for (int ii=0; ii<ntypes; ii++) {
@@ -153,7 +155,7 @@ TEST_F(ZBLCPULauncherTest, force_accuracy) {
         type_map,
         type_map,
         rmax,
-        rmin,
+        zbl_typewise_factor,
         cks,
         dks,
         batch_size,
@@ -185,7 +187,7 @@ TEST_F(ZBLCPULauncherTest, force_accuracy) {
         type_map,
         type_map,
         rmax,
-        rmin,
+        zbl_typewise_factor,
         cks,
         dks,
         batch_size,
@@ -224,7 +226,7 @@ TEST_F(ZBLCPULauncherTest, virial_accuracy)
         type_map,
         type_map,
         rmax,
-        rmin,
+        zbl_typewise_factor,
         cks,
         dks,
         batch_size,

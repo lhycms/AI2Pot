@@ -28,7 +28,7 @@ void correct_zbl_efv_torch_launcher(
     CoordType (*d_bforce)[3],
     CoordType *d_bvirial,
     CoordType rmax,
-    CoordType rmin,
+    CoordType zbl_typewise_factor,
     CoordType *d_cks,
     CoordType *d_dks,
     int batch_size,
@@ -49,12 +49,14 @@ void correct_zbl_efv_torch_launcher(
     dim3 grid_size(grid_size_x);
     dim3 block_size(block_size_x);
 
+    CoordType rmin = rmax / 2.0;
+
     correct_zbl_efv_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (
         d_betot_ptr,
         d_bforce,
         d_bvirial,
         rmax,
-        rmin,
+        zbl_typewise_factor,
         d_cks,
         d_dks,
         batch_size,
@@ -80,7 +82,7 @@ void correct_zbl_ef_torch_launcher(
     CoordType *d_betot_ptr,
     CoordType (*d_bforce)[3],
     CoordType rmax,
-    CoordType rmin,
+    CoordType zbl_typewise_factor,
     CoordType *d_cks,
     CoordType *d_dks,
     int batch_size,
@@ -101,11 +103,13 @@ void correct_zbl_ef_torch_launcher(
     dim3 grid_size(grid_size_x);
     dim3 block_size(block_size_x);
 
+    CoordType rmin = rmax / 2.0;
+
     correct_zbl_ef_kernel<CoordType> KERNEL_ARG2(grid_size, block_size) (
         d_betot_ptr,
         d_bforce,
         rmax,
-        rmin,
+        zbl_typewise_factor,
         d_cks,
         d_dks,
         batch_size,
