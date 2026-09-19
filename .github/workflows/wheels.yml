@@ -25,7 +25,7 @@ concurrency:
 
 env:
   TORCH_VERSION: "2.5.0"
-  NUMPY_VERSION: "2.4.6"
+  NUMPY_VERSION: "2.2.6"
 
 jobs:
   # ============================================================
@@ -57,8 +57,8 @@ jobs:
         env:
           CIBW_ARCHS_LINUX: x86_64
           CIBW_BUILD: "cp311-manylinux_x86_64 cp312-manylinux_x86_64"
-          # numpy 2.4.6 需要 glibc>=2.28（且与 torch 2.5 的 manylinux2014 兼容）
-          # CIBW_MANYLINUX_X86_64_IMAGE: quay.io/pypa/manylinux_2_28_x86_64
+          # numpy 2.2.6 需要 glibc>=2.17（且与 torch 2.5 的 manylinux2014 兼容）
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
           # 容器内先装构建依赖 + CPU 版 torch；--no-build-isolation 保证用容器环境里的 torch 头
           CIBW_BEFORE_BUILD_LINUX: "python -m pip install numpy==${{ env.NUMPY_VERSION }} pybind11==2.11.1 scikit-build-core==0.12.2 cmake==4.3.2 && python -m pip install torch==${{ env.TORCH_VERSION }} --index-url https://download.pytorch.org/whl/cpu"
           # 覆盖 pyproject 里硬编码的 USE_CUDA=yes / BUILD_TEST=yes
@@ -127,8 +127,8 @@ jobs:
           CIBW_ARCHS_LINUX: x86_64
           CIBW_BUILD: "cp311-manylinux_x86_64 cp312-manylinux_x86_64"
 
-          # manylinux_2_28 基于 AlmaLinux 8 / glibc 2.28
-          #CIBW_MANYLINUX_X86_64_IMAGE: quay.io/pypa/manylinux_2_28_x86_64
+          # CentOS 基于 glibc 2.17
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
 
           # ------------------------------------------------------
           # System dependencies installed once inside the
@@ -140,33 +140,35 @@ jobs:
           # CUDA 12.4 使用 GCC 13 作为 host compiler。
           # ------------------------------------------------------
           CIBW_BEFORE_ALL_LINUX: >-
-            dnf install -y
-            dnf-plugins-core
-            gcc-toolset-13-gcc
-            gcc-toolset-13-gcc-c++
+            yum install -y yum-utils
             &&
-            dnf config-manager
+            yum-config-manager
             --add-repo
-            https://developer.download.nvidia.com/compute/cuda/repos/rhel8/x86_64/cuda-rhel8.repo
+            https://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/cuda-rhel7.repo
             &&
-            dnf clean expire-cache
+            rpm --import
+            https://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/D42D0685.pub
             &&
-            dnf install -y cuda-toolkit-12-4
+            yum clean expire-cache
+            &&
+            yum install -y cuda-toolkit-12-4
             &&
             /usr/local/cuda-12.4/bin/nvcc --version
             &&
-            /opt/rh/gcc-toolset-13/root/usr/bin/g++ --version
+            gcc --version
+            &&
+            g++ --version
 
           # ------------------------------------------------------
           # Build environment inside manylinux
           # ------------------------------------------------------
           CIBW_ENVIRONMENT_LINUX: >-
             CUDA_HOME=/usr/local/cuda-12.4
-            PATH=/usr/local/cuda-12.4/bin:/opt/rh/gcc-toolset-13/root/usr/bin:$PATH
+            PATH=/usr/local/cuda-12.4/bin:$PATH
             LD_LIBRARY_PATH=/usr/local/cuda-12.4/lib64:$LD_LIBRARY_PATH
-            CC=/opt/rh/gcc-toolset-13/root/usr/bin/gcc
-            CXX=/opt/rh/gcc-toolset-13/root/usr/bin/g++
-            CUDAHOSTCXX=/opt/rh/gcc-toolset-13/root/usr/bin/g++
+            CC=gcc
+            CXX=g++
+            CUDAHOSTCXX=g++
 
           # ------------------------------------------------------
           # Python build dependencies for each cp311 / cp312 build
