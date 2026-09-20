@@ -536,10 +536,9 @@ void correct_zbl_efv_kernel(
     if (istruct >= batch_size)
         return;
 
-    __shared__ CoordType s_local_virial[64][9];
-    int tid = threadIdx.x;
+    CoordType s_local_virial[9];
     for (int ii=0; ii<9; ii++)
-        s_local_virial[tid][ii] = 0.0;
+        s_local_virial[ii] = 0.0;
 
     CoordType *etot_ptr = &betot_ptr[istruct];
     CoordType (*force)[3] = &bforce[istruct*(natoms_pad+nghost)];
@@ -569,14 +568,10 @@ void correct_zbl_efv_kernel(
             ntypes,
             type_map,
             umax_num_neigh_atoms,
-            s_local_virial[tid]);
-    }
-    __syncthreads();
+            s_local_virial);
 
-    if (tid == 0) {
-        for (int t=0; t<blockDim.x; t++)
-            for (int i=0; i<9; i++)
-                atomicAdd(&virial[i], s_local_virial[t][i]);
+        for (int v=0; v<9; v++)
+            atomicAdd(&virial[v], s_local_virial[v]);
     }
 }
 

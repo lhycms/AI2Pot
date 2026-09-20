@@ -225,10 +225,6 @@ void LinearMtp<CoordType>::find_efv(
     int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
 
     // Step 2.
-    etot = 0;
-    memset(force, 0, sizeof(CoordType) * (inum+nghost) * 3);
-    memset(virial, 0, sizeof(CoordType) * 9);
-
 #ifdef USE_OPENMP
 #pragma omp parallel private(mom_vals, mom_ders, e_site_der2mom)
 {
@@ -390,9 +386,6 @@ void LinearMtp<CoordType>::find_ef(
     int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
 
     // Step 2.
-    etot = 0;
-    memset(force, 0, sizeof(CoordType) * (inum+nghost) * 3);
-
 #ifdef USE_OPENMP
 #pragma omp parallel private(mom_vals, mom_ders, e_site_der2mom)
 {

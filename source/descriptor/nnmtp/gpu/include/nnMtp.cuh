@@ -632,7 +632,7 @@ void find_efv_kernel(
         return;
     int ii = nx % natoms_pad;
 
-    __shared__ CoordType s_local_virial[9];
+    CoordType s_local_virial[9];
     for (int v=0; v<9; v++)
         s_local_virial[v] = 0.0;
 
