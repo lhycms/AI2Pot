@@ -46,6 +46,14 @@ void find_revised_rmax_min(
   int Zj)
 {
   CoordType old_zbl_rmax = zbl_rmax;
+
+  // Disable typewise ZBL cutoff
+  if (zbl_typewise_factor == 0.0) {
+    zbl_rmax = old_zbl_rmax;
+    zbl_rmin = old_zbl_rmax / 2.0;
+    return;
+  }
+
   CoordType typewise_zbl_rmax = zbl_typewise_factor 
                                 * (COVALENT_RADIUS[Zi] + COVALENT_RADIUS[Zj]);
   if (typewise_zbl_rmax <= old_zbl_rmax) {
