@@ -407,11 +407,11 @@ void find_loss_kernel(
         for (int aa=0; aa<3; aa++)
             for (int bb=0; bb<3; bb++)
                 v_loss += std::pow(virial_ml[aa*3+bb] - virial_dft[aa*3+bb], 2);
-        v_loss = v_weight / (9*inum) * v_loss;
+        v_loss = v_weight / (9*inum*inum) * v_loss;
         atomicAdd(loss_ptr, v_loss);
 
         CoordType e_loss = 0.0;
-        e_loss = e_weight / inum * std::pow(etot_ml - etot_dft, 2);
+        e_loss = e_weight / (inum*inum) * std::pow(etot_ml - etot_dft, 2);
         atomicAdd(loss_ptr, e_loss);
     }
 }
@@ -543,7 +543,7 @@ void find_ef_loss_kernel(
 
     if (ii == 0) {
         CoordType e_loss = 0.0;
-        e_loss = e_weight / inum * std::pow(etot_ml - etot_dft, 2);
+        e_loss = e_weight / (inum*inum) * std::pow(etot_ml - etot_dft, 2);
         atomicAdd(loss_ptr, e_loss);
     }
 }
@@ -770,7 +770,7 @@ void find_loss_backward_atom(
                                             * (force_ml[neigh_idx][aa] - force_dft[neigh_idx][aa])
                                             * tmp_deriv;
                     for (int bb=0; bb<3; bb++) {
-                        dloss_combination[i] -= 2*v_weight/(9*inum)
+                        dloss_combination[i] -= 2*v_weight/(9*inum*inum)
                                                 * (virial_ml[aa*3+bb] - virial_dft[aa*3+bb])
                                                 * NeighbVect[bb]
                                                 * tmp_deriv;
@@ -899,7 +899,7 @@ void find_loss_backward_atom(
                 C_ders[1] = -k * powk * distance_ij_inv * distance_ij_inv * NeighbVect[1];
                 C_ders[2] = -k * powk * distance_ij_inv * distance_ij_inv * NeighbVect[2];
 
-                CoordType tmpe_loss_der2coeff = 2*e_weight/inum*(etot_ml - etot_dft)
+                CoordType tmpe_loss_der2coeff = 2*e_weight/(inum*inum)*(etot_ml - etot_dft)
                                                 * e_site_der2mom[i]
                                                 * A * B * C;
 
@@ -916,7 +916,7 @@ void find_loss_backward_atom(
                                   * (force_ml[neigh_idx][aa] - force_dft[neigh_idx][aa]);
                     for (int bb=0; bb<3; bb++) 
                     {
-                        tmp_prefix -= 2*v_weight/(9*inum)
+                        tmp_prefix -= 2*v_weight/(9*inum*inum)
                                       * (virial_ml[aa*3+bb] - virial_dft[aa*3+bb])
                                       * NeighbVect[bb];
                     }
@@ -931,7 +931,7 @@ void find_loss_backward_atom(
 
     // 2.4. loss derivative w.r.t. linear_coeffs
     for (int i=0; i<alpha_scalar_moments; i++) {
-        CoordType tmp_loss_der2linear_coeff = 2*e_weight/inum
+        CoordType tmp_loss_der2linear_coeff = 2*e_weight/(inum*inum)
                                               * (etot_ml - etot_dft)
                                               * mom_vals[alpha_moment_mapping[i]]
                                               + dloss_combination[alpha_moment_mapping[i]];
@@ -941,7 +941,7 @@ void find_loss_backward_atom(
 
     // 2.5. loss derivative w.r.t. type_bias
     atomicAdd(&loss_der2type_bias[type_central],
-              2*e_weight/inum*(etot_ml - etot_dft));
+              2*e_weight/(inum*inum)*(etot_ml - etot_dft));
 }
 
 
@@ -1529,7 +1529,7 @@ void find_ef_loss_backward_atom(
                 C_ders[1] = -k * powk * distance_ij_inv * distance_ij_inv * NeighbVect[1];
                 C_ders[2] = -k * powk * distance_ij_inv * distance_ij_inv * NeighbVect[2];
 
-                CoordType tmpe_loss_der2coeff = 2*e_weight/inum*(etot_ml - etot_dft)
+                CoordType tmpe_loss_der2coeff = 2*e_weight/(inum*inum)*(etot_ml - etot_dft)
                                                 * e_site_der2mom[i]
                                                 * A * B * C;
 
@@ -1555,7 +1555,7 @@ void find_ef_loss_backward_atom(
 
     // 2.4. loss derivative w.r.t. linear_coeffs
     for (int i=0; i<alpha_scalar_moments; i++) {
-        CoordType tmp_loss_der2linear_coeff = 2*e_weight/inum
+        CoordType tmp_loss_der2linear_coeff = 2*e_weight/(inum*inum)
                                               * (etot_ml - etot_dft)
                                               * mom_vals[alpha_moment_mapping[i]]
                                               + dloss_combination[alpha_moment_mapping[i]];
@@ -1564,7 +1564,7 @@ void find_ef_loss_backward_atom(
 
     // 2.5. loss derivative w.r.t. type_bias
     atomicAdd(&loss_der2type_bias[type_central],
-              2*e_weight/inum*(etot_ml - etot_dft));
+              2*e_weight/(inum*inum)*(etot_ml - etot_dft));
 }
 
 

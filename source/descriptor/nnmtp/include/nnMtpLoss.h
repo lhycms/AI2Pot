@@ -174,11 +174,11 @@ void NNMtpLoss<CoordType>::find_loss(
     for (int aa=0; aa<3; aa++)
         for (int bb=0; bb<3; bb++)
             v_loss += std::pow(virial_ml[aa*3+bb] - virial_dft[aa*3+bb], 2);
-    v_loss = v_weight / (9 * inum) * v_loss;
+    v_loss = v_weight / (9 * inum * inum) * v_loss;
 
     // Energy term
     CoordType e_loss = 0;
-    e_loss += e_weight / inum * std::pow(etot_ml - etot_dft, 2);
+    e_loss += e_weight / (inum*inum) * std::pow(etot_ml - etot_dft, 2);
 
     loss = f_loss + v_loss + e_loss;
 }
@@ -210,7 +210,7 @@ void NNMtpLoss<CoordType>::find_ef_loss(
     
     // Energy term
     CoordType e_loss = 0.0;
-    e_loss = e_weight / inum * std::pow(etot_ml - etot_dft, 2);
+    e_loss = e_weight / (inum*inum) * std::pow(etot_ml - etot_dft, 2);
 
     loss = f_loss + e_loss;
 }
@@ -414,7 +414,7 @@ void NNMtpLoss<CoordType>::find_loss_backward(
                                                 * (force_ml[neigh_idx][aa] - force_dft[neigh_idx][aa])
                                                 * tmp_deriv;
                         for (int bb=0; bb<3; bb++) {
-                            dloss_combination[i] -= 2*v_weight/(9*inum)
+                            dloss_combination[i] -= 2*v_weight/(9*inum*inum)
                                                     * (virial_ml[aa*3+bb] - virial_dft[aa*3+bb])
                                                     * neigh_vec[bb]
                                                     * tmp_deriv;
@@ -581,7 +581,7 @@ void NNMtpLoss<CoordType>::find_loss_backward(
                     C_ders[2] = -k * powk * distance_ij_inv * neigh_vec[2] * distance_ij_inv;
 
                     CoordType tmpe_loss_der2coeff = 0.0;
-                    tmpe_loss_der2coeff = 2*e_weight/inum*(etot_ml - etot_dft)
+                    tmpe_loss_der2coeff = 2*e_weight/(inum*inum)*(etot_ml - etot_dft)
                                           * e_site_der2mom[i]
                                           * A * B * C;
                     
@@ -598,7 +598,7 @@ void NNMtpLoss<CoordType>::find_loss_backward(
                                       * (force_ml[neigh_idx][aa] - force_dft[neigh_idx][aa]);
                         for (int bb=0; bb<3; bb++)
                         {
-                            tmp_prefix -= 2*v_weight/(9*inum)
+                            tmp_prefix -= 2*v_weight/(9*inum*inum)
                                           * (virial_ml[aa*3+bb] - virial_dft[aa*3+bb])
                                           * neigh_vec[bb];
                         }
@@ -621,7 +621,7 @@ void NNMtpLoss<CoordType>::find_loss_backward(
                                          * dloss_combination[alpha_moment_mapping[k]];
 
             for (int k=0; k<alpha_scalar_moments; k++) {
-                CoordType tmpe_loss_der2w0 = 2*e_weight/inum*(etot_ml - etot_dft)
+                CoordType tmpe_loss_der2w0 = 2*e_weight/(inum*inum)*(etot_ml - etot_dft)
                                              * type_central_w1[p]
                                              * activated_hidden_ders[p]
                                              * mom_vals[alpha_moment_mapping[k]]
@@ -641,7 +641,7 @@ void NNMtpLoss<CoordType>::find_loss_backward(
                                                                                                            + tmpf_loss_der2w0;
             }
 
-            CoordType tmpe_loss_der2b0 = 2*e_weight/inum*(etot_ml - etot_dft)
+            CoordType tmpe_loss_der2b0 = 2*e_weight/(inum*inum)*(etot_ml - etot_dft)
                                          * type_central_w1[p]
                                          * activated_hidden_ders[p];
             CoordType tmpf_loss_der2b0 = type_central_w1[p]
@@ -658,7 +658,7 @@ void NNMtpLoss<CoordType>::find_loss_backward(
             CoordType tmpe_loss_der2w1 = 0.0;
             CoordType tmpf_loss_der2w1 = 0.0;
 
-            tmpe_loss_der2w1 = 2*e_weight/inum*(etot_ml - etot_dft)
+            tmpe_loss_der2w1 = 2*e_weight/(inum*inum)*(etot_ml - etot_dft)
                                * activated_hidden_vals[p];
             for (int k=0; k<alpha_scalar_moments; k++) {
                 tmpf_loss_der2w1 += activated_hidden_ders[p]
@@ -678,7 +678,7 @@ void NNMtpLoss<CoordType>::find_loss_backward(
         #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
         #pragma omp atomic
         #endif
-        loss_der2type_bias[type_central] += 2*e_weight/inum*(etot_ml - etot_dft);
+        loss_der2type_bias[type_central] += 2*e_weight/(inum*inum)*(etot_ml - etot_dft);
     }
 
 
@@ -1054,7 +1054,7 @@ void NNMtpLoss<CoordType>::find_ef_loss_backward(
                     C_ders[2] = -k * powk * distance_ij_inv * neigh_vec[2] * distance_ij_inv;
 
                     CoordType tmpe_loss_der2coeff = 0.0;
-                    tmpe_loss_der2coeff = 2*e_weight/inum*(etot_ml - etot_dft)
+                    tmpe_loss_der2coeff = 2*e_weight/(inum*inum)*(etot_ml - etot_dft)
                                           * e_site_der2mom[i]
                                           * A * B * C;
                     
@@ -1088,7 +1088,7 @@ void NNMtpLoss<CoordType>::find_ef_loss_backward(
                                          * dloss_combination[alpha_moment_mapping[k]];
 
             for (int k=0; k<alpha_scalar_moments; k++) {
-                CoordType tmpe_loss_der2w0 = 2*e_weight/inum*(etot_ml - etot_dft)
+                CoordType tmpe_loss_der2w0 = 2*e_weight/(inum*inum)*(etot_ml - etot_dft)
                                              * type_central_w1[p]
                                              * activated_hidden_ders[p]
                                              * mom_vals[alpha_moment_mapping[k]]
@@ -1108,7 +1108,7 @@ void NNMtpLoss<CoordType>::find_ef_loss_backward(
                                                                                                            + tmpf_loss_der2w0;
             }
 
-            CoordType tmpe_loss_der2b0 = 2*e_weight/inum*(etot_ml - etot_dft)
+            CoordType tmpe_loss_der2b0 = 2*e_weight/(inum*inum)*(etot_ml - etot_dft)
                                          * type_central_w1[p]
                                          * activated_hidden_ders[p];
             CoordType tmpf_loss_der2b0 = type_central_w1[p]
@@ -1125,7 +1125,7 @@ void NNMtpLoss<CoordType>::find_ef_loss_backward(
             CoordType tmpe_loss_der2w1 = 0.0;
             CoordType tmpf_loss_der2w1 = 0.0;
 
-            tmpe_loss_der2w1 = 2*e_weight/inum*(etot_ml - etot_dft)
+            tmpe_loss_der2w1 = 2*e_weight/(inum*inum)*(etot_ml - etot_dft)
                                * activated_hidden_vals[p];
             for (int k=0; k<alpha_scalar_moments; k++) {
                 tmpf_loss_der2w1 += activated_hidden_ders[p]
@@ -1145,7 +1145,7 @@ void NNMtpLoss<CoordType>::find_ef_loss_backward(
         #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
         #pragma omp atomic
         #endif
-        loss_der2type_bias[type_central] += 2*e_weight/inum*(etot_ml - etot_dft);
+        loss_der2type_bias[type_central] += 2*e_weight/(inum*inum)*(etot_ml - etot_dft);
     }
 
 
