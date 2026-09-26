@@ -161,7 +161,7 @@ void NepLoss<CoordType>::find_ef_loss(
 
     // Energy term
     CoordType e_loss = 0.0;
-    e_loss = e_weight / inum * std::pow(etot_ml - etot_dft, 2);
+    e_loss = e_weight * std::pow((etot_ml - etot_dft) / inum, 2);
 
     loss = f_loss + e_loss;
 }
@@ -199,11 +199,11 @@ void NepLoss<CoordType>::find_loss(
     for (int aa=0; aa<3; aa++)
         for (int bb=0; bb<3; bb++)
             v_loss += std::pow(virial_ml[aa*3+bb] - virial_dft[aa*3+bb], 2);
-    v_loss = v_weight / (9*inum) * v_loss;
+    v_loss = v_weight / (9*inum*inum) * v_loss;
 
     // Energy term
     CoordType e_loss = 0;
-    e_loss = e_weight / inum * std::pow(etot_ml - etot_dft, 2);
+    e_loss = e_weight * std::pow((etot_ml - etot_dft) / inum, 2);
 
     loss = f_loss + v_loss + e_loss;
 }
@@ -548,7 +548,7 @@ void NepLoss<CoordType>::find_ef_loss_backward(
                               + mu*chebyshev_size + xi;
                     
                     CoordType tmpe_loss_der2coeff = 0.0;
-                    tmpe_loss_der2coeff = 2*e_weight/inum*(etot_ml - etot_dft)
+                    tmpe_loss_der2coeff = 2*e_weight/(inum*inum)*(etot_ml - etot_dft)
                                           * e_sites_der2dod[mu]
                                           * p_RadialBasis_radial->vals()[xi];
                     
@@ -602,7 +602,7 @@ void NepLoss<CoordType>::find_ef_loss_backward(
                             Blm<CoordType>::find_blm_der2xyz(B_ders, l, mp, neigh_vec, distance_ij);
 
                             CoordType tmpe_loss_der2coeff = 0.0;
-                            tmpe_loss_der2coeff = 2*e_weight/inum*(etot_ml-etot_dft)
+                            tmpe_loss_der2coeff = 2*e_weight/(inum*inum)*(etot_ml-etot_dft)
                                                   * e_sites_der2mom[idx_Sinlm]
                                                   * A * B * C;
                             CoordType tmpf_loss_der2coeff = (de22m0m1_dloss_combination_mom_sum_angular[idx_Sinlm]
@@ -642,7 +642,7 @@ void NepLoss<CoordType>::find_ef_loss_backward(
                                              * type_central_w0[p*num_descriptors + k]
                                              / q_scaler[k];
             for (int k=0; k<num_descriptors; k++) {
-                CoordType tmpe_loss_der2w0 = 2*e_weight/inum*(etot_ml-etot_dft)
+                CoordType tmpe_loss_der2w0 = 2*e_weight/(inum*inum)*(etot_ml-etot_dft)
                                              * type_central_w1[p]
                                              * activated_hidden_ders[p]
                                              * dod_vals[k]
@@ -664,7 +664,7 @@ void NepLoss<CoordType>::find_ef_loss_backward(
             /*
             // Old code: Wrong
             for (int k=0; k<num_descriptors; k++) {
-                CoordType tmpe_loss_der2w0 = 2*e_weight/inum*(etot_ml-etot_dft)
+                CoordType tmpe_loss_der2w0 = 2*e_weight/(inum*inum)*(etot_ml-etot_dft)
                                              * type_central_w1[p]
                                              * activated_hidden_der
                                              * dod_vals[k]
@@ -686,7 +686,7 @@ void NepLoss<CoordType>::find_ef_loss_backward(
             }
             */
 
-            CoordType tmpe_loss_der2b0 = 2*e_weight/inum*(etot_ml-etot_dft)
+            CoordType tmpe_loss_der2b0 = 2*e_weight/(inum*inum)*(etot_ml-etot_dft)
                                          * type_central_w1[p]
                                          * activated_hidden_ders[p];
             CoordType tmpf_loss_der2b0 = type_central_w1[p]
@@ -703,7 +703,7 @@ void NepLoss<CoordType>::find_ef_loss_backward(
             CoordType tmpe_loss_der2w1 = 0.0;
             CoordType tmpf_loss_der2w1 = 0.0;
 
-            tmpe_loss_der2w1 = 2*e_weight/inum*(etot_ml-etot_dft)
+            tmpe_loss_der2w1 = 2*e_weight/(inum*inum)*(etot_ml-etot_dft)
                                * activated_hidden_vals[p];
             for (int k=0; k<num_descriptors; k++) {
                 tmpf_loss_der2w1 += activated_hidden_ders[p]
@@ -723,7 +723,7 @@ void NepLoss<CoordType>::find_ef_loss_backward(
         #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
         #pragma omp atomic
         #endif
-        loss_der2type_bias[type_central] += 2*e_weight/inum*(etot_ml-etot_dft);
+        loss_der2type_bias[type_central] += 2*e_weight/(inum*inum)*(etot_ml-etot_dft);
     }
 
     // Step . Free
@@ -899,7 +899,7 @@ void NepLoss<CoordType>::find_loss_backward(
                                                      * (force_ml[neigh_idx][aa] - force_dft[neigh_idx][aa])
                                                      * coeffs[idx] * p_RadialBasis_radial->ders2r()[xi] * neigh_vec[aa] / distance_ij;
                         for (int bb=0; bb<3; bb++) {
-                            dloss_combination_dod[mu] -= 2*v_weight/(9*inum)
+                            dloss_combination_dod[mu] -= 2*v_weight/(9*inum*inum)
                                                          * (virial_ml[aa*3+bb] - virial_dft[aa*3+bb])
                                                          * neigh_vec[bb]
                                                          * coeffs[idx] * p_RadialBasis_radial->ders2r()[xi] * neigh_vec[aa] / distance_ij;
@@ -943,7 +943,7 @@ void NepLoss<CoordType>::find_loss_backward(
                                                                     * (force_ml[neigh_idx][aa] - force_dft[neigh_idx][aa])
                                                                     * tmp_deriv;
                                 for (int bb=0; bb<3; bb++) {
-                                    dloss_combination_mom[idx_Sinlm] -= 2*v_weight/(9*inum)
+                                    dloss_combination_mom[idx_Sinlm] -= 2*v_weight/(9*inum*inum)
                                                                         * (virial_ml[aa*3+bb] - virial_dft[aa*3+bb])
                                                                         * neigh_vec[bb]
                                                                         * tmp_deriv;
@@ -1104,7 +1104,7 @@ void NepLoss<CoordType>::find_loss_backward(
                               + mu*chebyshev_size + xi;
                     
                     CoordType tmpe_loss_der2coeff = 0.0;
-                    tmpe_loss_der2coeff = 2*e_weight/inum*(etot_ml - etot_dft)
+                    tmpe_loss_der2coeff = 2*e_weight/(inum*inum)*(etot_ml - etot_dft)
                                           * e_sites_der2dod[mu]
                                           * p_RadialBasis_radial->vals()[xi];
                     
@@ -1118,7 +1118,7 @@ void NepLoss<CoordType>::find_loss_backward(
                                         - force_ml[neigh_idx][aa] + force_dft[neigh_idx][aa]);
                         for (int bb=0; bb<3; bb++)
                         {
-                            tmp_prefix -= 2*v_weight/(9*inum)
+                            tmp_prefix -= 2*v_weight/(9*inum*inum)
                                           * (virial_ml[aa*3+bb] - virial_dft[aa*3+bb])
                                           * neigh_vec[bb];
                         }
@@ -1164,7 +1164,7 @@ void NepLoss<CoordType>::find_loss_backward(
                             Blm<CoordType>::find_blm_der2xyz(B_ders, l, mp, neigh_vec, distance_ij);
 
                             CoordType tmpe_loss_der2coeff = 0.0;
-                            tmpe_loss_der2coeff = 2*e_weight/inum*(etot_ml-etot_dft)
+                            tmpe_loss_der2coeff = 2*e_weight/(inum*inum)*(etot_ml-etot_dft)
                                                   * e_sites_der2mom[idx_Sinlm]
                                                   * A * B * C;
                             CoordType tmpf_loss_der2coeff = (de22m0m1_dloss_combination_mom_sum_angular[idx_Sinlm]
@@ -1182,7 +1182,7 @@ void NepLoss<CoordType>::find_loss_backward(
                                               * (force_ml[neigh_idx][aa] - force_dft[neigh_idx][aa]);
                                 for (int bb=0; bb<3; bb++)
                                 {
-                                    tmp_prefix -= 2*v_weight/(9*inum)
+                                    tmp_prefix -= 2*v_weight/(9*inum*inum)
                                                 * (virial_ml[aa*3+bb] - virial_dft[aa*3+bb])
                                                 * neigh_vec[bb];
                                 }
@@ -1210,7 +1210,7 @@ void NepLoss<CoordType>::find_loss_backward(
                                              * type_central_w0[p*num_descriptors + k]
                                              / q_scaler[k];
             for (int k=0; k<num_descriptors; k++) {
-                CoordType tmpe_loss_der2w0 = 2*e_weight/inum*(etot_ml-etot_dft)
+                CoordType tmpe_loss_der2w0 = 2*e_weight/(inum*inum)*(etot_ml-etot_dft)
                                              * type_central_w1[p]
                                              * activated_hidden_ders[p]
                                              * dod_vals[k]
@@ -1229,7 +1229,7 @@ void NepLoss<CoordType>::find_loss_backward(
                                                                                                  + tmpf_loss_der2w0;
             }
 
-            CoordType tmpe_loss_der2b0 = 2*e_weight/inum*(etot_ml-etot_dft)
+            CoordType tmpe_loss_der2b0 = 2*e_weight/(inum*inum)*(etot_ml-etot_dft)
                                          * type_central_w1[p]
                                          * activated_hidden_ders[p];
             CoordType tmpf_loss_der2b0 = type_central_w1[p]
@@ -1246,7 +1246,7 @@ void NepLoss<CoordType>::find_loss_backward(
             CoordType tmpe_loss_der2w1 = 0.0;
             CoordType tmpf_loss_der2w1 = 0.0;
 
-            tmpe_loss_der2w1 = 2*e_weight/inum*(etot_ml-etot_dft)
+            tmpe_loss_der2w1 = 2*e_weight/(inum*inum)*(etot_ml-etot_dft)
                                * activated_hidden_vals[p];
             for (int k=0; k<num_descriptors; k++) {
                 tmpf_loss_der2w1 += activated_hidden_ders[p]
@@ -1266,7 +1266,7 @@ void NepLoss<CoordType>::find_loss_backward(
         #if defined(USE_OPENMP) or defined(__INTELLISENSE__)
         #pragma omp atomic
         #endif
-        loss_der2type_bias[type_central] += 2*e_weight/inum*(etot_ml-etot_dft);
+        loss_der2type_bias[type_central] += 2*e_weight/(inum*inum)*(etot_ml-etot_dft);
     }
 
     // Step . Free
