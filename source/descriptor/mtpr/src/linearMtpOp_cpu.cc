@@ -1879,6 +1879,12 @@ torch::autograd::variable_list LinearMtpToEsitesFunctionCPU::forward(
     int (*alpha_index_basic)[4] = (int (*)[4])alpha_index_basic_tensor.data_ptr<int>();
     int (*alpha_index_times)[4] = (int (*)[4])alpha_index_times_tensor.data_ptr<int>();
     int *alpha_moment_mapping = (int*)alpha_moment_mapping_tensor.data_ptr<int>();
+    int *binum = binum_tensor.data_ptr<int>();
+    int *bilist = bilist_tensor.data_ptr<int>();
+    int *bnumneigh = bnumneigh_tensor.data_ptr<int>();
+    int *bfirstneigh = bfirstneigh_tensor.data_ptr<int>();
+    int *btypes = btypes_tensor.data_ptr<int>();
+    int *type_map = type_map_tensor.data_ptr<int>();
 
     // 2.
     c10::TensorOptions int_options = c10::TensorOptions()
@@ -1900,69 +1906,39 @@ torch::autograd::variable_list LinearMtpToEsitesFunctionCPU::forward(
         float *zbl_cks = zbl_cks_tensor.data_ptr<float>();
         float *zbl_dks = zbl_dks_tensor.data_ptr<float>();
 
-        for (int bb=0; bb<batch_size; bb++) {
-            float *e_sites = (float*)be_sites_tensor[bb].data_ptr<float>();
-            int inum = binum_tensor[bb].item<int>();
-            int *ilist = (int*)bilist_tensor[bb].data_ptr<int>();
-            int *numneigh = (int*)bnumneigh_tensor[bb].data_ptr<int>();
-            int *firstneigh = (int*)bfirstneigh_tensor[bb].data_ptr<int>();
-            float (*rcs)[3] = (float (*)[3])brcs_tensor[bb].data_ptr<float>();
-            int *types = (int*)btypes_tensor[bb].data_ptr<int>();
-            int *type_map = (int*)type_map_tensor.data_ptr<int>();
+        float *be_sites = be_sites_tensor.data_ptr<float>();
+        float (*brcs)[3] = (float (*)[3])brcs_tensor.data_ptr<float>();
 
-            if (zbl_rmax > 0.0) {
-                ai2pot::correction::GroupZBL<float> gzbl(
-                    ntypes,
-                    type_map,
-                    type_map,
-                    zbl_rmax,
-                    zbl_typewise_factor,
-                    zbl_cks,
-                    zbl_dks);
-
-                gzbl.correct_e_sites(
-                    e_sites,
-                    inum,
-                    ilist,
-                    numneigh,
-                    firstneigh,
-                    rcs,
-                    types,
-                    ntypes,
-                    type_map,
-                    umax_num_neigh_atoms,
-                    nghost);
-            }
-
-            LinearMtp<float>::find_e_sites(
-                e_sites,
-                chebyshev_size,
-                scaling,
-                coeffs,
-                linear_coeffs,
-                type_bias,
-                alpha_moments_count,
-                alpha_index_basic_count,
-                alpha_index_basic,
-                alpha_index_times_count,
-                alpha_index_times,
-                alpha_scalar_moments,
-                alpha_moment_mapping,
-                nmus,
-                inum,
-                ilist,
-                numneigh,
-                firstneigh,
-                rcs,
-                types,
-                ntypes,
-                type_map,
-                umax_num_neigh_atoms,
-                nghost,
-                rmax,
-                rmin,
-                q_scaler);
-        }
+        ai2pot::mtpr::find_e_sites_cpu_launcher<float>(
+            be_sites,
+            chebyshev_size,
+            scaling,
+            coeffs,
+            linear_coeffs,
+            type_bias,
+            alpha_moments_count,
+            alpha_index_basic_count,
+            alpha_index_basic,
+            alpha_index_times_count,
+            alpha_index_times,
+            alpha_scalar_moments,
+            alpha_moment_mapping,
+            nmus,
+            batch_size,
+            natoms_pad,
+            binum,
+            bilist,
+            bnumneigh,
+            bfirstneigh,
+            brcs,
+            btypes,
+            ntypes,
+            type_map,
+            umax_num_neigh_atoms,
+            nghost,
+            rmax,
+            rmin,
+            q_scaler);
     } else {
         double *coeffs = coeffs_tensor.data_ptr<double>();
         double *linear_coeffs = linear_coeffs_tensor.data_ptr<double>();
@@ -1971,69 +1947,39 @@ torch::autograd::variable_list LinearMtpToEsitesFunctionCPU::forward(
         double *zbl_cks = zbl_cks_tensor.data_ptr<double>();
         double *zbl_dks = zbl_dks_tensor.data_ptr<double>();
         
-        for (int bb=0; bb<batch_size; bb++) {
-            double *e_sites = (double*)be_sites_tensor[bb].data_ptr<double>();
-            int inum = binum_tensor[bb].item<int>();
-            int *ilist = (int*)bilist_tensor[bb].data_ptr<int>();
-            int *numneigh = (int*)bnumneigh_tensor[bb].data_ptr<int>();
-            int *firstneigh = (int*)bfirstneigh_tensor[bb].data_ptr<int>();
-            double (*rcs)[3] = (double (*)[3])brcs_tensor[bb].data_ptr<double>();
-            int *types = (int*)btypes_tensor[bb].data_ptr<int>();
-            int *type_map = (int*)type_map_tensor.data_ptr<int>();
+        double *be_sites = be_sites_tensor.data_ptr<double>();
+        double (*brcs)[3] = (double (*)[3])brcs_tensor.data_ptr<double>();
 
-            if (zbl_rmax > 0.0) {
-                ai2pot::correction::GroupZBL<double> gzbl(
-                    ntypes,
-                    type_map,
-                    type_map,
-                    zbl_rmax,
-                    zbl_typewise_factor,
-                    zbl_cks,
-                    zbl_dks);
-
-                gzbl.correct_e_sites(
-                    e_sites,
-                    inum,
-                    ilist,
-                    numneigh,
-                    firstneigh,
-                    rcs,
-                    types,
-                    ntypes,
-                    type_map,
-                    umax_num_neigh_atoms,
-                    nghost);
-            }
-
-            LinearMtp<double>::find_e_sites(
-                e_sites,
-                chebyshev_size,
-                scaling,
-                coeffs,
-                linear_coeffs,
-                type_bias,
-                alpha_moments_count,
-                alpha_index_basic_count,
-                alpha_index_basic,
-                alpha_index_times_count,
-                alpha_index_times,
-                alpha_scalar_moments,
-                alpha_moment_mapping,
-                nmus,
-                inum,
-                ilist,
-                numneigh,
-                firstneigh,
-                rcs,
-                types,
-                ntypes,
-                type_map,
-                umax_num_neigh_atoms,
-                nghost,
-                rmax,
-                rmin,
-                q_scaler);
-        }
+        ai2pot::mtpr::find_e_sites_cpu_launcher<double>(
+            be_sites,
+            chebyshev_size,
+            scaling,
+            coeffs,
+            linear_coeffs,
+            type_bias,
+            alpha_moments_count,
+            alpha_index_basic_count,
+            alpha_index_basic,
+            alpha_index_times_count,
+            alpha_index_times,
+            alpha_scalar_moments,
+            alpha_moment_mapping,
+            nmus,
+            batch_size,
+            natoms_pad,
+            binum,
+            bilist,
+            bnumneigh,
+            bfirstneigh,
+            brcs,
+            btypes,
+            ntypes,
+            type_map,
+            umax_num_neigh_atoms,
+            nghost,
+            rmax,
+            rmin,
+            q_scaler);
     }
 
     // 5.

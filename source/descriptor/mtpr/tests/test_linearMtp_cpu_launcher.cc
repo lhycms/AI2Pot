@@ -60,6 +60,11 @@ protected:
     real *bvirial;
     real *bvirial_;
 
+    real *be_sites;
+    real *be_sites_der2coeffs;
+    real *be_sites_der2linear_coeffs;
+    real *be_sites_der2type_bias;
+
     // Loss derivatives
     real *bloss_der2coeffs;
     real *bloss_der2linear_coeffs;
@@ -232,6 +237,15 @@ protected:
         bvirial_ = (real*)malloc(sizeof(real) * batch_size * 9);
         memset(bvirial_, 0.0, sizeof(real) * batch_size * 9);
 
+        be_sites = (real*)malloc(sizeof(real) * batch_size * (natoms_pad+nghost));
+        be_sites_der2coeffs = (real*)malloc(sizeof(real) * batch_size * (natoms_pad+nghost) * (ntypes*ntypes*mtp_param.nmus()*chebyshev_size));
+        be_sites_der2linear_coeffs = (real*)malloc(sizeof(real) * batch_size * (natoms_pad+nghost) * mtp_param.alpha_scalar_moments());
+        be_sites_der2type_bias = (real*)malloc(sizeof(real) * batch_size * (natoms_pad+nghost) * ntypes);
+        memset(be_sites, 0.0, sizeof(real) * batch_size * (natoms_pad+nghost));
+        memset(be_sites_der2coeffs, 0.0, sizeof(real) * batch_size * (natoms_pad+nghost) * (ntypes*ntypes*mtp_param.nmus()*chebyshev_size));
+        memset(be_sites_der2linear_coeffs, 0.0, sizeof(real) * batch_size * (natoms_pad+nghost) * mtp_param.alpha_scalar_moments());
+        memset(be_sites_der2type_bias, 0.0, sizeof(real) * batch_size * (natoms_pad+nghost) * ntypes);
+
         // Loss derivative
         bloss_der2coeffs = (real*)malloc(sizeof(real) * batch_size * ntypes * ntypes * mtp_param.nmus() * chebyshev_size);
         memset(bloss_der2coeffs, 0, sizeof(real) * batch_size * ntypes * ntypes * mtp_param.nmus() * chebyshev_size);
@@ -281,6 +295,10 @@ protected:
         free(betot_);
         free(bforce_);
         free(bvirial_);
+        free(be_sites);
+        free(be_sites_der2coeffs);
+        free(be_sites_der2linear_coeffs);
+        free(be_sites_der2type_bias);
 
         free(bloss_der2coeffs);
         free(bloss_der2linear_coeffs);
@@ -598,6 +616,80 @@ for (int ii=0; ii<ntypes; ii++)
     printf("%.15f, ", bloss_der2type_bias[ii]);
 printf("\n\n");
 }
+
+
+TEST_F(LinearMtpCPULauncher, find_e_sites_cpu_launcher)
+{
+    ai2pot::mtpr::find_e_sites_cpu_launcher<real>(
+        be_sites,
+        chebyshev_size,
+        scaling,
+        coeffs,
+        linear_coeffs,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        mtp_param.nmus(),
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        bnumneigh,
+        bfirstneigh,
+        (real (*)[3])brcs,
+        btypes,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin,
+        q_scaler);
+}
+
+
+TEST_F(LinearMtpCPULauncher, find_e_sites_backward_cpu_launcher)
+{
+    ai2pot::mtpr::find_e_sites_backward_cpu_launcher<real>(
+        be_sites_der2coeffs,
+        be_sites_der2linear_coeffs,
+        be_sites_der2type_bias,
+        chebyshev_size,
+        scaling,
+        coeffs,
+        linear_coeffs,
+        type_bias,
+        mtp_param.alpha_moments_count(),
+        mtp_param.alpha_index_basic_count(),
+        mtp_param.alpha_index_basic(),
+        mtp_param.alpha_index_times_count(),
+        mtp_param.alpha_index_times(),
+        mtp_param.alpha_scalar_moments(),
+        mtp_param.alpha_moment_mapping(),
+        mtp_param.nmus(),
+        batch_size,
+        natoms_pad,
+        binum,
+        bilist,
+        bnumneigh,
+        bfirstneigh,
+        (real (*)[3])brcs,
+        btypes,
+        ntypes,
+        type_map,
+        umax_num_neigh_atoms,
+        nghost,
+        rmax,
+        rmin,
+        q_scaler);
+}
+
+
 
 
 

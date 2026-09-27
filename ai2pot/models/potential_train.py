@@ -40,13 +40,13 @@ class LitPotentialBase(L.LightningModule):
             lr_start: float = 1e-3,
             lr_end: float = 1e-6,
             e_wgt_start: float = 0.1,
-            e_wgt_end: float = 2.0,
-            f_wgt_start: float = 10.0,
+            e_wgt_end: float = 8.0,
+            f_wgt_start: float = 30.0,
             f_wgt_end: float = 1.0,
             v_wgt_start: float = 0.1,
-            v_wgt_end: float = 0.5,
+            v_wgt_end: float = 1.0,
             max_clip_norm: float = 10.0,
-            weight_decay: float = 1e-5):
+            weight_decay: float = 0.0):
         super(LitPotentialBase, self).__init__()
 
         self.type_map: List[int] = type_map
@@ -398,19 +398,19 @@ class LitLinearMtp(LitPotentialBase):
             rmax: float = 5.0,
             rmin: float = 0.0,
             zbl_rmax: float = 0.0,
-            zbl_typewise_factor: float = 0.7,
+            zbl_typewise_factor: float = 0.0,
             zbl_cks_list: Optional[List[float]] = None,
             zbl_dks_list: Optional[List[float]] = None,
             lr_start: float = 1e-2,
             lr_end: float = 1e-4,
             e_wgt_start: float = 0.1,
-            e_wgt_end: float = 2.0,
-            f_wgt_start: float = 50.0,
+            e_wgt_end: float = 8.0,
+            f_wgt_start: float = 30.0,
             f_wgt_end: float = 1.0,
             v_wgt_start: float = 0.1,
-            v_wgt_end: float = 0.5,
+            v_wgt_end: float = 1.0,
             max_clip_norm: float = 10.0,
-            weight_decay: float = 1e-5):
+            weight_decay: float = 0.0):
         super().__init__(
             type_map=type_map,
             umax_num_neigh_atoms=umax_num_neigh_atoms,
@@ -469,13 +469,13 @@ class LitNep(LitPotentialBase):
             lr_start: float = 1e-3,
             lr_end: float = 1e-6,
             e_wgt_start: float = 0.1,
-            e_wgt_end: float = 2.0,
-            f_wgt_start: float = 50.0,
+            e_wgt_end: float = 8.0,
+            f_wgt_start: float = 30.0,
             f_wgt_end: float = 1.0,
             v_wgt_start: float = 0.1,
-            v_wgt_end: float = 0.5,
+            v_wgt_end: float = 1.0,
             max_clip_norm: float = 10.0,
-            weight_decay: float = 1e-5):
+            weight_decay: float = 0.0):
         super().__init__(
             type_map=type_map,
             umax_num_neigh_atoms=umax_num_neigh_atoms,
@@ -532,16 +532,16 @@ class LitNNMtp(LitPotentialBase):
             zbl_typewise_factor: float = 0.7,
             zbl_cks_list: Optional[List[float]] = None,
             zbl_dks_list: Optional[List[float]] = None,
-            lr_start: float = 1e-2,
-            lr_end: float = 1e-4,
+            lr_start: float = 1e-3,
+            lr_end: float = 1e-6,
             e_wgt_start: float = 0.1,
-            e_wgt_end: float = 2.0,
-            f_wgt_start: float = 50.0,
+            e_wgt_end: float = 8.0,
+            f_wgt_start: float = 30.0,
             f_wgt_end: float = 1.0,
             v_wgt_start: float = 0.1,
-            v_wgt_end: float = 0.5,
+            v_wgt_end: float = 1.0,
             max_clip_norm: float = 10.0,
-            weight_decay: float = 1e-5):
+            weight_decay: float = 0.0):
         super().__init__(
             type_map=type_map,
             umax_num_neigh_atoms=umax_num_neigh_atoms,
