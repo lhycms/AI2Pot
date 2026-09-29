@@ -494,37 +494,37 @@ void find_e_sites_backward_kernel(
 template <typename CoordType>
 static __host__
 void find_e_sites_backward_launcher(
-    CoordType *d_be_sites_der2coeffs,
-    CoordType *d_e_sites_der2linear_coeffs,
-    CoordType *d_e_sites_der2type_bias,
+    CoordType *h_be_sites_der2coeffs,
+    CoordType *h_e_sites_der2linear_coeffs,
+    CoordType *h_e_sites_der2type_bias,
     int chebyshev_size,
     CoordType scaling,
-    CoordType *d_coeffs,
-    CoordType *d_linear_coeffs,
-    CoordType *d_type_bias,
+    CoordType *h_coeffs,
+    CoordType *h_linear_coeffs,
+    CoordType *h_type_bias,
     const int alpha_moments_count,
     const int alpha_index_basic_count,
-    const int (*d_alpha_index_basic)[4],
+    const int (*h_alpha_index_basic)[4],
     const int alpha_index_times_count,
-    const int (*d_alpha_index_times)[4],
+    const int (*h_alpha_index_times)[4],
     const int alpha_scalar_moments,
-    const int *d_alpha_moment_mapping,
+    const int *h_alpha_moment_mapping,
     int nmus,
     int batch_size,
     int natoms_pad,
-    int *d_binum,
-    int *d_bilist,
-    int *d_bnumneigh,
-    int *d_bfirstneigh,
-    CoordType (*d_brcs)[3],
-    int *d_btypes,
+    int *h_binum,
+    int *h_bilist,
+    int *h_bnumneigh,
+    int *h_bfirstneigh,
+    CoordType (*h_brcs)[3],
+    int *h_btypes,
     int ntypes,
-    int *d_type_map,
+    int *h_type_map,
     int umax_num_neigh_atoms,
     int nghost,
     CoordType rmax,
     CoordType rmin,
-    CoordType *d_q_scaler);
+    CoordType *h_q_scaler);
 
 
 
@@ -2368,9 +2368,9 @@ void find_e_sites_backward_kernel(
         return;
 
     int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
-    CoordType *e_site_der2coeffs = &be_sites_der2coeffs[istruct*(natoms_pad+nghost)*num_coeffs];
-    CoordType *e_site_der2linear_coeffs = &be_sites_der2linear_coeffs[istruct*(natoms_pad+nghost)*alpha_scalar_moments];
-    CoordType *e_site_der2type_bias = &be_sites_der2type_bias[istruct*(natoms_pad+nghost)*ntypes];
+    CoordType *e_site_der2coeffs = &be_sites_der2coeffs[istruct*(natoms_pad+nghost)*num_coeffs + ii*num_coeffs];
+    CoordType *e_site_der2linear_coeffs = &be_sites_der2linear_coeffs[istruct*(natoms_pad+nghost)*alpha_scalar_moments + ii*alpha_scalar_moments];
+    CoordType *e_site_der2type_bias = &be_sites_der2type_bias[istruct*(natoms_pad+nghost)*ntypes + ii*ntypes];
     int inum = binum[istruct];
     int *types = &btypes[istruct*(natoms_pad+nghost)];
 

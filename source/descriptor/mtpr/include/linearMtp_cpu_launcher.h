@@ -459,7 +459,7 @@ void find_e_sites_backward_cpu_launcher(
 
     for (int bb=0; bb<batch_size; bb++) {
         CoordType *e_sites_der2coeffs = &be_sites_der2coeffs[bb*(natoms_pad+nghost)*num_coeffs];
-        CoordType *e_sites_der2linear_coeffs = &be_sites_der2coeffs[bb*(natoms_pad+nghost)*alpha_scalar_moments];
+        CoordType *e_sites_der2linear_coeffs = &be_sites_der2linear_coeffs[bb*(natoms_pad+nghost)*alpha_scalar_moments];
         CoordType *e_sites_der2type_bias = &be_sites_der2type_bias[bb*(natoms_pad+nghost)*ntypes];
         int inum = binum[bb];
         int *ilist = &bilist[bb*natoms_pad];

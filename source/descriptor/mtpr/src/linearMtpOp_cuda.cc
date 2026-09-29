@@ -449,6 +449,106 @@ extern template void ai2pot::mtpr::find_ef_loss_backward_torch_launcher<double>(
     double rmin,
     double *d_q_scaler);
 
+
+// 2.5. find_e_sites_torch_launcher()
+extern template void ai2pot::mtpr::find_e_sites_torch_launcher<float>(
+    float *d_be_sites,
+    int chebyshev_size,
+    float scaling,
+    float *d_coeffs,
+    float *d_linear_coeffs,
+    float *d_type_bias,
+    const int alpha_moments_count,
+    const int alpha_index_basic_count,
+    const int (*d_alpha_index_basic)[4],
+    const int alpha_index_times_count,
+    const int (*d_alpha_index_times)[4],
+    const int alpha_scalar_moments,
+    const int *d_alpha_moment_mapping,
+    int nmus,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    int *d_bnumneigh,
+    int *d_bfirstneigh,
+    float (*d_brcs)[3],
+    int *d_btypes,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    float rmax,
+    float rmin,
+    float *d_q_scaler);
+
+extern template void ai2pot::mtpr::find_e_sites_torch_launcher<double>(
+    double *d_be_sites,
+    int chebyshev_size,
+    double scaling,
+    double *d_coeffs,
+    double *d_linear_coeffs,
+    double *d_type_bias,
+    const int alpha_moments_count,
+    const int alpha_index_basic_count,
+    const int (*d_alpha_index_basic)[4],
+    const int alpha_index_times_count,
+    const int (*d_alpha_index_times)[4],
+    const int alpha_scalar_moments,
+    const int *d_alpha_moment_mapping,
+    int nmus,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    int *d_bnumneigh,
+    int *d_bfirstneigh,
+    double (*d_brcs)[3],
+    int *d_btypes,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    double rmax,
+    double rmin,
+    double *d_q_scaler);
+
+
+// 2.6. find_e_sites_backward_torch_launcher()
+extern template void ai2pot::mtpr::find_e_sites_backward_torch_launcher<float>(
+    float *d_be_sites_der2coeffs,
+    float *d_be_sites_der2linear_coeffs,
+    float *d_be_sites_der2type_bias,
+    int chebyshev_size,
+    float scaling,
+    float *d_coeffs,
+    float *d_linear_coeffs,
+    float *d_type_bias,
+    const int alpha_moments_count,
+    const int alpha_index_basic_count,
+    const int (*d_alpha_index_basic)[4],
+    const int alpha_index_times_count,
+    const int (*d_alpha_index_times)[4],
+    const int alpha_scalar_moments,
+    const int *d_alpha_moment_mapping,
+    int nmus,
+    int batch_size,
+    int natoms_pad,
+    int *d_binum,
+    int *d_bilist,
+    int *d_bnumneigh,
+    int *d_bfirstneigh,
+    float (*d_brcs)[3],
+    int *d_btypes,
+    int ntypes,
+    int *d_type_map,
+    int umax_num_neigh_atoms,
+    int nghost,
+    float rmax,
+    float rmin,
+    float *d_q_scaler);
+
+
 };  // namespace : mtpr
 };  // namespace : ai2pot
 
@@ -2452,12 +2552,22 @@ torch::autograd::variable_list LinearMtpToEsitesFunctionCUDA::forward(
     // 1. 
     int batch_size = binum_tensor.size(0);
     int natoms_pad = bfirstneigh_tensor.size(1);
+    int alpha_index_basic_count = (int)alpha_index_basic_tensor.size(0);
+    int alpha_index_times_count = (int)alpha_index_times_tensor.size(0);
+    int alpha_scalar_moments = (int)alpha_moment_mapping_tensor.size(0);
     int umax_num_neigh_atoms = bfirstneigh_tensor.size(2);
-    int alpha_index_basic_count = alpha_index_basic_tensor.size(0);
-    int alpha_index_times_count = alpha_index_times_tensor.size(0);
-    int alpha_scalar_moments = alpha_moment_mapping_tensor.size(0);
     int ntypes = type_map_tensor.size(0);
+    int (*alpha_index_basic)[4] = (int (*)[4])alpha_index_basic_tensor.data_ptr<int>();
+    int (*alpha_index_times)[4] = (int (*)[4])alpha_index_times_tensor.data_ptr<int>();
+    int *alpha_moment_mapping = alpha_moment_mapping_tensor.data_ptr<int>();
+    int *type_map = type_map_tensor.data_ptr<int>();
     int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
+
+    int *binum = binum_tensor.data_ptr<int>();
+    int *bilist = bilist_tensor.data_ptr<int>();
+    int *bnumneigh = bnumneigh_tensor.data_ptr<int>();
+    int *bfirstneigh = bfirstneigh_tensor.data_ptr<int>();
+    int *btypes = btypes_tensor.data_ptr<int>();
 
     // 2.
     c10::TensorOptions int_options = c10::TensorOptions()
@@ -2468,33 +2578,91 @@ torch::autograd::variable_list LinearMtpToEsitesFunctionCUDA::forward(
                                         .device(brcs_tensor.device());
 
     // 3.
-    at::Tensor be_sites_tensor = at::zeros({batch_size, natoms_pad}, float_options);
+    at::Tensor be_sites_tensor = at::zeros({batch_size, (natoms_pad+nghost)}, float_options);
 
     // 4.
     if (brcs_tensor.scalar_type() == torch::kFloat32) {
+        float *be_sites = be_sites_tensor.data_ptr<float>();
+        float (*brcs)[3] = (float (*)[3])brcs_tensor.data_ptr<float>();
+
         float *coeffs = coeffs_tensor.data_ptr<float>();
         float *linear_coeffs = linear_coeffs_tensor.data_ptr<float>();
         float *type_bias = type_bias_tensor.data_ptr<float>();
-        int (*alpha_index_basic)[4] = (int (*)[4])alpha_index_basic_tensor.data_ptr<int>();
-        int (*alpha_index_times)[4] = (int (*)[4])alpha_index_times_tensor.data_ptr<int>();
-        int *alpha_moment_mapping = (int*)alpha_moment_mapping_tensor.data_ptr<int>();
         float *q_scaler = q_scaler_tensor.data_ptr<float>();
         float *zbl_cks = zbl_cks_tensor.data_ptr<float>();
         float *zbl_dks = zbl_dks_tensor.data_ptr<float>();
 
-        // TODO
+        find_e_sites_torch_launcher<float>(
+            be_sites,
+            chebyshev_size,
+            scaling,
+            coeffs,
+            linear_coeffs,
+            type_bias,
+            alpha_moments_count,
+            alpha_index_basic_count,
+            alpha_index_basic,
+            alpha_index_times_count,
+            alpha_index_times,
+            alpha_scalar_moments,
+            alpha_moment_mapping,
+            nmus,
+            batch_size,
+            natoms_pad,
+            binum,
+            bilist,
+            bnumneigh,
+            bfirstneigh,
+            brcs,
+            btypes,
+            ntypes,
+            type_map,
+            umax_num_neigh_atoms,
+            nghost,
+            rmax,
+            rmin,
+            q_scaler);
     } else {
+        double *be_sites = be_sites_tensor.data_ptr<double>();
+        double (*brcs)[3] = (double (*)[3])brcs_tensor.data_ptr<double>();
+
         double *coeffs = coeffs_tensor.data_ptr<double>();
         double *linear_coeffs = linear_coeffs_tensor.data_ptr<double>();
         double *type_bias = type_bias_tensor.data_ptr<double>();
-        int (*alpha_index_basic)[4] = (int (*)[4])alpha_index_basic_tensor.data_ptr<int>();
-        int (*alpha_index_times)[4] = (int (*)[4])alpha_index_times_tensor.data_ptr<int>();
-        int *alpha_moment_mapping = (int*)alpha_moment_mapping_tensor.data_ptr<int>();
         double *q_scaler = q_scaler_tensor.data_ptr<double>();
         double *zbl_cks = zbl_cks_tensor.data_ptr<double>();
         double *zbl_dks = zbl_dks_tensor.data_ptr<double>();
         
-        // TODO
+        find_e_sites_torch_launcher<double>(
+            be_sites,
+            chebyshev_size,
+            scaling,
+            coeffs,
+            linear_coeffs,
+            type_bias,
+            alpha_moments_count,
+            alpha_index_basic_count,
+            alpha_index_basic,
+            alpha_index_times_count,
+            alpha_index_times,
+            alpha_scalar_moments,
+            alpha_moment_mapping,
+            nmus,
+            batch_size,
+            natoms_pad,
+            binum,
+            bilist,
+            bnumneigh,
+            bfirstneigh,
+            brcs,
+            btypes,
+            ntypes,
+            type_map,
+            umax_num_neigh_atoms,
+            nghost,
+            rmax,
+            rmin,
+            q_scaler);
     }
 
     // 5.
@@ -2575,7 +2743,17 @@ torch::autograd::variable_list LinearMtpToEsitesFunctionCUDA::backward(
     int alpha_index_times_count = alpha_index_times_tensor.size(0);
     int alpha_scalar_moments = alpha_moment_mapping_tensor.size(0);
     int ntypes = type_map_tensor.size(0);
+    int (*alpha_index_basic)[4] = (int (*)[4])alpha_index_basic_tensor.data_ptr<int>();
+    int (*alpha_index_times)[4] = (int (*)[4])alpha_index_times_tensor.data_ptr<int>();
+    int *alpha_moment_mapping = alpha_moment_mapping_tensor.data_ptr<int>();
+    int *type_map = (int*)type_map_tensor.data_ptr<int>();
     int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
+
+    int *binum = binum_tensor.data_ptr<int>();
+    int *bilist = bilist_tensor.data_ptr<int>();
+    int *bnumneigh = bnumneigh_tensor.data_ptr<int>();
+    int *bfirstneigh = bfirstneigh_tensor.data_ptr<int>();
+    int *btypes = btypes_tensor.data_ptr<int>();
 
     // 2.
     c10::TensorOptions int_options = c10::TensorOptions()
@@ -2586,30 +2764,97 @@ torch::autograd::variable_list LinearMtpToEsitesFunctionCUDA::backward(
                                         .device(brcs_tensor.device());
 
     // 3.
-    at::Tensor be_sites_der2coeffs_tensor = at::zeros({batch_size, natoms_pad, num_coeffs}, float_options);
-    at::Tensor be_sites_der2linear_coeffs_tensor = at::zeros({batch_size, natoms_pad, alpha_scalar_moments}, float_options);
-    at::Tensor be_sites_der2type_bias_tensor = at::zeros({batch_size, natoms_pad, ntypes}, float_options);
+    at::Tensor be_sites_der2coeffs_tensor = at::zeros({batch_size, (natoms_pad+nghost), num_coeffs}, float_options);
+    at::Tensor be_sites_der2linear_coeffs_tensor = at::zeros({batch_size, (natoms_pad+nghost), alpha_scalar_moments}, float_options);
+    at::Tensor be_sites_der2type_bias_tensor = at::zeros({batch_size, (natoms_pad+nghost), ntypes}, float_options);
 
     // 4.
-    int (*alpha_index_basic)[4] = (int (*)[4])alpha_index_basic_tensor.data_ptr<int>();
-    int (*alpha_index_times)[4] = (int (*)[4])alpha_index_times_tensor.data_ptr<int>();
-    int *alpha_moment_mapping = (int*)alpha_moment_mapping_tensor.data_ptr<int>();
-    int *type_map = (int*)type_map_tensor.data_ptr<int>();
-
     if (brcs_tensor.scalar_type() == torch::kFloat32) {
+        float *be_sites_der2coeffs = be_sites_der2coeffs_tensor.data_ptr<float>();
+        float *be_sites_der2linear_coeffs = be_sites_der2linear_coeffs_tensor.data_ptr<float>();
+        float *be_sites_der2type_bias = be_sites_der2type_bias_tensor.data_ptr<float>();
+        float (*brcs)[3] = (float (*)[3])brcs_tensor.data_ptr<float>();
+
         float *coeffs = (float*)coeffs_tensor.data_ptr<float>();
         float *linear_coeffs = (float*)linear_coeffs_tensor.data_ptr<float>();
         float *type_bias = (float*)type_bias_tensor.data_ptr<float>();
         float *q_scaler = q_scaler_tensor.data_ptr<float>();
 
-        // TODO
+        find_e_sites_backward_torch_launcher<float>(
+            be_sites_der2coeffs,
+            be_sites_der2linear_coeffs,
+            be_sites_der2type_bias,
+            chebyshev_size,
+            scaling,
+            coeffs,
+            linear_coeffs,
+            type_bias,
+            alpha_moments_count,
+            alpha_index_basic_count,
+            alpha_index_basic,
+            alpha_index_times_count,
+            alpha_index_times,
+            alpha_scalar_moments,
+            alpha_moment_mapping,
+            nmus,
+            batch_size,
+            natoms_pad,
+            binum,
+            bilist,
+            bnumneigh,
+            bfirstneigh,
+            brcs,
+            btypes,
+            ntypes,
+            type_map,
+            umax_num_neigh_atoms,
+            nghost,
+            rmax,
+            rmin,
+            q_scaler);
     } else {
+        double *be_sites_der2coeffs = be_sites_der2coeffs_tensor.data_ptr<double>();
+        double *be_sites_der2linear_coeffs = be_sites_der2linear_coeffs_tensor.data_ptr<double>();
+        double *be_sites_der2type_bias = be_sites_der2type_bias_tensor.data_ptr<double>();
+        double (*brcs)[3] = (double (*)[3])brcs_tensor.data_ptr<double>();
+
         double *coeffs = (double*)coeffs_tensor.data_ptr<double>();
         double *linear_coeffs = (double*)linear_coeffs_tensor.data_ptr<double>();
         double *type_bias = (double*)type_bias_tensor.data_ptr<double>();
         double *q_scaler = q_scaler_tensor.data_ptr<double>();
 
-        // TODO
+        find_e_sites_backward_torch_launcher<double>(
+            be_sites_der2coeffs,
+            be_sites_der2linear_coeffs,
+            be_sites_der2type_bias,
+            chebyshev_size,
+            scaling,
+            coeffs,
+            linear_coeffs,
+            type_bias,
+            alpha_moments_count,
+            alpha_index_basic_count,
+            alpha_index_basic,
+            alpha_index_times_count,
+            alpha_index_times,
+            alpha_scalar_moments,
+            alpha_moment_mapping,
+            nmus,
+            batch_size,
+            natoms_pad,
+            binum,
+            bilist,
+            bnumneigh,
+            bfirstneigh,
+            brcs,
+            btypes,
+            ntypes,
+            type_map,
+            umax_num_neigh_atoms,
+            nghost,
+            rmax,
+            rmin,
+            q_scaler);
     }
 
     // 5.

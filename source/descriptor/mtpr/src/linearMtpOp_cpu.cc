@@ -1895,7 +1895,7 @@ torch::autograd::variable_list LinearMtpToEsitesFunctionCPU::forward(
                                         .device(brcs_tensor.device());
 
     // 3.
-    at::Tensor be_sites_tensor = at::zeros({batch_size, natoms_pad}, float_options);
+    at::Tensor be_sites_tensor = at::zeros({batch_size, (natoms_pad+nghost)}, float_options);
 
     // 4.
     if (brcs_tensor.scalar_type() == torch::kFloat32) {
@@ -2059,8 +2059,18 @@ torch::autograd::variable_list LinearMtpToEsitesFunctionCPU::backward(
     int alpha_index_basic_count = alpha_index_basic_tensor.size(0);
     int alpha_index_times_count = alpha_index_times_tensor.size(0);
     int alpha_scalar_moments = alpha_moment_mapping_tensor.size(0);
+    int (*alpha_index_basic)[4] = (int (*)[4])alpha_index_basic_tensor.data_ptr<int>();
+    int (*alpha_index_times)[4] = (int (*)[4])alpha_index_times_tensor.data_ptr<int>();
+    int *alpha_moment_mapping = (int*)alpha_moment_mapping_tensor.data_ptr<int>();
+    
     int ntypes = type_map_tensor.size(0);
     int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
+    int *binum = binum_tensor.data_ptr<int>();
+    int *bilist = bilist_tensor.data_ptr<int>();
+    int *bnumneigh = bnumneigh_tensor.data_ptr<int>();
+    int *bfirstneigh = bfirstneigh_tensor.data_ptr<int>();
+    int *btypes = btypes_tensor.data_ptr<int>();
+    int *type_map = type_map_tensor.data_ptr<int>();
 
     // 2.
     c10::TensorOptions int_options = c10::TensorOptions()
@@ -2071,112 +2081,97 @@ torch::autograd::variable_list LinearMtpToEsitesFunctionCPU::backward(
                                         .device(brcs_tensor.device());
 
     // 3.
-    at::Tensor be_sites_der2coeffs_tensor = at::zeros({batch_size, natoms_pad, num_coeffs}, float_options);
-    at::Tensor be_sites_der2linear_coeffs_tensor = at::zeros({batch_size, natoms_pad, alpha_scalar_moments}, float_options);
-    at::Tensor be_sites_der2type_bias_tensor = at::zeros({batch_size, natoms_pad, ntypes}, float_options);
+    at::Tensor be_sites_der2coeffs_tensor = at::zeros({batch_size, (natoms_pad+nghost), num_coeffs}, float_options);
+    at::Tensor be_sites_der2linear_coeffs_tensor = at::zeros({batch_size, (natoms_pad+nghost), alpha_scalar_moments}, float_options);
+    at::Tensor be_sites_der2type_bias_tensor = at::zeros({batch_size, (natoms_pad+nghost), ntypes}, float_options);
 
     // 4.
-    int (*alpha_index_basic)[4] = (int (*)[4])alpha_index_basic_tensor.data_ptr<int>();
-    int (*alpha_index_times)[4] = (int (*)[4])alpha_index_times_tensor.data_ptr<int>();
-    int *alpha_moment_mapping = (int*)alpha_moment_mapping_tensor.data_ptr<int>();
-    int *type_map = (int*)type_map_tensor.data_ptr<int>();
-
     if (brcs_tensor.scalar_type() == torch::kFloat32) {
+        float *be_sites_der2coeffs = be_sites_der2coeffs_tensor.data_ptr<float>();
+        float *be_sites_der2linear_coeffs = be_sites_der2linear_coeffs_tensor.data_ptr<float>();
+        float *be_sites_der2type_bias = be_sites_der2type_bias_tensor.data_ptr<float>();
+        float (*brcs)[3] = (float (*)[3])brcs_tensor.data_ptr<float>();
+
         float *coeffs = (float*)coeffs_tensor.data_ptr<float>();
         float *linear_coeffs = (float*)linear_coeffs_tensor.data_ptr<float>();
         float *type_bias = (float*)type_bias_tensor.data_ptr<float>();
         float *q_scaler = q_scaler_tensor.data_ptr<float>();
 
-        for (int bb=0; bb<batch_size; bb++) {
-            float *e_sites_der2coeffs = (float*)be_sites_der2coeffs_tensor[bb].data_ptr<float>();
-            float *e_sites_der2linear_coeffs = (float*)be_sites_der2linear_coeffs_tensor[bb].data_ptr<float>();
-            float *e_sites_der2type_bias = (float*)be_sites_der2type_bias_tensor[bb].data_ptr<float>();
-            int inum = binum_tensor[bb].item<int>();
-            int *ilist = bilist_tensor[bb].data_ptr<int>();
-            int *numneigh = bnumneigh_tensor[bb].data_ptr<int>();
-            int *firstneigh = bfirstneigh_tensor[bb].data_ptr<int>();
-            float (*rcs)[3] = (float (*)[3])brcs_tensor[bb].data_ptr<float>();
-            int *types = btypes_tensor[bb].data_ptr<int>();
-
-            LinearMtp<float>::find_e_sites_backward(
-                e_sites_der2coeffs,
-                e_sites_der2linear_coeffs,
-                e_sites_der2type_bias,
-                chebyshev_size,
-                scaling,
-                coeffs,
-                linear_coeffs,
-                type_bias,
-                alpha_moments_count,
-                alpha_index_basic_count,
-                alpha_index_basic,
-                alpha_index_times_count,
-                alpha_index_times,
-                alpha_scalar_moments,
-                alpha_moment_mapping,
-                nmus,
-                inum,
-                ilist,
-                numneigh,
-                firstneigh,
-                rcs,
-                types,
-                ntypes,
-                type_map,
-                umax_num_neigh_atoms,
-                nghost,
-                rmax,
-                rmin,
-                q_scaler);
-        }
+        ai2pot::mtpr::find_e_sites_backward_cpu_launcher<float>(
+            be_sites_der2coeffs,
+            be_sites_der2linear_coeffs,
+            be_sites_der2type_bias,
+            chebyshev_size,
+            scaling,
+            coeffs,
+            linear_coeffs,
+            type_bias,
+            alpha_moments_count,
+            alpha_index_basic_count,
+            alpha_index_basic,
+            alpha_index_times_count,
+            alpha_index_times,
+            alpha_scalar_moments,
+            alpha_moment_mapping,
+            nmus,
+            batch_size,
+            natoms_pad,
+            binum,
+            bilist,
+            bnumneigh,
+            bfirstneigh,
+            brcs,
+            btypes,
+            ntypes,
+            type_map,
+            umax_num_neigh_atoms,
+            nghost,
+            rmax,
+            rmin,
+            q_scaler);
     } else {
+        double *be_sites_der2coeffs = be_sites_der2coeffs_tensor.data_ptr<double>();
+        double *be_sites_der2linear_coeffs = be_sites_der2linear_coeffs_tensor.data_ptr<double>();
+        double *be_sites_der2type_bias = be_sites_der2type_bias_tensor.data_ptr<double>();
+        double (*brcs)[3] = (double (*)[3])brcs_tensor.data_ptr<double>();
+
         double *coeffs = (double*)coeffs_tensor.data_ptr<double>();
         double *linear_coeffs = (double*)linear_coeffs_tensor.data_ptr<double>();
         double *type_bias = (double*)type_bias_tensor.data_ptr<double>();
         double *q_scaler = q_scaler_tensor.data_ptr<double>();
 
-        for (int bb=0; bb<batch_size; bb++) {
-            double *e_sites_der2coeffs = (double*)be_sites_der2coeffs_tensor[bb].data_ptr<double>();
-            double *e_sites_der2linear_coeffs = (double*)be_sites_der2linear_coeffs_tensor[bb].data_ptr<double>();
-            double *e_sites_der2type_bias = (double*)be_sites_der2type_bias_tensor[bb].data_ptr<double>();
-            int inum = binum_tensor[bb].item<int>();
-            int *ilist = bilist_tensor[bb].data_ptr<int>();
-            int *numneigh = bnumneigh_tensor[bb].data_ptr<int>();
-            int *firstneigh = bfirstneigh_tensor[bb].data_ptr<int>();
-            double (*rcs)[3] = (double (*)[3])brcs_tensor[bb].data_ptr<double>();
-            int *types = btypes_tensor[bb].data_ptr<int>();
-
-            LinearMtp<double>::find_e_sites_backward(
-                e_sites_der2coeffs,
-                e_sites_der2linear_coeffs,
-                e_sites_der2type_bias,
-                chebyshev_size,
-                scaling,
-                coeffs,
-                linear_coeffs,
-                type_bias,
-                alpha_moments_count,
-                alpha_index_basic_count,
-                alpha_index_basic,
-                alpha_index_times_count,
-                alpha_index_times,
-                alpha_scalar_moments,
-                alpha_moment_mapping,
-                nmus,
-                inum,
-                ilist,
-                numneigh,
-                firstneigh,
-                rcs,
-                types,
-                ntypes,
-                type_map,
-                umax_num_neigh_atoms,
-                nghost,
-                rmax,
-                rmin,
-                q_scaler);
-        }
+        ai2pot::mtpr::find_e_sites_backward_cpu_launcher<double>(
+            be_sites_der2coeffs,
+            be_sites_der2linear_coeffs,
+            be_sites_der2type_bias,
+            chebyshev_size,
+            scaling,
+            coeffs,
+            linear_coeffs,
+            type_bias,
+            alpha_moments_count,
+            alpha_index_basic_count,
+            alpha_index_basic,
+            alpha_index_times_count,
+            alpha_index_times,
+            alpha_scalar_moments,
+            alpha_moment_mapping,
+            nmus,
+            batch_size,
+            natoms_pad,
+            binum,
+            bilist,
+            bnumneigh,
+            bfirstneigh,
+            brcs,
+            btypes,
+            ntypes,
+            type_map,
+            umax_num_neigh_atoms,
+            nghost,
+            rmax,
+            rmin,
+            q_scaler);
     }
 
     // 5.
