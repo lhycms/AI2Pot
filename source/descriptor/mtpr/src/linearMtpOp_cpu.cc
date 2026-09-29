@@ -2353,6 +2353,190 @@ torch::autograd::variable_list LinearMtpToDescriptorsFunctionCPU::backward(
 }
 
 
+torch::autograd::variable_list LinearMtpToEsitesJacobianFunctionCPU::forward(
+    torch::autograd::AutogradContext *ctx,
+    int chebyshev_size,
+    double scaling,
+    const at::Tensor& coeffs_tensor,
+    const at::Tensor& linear_coeffs_tensor,
+    const at::Tensor& type_bias_tensor,
+    int alpha_moments_count,
+    const at::Tensor& alpha_index_basic_tensor,
+    const at::Tensor& alpha_index_times_tensor,
+    const at::Tensor& alpha_moment_mapping_tensor,
+    int nmus,
+    const at::Tensor& binum_tensor,
+    const at::Tensor& bilist_tensor,
+    const at::Tensor& bnumneigh_tensor,
+    const at::Tensor& bfirstneigh_tensor,
+    const at::Tensor& brcs_tensor,
+    const at::Tensor& btypes_tensor,
+    const at::Tensor& type_map_tensor,
+    int nghost,
+    double rmax,
+    double rmin,
+    const at::Tensor& q_scaler_tensor)
+{
+    // 1.
+    int batch_size = binum_tensor.size(0);
+    int natoms_pad = bnumneigh_tensor.size(1);  // not inum
+    int alpha_index_basic_count = alpha_index_basic_tensor.size(0);
+    int alpha_index_times_count = alpha_index_times_tensor.size(0);
+    int alpha_scalar_moments = alpha_moment_mapping_tensor.size(0);
+    int umax_num_neigh_atoms = bfirstneigh_tensor.size(2);
+    int ntypes = type_map_tensor.size(0);
+    int (*alpha_index_basic)[4] = (int (*)[4])alpha_index_basic_tensor.data_ptr<int>();
+    int (*alpha_index_times)[4] = (int (*)[4])alpha_index_times_tensor.data_ptr<int>();
+    int *alpha_moment_mapping = alpha_moment_mapping_tensor.data_ptr<int>();
+    int *type_map = type_map_tensor.data_ptr<int>();
+
+    int *binum = binum_tensor.data_ptr<int>();
+    int *bilist = bilist_tensor.data_ptr<int>();
+    int *bnumneigh = bnumneigh_tensor.data_ptr<int>();
+    int *bfirstneigh = bfirstneigh_tensor.data_ptr<int>();
+    int *btypes = btypes_tensor.data_ptr<int>();
+
+    // 2.
+    c10::TensorOptions int_options = c10::TensorOptions()
+                                     .dtype(torch::kInt32)
+                                     .device(brcs_tensor.device());
+    c10::TensorOptions float_options = c10::TensorOptions()
+                                       .dtype(brcs_tensor.scalar_type())
+                                       .device(brcs_tensor.device());
+
+    // 3. 
+    int num_coeffs = ntypes * ntypes * nmus * chebyshev_size;
+    at::Tensor be_sites_der2coeffs_tensor = at::zeros({batch_size, (natoms_pad+nghost), num_coeffs}, float_options);
+    at::Tensor be_sites_der2linear_coeffs_tensor = at::zeros({batch_size, (natoms_pad+nghost), alpha_scalar_moments}, float_options);
+    at::Tensor be_sites_der2type_bias_tensor = at::zeros({batch_size, (natoms_pad+nghost), ntypes}, float_options);
+
+    // 4.
+    if (brcs_tensor.scalar_type() == torch::kFloat32) {
+        float *be_sites_der2coeffs = be_sites_der2coeffs_tensor.data_ptr<float>();
+        float *be_sites_der2linear_coeffs = be_sites_der2linear_coeffs_tensor.data_ptr<float>();
+        float *be_sites_der2type_bias = be_sites_der2type_bias_tensor.data_ptr<float>();
+        float (*brcs)[3] = (float (*)[3])brcs_tensor.data_ptr<float>();
+
+        float* coeffs = coeffs_tensor.data_ptr<float>();
+        float* linear_coeffs = linear_coeffs_tensor.data_ptr<float>();
+        float* type_bias = type_bias_tensor.data_ptr<float>();
+        float* q_scaler = q_scaler_tensor.data_ptr<float>();
+
+        ai2pot::mtpr::find_e_sites_backward_cpu_launcher<float>(
+            be_sites_der2coeffs,
+            be_sites_der2linear_coeffs,
+            be_sites_der2type_bias,
+            chebyshev_size,
+            scaling,
+            coeffs,
+            linear_coeffs,
+            type_bias,
+            alpha_moments_count,
+            alpha_index_basic_count,
+            alpha_index_basic,
+            alpha_index_times_count,
+            alpha_index_times,
+            alpha_scalar_moments,
+            alpha_moment_mapping,
+            nmus,
+            batch_size,
+            natoms_pad,
+            binum,
+            bilist,
+            bnumneigh,
+            bfirstneigh,
+            brcs,
+            btypes,
+            ntypes,
+            type_map,
+            umax_num_neigh_atoms,
+            nghost,
+            rmax,
+            rmin,
+            q_scaler);
+    } else {
+        double *be_sites_der2coeffs = be_sites_der2coeffs_tensor.data_ptr<double>();
+        double *be_sites_der2linear_coeffs = be_sites_der2linear_coeffs_tensor.data_ptr<double>();
+        double *be_sites_der2type_bias = be_sites_der2type_bias_tensor.data_ptr<double>();
+        double (*brcs)[3] = (double (*)[3])brcs_tensor.data_ptr<double>();
+
+        double *coeffs = (double*)coeffs_tensor.data_ptr<double>();
+        double *linear_coeffs = (double*)linear_coeffs_tensor.data_ptr<double>();
+        double *type_bias = (double*)type_bias_tensor.data_ptr<double>();
+        double *q_scaler = q_scaler_tensor.data_ptr<double>();
+
+        ai2pot::mtpr::find_e_sites_backward_cpu_launcher<double>(
+            be_sites_der2coeffs,
+            be_sites_der2linear_coeffs,
+            be_sites_der2type_bias,
+            chebyshev_size,
+            scaling,
+            coeffs,
+            linear_coeffs,
+            type_bias,
+            alpha_moments_count,
+            alpha_index_basic_count,
+            alpha_index_basic,
+            alpha_index_times_count,
+            alpha_index_times,
+            alpha_scalar_moments,
+            alpha_moment_mapping,
+            nmus,
+            batch_size,
+            natoms_pad,
+            binum,
+            bilist,
+            bnumneigh,
+            bfirstneigh,
+            brcs,
+            btypes,
+            ntypes,
+            type_map,
+            umax_num_neigh_atoms,
+            nghost,
+            rmax,
+            rmin,
+            q_scaler);
+    }
+
+    return {
+        be_sites_der2coeffs_tensor,
+        be_sites_der2linear_coeffs_tensor,
+        be_sites_der2type_bias_tensor};
+}
+
+
+torch::autograd::variable_list LinearMtpToEsitesJacobianFunctionCPU::backward(
+    torch::autograd::AutogradContext *ctx,
+    torch::autograd::variable_list bgrad_outputs_tensor)
+{
+    return {
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor(),
+        at::Tensor()};
+}
+
+
+
+
 torch::autograd::variable_list LinearMtpToLossOpCPU(
     double e_weight,
     double f_weight,
@@ -2692,6 +2876,54 @@ torch::autograd::variable_list LinearMtpToDescriptorsOpCPU(
         nghost,
         rmax,
         rmin);
+}
+
+
+torch::autograd::variable_list LinearMtpToEsitesJacobianOpCPU(
+    int chebyshev_size,
+    double scaling,
+    const at::Tensor& coeffs_tensor,
+    const at::Tensor& linear_coeffs_tensor,
+    const at::Tensor& type_bias_tensor,
+    int alpha_moments_count,
+    const at::Tensor& alpha_index_basic_tensor,
+    const at::Tensor& alpha_index_times_tensor,
+    const at::Tensor& alpha_moment_mapping_tensor,
+    int nmus,
+    const at::Tensor& binum_tensor,
+    const at::Tensor& bilist_tensor,
+    const at::Tensor& bnumneigh_tensor,
+    const at::Tensor& bfirstneigh_tensor,
+    const at::Tensor& brcs_tensor,
+    const at::Tensor& btypes_tensor,
+    const at::Tensor& type_map_tensor,
+    int nghost,
+    double rmax,
+    double rmin,
+    const at::Tensor& q_scaler_tensor)
+{
+    return LinearMtpToEsitesJacobianFunctionCPU::apply(
+        chebyshev_size,
+        scaling,
+        coeffs_tensor,
+        linear_coeffs_tensor,
+        type_bias_tensor,
+        alpha_moments_count,
+        alpha_index_basic_tensor,
+        alpha_index_times_tensor,
+        alpha_moment_mapping_tensor,
+        nmus,
+        binum_tensor,
+        bilist_tensor,
+        bnumneigh_tensor,
+        bfirstneigh_tensor,
+        brcs_tensor,
+        btypes_tensor,
+        type_map_tensor,
+        nghost,
+        rmax,
+        rmin,
+        q_scaler_tensor);
 }
 
 
