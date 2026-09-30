@@ -1,8 +1,8 @@
 # AI2Pot
 
-Copyright © 2025 Hanyu Liu.
+Copyright © 2025-2026 Hanyu Liu.
 
-AI2Pot is distributed under the GNU General Public License v3.0.
+AI2Pot is distributed under the GNU Lesser General Public License v3.0.
 
 ## What is AI2Pot?
 
