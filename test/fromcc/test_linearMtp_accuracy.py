@@ -88,7 +88,7 @@ class LinearMtpTest(unittest.TestCase):
         print("LinearMtpTest (TestCase) is setting up...\n")
         # 0.
         self.torch_float_dtype: torch._C.dtype = torch.float64
-        self.device: torch._C.device = torch.device("cpu")
+        self.device: torch._C.device = torch.device("cuda")
         
         # 1. 
         self.scaling: float = 0.97
@@ -241,7 +241,7 @@ class LinearMtpTest(unittest.TestCase):
         print(v)
 
     
-    def est_linearMtpToEFLoss(self):
+    def test_linearMtpToEFLoss(self):
         # 1. Parameters
         e_weight: float = 2e1
         f_weight: float = 3e1
@@ -300,7 +300,7 @@ class LinearMtpTest(unittest.TestCase):
         print("-------------------------------------------------")
 
 
-    def est_linearMtpToLoss(self):
+    def test_linearMtpToLoss(self):
         # 1. Parameters
         e_weight: float = 2e1
         f_weight: float = 3e1
@@ -361,7 +361,7 @@ class LinearMtpTest(unittest.TestCase):
         print("-------------------------------------------------")
 
 
-    def est_linearMtpToEsites(self):
+    def test_linearMtpToEsites(self):
         # 1. Parameters
         self.coeffs_tensor.requires_grad_(True)
         self.linear_coeffs_tensor.requires_grad_(True)
