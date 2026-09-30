@@ -25,7 +25,8 @@ from ai2pot.fromcc import (mtpParamOp,
                            linearMtpToLossOp,
                            linearMtpToEFLossOp,
                            linearMtpToEsitesOp,
-                           linearMtpToDescriptorsOp)
+                           linearMtpToDescriptorsOp,
+                           linearMtpToEsitesJacobianOp)
 
 
 class LinearMtp(nn.Module):
@@ -543,3 +544,56 @@ class LinearMtp(nn.Module):
         
         return bdescriptors_tensor
 
+
+    @torch.jit.export
+    def predict_e_sites_jacobian(self,
+                                 binum_tensor: torch.Tensor,
+                                 bilist_tensor: torch.Tensor,
+                                 bnumneigh_tensor: torch.Tensor,
+                                 bfirstneigh_tensor: torch.Tensor,
+                                 brcs_tensor: torch.Tensor,
+                                 btypes_tensor: torch.Tensor,
+                                 bnghost_tensor: torch.Tensor):
+        #
+        conv_energy: float = self.conv_energy_tensor.item()
+        conv_length: float = self.conv_length_tensor.item()
+
+        brcs_tensor_norm: torch.Tensor = brcs_tensor * conv_length
+        rmax_norm: float = self.rmax * conv_length
+        rmin_norm: float = self.rmin * conv_length
+        
+        type_bias_norm: torch.Tensor = self.type_bias_tensor * conv_energy
+        
+        #
+        e_sites_der2coeffs_tensor, e_sites_der2linear_coeffs_tensor, e_sites_der2type_bias_tensor = torch.ops.mtpr.linearMtpToEsitesJacobianOp(
+            self.chebyshev_size,
+            self.scaling,
+            self.coeffs_tensor,
+            self.linear_coeffs_tensor,
+            type_bias_norm,
+            self.alpha_moments_count,
+            self.alpha_index_basic_tensor,
+            self.alpha_index_times_tensor,
+            self.alpha_moment_mapping_tensor,
+            self.nmus,
+            binum_tensor,
+            bilist_tensor,
+            bnumneigh_tensor,
+            bfirstneigh_tensor,
+            brcs_tensor_norm,
+            btypes_tensor,
+            self.type_map_tensor,
+            bnghost_tensor[0].item(),
+            rmax_norm,
+            rmin_norm,
+            self.q_scaler_tensor)
+        
+        e_sites_der2coeffs_tensor = e_sites_der2coeffs_tensor / conv_energy
+        e_sites_der2linear_coeffs_tensor = e_sites_der2linear_coeffs_tensor / conv_energy
+        e_sites_der2type_bias_tensor = e_sites_der2type_bias_tensor / conv_energy
+        
+        return torch.cat(
+            (e_sites_der2coeffs_tensor,
+             e_sites_der2linear_coeffs_tensor,
+             e_sites_der2type_bias_tensor),
+            dim=-1)

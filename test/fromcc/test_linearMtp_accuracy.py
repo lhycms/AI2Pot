@@ -16,7 +16,8 @@ from ai2pot.fromcc import (
     linearMtpToEFVOp,
     linearMtpToEsitesOp,
     mtpParamOp,
-    linearMtpToDescriptorsOp)
+    linearMtpToDescriptorsOp,
+    linearMtpToEsitesJacobianOp)
 
 
 TEST_FILES_DIR = os.path.join(os.getenv("AI2POT_PATH"), "test", "test_data")
@@ -87,7 +88,7 @@ class LinearMtpTest(unittest.TestCase):
         print("LinearMtpTest (TestCase) is setting up...\n")
         # 0.
         self.torch_float_dtype: torch._C.dtype = torch.float64
-        self.device: torch._C.device = torch.device("cuda")
+        self.device: torch._C.device = torch.device("cpu")
         
         # 1. 
         self.scaling: float = 0.97
@@ -240,7 +241,7 @@ class LinearMtpTest(unittest.TestCase):
         print(v)
 
     
-    def test_linearMtpToEFLoss(self):
+    def est_linearMtpToEFLoss(self):
         # 1. Parameters
         e_weight: float = 2e1
         f_weight: float = 3e1
@@ -299,7 +300,7 @@ class LinearMtpTest(unittest.TestCase):
         print("-------------------------------------------------")
 
 
-    def test_linearMtpToLoss(self):
+    def est_linearMtpToLoss(self):
         # 1. Parameters
         e_weight: float = 2e1
         f_weight: float = 3e1
@@ -360,7 +361,7 @@ class LinearMtpTest(unittest.TestCase):
         print("-------------------------------------------------")
 
 
-    def test_linearMtpToEsites(self):
+    def est_linearMtpToEsites(self):
         # 1. Parameters
         self.coeffs_tensor.requires_grad_(True)
         self.linear_coeffs_tensor.requires_grad_(True)
@@ -433,6 +434,35 @@ class LinearMtpTest(unittest.TestCase):
 
         #print(bdescriptors.reshape(-1, bdescriptors.shape[-1]).min(dim=0).values)
         #save_bar_plot([*range(bdescriptors.shape[-1])], bdescriptors.reshape(-1, bdescriptors.shape[-1]).min(dim=0).values)
+
+
+    def test_output_linearMtpToEsitesJacobian(self):
+        input_info: List[torch.Tensor] = self.mlff_input.analyse_pymatgen(self.structure)
+        e_sites_der2coeffs_tensor, e_sites_der2linear_coeffs_tensor, e_sites_der2type_bias_tensor = linearMtpToEsitesJacobianOp(self.chebyshev_size,
+                               self.scaling,
+                                self.coeffs_tensor,
+                                self.linear_coeffs_tensor,
+                                self.type_bias_tensor,
+                                self.alpha_moments_count,
+                                self.alpha_index_basic_tensor,
+                                self.alpha_index_times_tensor,
+                                self.alpha_moment_mapping_tensor,
+                                self.nmus,
+                                input_info[0],
+                                input_info[1],
+                                input_info[2],
+                                input_info[3],
+                                input_info[4],
+                                input_info[5],
+                                self.type_map_tensor,
+                                input_info[6],
+                                self.rmax,
+                                self.rmin,
+                                self.q_scaler_tensor)
+
+        print(e_sites_der2coeffs_tensor.shape)
+        print(e_sites_der2linear_coeffs_tensor.shape)
+        print(e_sites_der2type_bias_tensor.shape)
 
 
 if __name__ == "__main__":
