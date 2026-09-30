@@ -170,6 +170,7 @@ else:
     linearMtpToEFOp = torch.ops.mtpr.linearMtpToEFOp
     linearMtpToEsitesOp = torch.ops.mtpr.linearMtpToEsitesOp
     linearMtpToDescriptorsOp = torch.ops.mtpr.linearMtpToDescriptorsOp
+    linearMtpToEsitesJacobianOp = torch.ops.mtpr.linearMtpToEsitesJacobianOp
     # Action
     torch.ops.mtpr.set_ai2pot_path(ai2pot_path)
 

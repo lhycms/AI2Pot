@@ -455,7 +455,7 @@ class LinearMtpTest(unittest.TestCase):
                                 input_info[4],
                                 input_info[5],
                                 self.type_map_tensor,
-                                input_info[6],
+                                input_info[6].item(),
                                 self.rmax,
                                 self.rmin,
                                 self.q_scaler_tensor)

@@ -454,7 +454,6 @@ class LinearMtp(nn.Module):
                         brcs_tensor: torch.Tensor,
                         btypes_tensor: torch.Tensor,
                         bnghost_tensor: torch.Tensor):
-        assert(brcs_tensor.device == torch.device("cpu"))
         #
         conv_energy: float = self.conv_energy_tensor.item()
         conv_length: float = self.conv_length_tensor.item()
@@ -590,7 +589,7 @@ class LinearMtp(nn.Module):
         
         e_sites_der2coeffs_tensor = e_sites_der2coeffs_tensor / conv_energy
         e_sites_der2linear_coeffs_tensor = e_sites_der2linear_coeffs_tensor / conv_energy
-        e_sites_der2type_bias_tensor = e_sites_der2type_bias_tensor / conv_energy
+        # e_sites_der2type_bias_tensor = e_sites_der2type_bias_tensor / conv_energy
         
         return torch.cat(
             (e_sites_der2coeffs_tensor,
