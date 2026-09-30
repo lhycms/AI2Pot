@@ -248,6 +248,39 @@ public:
 };  // class : LinearMtpToDescriptorsCUDA
 
 
+class LinearMtpToEsitesJacobianFunctionCUDA : public torch::autograd::Function<LinearMtpToEsitesJacobianFunctionCUDA>
+{
+public:
+    static torch::autograd::variable_list forward(
+        torch::autograd::AutogradContext *ctx,
+        int chebyshev_size,
+        double scaling,
+        const at::Tensor& coeffs_tensor,
+        const at::Tensor& linear_coeffs_tensor,
+        const at::Tensor& type_bias_tensor,
+        int alpha_moments_count,
+        const at::Tensor& alpha_index_basic_tensor,
+        const at::Tensor& alpha_index_times_tensor,
+        const at::Tensor& alpha_moment_mapping_tensor,
+        int nmus,
+        const at::Tensor& binum_tensor,
+        const at::Tensor& bilist_tensor,
+        const at::Tensor& bnumneigh_tensor,
+        const at::Tensor& bfirstneigh_tensor,
+        const at::Tensor& brcs_tensor,
+        const at::Tensor& btypes_tensor,
+        const at::Tensor& type_map_tensor,
+        int nghost,
+        double rmax,
+        double rmin,
+        const at::Tensor& q_scaler_tensor);
+
+    static torch::autograd::variable_list backward(
+        torch::autograd::AutogradContext *ctx,
+        torch::autograd::variable_list bgrad_outputs_tensor);
+};
+
+
 torch::autograd::variable_list LinearMtpToLossOpCUDA(
     double e_weight,
     double f_weight,
@@ -418,6 +451,29 @@ torch::autograd::variable_list LinearMtpToDescriptorsOpCUDA(
     double rmax,
     double rmin);
 
+
+torch::autograd::variable_list LinearMtpToEsitesJacobianOpCUDA(
+    int chebyshev_size,
+    double scaling,
+    const at::Tensor& coeffs_tensor,
+    const at::Tensor& linear_coeffs_tensor,
+    const at::Tensor& type_bias_tensor,
+    int alpha_moments_count,
+    const at::Tensor& alpha_index_basic_tensor,
+    const at::Tensor& alpha_index_times_tensor,
+    const at::Tensor& alpha_moment_mapping_tensor,
+    int nmus,
+    const at::Tensor& binum_tensor,
+    const at::Tensor& bilist_tensor,
+    const at::Tensor& bnumneigh_tensor,
+    const at::Tensor& bfirstneigh_tensor,
+    const at::Tensor& brcs_tensor,
+    const at::Tensor& btypes_tensor,
+    const at::Tensor& type_map_tensor,
+    int nghost,
+    double rmax,
+    double rmin,
+    const at::Tensor& q_scaler_tensor);
 
 
 };  // namespace : mtpr

@@ -499,6 +499,55 @@ TORCH_LIBRARY_IMPL(mtpr, CUDA, m) {
                 rmin);
         }
     );
+
+    m.impl(
+        "linearMtpToEsitesJacobianOp",
+        [](int64_t chebyshev_size,
+           double scaling,
+           const at::Tensor& coeffs_tensor,
+           const at::Tensor& linear_coeffs_tensor,
+           const at::Tensor& type_bias_tensor,
+           int64_t alpha_moments_count,
+           const at::Tensor& alpha_index_basic_tensor,
+           const at::Tensor& alpha_index_times_tensor,
+           const at::Tensor& alpha_moment_mapping_tensor,
+           int64_t nmus,
+           const at::Tensor& binum_tensor,
+           const at::Tensor& bilist_tensor,
+           const at::Tensor& bnumneigh_tensor,
+           const at::Tensor& bfirstneigh_tensor,
+           const at::Tensor& brcs_tensor,
+           const at::Tensor& btypes_tensor,
+           const at::Tensor& type_map_tensor,
+           int64_t nghost,
+           double rmax,
+           double rmin,
+           const at::Tensor& q_scaler_tensor)
+        {
+            return ai2pot::mtpr::LinearMtpToEsitesJacobianOpCUDA(
+                (int)chebyshev_size,
+                scaling,
+                coeffs_tensor,
+                linear_coeffs_tensor,
+                type_bias_tensor,
+                (int)alpha_moments_count,
+                alpha_index_basic_tensor,
+                alpha_index_times_tensor,
+                alpha_moment_mapping_tensor,
+                (int)nmus,
+                binum_tensor,
+                bilist_tensor,
+                bnumneigh_tensor,
+                bfirstneigh_tensor,
+                brcs_tensor,
+                btypes_tensor,
+                type_map_tensor,
+                (int)nghost,
+                rmax,
+                rmin,
+                q_scaler_tensor);
+        }
+    );
 }
 
 
@@ -975,6 +1024,56 @@ TORCH_LIBRARY_IMPL(mtpr, AutogradCUDA, m) {
                 (int)nghost,
                 rmax,
                 rmin);
+        }
+    );
+
+
+    m.impl(
+        "linearMtpToEsitesJacobianOp",
+        [](int64_t chebyshev_size,
+           double scaling,
+           const at::Tensor& coeffs_tensor,
+           const at::Tensor& linear_coeffs_tensor,
+           const at::Tensor& type_bias_tensor,
+           int64_t alpha_moments_count,
+           const at::Tensor& alpha_index_basic_tensor,
+           const at::Tensor& alpha_index_times_tensor,
+           const at::Tensor& alpha_moment_mapping_tensor,
+           int64_t nmus,
+           const at::Tensor& binum_tensor,
+           const at::Tensor& bilist_tensor,
+           const at::Tensor& bnumneigh_tensor,
+           const at::Tensor& bfirstneigh_tensor,
+           const at::Tensor& brcs_tensor,
+           const at::Tensor& btypes_tensor,
+           const at::Tensor& type_map_tensor,
+           int64_t nghost,
+           double rmax,
+           double rmin,
+           const at::Tensor& q_scaler_tensor)
+        {
+            return ai2pot::mtpr::LinearMtpToEsitesJacobianOpCUDA(
+                (int)chebyshev_size,
+                scaling,
+                coeffs_tensor,
+                linear_coeffs_tensor,
+                type_bias_tensor,
+                (int)alpha_moments_count,
+                alpha_index_basic_tensor,
+                alpha_index_times_tensor,
+                alpha_moment_mapping_tensor,
+                (int)nmus,
+                binum_tensor,
+                bilist_tensor,
+                bnumneigh_tensor,
+                bfirstneigh_tensor,
+                brcs_tensor,
+                btypes_tensor,
+                type_map_tensor,
+                (int)nghost,
+                rmax,
+                rmin,
+                q_scaler_tensor);
         }
     );
 }

@@ -25,7 +25,7 @@ class LinearMtpTest(unittest.TestCase):
         self.rmax: float = 5.0
         self.rmin: float = 0.0
         self.umax_num_neigh_atoms = 200
-        self.device: torch._C.device = torch.device("cpu")
+        self.device: torch._C.device = torch.device("cuda")
         self.torch_float_dtype: torch._C.dtype = torch.float32
         self.linear_mtp: LinearMtp = LinearMtp(type_map=self.type_map,
                                                umax_num_neigh_atoms=self.umax_num_neigh_atoms,
@@ -175,6 +175,21 @@ class LinearMtpTest(unittest.TestCase):
         print("0.2. std time cost by linear_mtp.predict_descriptors() = ", np.std(times_list) / 100)
         print("\t1. descriptors = ", descriptors[0, 0, :])
 
+
+    def test_predict_e_sites_jacobian(self):
+        times_list: List[float] = []
+        for ii in range(110):
+            t1 = time.time()
+            e_sites_jacobian_tensor = self.linear_mtp.predict_e_sites_jacobian(*self.mlff_input.analyse_pymatgen(structure=self.structure))
+            t2 = time.time()
+            if (ii>9):
+                times_list.append(t2-t1)
+            if (ii==0):
+                print(e_sites_jacobian_tensor)
+
+        print("0.1. Average time cost by linear_mtp.predict_e_sites_jacobian() = ", np.sum(times_list) / 100)
+        print("0.2. std time cost by linear_mtp.predict_e_sites_jacobian() = ", np.std(times_list) / 100)
+        print("1. e_sites_jacobian_tensor.shape = ", e_sites_jacobian_tensor.shape)
 
 if __name__ == "__main__":
     unittest.main()
