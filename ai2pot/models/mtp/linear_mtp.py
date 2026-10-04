@@ -447,6 +447,7 @@ class LinearMtp(nn.Module):
         return betot_tensor, bforce_tensor
     
 
+    @torch.jit.ignore
     def predict_e_sites(self,
                         binum_tensor: torch.Tensor,
                         bilist_tensor: torch.Tensor,
@@ -456,8 +457,8 @@ class LinearMtp(nn.Module):
                         btypes_tensor: torch.Tensor,
                         bnghost_tensor: torch.Tensor):
         #
-        conv_energy: float = self.conv_energy_tensor.item()
-        conv_length: float = self.conv_length_tensor.item()
+        conv_energy: float = float( self.conv_energy_tensor.item() )
+        conv_length: float = float( self.conv_length_tensor.item() )
 
         brcs_tensor_norm: torch.Tensor = brcs_tensor * conv_length
 
@@ -504,7 +505,7 @@ class LinearMtp(nn.Module):
         return be_sites_tensor
 
 
-    @torch.no_grad()
+    @torch.jit.ignore
     def predict_descriptors(self,
                             binum_tensor: torch.Tensor,
                             bilist_tensor: torch.Tensor,
@@ -514,7 +515,7 @@ class LinearMtp(nn.Module):
                             btypes_tensor: torch.Tensor,
                             bnghost_tensor: torch.Tensor):
         #
-        conv_length: float = self.conv_length_tensor.item()
+        conv_length: float = float( self.conv_length_tensor.item() )
 
         brcs_tensor_norm: torch.Tensor = brcs_tensor * conv_length
 
@@ -555,8 +556,8 @@ class LinearMtp(nn.Module):
                                  btypes_tensor: torch.Tensor,
                                  bnghost_tensor: torch.Tensor):
         #
-        conv_energy: float = self.conv_energy_tensor.item()
-        conv_length: float = self.conv_length_tensor.item()
+        conv_energy: float = float( self.conv_energy_tensor.item() )
+        conv_length: float = float( self.conv_length_tensor.item() )
 
         brcs_tensor_norm: torch.Tensor = brcs_tensor * conv_length
         rmax_norm: float = self.rmax * conv_length
