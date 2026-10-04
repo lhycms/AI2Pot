@@ -108,13 +108,13 @@ class ExtxyzDataModule(LightningDataModule):
         # trainer.test(model, datamodule=dm)
         return DataLoader(dataset=self.testset_dataset,
                           batch_size=self.batch_size,
-                          shuffle=True)
+                          shuffle=False)
 
     
     def predict_dataloader(self):
         # trainer.predict(model, datamodule=dm)
         return DataLoader(dataset=self.predictset_dataset,
                           batch_size=self.batch_size,
-                          shuffle=True)
+                          shuffle=False)
     
 
