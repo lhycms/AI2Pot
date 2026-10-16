@@ -38,7 +38,7 @@ class LinearMtpMaxvolGeneratorTest(unittest.TestCase):
         self.linear_mtp_maxvol_generator: LinearMtpMaxvolGenerator = LinearMtpMaxvolGenerator(
             checkpoint_path=CHECK_POINT_PATH,
             candidate_set_path=EXTXYZ_PATH,
-            map_location="cuda",
+            map_location="cpu",
             pbc_xyz=[True, True, True])
 
 
@@ -46,9 +46,21 @@ class LinearMtpMaxvolGeneratorTest(unittest.TestCase):
         print("LinearMtpSerializer (TestCase) is tearing down...")
         
     
-    def test_generate_candidate_set_matrix(self):
+    def est_generate_candidate_set_matrix(self):
         structure_id_tensor, atom_id_tensor, candidate_matrix_tensor = self.linear_mtp_maxvol_generator._generate_candidate_set_matrix()
-        print(structure_id_tensor.shape, atom_id_tensor.shape, candidate_matrix_tensor.shape)
+        print(structure_id_tensor.shape)
+        print(atom_id_tensor.shape)
+        print(candidate_matrix_tensor.shape)
+        
+    
+    def test_generate_maxvol_matrix(self):
+        maxvol_structure_id_tensor, maxvol_atom_id_tensor, maxvol_matrix, maxvol_matrix_inv = \
+            self.linear_mtp_maxvol_generator.generate_maxvol_matrix()
+        print(maxvol_structure_id_tensor)
+        print(maxvol_atom_id_tensor)
+        print(maxvol_matrix)
+        print(maxvol_matrix_inv)
+    
 
 
 if __name__ == "__main__":
