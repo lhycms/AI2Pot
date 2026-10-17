@@ -5,6 +5,7 @@ from typing import List
 
 import numpy as np
 import torch
+from torch.utils.data import DataLoader
 from pymatgen.core import Structure
 from ai2pot.utils import (MlffInput, MlffToLossInput, MlffToEFLossInput)
 from ai2pot.models.mtp.linear_mtp import LinearMtp
@@ -38,8 +39,13 @@ class LinearMtpMaxvolGeneratorTest(unittest.TestCase):
         self.linear_mtp_maxvol_generator: LinearMtpMaxvolGenerator = LinearMtpMaxvolGenerator(
             checkpoint_path=CHECK_POINT_PATH,
             candidate_set_path=EXTXYZ_PATH,
-            map_location="cpu",
+            map_location="cuda",
             pbc_xyz=[True, True, True])
+        
+        self.device: torch._C.device = torch.device("cuda")
+        
+        self.linear_mtp: LinearMtp = self.linear_mtp_maxvol_generator.model
+        self.candidate_set_dataloader: DataLoader = self.linear_mtp_maxvol_generator.candidate_set_dataloader
 
 
     def tearDown(self):
@@ -53,7 +59,7 @@ class LinearMtpMaxvolGeneratorTest(unittest.TestCase):
         print(candidate_matrix_tensor.shape)
         
     
-    def test_generate_maxvol_matrix(self):
+    def est_generate_maxvol_matrix(self):
         maxvol_structure_id_tensor, maxvol_atom_id_tensor, maxvol_matrix, maxvol_matrix_inv = \
             self.linear_mtp_maxvol_generator.generate_maxvol_matrix()
         print(maxvol_structure_id_tensor)
@@ -61,6 +67,34 @@ class LinearMtpMaxvolGeneratorTest(unittest.TestCase):
         print(maxvol_matrix)
         print(maxvol_matrix_inv)
     
+    
+    def est_linear_mtp_predict_gamma(self):
+        maxvol_structure_id_tensor, maxvol_atom_id_tensor, maxvol_matrix, maxvol_matrix_inv = \
+            self.linear_mtp_maxvol_generator.generate_maxvol_matrix()
+
+        for batch_idx, batch_data in enumerate(self.candidate_set_dataloader):
+            binum_tensor, bilist_tensor, bnumneigh_tensor, bfirstneigh_tensor, \
+                brcs_tensor, btypes_tensor, bnghost_tensor, \
+                betot_dft_tensor, bforce_dft_tensor, bvirial_dft_tensor = \
+                    [t.to(self.device) for t in batch_data]
+            bgamma_strutures_tensor, bgamma_atoms_tensor = self.linear_mtp.predict_gamma(
+                binum_tensor,
+                bilist_tensor,
+                bnumneigh_tensor,
+                bfirstneigh_tensor,
+                brcs_tensor,
+                btypes_tensor,
+                bnghost_tensor,
+                maxvol_matrix_inv)
+            
+            print(bgamma_strutures_tensor)
+            print(bgamma_atoms_tensor.amax())
+    
+    
+    def test_get_gamma(self):
+        gamma_structures_tensor, gamma_atoms_tensor = self.linear_mtp_maxvol_generator.get_gamma(new_candidate_path=EXTXYZ_PATH)
+        print(gamma_structures_tensor.shape)
+        print(gamma_atoms_tensor.shape)
 
 
 if __name__ == "__main__":

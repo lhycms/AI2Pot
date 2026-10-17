@@ -24,6 +24,7 @@ import torch
 from torch.utils.data import DataLoader
 
 from ai2pot.data.mlffdatamodule import ExtxyzDataModule
+from ai2pot.data.mlffdataset import ExtxyzDataset
 from ai2pot.models.potential_train import LitLinearMtp
 from ai2pot.models.mtp.linear_mtp import (LinearMtp)
 
@@ -106,7 +107,7 @@ class LinearMtpMaxvolGenerator(object):
     
     @torch.no_grad()
     def generate_maxvol_matrix(self,
-                               maxiter: int = 10000,
+                               maxiter: int = 20000,
                                tol: float = 1e-4,
                                rank_tol: float = 1e-12):
         structure_id_tensor, atom_id_tensor, candidate_set_matrix_tensor = self._generate_candidate_set_matrix()
@@ -187,12 +188,88 @@ class LinearMtpMaxvolGenerator(object):
             )
         
         ### Step 4. Save MaxVol matrix and selected atom IDs
+        ### Step 4.2.        
         maxvol_matrix: torch.Tensor = B_matrix[selected].clone()
         maxvol_matrix_inv: torch.Tensor = torch.linalg.inv(maxvol_matrix)
         maxvol_structure_id_tensor: torch.Tensor = structure_id_tensor[selected]
         maxvol_atom_id_tensor: torch.Tensor = atom_id_tensor[selected]
         
+        ### Step 4.2. Veritifation
+        # Recompute coefficients to verify convergence
+        C_check: torch.Tensor = torch.linalg.solve(
+            maxvol_matrix.T, B_matrix.T
+        ).T
+        max_gamma: float = C_check.abs().max().item()
+        if max_gamma > 1.0 + tol + 1e-8:
+            raise RuntimeError(
+                f"MaxVol numerical verification failed: "
+                f"max_gamma = {max_gamma:.6f}"
+            )
+                
         return (
             maxvol_structure_id_tensor, maxvol_atom_id_tensor, maxvol_matrix, maxvol_matrix_inv
         )
+    
+    
+    @torch.no_grad()
+    def get_gamma(self,
+                  new_candidate_path: str,
+                  maxiter: int = 20000,
+                  tol: float = 0.0001,
+                  rank_tol: float = 1e-12):
+        new_candidate_datamodule: ExtxyzDataModule = ExtxyzDataModule(
+            testset_path=new_candidate_path,
+            batch_size=LinearMtpMaxvolGenerator.BATCH_SIZE_HERE,
+            rcut=self.model.rmax,
+            umax_num_neigh_atoms=self.model.umax_num_neigh_atoms,
+            pbc_xyz=[True, True, True],
+            sort=False,
+            torch_float_dtype=self.lit_module.dtype,
+            has_virial=self.fit_virial)
+        new_candidate_datamodule.setup("test")
+        new_candidate_dataloader: ExtxyzDataset = new_candidate_datamodule.test_dataloader()
+        _, _, _, maxvol_matrix_inv = self.generate_maxvol_matrix(
+            maxiter=maxiter,
+            tol=tol,
+            rank_tol=rank_tol)
+        
+        gamma_structures_list: List[torch.Tensor] = []
+        gamma_atoms_list: List[torch.Tensor] = []
+        for batch_idx, batch_data in enumerate(new_candidate_dataloader):
+            if (self.fit_virial):
+                binum_tensor, bilist_tensor, bnumneigh_tensor, bfirstneigh_tensor, \
+                    brcs_tensor, btypes_tensor, bnghost_tensor, \
+                    betot_dft_tensor, bforce_dft_tensor, bvirial_dft_tensor = \
+                        [t.to(self.lit_module.device) for t in batch_data]
+                bgamma_structures_tensor, bgamma_atom_tensor = self.model.predict_gamma(
+                    binum_tensor=binum_tensor,
+                    bilist_tensor=bilist_tensor,
+                    bnumneigh_tensor=bnumneigh_tensor,
+                    bfirstneigh_tensor=bfirstneigh_tensor,
+                    brcs_tensor=brcs_tensor,
+                    btypes_tensor=btypes_tensor,
+                    bnghost_tensor=bnghost_tensor,
+                    maxvol_matrix_inv=maxvol_matrix_inv)
+            else:
+                binum_tensor, bilist_tensor, bnumneigh_tensor, bfirstneigh_tensor, \
+                    brcs_tensor, btypes_tensor, bnghost_tensor, \
+                    betot_dft_tensor, bforce_dft_tensor = \
+                        [t.to(self.lit_module.device) for t in batch_data]
+                bgamma_structures_tensor, bgamma_atom_tensor = self.model.predict_gamma(
+                    binum_tensor=binum_tensor,
+                    bilist_tensor=bilist_tensor,
+                    bnumneigh_tensor=bnumneigh_tensor,
+                    bfirstneigh_tensor=bfirstneigh_tensor,
+                    brcs_tensor=brcs_tensor,
+                    btypes_tensor=btypes_tensor,
+                    bnghost_tensor=bnghost_tensor,
+                    maxvol_matrix_inv=maxvol_matrix_inv)
+            
+            gamma_structures_list.append(bgamma_structures_tensor)
+            gamma_atoms_list.append(bgamma_atom_tensor)
+        
+        gamma_structures_tensor: torch.Tensor = torch.cat(gamma_structures_list, dim=0)
+        gamma_atoms_tensor: torch.Tensor = torch.cat(gamma_atoms_list, dim=0)
+        
+        return gamma_structures_tensor, gamma_atoms_tensor
         
