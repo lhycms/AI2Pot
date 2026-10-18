@@ -207,12 +207,10 @@ class LinearMtpMaxvolGenerator(object):
     
     @torch.no_grad()
     def get_gamma(self,
-                  new_candidate_path: str,
-                  maxiter: int = 20000,
-                  tol: float = 0.0001,
-                  rank_tol: float = 1e-12):
-        new_candidate_datamodule: ExtxyzDataModule = ExtxyzDataModule(
-            testset_path=new_candidate_path,
+                  maxvol_matrix_inv: torch.Tensor,
+                  explore_path: str):
+        explore_datamodule: ExtxyzDataModule = ExtxyzDataModule(
+            testset_path=explore_path,
             batch_size=LinearMtpMaxvolGenerator.BATCH_SIZE_HERE,
             rcut=self.model.rmax,
             umax_num_neigh_atoms=self.model.umax_num_neigh_atoms,
@@ -220,16 +218,12 @@ class LinearMtpMaxvolGenerator(object):
             sort=False,
             torch_float_dtype=self.lit_module.dtype,
             has_virial=self.fit_virial)
-        new_candidate_datamodule.setup("test")
-        new_candidate_dataloader: ExtxyzDataset = new_candidate_datamodule.test_dataloader()
-        _, _, _, maxvol_matrix_inv = self.generate_maxvol_matrix(
-            maxiter=maxiter,
-            tol=tol,
-            rank_tol=rank_tol)
+        explore_datamodule.setup("test")
+        explore_dataloader: ExtxyzDataset = explore_datamodule.test_dataloader()
         
         gamma_structures_list: List[torch.Tensor] = []
         gamma_atoms_list: List[torch.Tensor] = []
-        for batch_idx, batch_data in enumerate(new_candidate_dataloader):
+        for batch_idx, batch_data in enumerate(explore_dataloader):
             binum_tensor, bilist_tensor, bnumneigh_tensor, bfirstneigh_tensor, \
                 brcs_tensor, btypes_tensor, bnghost_tensor = \
                     [t.to(self.lit_module.device) for t in batch_data[:7]]

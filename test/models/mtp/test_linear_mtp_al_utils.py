@@ -37,7 +37,7 @@ class LinearMtpMaxvolGeneratorTest(unittest.TestCase):
     def setUp(self):
         print("LinearMtpSerializer (TestCase) is setting up...")
         
-        device_str: str = "cpu"
+        device_str: str = "cuda"
         self.linear_mtp_maxvol_generator: LinearMtpMaxvolGenerator = LinearMtpMaxvolGenerator(
             checkpoint_path=CHECK_POINT_PATH,
             candidate_set_path=EXTXYZ_PATH,
@@ -94,9 +94,14 @@ class LinearMtpMaxvolGeneratorTest(unittest.TestCase):
     
     
     def test_get_gamma(self):
-        gamma_structures_tensor, gamma_atoms_tensor = self.linear_mtp_maxvol_generator.get_gamma(new_candidate_path=EXTXYZ_PATH)
-        print(gamma_structures_tensor.shape)
-        print(gamma_atoms_tensor.shape)
+        maxvol_structure_id_tensor, maxvol_atom_id_tensor, maxvol_matrix, maxvol_matrix_inv = \
+            self.linear_mtp_maxvol_generator.generate_maxvol_matrix()
+            
+        gamma_structures_tensor, gamma_atoms_tensor = self.linear_mtp_maxvol_generator.get_gamma(
+            maxvol_matrix_inv=maxvol_matrix_inv,
+            explore_path=EXTXYZ_PATH)
+        print(gamma_structures_tensor)
+        print(gamma_atoms_tensor)
 
 
 if __name__ == "__main__":
