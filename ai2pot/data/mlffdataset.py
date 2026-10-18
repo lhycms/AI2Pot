@@ -86,13 +86,40 @@ class ExtxyzDataset(Dataset):
                 self.sort)
         forces[:num_real_atoms] = self.atoms_list[index].get_forces()
         
-        if self.has_virial:
-            if "virial" in self.atoms_list[index].info.keys():
-                virial = self.atoms_list[index].info["virial"].reshape(9)
-            elif ("stress" in self.atoms_list[index].info.keys()):
-                virial = (-self.atoms_list[index].info["stress"] * self.atoms_list[index].get_volume()).reshape(9)
+        try:
+            if self.has_virial:
+                if "virial" in self.atoms_list[index].info.keys():
+                    virial = self.atoms_list[index].info["virial"].reshape(9)
+                elif ("stress" in self.atoms_list[index].info.keys()):
+                    virial = (-self.atoms_list[index].info["stress"] * self.atoms_list[index].get_volume()).reshape(9)
+                else:
+                    raise NotImplementedError("Extxyz file has no virial or stress!")
+                return [
+                    torch.tensor(inum, dtype=torch.int32),
+                    torch.tensor(ilist, dtype=torch.int32),
+                    torch.tensor(numneigh, dtype=torch.int32),
+                    torch.tensor(firstneigh, dtype=torch.int32),
+                    torch.tensor(relative_coords, dtype=self.torch_float_dtype),
+                    torch.tensor(types, dtype=torch.int32),
+                    torch.tensor(nghost, dtype=torch.int32),
+                    torch.tensor(self.atoms_list[index].get_total_energy(), dtype=self.torch_float_dtype),
+                    torch.tensor(forces, dtype=self.torch_float_dtype),
+                    #torch.tensor(-1.0 * self.atoms_list[index].get_stress(voigt=False).reshape(9) * self.atoms_list[index].get_volume()).view(3, 3)
+                    torch.tensor(virial, dtype=self.torch_float_dtype)
+                ]
             else:
-                raise NotImplementedError("Extxyz file has no virial or stress!")
+                return [
+                    torch.tensor(inum, dtype=torch.int32),
+                    torch.tensor(ilist, dtype=torch.int32),
+                    torch.tensor(numneigh, dtype=torch.int32),
+                    torch.tensor(firstneigh, dtype=torch.int32),
+                    torch.tensor(relative_coords, dtype=self.torch_float_dtype),
+                    torch.tensor(types, dtype=torch.int32),
+                    torch.tensor(nghost, dtype=torch.int32),
+                    torch.tensor(self.atoms_list[index].get_total_energy(), dtype=self.torch_float_dtype),
+                    torch.tensor(forces, dtype=self.torch_float_dtype)
+                ]
+        except:
             return [
                 torch.tensor(inum, dtype=torch.int32),
                 torch.tensor(ilist, dtype=torch.int32),
@@ -100,23 +127,7 @@ class ExtxyzDataset(Dataset):
                 torch.tensor(firstneigh, dtype=torch.int32),
                 torch.tensor(relative_coords, dtype=self.torch_float_dtype),
                 torch.tensor(types, dtype=torch.int32),
-                torch.tensor(nghost, dtype=torch.int32),
-                torch.tensor(self.atoms_list[index].get_total_energy(), dtype=self.torch_float_dtype),
-                torch.tensor(forces, dtype=self.torch_float_dtype),
-                #torch.tensor(-1.0 * self.atoms_list[index].get_stress(voigt=False).reshape(9) * self.atoms_list[index].get_volume()).view(3, 3)
-                torch.tensor(virial, dtype=self.torch_float_dtype)
-            ]
-        else:
-            return [
-                torch.tensor(inum, dtype=torch.int32),
-                torch.tensor(ilist, dtype=torch.int32),
-                torch.tensor(numneigh, dtype=torch.int32),
-                torch.tensor(firstneigh, dtype=torch.int32),
-                torch.tensor(relative_coords, dtype=self.torch_float_dtype),
-                torch.tensor(types, dtype=torch.int32),
-                torch.tensor(nghost, dtype=torch.int32),
-                torch.tensor(self.atoms_list[index].get_total_energy(), dtype=self.torch_float_dtype),
-                torch.tensor(forces, dtype=self.torch_float_dtype)
+                torch.tensor(nghost, dtype=torch.int32)
             ]
 
     def _get_max_num_atoms(self):
