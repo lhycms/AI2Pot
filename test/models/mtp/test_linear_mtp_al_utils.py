@@ -36,13 +36,15 @@ torch.set_num_threads(16)
 class LinearMtpMaxvolGeneratorTest(unittest.TestCase):
     def setUp(self):
         print("LinearMtpSerializer (TestCase) is setting up...")
+        
+        device_str: str = "cpu"
         self.linear_mtp_maxvol_generator: LinearMtpMaxvolGenerator = LinearMtpMaxvolGenerator(
             checkpoint_path=CHECK_POINT_PATH,
             candidate_set_path=EXTXYZ_PATH,
-            map_location="cuda",
+            map_location=device_str,
             pbc_xyz=[True, True, True])
         
-        self.device: torch._C.device = torch.device("cuda")
+        self.device: torch._C.device = torch.device(device_str)
         
         self.linear_mtp: LinearMtp = self.linear_mtp_maxvol_generator.model
         self.candidate_set_dataloader: DataLoader = self.linear_mtp_maxvol_generator.candidate_set_dataloader

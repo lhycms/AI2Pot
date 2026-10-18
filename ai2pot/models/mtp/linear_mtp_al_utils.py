@@ -66,16 +66,10 @@ class LinearMtpMaxvolGenerator(object):
         candidate_set_matrix_list: List[torch.Tensor] = []
         
         for batch_idx, batch_data in enumerate(self.candidate_set_dataloader):
-            if (self.fit_virial):
-                binum_tensor, bilist_tensor, bnumneigh_tensor, bfirstneigh_tensor, \
-                    brcs_tensor, btypes_tensor, bnghost_tensor, \
-                    betot_dft_tensor, bforce_dft_tensor, bvirial_dft_tensor = \
-                        [t.to(self.lit_module.device) for t in batch_data]
-            else:            
-                binum_tensor, bilist_tensor, bnumneigh_tensor, bfirstneigh_tensor, \
-                    brcs_tensor, btypes_tensor, bnghost_tensor, \
-                    betot_dft_tensor, bforce_dft_tensor = \
-                        [t.to(self.lit_module.device) for t in batch_data]
+            binum_tensor, bilist_tensor, bnumneigh_tensor, bfirstneigh_tensor, \
+                brcs_tensor, btypes_tensor, bnghost_tensor = \
+                    [t.to(self.lit_module.device) for t in batch_data[:7]]
+
 
             batch_e_sites_jacobian: torch.Tensor = self.model.predict_e_sites_jacobian(binum_tensor,
                                                                                        bilist_tensor,
@@ -236,34 +230,18 @@ class LinearMtpMaxvolGenerator(object):
         gamma_structures_list: List[torch.Tensor] = []
         gamma_atoms_list: List[torch.Tensor] = []
         for batch_idx, batch_data in enumerate(new_candidate_dataloader):
-            if (self.fit_virial):
-                binum_tensor, bilist_tensor, bnumneigh_tensor, bfirstneigh_tensor, \
-                    brcs_tensor, btypes_tensor, bnghost_tensor, \
-                    betot_dft_tensor, bforce_dft_tensor, bvirial_dft_tensor = \
-                        [t.to(self.lit_module.device) for t in batch_data]
-                bgamma_structures_tensor, bgamma_atom_tensor = self.model.predict_gamma(
-                    binum_tensor=binum_tensor,
-                    bilist_tensor=bilist_tensor,
-                    bnumneigh_tensor=bnumneigh_tensor,
-                    bfirstneigh_tensor=bfirstneigh_tensor,
-                    brcs_tensor=brcs_tensor,
-                    btypes_tensor=btypes_tensor,
-                    bnghost_tensor=bnghost_tensor,
-                    maxvol_matrix_inv=maxvol_matrix_inv)
-            else:
-                binum_tensor, bilist_tensor, bnumneigh_tensor, bfirstneigh_tensor, \
-                    brcs_tensor, btypes_tensor, bnghost_tensor, \
-                    betot_dft_tensor, bforce_dft_tensor = \
-                        [t.to(self.lit_module.device) for t in batch_data]
-                bgamma_structures_tensor, bgamma_atom_tensor = self.model.predict_gamma(
-                    binum_tensor=binum_tensor,
-                    bilist_tensor=bilist_tensor,
-                    bnumneigh_tensor=bnumneigh_tensor,
-                    bfirstneigh_tensor=bfirstneigh_tensor,
-                    brcs_tensor=brcs_tensor,
-                    btypes_tensor=btypes_tensor,
-                    bnghost_tensor=bnghost_tensor,
-                    maxvol_matrix_inv=maxvol_matrix_inv)
+            binum_tensor, bilist_tensor, bnumneigh_tensor, bfirstneigh_tensor, \
+                brcs_tensor, btypes_tensor, bnghost_tensor = \
+                    [t.to(self.lit_module.device) for t in batch_data[:7]]
+            bgamma_structures_tensor, bgamma_atom_tensor = self.model.predict_gamma(
+                binum_tensor=binum_tensor,
+                bilist_tensor=bilist_tensor,
+                bnumneigh_tensor=bnumneigh_tensor,
+                bfirstneigh_tensor=bfirstneigh_tensor,
+                brcs_tensor=brcs_tensor,
+                btypes_tensor=btypes_tensor,
+                bnghost_tensor=bnghost_tensor,
+                maxvol_matrix_inv=maxvol_matrix_inv)
             
             gamma_structures_list.append(bgamma_structures_tensor)
             gamma_atoms_list.append(bgamma_atom_tensor)
