@@ -97,10 +97,12 @@ class LinearMtpMaxvolGeneratorTest(unittest.TestCase):
         maxvol_structure_id_tensor, maxvol_atom_id_tensor, maxvol_matrix, maxvol_matrix_inv = \
             self.linear_mtp_maxvol_generator.generate_maxvol_matrix()
             
-        gamma_structures_tensor, gamma_atoms_tensor = self.linear_mtp_maxvol_generator.get_gamma(
+        structure_id_tensor, atom_id_tensor, gamma_structures_tensor, gamma_atoms_tensor = self.linear_mtp_maxvol_generator.get_gamma(
             maxvol_matrix_inv=maxvol_matrix_inv,
             explore_path=EXTXYZ_PATH)
-        print(gamma_structures_tensor)
+        print(structure_id_tensor)
+        print(atom_id_tensor)
+        print(gamma_structures_tensor.shape)
         print(gamma_atoms_tensor)
 
 

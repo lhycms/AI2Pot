@@ -220,10 +220,14 @@ class LinearMtpMaxvolGenerator(object):
             has_virial=self.fit_virial)
         explore_datamodule.setup("test")
         explore_dataloader: ExtxyzDataset = explore_datamodule.test_dataloader()
+        maxvol_matrix_inv = maxvol_matrix_inv.to(self.lit_module.device)
         
+        structure_offset: int = 0
+        structure_id_list: List[torch.Tensor] = []
+        atom_id_list: List[torch.Tensor] = []
         gamma_structures_list: List[torch.Tensor] = []
         gamma_atoms_list: List[torch.Tensor] = []
-        for batch_idx, batch_data in enumerate(explore_dataloader):
+        for _, batch_data in enumerate(explore_dataloader):
             binum_tensor, bilist_tensor, bnumneigh_tensor, bfirstneigh_tensor, \
                 brcs_tensor, btypes_tensor, bnghost_tensor = \
                     [t.to(self.lit_module.device) for t in batch_data[:7]]
@@ -237,11 +241,25 @@ class LinearMtpMaxvolGenerator(object):
                 bnghost_tensor=bnghost_tensor,
                 maxvol_matrix_inv=maxvol_matrix_inv)
             
+            batch_size: int = bfirstneigh_tensor.size(0)
+            natoms_pad: int = bfirstneigh_tensor.size(1)
+            bstructure_id_tensor: torch.Tensor = structure_offset + torch.arange(batch_size, device=self.lit_module.device)[:, None]
+            batom_id_tensor: torch.Tensor = torch.arange(natoms_pad, device=self.lit_module.device)[None, :]
+
+            mask_for_centers: torch.Tensor = torch.arange(natoms_pad,
+                                                          device=self.lit_module.device)[None, :] < binum_tensor[:, None]
+            
             gamma_structures_list.append(bgamma_structures_tensor)
-            gamma_atoms_list.append(bgamma_atom_tensor)
+            gamma_atoms_list.append(bgamma_atom_tensor[mask_for_centers])
+            structure_id_list.append(bstructure_id_tensor.expand(-1, natoms_pad)[mask_for_centers])
+            atom_id_list.append(batom_id_tensor.expand(batch_size, -1)[mask_for_centers])
+            
+            structure_offset += batch_size
         
         gamma_structures_tensor: torch.Tensor = torch.cat(gamma_structures_list, dim=0)
         gamma_atoms_tensor: torch.Tensor = torch.cat(gamma_atoms_list, dim=0)
+        structure_id_tensor: torch.Tensor = torch.cat(structure_id_list, dim=0)
+        atom_id_tensor: torch.Tensor = torch.cat(atom_id_list, dim=0)
         
-        return gamma_structures_tensor, gamma_atoms_tensor
+        return structure_id_tensor, atom_id_tensor, gamma_structures_tensor, gamma_atoms_tensor
         
