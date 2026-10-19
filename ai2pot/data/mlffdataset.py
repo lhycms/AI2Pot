@@ -84,12 +84,10 @@ class ExtxyzDataset(Dataset):
                 True,
                 self.pbc_xyz,
                 self.sort)
-        try:
-            forces[:num_real_atoms] = self.atoms_list[index].get_forces()
-        except:
-            pass
         
         try:
+            forces[:num_real_atoms] = self.atoms_list[index].get_forces()
+            
             if self.has_virial:
                 if "virial" in self.atoms_list[index].info.keys():
                     virial = self.atoms_list[index].info["virial"].reshape(9)
