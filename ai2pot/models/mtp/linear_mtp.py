@@ -601,15 +601,15 @@ class LinearMtp(nn.Module):
     
     
     @torch.jit.export
-    def predict_gamma(self,
-                      binum_tensor: torch.Tensor,
-                      bilist_tensor: torch.Tensor,
-                      bnumneigh_tensor: torch.Tensor,
-                      bfirstneigh_tensor: torch.Tensor,
-                      brcs_tensor: torch.Tensor,
-                      btypes_tensor: torch.Tensor,
-                      bnghost_tensor: torch.Tensor,
-                      maxvol_matrix_inv: torch.Tensor):
+    def predict_gamma_local(self,
+                            binum_tensor: torch.Tensor,
+                            bilist_tensor: torch.Tensor,
+                            bnumneigh_tensor: torch.Tensor,
+                            bfirstneigh_tensor: torch.Tensor,
+                            brcs_tensor: torch.Tensor,
+                            btypes_tensor: torch.Tensor,
+                            bnghost_tensor: torch.Tensor,
+                            maxvol_matrix_inv: torch.Tensor):
         assert(maxvol_matrix_inv.device == brcs_tensor.device)
         
         be_sites_jacobian_tensor: torch.Tensor = self.predict_e_sites_jacobian(

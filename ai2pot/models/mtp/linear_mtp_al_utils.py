@@ -59,7 +59,7 @@ class LinearMtpMaxvolGenerator(object):
         
         
     @torch.no_grad()
-    def _generate_candidate_set_matrix(self):
+    def _generate_candidate_set_matrix_local(self):
         structure_offset: int = 0
         structure_id_list: List[torch.Tensor] = []
         atom_id_list: List[torch.Tensor] = []
@@ -100,11 +100,11 @@ class LinearMtpMaxvolGenerator(object):
     
     
     @torch.no_grad()
-    def generate_maxvol_matrix(self,
-                               maxiter: int = 20000,
-                               tol: float = 1e-4,
-                               rank_tol: float = 1e-12):
-        structure_id_tensor, atom_id_tensor, candidate_set_matrix_tensor = self._generate_candidate_set_matrix()
+    def generate_maxvol_matrix_local(self,
+                                     maxiter: int = 20000,
+                                     tol: float = 1e-4,
+                                     rank_tol: float = 1e-12):
+        structure_id_tensor, atom_id_tensor, candidate_set_matrix_tensor = self._generate_candidate_set_matrix_local()
         structure_id_tensor: torch.Tensor
         atom_id_tensor: torch.Tensor
         candidate_set_matrix_tensor: torch.Tensor
@@ -206,9 +206,9 @@ class LinearMtpMaxvolGenerator(object):
     
     
     @torch.no_grad()
-    def get_gamma(self,
-                  maxvol_matrix_inv: torch.Tensor,
-                  explore_path: str):
+    def get_gamma_local(self,
+                        maxvol_matrix_inv: torch.Tensor,
+                        explore_path: str):
         explore_datamodule: ExtxyzDataModule = ExtxyzDataModule(
             testset_path=explore_path,
             batch_size=LinearMtpMaxvolGenerator.BATCH_SIZE_HERE,
@@ -231,7 +231,7 @@ class LinearMtpMaxvolGenerator(object):
             binum_tensor, bilist_tensor, bnumneigh_tensor, bfirstneigh_tensor, \
                 brcs_tensor, btypes_tensor, bnghost_tensor = \
                     [t.to(self.lit_module.device) for t in batch_data[:7]]
-            bgamma_structures_tensor, bgamma_atom_tensor = self.model.predict_gamma(
+            bgamma_structures_tensor, bgamma_atom_tensor = self.model.predict_gamma_local(
                 binum_tensor=binum_tensor,
                 bilist_tensor=bilist_tensor,
                 bnumneigh_tensor=bnumneigh_tensor,
