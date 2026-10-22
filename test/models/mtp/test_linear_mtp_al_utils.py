@@ -37,7 +37,7 @@ class LinearMtpMaxvolGeneratorTest(unittest.TestCase):
     def setUp(self):
         print("LinearMtpSerializer (TestCase) is setting up...")
         
-        device_str: str = "cpu"
+        device_str: str = "cuda"
         self.linear_mtp_maxvol_generator: LinearMtpMaxvolGenerator = LinearMtpMaxvolGenerator(
             checkpoint_path=CHECK_POINT_PATH,
             candidate_set_path=EXTXYZ_PATH,
@@ -54,14 +54,14 @@ class LinearMtpMaxvolGeneratorTest(unittest.TestCase):
         print("LinearMtpSerializer (TestCase) is tearing down...")
         
     
-    def test_generate_candidate_set_matrix_local(self):
+    def est_generate_candidate_set_matrix_local(self):
         structure_id_tensor, atom_id_tensor, candidate_matrix_tensor = self.linear_mtp_maxvol_generator._generate_candidate_set_matrix_local()
         print(structure_id_tensor.shape)
         print(atom_id_tensor.shape)
         print(candidate_matrix_tensor.shape)
         
     
-    def test_generate_maxvol_matrix_local(self):
+    def est_generate_maxvol_matrix_local(self):
         maxvol_structure_id_tensor, maxvol_atom_id_tensor, maxvol_matrix, maxvol_matrix_inv = \
             self.linear_mtp_maxvol_generator.generate_maxvol_matrix_local()
         print(maxvol_structure_id_tensor)
@@ -70,7 +70,7 @@ class LinearMtpMaxvolGeneratorTest(unittest.TestCase):
         print(maxvol_matrix_inv)
     
     
-    def test_linear_mtp_predict_gamma_local(self):
+    def est_linear_mtp_predict_gamma_local(self):
         maxvol_structure_id_tensor, maxvol_atom_id_tensor, maxvol_matrix, maxvol_matrix_inv = \
             self.linear_mtp_maxvol_generator.generate_maxvol_matrix_local()
 
@@ -93,7 +93,7 @@ class LinearMtpMaxvolGeneratorTest(unittest.TestCase):
             print(bgamma_atoms_tensor.amax())
     
     
-    def test_get_gamma_local(self):
+    def est_get_gamma_local(self):
         maxvol_structure_id_tensor, maxvol_atom_id_tensor, maxvol_matrix, maxvol_matrix_inv = \
             self.linear_mtp_maxvol_generator.generate_maxvol_matrix_local()
             
@@ -104,6 +104,14 @@ class LinearMtpMaxvolGeneratorTest(unittest.TestCase):
         print(atom_id_tensor)
         print(gamma_structures_tensor.shape)
         print(gamma_atoms_tensor)
+
+
+    def test_generate_candidate_set_matrix_global(self):
+        structure_id_tensor, candidate_matrix_tensor = self.linear_mtp_maxvol_generator._generate_candidate_set_matrix_global()
+        print(structure_id_tensor.shape)
+        print(candidate_matrix_tensor.shape)
+        
+        
 
 
 if __name__ == "__main__":

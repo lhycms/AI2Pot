@@ -262,4 +262,66 @@ class LinearMtpMaxvolGenerator(object):
         atom_id_tensor: torch.Tensor = torch.cat(atom_id_list, dim=0)
         
         return structure_id_tensor, atom_id_tensor, gamma_structures_tensor, gamma_atoms_tensor
+    
+    
+    @torch.no_grad()
+    def _generate_candidate_set_matrix_global(self):
+        structure_offset: int = 0
+        structure_id_list: List[torch.Tensor] = []
+        candidate_set_matrix_list: List[torch.Tensor] = []
         
+        for batch_idx, batch_data in enumerate(self.candidate_set_dataloader):
+            binum_tensor, bilist_tensor, bnumneigh_tensor, bfirstneigh_tensor, \
+                brcs_tensor, btypes_tensor, bnghost_tensor = \
+                    [t.to(self.lit_module.device) for t in batch_data[:7]]
+            
+            batch_e_sites_jacobian: torch.Tensor = self.model.predict_e_sites_jacobian(binum_tensor,
+                                                                                       bilist_tensor,
+                                                                                       bnumneigh_tensor,
+                                                                                       bfirstneigh_tensor,
+                                                                                       brcs_tensor,
+                                                                                       btypes_tensor,
+                                                                                       bnghost_tensor)
+            batch_size: int = bfirstneigh_tensor.size(0)
+            natoms_pad: int = bfirstneigh_tensor.size(1)
+            mask_for_centers: torch.Tensor = torch.arange(natoms_pad,
+                                                          device=self.lit_module.device)[None, :] < binum_tensor[:, None]
+            batch_etot_jacobian: torch.Tensor = (batch_e_sites_jacobian * mask_for_centers.unsqueeze(-1)).sum(dim=1)
+            
+            batch_structure_id: torch.Tensor = structure_offset + torch.arange(batch_size, device=self.lit_module.device)
+            
+            candidate_set_matrix_list.append(batch_etot_jacobian)
+            structure_id_list.append(batch_structure_id)
+            
+            structure_offset += batch_size
+        
+        structure_id_tensor: torch.Tensor = torch.cat(structure_id_list, dim=0)
+        candidate_set_matrix_tensor: torch.Tensor = torch.cat(candidate_set_matrix_list, dim=0)
+        
+        return structure_id_tensor, candidate_set_matrix_tensor
+
+    
+    @torch.no_grad()
+    def generate_maxvol_matrix_global(self,
+                                      maxiter: int = 20000,
+                                      tol: float = 1e-4,
+                                      rank_tol: float = 1e-12):
+        structure_id_tensor, candidate_set_matrix_tensor = self._generate_candidate_set_matrix_global()
+        structure_id_tensor: torch.Tensor
+        candidate_set_matrix_tensor: torch.Tensor
+        
+        B_matrix: torch.Tensor = candidate_set_matrix_tensor.to(torch.float64)
+        num_structures, num_parameters = B_matrix.shape
+        
+        if (num_structures < num_parameters):
+            raise ValueError("Number of candidates must be >= number of parameters.")
+        
+        if not torch.isfinite(B_matrix).all():
+            raise ValueError("Candidate matrix contains Nan or Inf.")
+        
+        ### Step 1. Initialize a unsingular square matrix
+        
+        
+        ### Step 2.
+        
+        ### Step 3.
