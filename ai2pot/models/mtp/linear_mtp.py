@@ -660,7 +660,9 @@ class LinearMtp(nn.Module):
         natoms_pad: int = bfirstneigh_tensor.size(1)
         mask_for_centers: torch.Tensor = torch.arange(natoms_pad,
                                                       device=brcs_tensor.device)[None, :] < binum_tensor[:, None]
-        betot_jacobian_tensor: torch.Tensor = (be_sites_jacobian_tensor * mask_for_centers.unsqueeze(dim=-1)).sum(dim=1)
+        betot_jacobian_tensor: torch.Tensor = be_sites_jacobian_tensor.masked_fill(
+                                                ~mask_for_centers.unsqueeze(-1), 0.0
+                                              ).sum(dim=1) / binum_tensor[:, None]
         
         bgamma_structure_tensor: torch.Tensor = torch.matmul(betot_jacobian_tensor, maxvol_matrix_inv).abs().amax(dim=1)
         

@@ -286,7 +286,10 @@ class LinearMtpMaxvolGenerator(object):
             natoms_pad: int = bfirstneigh_tensor.size(1)
             mask_for_centers: torch.Tensor = torch.arange(natoms_pad,
                                                           device=self.lit_module.device)[None, :] < binum_tensor[:, None]
-            batch_etot_jacobian: torch.Tensor = (batch_e_sites_jacobian * mask_for_centers.unsqueeze(-1)).sum(dim=1)
+            
+            batch_etot_jacobian: torch.Tensor = batch_e_sites_jacobian.masked_fill(
+                                                    ~mask_for_centers.unsqueeze(-1), 0.0
+                                                ).sum(dim=1) / binum_tensor[:, None]
             
             batch_structure_id: torch.Tensor = structure_offset + torch.arange(batch_size, device=self.lit_module.device)
             
