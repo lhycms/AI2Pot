@@ -3,10 +3,10 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/descriptor/mtpr/gpu)
 file(MAKE_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/descriptor/mtpr/gpu)
-file(MAKE_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+file(MAKE_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/obj/descriptor/mtpr/gpu)
-file(MAKE_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+file(MAKE_DIRECTORY ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY})
 
 
 # 5. compile
@@ -25,7 +25,7 @@ set_target_properties(schmidt_orth_torch_launcher PROPERTIES
     CUDA_STANDARD ${CUDA_STANDARD}
     CUDA_ARCHITECTURES "${CUDA_ARCHITECTURES}")
 if (USE_CUDA AND CUDA_FOUND)
-    target_compile_definitions(linear_mtp_torch_launcher PRIVATE USE_CUDA)
+    target_compile_definitions(schmidt_orth_torch_launcher PRIVATE USE_CUDA)
 endif()
 
 add_library(linear_mtp_loss_torch_launcher SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/linearMtpLoss_torch_launcher.cu)

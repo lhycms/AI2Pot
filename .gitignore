@@ -8,7 +8,6 @@ ai2pot.egg-info
 
 **/*.pt
 **/*.dump
-**/*.ckpt
 **/*.png
 **/*.traj
 **/*.log
