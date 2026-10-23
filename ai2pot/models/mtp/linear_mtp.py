@@ -633,4 +633,36 @@ class LinearMtp(nn.Module):
         bgamma_structures_tensor: torch.Tensor = bgamma_atoms_tensor.amax(dim=1)
         
         return bgamma_structures_tensor, bgamma_atoms_tensor
+    
+    
+    @torch.jit.export
+    def predict_gamma_global(self,
+                             binum_tensor: torch.Tensor,
+                             bilist_tensor: torch.Tensor,
+                             bnumneigh_tensor: torch.Tensor,
+                             bfirstneigh_tensor: torch.Tensor,
+                             brcs_tensor: torch.Tensor,
+                             btypes_tensor: torch.Tensor,
+                             bnghost_tensor: torch.Tensor,
+                             maxvol_matrix_inv: torch.Tensor):
+        assert(maxvol_matrix_inv.device == brcs_tensor.device)
+        
+        be_sites_jacobian_tensor: torch.Tensor = self.predict_e_sites_jacobian(
+            binum_tensor=binum_tensor,
+            bilist_tensor=bilist_tensor,
+            bnumneigh_tensor=bnumneigh_tensor,
+            bfirstneigh_tensor=bfirstneigh_tensor,
+            brcs_tensor=brcs_tensor,
+            btypes_tensor=btypes_tensor,
+            bnghost_tensor=bnghost_tensor)
+        be_sites_jacobian_tensor = be_sites_jacobian_tensor.to(dtype=maxvol_matrix_inv.dtype)
+        
+        natoms_pad: int = bfirstneigh_tensor.size(1)
+        mask_for_centers: torch.Tensor = torch.arange(natoms_pad,
+                                                      device=brcs_tensor.device)[None, :] < binum_tensor[:, None]
+        betot_jacobian_tensor: torch.Tensor = (be_sites_jacobian_tensor * mask_for_centers.unsqueeze(dim=-1)).sum(dim=1)
+        
+        bgamma_structure_tensor: torch.Tensor = torch.matmul(betot_jacobian_tensor, maxvol_matrix_inv).abs().amax(dim=1)
+        
+        return bgamma_structure_tensor
         

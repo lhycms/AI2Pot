@@ -182,7 +182,7 @@ class LinearMtpMaxvolGenerator(object):
             )
         
         ### Step 4. Save MaxVol matrix and selected atom IDs
-        ### Step 4.2.        
+        ### Step 4.1.        
         maxvol_matrix: torch.Tensor = B_matrix[selected].clone()
         maxvol_matrix_inv: torch.Tensor = torch.linalg.inv(maxvol_matrix)
         maxvol_structure_id_tensor: torch.Tensor = structure_id_tensor[selected]
@@ -320,8 +320,133 @@ class LinearMtpMaxvolGenerator(object):
             raise ValueError("Candidate matrix contains Nan or Inf.")
         
         ### Step 1. Initialize a unsingular square matrix
+        ### Step 1.1.
+        selected: torch.Tensor = torch.empty(num_parameters, dtype=torch.long, device=B_matrix.device)
+        selected_mask: torch.Tensor = torch.zeros(num_structures, dtype=torch.bool, device=B_matrix.device)
+        Q_matrix: torch.Tensor = torch.zeros((num_parameters, num_parameters), dtype=torch.float64, device=B_matrix.device)
+        residual_norms: torch.Tensor = torch.sum(B_matrix*B_matrix, dim=1)
         
+        max_norm: torch.Tensor = torch.sqrt(residual_norms.max())
+        if (max_norm == 0):
+            raise ValueError("Candidate matrix is zero.")
+
+        ### Step 1.2.
+        for k in range(num_parameters):
+            idx: int = int(
+                residual_norms.masked_fill(selected_mask, -torch.inf).argmax().item()
+            )
+            structure_b_tensor: torch.Tensor = B_matrix[idx].clone()
+            if k > 0:
+                basis_tensor: torch.Tensor = Q_matrix[:k]
+                structure_b_tensor -= (structure_b_tensor @ basis_tensor.T) @ basis_tensor
+                structure_b_tensor -= (structure_b_tensor @ basis_tensor.T) @ basis_tensor
+            
+            structure_b_norm: torch.Tensor = torch.linalg.vector_norm(structure_b_tensor)
+            if (structure_b_norm <= max_norm * rank_tol):
+                raise ValueError("Candidate matrix is rank deficient.")
+            
+            selected[k] = idx
+            selected_mask[idx] = True
+            Q_matrix[k] = structure_b_tensor / structure_b_norm
+            
+            projection: torch.Tensor = B_matrix @ Q_matrix[k]
+            residual_norms.sub_( projection.square() ).clamp_(min=0)
         
         ### Step 2.
+        A_matrix: torch.Tensor = B_matrix[selected].clone()
+        C_matrix: torch.Tensor = torch.linalg.solve(A_matrix.T, B_matrix.T).T.contiguous()
         
         ### Step 3.
+        for _ in range(maxiter):
+            flat_idx: int = int( torch.argmax(C_matrix.abs()).item() )
+            i, j = divmod(flat_idx, num_parameters)
+            pivot: float = float(C_matrix[i, j].item())
+            if (abs(pivot) <= (1.0 + tol)):
+                break
+            
+            row: torch.Tensor = C_matrix[i].clone()
+            row[j] -= 1.0
+            col: torch.Tensor = C_matrix[:, j].clone()
+            C_matrix.addmm_(
+            col[:, None],
+            row[None, :],
+            beta=1.0,
+            alpha=-1.0 / pivot)
+            
+            selected[j] = i
+        else:
+            raise RuntimeError(
+                f"Maxvol did not converge within {maxiter} iterations."
+            )
+        
+        ### Step 4.
+        ### Step 4.1.
+        maxvol_matrix: torch.Tensor = B_matrix[selected].clone()
+        maxvol_matrix_inv: torch.Tensor = torch.linalg.inv(maxvol_matrix)
+        maxvol_structure_id_tensor: torch.Tensor = structure_id_tensor[selected]
+        
+        ### Step 4.2. Vertifation
+        # Recompute coefficients to verify convergence
+        C_check: torch.Tensor = torch.linalg.solve(
+            maxvol_matrix.T, B_matrix.T
+        ).T
+        max_gamma: float = C_check.abs().max().item()
+        if max_gamma > 1.0 + tol + 1e-8:
+            raise RuntimeError(
+                f"MaxVol numerical verification failed: "
+                f"max_gamma = {max_gamma:.6f}"
+            )
+        
+        return (
+            maxvol_structure_id_tensor, maxvol_matrix, maxvol_matrix_inv
+        )
+        
+    
+    @torch.no_grad()
+    def get_gamma_global(self,
+                         maxvol_matrix_inv: torch.Tensor,
+                         explore_path: str):
+        explore_datamodule: ExtxyzDataModule = ExtxyzDataModule(
+            testset_path=explore_path,
+            batch_size=LinearMtpMaxvolGenerator.BATCH_SIZE_HERE,
+            rcut=self.model.rmax,
+            umax_num_neigh_atoms=self.model.umax_num_neigh_atoms,
+            pbc_xyz=[True, True, True],
+            sort=False,
+            torch_float_dtype=self.lit_module.dtype,
+            has_virial=self.fit_virial)
+        explore_datamodule.setup("test")
+        explore_dataloader: ExtxyzDataset = explore_datamodule.test_dataloader()
+        maxvol_matrix_inv = maxvol_matrix_inv.to(self.lit_module.device)
+        
+        structure_offset: int = 0
+        structure_id_list: List[torch.Tensor] = []
+        gamma_structure_list: List[torch.Tensor] = []
+        
+        for _, batch_data in enumerate(explore_dataloader):
+            binum_tensor, bilist_tensor, bnumneigh_tensor, bfirstneigh_tensor, \
+                brcs_tensor, btypes_tensor, bnghost_tensor = \
+                    [t.to(self.lit_module.device) for t in batch_data[:7]]
+            bgamma_structure_tensor: torch.Tensor = self.model.predict_gamma_global(
+                binum_tensor=binum_tensor,
+                bilist_tensor=bilist_tensor,
+                bnumneigh_tensor=bnumneigh_tensor,
+                bfirstneigh_tensor=bfirstneigh_tensor,
+                brcs_tensor=brcs_tensor,
+                btypes_tensor=btypes_tensor,
+                bnghost_tensor=bnghost_tensor,
+                maxvol_matrix_inv=maxvol_matrix_inv)
+            
+            batch_size: int = bfirstneigh_tensor.size(0)
+            batch_structure_id_tensor: torch.Tensor = structure_offset + torch.arange(batch_size,
+                                                                                      device=self.lit_module.device)
+            structure_id_list.append(batch_structure_id_tensor)
+            gamma_structure_list.append(bgamma_structure_tensor)
+
+            structure_offset += batch_size
+        
+        structure_id_tensor: torch.Tensor = torch.cat(structure_id_list, dim=0)
+        gamma_structure_tensor: torch.Tensor = torch.cat(gamma_structure_list, dim=0)
+        
+        return structure_id_tensor, gamma_structure_tensor
+    
