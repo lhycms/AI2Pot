@@ -42,6 +42,9 @@ class LinearMtpMaxvolGenerator(object):
         self.lit_module: LitLinearMtp = LitLinearMtp.load_from_checkpoint(checkpoint_path=self.checkpoint_path,
                                                                           map_location=map_location)
         self.fit_virial: bool = self.lit_module.model.fit_virial
+        self.pbc_xyz: List[bool] = pbc_xyz
+        
+        self.type_map: List[int] = self.lit_module.model.type_map_tensor.detach().cpu().numpy().tolist()
         
         # model and data
         self.model: LinearMtp = self.lit_module.model
@@ -53,7 +56,8 @@ class LinearMtpMaxvolGenerator(object):
             pbc_xyz=pbc_xyz,
             sort=False,
             torch_float_dtype=self.lit_module.dtype,
-            has_virial=self.fit_virial)
+            has_virial=self.fit_virial,
+            type_map=self.type_map)
         extxyz_datamodule.setup("test")
         self.candidate_set_dataloader: DataLoader = extxyz_datamodule.test_dataloader()
         
@@ -65,7 +69,7 @@ class LinearMtpMaxvolGenerator(object):
         atom_id_list: List[torch.Tensor] = []
         candidate_set_matrix_list: List[torch.Tensor] = []
         
-        for batch_idx, batch_data in enumerate(self.candidate_set_dataloader):
+        for _, batch_data in enumerate(self.candidate_set_dataloader):
             binum_tensor, bilist_tensor, bnumneigh_tensor, bfirstneigh_tensor, \
                 brcs_tensor, btypes_tensor, bnghost_tensor = \
                     [t.to(self.lit_module.device) for t in batch_data[:7]]
@@ -214,10 +218,11 @@ class LinearMtpMaxvolGenerator(object):
             batch_size=LinearMtpMaxvolGenerator.BATCH_SIZE_HERE,
             rcut=self.model.rmax,
             umax_num_neigh_atoms=self.model.umax_num_neigh_atoms,
-            pbc_xyz=[True, True, True],
+            pbc_xyz=self.pbc_xyz,
             sort=False,
             torch_float_dtype=self.lit_module.dtype,
-            has_virial=self.fit_virial)
+            has_virial=self.fit_virial,
+            type_map=self.type_map)
         explore_datamodule.setup("test")
         explore_dataloader: ExtxyzDataset = explore_datamodule.test_dataloader()
         maxvol_matrix_inv = maxvol_matrix_inv.to(self.lit_module.device)
@@ -282,6 +287,8 @@ class LinearMtpMaxvolGenerator(object):
                                                                                        brcs_tensor,
                                                                                        btypes_tensor,
                                                                                        bnghost_tensor)
+            batch_e_sites_jacobian = batch_e_sites_jacobian.to(torch.float64)
+            
             batch_size: int = bfirstneigh_tensor.size(0)
             natoms_pad: int = bfirstneigh_tensor.size(1)
             mask_for_centers: torch.Tensor = torch.arange(natoms_pad,
@@ -414,10 +421,11 @@ class LinearMtpMaxvolGenerator(object):
             batch_size=LinearMtpMaxvolGenerator.BATCH_SIZE_HERE,
             rcut=self.model.rmax,
             umax_num_neigh_atoms=self.model.umax_num_neigh_atoms,
-            pbc_xyz=[True, True, True],
+            pbc_xyz=self.pbc_xyz,
             sort=False,
             torch_float_dtype=self.lit_module.dtype,
-            has_virial=self.fit_virial)
+            has_virial=self.fit_virial,
+            type_map=self.type_map)
         explore_datamodule.setup("test")
         explore_dataloader: ExtxyzDataset = explore_datamodule.test_dataloader()
         maxvol_matrix_inv = maxvol_matrix_inv.to(self.lit_module.device)

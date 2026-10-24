@@ -19,7 +19,7 @@
 
 
 import glob
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 import numpy as np
 from pymatgen.core import Structure
@@ -39,7 +39,8 @@ class ExtxyzDataset(Dataset):
                  pbc_xyz: List[bool] = [True, True, True],
                  sort: bool = False,
                  torch_float_dtype: torch._C.dtype = torch.float64,
-                 has_virial: bool = False):
+                 has_virial: bool = False,
+                 type_map: Optional[List[int]] = None):
         self.atoms_list: List[Atoms] = ase_read(filename=filename, index=":")
         self.rcut: float = rcut
         self.umax_num_neigh_atoms: int = umax_num_neigh_atoms
@@ -53,7 +54,8 @@ class ExtxyzDataset(Dataset):
             self.npy_float_dtype = np.float64
             self.torch_float_dtype = torch.float64
         self.max_num_atoms: int = self._get_max_num_atoms()
-        self.type_map: List[int] = self._get_type_map()
+        self.type_map: List[int] = self._get_type_map(provided_types=type_map)
+
 
     
     def __len__(self):
@@ -138,13 +140,30 @@ class ExtxyzDataset(Dataset):
                 max_num_atoms = len(atoms)
         return max_num_atoms
     
-    def _get_type_map(self):
+    def _get_type_map(self,
+                      provided_types: Optional[List[int]]):
+        #
         atom_symbol_list: List[int] = []
         for atoms in self.atoms_list:
             for tmp_symbol in np.unique(atoms.get_atomic_numbers()):
+                tmp_symbol = int(tmp_symbol)
                 if tmp_symbol not in atom_symbol_list:
                     atom_symbol_list.append(tmp_symbol)
-        type_map: List[int] = sorted(atom_symbol_list)
+        required_types: List[int] = sorted(atom_symbol_list)
+    
+        # 
+        if provided_types is None:
+            type_map: List[int] = required_types
+        else:
+            required_types_set = set(required_types)
+            provided_types_set = set(provided_types)
+            if not required_types_set.issubset(provided_types_set):
+                missing_types_set = sorted(required_types_set - provided_types_set)
+                raise ValueError(
+                    f"type_map is missing required atomic numbers: {missing_types_set}"
+                )
+            type_map: List[int] = provided_types
+    
         return type_map
 
     
@@ -154,6 +173,7 @@ class ExtxyzDataset(Dataset):
         atom_symbol_list: List[int] = []
         for atoms in atoms_list:
             for tmp_symbol in np.unique(atoms.get_atomic_numbers()):
+                tmp_symbol = int(tmp_symbol)
                 if tmp_symbol not in atom_symbol_list:
                     atom_symbol_list.append(tmp_symbol)
         type_map: List[int] = sorted(atom_symbol_list)
