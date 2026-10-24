@@ -13,7 +13,7 @@ from ai2pot.models.mtp.linear_mtp_al_utils import LinearMtpMaxvolGenerator
 
 
 TEST_FILES_DIR = os.getenv("AI2POT_PATH")
-CHECK_POINT_PATH: str = "/data/home/liuhanyu/ai2pot_paper_code/5.JCTC_1.2.1/5.1.GST/3.1.1.MTP/bs16/lightning_logs/version_0/checkpoints/last.ckpt"
+CHECK_POINT_PATH: str = "/data/home/liuhanyu/mycode/AI2Pot/test/test_data/active_learning/iter0.ckpt"
 # "/data/home/liuhanyu/mycode/AI2Pot/lightning_logs/lightning_logs/version_59/checkpoints/epoch=199-step=5000.ckpt"
 EXTXYZ_PATH: str = os.path.join(TEST_FILES_DIR,
                                 "test",
@@ -25,7 +25,7 @@ EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/Li_battery/t
 #EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/Li_battery/train_802.xyz"
 #EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/C/train.xyz"
 #EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/gst/test.xyz"
-EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot-Tutorials/data/XYZ/gst/train.xyz"
+EXTXYZ_PATH = "/data/home/liuhanyu/mycode/AI2Pot/test/test_data/active_learning/train.xyz"
 #EXTXYZ_PATH = "/data/home/liuhanyu/ai2pot_paper/2.demo/hea_linear_mtp/train.xyz"
 
 
