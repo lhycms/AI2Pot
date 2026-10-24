@@ -38,7 +38,8 @@ class ExtxyzDataModule(LightningDataModule):
                  pbc_xyz: List[bool] = [True, True, True],
                  sort: bool = True,
                  torch_float_dtype: torch._C.dtype = torch.float32,
-                 has_virial: bool = False):
+                 has_virial: bool = False,
+                 type_map: Optional[List[int]] = None):
         super(ExtxyzDataModule, self).__init__()
         
         self.trainset_path: str = trainset_path
@@ -52,8 +53,10 @@ class ExtxyzDataModule(LightningDataModule):
         self.sort: bool = sort
         self.torch_float_dtype: torch._C.dtype = torch_float_dtype
         self.has_virial: bool = has_virial
+        self.type_map: Optional[List[int]] = type_map
 
-        self.save_hyperparameters(ignore=['torch_float_dtype'])
+        self.save_hyperparameters(ignore=['torch_float_dtype',
+                                          'type_map'])
 
 
     def setup(self, stage: Optional[str] = None):
@@ -64,14 +67,16 @@ class ExtxyzDataModule(LightningDataModule):
                                                   pbc_xyz=self.pbc_xyz,
                                                   sort=self.sort,
                                                   torch_float_dtype=self.torch_float_dtype,
-                                                  has_virial=self.has_virial)
+                                                  has_virial=self.has_virial,
+                                                  type_map=self.type_map)
             self.validset_dataset = ExtxyzDataset(filename=self.validset_path,
                                                   rcut=self.rcut,
                                                   umax_num_neigh_atoms=self.umax_num_neigh_atoms,
                                                   pbc_xyz=self.pbc_xyz,
                                                   sort=self.sort,
                                                   torch_float_dtype=self.torch_float_dtype,
-                                                  has_virial=self.has_virial)
+                                                  has_virial=self.has_virial,
+                                                  type_map=self.type_map)
         if (stage == "test") or (stage is None):
             self.testset_dataset = ExtxyzDataset(filename=self.testset_path,
                                                  rcut=self.rcut,
@@ -79,7 +84,8 @@ class ExtxyzDataModule(LightningDataModule):
                                                  pbc_xyz=self.pbc_xyz,
                                                  sort=self.sort,
                                                  torch_float_dtype=self.torch_float_dtype,
-                                                 has_virial=self.has_virial)
+                                                 has_virial=self.has_virial,
+                                                 type_map=self.type_map)
         if (stage == "predict") or (stage is None):
             self.predictset_dataset = ExtxyzDataset(filename=self.predict_path,
                                                     rcut=self.rcut,
@@ -87,7 +93,8 @@ class ExtxyzDataModule(LightningDataModule):
                                                     pbc_xyz=self.pbc_xyz,
                                                     sort=self.sort,
                                                     torch_float_dtype=self.torch_float_dtype,
-                                                    has_virial=self.has_virial)
+                                                    has_virial=self.has_virial,
+                                                    type_map=self.type_map)
 
 
     def train_dataloader(self):
