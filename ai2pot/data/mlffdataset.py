@@ -162,7 +162,7 @@ class ExtxyzDataset(Dataset):
                 raise ValueError(
                     f"type_map is missing required atomic numbers: {missing_types_set}"
                 )
-            type_map: List[int] = sorted(provided_types)    
+            type_map: List[int] = provided_types
     
         return type_map
 
