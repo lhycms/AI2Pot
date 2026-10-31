@@ -262,8 +262,10 @@ void PairAI2Pot::settings(int argc, char **argv) {
     try {
         // 1. Model && device
         torch::jit::getExecutorMode() = false;
-        if (torch::cuda::is_available())
+        if (torch::cuda::is_available()) {
             device = torch::Device(torch::kCUDA, get_node_rank());
+            cudaSetDevice(device.index());
+        }
         
         model = torch::jit::load(pt_path);
         model.to(device);

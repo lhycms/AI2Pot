@@ -61,6 +61,8 @@ void GraphBuilder<CoordType>::find_graph(
     // memset(slot_offsets, 0, batch_size*natoms_pad + 1);
 
     // Step 1.
+    // Step 1.1.
+    slot_offsets[0] = 0;
     #ifdef USE_OPENMP
     #pragma omp parallel for schedule(static)
     #endif
@@ -70,12 +72,13 @@ void GraphBuilder<CoordType>::find_graph(
         slot_offsets[idx + 1] = (ii < binum[bb]) ? bnumneigh[bb*natoms_pad + bilist[idx]] : 0;
     }
 
-    // Step 2.
+    // Step 1.2.
     for (int idx=0; idx<(batch_size*natoms_pad); idx++)
         slot_offsets[idx+1] += slot_offsets[idx];
     int num_edges = slot_offsets[batch_size*natoms_pad];
     
-    // Step 3.
+    // Step 2.
+    
 }
 
 };  // namespace : gnn
