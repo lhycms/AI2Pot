@@ -1170,6 +1170,9 @@ void find_ef_atom(CoordType *etot_ptr,
     
     // Step 3.2. Force and Virial
     for (int jj=0; jj<snumneigh; jj++) {
+        CoordType tmp_force_ij[3] = {0.0};
+        CoordType tmp_force_ji[3] = {0.0};
+
         neigh_idx = sfirstneigh[jj];
         type_outer = types[neigh_idx];
         Zj = type_map[type_outer];
@@ -1245,11 +1248,17 @@ void find_ef_atom(CoordType *etot_ptr,
                     CoordType mom_der2xyz = coeffs[idx]
                                             * (A_ders[aa]*B*C + A*B_ders[aa]*C + A*B*C_ders[aa]);
                     CoordType e_site_ders_ija = e_site_der2mom[i] * mom_der2xyz;
-                    atomicAdd(&force[center_idx][aa], e_site_ders_ija);
-                    atomicAdd(&force[neigh_idx][aa], -e_site_ders_ija);
+                    tmp_force_ij[aa] += e_site_ders_ija;
+                    tmp_force_ji[aa] -= e_site_ders_ija;
                 }
             }
         }
+        atomicAdd(&force[center_idx][0], tmp_force_ij[0]);
+        atomicAdd(&force[center_idx][1], tmp_force_ij[1]);
+        atomicAdd(&force[center_idx][2], tmp_force_ij[2]);
+        atomicAdd(&force[neigh_idx][0], tmp_force_ji[0]);
+        atomicAdd(&force[neigh_idx][1], tmp_force_ji[1]);
+        atomicAdd(&force[neigh_idx][2], tmp_force_ji[2]);
     }
 }
 
