@@ -82,6 +82,7 @@ class LinearMtpMaxvolGenerator(object):
                                                                                        brcs_tensor,
                                                                                        btypes_tensor,
                                                                                        bnghost_tensor)
+            batch_e_sites_jacobian = batch_e_sites_jacobian.to(torch.float64)
             
             natoms_pad: int = bilist_tensor.size(1)
             mask_for_centers: torch.Tensor = torch.arange(bilist_tensor.size(1),
