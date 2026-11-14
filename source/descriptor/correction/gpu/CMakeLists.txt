@@ -13,7 +13,7 @@ file(MAKE_DIRECTORY ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY})
 add_library(zbl_torch_launcher SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/zbl_torch_launcher.cu)
 set_target_properties(zbl_torch_launcher PROPERTIES
     CUDA_STANDARD ${CUDA_STANDARD}
-    CUDA_SEPERATE_COMPILATION on
+    CUDA_SEPARATE_COMPILATION on
     CUDA_ARCHITECTURES "${CUDA_ARCHITECTURES}")
 
 # 6. Compile test
