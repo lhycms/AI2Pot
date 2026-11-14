@@ -17,4 +17,4 @@
 # License along with AI2Pot. If not, see <https://www.gnu.org/licenses/>.
 
 
-__version__ = "1.2.2"
+__version__ = "1.2.3"
