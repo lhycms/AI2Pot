@@ -18,213 +18,35 @@ AI2Pot provides:
 
 ## Installation
 
-### 1. Configure CUDA
+AI2Pot is compiled against the PyTorch and NumPy versions installed in the active Python environment, so build isolation must be disabled when installing AI2Pot.
 
-For a CUDA-enabled installation, set `CUDA_HOME` to the CUDA toolkit compatible with the installed PyTorch version:
+### Prerequisites
 
-```bash
-$ export CUDA_HOME=/path/to/cuda
-$ export PATH="${CUDA_HOME}/bin:${PATH}"
-$ export LD_LIBRARY_PATH="${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}"
-```
+- Python 3.11 or 3.12
+- PyTorch >= 2.2.0 (tested with 2.5.0; the wheel is built against the installed version)
+- NumPy 2.x (baseline 2.2.6)
+- CUDA toolkit with `nvcc` matching the CUDA version of PyTorch for GPU builds (tested with CUDA 12.4)
+- A C/C++ toolchain (`gcc`/`g++`)
+- `AI2Pot-cli` for the wheel workflow (installed from source; not on PyPI)
 
-For example:
+### Choose an installation method
 
-```bash
-$ export CUDA_HOME=/usr/local/cuda-12.4
-```
+| Method | When to use | Guide |
+| --- | --- | --- |
+| Build a wheel with `AI2Pot-cli` (recommended) | You want to build AI2Pot once and reuse the wheel in the same environment | [Install from a wheel](docs/install-wheel.md) |
+| Install from source | You prefer a manual installation, or you are developing AI2Pot | [Install from source](docs/install-source.md) |
+| Install the LAMMPS interface | You need `pair_style ai2pot` in LAMMPS | [Install LAMMPS with AI2Pot](docs/install-lammps.md) |
 
-Check the CUDA compiler:
-
-```bash
-$ nvcc --version
-```
-
-### 2. Install PyTorch
-
-Choose either the CPU or CUDA version.
-
-#### Python environment
+### Verify the installation
 
 ```bash
-$ conda create -n ai2pot python=3.11.13
+$ python -c "import ai2pot; print(ai2pot.__version__)"
+$ python -c "import ai2pot.fromcc"
 ```
-
-#### CPU
-
-```bash
-$ python -m pip install torch==2.5.0 \
-    --index-url https://download.pytorch.org/whl/cpu
-```
-
-#### CUDA 12.4
-
-```bash
-$ python -m pip install torch==2.5.0 \
-    --index-url https://download.pytorch.org/whl/cu124
-```
-
-Verify the PyTorch installation:
-
-```bash
-$ python -c "import torch; print(torch.__version__); print(torch.version.cuda)"
-```
-
-### 3. Install AI2Pot
-
-AI2Pot currently needs to compile against the NumPy and PyTorch packages installed in the active Python environment. Therefore, build isolation must be disabled.
-
-Install the build backend first:
-
-```bash
-$ python -m pip install -U pip setuptools wheel
-$ python -m pip install \
-    scikit-build-core==0.12.2 \
-    cmake==4.3.2 \
-    pybind11==2.11.1
-$ python -m pip install -r requirements-lock.txt
-```
-
-Then install AI2Pot:
-
-```bash
-$ CMAKE_BUILD_PARALLEL_LEVEL=16 python -m pip install -v --no-build-isolation --no-deps .
-```
-
-`CMAKE_BUILD_PARALLEL_LEVEL` controls the number of parallel compilation jobs. Reduce this value if compilation consumes too much memory.
-
-To use specific C, C++, and CUDA host compilers:
-
-```bash
-$ CMAKE_BUILD_PARALLEL_LEVEL=16 \
-  CC=/path/to/gcc \
-  CXX=/path/to/g++ \
-  CUDAHOSTCXX=/path/to/g++ \
-  python -m pip install -v --no-build-isolation --no-deps .
-```
-
-<details>
-<summary><strong>Developer installation and maintainer notes</strong></summary>
-
-### Set the source-tree path
-
-```bash
-$ export AI2POT_PATH=/path/to/AI2Pot
-```
-
-### Configure and build the native libraries
-
-```bash
-$ cd "${AI2POT_PATH}/source"
-$ mkdir -p build
-$ cd build
-```
-
-Configure the project:
-
-```bash
-$ cmake \
-    -DBUILD_TEST=ON \
-    -DTORCH_OP=ON \
-    -DUSE_CUDA=ON \
-    -DUSE_OPENMP=ON \
-    -DMAX_MTP_LEVEL=20 \
-    ..
-```
-
-Compile and install:
-
-```bash
-$ cmake --build . --parallel 16
-$ cmake --install .
-```
-
-Equivalent Make commands:
-
-```bash
-$ make -j16
-$ make install
-```
-
-Install the Python package in editable mode:
-
-```bash
-$ cd "${AI2POT_PATH}"
-$ CMAKE_BUILD_PARALLEL_LEVEL=16 \
-  CC=/data/app/gcc/11.3.0/bin/gcc \
-  CXX=/data/app/gcc/11.3.0/bin/g++ \
-  CUDAHOSTCXX=/data/app/gcc/11.3.0/bin/g++ \
-  python -m pip install --no-build-isolation --no-deps -v -e .
-```
-
-### Optional CMake arguments
-
-```text
--DCMAKE_C_COMPILER=/path/to/gcc
--DCMAKE_CXX_COMPILER=/path/to/g++
--DCMAKE_CUDA_HOST_COMPILER=/path/to/g++
--DCMAKE_INSTALL_PREFIX=$HOME/.ai2pot
-```
-
-### Current development-server configuration
-
-```text
-C compiler:         /data/app/gcc/11.3.0/bin/gcc
-C++ compiler:       /data/app/gcc/11.3.0/bin/g++
-CUDA host compiler: /data/app/gcc/11.3.0/bin/g++
-```
-
-Equivalent installation command:
-
-```bash
-$ CMAKE_BUILD_PARALLEL_LEVEL=16 \
-  CC=/data/app/gcc/11.3.0/bin/gcc \
-  CXX=/data/app/gcc/11.3.0/bin/g++ \
-  CUDAHOSTCXX=/data/app/gcc/11.3.0/bin/g++ \
-  python -m pip install -v --no-build-isolation --no-deps .
-```
-
-### Optional VS Code configuration
-
-Add the repository path to `.vscode/settings.json` if Pylance cannot resolve the local package:
-
-```json
-{
-  "python.analysis.extraPaths": [
-    "/path/to/AI2Pot"
-  ]
-}
-```
-
-</details>
 
 ## LAMMPS Interface
 
-### Install AI2Pot-lammps
-
-1. Copy the AI2Pot interface files into the LAMMPS source directory:
-
-```bash
-$ cp AI2Pot/interface/lammps/AI2POT lammps/src
-$ cp AI2Pot/interface/lammps/Makefile.mpi lammps/src/MAKE/
-```
-
-2. Build LAMMPS with the AI2POT package:
-
-```bash
-$ cd lammps/src
-$ make yes-AI2POT
-$ make -j 16 mpi \
-    TORCH_ROOT=$(python -c "import torch, os; print(os.path.dirname(torch.__file__))") \
-    AI2POT_ROOT=$(python -c "import ai2pot, os; print(os.path.dirname(ai2pot.__file__))")
-```
-
-### AI2Pot pair style usage
-
-```txt
-pair_style ai2pot ./ai2pot_libtorch.pt
-pair_coeff * * Ge Sb Te
-```
+AI2Pot provides a LAMMPS interface through `pair_style ai2pot`. See [Install LAMMPS with AI2Pot](docs/install-lammps.md) for build and usage instructions.
 
 ## Citation
 
