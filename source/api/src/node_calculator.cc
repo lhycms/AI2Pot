@@ -17,3 +17,26 @@
     You should have received a copy of the GNU Lesser General Public
     License along with AI2Pot. If not, see <https://www.gnu.org/licenses/>.
 */
+
+#include "../include/node_calculator.h"
+
+
+AI2PotNodeCalculator::AI2PotNodeCalculator(
+    std::string pt_path,
+    torch::Device device)
+{
+    // Step 1.
+    this->model = torch::jit::load(pt_path);
+    this->model.to(device);
+    this->model.eval();
+
+    // Step 2.
+    if (model.hasattr("mtp_level") && model.hasattr("num_neurons"))
+        this->potential_type = "AI2POT-NNMTP";
+    else if (model.hasattr("mtp_level"))
+        this->potential_type = "AI2POT-MTP";
+    else if (model.hasattr("rmax_radial"))
+        this->potential_type = "AI2POT-NEP";
+    else
+        this->potential_type = "AI2Pot-custom";
+}

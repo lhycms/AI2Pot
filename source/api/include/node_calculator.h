@@ -31,30 +31,25 @@ public:
         std::string pt_path,
         torch::Device device);
 
+    torch::autograd::variable_list predict_ef(
+        const at::Tensor& binum_tensor,
+        const at::Tensor& bilist_tensor,
+        const at::Tensor& bnumneigh_tensor,
+        const at::Tensor& bfirstneigh_tensor,
+        const at::Tensor& brcs_tensor,
+        const at::Tensor& btypes_tensor,
+        const at::Tensor& bnghost_tensor);
 
-private:
+    torch::autograd::variable_list predict_efv(
+        const at::Tensor& binum_tensor,
+        const at::Tensor& nilist_tensor,
+        const at::Tensor& bnumneigh_tensor,
+        const at::Tensor& brcs_tensor,
+        const at::Tensor& btypes_tensor,
+        const at::Tensor& bnghost_tensor);
+
+    
     torch::jit::script::Module model;
     std::string potential_type;
 };  // class : AI2PotCalculator
 
-
-AI2PotNodeCalculator::AI2PotNodeCalculator(
-    std::string pt_path,
-    torch::Device device)
-{
-    // Step 1.
-    model = torch::jit::load(pt_path);
-    model.to(device);
-    model.eval();
-
-    // Step 2.
-    if (model.hasattr("mtp_level") && model.hasattr("num_neurons"))
-        potential_type = "AI2POT-NNMTP";
-    else if (model.hasattr("mtp_level"))
-        potential_type = "AI2POT-MTP";
-    else if (model.hasattr("rmax_radial"))
-        potential_type = "AI2POT-NEP";
-    else
-        potential_type = "AI2Pot-custom";
-
-}

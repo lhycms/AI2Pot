@@ -55,7 +55,7 @@ endif()
 ## 2.2. pybind11
 find_package(
     Python
-    COMPONENTS Interpreter Development.Module
+    COMPONENTS Interpreter Development
     REQUIRED)
 set(PYBIND11_FINDPYTHON ON)
 
@@ -123,6 +123,8 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/descriptor/nep)
 #add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/descriptor/ace)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/gst)
+
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/api)
 
 
 # 7. Copy
