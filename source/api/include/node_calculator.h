@@ -52,4 +52,3 @@ public:
     torch::jit::script::Module model;
     std::string potential_type;
 };  // class : AI2PotCalculator
-
