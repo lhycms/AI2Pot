@@ -49,6 +49,28 @@ public:
         const at::Tensor& btypes_tensor,
         const at::Tensor& bnghost_tensor);
 
+    torch::autograd::variable_list predict_gamma_local(
+        const at::Tensor& binum_tensor,
+        const at::Tensor& bilist_tensor,
+        const at::Tensor& bnumneigh_tensor,
+        const at::Tensor& bfirstneigh_tensor,
+        const at::Tensor& brcs_tensor,
+        const at::Tensor& btypes_tensor,
+        const at::Tensor& bnghost_tensor,
+        const at::Tensor& maxvol_matrix_inv);
+    
+    torch::autograd::variable_list predict_gamma_gloal(
+        const at::Tensor& binum_tensor,
+        const at::Tensor& bilist_tensor,
+        const at::Tensor& bnumneigh_tensor,
+        const at::Tensor& bfirstneigh_tensor,
+        const at::Tensor& brcs_tensor,
+        const at::Tensor& btypes_tensor,
+        const at::Tensor& bnghost_tensor,
+        const at::Tensor& maxvol_matrix_inv);
+
+    at::Tensor load_matrix_matrix_inv(std::string maxvaol_matrix_inv_path);
+
     
     torch::jit::script::Module model;
     std::string potential_type;

@@ -18,6 +18,8 @@
     License along with AI2Pot. If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include <torch/serialize.h>
+
 #include "../include/node_calculator.h"
 
 
@@ -94,4 +96,72 @@ torch::autograd::variable_list AI2PotNodeCalculator::predict_efv(
     at::Tensor bvirial_tensor = output->elements()[2].toTensor();
 
     return {betot_tensor, bforce_tensor, bvirial_tensor};
+}
+
+
+torch::autograd::variable_list AI2PotNodeCalculator::predict_gamma_gloal(
+    const at::Tensor& binum_tensor,
+    const at::Tensor& bilist_tensor,
+    const at::Tensor& bnumneigh_tensor,
+    const at::Tensor& bfirstneigh_tensor,
+    const at::Tensor& brcs_tensor,
+    const at::Tensor& btypes_tensor,
+    const at::Tensor& bnghost_tensor,
+    const at::Tensor& maxvol_matrix_inv)
+{
+    at::Tensor bgamma_structure_tensor = this->model.get_method("predict_gamma_global")(
+        {
+            binum_tensor,
+            bilist_tensor,
+            bnumneigh_tensor,
+            bfirstneigh_tensor,
+            brcs_tensor,
+            btypes_tensor,
+            bnghost_tensor,
+            maxvol_matrix_inv
+        }).toTensor();
+    
+    return {bgamma_structure_tensor};
+}
+
+
+torch::autograd::variable_list AI2PotNodeCalculator::predict_gamma_local(
+    const at::Tensor& binum_tensor,
+    const at::Tensor& bilist_tensor,
+    const at::Tensor& bnumneigh_tensor,
+    const at::Tensor& bfirstneigh_tensor,
+    const at::Tensor& brcs_tensor,
+    const at::Tensor& btypes_tensor,
+    const at::Tensor& bnghost_tensor,
+    const at::Tensor& maxvol_matrix_inv)
+{
+    c10::intrusive_ptr<c10::ivalue::Tuple> output = this->model.get_method("predict_gamma_local")(
+        {
+            binum_tensor,
+            bilist_tensor,
+            bnumneigh_tensor,
+            bfirstneigh_tensor,
+            brcs_tensor,
+            btypes_tensor,
+            bnghost_tensor,
+            maxvol_matrix_inv
+        }).toTuple();
+    
+    at::Tensor bgamma_structures_tensor = output->elements()[0].toTensor();
+    at::Tensor bgamma_atoms_tensor = output->elements()[1].toTensor();
+
+    return {bgamma_structures_tensor, bgamma_atoms_tensor};
+}
+
+
+at::Tensor AI2PotNodeCalculator::load_matrix_matrix_inv(std::string maxvol_matrix_inv_path)
+{
+    std::ifstream input(maxvol_matrix_inv_path, std::ios::binary);
+
+    std::vector<char> buffer(
+        (std::istreambuf_iterator<char>(input)),
+        std::istreambuf_iterator<char>()
+    );
+    auto data = torch::pickle_load(buffer);
+    return data.toTensor();
 }

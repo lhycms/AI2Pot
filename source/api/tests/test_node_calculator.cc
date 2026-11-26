@@ -51,6 +51,8 @@ protected:
     ai2pot::Structure<real> structure;
     ai2pot::NeighborList<real> neighbor_list;
 
+    std::string maxvol_matrix_inv_path;
+
     static void SetUpTestSuite() {
         std::cout << "AI2PotNodeCalculatorTest (TestSuite) is setting up...\n";
     }
@@ -60,7 +62,8 @@ protected:
     }
 
     void SetUp() override {
-        pt_path = "/data/home/liuhanyu/ai2pot_paper_code/7.JCTC_1.2.2b/21_MTP_Training/ai2pot_libtorch.pt";
+        pt_path = "/data/home/liuhanyu/mycode/AI2Pot/test/test_data/lmp_api/ai2pot_libtorch.pt";
+        maxvol_matrix_inv_path = "/data/home/liuhanyu/mycode/AI2Pot/test/test_data/lmp_api/maxvol_matrix_inv.pt";
 
         // Establish neighbor list
         num_atoms = 12;
@@ -242,6 +245,55 @@ TEST_F(AI2PotNodeCalculatorTest, predict_efv)
 
     std::cout << betot_tensor << std::endl;
 }
+
+
+TEST_F(AI2PotNodeCalculatorTest, load_maxvol_matrix_inv)
+{
+    AI2PotNodeCalculator node_calculator = AI2PotNodeCalculator(pt_path, device);
+    at::Tensor maxvol_matrix_inv_tensor = node_calculator.load_matrix_matrix_inv(maxvol_matrix_inv_path);
+    std::cout << maxvol_matrix_inv_tensor.sizes() << std::endl;
+}
+
+
+
+TEST_F(AI2PotNodeCalculatorTest, predict_gamma_global)
+{
+    AI2PotNodeCalculator node_calculator = AI2PotNodeCalculator(pt_path, device);
+    at::Tensor maxvol_matrix_inv_tensor = node_calculator.load_matrix_matrix_inv(maxvol_matrix_inv_path);
+
+    torch::autograd::variable_list output = node_calculator.predict_gamma_gloal(
+        binum_tensor,
+        bilist_tensor,
+        bnumneigh_tensor,
+        bfirstneigh_tensor,
+        brcs_tensor,
+        btypes_tensor,
+        bnghost_tensor,
+        maxvol_matrix_inv_tensor);
+    
+    std::cout << output[0] << std::endl;
+}
+
+
+TEST_F(AI2PotNodeCalculatorTest, predict_gamma_local)
+{
+    AI2PotNodeCalculator node_calculator = AI2PotNodeCalculator(pt_path, device);
+    at::Tensor maxvol_matrix_inv_tensor = node_calculator.load_matrix_matrix_inv(maxvol_matrix_inv_path);
+
+    torch::autograd::variable_list output = node_calculator.predict_gamma_local(
+        binum_tensor,
+        bilist_tensor,
+        bnumneigh_tensor,
+        bfirstneigh_tensor,
+        brcs_tensor,
+        btypes_tensor,
+        bnghost_tensor,
+        maxvol_matrix_inv_tensor);
+    
+    std::cout << output[0] << std::endl;    
+    std::cout << output[1] << std::endl; 
+}
+
 
 
 int main(int argc, char **argv) {
