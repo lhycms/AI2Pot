@@ -202,17 +202,44 @@ TEST_F(AI2PotNodeCalculatorTest, constructor)
 {
     AI2PotNodeCalculator node_calculator = AI2PotNodeCalculator(pt_path, device);
     std::cout << node_calculator.potential_type << std::endl;
+}
 
-    c10::intrusive_ptr<c10::ivalue::Tuple> output = node_calculator.model.get_method("predict_efv")(
-        {binum_tensor,
+
+TEST_F(AI2PotNodeCalculatorTest, predict_ef)
+{
+    AI2PotNodeCalculator node_calculator = AI2PotNodeCalculator(pt_path, device);
+    torch::autograd::variable_list output = node_calculator.predict_ef(
+        binum_tensor,
         bilist_tensor,
         bnumneigh_tensor,
         bfirstneigh_tensor,
         brcs_tensor,
         btypes_tensor,
-        bnghost_tensor}).toTuple();
+        bnghost_tensor);
+    
+    at::Tensor betot_tensor = output[0];
+    at::Tensor bforce_tensor = output[1];
 
-    at::Tensor betot_tensor = output->elements()[0].toTensor();
+    std::cout << betot_tensor << std::endl;
+}
+
+
+TEST_F(AI2PotNodeCalculatorTest, predict_efv)
+{
+    AI2PotNodeCalculator node_calculator = AI2PotNodeCalculator(pt_path, device);
+    torch::autograd::variable_list output = node_calculator.predict_efv(
+        binum_tensor,
+        bilist_tensor,
+        bnumneigh_tensor,
+        bfirstneigh_tensor,
+        brcs_tensor,
+        btypes_tensor,
+        bnghost_tensor);
+    
+    at::Tensor betot_tensor = output[0];
+    at::Tensor bforce_tensor = output[1];
+    at::Tensor bvirial_tensor = output[2];
+
     std::cout << betot_tensor << std::endl;
 }
 

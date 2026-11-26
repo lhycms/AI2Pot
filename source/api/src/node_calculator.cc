@@ -40,3 +40,58 @@ AI2PotNodeCalculator::AI2PotNodeCalculator(
     else
         this->potential_type = "AI2Pot-custom";
 }
+
+
+torch::autograd::variable_list AI2PotNodeCalculator::predict_ef(
+    const at::Tensor& binum_tensor,
+    const at::Tensor& bilist_tensor,
+    const at::Tensor& bnumneigh_tensor,
+    const at::Tensor& bfirstneigh_tensor,
+    const at::Tensor& brcs_tensor,
+    const at::Tensor& btypes_tensor,
+    const at::Tensor& bnghost_tensor)
+{
+    c10::intrusive_ptr<c10::ivalue::Tuple> output = this->model.get_method("predict_ef")(
+        {
+            binum_tensor,
+            bilist_tensor,
+            bnumneigh_tensor,
+            bfirstneigh_tensor,
+            brcs_tensor,
+            btypes_tensor,
+            bnghost_tensor
+        }).toTuple();
+    
+    at::Tensor betot_tensor = output->elements()[0].toTensor();
+    at::Tensor bforce_tensor = output->elements()[1].toTensor();
+
+    return {betot_tensor, bforce_tensor};
+}
+
+
+torch::autograd::variable_list AI2PotNodeCalculator::predict_efv(
+    const at::Tensor& binum_tensor,
+    const at::Tensor& bilist_tensor,
+    const at::Tensor& bnumneigh_tensor,
+    const at::Tensor& bfirstneigh_tensor,
+    const at::Tensor& brcs_tensor,
+    const at::Tensor& btypes_tensor,
+    const at::Tensor& bnghost_tensor)
+{
+    c10::intrusive_ptr<c10::ivalue::Tuple> output = this->model.get_method("predict_efv")(
+        {
+            binum_tensor,
+            bilist_tensor,
+            bnumneigh_tensor,
+            bfirstneigh_tensor,
+            brcs_tensor,
+            btypes_tensor,
+            bnghost_tensor
+        }).toTuple();
+    
+    at::Tensor betot_tensor = output->elements()[0].toTensor();
+    at::Tensor bforce_tensor = output->elements()[1].toTensor();
+    at::Tensor bvirial_tensor = output->elements()[2].toTensor();
+
+    return {betot_tensor, bforce_tensor, bvirial_tensor};
+}

@@ -44,6 +44,7 @@ public:
         const at::Tensor& binum_tensor,
         const at::Tensor& nilist_tensor,
         const at::Tensor& bnumneigh_tensor,
+        const at::Tensor& bfirstneigh_tensor,
         const at::Tensor& brcs_tensor,
         const at::Tensor& btypes_tensor,
         const at::Tensor& bnghost_tensor);
